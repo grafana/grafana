@@ -1062,6 +1062,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.frontend.tools.dashboardTemplates",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Enables the template dashboard assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-29T15:28:29Z"
@@ -1822,6 +1836,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource resource requests, frontend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.chunkedQueryStreaming",
         "resourceVersion": "1776098015598",
         "creationTimestamp": "2026-04-13T16:33:35Z"
@@ -1830,6 +1858,20 @@
         "description": "Allow requesting query results as chunked jsonl rather than single json blob",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.config.ui.useNewDatasourceCRUDAPIs",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests, frontend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
         "expression": "false"
       }
     },

@@ -2,6 +2,7 @@ import { PluginType, type PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
@@ -59,7 +60,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
     return;
@@ -165,7 +166,7 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     setPanelsAndAliases(settings.panels);
     return;
