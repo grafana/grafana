@@ -19,6 +19,7 @@ import { getPositioningMiddleware } from '../../utils/floating';
 import { renderOrCallToRender } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { type TooltipPlacement } from '../Tooltip/types';
 
 export interface Props {
@@ -112,7 +113,9 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
+                <div ref={transitionRef}>
+                  <ScrollContainer maxHeight="100vh">{renderOrCallToRender(overlay, {})}</ScrollContainer>
+                </div>
               </CSSTransition>
             </div>
           </FloatingFocusManager>
