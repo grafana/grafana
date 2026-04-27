@@ -5,7 +5,8 @@ import Highlighter from 'react-highlight-words';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Label, useStyles2 } from '@grafana/ui';
+import { Field, FieldSet, Label, useStyles2 } from '@grafana/ui';
+import { getLabelStyles } from '@grafana/ui/internal';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
@@ -89,7 +90,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
 }
 
 function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuery?: string): ReactNode {
-  const { title, description, overrides, id, addon } = itemDescriptor.props;
+  const { title, description, overrides, id, addon, useFieldset } = itemDescriptor.props;
 
   if (!title) {
     return null;
@@ -101,7 +102,16 @@ function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuer
       return null;
     }
 
-    return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} htmlFor={id} />;
+    return (
+      <OptionPaneLabel
+        title={title}
+        description={description}
+        overrides={overrides}
+        addon={addon}
+        htmlFor={id}
+        useFieldset={useFieldset}
+      />
+    );
   }
 
   const categories: React.ReactNode[] = [];
@@ -132,22 +142,34 @@ interface OptionPanelLabelProps {
   overrides?: OptionPaneItemOverrideInfo[];
   addon: ReactNode;
   htmlFor?: string;
+  useFieldset?: boolean;
 }
 
-function OptionPaneLabel({ title, description, overrides, addon, htmlFor }: OptionPanelLabelProps) {
-  const styles = useStyles2(getLabelStyles);
+function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFieldset }: OptionPanelLabelProps) {
+  const styles = useStyles2(getOptionPaneLabelStyles);
+  const labelStyles = useStyles2(getLabelStyles);
   return (
     <div className={styles.container}>
-      <Label description={description} htmlFor={htmlFor}>
-        {title}
-        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-      </Label>
+      {useFieldset ? (
+        <div className={labelStyles.label}>
+          <div className={labelStyles.labelContent}>
+            {title}
+            {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+          </div>
+          {description && <span className={labelStyles.description}>{description}</span>}
+        </div>
+      ) : (
+        <Label description={description} htmlFor={htmlFor}>
+          {title}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+        </Label>
+      )}
       {addon}
     </div>
   );
 }
 
-function getLabelStyles(theme: GrafanaTheme2) {
+function getOptionPaneLabelStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',

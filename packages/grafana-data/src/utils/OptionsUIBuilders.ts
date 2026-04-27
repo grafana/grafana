@@ -91,6 +91,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       id: config.path,
       override: standardEditorsRegistry.get('radio').editor,
       editor: standardEditorsRegistry.get('radio').editor,
+      useFieldset: true,
       process: selectOverrideProcessor,
       // ???
       shouldApply: config.shouldApply ? config.shouldApply : () => true,

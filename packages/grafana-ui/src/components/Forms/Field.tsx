@@ -85,8 +85,8 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
 
     let labelElement = label;
 
-    if (typeof label === 'string') {
-      if (useFieldset) {
+    if (useFieldset) {
+      if (typeof label === 'string') {
         labelElement = (
           <legend className={labelStyles.label}>
             <div className={labelStyles.labelContent}>{label}</div>
@@ -94,12 +94,14 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
           </legend>
         );
       } else {
-        labelElement = (
-          <Label htmlFor={inputId} description={description}>
-            {label}
-          </Label>
-        );
+        labelElement = <legend>{label}</legend>;
       }
+    } else if (typeof label === 'string') {
+      labelElement = (
+        <Label htmlFor={inputId} description={description}>
+          {label}
+        </Label>
+      );
     }
 
     // @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead
