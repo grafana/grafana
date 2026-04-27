@@ -4,6 +4,12 @@ import { type TransformationKind as V2Beta1TransformationKind } from '@grafana/s
 import { type DashboardV2Version, dashboardAPIVersionResolver } from '../../dashboard/api/DashboardAPIVersionResolver';
 
 /**
+ * v3alpha0 dashboards share the v2beta1 transformation wire shape ({ kind: <id>, spec: { id, ... } }).
+ * When convertSpecToWireFormat gains a first-class 'v3alpha0' branch, update this constant accordingly.
+ */
+export const V3ALPHA0_TRANSFORMATION_WIRE_FORMAT: DashboardV2Version = 'v2beta1';
+
+/**
  * Wire transformation is what the API returns — either v2 stable or v2beta1 shape.
  */
 type WireTransformation = TransformationKind | V2Beta1TransformationKind;

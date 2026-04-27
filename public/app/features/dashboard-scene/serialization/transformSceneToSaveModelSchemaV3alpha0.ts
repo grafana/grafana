@@ -4,7 +4,7 @@ import { type Spec as DashboardV3alpha0Spec } from '@grafana/schema/apis/dashboa
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
-import { convertSpecToWireFormat } from './transformationCompat';
+import { V3ALPHA0_TRANSFORMATION_WIRE_FORMAT, convertSpecToWireFormat } from './transformationCompat';
 
 /**
  * Transform a DashboardScene into a v3alpha0 DashboardSpec.
@@ -27,10 +27,11 @@ export function transformSceneToSaveModelSchemaV3alpha0(
   isSnapshot = false
 ): DashboardV3alpha0Spec {
   const v2Spec = transformSceneToSaveModelSchemaV2(scene, isSnapshot);
-  // Force v2beta1-style transformation wire shape. v3alpha0 inherits v2beta1's
-  // transformation kind (no top-level `group`), so the same conversion applies.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const reshapedSpec = convertSpecToWireFormat(v2Spec, 'v2beta1') as unknown as DashboardV3alpha0Spec;
+  const reshapedSpec = convertSpecToWireFormat(
+    v2Spec,
+    V3ALPHA0_TRANSFORMATION_WIRE_FORMAT
+  ) as unknown as DashboardV3alpha0Spec;
 
   const rules = scene.state.dashboardRules?.serialize();
   return rules?.length ? { ...reshapedSpec, rules } : reshapedSpec;

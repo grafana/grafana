@@ -95,9 +95,11 @@ export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
 }
 
 /**
- * True when the spec carries v3alpha0-exclusive rules with at least one entry.
- * Dashboards with an empty `rules: []` round-trip safely through v2, so they
- * don't need v3 storage.
+ * Structural predicate — true when the spec matches the v3alpha0 shape.
+ * v3alpha0 adds an optional `rules` array on top of v2, so any spec carrying
+ * a (possibly empty) `rules` array is a v3alpha0 spec. Save-path routing
+ * policy (e.g. empty-rules dashboards going through v2) lives in
+ * isV3DashboardCommand, not here.
  */
 export function isDashboardV3Spec(obj: unknown): obj is DashboardV3alpha0Spec {
   if (!isDashboardV2Spec(obj)) {
@@ -105,7 +107,7 @@ export function isDashboardV3Spec(obj: unknown): obj is DashboardV3alpha0Spec {
   }
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const rules = (obj as DashboardV3alpha0Spec).rules;
-  return Array.isArray(rules) && rules.length > 0;
+  return Array.isArray(rules);
 }
 
 export function isDashboardV1Spec(obj: unknown): obj is Dashboard {
@@ -137,18 +139,21 @@ export function isDashboardV1Resource(value: unknown): value is DashboardWithAcc
 export function isV2DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
 ): cmd is SaveDashboardCommand<DashboardV2Spec> {
-  return isDashboardV2Spec(cmd.dashboard) && !isDashboardV3Spec(cmd.dashboard);
+  return isDashboardV2Spec(cmd.dashboard) && !isV3DashboardCommand(cmd);
 }
 
 /**
- * True when the save command carries a rule-bearing spec. Rules are a
- * v3alpha0-exclusive concept, so this is the signal to route the save to
- * the v3alpha0 client instead of v2.
+ * Save-path policy: route to the v3alpha0 client only when the spec carries
+ * at least one rule. Dashboards with an empty `rules: []` round-trip safely
+ * through v2, so we keep them on v2 storage to avoid advertising v3 unnecessarily.
  */
 export function isV3DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec | DashboardV3alpha0Spec>
 ): cmd is SaveDashboardCommand<DashboardV3alpha0Spec> {
-  return isDashboardV3Spec(cmd.dashboard);
+  if (!isDashboardV3Spec(cmd.dashboard)) {
+    return false;
+  }
+  return (cmd.dashboard.rules?.length ?? 0) > 0;
 }
 
 export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
