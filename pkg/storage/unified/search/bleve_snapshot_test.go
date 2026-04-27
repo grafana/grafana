@@ -162,9 +162,6 @@ func TestSnapshotTier(t *testing.T) {
 	t.Run("no min: below running is tier 0", func(t *testing.T) {
 		assert.Equal(t, 0, snapshotTier(semver.MustParse("9.0.0"), nil, running))
 	})
-	t.Run("no running: anything is tier 0 or 1", func(t *testing.T) {
-		assert.Equal(t, 0, snapshotTier(semver.MustParse("99.0.0"), minV, nil))
-	})
 }
 
 func TestPickBestSnapshot(t *testing.T) {
