@@ -289,3 +289,60 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 		})
 	}
 }
+
+func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
+	mimirDS := &datasources.DataSource{
+		UID:   "mimir-ds-uid",
+		OrgID: 1,
+		Type:  datasources.DS_ALERTMANAGER,
+		URL:   "http://mimir:9009",
+		JsonData: simplejson.NewFromAny(map[string]any{
+			"implementation": "mimir",
+		}),
+	}
+
+	err := openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAlertingSyncExternalAlertmanager: {
+			Key:      featuremgmt.FlagAlertingSyncExternalAlertmanager,
+			Variants: map[string]any{"": true},
+		},
+	}))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	dsSvc := &fakeDatasources.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{mimirDS},
+	}
+	sut := ConfigSrv{
+		datasourceService: dsSvc,
+		store:             store.NewFakeAdminConfigStore(t),
+	}
+	ctx := createRequestCtxInOrg(1)
+	ctx.OrgRole = org.RoleAdmin
+
+	// First POST stores the UID with a valid datasource present.
+	resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
+		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+		ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+	})
+	require.Equal(t, http.StatusCreated, resp.Status())
+
+	// Remove the datasource so any further validation would fail.
+	dsSvc.DataSources = nil
+
+	// Re-POST with the same UID (and a different AlertmanagersChoice) — should
+	// succeed because validation is skipped when the UID hasn't changed.
+	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
+		AlertmanagersChoice:     ptrTo(definitions.AllAlertmanagers),
+		ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+	})
+	require.Equal(t, http.StatusCreated, resp.Status())
+
+	// POST with a different UID against the missing datasource — should fail
+	// validation as before.
+	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
+		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+		ExternalAlertmanagerUID: ptrTo("different-uid"),
+	})
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+}

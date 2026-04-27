@@ -119,7 +119,19 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 	}
 
 	if body.ExternalAlertmanagerUID != nil && ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
-		if *body.ExternalAlertmanagerUID != "" {
+		// Validate the datasource only when the value actually changes, so unrelated
+		// updates (e.g. AlertmanagersChoice only) don't fail because the previously
+		// stored UID is no longer valid.
+		current := ""
+		currentCfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
+		if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+			return response.Error(http.StatusInternalServerError, "failed to fetch admin configuration", err)
+		}
+		if currentCfg != nil && currentCfg.ExternalAlertmanagerUID != nil {
+			current = *currentCfg.ExternalAlertmanagerUID
+		}
+
+		if *body.ExternalAlertmanagerUID != current && *body.ExternalAlertmanagerUID != "" {
 			ds, err := srv.datasourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 				UID:   *body.ExternalAlertmanagerUID,
 				OrgID: c.GetOrgID(),
