@@ -357,3 +357,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-17,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
 2026-04-14,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false
 2026-04-23,assistant.frontend.tools.dashboardTemplates,experimental,@grafana/sharing-squad,false,false,true
+2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
