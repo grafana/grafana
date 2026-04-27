@@ -10,7 +10,7 @@ export const SLUG_MAX_LENGTH = 96;
 export function slugifyJestTestNameForFilename(testName: string): string {
   let s = testName.trim();
   if (!s) {
-    return 'unknown';
+    throw new Error('Missing test name!');
   }
 
   s = s
@@ -26,7 +26,7 @@ export function slugifyJestTestNameForFilename(testName: string): string {
     .replace(/^_|_$/g, '');
 
   if (!s) {
-    return 'unknown';
+    throw new Error('Invalid test name after parse!');
   }
 
   if (s.length > SLUG_MAX_LENGTH) {
