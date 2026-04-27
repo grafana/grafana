@@ -31,8 +31,8 @@ func ProvidePullRequestWorker(
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
 	publicURL := cfg.AppURL
-	if cfg.ProvisioningPublicAppURL != "" {
-		publicURL = cfg.ProvisioningPublicAppURL
+	if cfg.ProvisioningPublicRootURL != "" {
+		publicURL = cfg.ProvisioningPublicRootURL
 	}
 	urlProvider := func(_ context.Context, _ string) string {
 		return publicURL

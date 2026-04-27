@@ -106,7 +106,7 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name:              "screenshot uses ProvisioningPublicAppURL when set",
+			name:              "screenshot uses ProvisioningPublicRootURL when set",
 			screenshotBaseURL: "https://public.example.com",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
@@ -181,7 +181,7 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "screenshot falls back to grafana base url when ProvisioningPublicAppURL empty",
+			name: "screenshot falls back to grafana base url when ProvisioningPublicRootURL empty",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
@@ -256,9 +256,9 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			// Proves the screenshot path does not silently inherit spec.webhook.baseUrl.
-			// The repo has webhook.baseUrl set, but ProvisioningPublicAppURL is empty,
+			// The repo has webhook.baseUrl set, but ProvisioningPublicRootURL is empty,
 			// so screenshots must use the grafana base URL — not the webhook URL.
-			name: "screenshot ignores spec.webhook.baseUrl when ProvisioningPublicAppURL empty",
+			name: "screenshot ignores spec.webhook.baseUrl when ProvisioningPublicRootURL empty",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",

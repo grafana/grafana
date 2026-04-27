@@ -74,11 +74,11 @@ func ProvideWebhooksWithImages(
 ) *WebhookExtraBuilder {
 	// Webhooks registered with the git provider and screenshot images embedded in
 	// PR comments must both be reachable from the public internet. Prefer the
-	// instance-level [provisioning] public_app_url when set, otherwise fall back
-	// to the standard AppURL.
+	// instance-level [provisioning] public_root_url when set, otherwise fall
+	// back to the standard AppURL.
 	publicURL := cfg.AppURL
-	if cfg.ProvisioningPublicAppURL != "" {
-		publicURL = cfg.ProvisioningPublicAppURL
+	if cfg.ProvisioningPublicRootURL != "" {
+		publicURL = cfg.ProvisioningPublicRootURL
 	}
 	urlProvider := func(_ context.Context, _ string) string {
 		return publicURL

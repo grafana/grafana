@@ -180,8 +180,8 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	renderer := pullrequest.NewNoOpRenderer()
 	// Operator path uses a NoOp renderer; screenshotBaseURL is plumbed for
 	// signature parity but unused at runtime. Prefer the instance-level
-	// provisioning public_app_url when set.
-	screenshotBaseURL := cfg.ProvisioningPublicAppURL
+	// provisioning public_root_url when set.
+	screenshotBaseURL := cfg.ProvisioningPublicRootURL
 	if screenshotBaseURL == "" {
 		screenshotBaseURL = cfg.AppURL
 	}
