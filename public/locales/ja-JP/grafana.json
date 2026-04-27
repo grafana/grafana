@@ -3570,9 +3570,9 @@
         "declare-incident": "インシデントを宣言",
         "declare-incident-no-permission": "インシデントにアクセスする権限がありません",
         "instance-details": "インスタンスの詳細",
+        "section-silence": "",
         "silence-button": "サイレンス",
-        "silence-no-permission": "サイレンスを作成する権限がありません",
-        "silence-title-with-name": ""
+        "silence-no-permission": "サイレンスを作成する権限がありません"
       },
       "labels-column-title": "ラベル",
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
@@ -5606,6 +5606,7 @@
         "panels": "パネル",
         "row": "行",
         "rows": "行",
+        "section-filters-set": "",
         "tab": "タブ",
         "tabs": "タブ",
         "variable": "{{type}}変数",
@@ -11157,6 +11158,7 @@
       "label-numbers": "数値",
       "label-signature": "署名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "実験的機能。ログから表示フィールドを管理するためのコンポーネントを表示します。",
     "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
     "description-enable-logs-highlighting": "事前定義された配色スキームを使い、ログ行の関連部分をハイライト表示します。",
@@ -11451,6 +11453,7 @@
         "common-labels": "共通ラベル:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "共通ラベル",
     "name-deduplication": "重複排除",
     "name-details-mode": "ログ詳細パネルの表示モード",
@@ -13080,6 +13083,7 @@
       "token-user-description": "APIトークンでリポジトリにアクセスする際のユーザー名",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "BitbucketリポジトリURL",
+      "url-pattern": "",
       "url-required": "リポジトリURLが必要です"
     },
     "bootstrap-step": {
@@ -14018,7 +14022,6 @@
       "hide": "{{type}}を非表示",
       "hide-help": "データソースヘルプを非表示",
       "hide-transformation-help": "変換ヘルプを非表示",
-      "inspector": "クエリ検査ツール",
       "more-actions": "その他の{{type}}操作",
       "remove": "{{type}}を削除",
       "remove-transformation-filter": "フィルターを削除",
@@ -14030,6 +14033,25 @@
     "alerts": {
       "no-alerts": "このパネルのアラートルールはありません",
       "no-alerts-description": "データが特定の条件を満たしたときに通知を受け取るためのアラートルールを作成します。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "本当にこのクエリを削除してもよろしいですか？",
@@ -14067,6 +14089,7 @@
     },
     "footer": {
       "edit-option": "{{label}}を編集",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大データポイント数",
@@ -14077,6 +14100,7 @@
       "placeholder": {
         "no-limit": "制限なし"
       },
+      "query-inspector": "",
       "query-options": "クエリオプション"
     },
     "header": {
@@ -14673,6 +14697,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "ホームのダッシュボード",
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
