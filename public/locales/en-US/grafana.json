@@ -7730,6 +7730,20 @@
         "hidden-label": {
           "description": "Above the dashboard, but without showing the name of variable",
           "label": "Above dashboard, label hidden"
+        },
+        "top-of-row": {
+          "label": "Top of row"
+        },
+        "top-of-row-hidden-label": {
+          "description": "Top of row, but without showing the name of variable",
+          "label": "Top of row, label hidden"
+        },
+        "top-of-tab": {
+          "label": "Top of tab"
+        },
+        "top-of-tab-hidden-label": {
+          "description": "Top of tab, but without showing the name of variable",
+          "label": "Top of tab, label hidden"
         }
       }
     },
