@@ -2537,6 +2537,10 @@
         "name": {
           "type": "string"
         },
+        "ordinal": {
+          "type": "integer",
+          "format": "int64"
+        },
         "secureJsonData": {
           "type": "object",
           "additionalProperties": {
@@ -8443,6 +8447,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "ordinal": {
+          "type": "integer",
+          "format": "int64"
         },
         "secureJsonData": {
           "type": "object",
