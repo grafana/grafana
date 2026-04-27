@@ -53,6 +53,9 @@ type IndexViewData struct {
 	RenderBindingSupported bool
 
 	BootScript template.JS
+
+	// Feature flag for enabling SRI checks on Grafana assets
+	AssetSriChecksEnabled bool
 }
 
 // Templates setup.
@@ -122,6 +125,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
@@ -133,6 +137,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
+		AssetSriChecksEnabled:      grafanaAssetSriChecks,
 	}
 
 	if compiledBootScript {

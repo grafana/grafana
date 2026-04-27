@@ -1049,7 +1049,8 @@
       "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-04T10:56:35Z"
+        "creationTimestamp": "2025-03-04T10:56:35Z",
+        "deletionTimestamp": "2026-04-24T10:33:47Z"
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
@@ -2495,6 +2496,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.assetSriChecks",
+        "resourceVersion": "1777026827859",
+        "creationTimestamp": "2026-04-24T10:33:47Z"
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
         "expression": "false"
       }
     },

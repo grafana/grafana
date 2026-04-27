@@ -1716,11 +1716,11 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "assetSriChecks",
+			Name:        "grafana.assetSriChecks",
 			Description: "Enables SRI checks for Grafana JavaScript assets",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendOpsWG,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{Go: true},
 			Expression:  "false",
 		},
 		{
