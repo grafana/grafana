@@ -24,7 +24,7 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
   const setFilter = jest.fn();
   const onClose = jest.fn();
 
-  const result = render(
+  const view = render(
     <FilterPopup
       name="Status"
       rows={makeRows('Status', ['active', 'inactive'])}
@@ -41,7 +41,7 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
     />
   );
 
-  return { setFilter, onClose, buttonElement, ...result };
+  return { setFilter, onClose, buttonElement, ...view };
 }
 
 describe('FilterPopup', () => {
