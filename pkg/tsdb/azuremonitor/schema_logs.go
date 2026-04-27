@@ -350,16 +350,15 @@ func (p *logAnalyticsSchema) TableParameterValues(ctx context.Context, req *sche
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out, Errors: map[string]string{"": err.Error()}}, nil
 	}
 
-	if req.TableParameter == subscription {
+	switch req.TableParameter {
+	case subscription:
 		vals, err := listSubscriptionParameterValues(ctx, dsInfo)
 		if err != nil {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out, Errors: map[string]string{"": err.Error()}}, nil
 		}
 		out[req.TableParameter] = vals
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-	}
-
-	if req.TableParameter == logTableParam {
+	case logTableParam:
 		sub, err := p.resolveSubscription(ctx, dsInfo, req.DependencyValues)
 		if err != nil || sub == "" {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
@@ -394,17 +393,10 @@ func (p *logAnalyticsSchema) TableParameterValues(ctx context.Context, req *sche
 		sort.Strings(names)
 		out[req.TableParameter] = names
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+	default:
+		p.logger.Warn("unknown table parameter", "tableParameter", req.TableParameter)
+		return &schemas.TableParametersValuesResponse{Errors: map[string]string{req.TableParameter: "unknown table parameter"}}, nil
 	}
-
-	return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-}
-
-func (p *logAnalyticsSchema) ColumnValues(_ context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
-	out := make(map[string][]string, len(req.Columns))
-	for _, c := range req.Columns {
-		out[c] = nil
-	}
-	return &schemas.ColumnValuesResponse{ColumnValues: out}, nil
 }
 
 func (p *logAnalyticsSchema) resolveSubscription(ctx context.Context, dsInfo types.DatasourceInfo, params map[string]string) (string, error) {

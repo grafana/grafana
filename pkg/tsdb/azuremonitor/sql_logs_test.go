@@ -149,12 +149,12 @@ func TestBuildKQLFromSQLQuery(t *testing.T) {
 
 		kql := buildKQLFromSQLQuery("Heartbeat", filters, columns, orderBy, &limit, tr)
 
-		require.Contains(t, kql, "Heartbeat\n")
-		require.Contains(t, kql, "| where TimeGenerated >= datetime(")
-		require.Contains(t, kql, "| where Computer == 'server01'")
-		require.Contains(t, kql, "| project TimeGenerated, Computer, OSType")
-		require.Contains(t, kql, "| order by TimeGenerated desc")
-		require.Contains(t, kql, "| take 50")
+		require.Equal(t, `Heartbeat
+| where TimeGenerated >= datetime(2024-01-01T00:00:00Z) and TimeGenerated <= datetime(2024-01-02T00:00:00Z)
+| where Computer == 'server01'
+| project TimeGenerated, Computer, OSType
+| order by TimeGenerated desc
+| take 50`, kql)
 	})
 
 	t.Run("special characters in string values are escaped", func(t *testing.T) {

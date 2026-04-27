@@ -142,7 +142,7 @@ func (c *compositeSchema) TableParameterValues(ctx context.Context, req *schemas
 func (c *compositeSchema) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	table := stripTableParameterValues(req.Table)
 	if isLogsTable(table) {
-		return c.logs.ColumnValues(ctx, req)
+		return nil, schemas.ErrColumnValuesNotImplemented
 	}
 	return c.metrics.ColumnValues(ctx, req)
 }

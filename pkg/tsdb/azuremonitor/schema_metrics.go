@@ -233,7 +233,8 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		}
 		out[req.TableParameter] = vals
 	default:
-		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		p.logger.Warn("unknown table parameter", "tableParameter", req.TableParameter)
+		return &schemas.TableParametersValuesResponse{Errors: map[string]string{req.TableParameter: "unknown table parameter"}}, nil
 	}
 
 	return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
