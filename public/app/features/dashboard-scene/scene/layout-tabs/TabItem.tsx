@@ -72,6 +72,7 @@ export class TabItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  public readonly sectionType = 'tab' as const;
   private _filtersSet?: SectionFiltersSet;
 
   public containerRef = React.createRef<HTMLDivElement>();

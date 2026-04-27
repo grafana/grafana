@@ -28,6 +28,7 @@ import {
   isEditableVariableType,
   validateVariableName,
 } from './utils';
+import { getVariableSectionType } from './variableSectionType';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
@@ -129,7 +130,12 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         width={52}
       />
 
-      <VariableDisplaySelect onChange={onDisplayChange} display={display || defaultVariableModel.hide!} type={type} />
+      <VariableDisplaySelect
+        onChange={onDisplayChange}
+        display={display || defaultVariableModel.hide!}
+        type={type}
+        sectionType={getVariableSectionType(variable)}
+      />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
