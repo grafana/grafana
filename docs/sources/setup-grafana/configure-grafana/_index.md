@@ -2816,6 +2816,17 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
+#### `public_app_url`
+
+Public-facing URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.
+
+Two consumers honor this setting:
+
+- Webhook callbacks registered with the Git provider (for example, GitHub). The per-repository `spec.webhook.baseUrl`, when set, still wins.
+- Screenshot images embedded in pull-request comments. These are fetched by the Git provider's servers, so the URL must be reachable from the public internet.
+
+Set this when `[server] root_url` points at a cluster-internal address (for example, when Grafana runs behind a private ingress) but provisioning needs an externally-reachable host. This is analogous to `[rendering] callback_url`, which serves the same purpose for the image renderer plugin.
+
 <hr>
 
 ### `[plugin.plugin_id]`

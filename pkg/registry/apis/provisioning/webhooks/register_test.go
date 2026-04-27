@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
@@ -104,6 +105,56 @@ func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 
 			result := builder.WebhookURL(context.Background(), tt.repo)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestResolvePublicURL verifies the urlProvider resolution chain used by
+// ProvideWebhooksWithImages: spec.webhook.baseUrl wins when set on a repo;
+// otherwise the builder falls back to ProvisioningPublicAppURL when set, then
+// to AppURL.
+func TestResolvePublicURL(t *testing.T) {
+	tests := []struct {
+		name        string
+		cfg         *setting.Cfg
+		repoWebhook *provisioning.WebhookConfig
+		expected    string
+	}{
+		{
+			name:     "uses ProvisioningPublicAppURL when set and no spec override",
+			cfg:      &setting.Cfg{AppURL: "http://internal.cluster.local/", ProvisioningPublicAppURL: "https://public.example.com"},
+			expected: "https://public.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
+		},
+		{
+			name:     "falls back to AppURL when ProvisioningPublicAppURL empty",
+			cfg:      &setting.Cfg{AppURL: "https://grafana.example.com/"},
+			expected: "https://grafana.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
+		},
+		{
+			name:        "spec.webhook.baseUrl still wins over ProvisioningPublicAppURL",
+			cfg:         &setting.Cfg{AppURL: "http://internal.cluster.local/", ProvisioningPublicAppURL: "https://public.example.com"},
+			repoWebhook: &provisioning.WebhookConfig{BaseURL: "https://repo-override.example.com"},
+			expected:    "https://repo-override.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/my-repo/webhook",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			publicURL := tt.cfg.AppURL
+			if tt.cfg.ProvisioningPublicAppURL != "" {
+				publicURL = tt.cfg.ProvisioningPublicAppURL
+			}
+			builder := &WebhookExtraBuilder{
+				isPublic: isPublicURL(publicURL),
+				urlProvider: func(_ context.Context, _ string) string {
+					return publicURL
+				},
+			}
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{Webhook: tt.repoWebhook},
+			}
+			assert.Equal(t, tt.expected, builder.WebhookURL(context.Background(), repo))
 		})
 	}
 }

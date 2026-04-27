@@ -30,8 +30,12 @@ func ProvidePullRequestWorker(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
+	publicURL := cfg.AppURL
+	if cfg.ProvisioningPublicAppURL != "" {
+		publicURL = cfg.ProvisioningPublicAppURL
+	}
 	urlProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
+		return publicURL
 	}
 
 	// FIXME: we should create providers for client and parsers, so that we don't have
@@ -39,7 +43,7 @@ func ProvidePullRequestWorker(
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
-	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
+	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, publicURL, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)

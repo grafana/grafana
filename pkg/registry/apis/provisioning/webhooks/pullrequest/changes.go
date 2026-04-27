@@ -70,19 +70,27 @@ type fileChangeInfo struct {
 }
 
 type evaluator struct {
-	render      ScreenshotRenderer
-	parsers     resources.ParserFactory
-	urlProvider func(ctx context.Context, namespace string) string
-	metrics     screenshotMetrics
+	render            ScreenshotRenderer
+	parsers           resources.ParserFactory
+	urlProvider       func(ctx context.Context, namespace string) string
+	screenshotBaseURL string
+	metrics           screenshotMetrics
 }
 
-func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, registry prometheus.Registerer) Evaluator {
+// NewEvaluator constructs an Evaluator. screenshotBaseURL is the base URL
+// used to prefix relative blob paths returned by the screenshot renderer when
+// embedding images in PR comments — these images are fetched by external
+// systems (e.g. GitHub) so the URL must be publicly reachable. It is
+// independent from urlProvider, which builds the dashboard view and preview
+// URLs surfaced as clickable links in the same comment.
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, screenshotBaseURL string, registry prometheus.Registerer) Evaluator {
 	metrics := registerScreenshotMetrics(registry)
 	return &evaluator{
-		render:      render,
-		parsers:     parsers,
-		urlProvider: urlProvider,
-		metrics:     metrics,
+		render:            render,
+		parsers:           parsers,
+		urlProvider:       urlProvider,
+		screenshotBaseURL: screenshotBaseURL,
+		metrics:           metrics,
 	}
 }
 
@@ -115,7 +123,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, change, opts, parser, shouldRender))
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, e.screenshotBaseURL, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
@@ -123,7 +131,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
 		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
 	}
@@ -195,14 +203,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}

@@ -178,7 +178,14 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
+	// Operator path uses a NoOp renderer; screenshotBaseURL is plumbed for
+	// signature parity but unused at runtime. Prefer the instance-level
+	// provisioning public_app_url when set.
+	screenshotBaseURL := cfg.ProvisioningPublicAppURL
+	if screenshotBaseURL == "" {
+		screenshotBaseURL = cfg.AppURL
+	}
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, screenshotBaseURL, registry)
 	commenter := pullrequest.NewCommenter(false)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 

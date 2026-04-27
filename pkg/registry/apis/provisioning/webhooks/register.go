@@ -72,10 +72,18 @@ func ProvideWebhooksWithImages(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
+	// Webhooks registered with the git provider and screenshot images embedded in
+	// PR comments must both be reachable from the public internet. Prefer the
+	// instance-level [provisioning] public_app_url when set, otherwise fall back
+	// to the standard AppURL.
+	publicURL := cfg.AppURL
+	if cfg.ProvisioningPublicAppURL != "" {
+		publicURL = cfg.ProvisioningPublicAppURL
 	}
-	isPublic := isPublicURL(urlProvider(context.Background(), ""))
+	urlProvider := func(_ context.Context, _ string) string {
+		return publicURL
+	}
+	isPublic := isPublicURL(publicURL)
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
@@ -93,7 +101,7 @@ func ProvideWebhooksWithImages(
 				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, publicURL, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
