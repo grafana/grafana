@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import { type CodeEditorLanguage } from './languageLoader';
+import { type CodeMirrorEditorLanguage } from './types';
 
-const languageOptions: CodeEditorLanguage[] = ['sql', 'json'];
+const languageOptions: CodeMirrorEditorLanguage[] = ['sql', 'json'];
 
 const keywordCompletionSource: CompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
