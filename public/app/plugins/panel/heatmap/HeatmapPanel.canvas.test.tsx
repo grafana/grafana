@@ -13,15 +13,49 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, TooltipDisplayMode } from '@grafana/schema';
+import { measureText as uPlotAxisMeasureText } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
-import { defaultOptions, type Options } from './panelcfg.gen';
+import { defaultOptions, HeatmapColorMode, type Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
 import * as heatmapUtils from './utils';
-import { type prepConfig } from './utils';
+
+const width = 648;
+const height = 378;
+
+/**
+ * Without mocking measureText, the text width is always measured incorrectly, resulting in test behavior which does not match expected behavior in the browser.
+ * uPlot Y/X axis layout uses `measureText` from @grafana/ui (not `useMeasure` on the panel).
+ * jest-canvas-mock reports `TextMetrics.width === text.length`, which starves the Y axis and
+ * clips tick labels. This mock provides deterministic, ~browser-like widths for axis sizing.
+ * Override in a test: `uPlotAxisMeasureText.mockImplementationOnce(...)`; default is re-applied in `beforeEach`.
+ *
+ * Using relative import since measureText is not exported from grafana/ui, we could override this in jest config e.g.:
+ *   '^@grafana/ui/src/utils/measureText$': '<rootDir>/packages/grafana-ui/src/utils/measureText.ts',
+ */
+jest.mock('../../../../../packages/grafana-ui/src/utils/measureText', () => {
+  const actual = jest.requireActual('../../../../../packages/grafana-ui/src/utils/measureText');
+  return { ...actual, measureText: jest.fn() };
+});
+
+/** Width scale matched roughly to 12px Inter. */
+function defaultAxisTextWidthForTests(text: string, fontSize: number): number {
+  const AXIS_TEXT_WIDTH_PER_CHAR = 7.2;
+  const w = text.length * AXIS_TEXT_WIDTH_PER_CHAR * (fontSize / 12);
+  return Math.max(8, w);
+}
+
+function applyDefaultUPlotAxisMeasureTextMock() {
+  (uPlotAxisMeasureText as jest.Mock).mockImplementation(
+    (text: string, fontSize: number, _fontWeight = 400) =>
+      ({ width: defaultAxisTextWidthForTests(text, fontSize) }) as ReturnType<CanvasRenderingContext2D['measureText']>
+  );
+}
+
+applyDefaultUPlotAxisMeasureTextMock();
 
 /**
  * Generates a 2D array of heatmap bucket values for testing.
@@ -94,7 +128,6 @@ function scrubOutput(events: CanvasRenderingContext2DEvent[]): Array<Omit<Canvas
 }
 
 const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
-  // legend breaks the tests and requires mocking react-use:useMeasure, since legend is rendered in the DOM we can run traditional unit tests to cover
   legend: { show: false },
   tooltip: {
     mode: TooltipDisplayMode.Single,
@@ -121,8 +154,7 @@ function renderHeatmapPanel(
     timeRange: typeof canvasTestTimeRange;
   }>
 ) {
-  // @todo look into why auto axis size isn't working
-  const mergedOptions: Options = { ...defaultPanelOptions, yAxis: { axisWidth: 30 }, ...optionsOverrides };
+  const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
   const props = getPanelProps<Options>(mergedOptions, {
     data: {
       state: LoadingState.Done,
@@ -141,11 +173,8 @@ const canvasTestTimeRange = {
   raw: { from: '0', to: '10000' },
 };
 
-const width = 648;
-const height = 378;
-
 describe('HeatmapPanel (canvas)', () => {
-  let prepConfigSpy: jest.SpyInstance<typeof prepConfig>;
+  let prepConfigSpy: jest.SpyInstance;
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
   let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
@@ -168,19 +197,17 @@ describe('HeatmapPanel (canvas)', () => {
     });
   }
 
-  const assertCanvasOutput = async () => {
+  const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
     await waitFor(() =>
       expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
     );
-    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(
-      uPlotAxisEvents!,
-      { width, height },
-      true
-    );
+    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize, true);
   };
 
   beforeEach(() => {
+    applyDefaultUPlotAxisMeasureTextMock();
+    // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
       const builder = realPrepConfig(opts);
       builder.addHook('drawAxes', (u: uPlot) => {
@@ -234,18 +261,51 @@ describe('HeatmapPanel (canvas)', () => {
       consoleError.mockRestore();
     });
 
-    // @todo doesn't do anything?
-    // it('cellRadius', async () => {
-    //   renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { cellRadius: 200 });
-    //   await assertCanvasOutput();
-    // });
+    describe('Y Axis', () => {
+      it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          { yAxis: { axisPlacement, axisLabel: 'y-axis-label' } }
+        );
+        await assertCanvasOutput();
+      });
 
-    // it('decimals', async () => {
-    //   renderHeatmapPanel(
-    //     { series: [createDenseHeatmapFrameWithOrdinalY()] },
-    //     { showValue: VisibilityMode.Always }
-    //   );
-    //   await assertCanvasOutput();
-    // });
+      it('reverse', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { reverse: true } });
+        await assertCanvasOutput();
+      });
+
+      it('width', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
+        await assertCanvasOutput();
+      });
+    });
+
+    describe('color', () => {
+      it('opacity', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            color: {
+              scheme: 'UNUSED-FOR-OPACITY-BUT-STILL-REQUIRED-IN-TYPES',
+              steps: 20,
+              exponent: 2,
+              fill: 'red',
+              reverse: false,
+              mode: HeatmapColorMode.Opacity,
+            },
+          }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('scheme', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          { color: { steps: 20, exponent: 2, fill: '', reverse: false, scheme: 'BuGn', mode: HeatmapColorMode.Scheme } }
+        );
+        await assertCanvasOutput();
+      });
+    });
   });
 });
