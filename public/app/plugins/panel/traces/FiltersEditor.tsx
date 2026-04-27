@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
-import { type StandardEditorProps, type TraceSearchProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { TraceSearchProps } from '@grafana/data/types';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 
 import { useTraceAdHocFiltersController } from '../../../features/explore/TraceView/components/TracePageHeader/useTraceAdHocFiltersController';

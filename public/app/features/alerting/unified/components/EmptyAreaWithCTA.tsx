@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { type ButtonHTMLAttributes } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, type ButtonVariant, type IconName, LinkButton, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Button, type ButtonVariant, LinkButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 
 import { EmptyArea } from './EmptyArea';
 

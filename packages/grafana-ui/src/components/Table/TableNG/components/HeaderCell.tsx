@@ -3,8 +3,8 @@ import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
 import { type Column, type SortDirection } from 'react-data-grid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';

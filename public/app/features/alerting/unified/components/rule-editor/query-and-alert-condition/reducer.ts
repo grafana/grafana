@@ -1,13 +1,10 @@
 import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
-import {
-  ReducerID,
-  type RelativeTimeRange,
-  getDataSourceRef,
-  getDefaultRelativeTimeRange,
-  getNextRefId,
-  rangeUtil,
-} from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import { getNextRefId } from '@grafana/data/query';
+import { ReducerID } from '@grafana/data/transformations';
+import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';

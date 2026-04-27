@@ -1,4 +1,4 @@
-import { type PluginExtension } from '@grafana/data';
+import type { PluginExtension } from '@grafana/data/types';
 
 import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';

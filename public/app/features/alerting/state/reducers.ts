@@ -1,6 +1,6 @@
 import { type PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import {
   type AlertRule,
   type AlertRuleDTO,

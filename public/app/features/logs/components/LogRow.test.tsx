@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { CoreApp, createTheme, LogLevel, type LogRowModel } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { CoreApp, LogLevel, type LogRowModel } from '@grafana/data/types';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 
 import { LogRow } from './LogRow';

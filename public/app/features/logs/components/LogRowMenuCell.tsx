@@ -10,7 +10,7 @@ import {
   type MouseEvent,
 } from 'react';
 
-import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import type { LogRowContextOptions, LogRowModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton, type PopoverContent } from '@grafana/ui';

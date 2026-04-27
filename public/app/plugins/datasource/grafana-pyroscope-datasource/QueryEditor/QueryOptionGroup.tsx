@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Collapse, useStyles2, Stack } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Collapse, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props {
   title: string;

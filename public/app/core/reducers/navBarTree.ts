@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
-import { type NavModelItem, type OrgRole } from '@grafana/data';
+import type { NavModelItem, OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

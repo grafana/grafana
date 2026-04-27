@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
 
-import { CoreApp, getPanelDataSummary, type GrafanaTheme2, type PanelData, type PanelDataSummary, type PanelPluginVisualizationSuggestion, store } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary, type PanelDataSummary } from '@grafana/data/panel';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';

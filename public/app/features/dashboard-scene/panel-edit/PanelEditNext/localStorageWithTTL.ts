@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 interface StoredValueWithTTL<T> {
   value: T;

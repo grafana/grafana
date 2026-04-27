@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 

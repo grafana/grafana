@@ -1,4 +1,4 @@
-import { ThresholdsMode } from '@grafana/data';
+import { ThresholdsMode } from '@grafana/data/types';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 

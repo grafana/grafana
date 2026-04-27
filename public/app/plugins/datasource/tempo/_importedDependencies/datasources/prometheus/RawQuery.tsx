@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import Prism, { type Grammar } from 'prismjs';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useTheme2 } from '@grafana/ui/themes';
 
 export interface Props {
   query: string;

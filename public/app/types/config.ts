@@ -1,4 +1,4 @@
-import { type CurrentUserDTO } from '@grafana/data';
+import type { CurrentUserDTO } from '@grafana/data/types';
 
 /**
  * Extends `CurrentUserDTO` with some properties meant only for internal use.

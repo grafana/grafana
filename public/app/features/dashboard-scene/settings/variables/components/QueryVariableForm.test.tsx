@@ -4,8 +4,8 @@ import { type FormEvent } from 'react';
 import * as React from 'react';
 import { of } from 'rxjs';
 
-import { LoadingState, type PanelData, getDefaultTimeRange, VariableSupportType } from '@grafana/data';
 import { toDataFrame, FieldType } from '@grafana/data/dataframe';
+import { LoadingState, type PanelData, getDefaultTimeRange, VariableSupportType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type TimeZoneInfo } from '@grafana/data';
+import type { TimeZoneInfo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 

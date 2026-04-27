@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { Checkbox, Button, Tag, ModalsController } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { RevertDashboardModal } from './RevertDashboardModal';

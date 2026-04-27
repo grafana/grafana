@@ -2,10 +2,12 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
+import { getInputStyles, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { FolderPickerSkeleton } from './Skeleton';
 

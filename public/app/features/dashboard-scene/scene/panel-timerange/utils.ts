@@ -4,7 +4,8 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { dateTime, type DateTime, rangeUtil } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 // rendered appropriately.

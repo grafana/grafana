@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 import { type SQLQuery, SqlQueryEditorLazy } from '@grafana/sql';
 
 import { CheatSheet } from './CheatSheet';

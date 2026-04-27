@@ -1,5 +1,5 @@
-import { formattedValueToString } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';

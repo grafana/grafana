@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { first } from 'rxjs/operators';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ContextMenu, MenuItem, type MenuItemProps } from '@grafana/ui';

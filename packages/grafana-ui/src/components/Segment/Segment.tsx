@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { type HTMLProps } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';

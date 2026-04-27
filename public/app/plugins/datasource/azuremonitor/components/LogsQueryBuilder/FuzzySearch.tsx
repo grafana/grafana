@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';

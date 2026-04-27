@@ -4,10 +4,11 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
+import { Drawer, FilterInput, IconButton, Text, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { useDispatch } from 'app/types/store';

@@ -7,7 +7,7 @@ import { TextEncoder, TextDecoder } from 'util';
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
 jest.isolateModulesAsync(async () => {
-  const { EventBusSrv } = await import('@grafana/data');
+  const { EventBusSrv } = await import('@grafana/data/events');
   const testAppEvents = new EventBusSrv();
   jest.mock('../app/core/app_events', () => ({
     ...jest.requireActual('../app/core/app_events'),

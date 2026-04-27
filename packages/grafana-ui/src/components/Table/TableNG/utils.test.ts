@@ -4,17 +4,14 @@ import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
-  createTheme,
   type DataFrame,
   type DataFrameWithValue,
-  type DataLink,
-  type DisplayValue,
   type Field,
   FieldType,
-  type GrafanaTheme2,
-  type LinkModel,
   type ValueLinkConfig,
-} from '@grafana/data';
+} from '@grafana/data/dataframe';
+import { createTheme, type GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataLink, DisplayValue, LinkModel } from '@grafana/data/types';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';

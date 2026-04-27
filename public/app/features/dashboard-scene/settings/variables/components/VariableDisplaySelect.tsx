@@ -1,6 +1,6 @@
 import { type PropsWithChildren, useId, useMemo } from 'react';
 
-import { type VariableType, VariableHide } from '@grafana/data';
+import { type VariableType, VariableHide } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import type { AppPluginConfig, DataSourcePluginMeta, PanelPluginMeta } from '@grafana/data';
+import type { AppPluginConfig, DataSourcePluginMeta, PanelPluginMeta } from '@grafana/data/types';
 
 import type { Meta } from './types/meta/meta_object_gen';
 

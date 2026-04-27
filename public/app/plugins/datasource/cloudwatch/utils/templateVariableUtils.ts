@@ -1,10 +1,4 @@
-import {
-  type VariableOption,
-  type UserProps,
-  type OrgProps,
-  type DashboardProps,
-  type ScopedVars,
-} from '@grafana/data';
+import type { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 /*

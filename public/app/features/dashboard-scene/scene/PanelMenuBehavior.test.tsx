@@ -1,8 +1,15 @@
 import { of } from 'rxjs';
 
-import { LoadingState, type PanelData, type PluginExtensionPanelContext, PluginExtensionTypes, getDefaultTimeRange, store, urlUtil } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
+import {
+  LoadingState,
+  type PanelData,
+  type PluginExtensionPanelContext,
+  PluginExtensionTypes,
+  getDefaultTimeRange,
+} from '@grafana/data/types';
+import { store, urlUtil } from '@grafana/data/utils';
 import { config, locationService } from '@grafana/runtime';
 import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {

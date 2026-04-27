@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
-import { CoreApp, type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { CoreApp, type DataSourcePluginMeta, PluginType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { type BackendSrv, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 

@@ -1,6 +1,6 @@
 import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 
-import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import type { LogRowContextOptions, LogRowModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';

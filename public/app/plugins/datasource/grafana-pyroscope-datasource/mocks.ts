@@ -3,7 +3,7 @@ import {
   type DataSourceJsonData,
   type PluginMetaInfo,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { setBackendSrv, getBackendSrv } from '@grafana/runtime';
 
 export const defaultSettings: DataSourceInstanceSettings = {

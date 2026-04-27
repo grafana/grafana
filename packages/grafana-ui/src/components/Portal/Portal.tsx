@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { createContext, type PropsWithChildren, useContext, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';

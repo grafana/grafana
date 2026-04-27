@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+import { Input, FieldValidationMessage, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { trackRenameInitiated } from '../../tracking';
 

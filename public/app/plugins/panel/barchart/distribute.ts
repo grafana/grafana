@@ -1,4 +1,4 @@
-import { roundDecimals } from '@grafana/data';
+import { roundDecimals } from '@grafana/data/utils';
 
 export const SPACE_BETWEEN = 1;
 export const SPACE_AROUND = 2;

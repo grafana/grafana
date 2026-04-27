@@ -14,7 +14,8 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { createTheme, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { createTheme } from '@grafana/data/themes';
 import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';

@@ -1,4 +1,4 @@
-import { type DataFrameDTO, FieldType, MutableDataFrame } from '@grafana/data';
+import { type DataFrameDTO, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
 
 import { ResponseParser } from './ResponseParser';
 

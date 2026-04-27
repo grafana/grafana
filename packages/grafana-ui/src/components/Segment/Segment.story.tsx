@@ -3,7 +3,7 @@ import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { Icon } from '../Icon/Icon';
 

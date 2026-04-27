@@ -1,12 +1,11 @@
-import {
-  type DataSourcePluginMeta,
-  type DataSourceSettings,
-  locationUtil,
-  type TestDataSourceResponse,
-  DataSourceTestSucceeded,
-  DataSourceTestFailed,
-  type DataSourceApi,
-} from '@grafana/data';
+import { DataSourceTestSucceeded, DataSourceTestFailed } from '@grafana/data/events';
+import type {
+  DataSourcePluginMeta,
+  DataSourceSettings,
+  TestDataSourceResponse,
+  DataSourceApi,
+} from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import {
   config,

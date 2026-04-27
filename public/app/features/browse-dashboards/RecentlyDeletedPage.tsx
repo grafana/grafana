@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { FilterInput } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';

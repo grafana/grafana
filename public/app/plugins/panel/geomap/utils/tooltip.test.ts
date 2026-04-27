@@ -4,8 +4,9 @@ import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
-import { DataHoverClearEvent, type PanelProps } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { DataHoverClearEvent } from '@grafana/data/events';
+import type { PanelProps } from '@grafana/data/types';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';

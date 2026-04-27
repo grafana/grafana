@@ -2,7 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getTimeZoneInfo, type GrafanaTheme2, type TimeZone } from '@grafana/data';
+import { getTimeZoneInfo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeZone } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

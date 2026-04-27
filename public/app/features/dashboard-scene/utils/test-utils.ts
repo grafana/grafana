@@ -1,4 +1,4 @@
-import { type VariableRefresh } from '@grafana/data';
+import type { VariableRefresh } from '@grafana/data/types';
 import { type FetchError } from '@grafana/runtime';
 import {
   type DeepPartial,

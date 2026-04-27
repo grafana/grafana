@@ -1,4 +1,4 @@
-import { type PanelModel, OneClickMode } from '@grafana/data';
+import { type PanelModel, OneClickMode } from '@grafana/data/types';
 
 import { canvasMigrationHandler } from './migrations';
 

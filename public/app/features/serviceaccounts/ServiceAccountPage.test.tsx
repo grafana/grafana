@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { type ApiKey } from 'app/types/apiKeys';
 import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 

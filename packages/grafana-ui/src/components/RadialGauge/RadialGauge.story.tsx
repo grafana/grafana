@@ -1,13 +1,8 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import {
-  applyFieldOverrides,
-  type Field,
-  FieldType,
-  getFieldDisplayValues,
-  type GrafanaTheme2,
-  toDataFrame,
-} from '@grafana/data';
+import { type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { applyFieldOverrides, getFieldDisplayValues } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { FieldColorModeId, type FieldConfig, ThresholdsMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';

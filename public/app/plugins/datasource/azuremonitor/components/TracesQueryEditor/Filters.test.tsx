@@ -3,7 +3,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import * as React from 'react';
 import { of } from 'rxjs';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 
 import { AzureQueryType } from '../../dataquery.gen';
 import type Datasource from '../../datasource';

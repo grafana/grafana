@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { getResponsiveStyle, type ResponsiveProp } from './responsiveness';
 

@@ -6,7 +6,7 @@ import {
   type PluginExtension,
   type PluginExtensionComponentMeta,
   PluginExtensionTypes,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { getLimitedComponentsToRender, isPluginExtensionLink, renderLimitedComponents } from './utils';
 

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { isV2StoredVersion } from 'app/features/dashboard/api/utils';
 
 import { type DashboardScene } from '../scene/DashboardScene';

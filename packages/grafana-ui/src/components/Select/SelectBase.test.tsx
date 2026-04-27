@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { select } from 'react-select-event';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Drawer } from '../Drawer/Drawer';

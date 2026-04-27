@@ -2,13 +2,44 @@ import ansicolor from 'ansicolor';
 import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
-import { type AbsoluteTimeRange, type DataQuery, type DataQueryRequest, type DataQueryResponse, type DataSourceApi, type DataSourceJsonData, DataTopic, dateTimeFormat, dateTimeFormatTimeAgo, type DateTimeInput, FieldColorModeId, findCommonLabels, findUniqueLabels, type Labels, LoadingState, LogLevel, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type LogsModel, type LogsVolumeCustomMetaData, LogsVolumeType, rangeUtil, type ScopedVars, textUtil, toUtc } from '@grafana/data';
-import { FieldCache } from '@grafana/data/dataframe';
-import { createDataFrame, type DataFrame, type Field, FieldType, getTimeField, sortDataFrame, toDataFrame } from '@grafana/data/dataframe';
+import {
+  createDataFrame,
+  type DataFrame,
+  type Field,
+  FieldCache,
+  FieldType,
+  getTimeField,
+  sortDataFrame,
+  toDataFrame,
+} from '@grafana/data/dataframe';
+import { dateTimeFormat, dateTimeFormatTimeAgo, type DateTimeInput, rangeUtil, toUtc } from '@grafana/data/datetime';
 import { SIPrefix } from '@grafana/data/internal';
+import { textUtil } from '@grafana/data/text';
+import {
+  type AbsoluteTimeRange,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  DataTopic,
+  FieldColorModeId,
+  type Labels,
+  LoadingState,
+  LogLevel,
+  type LogRowModel,
+  LogsDedupStrategy,
+  type LogsMetaItem,
+  LogsMetaKind,
+  type LogsModel,
+  type LogsVolumeCustomMetaData,
+  LogsVolumeType,
+  type ScopedVars,
+} from '@grafana/data/types';
+import { findCommonLabels, findUniqueLabels } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { colors } from '@grafana/ui';
+import { colors } from '@grafana/ui/utils';
 import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 

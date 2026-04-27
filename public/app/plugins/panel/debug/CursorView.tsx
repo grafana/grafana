@@ -1,14 +1,8 @@
 import { Component } from 'react';
 import { Subscription } from 'rxjs';
 
-import {
-  type EventBus,
-  LegacyGraphHoverEvent,
-  LegacyGraphHoverClearEvent,
-  DataHoverEvent,
-  DataHoverClearEvent,
-  type BusEventBase,
-} from '@grafana/data';
+import { type EventBus, DataHoverEvent, DataHoverClearEvent, type BusEventBase } from '@grafana/data/events';
+import { LegacyGraphHoverEvent, LegacyGraphHoverClearEvent } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { CustomScrollbar } from '@grafana/ui';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';

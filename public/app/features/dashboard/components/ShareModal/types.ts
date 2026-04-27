@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { type LibraryPanel } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

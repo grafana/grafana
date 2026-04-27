@@ -1,7 +1,7 @@
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes } from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { LocalStorageValueProvider } from '@grafana/data';
+import { LocalStorageValueProvider } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -12,7 +12,6 @@ import {
   Button,
   LoadingPlaceholder,
   Modal,
-  useStyles2,
   Space,
   Stack,
   Field,
@@ -22,6 +21,7 @@ import {
   TabContent,
   Tab,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
 import { type AzureMonitorResource } from '../../dataquery.gen';

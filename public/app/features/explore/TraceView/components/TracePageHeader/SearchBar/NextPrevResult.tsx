@@ -17,10 +17,12 @@ import { get, maxBy, values } from 'lodash';
 import { memo, type Dispatch, type SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, type PopoverContent, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type Trace } from '../../types/trace';
 import { getServiceDisplayName } from '../../utils/service-name';

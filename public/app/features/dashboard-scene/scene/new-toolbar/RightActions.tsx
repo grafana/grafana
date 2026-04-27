@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ToolbarButtonRow } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 

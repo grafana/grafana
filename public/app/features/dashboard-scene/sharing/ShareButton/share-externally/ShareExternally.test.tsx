@@ -1,8 +1,8 @@
 import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {

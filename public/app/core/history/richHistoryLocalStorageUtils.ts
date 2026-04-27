@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { type DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data';
+import { type DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data/datetime';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { SortOrder } from '../utils/richHistoryTypes';

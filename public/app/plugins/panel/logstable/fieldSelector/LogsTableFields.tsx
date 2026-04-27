@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, store } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
-import { getDragStyles, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { store } from '@grafana/data/utils';
+import { getDragStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import {

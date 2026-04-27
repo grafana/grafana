@@ -7,8 +7,8 @@ import {
   type GrafanaConfig,
   type PluginMetaInfo,
   PluginType,
-  locationUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';

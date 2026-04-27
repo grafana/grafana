@@ -1,4 +1,4 @@
-import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
+import type { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import {
   type DataQuery,

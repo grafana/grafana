@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import type uPlot from 'uplot';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { ScaleDirection, ScaleOrientation } from '../../../schema';

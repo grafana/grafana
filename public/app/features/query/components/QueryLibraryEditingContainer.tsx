@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface QueryLibraryEditingContainerProps {
   children: ReactNode;

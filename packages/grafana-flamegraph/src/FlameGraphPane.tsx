@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { escapeStringForRegex } from '@grafana/data';
+import { escapeStringForRegex } from '@grafana/data/text';
 
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';

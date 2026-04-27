@@ -1,7 +1,7 @@
 import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import {
   grantUserPermissions,

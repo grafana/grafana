@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';

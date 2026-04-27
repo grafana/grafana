@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
 import { memo, type ReactNode } from 'react';
 
-import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { getValueFormat } from '@grafana/data/valueFormats';
+import { IconButton, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type ClickedItemData } from '../types';
 

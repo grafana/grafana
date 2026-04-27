@@ -1,5 +1,6 @@
-import { getDisplayProcessor, getFieldColorModeForField, type GrafanaTheme2, getFieldConfigWithMinMax } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getDisplayProcessor, getFieldColorModeForField, getFieldConfigWithMinMax } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { type ColorDimensionConfig } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';

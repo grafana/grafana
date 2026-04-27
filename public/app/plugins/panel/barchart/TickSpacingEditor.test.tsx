@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type StandardEditorContext, type StandardEditorsRegistryItem } from '@grafana/data';
+import type { StandardEditorContext, StandardEditorsRegistryItem } from '@grafana/data/field';
 
 import { TickSpacingEditor } from './TickSpacingEditor';
 

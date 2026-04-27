@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data/types';
 import { GoogleAuthType } from '@grafana/google-sdk';
 
 import { type CloudMonitoringOptions } from '../types/types';

@@ -1,4 +1,5 @@
-import { type NavModel, type NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
+import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data/types';
+import { arrayUtils } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';

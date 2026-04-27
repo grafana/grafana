@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { fieldMap, getSectionFields } from '../fields';
 import { type FieldData, type SSOProvider, type SSOProviderDTO } from '../types';

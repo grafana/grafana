@@ -1,4 +1,6 @@
-import { type UrlQueryMap, getTimeZone, getDefaultTimeRange, dateMath } from '@grafana/data';
+import { getTimeZone, dateMath } from '@grafana/data/datetime';
+import { getDefaultTimeRange } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { updateNavIndex } from 'app/core/reducers/navModel';

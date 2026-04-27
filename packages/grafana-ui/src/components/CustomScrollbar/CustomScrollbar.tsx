@@ -3,7 +3,7 @@ import { type RefCallback, useCallback, useEffect, useRef, type JSX } from 'reac
 import * as React from 'react';
 import Scrollbars, { type positionValues } from 'react-custom-scrollbars-2';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

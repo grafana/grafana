@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import PageActionBar, { type FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
 import { type StoreState, useSelector, useDispatch } from 'app/types/store';
 

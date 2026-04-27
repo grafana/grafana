@@ -9,25 +9,16 @@ import { useCallback } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import {
-  type FieldDisplay,
-  FALLBACK_COLOR,
-  formattedValueToString,
-  type GrafanaTheme2,
-  DataHoverClearEvent,
-  DataHoverEvent,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data/events';
+import type { FieldDisplay } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FALLBACK_COLOR } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { selectors } from '@grafana/e2e-selectors';
 import { type SortOrder, type VizTooltipOptions } from '@grafana/schema';
-import {
-  useTheme2,
-  useStyles2,
-  type SeriesTableRowProps,
-  DataLinksContextMenu,
-  SeriesTable,
-  usePanelContext,
-} from '@grafana/ui';
+import { type SeriesTableRowProps, DataLinksContextMenu, SeriesTable, usePanelContext } from '@grafana/ui';
 import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 
 import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';

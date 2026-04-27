@@ -1,7 +1,8 @@
 import { type ComponentType } from 'react';
 
-import { type DataLink, type RegistryItem, type Action } from '@grafana/data';
 import { type PanelOptionsSupplier } from '@grafana/data/internal';
+import type { DataLink, Action } from '@grafana/data/types';
+import type { RegistryItem } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { type ColorDimensionConfig, type ScaleDimensionConfig, type DirectionDimensionConfig } from '@grafana/schema';
 import {

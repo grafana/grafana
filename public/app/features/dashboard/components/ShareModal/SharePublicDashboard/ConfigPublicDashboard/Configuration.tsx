@@ -1,6 +1,6 @@
 import { type UseFormRegister } from 'react-hook-form';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Label, Switch, TimeRangeInput, Stack } from '@grafana/ui';

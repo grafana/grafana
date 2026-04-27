@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Controller, FormProvider, type SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

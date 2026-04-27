@@ -2,8 +2,29 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { urlUtil, applyFieldOverrides, type CustomTransformOperator, DataFrameType, type DataTransformerConfig, LogsSortOrder, type SplitOpen, type TimeRange, transformDataFrame, type ExploreLogsPanelState, type AbsoluteTimeRange, type LogRowModel, type GrafanaTheme2 } from '@grafana/data';
-import { type DataFrame, type Field, FieldType, guessFieldTypeForField, sortDataFrame, type ValueLinkConfig } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type Field,
+  FieldType,
+  guessFieldTypeForField,
+  sortDataFrame,
+  type ValueLinkConfig,
+} from '@grafana/data/dataframe';
+import { applyFieldOverrides } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { transformDataFrame } from '@grafana/data/transformations';
+import {
+  type CustomTransformOperator,
+  DataFrameType,
+  type DataTransformerConfig,
+  LogsSortOrder,
+  type SplitOpen,
+  type TimeRange,
+  type ExploreLogsPanelState,
+  type AbsoluteTimeRange,
+  type LogRowModel,
+} from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { config, locationService } from '@grafana/runtime';
 import {
   type AdHocFilterItem,
@@ -11,9 +32,9 @@ import {
   type TableSortByFieldState,
   Table,
   TableCellDisplayMode,
-  useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';

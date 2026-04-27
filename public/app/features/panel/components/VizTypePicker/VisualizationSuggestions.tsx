@@ -2,18 +2,15 @@ import { css } from '@emotion/css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import {
-  type GrafanaTheme2,
-  type PanelData,
-  type PanelModel,
-  type PanelPluginMeta,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData, PanelModel, PanelPluginMeta, PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
-import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptySearchResult, Spinner, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';

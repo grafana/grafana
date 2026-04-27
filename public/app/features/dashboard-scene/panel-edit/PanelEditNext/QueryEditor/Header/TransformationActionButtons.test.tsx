@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 
-import { type DataTransformerInfo, FrameMatcherID, getDefaultTimeRange, LoadingState, type TransformerRegistryItem } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { FrameMatcherID, type TransformerRegistryItem } from '@grafana/data/transformations';
+import { type DataTransformerInfo, getDefaultTimeRange, LoadingState } from '@grafana/data/types';
 import { DataTopic } from '@grafana/schema';
 
 import { mockTransformToggles, renderWithQueryEditorProvider } from '../testUtils';

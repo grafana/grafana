@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type NavModelItem, type PageLayoutType } from '@grafana/data';
+import type { NavModelItem, PageLayoutType } from '@grafana/data/types';
 
 export interface PageInfoItem {
   label: string;

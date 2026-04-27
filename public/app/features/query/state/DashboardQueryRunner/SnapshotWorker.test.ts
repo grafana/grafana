@@ -1,4 +1,4 @@
-import { type AnnotationEvent, type AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
+import { type AnnotationEvent, type AnnotationQuery, getDefaultTimeRange } from '@grafana/data/types';
 import { type Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

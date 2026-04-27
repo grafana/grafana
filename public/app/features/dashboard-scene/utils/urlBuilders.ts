@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';

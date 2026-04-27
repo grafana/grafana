@@ -4,10 +4,12 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
 import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Combobox, Input, Label, MultiCombobox, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';

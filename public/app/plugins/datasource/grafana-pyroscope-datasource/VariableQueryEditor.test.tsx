@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { VariableQueryEditor } from './VariableQueryEditor';

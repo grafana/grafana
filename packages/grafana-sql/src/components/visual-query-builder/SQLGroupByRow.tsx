@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { type QueryWithDefaults } from '../../defaults';
 import { type DB, type SQLQuery } from '../../types';

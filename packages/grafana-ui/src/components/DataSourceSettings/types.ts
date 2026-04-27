@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import { type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
+import type { DataSourceJsonData, DataSourceSettings } from '@grafana/data/types';
 
 export interface AzureAuthSettings {
   /** Set to true if Azure authentication supported by the datasource */

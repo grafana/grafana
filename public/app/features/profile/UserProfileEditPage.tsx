@@ -1,8 +1,9 @@
 import { connect, type ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { usePluginComponents } from '@grafana/runtime';
+import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
@@ -62,14 +63,15 @@ export function UserProfileEditPage({
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.UserProfileTab,
   });
-
+  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
+  const userResourceUri = newPrefsEnabled && user?.uid ? `user-${user.uid}` : 'user';
   return (
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user || isLoading}>
         <UserProfileEditTabs components={components}>
           <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-            <SharedPreferences resourceUri="user" preferenceType="user" />
+            <SharedPreferences resourceUri={userResourceUri} preferenceType="user" />
             <Stack direction="column" gap={6}>
               <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />

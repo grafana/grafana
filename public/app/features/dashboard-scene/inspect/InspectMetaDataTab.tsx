@@ -1,4 +1,4 @@
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,

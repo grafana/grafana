@@ -2,21 +2,12 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Card,
-  EmptyState,
-  LinkButton,
-  Pagination,
-  Spinner,
-  Switch,
-  TextLink,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Card, EmptyState, LinkButton, Pagination, Spinner, Switch, TextLink } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import {

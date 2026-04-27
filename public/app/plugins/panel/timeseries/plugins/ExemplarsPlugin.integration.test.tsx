@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { ActionType, applyFieldOverrides, createTheme, FieldConfigOptionsRegistry, HttpRequestMethod } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { applyFieldOverrides, FieldConfigOptionsRegistry } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import { ActionType, HttpRequestMethod } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { FIXED_UNIT, type UPlotConfigBuilder } from '@grafana/ui';
 

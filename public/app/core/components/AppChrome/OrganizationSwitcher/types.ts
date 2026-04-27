@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { type UserOrg } from 'app/types/user';
 
 export interface OrganizationBaseProps {

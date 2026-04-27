@@ -1,4 +1,4 @@
-import { VariableSupportBase, VariableSupportType } from '@grafana/data';
+import { VariableSupportBase, VariableSupportType } from '@grafana/data/types';
 import { DEFAULT_QUERY, MyQuery } from './types';
 import { DataSource } from './datasource';
 

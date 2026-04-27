@@ -3,8 +3,12 @@ import { type CSSProperties, type HTMLAttributes, useMemo } from 'react';
 import tinycolor2 from 'tinycolor2';
 import { type MergeExclusive } from 'type-fest';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { Icon, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { IconName } from '@grafana/data/types';
+import { Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { getTagColorsFromName } from '@grafana/ui/utils';
 
 export type LabelSize = 'md' | 'sm' | 'xs';
 

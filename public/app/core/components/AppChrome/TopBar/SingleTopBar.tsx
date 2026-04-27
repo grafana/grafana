@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 import React, { memo } from 'react';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Stack, ToolbarButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';

@@ -1,4 +1,4 @@
-import { parseFlags } from '@grafana/data';
+import { parseFlags } from '@grafana/data/text';
 
 import { type Label, type LabelMatcher } from './types';
 

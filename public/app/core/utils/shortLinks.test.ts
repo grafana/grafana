@@ -1,4 +1,4 @@
-import { type LogRowModel } from '@grafana/data';
+import type { LogRowModel } from '@grafana/data/types';
 import { config, locationService } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

@@ -5,7 +5,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { isObject } from '@grafana/data';
+import { isObject } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetRepositoryFilesQuery } from 'app/api/clients/provisioning/v0alpha1';

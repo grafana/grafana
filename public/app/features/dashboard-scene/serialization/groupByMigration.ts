@@ -11,7 +11,7 @@
  *
  * This is a temporary compat layer — remove once GroupByVariable is fully deprecated.
  */
-import type { GroupByVariableModel, TypedVariableModel } from '@grafana/data';
+import type { GroupByVariableModel, TypedVariableModel } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import type {
   AdhocVariableKind,

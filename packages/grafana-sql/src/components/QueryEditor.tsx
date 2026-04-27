@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { EditorMode } from '@grafana/plugin-ui';
 import { Space } from '@grafana/ui';
 

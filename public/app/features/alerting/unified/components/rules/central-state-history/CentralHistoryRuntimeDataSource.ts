@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse } from '@grafana/data';
+import type { DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';

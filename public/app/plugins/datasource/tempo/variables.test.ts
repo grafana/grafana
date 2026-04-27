@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest, type TimeRange } from '@grafana/data';
+import type { DataQueryRequest, TimeRange } from '@grafana/data/types';
 
 import { type TempoVariableQuery } from './VariableQueryEditor';
 import { createTempoDatasource } from './test/mocks';

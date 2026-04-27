@@ -2,9 +2,13 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, type MultiValueRemoveProps } from 'react-select';
 
-import { escapeStringForRegex, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { escapeStringForRegex } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
+import { MultiSelect } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';
 import { TagOption, type TagSelectOption } from './TagOption';

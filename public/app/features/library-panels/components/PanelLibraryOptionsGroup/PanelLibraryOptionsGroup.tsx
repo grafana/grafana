@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type PanelPluginMeta } from '@grafana/data';
+import type { PanelPluginMeta } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

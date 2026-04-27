@@ -3,17 +3,12 @@ import { autoUpdate, useFloating } from '@floating-ui/react';
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
-import {
-  FieldValidationMessage,
-  floatingUtils,
-  Input,
-  Portal,
-  ScrollContainer,
-  TextArea,
-  useTheme2,
-} from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { VariableSuggestion } from '@grafana/data/types';
+import { FieldValidationMessage, Input, Portal, ScrollContainer, TextArea } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;

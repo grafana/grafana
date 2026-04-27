@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type QueryGroupOptions } from 'app/types/query';
 

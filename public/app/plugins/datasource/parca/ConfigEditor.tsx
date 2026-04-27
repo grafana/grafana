@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import {
   AdvancedHttpSettings,
   Auth,
@@ -10,7 +11,8 @@ import {
   convertLegacyAuthProps,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Divider, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
+import { Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type ParcaDataSourceOptions } from './types';
 

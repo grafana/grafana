@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 

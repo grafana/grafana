@@ -1,6 +1,6 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data/types';
 
 import { PluginSignatureBadge } from './PluginSignatureBadge';
 import mdx from './PluginSignatureBadge.mdx';

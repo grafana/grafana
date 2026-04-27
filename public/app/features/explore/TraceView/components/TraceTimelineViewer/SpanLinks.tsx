@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
+import { MenuItem, ContextMenu } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type SpanLinkDef } from '../types/links';
 

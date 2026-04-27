@@ -1,7 +1,7 @@
 import { from, type Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { type AnnotationEvent, type DataSourceApi } from '@grafana/data';
+import type { AnnotationEvent, DataSourceApi } from '@grafana/data/types';
 import { shouldUseLegacyRunner } from 'app/features/annotations/standardAnnotationSupport';
 
 import { type AnnotationQueryRunner, type AnnotationQueryRunnerOptions } from './types';

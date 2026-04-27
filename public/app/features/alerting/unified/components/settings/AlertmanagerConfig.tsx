@@ -3,9 +3,10 @@ import { type JSX, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, CodeEditor, ConfirmModal, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';

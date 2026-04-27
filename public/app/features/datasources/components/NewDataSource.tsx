@@ -1,6 +1,6 @@
 import { type Action } from 'redux';
 
-import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';

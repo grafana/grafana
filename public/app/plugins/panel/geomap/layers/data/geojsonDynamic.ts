@@ -8,8 +8,11 @@ import { Fill, Stroke, Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, PluginState, type EventBus } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type PanelData, PluginState } from '@grafana/data/types';
 import { ComparisonOperation } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
 

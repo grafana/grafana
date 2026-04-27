@@ -2,7 +2,7 @@ import { type Action } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { type MutableRefObject } from 'react';
 
-import { type UrlQueryMap } from '@grafana/data';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { type LocationService } from '@grafana/runtime';
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { changeCompactModeAction, changePanelsStateAction } from 'app/features/explore/state/explorePane';

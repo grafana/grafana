@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
 

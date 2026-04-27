@@ -1,9 +1,18 @@
 import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, dateTime, type PanelData, type PanelPluginMeta, standardTransformersRegistry, type StandardVariableQuery, VariableSupportType } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
 import { getPanelPlugin } from '@grafana/data/test';
+import { standardTransformersRegistry } from '@grafana/data/transformations';
+import {
+  type DataQueryRequest,
+  type DataSourceApi,
+  type PanelData,
+  type PanelPluginMeta,
+  type StandardVariableQuery,
+  VariableSupportType,
+} from '@grafana/data/types';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {

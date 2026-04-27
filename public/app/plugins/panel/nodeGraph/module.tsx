@@ -1,4 +1,5 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldConfigProperty } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { NodeGraphPanel } from './NodeGraphPanel';

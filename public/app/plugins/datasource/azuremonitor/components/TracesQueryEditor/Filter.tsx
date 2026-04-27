@@ -3,12 +3,13 @@ import { type RefCallback, type SyntheticEvent, useState, type JSX } from 'react
 import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { CoreApp, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, Checkbox, Stack } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type AzureMonitorQuery, AzureQueryType, type AzureTracesFilter } from '../../dataquery.gen';
 import type Datasource from '../../datasource';

@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 
-import { FieldMatcherID, fieldMatchers, type PanelProps, type TimeRange, useDataLinksContext } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { useDataLinksContext } from '@grafana/data/field';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
+import type { PanelProps, TimeRange } from '@grafana/data/types';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';

@@ -1,4 +1,4 @@
-import { type DataQuery, type DataSourceJsonData } from '@grafana/data';
+import type { DataQuery, DataSourceJsonData } from '@grafana/data/types';
 
 export interface OpenTsdbQuery extends DataQuery {
   // migrating to react

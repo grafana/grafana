@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Grid, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';

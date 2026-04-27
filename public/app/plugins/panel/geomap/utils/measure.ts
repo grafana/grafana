@@ -1,4 +1,5 @@
-import { type FormattedValue, getValueFormat, type SelectableValue, toFixedUnit } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { type FormattedValue, getValueFormat, toFixedUnit } from '@grafana/data/valueFormats';
 
 type MeasureAction = 'area' | 'length';
 

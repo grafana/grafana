@@ -1,17 +1,16 @@
 import * as React from 'react';
 
+import { getFieldDisplayName } from '@grafana/data/field';
+import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+import { stringToJsRegex } from '@grafana/data/text';
 import {
   DataTransformerID,
-  type KeyValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  getFieldDisplayName,
-  stringToJsRegex,
   TransformerCategory,
-  type SelectableValue,
-} from '@grafana/data';
-import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import type { KeyValue, SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';

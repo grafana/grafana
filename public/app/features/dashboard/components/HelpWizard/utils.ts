@@ -1,8 +1,16 @@
 import { cloneDeep } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 
-import { dateTimeFormat, type TimeRange, type DataQuery, type PanelData, type DataTransformerConfig, LoadingState, DataTopic } from '@grafana/data';
 import { type DataFrameJSON, dataFrameToJSON } from '@grafana/data/dataframe';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import {
+  type TimeRange,
+  type DataQuery,
+  type PanelData,
+  type DataTransformerConfig,
+  LoadingState,
+  DataTopic,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

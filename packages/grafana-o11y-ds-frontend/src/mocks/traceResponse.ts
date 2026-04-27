@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 
 // trace response with following fields: traceID, spanID, parentSpanID, operationName, serviceName, serviceTags, startTime, duration, logs, tags
 export const bigTraceResponse = createDataFrame({

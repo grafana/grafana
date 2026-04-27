@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
+import { Alert, Button, Dropdown, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { type FolderDTO } from 'app/types/folders';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';

@@ -1,6 +1,7 @@
 import { isEmpty, omit } from 'lodash';
 
-import { ReducerID, getNextRefId } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import { ReducerID } from '@grafana/data/transformations';
 import { config } from '@grafana/runtime';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';

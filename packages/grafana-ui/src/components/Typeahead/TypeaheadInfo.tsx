@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type CompletionItem } from '../../types/completion';

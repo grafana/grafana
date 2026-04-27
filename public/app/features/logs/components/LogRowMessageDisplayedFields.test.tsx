@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, LogLevel } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { LogLevel } from '@grafana/data/types';
 import { IconButton } from '@grafana/ui';
 
 import { LogRowMessageDisplayedFields, type Props } from './LogRowMessageDisplayedFields';

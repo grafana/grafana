@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type TypedVariableModel, type VariableType } from '@grafana/data';
+import type { TypedVariableModel, VariableType } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 

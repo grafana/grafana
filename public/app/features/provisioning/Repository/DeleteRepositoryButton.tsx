@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
+import { Button, Dropdown, Menu, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import {
   type Repository,
   useDeleteRepositoryMutation,

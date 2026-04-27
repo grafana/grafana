@@ -2,23 +2,25 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useRef, type JSX } from 'react';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   CoreApp,
   type DataQueryResponse,
   type DataSourceApi,
-  type GrafanaTheme2,
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsDedupStrategy,
   type SplitOpen,
-  store,
   SupplementaryQueryType,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
-import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
 import { LogRows } from '../../logs/components/LogRows';

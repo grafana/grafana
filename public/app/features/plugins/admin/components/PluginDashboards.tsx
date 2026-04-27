@@ -1,7 +1,7 @@
 import { extend } from 'lodash';
 import { memo, useCallback, useEffect, useState } from 'react';
 
-import { AppEvents, type PluginMeta, type DataSourceApi } from '@grafana/data';
+import { AppEvents, type PluginMeta, type DataSourceApi } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';

@@ -1,6 +1,6 @@
 import { type FormEvent, memo } from 'react';
 
-import { type CustomVariableModel, type VariableWithMultiSupport } from '@grafana/data';
+import type { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data/types';
 import { CustomVariableForm } from 'app/features/dashboard-scene/settings/variables/components/CustomVariableForm';
 
 import { type OnPropChangeArguments, type VariableEditorProps } from '../editor/types';

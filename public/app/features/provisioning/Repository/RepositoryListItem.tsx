@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormatTimeAgo } from '@grafana/data/datetime';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';

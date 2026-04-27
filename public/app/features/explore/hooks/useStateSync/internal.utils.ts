@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { CoreApp, type DataSourceApi, type ExploreUrlState, isTruthy } from '@grafana/data';
+import { CoreApp, type DataSourceApi, type ExploreUrlState, isTruthy } from '@grafana/data/types';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

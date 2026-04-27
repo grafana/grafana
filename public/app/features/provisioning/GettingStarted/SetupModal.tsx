@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
+import { Modal, Button, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { SetupStep } from './SetupStep';
 import { Sidebar } from './Sidebar';

@@ -1,12 +1,8 @@
 import { uniqueId } from 'lodash';
 import { PureComponent } from 'react';
 
-import {
-  type DataSourcePluginOptionsEditorProps,
-  type DataSourceSettings,
-  type SelectableValue,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps, DataSourceSettings, SelectableValue } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 

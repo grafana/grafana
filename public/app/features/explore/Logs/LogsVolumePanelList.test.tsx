@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataQueryResponse, LoadingState, EventBusSrv, type LogRowModel, DataTopic } from '@grafana/data';
 import { arrayToDataFrame } from '@grafana/data/dataframe';
+import { EventBusSrv } from '@grafana/data/events';
+import { type DataQueryResponse, LoadingState, type LogRowModel, DataTopic } from '@grafana/data/types';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 
 import * as logUtils from '../../logs/utils';

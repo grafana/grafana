@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
-import { type StandardEditorContext, type StandardEditorsRegistryItem, type SelectableValue } from '@grafana/data';
+import type { StandardEditorContext, StandardEditorsRegistryItem } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { getGraphFieldOptions } from '@grafana/ui';
 

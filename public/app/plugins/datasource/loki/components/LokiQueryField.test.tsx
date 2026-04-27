@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 
 import { createLokiDatasource } from '../mocks/datasource';
 

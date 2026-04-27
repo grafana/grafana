@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 import { initPluginTranslations } from '@grafana/i18n';
 import { type SQLQuery, SqlQueryEditorLazy, loadResources as loadSQLResources } from '@grafana/sql';
 

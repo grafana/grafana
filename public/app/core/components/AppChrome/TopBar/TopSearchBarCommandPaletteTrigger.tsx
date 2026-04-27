@@ -2,11 +2,13 @@ import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
 import React, { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { getInputStyles, Text, ToolbarButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getModKey } from 'app/core/utils/browser';
 

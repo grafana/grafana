@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';

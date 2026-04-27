@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';

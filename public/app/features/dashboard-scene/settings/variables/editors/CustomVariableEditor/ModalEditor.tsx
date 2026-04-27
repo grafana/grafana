@@ -1,7 +1,7 @@
 import { type FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

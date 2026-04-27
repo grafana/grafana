@@ -1,7 +1,7 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';

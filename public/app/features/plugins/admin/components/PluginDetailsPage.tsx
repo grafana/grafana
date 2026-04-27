@@ -3,9 +3,11 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack, TabContent, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types/appNotifications';
 

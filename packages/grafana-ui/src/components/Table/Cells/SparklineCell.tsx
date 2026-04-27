@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { getMinMaxAndDelta, type FieldSparkline, formattedValueToString } from '@grafana/data';
 import { FieldType, type FieldConfig, isDataFrame, type Field, isDataFrameWithValue } from '@grafana/data/dataframe';
+import { getMinMaxAndDelta, type FieldSparkline } from '@grafana/data/field';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import {
   BarAlignment,
   GraphDrawStyle,

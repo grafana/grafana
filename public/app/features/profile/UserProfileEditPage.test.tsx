@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv, setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
 

@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { PureComponent } from 'react';
 
-import { type GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
+import { monacoLanguageRegistry } from '@grafana/data/monaco';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { withTheme2 } from '../../themes/ThemeContext';

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes } from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 
 import { type CombinedRuleNamespace } from '../../../../../types/unified-alerting';

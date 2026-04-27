@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type PluginMeta } from '@grafana/data';
+import type { PluginMeta } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';

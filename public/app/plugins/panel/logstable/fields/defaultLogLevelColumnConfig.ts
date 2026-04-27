@@ -1,5 +1,5 @@
-import { LogLevel, MappingType, type ValueMap } from '@grafana/data';
 import { type Field, type FieldConfig, FieldType } from '@grafana/data/dataframe';
+import { LogLevel, MappingType, type ValueMap } from '@grafana/data/types';
 import { type TableCellOptions, type ValueMappingResult } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { LogLevelColor } from 'app/features/logs/logsModel';

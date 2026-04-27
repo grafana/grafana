@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
 
-import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data/types';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type QueryGroupOptions } from 'app/types/query';

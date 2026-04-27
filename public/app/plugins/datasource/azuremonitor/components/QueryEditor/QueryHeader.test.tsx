@@ -1,7 +1,7 @@
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, LoadingState, type PanelData } from '@grafana/data';
+import { CoreApp, LoadingState, type PanelData } from '@grafana/data/types';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';

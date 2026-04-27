@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,

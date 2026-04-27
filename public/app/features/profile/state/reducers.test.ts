@@ -1,4 +1,4 @@
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getMockTeam } from '../../teams/mocks/teamMocks';

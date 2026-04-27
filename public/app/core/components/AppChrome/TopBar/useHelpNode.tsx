@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { useMemo } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { useSelector } from 'app/types/store';
 
 import { getEnrichedHelpItem } from '../MegaMenu/utils';

@@ -1,5 +1,5 @@
-import { getFieldDisplayName } from '@grafana/data';
 import { type DataFrame, type FieldWithIndex } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
 import { type FieldNameMeta, type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 

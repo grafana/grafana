@@ -3,8 +3,9 @@ jest.mock('geotiff', () => ({}));
 
 import type BaseLayer from 'ol/layer/Base';
 
-import { type DataQueryRequest, LoadingState, type MapLayerHandler, type MapLayerOptions, type PanelData, type TimeRange } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import type { MapLayerHandler, MapLayerOptions } from '@grafana/data/geo';
+import { type DataQueryRequest, LoadingState, type PanelData, type TimeRange } from '@grafana/data/types';
 
 import { applyLayerFilter } from './layers';
 

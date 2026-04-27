@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { type SwitchVariableModel } from '@grafana/data';
+import type { SwitchVariableModel } from '@grafana/data/types';
 import { SwitchVariableForm } from 'app/features/dashboard-scene/settings/variables/components/SwitchVariableForm';
 
 import { type VariableEditorProps } from '../editor/types';

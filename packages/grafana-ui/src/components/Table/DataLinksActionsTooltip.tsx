@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useMemo, type ReactNode } from 'react';
 
-import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { ActionModel, LinkModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';

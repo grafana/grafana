@@ -1,13 +1,13 @@
 import { throttle } from 'lodash';
 
+import { getNextRefId } from '@grafana/data/query';
 import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
-  getDataSourceRef,
-  getNextRefId,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { config, getDataSourceSrv, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import {
   SceneDataTransformer,

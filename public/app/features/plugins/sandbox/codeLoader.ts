@@ -1,4 +1,4 @@
-import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
+import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { getAppPluginMetas, getDatasourcePluginMeta, getPanelPluginMetas } from '@grafana/runtime/internal';
 

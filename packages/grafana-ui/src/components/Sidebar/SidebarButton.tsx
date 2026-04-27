@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { type ButtonHTMLAttributes } from 'react';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type IconName, isIconName } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';

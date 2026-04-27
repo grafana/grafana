@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
@@ -11,7 +11,9 @@ import {
   type GroupByVariable,
   type SceneQueryRunner,
 } from '@grafana/scenes';
-import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
+import { measureText } from '@grafana/ui/utils';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
 

@@ -1,8 +1,8 @@
-import { FieldMatcherID } from '@grafana/data';
 import {
   type GroupToNestedTableMatcherConfig,
   type GroupToNestedTableTransformerOptionsV2,
 } from '@grafana/data/internal';
+import { FieldMatcherID } from '@grafana/data/transformations';
 
 export const DEFAULT_MATCHER_ID = FieldMatcherID.byName;
 

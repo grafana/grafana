@@ -1,4 +1,5 @@
-import { CoreApp, type DashboardLoadedEvent, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data/events';
+import { CoreApp, type DataQueryRequest, type DataQueryResponse } from '@grafana/data/types';
 import { QueryEditorMode } from '@grafana/plugin-ui';
 import { reportInteraction, config } from '@grafana/runtime';
 

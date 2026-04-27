@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import { Button, ModalsController, CollapsableSection, Stack, Box } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';

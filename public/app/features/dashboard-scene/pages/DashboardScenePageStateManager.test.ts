@@ -4,7 +4,7 @@ import { type UnknownAction } from 'redux';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { type BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   type Spec as DashboardV2Spec,

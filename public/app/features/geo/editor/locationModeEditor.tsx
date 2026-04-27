@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type StandardEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 

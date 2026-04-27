@@ -1,9 +1,18 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, type FieldConfigSource, type GrafanaTheme2, LoadingState, LogsSortOrder, type PanelData, type PanelProps } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  CoreApp,
+  type FieldConfigSource,
+  LoadingState,
+  LogsSortOrder,
+  type PanelData,
+  type PanelProps,
+} from '@grafana/data/types';
+import { usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
@@ -319,6 +328,7 @@ export const LogsTable = ({
           />
 
           <LogsTableDetails
+            containerElement={containerElement}
             options={tableOptions}
             onOptionsChange={handleTableOptionsChange}
             timeRange={data.timeRange}

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import { NodeGraphSection, SpanBarSection, TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
 import {
   AdvancedHttpSettings,
@@ -11,7 +12,8 @@ import {
   convertLegacyAuthProps,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2, Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
+import { Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { TraceIdTimeParams } from './TraceIdTimeParams';
 

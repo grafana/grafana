@@ -1,6 +1,6 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';

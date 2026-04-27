@@ -1,4 +1,4 @@
-import { type NavIndex } from '@grafana/data';
+import type { NavIndex } from '@grafana/data/types';
 
 export const navIndex: NavIndex = {
   dashboards: {

@@ -2,7 +2,7 @@ import { css, keyframes } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { config } from '@grafana/runtime';
 import { type SceneObject } from '@grafana/scenes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';

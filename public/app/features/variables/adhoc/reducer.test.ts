@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
+import type { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';

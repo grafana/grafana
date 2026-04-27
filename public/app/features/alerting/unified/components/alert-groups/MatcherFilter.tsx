@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, Input, Label, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';

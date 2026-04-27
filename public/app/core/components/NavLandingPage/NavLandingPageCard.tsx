@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Card, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Card } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   description?: string;

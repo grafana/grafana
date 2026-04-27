@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
-import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Sidebar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';

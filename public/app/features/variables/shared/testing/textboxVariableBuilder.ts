@@ -1,4 +1,4 @@
-import { type TextBoxVariableModel } from '@grafana/data';
+import type { TextBoxVariableModel } from '@grafana/data/types';
 
 import { OptionsVariableBuilder } from './optionsVariableBuilder';
 

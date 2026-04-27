@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourcePluginOptionsEditorProps,
-  type GrafanaTheme2,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type {
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourcePluginOptionsEditorProps,
+} from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';

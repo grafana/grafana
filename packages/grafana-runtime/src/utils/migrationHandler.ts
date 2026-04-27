@@ -1,4 +1,4 @@
-import { type DataQueryRequest } from '@grafana/data';
+import type { DataQueryRequest } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 
 import { config } from '../config';

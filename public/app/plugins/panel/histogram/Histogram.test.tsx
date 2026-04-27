@@ -1,7 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { buildHistogram, createTheme, DataFrameType, getDisplayProcessor, getHistogramFields, histogramFieldsToFrame, joinHistograms } from '@grafana/data';
 import { createDataFrame, type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import {
+  buildHistogram,
+  getHistogramFields,
+  histogramFieldsToFrame,
+  joinHistograms,
+} from '@grafana/data/transformations';
+import { DataFrameType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, TooltipDisplayMode, type UPlotConfigBuilder, type VizLegendOptions } from '@grafana/ui';
 

@@ -2,7 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { AppEvents, CoreApp, type PanelProps } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
@@ -13,15 +15,15 @@ import {
   ButtonGroup,
   Dropdown,
   EmptyState,
-  Icon,
-  type IconName,
   Menu,
   Stack,
   Text,
   useElementSelection,
   usePanelContext,
-  useStyles2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';

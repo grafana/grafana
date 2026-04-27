@@ -1,6 +1,7 @@
 import uPlot, { type Series } from 'uplot';
 
-import { type GrafanaTheme2, type TimeRange, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
 import { type TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';

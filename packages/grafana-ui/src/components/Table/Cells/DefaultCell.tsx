@@ -1,7 +1,8 @@
 import { type ReactElement, useState } from 'react';
 import * as React from 'react';
 
-import { type DisplayValue, formattedValueToString } from '@grafana/data';
+import type { DisplayValue } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getCellLinks } from '../../../utils/table';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { type Labels } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { Labels } from '@grafana/data/types';
 import { useQueryRunner } from '@grafana/scenes-react';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 

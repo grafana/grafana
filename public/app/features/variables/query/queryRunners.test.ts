@@ -8,7 +8,7 @@ import {
   type StandardVariableQuery,
   VariableRefresh,
   VariableSupportType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { QueryRunners, type RunnerArgs, variableDummyRefId } from './queryRunners';
 

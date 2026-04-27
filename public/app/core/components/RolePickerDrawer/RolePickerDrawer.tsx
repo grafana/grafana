@@ -1,6 +1,7 @@
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { OrgRole, toOption } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { Drawer, Field, RadioButtonGroup, TextLink } from '@grafana/ui';
 

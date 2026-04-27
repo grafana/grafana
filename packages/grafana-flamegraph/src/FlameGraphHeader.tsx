@@ -4,8 +4,10 @@ import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
 import { type ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Button, ButtonGroup, Dropdown, IconButton, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
+import { Button, ButtonGroup, Dropdown, IconButton, Input, Menu, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ColorSchemeButton } from './ColorSchemeButton';
 import { type CollapsedMap } from './FlameGraph/dataTransform';

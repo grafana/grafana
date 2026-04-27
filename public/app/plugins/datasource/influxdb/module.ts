@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { ConfigEditor as ConfigEditorV1 } from './components/editor/config/ConfigEditor';

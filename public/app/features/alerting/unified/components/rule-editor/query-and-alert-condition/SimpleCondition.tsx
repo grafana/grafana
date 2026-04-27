@@ -3,9 +3,12 @@ import { produce } from 'immer';
 import { type Dispatch, type FormEvent } from 'react';
 import { type UnknownAction } from 'redux';
 
-import { type GrafanaTheme2, type PanelData, ReducerID, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ReducerID } from '@grafana/data/transformations';
+import type { PanelData, SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import {

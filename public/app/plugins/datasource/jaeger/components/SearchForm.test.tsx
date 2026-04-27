@@ -2,13 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
+import { dateTime } from '@grafana/data/datetime';
 import {
   type DataQueryRequest,
   type DataSourceInstanceSettings,
-  dateTime,
   type PluginMetaInfo,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type BackendSrv } from '@grafana/runtime';
 
 import { JaegerDatasource, type JaegerJsonData } from '../datasource';

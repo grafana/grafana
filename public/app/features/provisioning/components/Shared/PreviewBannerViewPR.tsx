@@ -1,6 +1,7 @@
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
+import { Alert, Box, Stack, TextLink, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';

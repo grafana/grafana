@@ -1,11 +1,20 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type ActionModel, DashboardCursorSync, FieldMatcherID, getFrameDisplayName, type InterpolateFunction, type PanelProps, type SelectableValue, cacheFieldDisplayNames } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getFrameDisplayName, cacheFieldDisplayNames } from '@grafana/data/field';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import {
+  type ActionModel,
+  DashboardCursorSync,
+  type InterpolateFunction,
+  type PanelProps,
+  type SelectableValue,
+} from '@grafana/data/types';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, usePanelContext } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
 import { getActions } from 'app/features/actions/utils';

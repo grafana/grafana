@@ -1,7 +1,9 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID, type DataTransformerInfo, FieldMatcherID, getFieldDisplayName, getFieldMatcher, type MatcherConfig, reduceField } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { DataTransformerID, FieldMatcherID, getFieldMatcher, reduceField } from '@grafana/data/transformations';
+import type { DataTransformerInfo, MatcherConfig } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import {

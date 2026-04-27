@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';

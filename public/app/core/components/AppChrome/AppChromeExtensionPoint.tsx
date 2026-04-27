@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 

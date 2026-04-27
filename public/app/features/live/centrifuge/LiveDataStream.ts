@@ -1,8 +1,16 @@
 import { map, Observable, ReplaySubject, type Subject, type Subscriber, type Subscription } from 'rxjs';
 
-import { type DataQueryError, isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelConnectionState, type LiveChannelEvent, type LiveChannelId, LoadingState } from '@grafana/data';
 import { type DataFrameJSON, type Field, StreamingDataFrame } from '@grafana/data/dataframe';
 import { getStreamingFrameOptions } from '@grafana/data/internal';
+import {
+  type DataQueryError,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
+  LiveChannelConnectionState,
+  type LiveChannelEvent,
+  type LiveChannelId,
+  LoadingState,
+} from '@grafana/data/types';
 import {
   type LiveDataStreamOptions,
   StreamingFrameAction,

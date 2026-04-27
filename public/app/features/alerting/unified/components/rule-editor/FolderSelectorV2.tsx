@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
+import { Field, Label, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import { type Folder, type RuleFormValues } from '../../types/rule-form';

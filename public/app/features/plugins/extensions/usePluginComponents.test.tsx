@@ -1,13 +1,8 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import React, { type JSX } from 'react';
 
-import {
-  type AppPluginConfig,
-  PluginContextProvider,
-  PluginExtensionPoints,
-  type PluginMeta,
-  PluginType,
-} from '@grafana/data';
+import { PluginContextProvider } from '@grafana/data/context';
+import { type AppPluginConfig, PluginExtensionPoints, type PluginMeta, PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';

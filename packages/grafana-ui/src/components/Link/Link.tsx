@@ -1,7 +1,8 @@
 import { type AnchorHTMLAttributes, forwardRef } from 'react';
 import { Link as RouterLink } from 'react-router-dom-v5-compat';
 
-import { locationUtil, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import { locationUtil } from '@grafana/data/utils';
 
 export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {}
 

@@ -1,15 +1,15 @@
 import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { transformDataFrame } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { transformDataFrame } from '@grafana/data/transformations';
 
 import { type Transformation } from '../types';
 
 import { useTransformationInputData } from './useTransformationInputData';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/transformations', () => ({
+  ...jest.requireActual('@grafana/data/transformations'),
   transformDataFrame: jest.fn(),
 }));
 

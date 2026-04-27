@@ -1,13 +1,12 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import {
   CoreApp,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  createDataFrame,
-  FieldType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DataSourceResponse } from './types';
 import { lastValueFrom } from 'rxjs';

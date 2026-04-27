@@ -1,7 +1,7 @@
 import { cloneDeep, merge } from 'lodash';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import { type InterpolateFunction, type SelectableValue, type TraceSearchProps } from '@grafana/data';
+import type { InterpolateFunction, SelectableValue, TraceSearchProps } from '@grafana/data/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';

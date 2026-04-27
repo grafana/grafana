@@ -2,7 +2,7 @@ import { waitFor, renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
 
-import { type ScopeNode } from '@grafana/data';
+import type { ScopeNode } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { type NodesMap, type TreeNode } from '../../scopes/selector/types';

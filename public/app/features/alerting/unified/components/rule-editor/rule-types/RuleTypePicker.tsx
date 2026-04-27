@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';

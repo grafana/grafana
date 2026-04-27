@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { type ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type BaseVariableModel, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { BaseVariableModel } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Spinner, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 

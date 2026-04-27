@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { usePluginContext } from '@grafana/data';
+import { usePluginContext } from '@grafana/data/context';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
 import * as errors from './errors';

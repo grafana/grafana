@@ -1,4 +1,5 @@
-import { type PanelPlugin, type PluginError, type PluginMeta } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
+import type { PluginError, PluginMeta } from '@grafana/data/types';
 
 export interface PluginDashboard {
   dashboardId: number;

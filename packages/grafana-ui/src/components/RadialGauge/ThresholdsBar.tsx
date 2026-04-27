@@ -1,4 +1,5 @@
-import { type FieldDisplay, type Threshold, ThresholdsMode } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
+import { type Threshold, ThresholdsMode } from '@grafana/data/types';
 
 import { RadialArcPath } from './RadialArcPath';
 import { type GradientStop, type RadialGaugeDimensions, type RadialShape } from './types';

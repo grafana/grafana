@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { delay, HttpResponse } from 'msw';
 import useMountedState from 'react-use/lib/useMountedState';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { config, getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {

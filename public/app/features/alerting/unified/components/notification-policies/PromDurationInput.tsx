@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 
-import { Icon, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { PopupCard } from '../HoverCard';
 

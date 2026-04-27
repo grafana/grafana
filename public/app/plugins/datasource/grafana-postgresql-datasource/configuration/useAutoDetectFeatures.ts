@@ -1,12 +1,8 @@
 import { type Dispatch, type SetStateAction, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
-import {
-  type DataSourcePluginOptionsEditorProps,
-  type DataSourceSettings,
-  updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginOption,
-} from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption, updateDatasourcePluginOption } from '@grafana/data/utils';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
 

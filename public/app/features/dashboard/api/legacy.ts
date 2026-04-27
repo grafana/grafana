@@ -1,4 +1,5 @@
-import { AppEvents, type UrlQueryMap } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type FetchError, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';

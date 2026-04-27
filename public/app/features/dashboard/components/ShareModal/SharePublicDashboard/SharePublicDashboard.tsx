@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { type ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';

@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ManagerKind } from 'app/features/apiserver/types';
 
 export const ResultItem = React.forwardRef(

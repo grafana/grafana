@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 import {
   CodeEditor,
@@ -11,9 +12,9 @@ import {
   LinkButton,
   type MonacoEditor,
   Segment,
-  type Themeable2,
-  withTheme2,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import type InfluxDatasource from '../../../../datasource';
 import { type InfluxQuery } from '../../../../types';

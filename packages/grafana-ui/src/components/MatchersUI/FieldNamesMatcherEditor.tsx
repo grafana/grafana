@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers, type SelectableValue, type ByNamesMatcherOptions } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, type ByNamesMatcherOptions } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { Input } from '../Input/Input';

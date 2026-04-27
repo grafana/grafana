@@ -3,11 +3,12 @@ import { saveAs } from 'file-saver';
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Alert, Button, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 

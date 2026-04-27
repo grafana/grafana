@@ -1,4 +1,4 @@
-import { type ExploreLogsPanelState } from '@grafana/data';
+import type { ExploreLogsPanelState } from '@grafana/data/types';
 
 import { getDefaultDisplayedFieldsFromExploreState } from './columnsMigration';
 

@@ -1,5 +1,5 @@
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
 import { FieldType, DataFrameView, type DataFrame, MutableDataFrame } from '@grafana/data/dataframe';
+import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data/utils';
 
 export function createNodeGraphFrames(data: DataFrame): DataFrame[] {
   const { nodes, edges } = convertTraceToGraph(data);

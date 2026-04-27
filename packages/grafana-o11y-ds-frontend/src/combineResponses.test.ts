@@ -1,14 +1,12 @@
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import {
-  type DataFrame,
   DataFrameType,
   type DataQueryResponse,
-  type Field,
-  FieldType,
   LoadingState,
   type PanelData,
   type QueryResultMetaStat,
   getDefaultTimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { cloneQueryResponse, combinePanelData, combineResponses } from './combineResponses';
 

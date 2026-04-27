@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';

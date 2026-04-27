@@ -1,4 +1,4 @@
-import { type CurrentUser } from '@grafana/data';
+import { type CurrentUser } from '@grafana/data/rbac';
 
 let singletonInstance: CurrentUser | null = null;
 

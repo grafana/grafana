@@ -2,7 +2,8 @@
 // Migrations applied by the DashboardMigrator are performed before the plugin is loaded.
 // DashboardMigrator migrations are tied to a certain minimum version of a dashboard which means they will only be ran once.
 
-import { type AnnotationQuery, getNextRefId } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 
 import { type CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';

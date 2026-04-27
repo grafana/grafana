@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const getStyles = () => ({
   GraphTick: css({

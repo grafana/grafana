@@ -6,9 +6,10 @@ import {
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Tooltip, useTheme2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Tooltip } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import darkImage from '../images/dark/smoothing.svg';

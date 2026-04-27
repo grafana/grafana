@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
+import { PluginContextProvider } from '@grafana/data/context';
 import {
   AppEvents,
   type AppPlugin,
@@ -12,8 +13,7 @@ import {
   type NavModelItem,
   OrgRole,
   PluginType,
-  PluginContextProvider,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert, ErrorWithStack } from '@grafana/ui';

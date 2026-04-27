@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Label, Select } from '@grafana/ui';
 

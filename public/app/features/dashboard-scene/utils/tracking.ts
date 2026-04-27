@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { type SceneGridItemLike } from '@grafana/scenes';
 import {

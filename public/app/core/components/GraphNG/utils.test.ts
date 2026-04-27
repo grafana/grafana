@@ -1,5 +1,7 @@
-import { createTheme, DefaultTimeZone, FieldColorModeId, FieldMatcherID, fieldMatchers, getDefaultTimeRange } from '@grafana/data';
 import { type DataFrame, type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
+import { DefaultTimeZone, FieldColorModeId, getDefaultTimeRange } from '@grafana/data/types';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -190,8 +192,8 @@ function mockDataFrame() {
   });
 }
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/types', () => ({
+  ...jest.requireActual('@grafana/data/types'),
   DefaultTimeZone: 'utc',
 }));
 

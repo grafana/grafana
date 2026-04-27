@@ -1,3 +1,4 @@
+import type { PanelPlugin } from '@grafana/data/panel';
 import {
   AppPlugin,
   type AppPluginMeta,
@@ -6,12 +7,11 @@ import {
   type DataSourceJsonData,
   DataSourcePlugin,
   type DataSourcePluginMeta,
-  type PanelPlugin,
   type PanelPluginMeta,
   PluginLoadingStrategy,
   type PluginMeta,
-  throwIfAngular,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { throwIfAngular } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';

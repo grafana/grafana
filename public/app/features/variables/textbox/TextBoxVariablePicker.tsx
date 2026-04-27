@@ -8,7 +8,8 @@ import {
   useState,
 } from 'react';
 
-import { type TextBoxVariableModel, isEmptyObject } from '@grafana/data';
+import type { TextBoxVariableModel } from '@grafana/data/types';
+import { isEmptyObject } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 import { useDispatch } from 'app/types/store';

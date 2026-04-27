@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
+import { Input, IconButton, FieldValidationMessage, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type EnumMappingRowProps = {
   transformIndex: number;

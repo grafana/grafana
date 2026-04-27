@@ -1,5 +1,7 @@
-import { createTheme, DataFrameType, dateTime } from '@grafana/data';
 import { createDataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { createTheme } from '@grafana/data/themes';
+import { DataFrameType } from '@grafana/data/types';
 import { HeatmapCalculationMode, ScaleDistribution } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';

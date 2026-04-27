@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 
 import { type VariablePayload } from '../state/types';
 import { type VariableQueryEditorType } from '../types';

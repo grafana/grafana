@@ -1,7 +1,7 @@
 import { type HTMLProps, useRef } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { AsyncSelect, Select } from '../Select/Select';

@@ -1,7 +1,7 @@
 /* eslint-disable @grafana/i18n/no-translation-top-level */
 import { useSessionStorage } from 'react-use';
 
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventWithPayload } from '@grafana/data/events';
 import { t } from '@grafana/i18n';
 import {
   dataLayers,

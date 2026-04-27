@@ -5,7 +5,8 @@ import { type ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type DataQuery, type DataSourceApi, type UrlQueryMap } from '@grafana/data';
+import type { DataQuery, DataSourceApi } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { HistoryWrapper, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';

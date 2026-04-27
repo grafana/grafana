@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { IconButton, LinkButton, useStyles2 } from '@grafana/ui';
+import { IconButton, LinkButton } from '@grafana/ui';
 import { ModalBase } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SplashScreenNav } from './SplashScreenNav';

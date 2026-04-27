@@ -5,7 +5,7 @@ import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedComponentConfig,
   PluginExtensionTypes,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
 
 import {

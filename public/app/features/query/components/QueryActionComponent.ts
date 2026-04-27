@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { type CoreApp, type DataQuery, type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import type { CoreApp, DataQuery, DataSourceInstanceSettings, TimeRange } from '@grafana/data/types';
 
 interface ActionComponentProps {
   query?: DataQuery;

@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type ExploreUrlState, type GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { ExploreUrlState } from '@grafana/data/types';
+import { serializeStateToUrlParam, toURLRange } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -12,7 +14,9 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, IconButton, Menu, Modal } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { trackInsightsFeedback } from '../Analytics';
 

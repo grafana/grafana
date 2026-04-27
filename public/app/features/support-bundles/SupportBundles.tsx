@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

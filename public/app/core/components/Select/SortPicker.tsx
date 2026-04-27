@@ -1,8 +1,9 @@
 import { useAsync } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Icon, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 

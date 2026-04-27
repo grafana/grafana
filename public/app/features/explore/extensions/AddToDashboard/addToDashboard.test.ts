@@ -1,5 +1,5 @@
-import { getDefaultTimeRange } from '@grafana/data';
 import { MutableDataFrame } from '@grafana/data/dataframe';
+import { getDefaultTimeRange } from '@grafana/data/types';
 import { type DataQuery, LoadingState } from '@grafana/schema';
 import { type ExplorePanelData } from 'app/types/explore';
 

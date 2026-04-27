@@ -1,5 +1,6 @@
-import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { AnnotationChangeEvent } from '@grafana/data/events';
+import { type AnnotationEventUIModel, CoreApp } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';

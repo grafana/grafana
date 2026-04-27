@@ -1,7 +1,10 @@
 import { isArray } from 'lodash';
 
-import { anyToNumber, FieldColorModeId, getFieldDisplayName, MappingType, ReducerID, ThresholdsMode, type ValueMapping, type ValueMap } from '@grafana/data';
 import { type DataFrame, type FieldConfig, type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { ReducerID } from '@grafana/data/transformations';
+import { FieldColorModeId, MappingType, ThresholdsMode, type ValueMapping, type ValueMap } from '@grafana/data/types';
+import { anyToNumber } from '@grafana/data/utils';
 
 export interface ThresholdArguments {
   color: string;

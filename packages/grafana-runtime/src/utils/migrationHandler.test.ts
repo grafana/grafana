@@ -1,6 +1,6 @@
 import { type BackendSrv, type BackendSrvRequest } from 'src/services';
 
-import { type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data/types';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';

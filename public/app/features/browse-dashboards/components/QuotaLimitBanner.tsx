@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button } from '@grafana/ui';
 

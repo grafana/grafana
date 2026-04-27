@@ -3,15 +3,12 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import {
-  type GrafanaTheme2,
-  MappingType,
-  SpecialValueMatch,
-  type SelectableValue,
-  type ValueMappingResult,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { MappingType, SpecialValueMatch, type SelectableValue, type ValueMappingResult } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';

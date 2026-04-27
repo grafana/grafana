@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { TimePickerButtonLabel, type TimeRangePickerProps } from '../TimeRangePicker';

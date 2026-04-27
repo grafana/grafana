@@ -1,9 +1,10 @@
-import { PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { PanelPlugin } from '@grafana/data/panel';
+import { VisualizationSuggestionScore } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';

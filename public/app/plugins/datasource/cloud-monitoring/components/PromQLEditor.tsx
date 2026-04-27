@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { TextArea, Input } from '@grafana/ui';
 

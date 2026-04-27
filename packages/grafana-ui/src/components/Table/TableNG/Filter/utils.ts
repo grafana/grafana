@@ -1,5 +1,6 @@
-import { formattedValueToString, type SelectableValue } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { SelectableValue } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 
 import { FilterOperator, type TableRow } from '../types';

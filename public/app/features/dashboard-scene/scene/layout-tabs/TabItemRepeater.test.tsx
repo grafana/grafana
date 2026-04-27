@@ -1,8 +1,8 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import type { VariableRefresh } from '@grafana/data/types';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,

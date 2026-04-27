@@ -1,6 +1,7 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { rangeUtil, type SelectableValue } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';

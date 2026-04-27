@@ -1,6 +1,6 @@
 import { type FeatureLike } from 'ol/Feature';
 
-import { type DataHoverPayload } from '@grafana/data';
+import { type DataHoverPayload } from '@grafana/data/events';
 
 import { type MapLayerState } from './types';
 

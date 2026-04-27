@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 import { type Subscription } from 'rxjs';
 
-import { type ScopeDashboardBinding } from '@grafana/data';
+import type { ScopeDashboardBinding } from '@grafana/data/types';
 import { config, locationService } from '@grafana/runtime';
 
 import { type ScopesApiClient } from '../ScopesApiClient';

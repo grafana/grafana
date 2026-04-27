@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { systemDateFormats } from '@grafana/data/datetime';
+import { getDefaultTimeRange } from '@grafana/data/types';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 

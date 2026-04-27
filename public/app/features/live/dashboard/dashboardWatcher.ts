@@ -9,7 +9,7 @@ import {
   LiveChannelConnectionState,
   type LiveChannelEvent,
   LiveChannelScope,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -89,6 +89,16 @@ class DashboardWatcher {
   // ignore the next 5 seconds of save events
   ignoreNextSave() {
     this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
+  }
+
+  // Suppress save events indefinitely until clearIgnoreSave() is called.
+  // Used by provisioned saves where Git operations can exceed the 5s window.
+  ignoreSaveIndefinitely() {
+    this.ignoreSave = Infinity;
+  }
+
+  clearIgnoreSave() {
+    this.ignoreSave = 0;
   }
 
   getRecentEditingEvent() {

@@ -1,6 +1,7 @@
 import React, { type ComponentType, Fragment, type ReactElement, useCallback, useMemo } from 'react';
 
-import { type ComponentTypeWithExtensionMeta, type UrlQueryValue } from '@grafana/data';
+import type { ComponentTypeWithExtensionMeta } from '@grafana/data/types';
+import type { UrlQueryValue } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';

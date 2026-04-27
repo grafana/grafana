@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';

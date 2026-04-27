@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { PluginExtensionTypes, type IconName } from '@grafana/data';
+import { PluginExtensionTypes, type IconName } from '@grafana/data/types';
 import { setPluginLinksHook, config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 

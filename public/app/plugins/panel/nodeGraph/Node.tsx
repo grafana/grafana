@@ -3,10 +3,12 @@ import cx from 'classnames';
 import { type MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import { getFieldColorModeForField } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type HoverState } from './NodeGraph';
 import { type NodeDatum } from './types';

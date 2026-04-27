@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
 
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';

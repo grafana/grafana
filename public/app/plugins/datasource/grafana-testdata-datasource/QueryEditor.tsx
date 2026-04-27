@@ -1,9 +1,10 @@
 import { type FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import type { QueryEditorProps, SelectableValue } from '@grafana/data/types';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { CSVContentEditor } from './components/CSVContentEditor';
 import { CSVFileEditor } from './components/CSVFileEditor';

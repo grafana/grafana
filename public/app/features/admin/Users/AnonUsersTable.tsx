@@ -4,7 +4,6 @@ import { Trans } from '@grafana/i18n';
 import {
   Avatar,
   type CellProps,
-  type Column,
   InteractiveTable,
   Stack,
   Badge,
@@ -12,6 +11,7 @@ import {
   Pagination,
   type FetchDataFunc,
 } from '@grafana/ui';
+import type { Column } from '@grafana/ui/types';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { type UserAnonymousDeviceDTO } from 'app/types/user';
 

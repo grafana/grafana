@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { type SelectableOptGroup } from './types';
 import { cleanValue, findSelectedValue } from './utils';

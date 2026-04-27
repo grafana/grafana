@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
-import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
+import { Menu, MenuItem } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 

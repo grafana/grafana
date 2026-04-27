@@ -2,8 +2,9 @@ import { omit } from 'lodash';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type Labels, findCommonLabels } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { Labels } from '@grafana/data/types';
+import { findCommonLabels } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { Box } from '@grafana/ui';

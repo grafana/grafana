@@ -1,13 +1,13 @@
 import { type EntityGroup, type Function, type ScalarParameter, type TabularParameter } from '@kusto/monaco-kusto';
 
 import { type AzureDataSourceJsonData, type AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceSettings,
-  type PanelData,
-  type SelectableValue,
-  type TimeRange,
-} from '@grafana/data';
+import type {
+  DataSourceInstanceSettings,
+  DataSourceSettings,
+  PanelData,
+  SelectableValue,
+  TimeRange,
+} from '@grafana/data/types';
 
 import { type ResultFormat } from '../dataquery.gen';
 import type Datasource from '../datasource';

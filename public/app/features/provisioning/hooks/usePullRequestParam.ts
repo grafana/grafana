@@ -1,4 +1,4 @@
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
 export const usePullRequestParam = () => {

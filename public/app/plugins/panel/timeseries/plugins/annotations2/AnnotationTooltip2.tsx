@@ -1,17 +1,14 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import {
-  type GrafanaTheme2,
-  dateTimeFormat,
-  systemDateFormats,
-  textUtil,
-  type LinkModel,
-  type ActionModel,
-} from '@grafana/data';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel, ActionModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Stack, IconButton, Tag, usePanelContext } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';

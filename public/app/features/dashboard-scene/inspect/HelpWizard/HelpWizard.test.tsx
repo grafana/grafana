@@ -1,9 +1,15 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data/types';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';

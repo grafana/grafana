@@ -1,7 +1,8 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { isEmptyObject, type SelectableValue, VariableRefresh } from '@grafana/data';
+import { type SelectableValue, VariableRefresh } from '@grafana/data/types';
+import { isEmptyObject } from '@grafana/data/utils';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';

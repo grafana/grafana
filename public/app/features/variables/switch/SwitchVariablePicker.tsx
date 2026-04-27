@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, useCallback } from 'react';
 
-import { type SwitchVariableModel } from '@grafana/data';
+import type { SwitchVariableModel } from '@grafana/data/types';
 import { Switch } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';

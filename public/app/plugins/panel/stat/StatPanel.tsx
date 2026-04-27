@@ -1,12 +1,14 @@
 import { isNumber } from 'lodash';
 import { memo, useCallback, type JSX } from 'react';
 
-import { type DisplayValueAlignmentFactors, type FieldDisplay, getDisplayValueAlignmentFactors, getFieldDisplayValues, type PanelProps } from '@grafana/data';
 import { FieldType, type NumericRange } from '@grafana/data/dataframe';
+import { type FieldDisplay, getDisplayValueAlignmentFactors, getFieldDisplayValues } from '@grafana/data/field';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
+import type { DisplayValueAlignmentFactors, PanelProps } from '@grafana/data/types';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
-import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { BigValue, DataLinksContextMenu, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
 import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type Options } from './panelcfg.gen';
 

@@ -1,4 +1,5 @@
-import { PanelPlugin, type PanelProps } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import type { PanelProps } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

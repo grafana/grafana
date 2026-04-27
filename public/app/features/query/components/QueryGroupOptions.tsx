@@ -1,9 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, type ChangeEvent, type FocusEvent, useCallback } from 'react';
 
-import { rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData, DataSourceApi } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
+import { Input, InlineSwitch, InlineLabel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { type QueryGroupOptions } from 'app/types/query';
 

@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { type PanelPluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { type PanelPluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data/types';
 import { setBackendSrv } from '@grafana/runtime';
 import { type Panel } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';

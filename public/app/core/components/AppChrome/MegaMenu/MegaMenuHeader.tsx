@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types/store';

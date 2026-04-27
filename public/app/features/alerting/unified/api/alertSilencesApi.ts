@@ -1,4 +1,4 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { appEvents } from 'app/core/app_events';
 import { type Silence, type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 

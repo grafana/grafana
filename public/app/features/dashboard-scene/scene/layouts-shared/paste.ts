@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import {
   type AutoGridLayoutItemKind,
   type Spec as DashboardV2Spec,

@@ -3,7 +3,9 @@ import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
 import { type FormEvent, type MouseEvent, useState } from 'react';
 
-import { dateTime, getDefaultTimeRange, type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { getDefaultTimeRange, type TimeRange, type TimeZone } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';

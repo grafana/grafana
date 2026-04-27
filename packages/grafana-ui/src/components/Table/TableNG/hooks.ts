@@ -11,8 +11,9 @@ import {
 } from 'react';
 import { type Column, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
-import { formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { reduceField, ReducerID } from '@grafana/data/transformations';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { type TableColumnResizeActionCallback } from '../types';
 

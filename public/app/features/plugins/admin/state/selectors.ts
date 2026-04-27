@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { debounce } from 'lodash';
 
-import { type PluginError, type PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { unEscapeStringFromRegex } from '@grafana/data/text';
+import type { PluginError, PluginType } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
 
 import { filterByKeyword, isPluginUpdatable } from '../helpers';

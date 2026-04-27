@@ -2,15 +2,10 @@ import { castArray, isEqual } from 'lodash';
 
 import {
   type DataQuery,
-  getDataSourceRef,
-  isDataSourceRef,
-  isEmptyObject,
   isObject,
   LoadingState,
   type TimeRange,
   type TypedVariableModel,
-  type UrlQueryMap,
-  type UrlQueryValue,
   type OrgVariableModel,
   type QueryVariableModel,
   type DashboardVariableModel,
@@ -19,7 +14,14 @@ import {
   type VariableOption,
   VariableRefresh,
   type VariableWithOptions,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import {
+  getDataSourceRef,
+  isDataSourceRef,
+  isEmptyObject,
+  type UrlQueryMap,
+  type UrlQueryValue,
+} from '@grafana/data/utils';
 import { config, locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';

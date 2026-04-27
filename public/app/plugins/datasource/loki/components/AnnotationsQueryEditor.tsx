@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Input, Stack } from '@grafana/ui';
 

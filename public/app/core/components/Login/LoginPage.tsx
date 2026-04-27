@@ -2,10 +2,12 @@
 import { css } from '@emotion/css';
 
 // Components
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PageLayoutType } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Branding } from 'app/core/components/Branding/Branding';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';

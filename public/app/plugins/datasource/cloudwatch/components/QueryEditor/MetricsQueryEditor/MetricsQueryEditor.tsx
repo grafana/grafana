@@ -1,7 +1,7 @@
 import { type ChangeEvent, useCallback, useEffect, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import type { QueryEditorProps, SelectableValue } from '@grafana/data/types';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';

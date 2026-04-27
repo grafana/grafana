@@ -3,9 +3,10 @@ import { type ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Label, useStyles2 } from '@grafana/ui';
+import { Field, Label } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';

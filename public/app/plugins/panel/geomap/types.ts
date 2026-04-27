@@ -4,7 +4,7 @@ import { type Units } from 'ol/control/ScaleLine';
 import type BaseLayer from 'ol/layer/Base';
 import { type Subject } from 'rxjs';
 
-import { type MapLayerHandler, type MapLayerOptions } from '@grafana/data';
+import { type MapLayerHandler, type MapLayerOptions } from '@grafana/data/geo';
 import { type ComparisonOperation } from '@grafana/schema';
 import { type LayerElement } from 'app/core/components/Layers/types';
 

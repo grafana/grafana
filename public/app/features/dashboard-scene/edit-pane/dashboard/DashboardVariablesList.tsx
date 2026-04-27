@@ -1,7 +1,7 @@
 import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

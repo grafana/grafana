@@ -2,7 +2,8 @@ import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { type ReactNode } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv, serializeStateToUrlParam, store } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { serializeStateToUrlParam, store } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';

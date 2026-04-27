@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';

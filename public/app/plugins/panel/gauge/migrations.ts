@@ -1,4 +1,4 @@
-import { type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
+import type { PanelModel, PanelTypeChangedHandler } from '@grafana/data/types';
 import { FieldColorModeId } from '@grafana/schema';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 

@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type StandardEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/';
 

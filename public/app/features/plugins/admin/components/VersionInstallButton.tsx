@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { gt, valid } from 'semver';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Spinner } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';

@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data/types';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

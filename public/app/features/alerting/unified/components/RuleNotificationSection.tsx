@@ -3,7 +3,8 @@ import { useCallback, useId, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -19,8 +20,8 @@ import {
   Text,
   TextArea,
   TextLink,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type RuleFormValues } from '../types/rule-form';

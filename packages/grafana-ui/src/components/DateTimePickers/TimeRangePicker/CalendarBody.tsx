@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import Calendar, { type CalendarType } from 'react-calendar';
 
-import { type GrafanaTheme2, dateTimeParse, type DateTime, type TimeZone } from '@grafana/data';
+import { dateTimeParse, type DateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeZone } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';

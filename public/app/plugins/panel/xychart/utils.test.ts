@@ -1,5 +1,8 @@
-import { createTheme, FieldColorModeId, formattedValueToString, getDisplayProcessor, type FieldConfigSource } from '@grafana/data';
 import { createDataFrame, FieldType, type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import { FieldColorModeId, type FieldConfigSource } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { PointShape, SeriesMapping, XYShowMode } from './panelcfg.gen';
 import { fmt, getCommonPrefixSuffix, prepSeries } from './utils';

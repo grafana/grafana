@@ -9,7 +9,7 @@ import {
   type SwitchVariableModel,
   type TextBoxVariableModel,
   type TypedVariableModel,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

@@ -1,6 +1,6 @@
 import { type Observable } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, type PanelData, type QueryRunner } from '@grafana/data';
+import type { DataQueryRequest, DataSourceApi, PanelData, QueryRunner } from '@grafana/data/types';
 
 let factory: QueryRunnerFactory | undefined;
 

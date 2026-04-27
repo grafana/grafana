@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 
-import { formattedValueToString } from '@grafana/data';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';

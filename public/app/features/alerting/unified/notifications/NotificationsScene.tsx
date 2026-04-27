@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { VariableHide } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
@@ -35,8 +36,8 @@ import {
   Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogMessages, logInfo } from '../Analytics';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';

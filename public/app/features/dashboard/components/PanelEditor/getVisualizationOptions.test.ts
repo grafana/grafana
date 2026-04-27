@@ -1,5 +1,9 @@
-import { EventBusSrv, type FieldConfigOptionsRegistry, type FieldConfigPropertyItem, getDefaultTimeRange, LoadingState, type PanelPlugin, Registry } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { EventBusSrv } from '@grafana/data/events';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import type { PanelPlugin } from '@grafana/data/panel';
+import { type FieldConfigPropertyItem, getDefaultTimeRange, LoadingState } from '@grafana/data/types';
+import { Registry } from '@grafana/data/utils';
 import { VizPanel } from '@grafana/scenes';
 
 import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';

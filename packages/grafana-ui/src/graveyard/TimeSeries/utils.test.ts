@@ -1,4 +1,5 @@
-import { EventBus, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
+import { EventBus } from '@grafana/data/events';
 
 import { getTheme } from '../../themes/getTheme';
 

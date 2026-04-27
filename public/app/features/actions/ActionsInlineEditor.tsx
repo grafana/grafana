@@ -1,4 +1,4 @@
-import { type Action, defaultActionConfig, type VariableSuggestion } from '@grafana/data';
+import { type Action, defaultActionConfig, type VariableSuggestion } from '@grafana/data/types';
 import { DataLinksInlineEditorBase, type DataLinksInlineEditorBaseProps } from '@grafana/ui';
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
@@ -15,7 +15,7 @@ export const ActionsInlineEditor = ({
   showOneClick = false,
   ...rest
 }: DataLinksInlineEditorProps) => (
-  <DataLinksInlineEditorBase<Action> type="action" items={actions} {...rest}>
+  <DataLinksInlineEditorBase<Action> type="action" items={actions} data-testid="actions-inline" {...rest}>
     {(item, index, onSave, onCancel) => (
       <ActionEditorModalContent
         index={index}

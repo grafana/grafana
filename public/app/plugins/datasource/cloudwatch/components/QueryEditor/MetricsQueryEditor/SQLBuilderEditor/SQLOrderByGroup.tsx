@@ -1,4 +1,5 @@
-import { type SelectableValue, toOption } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 

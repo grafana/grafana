@@ -1,4 +1,5 @@
-import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   type SceneDataLayerProviderState,

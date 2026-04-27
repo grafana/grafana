@@ -9,7 +9,7 @@ import {
   type PanelProps,
   PluginExtensionTypes,
   ThresholdsMode,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { config, TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
 import { BigValueColorMode } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';

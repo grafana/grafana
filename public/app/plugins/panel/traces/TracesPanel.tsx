@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { type TraceSearchProps, type LinkModel, type PanelProps } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { TraceSearchProps, LinkModel, PanelProps } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';

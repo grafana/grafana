@@ -1,4 +1,4 @@
-import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
+import type { DataSourceApi, MetricFindValue } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

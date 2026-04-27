@@ -1,9 +1,12 @@
-import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, PanelPlugin, VizOrientation } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { identityOverrideProcessor } from '@grafana/data/field';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldColorModeId, FieldConfigProperty, VizOrientation } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
-import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { getGraphFieldOptions } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 

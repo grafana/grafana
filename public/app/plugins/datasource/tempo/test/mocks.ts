@@ -1,4 +1,5 @@
-import { type DataSourceInstanceSettings, PluginType, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { TempoDatasource } from '../datasource';

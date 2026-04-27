@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

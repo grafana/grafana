@@ -3,7 +3,8 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CorrelationData,
@@ -17,15 +18,15 @@ import {
   Button,
   DeleteButton,
   LoadingPlaceholder,
-  useStyles2,
   Alert,
   InteractiveTable,
-  type Column,
   type CellProps,
   type SortByFn,
   Pagination,
   TextLink,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { Column } from '@grafana/ui/types';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AppRootProps } from '@grafana/data';
+import { AppRootProps } from '@grafana/data/types';
 import { AddedLinks } from './AddedLinks';
 import { testIds } from '../../../../testIds';
 

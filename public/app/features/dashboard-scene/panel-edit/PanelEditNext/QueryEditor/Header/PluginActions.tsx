@@ -4,7 +4,7 @@ import {
   type CoreApp,
   PluginExtensionPoints,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';

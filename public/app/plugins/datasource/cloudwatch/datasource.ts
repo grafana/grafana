@@ -11,7 +11,7 @@ import {
   type LogRowContextOptions,
   type LogRowModel,
   type ScopedVars,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { DataSourceWithBackend, type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, type RangeValueMatcherOptions } from '@grafana/data';
+import { ValueMatcherID, type RangeValueMatcherOptions } from '@grafana/data/transformations';
 import { Trans, t } from '@grafana/i18n';
 import { InlineLabel } from '@grafana/ui';
 

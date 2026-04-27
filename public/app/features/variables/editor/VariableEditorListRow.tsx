@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import { type ReactElement } from 'react';
 
-import { type GrafanaTheme2, type TypedVariableModel } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TypedVariableModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, IconButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';

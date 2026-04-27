@@ -1,4 +1,4 @@
-import { type DataQueryError } from '@grafana/data';
+import type { DataQueryError } from '@grafana/data/types';
 import { Alert } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 

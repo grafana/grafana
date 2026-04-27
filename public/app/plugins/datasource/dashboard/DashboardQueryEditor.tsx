@@ -4,17 +4,13 @@ import pluralize from 'pluralize';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataQuery,
-  type GrafanaTheme2,
-  type SelectableValue,
-  DataTopic,
-  type QueryEditorProps,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type DataQuery, type SelectableValue, DataTopic, type QueryEditorProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import { Alert, Field, Select, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

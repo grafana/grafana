@@ -1,4 +1,9 @@
-import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue, getDefaultTimeRange } from '@grafana/data';
+import {
+  type AdHocVariableFilter,
+  type DataSourceRef,
+  type SelectableValue,
+  getDefaultTimeRange,
+} from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SegmentAsync } from '@grafana/ui';
 

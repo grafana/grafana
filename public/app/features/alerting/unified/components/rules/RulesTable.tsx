@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
+import { Pagination, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';

@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, useCallback, memo } from 'react';
 import type uPlot from 'uplot';
 
-import { type AbsoluteTimeRange } from '@grafana/data';
+import type { AbsoluteTimeRange } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { type UPlotConfigBuilder, Button } from '@grafana/ui';
 

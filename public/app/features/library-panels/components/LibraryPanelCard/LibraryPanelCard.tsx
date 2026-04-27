@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { type ReactElement, useState, type JSX } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { usePanelPluginMeta } from '@grafana/runtime/internal';
-import { Icon, Link, useStyles2 } from '@grafana/ui';
+import { Link } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';

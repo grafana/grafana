@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { type ExplorePanelsState, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
+import { type ExplorePanelsState, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';

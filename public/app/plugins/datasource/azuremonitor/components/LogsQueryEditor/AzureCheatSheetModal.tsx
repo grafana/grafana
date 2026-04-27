@@ -1,4 +1,4 @@
-import { type CoreApp } from '@grafana/data';
+import type { CoreApp } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 

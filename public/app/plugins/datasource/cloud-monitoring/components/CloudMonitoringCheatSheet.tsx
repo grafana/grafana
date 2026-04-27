@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { type QueryEditorHelpProps } from '@grafana/data';
+import type { QueryEditorHelpProps } from '@grafana/data/types';
 
 import { type CloudMonitoringQuery } from '../types/query';
 

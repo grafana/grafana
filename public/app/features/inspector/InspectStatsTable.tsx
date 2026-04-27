@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
 
-import { formattedValueToString, getDisplayProcessor, type GrafanaTheme2, type QueryResultMetaStat, type TimeZone } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { getDisplayProcessor } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { QueryResultMetaStat, TimeZone } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 interface InspectStatsTableProps {
   timeZone: TimeZone;

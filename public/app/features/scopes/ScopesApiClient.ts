@@ -1,4 +1,4 @@
-import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
+import type { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';

@@ -1,7 +1,8 @@
 import { of } from 'rxjs';
 
-import { type DataQueryResponse, LogRowContextQueryDirection, type LogRowModel, dateTime } from '@grafana/data';
 import { FieldType, createDataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { type DataQueryResponse, LogRowContextQueryDirection, type LogRowModel } from '@grafana/data/types';
 import { setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import type LokiLanguageProvider from './LanguageProvider';

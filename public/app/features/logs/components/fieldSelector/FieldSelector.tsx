@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { startTransition, useCallback, useMemo, useState } from 'react';
 
-import { fuzzySearch, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { fuzzySearch } from '@grafana/data/utils';
+import { useStyles2 } from '@grafana/ui/themes';
 import { defaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 
 import { reportInteractionOnce } from '../panel/analytics';

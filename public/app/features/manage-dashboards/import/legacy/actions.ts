@@ -1,6 +1,6 @@
 // Legacy Redux actions - will be removed when kubernetesDashboards feature is removed
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
 import {
   type Spec as DashboardV2Spec,

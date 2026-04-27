@@ -1,7 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { type VisualizationSuggestion, type VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import {
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+  VizOrientation,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 

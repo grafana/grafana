@@ -2,7 +2,9 @@ import { trim } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
-import { CoreApp, isValidGrafanaDuration, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
+import { isValidGrafanaDuration } from '@grafana/data/datetime';
+import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { EditorField, QueryOptionGroup } from '@grafana/plugin-ui';
 import { getAppEvents } from '@grafana/runtime';
 import { AutoSizeInput, Box, RadioButtonGroup } from '@grafana/ui';

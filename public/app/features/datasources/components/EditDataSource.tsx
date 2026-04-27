@@ -2,14 +2,14 @@ import { type AnyAction } from '@reduxjs/toolkit';
 import { useMemo } from 'react';
 import * as React from 'react';
 
+import { DataSourcePluginContextProvider } from '@grafana/data/context';
+import { DataSourceUpdatedSuccessfully } from '@grafana/data/events';
 import {
-  DataSourcePluginContextProvider,
   type DataSourcePluginMeta,
   type DataSourceSettings as DataSourceSettingsType,
   PluginExtensionPoints,
   type PluginExtensionDataSourceConfigContext,
-  DataSourceUpdatedSuccessfully,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';

@@ -1,7 +1,14 @@
 import { cloneDeep } from 'lodash';
 
-import { dateTimeFormat, type TimeRange, type PanelData, type DataTransformerConfig, LoadingState, DataTopic } from '@grafana/data';
 import { type DataFrameJSON, dataFrameToJSON } from '@grafana/data/dataframe';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import {
+  type TimeRange,
+  type PanelData,
+  type DataTransformerConfig,
+  LoadingState,
+  DataTopic,
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';

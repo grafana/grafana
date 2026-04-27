@@ -1,14 +1,13 @@
 import { useMemo, useCallback } from 'react';
 
 import {
-  type SelectableValue,
   getTimeZoneInfo,
   type TimeZoneInfo,
   getTimeZoneGroups,
   type GroupedTimeZones,
-  type TimeZone,
   InternalTimeZones,
-} from '@grafana/data';
+} from '@grafana/data/datetime';
+import type { SelectableValue, TimeZone } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';

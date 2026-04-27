@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type BootData } from '@grafana/data';
+import type { BootData } from '@grafana/data/types';
 import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 

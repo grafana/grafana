@@ -3,10 +3,11 @@ import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
+import { Modal } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type SQLQuery, type QueryEditorProps } from '../../types';
 

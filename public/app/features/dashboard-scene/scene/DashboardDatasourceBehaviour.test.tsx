@@ -1,5 +1,6 @@
 import { map, of } from 'rxjs';
 
+import { getPanelPlugin } from '@grafana/data/test';
 import {
   type DataQuery,
   type DataQueryRequest,
@@ -9,8 +10,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
-} from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
+} from '@grafana/data/types';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';

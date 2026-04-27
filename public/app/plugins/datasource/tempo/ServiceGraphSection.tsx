@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Alert, InlineField, InlineFieldRow, TextLink, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Alert, InlineField, InlineFieldRow, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AdHocFilter } from './_importedDependencies/components/AdHocFilter/AdHocFilter';
 import { type AdHocVariableFilter } from './_importedDependencies/components/AdHocFilter/types';

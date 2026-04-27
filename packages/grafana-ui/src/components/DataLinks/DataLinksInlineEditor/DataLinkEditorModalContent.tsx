@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { type DataLink, type VariableSuggestion } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { DataLink, VariableSuggestion } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 
 import { Button } from '../../Button/Button';

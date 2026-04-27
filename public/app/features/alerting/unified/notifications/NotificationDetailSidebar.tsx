@@ -2,9 +2,13 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Collapse, Icon, type IconName, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Collapse, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { DetailText } from '../components/common/DetailText';

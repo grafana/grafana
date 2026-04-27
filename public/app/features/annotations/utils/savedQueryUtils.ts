@@ -4,7 +4,7 @@ import {
   type DataSourceApi,
   hasQueryExportSupport,
   hasQueryImportSupport,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 

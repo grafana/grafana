@@ -18,12 +18,14 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { type RefObject } from 'react';
 
-import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { CoreApp, LinkModel, TimeRange, TraceLog } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';

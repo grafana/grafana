@@ -3,10 +3,12 @@ import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { UrlQueryValue } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, useStyles2 } from '@grafana/ui';
+import { Alert, Box } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';

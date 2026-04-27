@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
-import { PluginContextProvider, type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { PluginContextProvider } from '@grafana/data/context';
+import { type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data/types';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {

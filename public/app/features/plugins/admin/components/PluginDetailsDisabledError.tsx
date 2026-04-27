@@ -1,6 +1,6 @@
 import { type ReactElement } from 'react';
 
-import { PluginErrorCode } from '@grafana/data';
+import { PluginErrorCode } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';

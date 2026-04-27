@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { type AdHocVariableModel } from '@grafana/data';
+import type { AdHocVariableModel } from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { adHocBuilder } from '../../shared/testing/builders';

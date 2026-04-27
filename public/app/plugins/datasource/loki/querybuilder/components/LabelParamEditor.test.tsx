@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { type QueryBuilderOperation, type QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
 
 import { LokiDatasource } from '../../datasource';

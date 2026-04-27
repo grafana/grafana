@@ -1,8 +1,21 @@
 import { from, merge, type Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { type AnnotationEvent, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, DataTopic, LiveChannelScope, LoadingState, type TimeRange, type ScopedVars, type AnnotationQuery, getSearchFilterScopedVar, type DataSourceWithLogsLabelTypesSupport } from '@grafana/data';
 import { ArrayDataFrame, type DataFrame, toDataFrame, MutableDataFrame, FieldType } from '@grafana/data/dataframe';
+import {
+  type AnnotationEvent,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  DataTopic,
+  LiveChannelScope,
+  LoadingState,
+  type TimeRange,
+  type ScopedVars,
+  type AnnotationQuery,
+  type DataSourceWithLogsLabelTypesSupport,
+} from '@grafana/data/types';
+import { getSearchFilterScopedVar } from '@grafana/data/utils';
 import {
   DataSourceWithBackend,
   getBackendSrv,

@@ -2,8 +2,46 @@ import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, type Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
-import { type AbstractQuery, type AnnotationEvent, type AnnotationQueryRequest, CoreApp, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type DataSourceWithLogsContextSupport, type DataSourceWithSupplementaryQueriesSupport, SupplementaryQueryType, type DataSourceWithQueryExportSupport, type DataSourceWithQueryImportSupport, type Labels, LoadingState, type LogRowModel, type QueryFixAction, type QueryHint, rangeUtil, type ScopedVars, type SupplementaryQueryOptions, type TimeRange, type LogRowContextOptions, type DataSourceWithToggleableQueryFiltersSupport, type ToggleFilterAction, type QueryFilterOptions, renderLegendFormat, type LegacyMetricFindQueryOptions, type AdHocVariableFilter, urlUtil, type MetricFindValue, type DataSourceGetTagValuesOptions, type DataSourceGetTagKeysOptions, type DataSourceWithQueryModificationSupport, type DataSourceWithLogsLabelTypesSupport, type LogsVolumeOption, type LogsSampleOptions, type QueryVariableModel, type CustomVariableModel } from '@grafana/data';
 import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
+import { rangeUtil } from '@grafana/data/datetime';
+import {
+  type AbstractQuery,
+  type AnnotationEvent,
+  type AnnotationQueryRequest,
+  CoreApp,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceWithLogsContextSupport,
+  type DataSourceWithSupplementaryQueriesSupport,
+  SupplementaryQueryType,
+  type DataSourceWithQueryExportSupport,
+  type DataSourceWithQueryImportSupport,
+  type Labels,
+  LoadingState,
+  type LogRowModel,
+  type QueryFixAction,
+  type QueryHint,
+  type ScopedVars,
+  type SupplementaryQueryOptions,
+  type TimeRange,
+  type LogRowContextOptions,
+  type DataSourceWithToggleableQueryFiltersSupport,
+  type ToggleFilterAction,
+  type QueryFilterOptions,
+  type LegacyMetricFindQueryOptions,
+  type AdHocVariableFilter,
+  type MetricFindValue,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceWithQueryModificationSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  type LogsVolumeOption,
+  type LogsSampleOptions,
+  type QueryVariableModel,
+  type CustomVariableModel,
+} from '@grafana/data/types';
+import { renderLegendFormat, urlUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { Duration } from '@grafana/lezer-logql';
 import {

@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 
-import { stringToJsRegex } from '@grafana/data';
+import { stringToJsRegex } from '@grafana/data/text';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 

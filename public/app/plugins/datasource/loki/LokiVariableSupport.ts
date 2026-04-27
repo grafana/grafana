@@ -7,7 +7,7 @@ import {
   type MetricFindValue,
   type ScopedVars,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { LokiVariableQueryEditor } from './components/VariableQueryEditor';
 import { type LokiDatasource } from './datasource';

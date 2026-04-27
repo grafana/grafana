@@ -17,8 +17,9 @@ import cx from 'classnames';
 import { get as _get } from 'lodash';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Icon } from '@grafana/ui/components/icons';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../Theme';
 import { type TraceSpan } from '../types/trace';

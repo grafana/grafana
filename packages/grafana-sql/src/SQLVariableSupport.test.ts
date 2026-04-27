@@ -1,4 +1,4 @@
-import { type DataFrame, type Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { migrateVariableQuery, convertFieldsToVariableFields, updateFrame } from './SQLVariableUtils';

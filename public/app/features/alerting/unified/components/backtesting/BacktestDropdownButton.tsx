@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { type TimeRange, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Menu, MenuItem } from '@grafana/ui';
 

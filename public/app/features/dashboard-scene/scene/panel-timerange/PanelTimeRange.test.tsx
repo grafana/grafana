@@ -1,6 +1,6 @@
 import { advanceTo, clear } from 'jest-date-mock';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import {
   SceneCanvasText,
   SceneFlexItem,

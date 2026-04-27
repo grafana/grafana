@@ -1,7 +1,8 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { LoadingState } from '@grafana/data/types';
 
 import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';

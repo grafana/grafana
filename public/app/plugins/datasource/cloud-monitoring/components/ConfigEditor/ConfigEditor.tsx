@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
-import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConnectionConfig } from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';

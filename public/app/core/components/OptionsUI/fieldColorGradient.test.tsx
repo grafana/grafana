@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type JSX } from 'react';
 
-import { FieldColorModeId } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/data/types';
 
 import { FieldColorEditor } from './fieldColor';
 

@@ -6,21 +6,12 @@ import { type FC, Fragment, type JSX, type ReactNode, useCallback, useState } fr
 import { useToggle } from 'react-use';
 
 import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  Dropdown,
-  Icon,
-  IconButton,
-  Menu,
-  Stack,
-  Text,
-  TextLink,
-  Tooltip,
-  getTagColorsFromName,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Dropdown, IconButton, Menu, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { getTagColorsFromName } from '@grafana/ui/utils';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';

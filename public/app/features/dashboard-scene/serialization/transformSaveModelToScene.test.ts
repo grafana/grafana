@@ -1,5 +1,5 @@
-import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { LoadingState } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {

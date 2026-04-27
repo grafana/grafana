@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
   Badge,
-  Icon,
   InteractiveTable,
   ScrollContainer,
   Spinner,
@@ -15,8 +14,9 @@ import {
   TabContent,
   TabsBar,
   Text,
-  useStyles2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type SQLSchemaData, type SQLSchemaField, type SQLSchemas } from '../hooks/useSQLSchemas';
 

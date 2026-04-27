@@ -1,7 +1,7 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';

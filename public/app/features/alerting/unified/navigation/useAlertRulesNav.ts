@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';

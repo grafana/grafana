@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 
 import { PageTabs } from './PageTabs';
 

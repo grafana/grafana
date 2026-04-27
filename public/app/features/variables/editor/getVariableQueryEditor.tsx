@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 
-import {
-  type DataQuery,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type QueryEditorProps,
-  type StandardVariableQuery,
-} from '@grafana/data';
+import type {
+  DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
+  QueryEditorProps,
+  StandardVariableQuery,
+} from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { pluginImporter } from '../../plugins/importer/pluginImporter';

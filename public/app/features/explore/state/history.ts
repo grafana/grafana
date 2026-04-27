@@ -1,6 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { type HistoryItem } from '@grafana/data';
+import type { HistoryItem } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,

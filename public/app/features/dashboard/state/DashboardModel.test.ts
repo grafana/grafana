@@ -1,6 +1,7 @@
 import { keys as _keys } from 'lodash';
 
-import { dateTime, type TimeRange, VariableHide } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { type TimeRange, VariableHide } from '@grafana/data/types';
 import { type Dashboard, defaultVariableModel, type RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';

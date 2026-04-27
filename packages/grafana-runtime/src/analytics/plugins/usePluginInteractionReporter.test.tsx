@@ -1,15 +1,14 @@
 import { renderHook } from '@testing-library/react';
 import * as React from 'react';
 
+import { DataSourcePluginContextProvider, PluginContextProvider } from '@grafana/data/context';
 import {
   type DataSourceInstanceSettings,
-  DataSourcePluginContextProvider,
-  PluginContextProvider,
   type PluginMeta,
   type PluginMetaInfo,
   PluginSignatureStatus,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import iconGaugeSvg from 'app/plugins/panel/gauge/img/icon_gauge.svg';
 
 import { reportInteraction } from '../utils';

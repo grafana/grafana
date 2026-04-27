@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 
+import { LabelsToFieldsMode, type LabelsToFieldsOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
-  type SelectableValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
-import { LabelsToFieldsMode, type LabelsToFieldsOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 

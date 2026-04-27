@@ -1,4 +1,4 @@
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { Page } from '../Page/Page';

@@ -3,7 +3,8 @@ import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataTransformerConfig, PanelData } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -16,7 +17,8 @@ import {
   type SceneQueryRunner,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Tab } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 

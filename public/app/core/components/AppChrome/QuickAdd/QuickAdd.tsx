@@ -1,10 +1,11 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useMemo, useState } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
-import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';

@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
-import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, DeleteButton, EmptyState, IconButton, Stack, TagList, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];

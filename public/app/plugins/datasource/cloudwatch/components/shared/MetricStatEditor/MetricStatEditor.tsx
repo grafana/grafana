@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select, TextLink } from '@grafana/ui';

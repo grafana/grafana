@@ -1,4 +1,4 @@
-import { type PanelModel, type FieldConfigSource } from '@grafana/data';
+import type { PanelModel, FieldConfigSource } from '@grafana/data/types';
 
 import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 describe('Worldmap Migrations', () => {

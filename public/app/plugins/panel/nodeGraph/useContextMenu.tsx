@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { type MouseEvent, useCallback, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel, LinkTarget } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
+import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Config } from './layout';
 import { type EdgeDatumLayout, type NodeDatum } from './types';

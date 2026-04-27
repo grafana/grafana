@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
 
 import { type USAQuery } from '../dataquery';

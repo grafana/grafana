@@ -2,7 +2,7 @@ import { defaults } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useMount } from 'react-use';
 
-import { CoreApp, type QueryEditorProps } from '@grafana/data';
+import { CoreApp, type QueryEditorProps } from '@grafana/data/types';
 import { ButtonCascader, type CascaderOption } from '@grafana/ui';
 
 import { defaultParcaDataQuery, defaultParcaQueryType, type ParcaDataQuery as Parca } from '../dataquery.gen';

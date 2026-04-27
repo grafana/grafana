@@ -3,7 +3,7 @@ import {
   type Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { SupportedTransformationType } from '@grafana/data';
+import { SupportedTransformationType } from '@grafana/data/types';
 import {
   type CorrelationData,
   type CorrelationExternal,

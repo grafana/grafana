@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { standardTransformersRegistry } from '@grafana/data';
+import { standardTransformersRegistry } from '@grafana/data/transformations';
 import { type SceneDataTransformer } from '@grafana/scenes';
 
 import { type Transformation } from '../types';

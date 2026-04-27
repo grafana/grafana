@@ -12,7 +12,8 @@ import {
   useTable,
 } from 'react-table';
 
-import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type IconName, isTruthy } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

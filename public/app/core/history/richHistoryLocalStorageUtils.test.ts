@@ -1,4 +1,4 @@
-import { type DataQuery } from '@grafana/data';
+import type { DataQuery } from '@grafana/data/types';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 

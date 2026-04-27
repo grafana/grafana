@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { MappingType, type StandardEditorsRegistryItem } from '@grafana/data';
+import type { StandardEditorsRegistryItem } from '@grafana/data/field';
+import { MappingType } from '@grafana/data/types';
 
 import { ValueMappingsEditor, type Props } from './ValueMappingsEditor';
 

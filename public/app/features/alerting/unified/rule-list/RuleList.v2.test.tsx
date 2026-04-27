@@ -2,7 +2,7 @@ import { HttpResponse } from 'msw';
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 

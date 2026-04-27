@@ -1,11 +1,11 @@
 import { uniqueId } from 'lodash';
 
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import {
-  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 
 import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';

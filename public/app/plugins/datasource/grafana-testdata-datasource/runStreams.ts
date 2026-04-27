@@ -2,8 +2,20 @@ import { defaults } from 'lodash';
 import { Observable, throwError } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type DataQueryRequest, type DataQueryResponse, CSVReader, LoadingState, getDisplayProcessor, createTheme } from '@grafana/data';
-import { FieldType, CircularDataFrame, type Field, type DataFrameSchema, type DataFrameData, StreamingDataFrame, createDataFrame, addRow } from '@grafana/data/dataframe';
+import {
+  FieldType,
+  CircularDataFrame,
+  type Field,
+  type DataFrameSchema,
+  type DataFrameData,
+  StreamingDataFrame,
+  createDataFrame,
+  addRow,
+} from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import { type DataQueryRequest, type DataQueryResponse, LoadingState } from '@grafana/data/types';
+import { CSVReader } from '@grafana/data/utils';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { getRandomLine } from './LogIpsum';

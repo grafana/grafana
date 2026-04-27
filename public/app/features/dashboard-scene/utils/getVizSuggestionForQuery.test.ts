@@ -1,6 +1,6 @@
 import { of, Subject } from 'rxjs';
 
-import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';

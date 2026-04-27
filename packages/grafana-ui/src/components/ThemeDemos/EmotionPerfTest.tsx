@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import React, { Profiler, type ProfilerOnRenderCallback, useState, type FC } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';

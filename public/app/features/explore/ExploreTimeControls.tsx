@@ -1,4 +1,5 @@
-import { type TimeRange, type RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
+import { dateTimeForTimeZone, dateMath } from '@grafana/data/datetime';
+import type { TimeRange, RawTimeRange } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';

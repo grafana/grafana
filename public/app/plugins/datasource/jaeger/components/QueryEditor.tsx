@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import {
   Button,
   FileDropzone,
@@ -11,9 +11,8 @@ import {
   Modal,
   QueryField,
   RadioButtonGroup,
-  useStyles2,
-  useTheme2,
 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type JaegerDatasource } from '../datasource';
 import { type JaegerQuery, type JaegerQueryType } from '../types';

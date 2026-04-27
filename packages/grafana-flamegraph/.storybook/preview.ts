@@ -1,6 +1,7 @@
 import { Preview } from '@storybook/react';
 
-import { getBuiltInThemes, getTimeZone, getTimeZones, GrafanaTheme2 } from '@grafana/data';
+import { getTimeZone, getTimeZones } from '@grafana/data/datetime';
+import { getBuiltInThemes, GrafanaTheme2 } from '@grafana/data/themes';
 
 import { withTheme } from '../src/utils/storybook/withTheme';
 import { withTimeZone } from '../src/utils/storybook/withTimeZone';

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { interval, type Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 
-import { stringToMs, type SelectableValue } from '@grafana/data';
+import { stringToMs } from '@grafana/data/text';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
 

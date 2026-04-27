@@ -4,10 +4,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from 'react-dom';
 
 import { AssistantPromptCard, createAssistantContextItem } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type PopoverTarget } from './AssistantPopoverContext';
 import { getAnimatedBorderClass } from './DashboardAssistantViewMode';

@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';

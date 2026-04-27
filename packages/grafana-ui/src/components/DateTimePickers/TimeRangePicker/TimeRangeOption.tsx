@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { memo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeOption } from '@grafana/data/types';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';

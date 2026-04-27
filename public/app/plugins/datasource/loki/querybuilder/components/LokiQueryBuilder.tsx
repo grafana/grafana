@@ -9,7 +9,7 @@ import {
   type PanelData,
   type SelectableValue,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import {
   EditorRow,
   LabelFilters,

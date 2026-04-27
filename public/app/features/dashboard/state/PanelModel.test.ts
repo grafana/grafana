@@ -1,17 +1,16 @@
 import { type ComponentClass } from 'react';
 
+import { dateTime } from '@grafana/data/datetime';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data/field';
+import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import {
   FieldConfigProperty,
   type PanelData,
   type PanelProps,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-  dateTime,
   type TimeRange,
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
-} from '@grafana/data';
-import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
+} from '@grafana/data/types';
 import { setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 

@@ -1,4 +1,4 @@
-import { type PanelData, type RawTimeRange } from '@grafana/data';
+import type { PanelData, RawTimeRange } from '@grafana/data/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

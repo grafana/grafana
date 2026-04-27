@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, type DataQueryRequest, getDefaultTimeRange } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, getDefaultTimeRange } from '@grafana/data/types';
 
 import { type DataAPI, VariableSupport } from './VariableSupport';
 import { type ProfileTypeMessage, type VariableQuery } from './types';

@@ -1,6 +1,6 @@
 import { type FormEvent } from 'react';
 
-import { type PanelOptionsEditorProps, type PanelProps } from '@grafana/data';
+import type { PanelOptionsEditorProps, PanelProps } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, usePanelContext } from '@grafana/ui';
 

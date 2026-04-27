@@ -1,4 +1,4 @@
-import { OrgRole, type PluginMeta } from '@grafana/data';
+import { OrgRole, type PluginMeta } from '@grafana/data/types';
 import { isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 

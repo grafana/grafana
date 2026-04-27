@@ -1,4 +1,4 @@
-import { PluginLoadingStrategy } from '@grafana/data';
+import { PluginLoadingStrategy } from '@grafana/data/types';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
 

@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 export interface SelectionInfo<T> {
   options: Array<SelectableValue<T>>;

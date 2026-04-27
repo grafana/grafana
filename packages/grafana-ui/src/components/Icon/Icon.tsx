@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useState, useRef, memo, forwardRef } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { type GrafanaTheme2, isIconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { isIconName } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName, type IconType, type IconSize } from '../../types/icon';

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
 
 import { PanelContextProvider } from '../PanelChrome';
 

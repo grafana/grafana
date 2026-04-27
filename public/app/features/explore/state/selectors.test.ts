@@ -1,4 +1,4 @@
-import { type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import type { DataSourceApi, DataSourceJsonData } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';

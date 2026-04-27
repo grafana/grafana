@@ -1,4 +1,4 @@
-import { type AppPluginConfig, type PluginDependencies, type PluginExtensions, type PluginType } from '@grafana/data';
+import type { AppPluginConfig, PluginDependencies, PluginExtensions, PluginType } from '@grafana/data/types';
 
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';

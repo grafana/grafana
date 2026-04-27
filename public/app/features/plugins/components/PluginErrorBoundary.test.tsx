@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 
-import { type PluginMeta, PluginType, PluginContext } from '@grafana/data';
+import { PluginContext } from '@grafana/data/context';
 import { getMockPlugin } from '@grafana/data/test';
+import { type PluginMeta, PluginType } from '@grafana/data/types';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 

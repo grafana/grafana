@@ -8,16 +8,11 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import {
-  locationUtil,
-  monacoLanguageRegistry,
-  setLocale,
-  setTimeZoneResolver,
-  setWeekStart,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-  standardTransformersRegistry,
-} from '@grafana/data';
+import { setLocale, setTimeZoneResolver, setWeekStart } from '@grafana/data/datetime';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data/field';
+import { monacoLanguageRegistry } from '@grafana/data/monaco';
+import { standardTransformersRegistry } from '@grafana/data/transformations';
+import { locationUtil } from '@grafana/data/utils';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {

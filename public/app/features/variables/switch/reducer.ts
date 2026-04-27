@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { type SwitchVariableModel } from '@grafana/data';
+import type { SwitchVariableModel } from '@grafana/data/types';
 
 import { initialVariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';

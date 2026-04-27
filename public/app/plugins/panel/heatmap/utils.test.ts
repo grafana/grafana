@@ -1,7 +1,9 @@
 import uPlot from 'uplot';
 
-import { createTheme, DataFrameType, dateTime } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { createTheme } from '@grafana/data/themes';
+import { DataFrameType } from '@grafana/data/types';
 import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 

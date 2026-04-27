@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type SelectableValue, urlUtil } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';

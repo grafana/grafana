@@ -2,15 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import {
-  type DynamicConfigValue,
-  type FieldConfigOptionsRegistry,
-  FieldConfigProperty,
-  type FieldOverrideContext,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type DynamicConfigValue, FieldConfigProperty, type FieldOverrideContext } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { Counter, Field, Stack, IconButton, Label } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 

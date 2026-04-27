@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type SelectableValue, type GrafanaTheme2, type PluginType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue, PluginType } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject } from '@grafana/runtime';
-import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
+import { Select, RadioButtonGroup, Tooltip, Field, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';

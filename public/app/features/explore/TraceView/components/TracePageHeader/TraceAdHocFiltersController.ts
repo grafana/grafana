@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
-import { type SelectableValue, toOption, type TraceSearchProps } from '@grafana/data';
+import type { SelectableValue, TraceSearchProps } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import {
   type AdHocFiltersController,

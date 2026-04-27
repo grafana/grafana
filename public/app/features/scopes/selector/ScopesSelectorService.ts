@@ -1,4 +1,5 @@
-import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
+import type { Scope, ScopeNode } from '@grafana/data/types';
+import { store as storeImpl } from '@grafana/data/utils';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';

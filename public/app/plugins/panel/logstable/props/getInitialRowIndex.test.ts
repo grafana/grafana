@@ -1,5 +1,5 @@
-import { DataFrameType } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { DataFrameType } from '@grafana/data/types';
 
 import {
   LOGS_DATAPLANE_BODY_NAME,

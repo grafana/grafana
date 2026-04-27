@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';

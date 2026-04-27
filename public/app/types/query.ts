@@ -1,4 +1,4 @@
-import { type DataQuery, type DataSourceRef } from '@grafana/data';
+import type { DataQuery, DataSourceRef } from '@grafana/data/types';
 
 export interface QueryGroupOptions {
   queries: DataQuery[];

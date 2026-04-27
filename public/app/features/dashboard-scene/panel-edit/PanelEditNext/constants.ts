@@ -1,4 +1,5 @@
-import { AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { AlertState, type IconName } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
 import mathDarkImage from 'app/features/expressions/images/dark/math.svg';

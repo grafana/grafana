@@ -1,6 +1,7 @@
 import { type CSSProperties } from 'react';
 
-import { createTheme, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
 import { PercentChangeColorMode } from '@grafana/schema';
 
 import { type Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';

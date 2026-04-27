@@ -1,7 +1,9 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID, type DataTransformerInfo, getFieldDisplayName, type Labels } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { DataTransformerID } from '@grafana/data/transformations';
+import type { DataTransformerInfo, Labels } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import {

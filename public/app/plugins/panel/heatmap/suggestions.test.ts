@@ -1,5 +1,6 @@
-import { DataFrameType, getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary } from '@grafana/data/panel';
+import { DataFrameType, VisualizationSuggestionScore } from '@grafana/data/types';
 
 import { heatmapSuggestionsSupplier } from './suggestions';
 

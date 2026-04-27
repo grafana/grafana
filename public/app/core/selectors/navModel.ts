@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { type NavModel, type NavModelItem, type NavIndex } from '@grafana/data';
+import type { NavModel, NavModelItem, NavIndex } from '@grafana/data/types';
 import { FOLDER_ID } from 'app/features/folders/state/navModel';
 
 import { HOME_NAV_ID } from '../reducers/navModel';

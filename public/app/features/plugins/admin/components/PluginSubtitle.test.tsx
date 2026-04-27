@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data/types';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import * as runtime from '../state/hooks';

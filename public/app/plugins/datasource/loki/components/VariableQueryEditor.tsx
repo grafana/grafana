@@ -1,7 +1,7 @@
 import { type FormEvent, useState, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import type { QueryEditorProps, SelectableValue } from '@grafana/data/types';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { type LokiDatasource } from '../datasource';

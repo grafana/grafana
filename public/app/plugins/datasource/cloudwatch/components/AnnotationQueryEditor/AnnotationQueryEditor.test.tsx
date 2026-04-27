@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 
 import { type CloudWatchAnnotationQuery, type CloudWatchMetricsQuery } from '../../dataquery.gen';
 import { type CloudWatchDatasource } from '../../datasource';

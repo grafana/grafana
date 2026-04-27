@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataQueryResponse, LoadingState, EventBusSrv, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { type DataQueryResponse, LoadingState } from '@grafana/data/types';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 

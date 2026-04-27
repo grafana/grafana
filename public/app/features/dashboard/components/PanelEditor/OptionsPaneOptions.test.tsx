@@ -3,9 +3,10 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { render } from 'test/test-utils';
 
-import { type FieldConfigSource, LoadingState, type PanelData, standardEditorsRegistry, standardFieldConfigEditorRegistry, type TimeRange } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data/field';
 import { getPanelPlugin } from '@grafana/data/test';
+import { type FieldConfigSource, LoadingState, type PanelData, type TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 

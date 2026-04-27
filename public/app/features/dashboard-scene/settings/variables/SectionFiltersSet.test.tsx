@@ -1,4 +1,4 @@
-import { VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data/types';
 import { AdHocFiltersVariable, CustomVariable, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';

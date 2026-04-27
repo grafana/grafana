@@ -1,5 +1,6 @@
 import { Trans } from '@grafana/i18n';
-import { Box, Button, Icon, Stack, Text } from '@grafana/ui';
+import { Box, Button, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 export function SqlExpressionsCTA({ onAddSqlExpression }: { onAddSqlExpression: () => void }) {
   return (

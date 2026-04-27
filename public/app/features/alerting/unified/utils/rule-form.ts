@@ -1,5 +1,7 @@
 import { produce } from 'immer';
 
+import { rangeUtil } from '@grafana/data/datetime';
+import { getNextRefId } from '@grafana/data/query';
 import {
   type DataSourceInstanceSettings,
   type IntervalValues,
@@ -7,9 +9,7 @@ import {
   type ScopedVars,
   type TimeRange,
   getDefaultRelativeTimeRange,
-  getNextRefId,
-  rangeUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';

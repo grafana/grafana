@@ -1,4 +1,4 @@
-import { createDataFrame, DataFrameView } from '@grafana/data';
+import { createDataFrame, DataFrameView } from '@grafana/data/dataframe';
 
 import { createNodeGraphFrames } from './createNodeGraphFrames';
 import { bigTraceResponse } from './mocks/traceResponse';

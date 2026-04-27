@@ -4,20 +4,13 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
+import type { UrlQueryValue } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import {
-  Alert,
-  LinkButton,
-  LoadingBar,
-  Stack,
-  TabContent,
-  Text,
-  TextLink,
-  useStyles2,
-  withErrorBoundary,
-} from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, withErrorBoundary } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { type DataSourcePluginMeta } from '@grafana/data';
+import type { DataSourcePluginMeta } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';

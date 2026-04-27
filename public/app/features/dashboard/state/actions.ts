@@ -1,4 +1,4 @@
-import { type TimeZone } from '@grafana/data';
+import type { TimeZone } from '@grafana/data/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { type WeekStart } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';

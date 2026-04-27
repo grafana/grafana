@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
+import { Field, FilterInput, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type FileElement, type GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 

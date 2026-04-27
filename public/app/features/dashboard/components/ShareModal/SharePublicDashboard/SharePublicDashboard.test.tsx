@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import { type BootData, type DataQuery } from '@grafana/data';
+import type { BootData, DataQuery } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setEchoSrv } from '@grafana/runtime';
 import { type Panel } from '@grafana/schema';

@@ -1,4 +1,4 @@
-import { type DataSourceJsonData, type PluginMeta } from '@grafana/data';
+import type { DataSourceJsonData, PluginMeta } from '@grafana/data/types';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';

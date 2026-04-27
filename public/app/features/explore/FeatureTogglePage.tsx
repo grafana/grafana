@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 
 function getStyles(theme: GrafanaTheme2) {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';

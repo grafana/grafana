@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { connect, type MapStateToProps } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
 import { locationService } from '@grafana/runtime';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

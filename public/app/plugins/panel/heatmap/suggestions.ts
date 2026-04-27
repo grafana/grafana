@@ -1,5 +1,10 @@
-import { DataFrameType, type PanelDataSummary, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import type { PanelDataSummary } from '@grafana/data/panel';
+import {
+  DataFrameType,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type GraphFieldConfig } from '@grafana/schema';
 

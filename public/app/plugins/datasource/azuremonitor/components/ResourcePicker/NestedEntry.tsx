@@ -2,7 +2,8 @@ import { cx } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import * as React from 'react';
 
-import { Checkbox, IconButton, useStyles2, useTheme2, Space } from '@grafana/ui';
+import { Checkbox, IconButton, Space } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { EntryIcon } from './EntryIcon';
 import getStyles from './styles';

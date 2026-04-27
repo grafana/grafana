@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceApi, SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+import { Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { createDatasourcesList } from 'app/core/utils/richHistory';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';

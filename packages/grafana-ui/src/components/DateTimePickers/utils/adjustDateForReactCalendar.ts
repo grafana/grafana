@@ -1,4 +1,4 @@
-import { getZone } from '@grafana/data';
+import { getZone } from '@grafana/data/datetime';
 
 /**
  * React calendar doesn't support showing dates in other time zones, so attempting to show

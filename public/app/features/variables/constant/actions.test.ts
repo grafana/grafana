@@ -1,4 +1,4 @@
-import { type ConstantVariableModel, type VariableOption } from '@grafana/data';
+import type { ConstantVariableModel, VariableOption } from '@grafana/data/types';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';

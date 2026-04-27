@@ -2,7 +2,8 @@
 // like returned by `new Date().getTime()`. this is needed because the "math"
 // has to be done on integer numbers.
 
-import { type TimeRange, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 
 // the way loki handles logs-range-queries is that if you specify start & end,
 // one of those will be included, but the other will not. this allows us to

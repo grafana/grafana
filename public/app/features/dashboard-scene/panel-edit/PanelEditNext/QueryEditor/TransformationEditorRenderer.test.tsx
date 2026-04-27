@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 
-import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
+import type { TransformerRegistryItem } from '@grafana/data/transformations';
+import type { DataTransformerInfo } from '@grafana/data/types';
 
 import { TransformationEditorRenderer } from './TransformationEditorRenderer';
 import { renderWithQueryEditorProvider } from './testUtils';

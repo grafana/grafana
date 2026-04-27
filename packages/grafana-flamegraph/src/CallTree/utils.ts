@@ -1,4 +1,4 @@
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';

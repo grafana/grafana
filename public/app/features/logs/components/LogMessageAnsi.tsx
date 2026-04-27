@@ -2,8 +2,10 @@ import ansicolor from 'ansicolor';
 import { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { findHighlightChunksInText, type GrafanaTheme2 } from '@grafana/data';
-import { withTheme2, type Themeable2 } from '@grafana/ui';
+import { findHighlightChunksInText } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 interface Style {
   [key: string]: string;

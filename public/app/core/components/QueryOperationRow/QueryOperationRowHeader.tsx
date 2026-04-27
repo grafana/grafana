@@ -3,9 +3,11 @@ import { type DraggableProvided } from '@hello-pangea/dnd';
 import { type MouseEventHandler } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { IconButton, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;

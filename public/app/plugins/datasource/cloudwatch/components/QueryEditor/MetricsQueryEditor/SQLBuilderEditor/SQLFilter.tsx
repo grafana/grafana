@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type SelectableValue, toOption } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Alert, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type CloudWatchMetricsQuery,
   QueryEditorExpressionType,

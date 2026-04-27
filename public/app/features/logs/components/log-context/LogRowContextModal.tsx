@@ -4,24 +4,25 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
+import { dateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   type DataQueryResponse,
   type DataSourceWithLogsContextSupport,
-  type GrafanaTheme2,
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  dateTime,
   type TimeRange,
   LoadingState,
-  store,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Button, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';

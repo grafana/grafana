@@ -1,16 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import {
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  LogSortOrderChangeEvent,
-  LogsSortOrder,
-  type PanelProps,
-  store,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type FieldConfigSource, LogSortOrderChangeEvent, LogsSortOrder, type PanelProps } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { getAppEvents } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';

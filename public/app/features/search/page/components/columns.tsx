@@ -2,12 +2,16 @@ import { cx } from '@emotion/css';
 import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
-import { type DisplayProcessor, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getDisplayProcessor, getFieldDisplayName } from '@grafana/data/field';
+import type { DisplayProcessor } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { Checkbox, TagList, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import type { IconName } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';

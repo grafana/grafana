@@ -3,9 +3,9 @@ import * as React from 'react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { LoadingState, type PanelData, VariableSupportType, getDefaultTimeRange } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
+import { LoadingState, type PanelData, VariableSupportType, getDefaultTimeRange } from '@grafana/data/types';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

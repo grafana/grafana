@@ -1,6 +1,6 @@
 import { css, keyframes } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { getIconPath } from '../Icon/utils';
 

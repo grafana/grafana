@@ -1,6 +1,6 @@
 import { render, type RenderResult } from '@testing-library/react';
 
-import { type FieldDisplay } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
 
 import { RadialArcPathEndpointMarks, type RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
 import { type RadialGaugeDimensions } from './types';

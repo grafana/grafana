@@ -1,6 +1,6 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { type PluginMeta, type PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
+import { LayoutModes, type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data/types';
 import { type DataSourceSettingsState, type DataSourcesState } from 'app/types/datasources';
 
 import { getMockDataSource, getMockDataSources } from '../mocks/dataSourcesMocks';

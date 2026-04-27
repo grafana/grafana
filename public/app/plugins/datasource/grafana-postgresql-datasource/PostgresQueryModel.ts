@@ -1,4 +1,4 @@
-import { type ScopedVars } from '@grafana/data';
+import type { ScopedVars } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 import { type SQLQuery, type SqlQueryModel, applyQueryDefaults } from '@grafana/sql';

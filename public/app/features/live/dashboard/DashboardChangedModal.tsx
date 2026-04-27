@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { dashboardWatcher } from './dashboardWatcher';
 import { type DashboardEvent, DashboardEventAction } from './types';

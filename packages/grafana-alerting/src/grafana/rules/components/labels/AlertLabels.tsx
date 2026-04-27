@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Stack, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Toggletip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 

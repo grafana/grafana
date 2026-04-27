@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, DataFrameType, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { alignTimeRangeCompareData, type DataFrame, FieldType, shouldAlignTimeCompare } from '@grafana/data/dataframe';
+import { useDataLinksContext } from '@grafana/data/field';
+import { DashboardCursorSync, DataFrameType, type PanelProps } from '@grafana/data/types';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {

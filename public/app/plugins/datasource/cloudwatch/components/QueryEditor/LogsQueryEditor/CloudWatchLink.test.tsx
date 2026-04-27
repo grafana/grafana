@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 
 import { type CloudWatchLogsQuery } from '../../../dataquery.gen';
 import { setupMockedDataSource } from '../../../mocks/CloudWatchDataSource';

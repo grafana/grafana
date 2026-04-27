@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { RawQuery } from '@grafana/plugin-ui';
-import { Button, Card, useStyles2 } from '@grafana/ui';
+import { Button, Card } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';

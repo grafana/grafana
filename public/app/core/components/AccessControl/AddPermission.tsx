@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';

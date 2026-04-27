@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { LoadingState, type PanelData } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

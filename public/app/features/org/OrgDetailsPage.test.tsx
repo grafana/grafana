@@ -1,7 +1,7 @@
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render, screen } from 'test/test-utils';
 
-import { type NavModel } from '@grafana/data';
+import type { NavModel } from '@grafana/data/types';
 import { setBackendSrv } from '@grafana/runtime';
 import { ModalRoot } from '@grafana/ui';
 import { type Organization } from 'app/types/organization';

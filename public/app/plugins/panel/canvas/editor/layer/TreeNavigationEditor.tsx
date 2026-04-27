@@ -3,10 +3,13 @@ import { Global } from '@emotion/react';
 import Tree, { type TreeNodeProps } from '@rc-component/tree';
 import { type Key, useEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { type ElementState } from 'app/features/canvas/runtime/element';
 import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';

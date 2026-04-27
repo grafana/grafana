@@ -1,4 +1,5 @@
-import { createTheme, LogsSortOrder } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { LogsSortOrder } from '@grafana/data/types';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';

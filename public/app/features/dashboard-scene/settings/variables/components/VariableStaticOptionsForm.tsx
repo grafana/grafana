@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { type VariableValueOption } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
 import { type VariableStaticOptionsFormItem } from './VariableStaticOptionsFormItemEditor';

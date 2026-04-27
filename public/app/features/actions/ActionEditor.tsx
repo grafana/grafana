@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 import { memo, useId } from 'react';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   type Action,
   ActionType,
   type DataSourceInstanceSettings,
-  type GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
   type VariableSuggestion,
   type InfinityOptions,
   type FetchOptions,
   type ActionVariable,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   ColorPicker,
@@ -23,9 +23,8 @@ import {
   RadioButtonGroup,
   Stack,
   Switch,
-  useStyles2,
-  useTheme2,
 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

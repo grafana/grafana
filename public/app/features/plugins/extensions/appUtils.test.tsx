@@ -1,6 +1,6 @@
 // The tests here are mostly a copy of the tests in public/app/features/plugins/extensions/utils.tsx + real config.apps tests
 
-import { type AppPluginConfig, PluginExtensionPoints, PluginLoadingStrategy } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionPoints, PluginLoadingStrategy } from '@grafana/data/types';
 
 import {
   getAppPluginConfigsSync,

@@ -5,20 +5,36 @@ import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
-import { type AbsoluteTimeRange, CoreApp, DataHoverClearEvent, DataHoverEvent, type DataQueryResponse, type EventBus, type ExploreLogsPanelState, type ExplorePanelsState, type GrafanaTheme2, LoadingState, type LogLevel, type LogRowContextOptions, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, LogsSortOrder, type PanelData, rangeUtil, type RawTimeRange, serializeStateToUrlParam, type SplitOpen, store, type TimeRange, type TimeZone, toUtc, urlUtil } from '@grafana/data';
 import { compareArrayValues, type DataFrame, shallowCompare } from '@grafana/data/dataframe';
+import { rangeUtil, toUtc } from '@grafana/data/datetime';
+import { DataHoverClearEvent, DataHoverEvent, type EventBus } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  type AbsoluteTimeRange,
+  CoreApp,
+  type DataQueryResponse,
+  type ExploreLogsPanelState,
+  type ExplorePanelsState,
+  LoadingState,
+  type LogLevel,
+  type LogRowContextOptions,
+  type LogRowModel,
+  LogsDedupStrategy,
+  type LogsMetaItem,
+  LogsSortOrder,
+  type PanelData,
+  type RawTimeRange,
+  type SplitOpen,
+  type TimeRange,
+  type TimeZone,
+} from '@grafana/data/types';
+import { serializeStateToUrlParam, store, urlUtil } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';
-import {
-  Button,
-  PanelChrome,
-  type PopoverContent,
-  RadioButtonGroup,
-  SeriesVisibilityChangeMode,
-  type Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { Button, PanelChrome, type PopoverContent, RadioButtonGroup, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';

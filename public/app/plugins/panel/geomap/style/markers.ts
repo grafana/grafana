@@ -2,7 +2,8 @@ import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style'
 import type { FlatStyle } from 'ol/style/flat';
 import tinycolor from 'tinycolor2';
 
-import { Registry, type RegistryItem, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import { Registry, type RegistryItem } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 

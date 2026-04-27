@@ -4,7 +4,7 @@ import { type Meta, type StoryFn } from '@storybook/react';
 import Chance from 'chance';
 import { useState } from 'react';
 
-import { type SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data/types';
 
 import { getAvailableIcons } from '../../types/icon';
 import { Alert } from '../Alert/Alert';

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 
 import { MetricKind, ValueTypes } from '../dataquery.gen';
 import { createMockMetricDescriptor } from '../mocks/cloudMonitoringMetricDescriptor';

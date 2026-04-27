@@ -1,5 +1,6 @@
-import { type FieldDisplay, ThresholdsMode } from '@grafana/data';
 import { type DataFrameView } from '@grafana/data/dataframe';
+import type { FieldDisplay } from '@grafana/data/field';
+import { ThresholdsMode } from '@grafana/data/types';
 
 import type { RadialGaugeProps } from './RadialGauge';
 import { type RadialGaugeDimensions } from './types';

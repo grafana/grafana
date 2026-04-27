@@ -2,7 +2,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { Input, SecretInput, Field, Space, Box } from '@grafana/ui';
 
 import {

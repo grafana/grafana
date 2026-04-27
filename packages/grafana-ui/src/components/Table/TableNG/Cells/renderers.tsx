@@ -1,8 +1,8 @@
 import { clsx } from 'clsx';
 import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type Field, FieldType, isDataFrame, isTimeSeriesFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { TableCellDisplayMode, type TableCellOptions, type TableCustomCellOptions } from '../../types';
 import {

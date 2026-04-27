@@ -3,7 +3,7 @@ import { type FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

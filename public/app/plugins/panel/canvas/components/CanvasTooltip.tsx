@@ -3,9 +3,12 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { createRef, useMemo } from 'react';
 
-import { type LinkModel, type GrafanaTheme2, formattedValueToString, getFieldDisplayName, type ScopedVars, type ActionModel } from '@grafana/data';
 import { type Field, FieldType, type ValueLinkConfig } from '@grafana/data/dataframe';
-import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel, ScopedVars, ActionModel } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
+import { Portal, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -13,6 +16,7 @@ import {
   type VizTooltipItem,
   CloseButton,
 } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 

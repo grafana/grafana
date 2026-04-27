@@ -1,4 +1,4 @@
-import { locationUtil, type UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';

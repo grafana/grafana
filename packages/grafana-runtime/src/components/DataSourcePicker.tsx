@@ -5,10 +5,10 @@ import { PureComponent } from 'react';
 import {
   type DataSourceInstanceSettings,
   type DataSourceRef,
-  getDataSourceUID,
   isUnsignedPluginSignature,
   type SelectableValue,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceUID } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
 

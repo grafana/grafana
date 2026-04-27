@@ -1,6 +1,6 @@
 import { Subject, throwError } from 'rxjs';
 
-import { type LiveChannelEvent, LiveChannelEventType } from '@grafana/data';
+import { type LiveChannelEvent, LiveChannelEventType } from '@grafana/data/types';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 

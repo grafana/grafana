@@ -1,7 +1,7 @@
 import { type Decorator } from '@storybook/react';
 import { useEffect } from 'react';
 
-import { setTimeZoneResolver } from '@grafana/data';
+import { setTimeZoneResolver } from '@grafana/data/datetime';
 
 export const withTimeZone = (): Decorator => (Story, context) => {
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { type ComponentType } from 'react';
 
+import { BusEventWithPayload } from '@grafana/data/events';
 import {
-  BusEventWithPayload,
   type DataQuery,
   type DataSourceJsonData,
   LoadingState,
@@ -9,7 +9,7 @@ import {
   type BaseVariableModel,
   VariableHide,
   type TypedVariableModel,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { NEW_VARIABLE_ID } from './constants';

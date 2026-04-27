@@ -1,12 +1,6 @@
-import {
-  type DataSourceApi,
-  dateTime,
-  type ExploreUrlState,
-  type GrafanaConfig,
-  locationUtil,
-  LogsSortOrder,
-  serializeStateToUrlParam,
-} from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { type DataSourceApi, type ExploreUrlState, type GrafanaConfig, LogsSortOrder } from '@grafana/data/types';
+import { locationUtil, serializeStateToUrlParam } from '@grafana/data/utils';
 import { type DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';

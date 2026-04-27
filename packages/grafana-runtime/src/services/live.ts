@@ -1,7 +1,13 @@
 import { type Observable } from 'rxjs';
 
-import { type DataQueryRequest, type DataQueryResponse, type LiveChannelAddress, type LiveChannelEvent, type LiveChannelPresenceStatus } from '@grafana/data';
 import { type DataFrameJSON, type StreamingFrameOptions } from '@grafana/data/dataframe';
+import type {
+  DataQueryRequest,
+  DataQueryResponse,
+  LiveChannelAddress,
+  LiveChannelEvent,
+  LiveChannelPresenceStatus,
+} from '@grafana/data/types';
 
 /**
  * @alpha -- experimental

@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { type TimeRange, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../mocks/datasource';

@@ -1,7 +1,7 @@
 import { type PropsWithChildren } from 'react';
 import { render, screen, waitFor, getWrapper } from 'test/test-utils';
 
-import { createTheme, ThemeContext } from '@grafana/data';
+import { createTheme, ThemeContext } from '@grafana/data/themes';
 
 import LazyDiffViewer from './LazyDiffViewer';
 

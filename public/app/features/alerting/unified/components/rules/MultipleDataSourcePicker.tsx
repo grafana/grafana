@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
-import {
-  type DataSourceInstanceSettings,
-  type SelectableValue,
-  getDataSourceUID,
-  isUnsignedPluginSignature,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type SelectableValue, isUnsignedPluginSignature } from '@grafana/data/types';
+import { getDataSourceUID } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataSourcePickerProps, type DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';

@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo } from 'react';
 
-import { formattedValueToString } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,

@@ -1,4 +1,4 @@
-import { type TypedVariableModel, VariableSupportType } from '@grafana/data';
+import { type TypedVariableModel, VariableSupportType } from '@grafana/data/types';
 
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';

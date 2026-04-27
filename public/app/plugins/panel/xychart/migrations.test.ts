@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 
 import { xyChartMigrationHandler } from './migrations';
 import { type Options } from './panelcfg.gen';

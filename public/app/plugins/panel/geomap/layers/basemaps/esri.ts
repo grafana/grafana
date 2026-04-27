@@ -1,13 +1,9 @@
 import type OpenLayersMap from 'ol/Map';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type RegistryItem,
-  Registry,
-  type EventBus,
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type RegistryItem, Registry } from '@grafana/data/utils';
 
 import { xyzTiles, defaultXYZConfig, type XYZConfig } from './generic';
 

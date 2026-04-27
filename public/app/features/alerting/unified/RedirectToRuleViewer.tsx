@@ -4,10 +4,12 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Card, LoadingPlaceholder } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
 import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';

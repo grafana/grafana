@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrameType } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { DataFrameType } from '@grafana/data/types';
 import { FIELD_SELECTOR_MIN_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import {
   DATAPLANE_SEVERITY_NAME,

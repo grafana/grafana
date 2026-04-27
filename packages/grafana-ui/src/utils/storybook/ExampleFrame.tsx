@@ -3,7 +3,7 @@ import { Source } from '@storybook/blocks';
 import { Children, isValidElement, type ReactNode, useMemo, useState } from 'react';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { Stack } from '../../components/Layout/Stack/Stack';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';

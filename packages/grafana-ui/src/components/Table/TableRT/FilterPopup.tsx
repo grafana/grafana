@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';

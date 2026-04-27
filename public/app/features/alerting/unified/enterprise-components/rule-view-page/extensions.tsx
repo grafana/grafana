@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { FeatureState, type NavModelItem } from '@grafana/data';
+import { FeatureState, type NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { FeatureBadge, useStyles2 } from '@grafana/ui';
+import { FeatureBadge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useAlertRule } from '../../components/rule-viewer/RuleContext';
 import { EnrichmentAction, useEnrichmentAbility } from '../../hooks/useAbilities';

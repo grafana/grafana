@@ -10,7 +10,7 @@ import {
   type PanelData,
   type QueryVariableModel,
   VariableSupportType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { type TimeSrv } from '../../dashboard/services/TimeSrv';
 import {

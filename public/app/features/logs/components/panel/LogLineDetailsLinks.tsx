@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, Toggletip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FieldDef } from '../logParser';
 

@@ -6,7 +6,7 @@ import {
   PluginLoadingStrategy,
   PluginSignatureStatus,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import type { DatasourcePluginMetas } from '../types';
 

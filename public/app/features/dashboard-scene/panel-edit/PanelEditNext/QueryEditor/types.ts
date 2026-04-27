@@ -1,4 +1,5 @@
-import { type AlertState, type DataTransformerConfig, type TransformerRegistryItem } from '@grafana/data';
+import type { TransformerRegistryItem } from '@grafana/data/transformations';
+import type { AlertState, DataTransformerConfig } from '@grafana/data/types';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 export type Transformation = {

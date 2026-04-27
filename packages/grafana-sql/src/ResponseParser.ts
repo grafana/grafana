@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash';
 
-import { type MetricFindValue } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { MetricFindValue } from '@grafana/data/types';
 
 import type { ResponseParser as ResponseParserType } from './types';
 

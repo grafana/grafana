@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { type VizPanel } from '@grafana/scenes';
 import { createAndCopyShareDashboardLink } from 'app/core/utils/shortLinks';
 import { getTrackingSource } from 'app/features/dashboard/components/ShareModal/utils';

@@ -1,11 +1,11 @@
 import { find } from 'lodash';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceRef,
-  type PanelPluginMeta,
-  type TypedVariableModel,
-} from '@grafana/data';
+import type {
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  PanelPluginMeta,
+  TypedVariableModel,
+} from '@grafana/data/types';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';

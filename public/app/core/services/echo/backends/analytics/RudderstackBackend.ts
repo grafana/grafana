@@ -1,4 +1,4 @@
-import { type BuildInfo } from '@grafana/data';
+import type { BuildInfo } from '@grafana/data/types';
 import {
   type EchoBackend,
   EchoEventType,

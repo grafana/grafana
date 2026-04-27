@@ -1,4 +1,4 @@
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 
 /**
  * Generates a timestamp string in the format YYYY-MM-DD-xxxxx where xxxxx is a random string

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type KeyValue } from '@grafana/data';
+import type { KeyValue } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 
 import { FormField } from '../FormField/FormField';

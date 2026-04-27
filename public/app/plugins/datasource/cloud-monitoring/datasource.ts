@@ -11,7 +11,7 @@ import {
   type SelectableValue,
   type TimeRange,
   getDefaultTimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import {
   DataSourceWithBackend,
   getBackendSrv,

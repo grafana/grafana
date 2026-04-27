@@ -1,4 +1,4 @@
-import { type VariableType, type TypedVariableModel, type BaseVariableModel } from '@grafana/data';
+import type { VariableType, TypedVariableModel, BaseVariableModel } from '@grafana/data/types';
 
 export type VariablesState = Record<string, TypedVariableModel>;
 

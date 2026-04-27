@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 
-import { type RawTimeRange, type TimeRange } from '@grafana/data';
+import type { RawTimeRange, TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ClipboardButton, Field, Label, Stack, Switch, TextArea } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

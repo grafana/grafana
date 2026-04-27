@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { createTheme, type ThemeTypographyVariantTypes } from '@grafana/data';
+import { createTheme, type ThemeTypographyVariantTypes } from '@grafana/data/themes';
 
 import { Text } from './Text';
 

@@ -2,8 +2,12 @@ import type OpenLayersMap from 'ol/Map';
 import { type Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 
-import { type EventBus, getFieldColorModeForField, type GrafanaTheme2, type MapLayerOptions, type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import { getFieldColorModeForField } from '@grafana/data/field';
+import type { MapLayerOptions, MapLayerRegistryItem } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData } from '@grafana/data/types';
 import { type ScaleDimensionConfig } from '@grafana/schema';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
 import { getScaledDimension } from 'app/features/dimensions/scale';

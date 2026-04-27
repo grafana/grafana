@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { fuzzySearch, type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { fuzzySearch } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

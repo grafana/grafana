@@ -1,5 +1,7 @@
-import { createTheme, getDisplayProcessor, MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data';
 import { createDataFrame, FieldType, type Field } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import { MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data/types';
 import { AxisPlacement, FieldColorModeId, VisibilityMode } from '@grafana/schema';
 
 import { PointShape } from './panelcfg.gen';

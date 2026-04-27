@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';

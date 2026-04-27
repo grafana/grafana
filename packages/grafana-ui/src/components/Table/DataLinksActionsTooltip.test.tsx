@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LinkModel, type ActionModel } from '@grafana/data';
+import type { LinkModel, ActionModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';

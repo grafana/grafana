@@ -3,7 +3,9 @@ import type View from 'ol/View';
 import { transformExtent } from 'ol/proj';
 import { type ComponentProps } from 'react';
 
-import { dateTime, EventBusSrv, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { LoadingState } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { GeomapPanel } from './GeomapPanel';

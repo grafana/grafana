@@ -1,4 +1,4 @@
-import { type UrlQueryMap } from '@grafana/data';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ListOptions, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';

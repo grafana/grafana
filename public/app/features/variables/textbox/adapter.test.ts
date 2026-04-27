@@ -1,4 +1,4 @@
-import { VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data/types';
 
 import { variableAdapters } from '../adapters';
 import { textboxBuilder } from '../shared/testing/builders';

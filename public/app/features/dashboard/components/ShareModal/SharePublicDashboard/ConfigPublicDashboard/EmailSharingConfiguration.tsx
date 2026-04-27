@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useAddRecipientMutation,

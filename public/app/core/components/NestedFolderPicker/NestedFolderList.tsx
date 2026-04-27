@@ -5,10 +5,11 @@ import Skeleton from 'react-loading-skeleton';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
+import { Avatar, IconButton, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';

@@ -1,10 +1,10 @@
+import type { PanelDataSummary } from '@grafana/data/panel';
 import {
   DataFrameType,
   type PanelData,
-  type PanelDataSummary,
   type VisualizationSuggestion,
   VisualizationSuggestionScore,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { LegendDisplayMode, type ReduceDataOptions, type VizLegendOptions } from '@grafana/schema';
 
 /**

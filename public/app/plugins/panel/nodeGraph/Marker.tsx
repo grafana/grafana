@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { type MouseEvent, memo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type NodesMarker } from './types';
 

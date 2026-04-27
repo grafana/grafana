@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type TimeZone } from '@grafana/data';
 import { type Dimensions } from '@grafana/data/dataframe';
+import type { TimeZone } from '@grafana/data/types';
 import { type TooltipDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';

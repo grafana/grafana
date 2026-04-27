@@ -1,4 +1,5 @@
-import { type HistoryItem, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { HistoryItem } from '@grafana/data/types';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { type LokiDatasource } from '../../../datasource';

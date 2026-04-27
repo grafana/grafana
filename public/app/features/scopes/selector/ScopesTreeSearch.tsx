@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { FilterInput } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TreeNode } from './types';
 import { useScopeActions } from './useScopeActions';

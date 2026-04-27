@@ -1,4 +1,4 @@
-import { FeatureState } from '@grafana/data';
+import { FeatureState } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

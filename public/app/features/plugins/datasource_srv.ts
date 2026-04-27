@@ -6,8 +6,8 @@ import {
   PluginType,
   type ScopedVars,
   isObject,
-  matchPluginId,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { matchPluginId } from '@grafana/data/utils';
 import {
   type DataSourceSrv as DataSourceService,
   getBackendSrv,

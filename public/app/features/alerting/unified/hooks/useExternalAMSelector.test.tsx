@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 import { getWrapper } from 'test/test-utils';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 

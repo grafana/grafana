@@ -4,22 +4,24 @@ import * as React from 'react';
 import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
-  type GrafanaTheme2,
   LoadingState,
   type PanelData,
   type RelativeTimeRange,
   type ThresholdsConfig,
   getDefaultRelativeTimeRange,
-  rangeUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type GraphThresholdsStyleMode, InlineField, Input, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';

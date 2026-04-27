@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';

@@ -7,7 +7,7 @@ import {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionExposedComponentConfig,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { type SandboxPluginMeta, type SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';

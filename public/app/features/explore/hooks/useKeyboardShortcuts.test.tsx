@@ -1,6 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 
-import { dateTime, EventBusSrv } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
 import { getAppEvents } from '@grafana/runtime';
 import {
   AbsoluteTimeEvent,

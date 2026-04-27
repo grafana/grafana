@@ -1,4 +1,4 @@
-import { type GrafanaThemeCommons } from '@grafana/data';
+import type { GrafanaThemeCommons } from '@grafana/data/types';
 
 export const commonColorsPalette = {
   // New greys palette used by next-gen form elements

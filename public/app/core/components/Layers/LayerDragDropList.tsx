@@ -2,9 +2,11 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import type { JSX } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LayerName } from './LayerName';
 import { type LayerElement } from './types';

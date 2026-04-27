@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type PanelProps, VizOrientation } from '@grafana/data';
+import { type PanelProps, VizOrientation } from '@grafana/data/types';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   type AdHocFilterItem,
@@ -9,11 +9,11 @@ import {
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
   VizLayout,
-  measureText,
   usePanelContext,
-  useTheme2,
 } from '@grafana/ui';
 import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
+import { measureText } from '@grafana/ui/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 

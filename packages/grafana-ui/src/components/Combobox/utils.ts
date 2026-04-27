@@ -1,4 +1,4 @@
-import { isIconName, type SelectableValue } from '@grafana/data';
+import { isIconName, type SelectableValue } from '@grafana/data/types';
 
 import { type ComboboxOption } from './types';
 

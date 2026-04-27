@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, isObject } from '@grafana/data';
+import { AppEvents, isObject } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';

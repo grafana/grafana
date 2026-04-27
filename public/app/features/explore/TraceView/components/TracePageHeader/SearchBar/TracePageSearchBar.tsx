@@ -15,9 +15,11 @@
 import { css } from '@emotion/css';
 import { memo, type Dispatch, type SetStateAction } from 'react';
 
-import { type GrafanaTheme2, type TraceSearchProps } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TraceSearchProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { InlineSwitch, useStyles2 } from '@grafana/ui';
+import { InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Trace } from '../../types/trace';
 

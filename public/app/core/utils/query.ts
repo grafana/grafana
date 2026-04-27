@@ -1,4 +1,5 @@
-import { type DataQuery, type DataSourceRef, getNextRefId } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import type { DataQuery, DataSourceRef } from '@grafana/data/types';
 
 // This function checks if the query has defined properties beyond those defined in the DataQuery interface.
 export function queryIsEmpty(query: DataQuery): boolean {

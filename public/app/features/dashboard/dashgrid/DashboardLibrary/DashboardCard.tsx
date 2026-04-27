@@ -3,10 +3,11 @@ import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 

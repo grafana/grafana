@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { LoadingState, type PanelData } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data/types';
 
 import { type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';

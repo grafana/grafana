@@ -1,7 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, type SelectableValue } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Checkbox } from '../Forms/Checkbox';

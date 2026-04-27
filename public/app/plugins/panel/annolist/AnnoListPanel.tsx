@@ -2,20 +2,16 @@ import { css } from '@emotion/css';
 import { createRef, PureComponent, type JSX } from 'react';
 import { Subscription } from 'rxjs';
 
-import {
-  AnnotationChangeEvent,
-  type AnnotationEvent,
-  AppEvents,
-  dateTime,
-  dateMath,
-  type GrafanaTheme2,
-  locationUtil,
-  type PanelProps,
-} from '@grafana/data';
+import { dateTime, dateMath } from '@grafana/data/datetime';
+import { AnnotationChangeEvent } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type AnnotationEvent, AppEvents, type PanelProps } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
+import { Button, ScrollContainer, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
+import { stylesFactory } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 

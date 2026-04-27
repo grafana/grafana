@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import type { DashboardLink } from '@grafana/schema';
-import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardScene } from '../../scene/DashboardScene';

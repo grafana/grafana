@@ -1,7 +1,9 @@
 import { isEmpty } from 'lodash';
 
-import { type DisplayValue, getActiveThreshold, getDisplayProcessor, type GrafanaTheme2, type Labels, type ThresholdsConfig, type ValueMapping } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { getActiveThreshold, getDisplayProcessor } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DisplayValue, Labels, ThresholdsConfig, ValueMapping } from '@grafana/data/types';
 import { BigValueColorMode } from '@grafana/ui';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';

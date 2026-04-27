@@ -2,7 +2,8 @@ import { render } from '@testing-library/react';
 import { Subscription } from 'rxjs';
 import type uPlot from 'uplot';
 
-import { DataHoverClearEvent, DataHoverEvent, EventBusSrv, LegacyGraphHoverEvent } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, EventBusSrv } from '@grafana/data/events';
+import { LegacyGraphHoverEvent } from '@grafana/data/types';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 

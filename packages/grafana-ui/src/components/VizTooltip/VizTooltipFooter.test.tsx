@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { type Field, FieldType, type LinkModel } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
+import type { LinkModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VizTooltipFooter, type AdHocFilterModel } from './VizTooltipFooter';

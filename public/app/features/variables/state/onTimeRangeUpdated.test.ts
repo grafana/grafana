@@ -1,4 +1,5 @@
-import { dateTime, type TimeRange, VariableRefresh } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { type TimeRange, VariableRefresh } from '@grafana/data/types';
 import { config, type DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
 import { type DashboardState } from 'app/types/dashboard';

@@ -1,4 +1,4 @@
-import { type PluginType } from '@grafana/data';
+import type { PluginType } from '@grafana/data/types';
 
 import { getLogger } from '../logging/registry';
 

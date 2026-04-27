@@ -1,11 +1,11 @@
 import { useMemo, type JSX } from 'react';
 
+import { usePluginContext } from '@grafana/data/context';
 import {
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionComponentMeta,
   PluginExtensionTypes,
-  usePluginContext,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type UsePluginComponentsOptions, type UsePluginComponentsResult } from '@grafana/runtime';
 
 import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';

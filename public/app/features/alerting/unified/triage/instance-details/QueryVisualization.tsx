@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { type Labels, LoadingState } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type Labels, LoadingState } from '@grafana/data/types';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';

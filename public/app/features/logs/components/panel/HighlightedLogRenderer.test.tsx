@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { LogsSortOrder } from '@grafana/data';
+import { LogsSortOrder } from '@grafana/data/types';
 
 import { createLogLine } from '../mocks/logRow';
 

@@ -1,4 +1,5 @@
-import { dateTime, type TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 
 const start = 1483196400 * 1000;
 const from = dateTime(start);

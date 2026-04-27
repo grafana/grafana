@@ -1,10 +1,11 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Menu, MenuItem, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2, type TypedVariableModel, VariableHide } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type TypedVariableModel, VariableHide } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 

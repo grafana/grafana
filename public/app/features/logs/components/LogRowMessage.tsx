@@ -2,16 +2,13 @@ import { css } from '@emotion/css';
 import { memo, type ReactNode, type SyntheticEvent, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import {
-  type CoreApp,
-  findHighlightChunksInText,
-  type GrafanaTheme2,
-  type LogRowContextOptions,
-  type LogRowModel,
-} from '@grafana/data';
+import { findHighlightChunksInText } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { CoreApp, LogRowContextOptions, LogRowModel } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { type PopoverContent, useTheme2 } from '@grafana/ui';
+import type { PopoverContent } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { escapeUnescapedString } from '../utils';
 

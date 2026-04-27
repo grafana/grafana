@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { type CatalogPlugin, SCORE_LEVELS } from '../types';

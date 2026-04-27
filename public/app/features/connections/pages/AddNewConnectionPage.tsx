@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { PluginType, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginType } from '@grafana/data/types';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
 import UpdateAllButton from 'app/features/plugins/admin/components/UpdateAllButton';

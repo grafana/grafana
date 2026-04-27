@@ -2,17 +2,11 @@ import debounce from 'debounce-promise';
 import { has, size } from 'lodash';
 import { useState } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
-import {
-  Select,
-  InlineFormLabel,
-  Icon,
-  clearButtonStyles,
-  useStyles2,
-  AsyncSelect,
-  Stack,
-  InlineLabel,
-} from '@grafana/ui';
+import type { SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
+import { Select, InlineFormLabel, clearButtonStyles, AsyncSelect, Stack, InlineLabel } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type OpenTsdbQuery } from '../types';
 

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Text, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
+import { Text, Stack, Button, LinkButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';

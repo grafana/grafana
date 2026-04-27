@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeValueMode, type TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup } from '@grafana/ui';

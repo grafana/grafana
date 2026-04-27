@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'path';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { darkThemeVarsTemplate } from './themeTemplates/_variables.dark.scss.tmpl';
 import { lightThemeVarsTemplate } from './themeTemplates/_variables.light.scss.tmpl';

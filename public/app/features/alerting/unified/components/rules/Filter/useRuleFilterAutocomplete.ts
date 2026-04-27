@@ -1,7 +1,7 @@
 import { chain } from 'lodash';
 import { useCallback } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';

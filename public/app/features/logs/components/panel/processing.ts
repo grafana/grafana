@@ -2,8 +2,9 @@ import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
 import Prism, { type Grammar, type Token } from 'prismjs';
 
-import { dateTimeFormat, type Labels, LogLevel, type LogRowModel, type LogsSortOrder, systemDateFormats } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
+import { type Labels, LogLevel, type LogRowModel, type LogsSortOrder } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 

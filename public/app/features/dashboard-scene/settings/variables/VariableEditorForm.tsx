@@ -3,13 +3,15 @@ import { type FormEvent, useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
 import { type VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Alert, Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';

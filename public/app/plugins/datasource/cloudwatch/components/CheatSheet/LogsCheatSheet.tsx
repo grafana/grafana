@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import Prism from 'prismjs';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Collapse, useStyles2, Text, TextLink } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Collapse, Text, TextLink } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CloudWatchLogsQuery, LogsQueryLanguage } from '../../dataquery.gen';
 import { trackSampleQuerySelection } from '../../tracking';

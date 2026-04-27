@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { type ReactNode, useId } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface CollapsableSectionProps {
   label: string;

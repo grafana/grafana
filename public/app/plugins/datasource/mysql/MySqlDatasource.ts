@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import type { DataSourceInstanceSettings, TimeRange } from '@grafana/data/types';
 import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import {
   COMMON_FNS,

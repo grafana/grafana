@@ -1,4 +1,4 @@
-import { type DashboardLoadedEvent } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data/events';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';

@@ -1,4 +1,4 @@
-import { type DataQueryResponse } from '@grafana/data';
+import type { DataQueryResponse } from '@grafana/data/types';
 
 import { isMaxBytesErrorResponse, isTimeoutErrorResponse } from './logsVolumeResponse';
 

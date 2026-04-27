@@ -1,5 +1,5 @@
-import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { store } from '@grafana/data/utils';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {

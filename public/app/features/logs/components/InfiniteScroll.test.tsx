@@ -2,7 +2,8 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
-import { CoreApp, type LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
+import { dateTimeForTimeZone, rangeUtil } from '@grafana/data/datetime';
+import { CoreApp, type LogRowModel } from '@grafana/data/types';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { InfiniteScroll, type Props, SCROLLING_THRESHOLD } from './InfiniteScroll';

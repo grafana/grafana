@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Box, Text, useStyles2 } from '@grafana/ui';
+import { Box, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface MessageListProps {
   messages: string[];

@@ -1,4 +1,4 @@
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import { type Monaco, type monacoTypes } from '@grafana/ui';
 
 import LokiLanguageProvider from '../../../LanguageProvider';

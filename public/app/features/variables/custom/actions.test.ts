@@ -1,4 +1,4 @@
-import { type CustomVariableModel, type VariableOption } from '@grafana/data';
+import type { CustomVariableModel, VariableOption } from '@grafana/data/types';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';

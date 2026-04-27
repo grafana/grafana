@@ -1,6 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
+import type { AnnotationQuery, TimeRange } from '@grafana/data/types';
+import { isEmptyObject } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {

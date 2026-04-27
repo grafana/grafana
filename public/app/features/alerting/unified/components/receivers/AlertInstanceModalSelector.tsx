@@ -3,19 +3,11 @@ import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  FilterInput,
-  Icon,
-  LoadingPlaceholder,
-  Modal,
-  Tag,
-  Tooltip,
-  clearButtonStyles,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, FilterInput, LoadingPlaceholder, Modal, Tag, Tooltip, clearButtonStyles } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerAlert, type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';

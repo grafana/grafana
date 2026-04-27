@@ -1,7 +1,8 @@
 import { assertIsDefined } from 'test/helpers/asserts';
 
-import { createTheme, FieldColorModeId, type FieldConfigSource } from '@grafana/data';
 import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
+import { FieldColorModeId, type FieldConfigSource } from '@grafana/data/types';
 import {
   AxisColorMode,
   AxisPlacement,

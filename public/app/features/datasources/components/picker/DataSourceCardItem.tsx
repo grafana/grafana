@@ -1,4 +1,4 @@
-import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data/types';
 import { type FavoriteDatasources, reportInteraction } from '@grafana/runtime';
 
 import { DataSourceCard } from './DataSourceCard';

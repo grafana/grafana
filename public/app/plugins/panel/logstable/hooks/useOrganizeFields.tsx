@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
-import { type FieldConfigSource, transformDataFrame } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { transformDataFrame } from '@grafana/data/transformations';
+import type { FieldConfigSource } from '@grafana/data/types';
 import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 

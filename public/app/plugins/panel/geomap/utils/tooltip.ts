@@ -6,8 +6,8 @@ import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { toLonLat } from 'ol/proj';
 import type VectorSource from 'ol/source/Vector';
 
-import { DataHoverClearEvent } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { DataHoverClearEvent } from '@grafana/data/events';
 
 import { type GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';

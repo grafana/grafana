@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { config, reportInteraction } from '@grafana/runtime';
 import { InlineField, Input, Stack } from '@grafana/ui';
 

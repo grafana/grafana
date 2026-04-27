@@ -1,9 +1,6 @@
-import {
-  createFieldConfigRegistry,
-  FieldConfigProperty,
-  type FieldConfigOptionsRegistry,
-  type SetFieldConfigOptionsArgs,
-} from '@grafana/data';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data/panel';
+import { FieldConfigProperty } from '@grafana/data/types';
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 
 import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';

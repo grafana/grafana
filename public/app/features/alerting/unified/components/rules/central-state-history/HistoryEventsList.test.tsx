@@ -1,7 +1,7 @@
 import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byTestId } from 'testing-library-selector';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { getDefaultTimeRange } from '@grafana/data/types';
 
 import { setupMswServer } from '../../../mockApi';
 import { captureRequests } from '../../../mocks/server/events';

@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { type DataSourceInstanceSettings, PluginType, type ScopedVars } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType, type ScopedVars } from '@grafana/data/types';
 import {
   type FetchResponse,
   getBackendSrv,

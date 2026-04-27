@@ -1,14 +1,10 @@
 import type OpenLayersMap from 'ol/Map';
 
-import {
-  type MapLayerRegistryItem,
-  Registry,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type EventBus,
-  type SelectableValue,
-  PluginState,
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type SelectableValue, PluginState } from '@grafana/data/types';
+import { Registry } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { hasAlphaPanels } from 'app/core/config';
 

@@ -1,6 +1,8 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 
-import { VizOrientation, ThresholdsMode, type Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { VizOrientation, ThresholdsMode } from '@grafana/data/types';
 import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';

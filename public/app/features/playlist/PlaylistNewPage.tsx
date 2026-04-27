@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';

@@ -9,7 +9,7 @@ import VectorSource from 'ol/source/Vector';
 import { getArea, getLength } from 'ol/sphere';
 import { Circle as CircleStyle, Fill, RegularShape, Stroke, Style, Text } from 'ol/style';
 
-import { formattedValueToString } from '@grafana/data';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { type MapMeasureOptions, measures } from '../utils/measure';
 

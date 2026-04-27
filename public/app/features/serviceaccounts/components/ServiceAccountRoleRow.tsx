@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { type OrgRole } from '@grafana/data';
+import type { OrgRole } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';

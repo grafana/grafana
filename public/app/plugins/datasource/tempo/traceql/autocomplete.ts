@@ -1,6 +1,6 @@
 import { type IMarkdownString, languages } from 'monaco-editor';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 

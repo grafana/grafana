@@ -1,5 +1,16 @@
-import { type DataLink, type DataLinkPostProcessor, type DataSourceInstanceSettings, type DataSourceJsonData, dateTime, type LinkModel, mapInternalLinkToExplore, rangeUtil, type ScopedVars, type SplitOpen, type TimeRange } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { dateTime, rangeUtil } from '@grafana/data/datetime';
+import type {
+  DataLink,
+  DataLinkPostProcessor,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  LinkModel,
+  ScopedVars,
+  SplitOpen,
+  TimeRange,
+} from '@grafana/data/types';
+import { mapInternalLinkToExplore } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import {
   type TraceToProfilesOptions,
@@ -10,7 +21,7 @@ import {
 import { type PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Icon } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type LokiQuery } from '../../../plugins/datasource/loki/types';

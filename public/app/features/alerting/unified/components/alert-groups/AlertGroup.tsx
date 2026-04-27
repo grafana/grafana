@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, TextLink, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { useCanViewContactPoints } from '../../hooks/useAbilities';

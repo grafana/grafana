@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, type Draft, type PayloadAction } from '@reduxjs/toolkit';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 
 import { type DashboardInputs, DashboardSource, InputType, type LibraryPanelInput } from '../../types';
 

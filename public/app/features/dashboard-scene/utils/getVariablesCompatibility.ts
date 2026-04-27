@@ -1,4 +1,4 @@
-import { type TypedVariableModel, type VariableModel } from '@grafana/data';
+import type { TypedVariableModel, VariableModel } from '@grafana/data/types';
 import { type SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';

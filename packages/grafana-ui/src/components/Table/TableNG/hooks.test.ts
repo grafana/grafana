@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
+import { createDataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { ReducerID } from '@grafana/data/transformations';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';

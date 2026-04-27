@@ -1,6 +1,6 @@
 import { get, set } from 'lodash';
 
-import { type ScopedVars } from '@grafana/data';
+import type { ScopedVars } from '@grafana/data/types';
 import { type VariableInterpolation } from '@grafana/runtime';
 
 import AzureMonitorDatasource from '../datasource';

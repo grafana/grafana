@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
 
 import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';

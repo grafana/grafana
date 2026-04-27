@@ -16,8 +16,9 @@ import {
 import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { type AnnotationEvent, type DataQueryRequest, type DataQueryResponse, dateMath, type DateTime, type ScopedVars } from '@grafana/data';
 import { type DataFrame, toDataFrame } from '@grafana/data/dataframe';
+import { dateMath, type DateTime } from '@grafana/data/datetime';
+import type { AnnotationEvent, DataQueryRequest, DataQueryResponse, ScopedVars } from '@grafana/data/types';
 import {
   config,
   DataSourceWithBackend,

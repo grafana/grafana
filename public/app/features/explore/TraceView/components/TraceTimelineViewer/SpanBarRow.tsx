@@ -16,10 +16,13 @@ import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TraceKeyValuePair } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
-import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../Theme';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';

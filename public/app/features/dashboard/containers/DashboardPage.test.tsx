@@ -4,7 +4,7 @@ import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setDataSourceSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';

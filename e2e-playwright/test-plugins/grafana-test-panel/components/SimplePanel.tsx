@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { PanelDataErrorView } from '@grafana/runtime';
-import { PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data/types';
 import React from 'react';
 import { SimpleOptions } from '../types';
 import { Trans } from '@grafana/i18n';

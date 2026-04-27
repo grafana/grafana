@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { serializeStateToUrlParam } from '@grafana/data/utils';
 
 import * as mainState from '../state/main';
 

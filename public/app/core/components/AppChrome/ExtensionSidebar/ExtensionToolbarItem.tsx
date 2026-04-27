@@ -1,4 +1,4 @@
-import { type ExtensionInfo } from '@grafana/data';
+import type { ExtensionInfo } from '@grafana/data/types';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';

@@ -7,7 +7,7 @@ import {
   PluginSignatureStatus,
   PluginState,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import type { PanelPluginMetas } from '../types';
 

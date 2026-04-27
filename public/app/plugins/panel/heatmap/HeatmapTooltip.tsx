@@ -2,10 +2,12 @@ import { type ReactElement, useEffect, useRef, useState, type ReactNode } from '
 import * as React from 'react';
 import uPlot from 'uplot';
 
-import { type ActionModel, formattedValueToString, getFieldDisplayName, type InterpolateFunction, type LinkModel, type PanelData } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { ActionModel, InterpolateFunction, LinkModel, PanelData } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -15,6 +17,7 @@ import {
   ColorIndicator,
   ColorPlacement,
 } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';

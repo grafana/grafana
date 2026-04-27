@@ -3,7 +3,7 @@ import { type FC, type CSSProperties, type ComponentType } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { type LegendPlacement } from '@grafana/schema';
 

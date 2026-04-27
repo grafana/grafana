@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { makeTimeRange } from '@grafana/data';
 import { createDataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { makeTimeRange } from '@grafana/data/types';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';

@@ -3,21 +3,6 @@
  *
  * @packageDocumentation
  */
-
-import { FormField } from './components/FormField/FormField';
-import { Input, LegacyInputStatus } from './components/Forms/Legacy/Input/Input';
-import { IndicatorsContainer } from './components/Forms/Legacy/Select/IndicatorsContainer';
-import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMessage';
-import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
-import { Switch } from './components/Forms/Legacy/Switch/Switch';
-import { SecretFormField } from './components/SecretFormField/SecretFormField';
-import * as commonOptionsBuilder from './options/builder';
-import * as styleMixins from './themes/mixins';
-import * as DOMUtil from './utils/dom';
-import * as floatingUtils from './utils/floating';
-import * as ReactUtils from './utils/reactUtils';
-
-export { Icon } from './components/Icon/Icon';
 export { IconButton, type IconButtonVariant } from './components/IconButton/IconButton';
 export { ConfirmButton } from './components/ConfirmButton/ConfirmButton';
 export { DeleteButton } from './components/ConfirmButton/DeleteButton';
@@ -201,7 +186,6 @@ export {
   type DataLinksContextMenuProps,
   type DataLinksContextMenuApi,
 } from './components/DataLinks/DataLinksContextMenu';
-export { SeriesIcon } from './components/VizLegend/SeriesIcon';
 export { InfoBox } from './components/InfoBox/InfoBox';
 export { FeatureInfoBox } from './components/InfoBox/FeatureInfoBox';
 export { FeatureBadge } from './components/FeatureBadge/FeatureBadge';
@@ -323,7 +307,6 @@ export {
   PluginSignatureBadge,
   type PluginSignatureBadgeProps,
 } from './components/PluginSignatureBadge/PluginSignatureBadge';
-export { UserIcon, type UserIconProps } from './components/UsersIndicator/UserIcon';
 export { UsersIndicator, type UsersIndicatorProps } from './components/UsersIndicator/UsersIndicator';
 export { type UserView } from './components/UsersIndicator/types';
 export { Avatar } from './components/UsersIndicator/Avatar';
@@ -332,19 +315,6 @@ export { InlineFormLabel } from './components/FormLabel/FormLabel';
 export { Divider } from './components/Divider/Divider';
 export { getDragStyles, type DragHandlePosition } from './components/DragHandle/DragHandle';
 export { useSplitter } from './components/Splitter/useSplitter';
-
-/** @deprecated Please use non-legacy versions of these components */
-const LegacyForms = {
-  SecretFormField,
-  FormField,
-  Select,
-  AsyncSelect,
-  IndicatorsContainer,
-  NoOptionsMessage,
-  Input,
-  Switch,
-};
-export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export { graphFieldOptions, getGraphFieldOptions } from './components/uPlot/config';
@@ -367,20 +337,6 @@ export { Label as BrowserLabel } from './components/BrowserLabel/Label';
 export { PanelContainer } from './components/PanelContainer/PanelContainer';
 export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 
-// -----------------------------------------------------
-// Graveyard: exported, but no longer used internally
-// These will be removed in the future
-// -----------------------------------------------------
-
-export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
-export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
-export { useGraphNGContext } from './graveyard/GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './graveyard/GraphNG/utils';
-export { type GraphNGLegendEvent } from './graveyard/GraphNG/types';
-
-export { ZoomPlugin } from './graveyard/uPlot/plugins/ZoomPlugin';
-export { TooltipPlugin } from './graveyard/uPlot/plugins/TooltipPlugin';
-
 export {
   ElementSelectionContext,
   useElementSelection,
@@ -390,81 +346,19 @@ export {
   type UseElementSelectionResult,
 } from './components/ElementSelectionContext/ElementSelectionContext';
 
-export type { Themeable, Themeable2 } from './types/theme';
-export type { ValidationRule, ValidationEvents } from './types/input';
-export type {
-  SearchFunction,
-  CompletionItemGroup,
-  HighlightPart,
-  CompletionItem,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-} from './types/completion';
-export { CompletionItemKind } from './types/completion';
-export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
-export type { IconName, IconType, IconSize } from './types/icon';
-export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTypeIconName } from './types/icon';
-export type { ActionMeta } from './types/select';
-export type { ComponentSize } from './types/size';
-export type { Column } from './types/interactiveTable';
 export type { CellProps, SortByFn } from 'react-table';
 
-export {
-  DEFAULT_ANNOTATION_COLOR,
-  OK_COLOR,
-  ALERTING_COLOR,
-  NO_DATA_COLOR,
-  PENDING_COLOR,
-  REGION_FILL_ALPHA,
-  colors,
-  getTextColorForBackground,
-  getTextColorForAlphaBackground,
-  sortedColors,
-} from './utils/colors';
-export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
-export { SCHEMA, makeFragment, makeValue } from './utils/slate';
-export { linkModelToContextMenuItems } from './utils/dataLinks';
-export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
-export { getScrollbarWidth } from './utils/scrollbar';
-export { getCellLinks } from './utils/table';
-export { getCanvasContext, measureText, calculateFontSize } from './utils/measureText';
-export { createPointerDistance, usePointerDistance } from './utils/usePointerDistance';
-export { useForceUpdate } from './utils/useForceUpdate';
-export { SearchFunctionType } from './utils/searchFunctions';
-export { createLogger } from './utils/logger';
-export { attachDebugger } from './utils/debug';
-export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
-export { fuzzyMatch } from './utils/fuzzy';
-export { logOptions } from './utils/logOptions';
+export * from './components/Forms/Legacy';
+// export * from './components/icons';
+export * from './graveyard';
+export * from './utils';
+export * from './themes';
+export * from './types';
+export * from './slate-plugins';
+export * from './options';
 
-export { DOMUtil, ReactUtils, floatingUtils };
+export { ThemeContext } from '@grafana/data/themes';
 
-export { ThemeContext } from '@grafana/data';
-export {
-  withTheme,
-  withTheme2,
-  useTheme,
-  useTheme2,
-  useStyles,
-  useStyles2,
-  mockThemeContext,
-} from './themes/ThemeContext';
-export { getTheme, mockTheme } from './themes/getTheme';
-export { stylesFactory } from './themes/stylesFactory';
-export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
-
-export { styleMixins, commonOptionsBuilder };
-
-export { BracesPlugin } from './slate-plugins/braces';
-export { ClearPlugin } from './slate-plugins/clear';
-export { ClipboardPlugin } from './slate-plugins/clipboard';
-export { IndentationPlugin } from './slate-plugins/indentation';
-export { NewlinePlugin } from './slate-plugins/newline';
-export { RunnerPlugin } from './slate-plugins/runner';
-export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
-export { SlatePrism, type Token } from './slate-plugins/slate-prism';
-export { SuggestionsPlugin } from './slate-plugins/suggestions';
 export {
   Sidebar,
   useSidebar,

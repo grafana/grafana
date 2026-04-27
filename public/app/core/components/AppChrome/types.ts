@@ -1,4 +1,4 @@
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 
 export interface ToolbarUpdateProps {
   pageNav?: NavModelItem;

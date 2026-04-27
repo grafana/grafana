@@ -1,7 +1,12 @@
 import { type ReactElement, useEffect, useMemo } from 'react';
 
-import { DataTransformerID, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import {
+  DataTransformerID,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { Combobox, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

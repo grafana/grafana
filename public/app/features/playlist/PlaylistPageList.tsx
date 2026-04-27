@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { type Playlist } from '../../api/clients/playlist/v1';

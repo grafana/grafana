@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginSignatureType } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { type PageInfoItem } from '../../../../core/components/Page/types';

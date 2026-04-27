@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { type UrlQueryMap, urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';

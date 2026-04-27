@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
+import type { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { appEvents } from 'app/core/app_events';

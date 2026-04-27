@@ -1,4 +1,4 @@
-import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { FieldNamePicker } from '@grafana/ui/internal';
 

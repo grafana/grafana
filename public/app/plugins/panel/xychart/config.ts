@@ -1,8 +1,10 @@
-import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, type SetFieldConfigOptionsArgs } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { identityOverrideProcessor } from '@grafana/data/field';
+import type { SetFieldConfigOptionsArgs } from '@grafana/data/panel';
+import { FieldColorModeId, FieldConfigProperty } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type LineStyle } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 

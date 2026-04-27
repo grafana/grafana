@@ -1,7 +1,14 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceInstanceSettings, dateTime, type PluginMetaInfo, PluginType, type ScopedVars } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import {
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  type PluginMetaInfo,
+  PluginType,
+  type ScopedVars,
+} from '@grafana/data/types';
 import { type BackendSrv, DataSourceWithBackend, type TemplateSrv } from '@grafana/runtime';
 
 import { JaegerDatasource, type JaegerJsonData } from './datasource';

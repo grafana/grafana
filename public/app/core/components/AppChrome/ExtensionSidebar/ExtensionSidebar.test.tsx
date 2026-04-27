@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
+import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data/types';
 import { config, usePluginComponents } from '@grafana/runtime';
 import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';

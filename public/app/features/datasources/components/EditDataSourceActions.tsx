@@ -1,7 +1,8 @@
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
+import { Button, Dropdown, LinkButton, Menu, IconButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';

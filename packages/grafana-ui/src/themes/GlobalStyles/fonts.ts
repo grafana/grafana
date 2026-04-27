@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 export function getFontStyles(theme: GrafanaTheme2) {
   const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;

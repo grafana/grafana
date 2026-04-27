@@ -4,8 +4,8 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { type ResourceItem } from './FolderPickerTab';

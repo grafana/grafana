@@ -1,7 +1,7 @@
 import { Factory } from 'fishery';
 import { uniqueId } from 'lodash';
 
-import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import {
   type GrafanaManagedContactPoint,

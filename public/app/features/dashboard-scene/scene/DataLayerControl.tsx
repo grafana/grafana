@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2, LoadingState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { LoadingState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ControlsLabel, dataLayers, type SceneDataLayerProvider } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { useElementSelection } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type Props = {
   layer: SceneDataLayerProvider;

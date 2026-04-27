@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { type QueryResultMetaNotice } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { QueryResultMetaNotice } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { PanelHeaderNotice } from './PanelHeaderNotice';

@@ -1,9 +1,5 @@
-import {
-  type DataLink,
-  type DataLinksFieldConfigSettings,
-  type StandardEditorProps,
-  VariableSuggestionsScope,
-} from '@grafana/data';
+import type { DataLinksFieldConfigSettings, StandardEditorProps } from '@grafana/data/field';
+import { type DataLink, VariableSuggestionsScope } from '@grafana/data/types';
 import { DataLinksInlineEditor } from '@grafana/ui';
 
 type Props = StandardEditorProps<DataLink[], DataLinksFieldConfigSettings>;

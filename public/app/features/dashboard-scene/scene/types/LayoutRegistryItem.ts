@@ -1,4 +1,5 @@
-import { type IconName, type RegistryItem } from '@grafana/data';
+import type { IconName } from '@grafana/data/types';
+import type { RegistryItem } from '@grafana/data/utils';
 
 import { type DashboardLayoutManager } from './DashboardLayoutManager';
 

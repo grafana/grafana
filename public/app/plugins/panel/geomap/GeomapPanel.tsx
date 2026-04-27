@@ -15,7 +15,8 @@ import { Component, type ReactNode } from 'react';
 import * as React from 'react';
 import { Subscription } from 'rxjs';
 
-import { DataHoverEvent, type PanelData, type PanelProps } from '@grafana/data';
+import { DataHoverEvent } from '@grafana/data/events';
+import type { PanelData, PanelProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { type PanelContext, PanelContextRoot } from '@grafana/ui';

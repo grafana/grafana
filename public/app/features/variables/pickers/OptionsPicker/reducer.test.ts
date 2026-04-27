@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type QueryVariableModel, type VariableOption } from '@grafana/data';
+import type { QueryVariableModel, VariableOption } from '@grafana/data/types';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../constants';

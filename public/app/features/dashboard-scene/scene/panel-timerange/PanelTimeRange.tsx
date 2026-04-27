@@ -1,14 +1,9 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import {
-  type DataQueryRequest,
-  dateMath,
-  getDefaultTimeRange,
-  type GrafanaTheme2,
-  rangeUtil,
-  type TimeRange,
-} from '@grafana/data';
+import { dateMath, rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type DataQueryRequest, getDefaultTimeRange, type TimeRange } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import {
   type ExtraQueryDescriptor,
@@ -21,7 +16,9 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import { PanelChrome, Stack, TimePickerTooltip, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';

@@ -7,10 +7,10 @@ import {
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
-  getDataSourceUID,
   LoadingState,
   type PanelData,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceUID } from '@grafana/data/utils';
 import { SceneTimeRange, type dataLayers } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 

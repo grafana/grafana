@@ -1,6 +1,7 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { type DataQuery, type SelectableValue, store } from '@grafana/data';
+import type { DataQuery, SelectableValue } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { createMonitoringLogger } from '@grafana/runtime';
 import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';

@@ -1,5 +1,6 @@
-import { applyFieldOverrides, getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import { arrayToDataFrame, getProcessedDataFrames } from '@grafana/data/dataframe';
+import { applyFieldOverrides } from '@grafana/data/field';
+import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';

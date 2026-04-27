@@ -1,4 +1,4 @@
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';

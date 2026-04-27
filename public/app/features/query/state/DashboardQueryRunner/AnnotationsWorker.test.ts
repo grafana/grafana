@@ -1,7 +1,7 @@
 import { Subject, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

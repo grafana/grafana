@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { type Panel } from '@grafana/schema';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';

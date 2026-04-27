@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Spacer } from '../../components/Spacer';
 

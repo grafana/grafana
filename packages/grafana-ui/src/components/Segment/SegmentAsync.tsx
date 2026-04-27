@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useAsyncFn } from 'react-use';
 import { type AsyncState } from 'react-use/lib/useAsync';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

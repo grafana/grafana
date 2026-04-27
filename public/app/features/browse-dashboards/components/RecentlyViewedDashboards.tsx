@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type GrafanaTheme2, store } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { store } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, Grid, Spinner, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';

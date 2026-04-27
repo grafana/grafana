@@ -4,7 +4,7 @@ import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import tinycolor from 'tinycolor2';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';

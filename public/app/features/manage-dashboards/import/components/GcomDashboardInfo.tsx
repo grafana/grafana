@@ -1,4 +1,5 @@
-import { dateTimeFormat, textUtil } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import { textUtil } from '@grafana/data/text';
 import { Trans } from '@grafana/i18n';
 import { Box, Legend, TextLink } from '@grafana/ui';
 

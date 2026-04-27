@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { type ReactNode, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type Column = {
   i18nKey: string;

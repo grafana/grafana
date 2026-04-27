@@ -2,7 +2,7 @@ import { isNearMembraneProxy, type ProxyTarget } from '@locker/near-membrane-sha
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
-import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
+import { CustomVariableSupport, DataSourceApi } from '@grafana/data/types';
 
 import { forbiddenElements } from './constants';
 import { isReactClassComponent, logWarning, unboxNearMembraneProxies } from './utils';

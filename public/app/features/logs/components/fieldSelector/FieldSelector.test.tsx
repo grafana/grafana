@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { store } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { store } from '@grafana/data/utils';
 import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';

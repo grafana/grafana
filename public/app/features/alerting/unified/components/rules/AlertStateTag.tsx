@@ -1,8 +1,9 @@
 import { memo } from 'react';
 
-import { type AlertState } from '@grafana/data';
+import type { AlertState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Tooltip } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import {
   type GrafanaAlertState,
   type GrafanaAlertStateWithReason,

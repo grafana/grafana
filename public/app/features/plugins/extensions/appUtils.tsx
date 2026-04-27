@@ -1,4 +1,4 @@
-import { type AppPluginConfig, type ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
+import { type AppPluginConfig, type ExtensionInfo, PluginExtensionPoints } from '@grafana/data/types';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.

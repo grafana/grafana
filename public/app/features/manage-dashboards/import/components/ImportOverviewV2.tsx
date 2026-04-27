@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { AppEvents, locationUtil } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';

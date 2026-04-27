@@ -1,4 +1,4 @@
-import { getBuiltInThemes } from '@grafana/data';
+import { getBuiltInThemes } from '@grafana/data/themes';
 import { config } from '@grafana/runtime';
 
 export function getSelectableThemes() {

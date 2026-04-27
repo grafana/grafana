@@ -3,8 +3,9 @@
  * Used by utils.test.ts, BarChartLegend.test.tsx, BarChartPanel.test.tsx
  */
 
-import { createTheme, getDisplayProcessor, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme, type GrafanaTheme2 } from '@grafana/data/themes';
 
 /**
  * Ensures custom config exists and sets display processor on frame fields.

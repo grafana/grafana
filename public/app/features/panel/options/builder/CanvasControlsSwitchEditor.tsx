@@ -1,4 +1,4 @@
-import { type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
 import { type AnnotationDisplayOptions, type VizAnnotations } from '@grafana/schema/dist/esm/common/common.gen';
 import { Switch } from '@grafana/ui';
 

@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { type FocusEvent, type ReactNode } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Input, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { CONTENT_SIDE_BAR, QUERY_OPTION_FIELD_CONFIG } from '../../constants';
 import { type QueryOptionField } from '../types';

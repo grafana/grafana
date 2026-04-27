@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 const LAST_BRANCH_KEY_PREFIX = 'grafana.provisioning.lastBranch';
 

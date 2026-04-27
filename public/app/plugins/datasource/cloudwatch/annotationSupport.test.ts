@@ -1,4 +1,4 @@
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { type CloudWatchAnnotationQuery } from './dataquery.gen';

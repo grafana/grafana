@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, type ComboboxOption, Label, useStyles2 } from '@grafana/ui';
+import { Button, type ComboboxOption, Label } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   AzureQueryType,

@@ -1,7 +1,7 @@
 import { assign, each, filter, forEach, get, includes, isFinite, isString, last, map, toString } from 'lodash';
 import { coerce, gte } from 'semver';
 
-import { type InterpolateFunction } from '@grafana/data';
+import type { InterpolateFunction } from '@grafana/data/types';
 
 export type ParamDef = {
   name: string;

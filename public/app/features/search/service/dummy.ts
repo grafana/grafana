@@ -1,5 +1,5 @@
-import { type SelectableValue } from '@grafana/data';
 import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
+import type { SelectableValue } from '@grafana/data/types';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { type GrafanaSearcher, type LocationInfo, type QueryResponse, type SearchQuery } from './types';

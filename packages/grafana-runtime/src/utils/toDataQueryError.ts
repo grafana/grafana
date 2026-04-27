@@ -1,4 +1,4 @@
-import { type DataQueryError } from '@grafana/data';
+import type { DataQueryError } from '@grafana/data/types';
 
 /**
  * Convert an object into a DataQueryError -- if this is an HTTP response,

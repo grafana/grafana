@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 
 export const isHttpUrl = (value: string): boolean => {
   try {

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { IconButton, Link } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useTheme2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {

@@ -2,7 +2,8 @@ import { useEffect, useState, type JSX } from 'react';
 import { type ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem, getTimeZone } from '@grafana/data';
+import { getTimeZone } from '@grafana/data/datetime';
+import type { NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

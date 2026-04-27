@@ -3,7 +3,7 @@ import Tooltip, { type TooltipRef } from '@rc-component/tooltip';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

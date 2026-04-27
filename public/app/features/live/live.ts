@@ -1,7 +1,7 @@
 import { map } from 'rxjs';
 
-import { toLiveChannelId } from '@grafana/data';
 import { StreamingDataFrame } from '@grafana/data/dataframe';
+import { toLiveChannelId } from '@grafana/data/types';
 import { type BackendSrv, type GrafanaLiveSrv } from '@grafana/runtime';
 
 import { type CentrifugeSrv, type StreamingDataQueryResponse } from './centrifuge/service';

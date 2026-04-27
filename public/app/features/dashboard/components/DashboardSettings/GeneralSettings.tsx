@@ -1,7 +1,7 @@
 import { useCallback, type ChangeEvent, useState, type JSX } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type TimeZone } from '@grafana/data';
+import type { TimeZone } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {

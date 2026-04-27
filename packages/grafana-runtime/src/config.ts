@@ -1,32 +1,30 @@
 import { merge } from 'lodash';
 
-import {
-  type AppPluginConfig as AppPluginConfigGrafanaData,
-  type AuthSettings,
-  type AzureSettings as AzureSettingsGrafanaData,
-  type BootData,
-  type BuildInfo,
-  type DataSourceInstanceSettings,
-  type FeatureToggles,
-  type GrafanaTheme,
-  type GrafanaTheme2,
-  type LicenseInfo,
-  type MapLayerOptions,
-  type OAuthSettings,
-  type PanelPluginMeta,
-  type PreinstalledPlugin as PreinstalledPluginGrafanaData,
-  systemDateFormats,
-  type SystemDateFormatSettings,
-  getThemeById,
-  type AngularMeta,
-  type PluginLoadingStrategy,
-  type PluginDependencies,
-  type PluginExtensions,
-  type TimeOption,
-  type UnifiedAlertingConfig,
-  type GrafanaConfig,
-  type CurrentUserDTO,
-} from '@grafana/data';
+import { systemDateFormats, type SystemDateFormatSettings } from '@grafana/data/datetime';
+import type { MapLayerOptions } from '@grafana/data/geo';
+import { type GrafanaTheme2, getThemeById } from '@grafana/data/themes';
+import type {
+  AppPluginConfig as AppPluginConfigGrafanaData,
+  AuthSettings,
+  AzureSettings as AzureSettingsGrafanaData,
+  BootData,
+  BuildInfo,
+  DataSourceInstanceSettings,
+  FeatureToggles,
+  GrafanaTheme,
+  LicenseInfo,
+  OAuthSettings,
+  PanelPluginMeta,
+  PreinstalledPlugin as PreinstalledPluginGrafanaData,
+  AngularMeta,
+  PluginLoadingStrategy,
+  PluginDependencies,
+  PluginExtensions,
+  TimeOption,
+  UnifiedAlertingConfig,
+  GrafanaConfig,
+  CurrentUserDTO,
+} from '@grafana/data/types';
 
 /**
  * @deprecated Use the type from `@grafana/data`

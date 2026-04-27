@@ -1,4 +1,4 @@
-import type { FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 import { reportInteraction, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';

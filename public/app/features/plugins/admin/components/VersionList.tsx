@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
 import { major, compare, lte } from 'semver';
 
-import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormatTimeAgo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, Badge } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
 import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';

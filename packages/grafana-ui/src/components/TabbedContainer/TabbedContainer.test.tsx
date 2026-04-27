@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
-import { type IconName } from '@grafana/data';
+import type { IconName } from '@grafana/data/types';
 
 import { TabbedContainer } from './TabbedContainer';
 

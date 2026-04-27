@@ -10,7 +10,7 @@
  * import this module directly because it lives inside the core bundle.
  */
 
-import type { DashboardMutationAPI } from '@grafana/data';
+import type { DashboardMutationAPI } from '@grafana/data/context';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';

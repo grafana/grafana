@@ -1,7 +1,8 @@
 import { render, type RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, type TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
 

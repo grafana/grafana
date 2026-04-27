@@ -1,6 +1,7 @@
 import type { Duration } from 'date-fns';
 
-import { type AbsoluteTimeRange, dateTimeForTimeZone, reverseParseDuration, type TimeRange } from '@grafana/data';
+import { dateTimeForTimeZone, reverseParseDuration } from '@grafana/data/datetime';
+import type { AbsoluteTimeRange, TimeRange } from '@grafana/data/types';
 import { convertToCron, type TimeRegionConfig } from 'app/core/utils/timeRegions';
 
 import { calculateTimesWithin } from './timeRegions';

@@ -1,4 +1,4 @@
-import { dateTimeFormat, systemDateFormats } from '@grafana/data';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { type AnnotationVals } from './types';

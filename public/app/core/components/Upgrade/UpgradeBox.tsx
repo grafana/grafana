@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { type HTMLAttributes, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { reportExperimentView } from '@grafana/runtime';
-import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, LinkButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type ComponentSize = 'sm' | 'md';
 

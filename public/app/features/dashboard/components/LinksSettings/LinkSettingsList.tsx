@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { arrayUtils } from '@grafana/data';
+import { arrayUtils } from '@grafana/data/utils';
 import { type DashboardLink } from '@grafana/schema';
 import { DashboardLinkList } from 'app/features/dashboard-scene/settings/links/DashboardLinkList';
 

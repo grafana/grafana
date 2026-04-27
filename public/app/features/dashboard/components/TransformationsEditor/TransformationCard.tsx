@@ -1,9 +1,11 @@
 import { cx } from '@emotion/css';
 
-import { type TransformerRegistryItem, TransformationApplicabilityLevels, standardTransformersRegistry } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type TransformerRegistryItem, standardTransformersRegistry } from '@grafana/data/transformations';
+import { TransformationApplicabilityLevels } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, Card, IconButton, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Badge, Card, IconButton, Stack, Text } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { getCardStyles } from './getCardStyles';
@@ -74,7 +76,12 @@ export function TransformationCard({
         <Text variant="bodySmall">{description || ''}</Text>
         {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt={transform.name} />}
         {!isApplicable && applicabilityDescription !== null && (
-          <IconButton className={styles.applicableInfoButton} name="info-circle" tooltip={applicabilityDescription} />
+          <IconButton
+            className={styles.applicableInfoButton}
+            name="info-circle"
+            tooltip={applicabilityDescription}
+            data-testid={selectors.components.Transforms.applicabilityInfo}
+          />
         )}
       </Card.Description>
     </Card>

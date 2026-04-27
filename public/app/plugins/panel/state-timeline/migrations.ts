@@ -7,7 +7,7 @@ import {
   type ValueMap,
   type RangeMap,
   type ValueMapping,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { type FieldConfig, type Options } from './panelcfg.gen';
 

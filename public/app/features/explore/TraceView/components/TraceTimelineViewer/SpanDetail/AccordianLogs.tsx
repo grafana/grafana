@@ -16,9 +16,12 @@ import { css } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type TraceLog } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TraceLog } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Counter } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import { formatDuration } from '../../utils/date';

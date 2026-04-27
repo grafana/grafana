@@ -4,20 +4,11 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  Drawer,
-  IconButton,
-  Label,
-  RadioButtonGroup,
-  Select,
-  Stack,
-  Text,
-  TextArea,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Drawer, IconButton, Label, RadioButtonGroup, Select, Stack, Text, TextArea } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,

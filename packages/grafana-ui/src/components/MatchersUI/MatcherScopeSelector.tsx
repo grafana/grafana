@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { type MatcherScope } from '@grafana/schema';
 
 import { RadioButtonGroup, type RadioButtonGroupProps } from '../Forms/RadioButtonGroup/RadioButtonGroup';

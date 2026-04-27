@@ -2,10 +2,11 @@
 import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { type PanelProps } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Spinner, stylesFactory } from '@grafana/ui';
+import { Button, Spinner } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

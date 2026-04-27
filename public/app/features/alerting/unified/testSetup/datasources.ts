@@ -1,6 +1,6 @@
 import { keyBy } from 'lodash';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { config, setDataSourceSrv } from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 

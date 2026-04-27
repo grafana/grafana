@@ -1,6 +1,7 @@
 import { type FetchError, type FetchResponse } from 'src/services';
 
-import { type DataQuery, toDataFrameDTO, type DataFrame } from '@grafana/data';
+import { toDataFrameDTO, type DataFrame } from '@grafana/data/dataframe';
+import type { DataQuery } from '@grafana/data/types';
 
 import {
   type BackendDataSourceResponse,

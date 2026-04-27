@@ -1,4 +1,4 @@
-import { PluginLoadingStrategy } from '@grafana/data';
+import { PluginLoadingStrategy } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';

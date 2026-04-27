@@ -2,10 +2,13 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import { type ReactNode, useState } from 'react';
 
-import { type DataQuery, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataQuery, DataSourceInstanceSettings } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Input } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {

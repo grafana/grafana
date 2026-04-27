@@ -1,4 +1,5 @@
-import { type DataSourceApi, parseDuration } from '@grafana/data';
+import { parseDuration } from '@grafana/data/datetime';
+import type { DataSourceApi } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { generateId } from './SearchTraceQLEditor/TagsInput';

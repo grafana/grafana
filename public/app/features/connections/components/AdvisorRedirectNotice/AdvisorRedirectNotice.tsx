@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config, useAppPluginInstalled } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
-import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 const getStyles = (theme: GrafanaTheme2) => ({

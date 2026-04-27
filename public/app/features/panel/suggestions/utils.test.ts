@@ -1,5 +1,6 @@
-import { getPanelDataSummary, type PanelDataSummary, type PanelData, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary, type PanelDataSummary } from '@grafana/data/panel';
+import { type PanelData, LoadingState, getDefaultTimeRange } from '@grafana/data/types';
 
 import { showDefaultSuggestion, hasData } from './utils';
 

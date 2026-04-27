@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { AlertState, getDefaultTimeRange, type TimeRange } from '@grafana/data';
+import { AlertState, getDefaultTimeRange, type TimeRange } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {

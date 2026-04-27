@@ -1,6 +1,6 @@
 import { type FeatureLike } from 'ol/Feature';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { GeometryTypeId } from '../style/types';
 

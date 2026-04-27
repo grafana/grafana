@@ -2,8 +2,10 @@ import { type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, type DisplayValue, type ThemeVisualizationColors } from '@grafana/data';
 import { type FieldConfig, FieldType } from '@grafana/data/dataframe';
+import type { ThemeVisualizationColors } from '@grafana/data/themes';
+import type { DisplayValue } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { GraphDrawStyle, type GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils/colors';

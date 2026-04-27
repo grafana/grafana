@@ -1,4 +1,4 @@
-import type { DrilldownsApplicability } from '@grafana/data';
+import type { DrilldownsApplicability } from '@grafana/data/types';
 import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

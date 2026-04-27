@@ -1,4 +1,4 @@
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 import {
   type AnnotationQueryKind,
   defaultAnnotationQuerySpec,

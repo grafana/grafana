@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type TraceSearchProps } from '@grafana/data';
+import type { TraceSearchProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { FilterPill, Stack, Tooltip } from '@grafana/ui';
 

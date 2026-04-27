@@ -6,27 +6,17 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
 import {
-  type GrafanaTheme2,
   addDurationToDate,
   dateTime,
   intervalToAbbreviatedDurationString,
   isValidDate,
   parseDuration,
-} from '@grafana/data';
+} from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Field,
-  FieldSet,
-  Input,
-  LinkButton,
-  LoadingPlaceholder,
-  Stack,
-  TextArea,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, Stack, TextArea } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';

@@ -1,4 +1,4 @@
-import { type DataSourcePluginOptionsEditorProps, type DataSourceSettings } from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data/types';
 import {
   ConfigSection,
   DataSourceDescription,

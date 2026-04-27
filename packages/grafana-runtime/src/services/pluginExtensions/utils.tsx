@@ -6,7 +6,7 @@ import {
   type PluginExtensionComponent,
   type PluginExtensionLink,
   PluginExtensionTypes,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
   if (!extension) {

@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 
+import type { StandardEditorContext } from '@grafana/data/field';
 import {
-  type PanelOptionsEditorBuilder,
-  PluginState,
-  type StandardEditorContext,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import { PluginState } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 
 import darkImage from '../images/dark/heatmap.svg';
 import lightImage from '../images/light/heatmap.svg';

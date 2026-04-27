@@ -1,5 +1,5 @@
 import { type DataQuery } from '@grafana/schema';
-import { Icon } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 

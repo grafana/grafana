@@ -9,9 +9,11 @@ import {
   useCreateNotificationqueryMutation,
   useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, LoadingPlaceholder, TabContent, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, TabContent } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 

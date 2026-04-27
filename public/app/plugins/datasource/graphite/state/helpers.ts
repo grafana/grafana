@@ -1,6 +1,6 @@
 import { clone, some } from 'lodash';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { getAppEvents } from '@grafana/runtime';
 
 import { type FuncInstance } from '../gfunc';

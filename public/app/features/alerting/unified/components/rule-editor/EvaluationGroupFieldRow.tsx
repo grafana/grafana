@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { useId, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Field, Select, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';

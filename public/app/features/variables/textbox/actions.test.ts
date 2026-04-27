@@ -1,4 +1,4 @@
-import { type VariableOption } from '@grafana/data';
+import type { VariableOption } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';

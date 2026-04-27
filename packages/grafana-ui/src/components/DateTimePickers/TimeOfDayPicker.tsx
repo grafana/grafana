@@ -4,7 +4,8 @@ import generateConfig from '@rc-component/picker/lib/generate/moment';
 import locale from '@rc-component/picker/lib/locale/en_US';
 import { type Moment } from 'moment';
 
-import { dateTime, type DateTime, dateTimeAsMoment, type GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, type DateTime, dateTimeAsMoment, isDateTimeInput } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';

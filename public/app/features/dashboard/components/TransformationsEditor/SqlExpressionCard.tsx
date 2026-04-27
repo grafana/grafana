@@ -1,4 +1,5 @@
-import { Card, Text, useStyles2 } from '@grafana/ui';
+import { Card, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getCardStyles } from './getCardStyles';
 

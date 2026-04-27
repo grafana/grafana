@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { Text, Box, Button, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';

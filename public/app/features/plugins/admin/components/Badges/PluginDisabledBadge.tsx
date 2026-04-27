@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { PluginErrorCode } from '@grafana/data';
+import { PluginErrorCode } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 

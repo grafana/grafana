@@ -3,7 +3,7 @@ import { Placement } from '@popperjs/core';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { withTheme2 } from '../../../../themes/ThemeContext';
 import { Themeable2 } from '../../../../types/theme';

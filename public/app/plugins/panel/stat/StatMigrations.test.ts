@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { BigValueGraphMode, BigValueColorMode, BigValueTextMode } from '@grafana/schema';
 
 import { statPanelChangedHandler } from './StatMigrations';

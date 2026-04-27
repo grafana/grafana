@@ -6,7 +6,7 @@ import {
   onUpdateDatasourceOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { AuthMethod, convertLegacyAuthProps } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import {
@@ -19,11 +19,11 @@ import {
   Label,
   RadioButtonGroup,
   SecretInput,
-  useStyles2,
   Text,
   Stack,
   InlineLabel,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   AUTH_RADIO_BUTTON_OPTIONS,

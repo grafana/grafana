@@ -1,5 +1,5 @@
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data/types';
 
 import { PanelModel } from '../../state/PanelModel';
 

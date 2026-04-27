@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { type CatalogPlugin, PluginUpdateStrategy } from '../types';

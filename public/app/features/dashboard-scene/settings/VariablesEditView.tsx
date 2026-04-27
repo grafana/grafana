@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data';
+import { type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data/types';
 import {
   type SceneComponentProps,
   SceneObjectBase,

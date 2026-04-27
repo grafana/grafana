@@ -1,5 +1,14 @@
-import { type FieldDisplay, GAUGE_DEFAULT_MAXIMUM, GAUGE_DEFAULT_MINIMUM, getActiveThreshold, getDisplayProcessor, type GrafanaTheme, type GrafanaTheme2, type Threshold, type ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { type FieldConfig } from '@grafana/data/dataframe';
+import { type FieldDisplay, getActiveThreshold, getDisplayProcessor } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  type GrafanaTheme,
+  type Threshold,
+  type ThresholdsConfig,
+  ThresholdsMode,
+} from '@grafana/data/types';
 
 import { type RadialGaugeDimensions } from './types';
 

@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
+import type { DataSourceInstanceSettings, VariableModel } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';

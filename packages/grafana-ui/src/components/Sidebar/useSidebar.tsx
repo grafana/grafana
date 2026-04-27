@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect } from 'react';
 import { useMedia } from 'react-use';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { clamp } from '../../utils/clamp';

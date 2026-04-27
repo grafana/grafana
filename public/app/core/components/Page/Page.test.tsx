@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type NavModelItem, PageLayoutType } from '@grafana/data';
+import { type NavModelItem, PageLayoutType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 

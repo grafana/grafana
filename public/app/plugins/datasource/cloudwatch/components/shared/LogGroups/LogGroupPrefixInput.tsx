@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { EditorField } from '@grafana/plugin-ui';
 import { MultiSelect } from '@grafana/ui';
 

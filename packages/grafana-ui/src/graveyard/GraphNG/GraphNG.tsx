@@ -4,7 +4,10 @@ import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
 
-import { DataHoverClearEvent, DataHoverEvent, FieldMatcherID, fieldMatchers, LegacyGraphHoverEvent, TimeRange, TimeZone } from '@grafana/data';
+import { LegacyGraphHoverEvent, TimeRange, TimeZone } from '@grafana/data/types';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
+
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data/events';
 import { DataFrame, Field, FieldType } from '@grafana/data/dataframe';
 import { VizLegendOptions } from '@grafana/schema';
 

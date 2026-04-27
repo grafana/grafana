@@ -1,7 +1,9 @@
 import { render, screen, act } from '@testing-library/react';
 import { useAsync } from 'react-use';
 
-import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
+import { EventBusSrv, type EventBus } from '@grafana/data/events';
+import type { ExtensionInfo } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
@@ -32,8 +34,8 @@ const mockPluginMeta = {
 };
 
 // Mock the store
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   store: {
     get: jest.fn(),
     set: jest.fn(),

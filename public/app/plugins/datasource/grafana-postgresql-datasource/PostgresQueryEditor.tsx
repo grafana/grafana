@@ -1,4 +1,4 @@
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { SqlQueryEditorLazy, type SQLOptions, type SQLQuery, type QueryHeaderProps } from '@grafana/sql';
 
 import { type PostgresDatasource } from './datasource';

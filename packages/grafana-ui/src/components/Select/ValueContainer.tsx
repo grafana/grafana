@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { Component, createRef, type ReactNode } from 'react';
 import { type ValueContainerProps as BaseValueContainerProps, type GroupBase } from 'react-select';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 

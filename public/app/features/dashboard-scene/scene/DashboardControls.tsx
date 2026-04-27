@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { VariableHide } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -18,7 +19,8 @@ import {
   type SceneObjectUrlValues,
   type CancelActivationHandler,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';

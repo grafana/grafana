@@ -5,10 +5,23 @@ import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { type Align, VariableSizeList } from 'react-window';
 
-import { CoreApp, type EventBus, EventBusSrv, type GrafanaTheme2, type LogLevel, type LogRowModel, LogsDedupStrategy, type LogsMetaItem, type LogsSortOrder, store, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus, EventBusSrv } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  CoreApp,
+  type LogLevel,
+  type LogRowModel,
+  LogsDedupStrategy,
+  type LogsMetaItem,
+  type LogsSortOrder,
+  type TimeRange,
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, type PopoverContent } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -459,10 +472,10 @@ const LogListComponent = ({
   );
 
   const focusLogLine = useCallback(
-    (log: LogListModel) => {
+    (log: LogListModel, align: Align = 'start') => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
-        debouncedScrollToItem(index, 'start');
+        debouncedScrollToItem(index, align);
       }
     },
     [debouncedScrollToItem, filteredLogs]

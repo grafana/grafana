@@ -2,8 +2,12 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, classicColors, getColorByStringHash, FALLBACK_COLOR, fieldColorModeRegistry, formattedValueToString } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import { getColorByStringHash, fieldColorModeRegistry } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FALLBACK_COLOR } from '@grafana/data/types';
+import { classicColors } from '@grafana/data/utils';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';

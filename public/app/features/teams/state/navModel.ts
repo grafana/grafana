@@ -1,4 +1,4 @@
-import { type NavModelItem, type NavModel } from '@grafana/data';
+import type { NavModelItem, NavModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';

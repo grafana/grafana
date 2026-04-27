@@ -3,7 +3,7 @@ import type {
   PluginExtensionAddedLinkConfig,
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 

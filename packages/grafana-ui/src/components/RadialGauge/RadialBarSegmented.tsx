@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
-import { FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
+import { FALLBACK_COLOR } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';

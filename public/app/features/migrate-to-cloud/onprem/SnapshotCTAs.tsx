@@ -1,5 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Spinner, Text } from '@grafana/ui';
+import { Button, Spinner, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { CTAInfo } from './CTAInfo';
 

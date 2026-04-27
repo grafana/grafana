@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DimensionContext } from 'app/features/dimensions/context';

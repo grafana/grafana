@@ -7,8 +7,8 @@ import {
   type GrafanaConfig,
   type PluginMetaInfo,
   PluginType,
-  locationUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';

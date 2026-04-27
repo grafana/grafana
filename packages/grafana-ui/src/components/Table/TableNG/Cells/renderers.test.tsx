@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 
-import { createDataFrame, createTheme, type Field, FieldType } from '@grafana/data';
+import { createDataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
 
 import { type TableCellOptions, TableCellDisplayMode, type TableCustomCellOptions } from '../../types';
 

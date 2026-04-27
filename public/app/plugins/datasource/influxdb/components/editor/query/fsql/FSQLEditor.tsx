@@ -1,7 +1,9 @@
 import { PureComponent } from 'react';
 
 import { type SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
-import { InlineFormLabel, LinkButton, type Themeable2, withTheme2, Stack, Space } from '@grafana/ui';
+import { InlineFormLabel, LinkButton, Stack, Space } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import type InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';

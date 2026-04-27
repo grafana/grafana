@@ -1,4 +1,3 @@
-import { type BinaryOperationID, binaryOperators, FieldMatcherID, type SelectableValue } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
 import {
   type BinaryValue,
@@ -7,8 +6,12 @@ import {
   type CalculateFieldTransformerOptions,
   checkBinaryValueType,
 } from '@grafana/data/internal';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
+import { type BinaryOperationID, binaryOperators } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
-import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { getFieldTypeIconName } from '@grafana/ui/types';
 
 import { LABEL_WIDTH } from './constants';
 

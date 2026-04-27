@@ -1,6 +1,7 @@
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { t } from '@grafana/i18n';
-import { Alert, Icon, Stack } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { type StatusInfo } from '../types';
 

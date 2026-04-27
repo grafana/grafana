@@ -1,4 +1,4 @@
-import { Registry } from '@grafana/data';
+import { Registry } from '@grafana/data/utils';
 
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';

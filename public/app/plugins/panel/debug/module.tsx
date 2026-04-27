@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
 
 import { DebugPanel } from './DebugPanel';
 import { StateViewEditor } from './StateView';

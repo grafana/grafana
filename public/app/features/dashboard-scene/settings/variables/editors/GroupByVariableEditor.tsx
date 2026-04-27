@@ -2,12 +2,8 @@ import { noop } from 'lodash';
 import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataSourceInstanceSettings,
-  type MetricFindValue,
-  type SelectableValue,
-  getDataSourceRef,
-} from '@grafana/data';
+import type { DataSourceInstanceSettings, MetricFindValue, SelectableValue } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';

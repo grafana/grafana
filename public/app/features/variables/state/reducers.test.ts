@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { type ComponentType } from 'react';
 
-import { type QueryVariableModel, type VariableType } from '@grafana/data';
+import type { QueryVariableModel, VariableType } from '@grafana/data/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { type VariableAdapter, variableAdapters } from '../adapters';

@@ -1,4 +1,4 @@
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { ResourcesAPI } from '../resources/ResourcesAPI';

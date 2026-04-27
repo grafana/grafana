@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { OrgRole, PluginIncludeType } from '@grafana/data';
+import { OrgRole, PluginIncludeType } from '@grafana/data/types';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';

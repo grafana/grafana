@@ -1,4 +1,4 @@
-import { type TimeRange, type ScopedVars } from '@grafana/data';
+import type { TimeRange, ScopedVars } from '@grafana/data/types';
 import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 
 export const initTemplateSrv = (variables: Array<{ name: string }>, expectedValues: Record<string, string>) => {

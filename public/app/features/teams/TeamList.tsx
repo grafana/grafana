@@ -9,7 +9,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
   type CellProps,
-  type Column,
   EmptyState,
   FilterInput,
   IconButton,
@@ -21,8 +20,9 @@ import {
   Stack,
   Tag,
   TextLink,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { Column } from '@grafana/ui/types';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';

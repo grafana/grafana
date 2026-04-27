@@ -1,7 +1,20 @@
 import { chain } from 'lodash';
 
-import { type DataLink, DataLinkBuiltInVars, deprecationWarning, getFieldDisplayName, type InterpolateFunction, type KeyValue, type LinkModel, locationUtil, type ScopedVars, textUtil, type TypedVariableModel, urlUtil, VariableOrigin, type VariableSuggestion, VariableSuggestionsScope } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { textUtil } from '@grafana/data/text';
+import {
+  type DataLink,
+  type InterpolateFunction,
+  type KeyValue,
+  type LinkModel,
+  type ScopedVars,
+  type TypedVariableModel,
+  VariableOrigin,
+  type VariableSuggestion,
+  VariableSuggestionsScope,
+} from '@grafana/data/types';
+import { DataLinkBuiltInVars, deprecationWarning, locationUtil, urlUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type DashboardLink, VariableFormatID } from '@grafana/schema';

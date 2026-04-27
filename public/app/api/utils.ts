@@ -1,5 +1,5 @@
 import { normalizeError } from '@grafana/api-clients';
-import { isObject } from '@grafana/data';
+import { isObject } from '@grafana/data/types';
 import { type ThunkDispatch } from 'app/types/store';
 
 import { createErrorNotification } from '../core/copy/appNotification';

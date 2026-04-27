@@ -9,7 +9,8 @@ import {
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
+import { Button, Field, Input, Label, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 

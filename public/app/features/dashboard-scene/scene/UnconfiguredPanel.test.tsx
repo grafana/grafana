@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data/types';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';

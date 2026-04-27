@@ -1,4 +1,5 @@
-import { FieldMatcherID, FrameMatcherID, type MatcherConfig, type PanelModel } from '@grafana/data';
+import { FieldMatcherID, FrameMatcherID } from '@grafana/data/transformations';
+import type { MatcherConfig, PanelModel } from '@grafana/data/types';
 
 import { type XYSeriesConfig, type Options } from './panelcfg.gen';
 import {

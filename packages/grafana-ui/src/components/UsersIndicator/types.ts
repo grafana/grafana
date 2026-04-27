@@ -1,4 +1,4 @@
-import { type DateTimeInput } from '@grafana/data';
+import type { DateTimeInput } from '@grafana/data/datetime';
 
 export interface UserView {
   user: {

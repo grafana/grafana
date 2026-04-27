@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

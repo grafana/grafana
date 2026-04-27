@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type SwitchVariableModel } from '@grafana/data';
+import type { SwitchVariableModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';

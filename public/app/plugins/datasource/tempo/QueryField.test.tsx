@@ -2,9 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp, type GrafanaTheme, type GrafanaTheme2, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, type GrafanaTheme } from '@grafana/data/types';
 import { config, reportInteraction, type TemplateSrv } from '@grafana/runtime';
-import { type Themeable } from '@grafana/ui';
+import type { Themeable } from '@grafana/ui/types';
 
 import QueryField from './QueryField';
 import { createTempoDatasource } from './test/mocks';

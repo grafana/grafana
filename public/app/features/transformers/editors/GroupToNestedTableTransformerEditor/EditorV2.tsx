@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useId } from 'react';
 
-import { type GrafanaTheme2, ReducerID, type TransformerUIProps } from '@grafana/data';
 import {
   GroupByOperationID,
   type GroupToNestedTableMatcherConfig,
@@ -11,6 +10,8 @@ import {
   migrateGroupToNestedTableOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ReducerID, type TransformerUIProps } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import {
   Alert,
@@ -24,8 +25,8 @@ import {
   Stack,
   StatsPicker,
   Switch,
-  useTheme2,
 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { appendNewRule, DEFAULT_MATCHER_ID, deleteRuleByIndex, getRuleKey, updateRuleByIndex } from './utils';
 

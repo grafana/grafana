@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { getDefaultTimeRange } from '@grafana/data';
 import { MutableDataFrame } from '@grafana/data/dataframe';
+import { getDefaultTimeRange } from '@grafana/data/types';
 import { type NodeDatum } from 'app/plugins/panel/nodeGraph/types';
 
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';

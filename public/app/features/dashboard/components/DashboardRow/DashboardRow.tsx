@@ -3,11 +3,14 @@ import { indexOf } from 'lodash';
 import { Component } from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { Icon, TextLink, type Themeable2, withTheme2 } from '@grafana/ui';
+import { TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';

@@ -1,4 +1,5 @@
-import { dateMath, dateTime, isDateTime, type DateTime, type TimeRange } from '@grafana/data';
+import { dateMath, dateTime, isDateTime, type DateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 import { type TimeModel } from 'app/features/dashboard/state/TimeModel';
 
 export const getTimeRange = (

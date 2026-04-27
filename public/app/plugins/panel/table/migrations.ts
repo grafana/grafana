@@ -1,8 +1,9 @@
 import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
-import { type PanelModel, FieldMatcherID, type ConfigOverrideRule, ThresholdsMode, type ThresholdsConfig, ByNamesMatcherMode } from '@grafana/data';
 import { type FieldConfig, type DataFrame, FieldType } from '@grafana/data/dataframe';
 import { type ReduceTransformerOptions } from '@grafana/data/internal';
+import { FieldMatcherID, ByNamesMatcherMode } from '@grafana/data/transformations';
+import { type PanelModel, type ConfigOverrideRule, ThresholdsMode, type ThresholdsConfig } from '@grafana/data/types';
 
 import { type Options } from './panelcfg.gen';
 

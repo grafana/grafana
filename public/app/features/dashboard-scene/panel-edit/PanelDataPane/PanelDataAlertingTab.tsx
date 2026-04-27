@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -10,7 +10,8 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Tab } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';

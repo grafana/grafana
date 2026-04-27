@@ -1,4 +1,4 @@
-import { type AnnotationSupport, type AnnotationQuery } from '@grafana/data';
+import type { AnnotationSupport, AnnotationQuery } from '@grafana/data/types';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import { AlignmentTypes, QueryType, type LegacyCloudMonitoringAnnotationQuery } from './dataquery.gen';

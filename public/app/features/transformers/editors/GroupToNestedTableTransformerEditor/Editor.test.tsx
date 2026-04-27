@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldMatcherID } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import {
   GroupByOperationID,
   type GroupToNestedTableTransformerOptions,
   type GroupToNestedTableTransformerOptionsV2,
 } from '@grafana/data/internal';
+import { FieldMatcherID } from '@grafana/data/transformations';
 import { config } from '@grafana/runtime';
 
 import { GroupToNestedTableTransformerEditor } from './Editor';

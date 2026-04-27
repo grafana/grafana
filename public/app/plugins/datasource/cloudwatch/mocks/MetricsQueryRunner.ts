@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 
-import {
-  type CustomVariableModel,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-} from '@grafana/data';
+import type {
+  CustomVariableModel,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data/types';
 
 import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQueryRunner';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../types';

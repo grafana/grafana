@@ -16,8 +16,10 @@ import { css, cx } from '@emotion/css';
 import { memo, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { type CoreApp, type TraceSearchProps, dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type CoreApp, type TraceSearchProps, PluginExtensionPoints } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   reportInteraction,
@@ -35,14 +37,13 @@ import {
   ButtonGroup,
   CollapsableSection,
   Dropdown,
-  Icon,
   Label,
   LinkButton,
   Menu,
   Tooltip,
-  useStyles2,
-  useTheme2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';

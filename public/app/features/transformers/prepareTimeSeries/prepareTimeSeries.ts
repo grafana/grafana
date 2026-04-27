@@ -1,7 +1,8 @@
 import { map } from 'rxjs/operators';
 
-import { type SynchronousDataTransformerInfo, DataFrameType, DataTransformerID, outerJoinDataFrames, fieldMatchers, FieldMatcherID } from '@grafana/data';
 import { type DataFrame, FieldType, type Field, MutableDataFrame } from '@grafana/data/dataframe';
+import { DataTransformerID, outerJoinDataFrames, fieldMatchers, FieldMatcherID } from '@grafana/data/transformations';
+import { type SynchronousDataTransformerInfo, DataFrameType } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type Labels } from 'app/types/unified-alerting-dto';
 

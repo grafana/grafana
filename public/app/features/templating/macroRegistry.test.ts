@@ -1,6 +1,6 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars } from '@grafana/data/utils';
 import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 
 import { setTimeSrv, type TimeSrv } from '../dashboard/services/TimeSrv';

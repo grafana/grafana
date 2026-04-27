@@ -1,9 +1,5 @@
-import {
-  type DataSourceInstanceSettings,
-  type DataTransformerConfig,
-  getDataSourceRef,
-  PluginType,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataTransformerConfig, PluginType } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   SceneDataTransformer,

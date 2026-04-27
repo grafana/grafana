@@ -1,7 +1,8 @@
 import { type ComponentProps, type ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { StateDot } from './StateDot';
 import { type Health, type State } from './types';

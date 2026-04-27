@@ -3,14 +3,13 @@ import { isArray, isEqual } from 'lodash';
 import {
   type LegacyMetricFindQueryOptions,
   type ScopedVars,
-  type UrlQueryMap,
-  type UrlQueryValue,
   type VariableType,
   VariableRefresh,
   type VariableWithOptions,
   type QueryVariableModel,
   type BaseVariableModel,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import type { UrlQueryMap, UrlQueryValue } from '@grafana/data/utils';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { type StoreState } from 'app/types/store';

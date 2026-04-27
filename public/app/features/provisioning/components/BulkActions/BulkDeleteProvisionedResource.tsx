@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';

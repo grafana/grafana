@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { Controller, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { FieldSet, Icon, Label, Spinner, Stack, Switch, Text, TimeRangeLabel, Tooltip, useStyles2 } from '@grafana/ui';
+import { FieldSet, Label, Spinner, Stack, Switch, Text, TimeRangeLabel, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { type ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';

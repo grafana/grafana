@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
+import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   DataTransformerID,
   ReducerID,
@@ -8,11 +10,10 @@ import {
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-  type GrafanaTheme2,
-} from '@grafana/data';
-import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
-import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
+import { StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import darkImage from '../images/dark/groupBy.svg';
 import lightImage from '../images/light/groupBy.svg';

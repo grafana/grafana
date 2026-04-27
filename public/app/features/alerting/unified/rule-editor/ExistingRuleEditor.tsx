@@ -1,4 +1,4 @@
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
 import { type RuleIdentifier } from 'app/types/unified-alerting';

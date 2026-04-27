@@ -9,7 +9,7 @@ import {
   startWith,
 } from 'rxjs';
 
-import { type AppPluginConfig } from '@grafana/data';
+import type { AppPluginConfig } from '@grafana/data/types';
 
 import { type ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
 import { RadioButtonGroup, Field, Select, Input } from '@grafana/ui';

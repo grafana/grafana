@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';

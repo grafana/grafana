@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
 
 import { DatePickerWithInput } from './DatePickerWithInput';
 

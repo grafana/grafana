@@ -1,4 +1,4 @@
-import { type FieldConfigEditorBuilder } from '@grafana/data';
+import type { FieldConfigEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type TableFieldOptions, defaultTableFieldOptions } from '@grafana/schema';
 

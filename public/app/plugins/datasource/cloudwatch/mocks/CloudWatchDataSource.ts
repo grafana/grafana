@@ -8,7 +8,7 @@ import {
   PluginType,
   type ScopedVars,
   VariableHide,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getBackendSrv, setBackendSrv, DataSourceWithBackend, type TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../datasource';

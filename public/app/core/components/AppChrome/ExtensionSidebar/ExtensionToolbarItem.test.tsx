@@ -2,15 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAsync } from 'react-use';
 
-import { EventBusSrv, store } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { store } from '@grafana/data/utils';
 import { setAppEvents, usePluginLinks } from '@grafana/runtime';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from './ExtensionToolbarItem';
 
 // Mock store
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   store: {
     get: jest.fn(),
     set: jest.fn(),

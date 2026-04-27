@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { urlUtil } from '@grafana/data';
+import { urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, LinkButton } from '@grafana/ui';

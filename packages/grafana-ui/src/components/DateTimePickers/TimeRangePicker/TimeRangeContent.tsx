@@ -2,16 +2,9 @@ import { css } from '@emotion/css';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import {
-  type DateTime,
-  dateTimeFormat,
-  dateTimeParse,
-  type GrafanaTheme2,
-  isDateTime,
-  rangeUtil,
-  type RawTimeRange,
-  type TimeRange,
-} from '@grafana/data';
+import { type DateTime, dateTimeFormat, dateTimeParse, isDateTime, rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { RawTimeRange, TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';

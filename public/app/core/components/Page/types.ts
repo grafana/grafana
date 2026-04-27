@@ -1,7 +1,7 @@
 import { type FC, type HTMLAttributes } from 'react';
 import type * as React from 'react';
 
-import { type NavModel, type NavModelItem, type PageLayoutType } from '@grafana/data';
+import type { NavModel, NavModelItem, PageLayoutType } from '@grafana/data/types';
 import { type PluginPageBackground } from '@grafana/runtime';
 
 import { type ScrollRefElement } from '../NativeScrollbar';

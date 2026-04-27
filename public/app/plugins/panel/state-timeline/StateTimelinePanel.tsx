@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { useDataLinksContext } from '@grafana/data/field';
+import { DashboardCursorSync, type PanelProps } from '@grafana/data/types';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -8,10 +9,10 @@ import {
   TooltipDisplayMode,
   TooltipPlugin2,
   usePanelContext,
-  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,

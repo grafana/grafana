@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';

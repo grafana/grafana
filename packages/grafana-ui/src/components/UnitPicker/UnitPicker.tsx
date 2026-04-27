@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
-import { getValueFormats, type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { getValueFormats } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 
 import { Cascader, type CascaderOption } from '../Cascader/Cascader';

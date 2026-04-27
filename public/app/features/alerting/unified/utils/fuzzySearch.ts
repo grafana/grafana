@@ -1,4 +1,4 @@
-import { fuzzySearch } from '@grafana/data';
+import { fuzzySearch } from '@grafana/data/utils';
 
 /**
  * Applies fuzzy search to a list of items using the provided filter function.

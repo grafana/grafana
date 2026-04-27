@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, TextLink, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { TextLink, Tooltip, type PopoverContent } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FuncInstance } from '../gfunc';
 

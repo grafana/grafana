@@ -1,4 +1,4 @@
-import { type DataQueryError } from '@grafana/data';
+import type { DataQueryError } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { Alert, JSONFormatter } from '@grafana/ui';
 

@@ -1,6 +1,6 @@
 import { type AnyAction } from 'redux';
 
-import { type ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data';
+import { type ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data/types';
 import * as runtime from '@grafana/runtime';
 import { type DataSourceSrv, type LocationService } from '@grafana/runtime';
 import { type BackendSrv } from 'app/core/services/backend_srv';

@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { LoadingState, type PanelData, type PanelPluginVisualizationSuggestion, getDefaultTimeRange } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  LoadingState,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
+  getDefaultTimeRange,
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';

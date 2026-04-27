@@ -1,4 +1,4 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { getRestoreNotificationData } from './notifications';

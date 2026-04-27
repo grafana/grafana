@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type BootData, getDefaultTimeRange } from '@grafana/data';
+import { type BootData, getDefaultTimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';

@@ -1,6 +1,7 @@
 import { screen, render } from '@testing-library/react';
 
-import { type Field, FieldType, ReducerID } from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
+import { ReducerID } from '@grafana/data/transformations';
 
 import { SummaryCell } from './SummaryCell';
 

@@ -8,7 +8,7 @@ import {
   type QueryVariableModel,
   type VariableWithMultiSupport,
   type VariableWithOptions,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { queryBuilder } from '../../shared/testing/builders';

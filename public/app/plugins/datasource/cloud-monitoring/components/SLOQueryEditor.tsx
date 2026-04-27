@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';

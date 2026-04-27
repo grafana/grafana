@@ -1,4 +1,4 @@
-import { type UrlQueryMap } from '@grafana/data';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { KioskMode } from 'app/types/dashboard';
 
 // TODO Remove after topnav feature toggle is permanent and old NavBar is removed

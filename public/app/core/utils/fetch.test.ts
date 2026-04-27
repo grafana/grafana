@@ -1,4 +1,4 @@
-import { PathValidationError } from '@grafana/data';
+import { PathValidationError } from '@grafana/data/text';
 
 import {
   isContentTypeJson,
@@ -10,8 +10,8 @@ import {
   parseUrlFromOptions,
 } from './fetch';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   deprecationWarning: () => {},
 }));
 

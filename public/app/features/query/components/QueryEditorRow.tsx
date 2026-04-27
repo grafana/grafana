@@ -3,21 +3,21 @@ import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
 
+import { DataSourcePluginContextProvider } from '@grafana/data/context';
+import { type EventBusExtended } from '@grafana/data/events';
 import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
-  DataSourcePluginContextProvider,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
-  type EventBusExtended,
   type HistoryItem,
   LoadingState,
   type PanelData,
   type QueryResultMetaNotice,
   type TimeRange,
-  getDataSourceRef,
   PluginExtensionPoints,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';

@@ -3,12 +3,13 @@ import yaml from 'js-yaml';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { ExportFormat } from 'app/features/dashboard/api/types';

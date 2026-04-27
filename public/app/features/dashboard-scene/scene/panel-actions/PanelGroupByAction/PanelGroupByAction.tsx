@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { fuzzySearch, type MetricFindValue } from '@grafana/data';
+import type { MetricFindValue } from '@grafana/data/types';
+import { fuzzySearch } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -11,7 +12,8 @@ import {
   type VariableValueOption,
   type VariableValueSingle,
 } from '@grafana/scenes';
-import { Button, Icon, Popover } from '@grafana/ui';
+import { Button, Popover } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { PanelGroupByActionPopover } from './PanelGroupByActionPopover';
 

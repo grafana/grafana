@@ -1,6 +1,8 @@
 import saveAs from 'file-saver';
 
-import { dateTimeFormat, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { SelectableValue } from '@grafana/data/types';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';

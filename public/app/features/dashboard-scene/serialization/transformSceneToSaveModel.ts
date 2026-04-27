@@ -1,6 +1,7 @@
 import { defaults, isEqual } from 'lodash';
 
-import { isEmptyObject, type ScopedVars, type TimeRange } from '@grafana/data';
+import type { ScopedVars, TimeRange } from '@grafana/data/types';
+import { isEmptyObject } from '@grafana/data/utils';
 import {
   behaviors,
   type SceneGridItemLike,

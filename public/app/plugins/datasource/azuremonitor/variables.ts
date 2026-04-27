@@ -1,8 +1,13 @@
 import { startsWith } from 'lodash';
 import { from, lastValueFrom, type Observable } from 'rxjs';
 
-import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse, type MetricFindValue } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/dataframe';
+import {
+  CustomVariableSupport,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type MetricFindValue,
+} from '@grafana/data/types';
 import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from './azure_monitor/url_builder';

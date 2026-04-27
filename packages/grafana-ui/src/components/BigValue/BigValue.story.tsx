@@ -1,6 +1,7 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 
-import { type FieldSparkline, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
+import type { FieldSparkline } from '@grafana/data/field';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 

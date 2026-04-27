@@ -1,15 +1,11 @@
 import Prism, { type Grammar } from 'prismjs';
 import { lastValueFrom } from 'rxjs';
 
-import { type AbsoluteTimeRange, type HistoryItem, LanguageProvider } from '@grafana/data';
+import { type AbsoluteTimeRange, type HistoryItem, LanguageProvider } from '@grafana/data/types';
 import { type BackendDataSourceResponse, type FetchResponse, type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import {
-  type CompletionItemGroup,
-  SearchFunctionType,
-  type Token,
-  type TypeaheadInput,
-  type TypeaheadOutput,
-} from '@grafana/ui';
+import type { Token } from '@grafana/ui/slate-plugins';
+import type { CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui/types';
+import { SearchFunctionType } from '@grafana/ui/utils';
 
 import { type LogGroup } from '../../dataquery.gen';
 import { type CloudWatchDatasource } from '../../datasource';

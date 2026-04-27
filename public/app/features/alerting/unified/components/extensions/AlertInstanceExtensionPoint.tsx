@@ -1,6 +1,6 @@
 import { type ReactElement, useMemo, useState } from 'react';
 
-import { type PluginExtensionLink, type PluginExtensionPoints } from '@grafana/data';
+import type { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';

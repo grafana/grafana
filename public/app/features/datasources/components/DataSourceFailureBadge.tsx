@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { type ReactElement } from 'react';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { t } from '@grafana/i18n';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
 

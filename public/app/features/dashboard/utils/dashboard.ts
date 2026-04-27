@@ -1,6 +1,7 @@
 import { cloneDeep, defaults, find } from 'lodash';
 
-import { type PanelPluginMeta, store } from '@grafana/data';
+import type { PanelPluginMeta } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -27,6 +28,7 @@ export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: st
   const newPanel: Partial<PanelModel> = {
     type: widgetType,
     title: t('dashboard.on-create-new-widget-panel.new-panel.title.widget-title', 'Widget title'),
+
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: null,
     isNew: true,

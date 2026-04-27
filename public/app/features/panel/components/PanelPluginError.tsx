@@ -2,7 +2,8 @@
 import { memo, type ReactNode } from 'react';
 
 // Types
-import { type PanelProps, PanelPlugin, PluginType, type PanelPluginMeta } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import { type PanelProps, PluginType, type PanelPluginMeta } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types/appNotifications';

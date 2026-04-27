@@ -1,6 +1,6 @@
 import { type ColumnInstance, type HeaderGroup } from 'react-table';
 
-import { fieldReducers, ReducerID } from '@grafana/data';
+import { fieldReducers, ReducerID } from '@grafana/data/transformations';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { EmptyCell, FooterCell } from '../Cells/FooterCell';

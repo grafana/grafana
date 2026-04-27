@@ -1,9 +1,13 @@
 import { css, cx } from '@emotion/css';
 import type { JSX } from 'react';
 
-import { dateTimeFormat, type GrafanaTheme2, type TimeZone, dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeZone } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { DeleteButton, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type ApiKey } from 'app/types/apiKeys';
 
 interface Props {

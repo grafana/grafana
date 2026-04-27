@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AppEvents, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { AppEvents, type DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { Checkbox } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   active: boolean;

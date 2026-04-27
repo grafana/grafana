@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig, type ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';

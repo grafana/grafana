@@ -4,11 +4,12 @@ import { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, type Monaco, type monacoTypes, type MonacoEditor } from '@grafana/ui';
+import { ReactMonacoEditor, type Monaco, type monacoTypes, type MonacoEditor } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';

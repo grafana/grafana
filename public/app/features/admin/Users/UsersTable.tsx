@@ -4,9 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   type CellProps,
-  type Column,
   type FetchDataFunc,
-  Icon,
   InteractiveTable,
   LinkButton,
   Pagination,
@@ -16,6 +14,8 @@ import {
   TextLink,
   Tooltip,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import type { Column } from '@grafana/ui/types';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { type UserDTO } from 'app/types/user';
 

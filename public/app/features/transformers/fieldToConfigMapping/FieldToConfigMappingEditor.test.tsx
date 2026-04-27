@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { ReducerID } from '@grafana/data';
 import { toDataFrame, FieldType } from '@grafana/data/dataframe';
+import { ReducerID } from '@grafana/data/transformations';
 
 import { type Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 

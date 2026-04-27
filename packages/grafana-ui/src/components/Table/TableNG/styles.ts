@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data/themes';
 
 import { COLUMN, TABLE } from './constants';
 import { type TableCellStyles } from './types';

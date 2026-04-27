@@ -1,7 +1,8 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import { FrameGeometrySourceMode, getFrameMatchers, type MapLayerOptions } from '@grafana/data';
+import { FrameGeometrySourceMode, type MapLayerOptions } from '@grafana/data/geo';
 import { type NestedPanelOptions, type NestedValueAccess } from '@grafana/data/internal';
+import { getFrameMatchers } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';

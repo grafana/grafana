@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   LiveChannelScope,
   type LiveChannelAddress,
   type SelectableValue,
-  type StandardEditorProps,
-  type GrafanaTheme2,
   parseLiveChannelAddress,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
+import { Select, Alert, Label, Combobox } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 import {
   discoveryResources,
   getAPIGroupDiscoveryList,

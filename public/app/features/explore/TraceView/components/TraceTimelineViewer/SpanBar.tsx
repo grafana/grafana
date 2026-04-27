@@ -18,10 +18,11 @@ import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';

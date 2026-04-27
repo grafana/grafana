@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { trackRulesListViewChange } from '../../../Analytics';

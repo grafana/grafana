@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
 import { Drawer } from '@grafana/ui';
 import { FALLBACK_DOCS_LINK } from 'app/features/transformers/docs/constants';
 import { getTransformationContent } from 'app/features/transformers/docs/getTransformationContent';

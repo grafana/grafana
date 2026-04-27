@@ -2,7 +2,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
+import { Card, EmptyState, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import { UserIcon } from '@grafana/ui/components/icons';
 import {
   useGetRepositoryHistoryWithPathQuery,
   useGetRepositoryStatusQuery,

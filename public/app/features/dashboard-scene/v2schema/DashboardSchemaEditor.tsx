@@ -3,18 +3,10 @@ import yaml from 'js-yaml';
 import type * as MonacoEditorModule from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import {
-  CodeEditor,
-  RadioButtonGroup,
-  Spinner,
-  Stack,
-  Tooltip,
-  useStyles2,
-  type Monaco,
-  type MonacoEditor,
-} from '@grafana/ui';
+import { CodeEditor, RadioButtonGroup, Spinner, Stack, Tooltip, type Monaco, type MonacoEditor } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 

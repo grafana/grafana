@@ -2,7 +2,8 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { dateTime, DefaultTimeZone, isDateTime, type TimeRange } from '@grafana/data';
+import { dateTime, isDateTime } from '@grafana/data/datetime';
+import { DefaultTimeZone, type TimeRange } from '@grafana/data/types';
 
 import { TimeRangeInput } from './TimeRangeInput';
 import mdx from './TimeRangeInput.mdx';

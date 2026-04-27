@@ -4,10 +4,13 @@ import classNames from 'classnames';
 import { Resizable } from 're-resizable';
 import { type PropsWithChildren, useEffect } from 'react';
 
-import { type GrafanaTheme2, store } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { store } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, getDragStyles, LinkButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';

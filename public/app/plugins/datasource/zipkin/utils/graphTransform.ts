@@ -1,5 +1,5 @@
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data/utils';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/o11y-ds-frontend';
 
 import { type ZipkinSpan } from '../types';

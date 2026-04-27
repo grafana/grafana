@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Tab } from '../../components/Tabs/Tab';

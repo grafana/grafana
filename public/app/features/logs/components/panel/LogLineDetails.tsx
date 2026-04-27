@@ -2,11 +2,16 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Align } from 'react-window';
 
-import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { getDragStyles, ScrollContainer, Tab, TabsBar } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
@@ -20,7 +25,7 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
   containerElement: HTMLDivElement;
-  focusLogLine: (log: LogListModel) => void;
+  focusLogLine: (log: LogListModel, align?: Align) => void;
   logs: LogListModel[];
   timeRange: TimeRange;
   timeZone: string;
@@ -69,7 +74,13 @@ export const LogLineDetails = memo(
         maxWidth={maxWidth}
       >
         <div className={styles.container} ref={containerRef}>
-          <LogLineDetailsTabs focusLogLine={focusLogLine} logs={logs} timeRange={timeRange} timeZone={timeZone} />
+          <LogLineDetailsTabs
+            containerElement={containerElement}
+            focusLogLine={focusLogLine}
+            logs={logs}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         </div>
       </Resizable>
     );
@@ -78,10 +89,24 @@ export const LogLineDetails = memo(
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
-  ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
+  ({
+    containerElement,
+    focusLogLine,
+    logs,
+    timeRange,
+    timeZone,
+  }: Pick<Props, 'containerElement' | 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
-    const { currentLog, closeDetails, detailsMode, setCurrentLog, showDetails, setDetailsMode, toggleDetails } =
-      useLogDetailsContext();
+    const {
+      currentLog,
+      closeDetails,
+      detailsMode,
+      replaceDetails,
+      setCurrentLog,
+      showDetails,
+      setDetailsMode,
+      toggleDetails,
+    } = useLogDetailsContext();
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
 
@@ -102,6 +127,38 @@ const LogLineDetailsTabs = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+      function handleKeydown(e: KeyboardEvent) {
+        if (
+          e.target instanceof Element &&
+          e.target.contains(containerElement) === false &&
+          containerElement.contains(e.target) === false
+        ) {
+          return;
+        }
+        let delta: number;
+        if (e.key === 'ArrowDown') {
+          delta = 1;
+        } else if (e.key === 'ArrowUp') {
+          delta = -1;
+        } else {
+          return;
+        }
+        if (!currentLog || !logs.find((log) => log.uid === currentLog.uid)) {
+          return;
+        }
+        const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+        if (!nextLog) {
+          return;
+        }
+        e.preventDefault();
+        replaceDetails(nextLog);
+        focusLogLine(nextLog, 'auto');
+      }
+      document.addEventListener('keydown', handleKeydown);
+      return () => document.removeEventListener('keydown', handleKeydown);
+    }, [containerElement, currentLog, focusLogLine, logs, replaceDetails]);
 
     const handleSearch = useCallback((newSearch: string) => {
       inputRef.current = newSearch;

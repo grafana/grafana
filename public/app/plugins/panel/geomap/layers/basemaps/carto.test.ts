@@ -2,7 +2,9 @@ import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { carto, type CartoConfig, LayerTheme } from './carto';
 

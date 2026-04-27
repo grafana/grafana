@@ -1,4 +1,4 @@
-import { PluginLoadingStrategy, type PluginMeta, PluginType } from '@grafana/data';
+import { PluginLoadingStrategy, type PluginMeta, PluginType } from '@grafana/data/types';
 import { type AppPluginConfig, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 

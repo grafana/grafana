@@ -1,6 +1,6 @@
 import { forEach, sortBy } from 'lodash';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { type FuncDefs, type FuncInstance, type ParamDef } from '../gfunc';
 import { type GraphiteQuery, GraphiteQueryType, type GraphiteSegment } from '../types';

@@ -1,26 +1,21 @@
 import { cloneDeep, defaults as _defaults, filter, indexOf, isEqual, map, maxBy, pull } from 'lodash';
 import { Subscription } from 'rxjs';
 
-import {
-  type AnnotationQuery,
-  type AppEvent,
-  type DashboardCursorSync,
-  dateTime,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
-  type DateTimeInput,
-  type EventBusExtended,
-  EventBusSrv,
-  type PanelModel as IPanelModel,
-  type TimeRange,
-  type TimeZone,
-  type TypedVariableModel,
-  type UrlQueryValue,
-} from '@grafana/data';
+import { dateTime, dateTimeFormat, dateTimeFormatTimeAgo, type DateTimeInput } from '@grafana/data/datetime';
+import { type AppEvent, type EventBusExtended, EventBusSrv } from '@grafana/data/events';
+import type {
+  AnnotationQuery,
+  DashboardCursorSync,
+  PanelModel as IPanelModel,
+  TimeRange,
+  TimeZone,
+  TypedVariableModel,
+} from '@grafana/data/types';
+import type { UrlQueryValue } from '@grafana/data/utils';
 import { type PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { type Dashboard, type DashboardLink, type VariableModel } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui/utils';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';

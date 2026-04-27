@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { type PanelData } from '@grafana/data';
+import type { PanelData } from '@grafana/data/types';
 
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { type ThresholdDefinition } from '../rule-editor/util';

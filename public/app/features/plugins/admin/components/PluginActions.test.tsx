@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data/types';
 
 import * as helpers from '../helpers';
 import * as hooks from '../state/hooks';

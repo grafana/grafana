@@ -3,9 +3,12 @@ import { type SyntheticEvent, useEffect, useRef, useState } from 'react';
 import Draggable, { type DraggableEventHandler } from 'react-draggable';
 import { Resizable, type ResizeCallbackData } from 'react-resizable';
 
-import { type Dimensions2D, type GrafanaTheme2, store } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Dimensions2D } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
-import { IconButton, Portal, useStyles2 } from '@grafana/ui';
+import { IconButton, Portal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 
 import { InlineEditBody } from './InlineEditBody';

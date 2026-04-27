@@ -3,14 +3,6 @@ import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-p
 import { useCallback, useId, useMemo } from 'react';
 
 import {
-  DataTransformerID,
-  type GrafanaTheme2,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import {
   createOrderFieldsComparer,
   Order,
   type OrderByItem,
@@ -18,13 +10,19 @@ import {
   OrderByType,
   type OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  DataTransformerID,
+  standardTransformers,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data/transformations';
 import { Trans, t } from '@grafana/i18n';
 import {
   Input,
   IconButton,
-  Icon,
   FieldValidationMessage,
-  useStyles2,
   Stack,
   InlineLabel,
   Text,
@@ -33,6 +31,8 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import darkImage from '../images/dark/organize.svg';

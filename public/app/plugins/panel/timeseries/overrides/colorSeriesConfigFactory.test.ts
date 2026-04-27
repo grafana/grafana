@@ -1,4 +1,5 @@
-import { FieldColorModeId, type FieldConfigSource, FieldMatcherID } from '@grafana/data';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import { FieldColorModeId, type FieldConfigSource } from '@grafana/data/types';
 
 import { changeSeriesColorConfigFactory } from './colorSeriesConfigFactory';
 

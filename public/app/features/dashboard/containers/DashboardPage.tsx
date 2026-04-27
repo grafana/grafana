@@ -2,17 +2,13 @@ import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import {
-  type NavModel,
-  type NavModelItem,
-  type TimeRange,
-  PageLayoutType,
-  locationUtil,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type NavModel, type NavModelItem, type TimeRange, PageLayoutType } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { type Themeable2, withTheme2 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';

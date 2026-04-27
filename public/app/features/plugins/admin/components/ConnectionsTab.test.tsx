@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';

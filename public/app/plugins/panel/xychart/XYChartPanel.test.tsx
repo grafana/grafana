@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
-import { createTheme, getDisplayProcessor } from '@grafana/data';
 import { createDataFrame, FieldType, type Field } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';

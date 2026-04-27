@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type SplitOpen, type TimeRange } from '@grafana/data';
+import type { SplitOpen, TimeRange } from '@grafana/data/types';
 
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 

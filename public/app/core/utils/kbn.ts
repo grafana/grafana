@@ -1,16 +1,14 @@
+import { rangeUtil } from '@grafana/data/datetime';
+import { escapeRegex, stringToJsRegex } from '@grafana/data/text';
+import type { DecimalCount, TimeRange } from '@grafana/data/types';
+import { deprecationWarning } from '@grafana/data/utils';
 import {
-  type DecimalCount,
-  deprecationWarning,
   formattedValueToString,
   getValueFormat,
   getValueFormats,
   getValueFormatterIndex,
-  stringToJsRegex,
-  type TimeRange,
   type ValueFormatterIndex,
-  rangeUtil,
-  escapeRegex,
-} from '@grafana/data';
+} from '@grafana/data/valueFormats';
 
 const valueFormats: ValueFormatterIndex = {};
 const kbn = {

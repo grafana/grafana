@@ -1,4 +1,5 @@
-import { Icon, Tooltip } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 export function InfoIcon({ text }: { text: string }) {
   return (

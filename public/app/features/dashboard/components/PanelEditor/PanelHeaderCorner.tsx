@@ -1,16 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, type JSX } from 'react';
 
-import {
-  type GrafanaTheme2,
-  renderMarkdown,
-  type LinkModelSupplier,
-  type ScopedVars,
-  type IconName,
-} from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModelSupplier, ScopedVars, IconName } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, type PopoverContent, Icon, useStyles2 } from '@grafana/ui';
+import { Tooltip, type PopoverContent } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 

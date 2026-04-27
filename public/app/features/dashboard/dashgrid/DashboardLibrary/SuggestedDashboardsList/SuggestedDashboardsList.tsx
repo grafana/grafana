@@ -3,10 +3,11 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncFn, useDebounce } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { FilterInput, Grid, Pagination, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';

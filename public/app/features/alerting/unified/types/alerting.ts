@@ -1,7 +1,7 @@
 import { type ValidationRule } from 'react-hook-form';
 
-import { type SelectableValue } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
+import type { SelectableValue } from '@grafana/data/types';
+import type { IconName } from '@grafana/ui/types';
 
 export interface AlertRuleDTO {
   id: number;

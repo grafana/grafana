@@ -1,6 +1,6 @@
 import { maxBy } from 'lodash';
 
-import type { TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import type { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';

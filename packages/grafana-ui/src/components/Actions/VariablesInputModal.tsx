@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type ActionModel, type ActionVariableInput } from '@grafana/data';
+import type { ActionModel, ActionVariableInput } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

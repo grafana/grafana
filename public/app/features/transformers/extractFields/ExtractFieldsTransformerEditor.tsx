@@ -1,14 +1,13 @@
 import { type ChangeEvent } from 'react';
 
+import type { FieldNamePickerConfigSettings, StandardEditorsRegistryItem } from '@grafana/data/field';
 import {
   DataTransformerID,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  type FieldNamePickerConfigSettings,
-  type SelectableValue,
-  type StandardEditorsRegistryItem,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, type ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

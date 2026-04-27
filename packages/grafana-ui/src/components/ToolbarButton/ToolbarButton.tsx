@@ -2,7 +2,8 @@ import { cx, css } from '@emotion/css';
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type IconName, isIconName } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';

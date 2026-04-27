@@ -1,6 +1,6 @@
 import { type ReactElement } from 'react';
 
-import { PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { type CatalogPlugin } from '../../types';

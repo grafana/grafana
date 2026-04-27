@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { AlertLabels, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { arrayLabelsToObject } from '../../../utils/labels';

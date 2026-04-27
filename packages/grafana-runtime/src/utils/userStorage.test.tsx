@@ -20,21 +20,27 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('@grafana/data', () => {
+jest.mock('@grafana/data/context', () => {
+  return {
+    ...jest.requireActual('@grafana/data/context'),
+    usePluginContext: jest.fn().mockReturnValue({ meta: { id: 'plugin-id' } }),
+  };
+});
+
+jest.mock('@grafana/data/utils', () => {
   const storeMocks = {
     get: jest.fn(),
     set: jest.fn(),
   };
   return {
-    ...jest.requireActual('@grafana/data'),
-    usePluginContext: jest.fn().mockReturnValue({ meta: { id: 'plugin-id' } }),
+    ...jest.requireActual('@grafana/data/utils'),
     store: storeMocks,
   };
 });
 
 // Get reference to the mocked store for use in tests
 const getStoreMocks = () => {
-  const { store } = require('@grafana/data');
+  const { store } = require('@grafana/data/utils');
   return store;
 };
 

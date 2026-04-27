@@ -2,10 +2,12 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, PluginState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { isUnsignedPluginSignature, type PanelPluginMeta, PluginState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { IconButton, PluginSignatureBadge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

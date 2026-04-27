@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
-import { type CustomVariableModel, type DataSourceInstanceSettings } from '@grafana/data';
+import type { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data/types';
 import type * as runtime from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import type * as ui from '@grafana/ui';

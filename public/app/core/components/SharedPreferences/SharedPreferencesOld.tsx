@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { FeatureState } from '@grafana/data';
+import { FeatureState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';

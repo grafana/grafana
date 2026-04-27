@@ -1,4 +1,4 @@
-import { type DataLink, type VariableSuggestion } from '@grafana/data';
+import type { DataLink, VariableSuggestion } from '@grafana/data/types';
 
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 import { DataLinksInlineEditorBase, type DataLinksInlineEditorBaseProps } from './DataLinksInlineEditorBase';
@@ -15,7 +15,7 @@ export const DataLinksInlineEditor = ({
   showOneClick = false,
   ...rest
 }: DataLinksInlineEditorProps) => (
-  <DataLinksInlineEditorBase<DataLink> type="link" items={links} {...rest}>
+  <DataLinksInlineEditorBase<DataLink> type="link" items={links} data-testid="links-inline" {...rest}>
     {(item, index, onSave, onCancel) => (
       <DataLinkEditorModalContent
         index={index}

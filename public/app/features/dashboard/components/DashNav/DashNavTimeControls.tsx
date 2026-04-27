@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react';
 
-import { dateMath, type TimeRange, type TimeZone } from '@grafana/data';
+import { dateMath } from '@grafana/data/datetime';
+import type { TimeRange, TimeZone } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';

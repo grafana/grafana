@@ -2,17 +2,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { type EventBus, EventBusSrv } from '@grafana/data/events';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import {
   type AbsoluteTimeRange,
   CoreApp,
-  type EventBus,
-  EventBusSrv,
   type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
   type ScopedVars,
-} from '@grafana/data';
-import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+} from '@grafana/data/types';
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';

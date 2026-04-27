@@ -4,25 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, type RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 import { useFirstMountState } from 'react-use';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Box,
-  Button,
-  Divider,
-  Field,
-  Icon,
-  Input,
-  Label,
-  Modal,
-  Select,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Box, Button, Divider, Field, Input, Label, Modal, Select, Stack, Switch, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { evaluateEveryValidationOptions } from '../../group-details/validation';

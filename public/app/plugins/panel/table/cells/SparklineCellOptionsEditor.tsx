@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 
-import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data';
+import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data/panel';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
-import { Field, useStyles2 } from '@grafana/ui';
+import { Field } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { type TableCellEditorProps } from '../TableCellOptionEditor';

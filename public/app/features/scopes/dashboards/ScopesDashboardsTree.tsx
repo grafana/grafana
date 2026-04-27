@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, urlUtil } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { urlUtil } from '@grafana/data/utils';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';

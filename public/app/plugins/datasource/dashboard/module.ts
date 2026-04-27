@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { DashboardDatasource } from './datasource';

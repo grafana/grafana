@@ -1,6 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 
-import { type ScopeSpecFilter } from '@grafana/data';
+import type { ScopeSpecFilter } from '@grafana/data/types';
 import { type LocationService } from '@grafana/runtime';
 
 import { ScopesService } from './ScopesService';

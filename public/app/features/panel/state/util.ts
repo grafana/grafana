@@ -1,4 +1,5 @@
-import { type PanelPluginMeta, PluginState, unEscapeStringFromRegex } from '@grafana/data';
+import { unEscapeStringFromRegex } from '@grafana/data/text';
+import { type PanelPluginMeta, PluginState } from '@grafana/data/types';
 
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],

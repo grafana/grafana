@@ -1,5 +1,5 @@
-import { DataFrameType } from '@grafana/data';
 import { createDataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { DataFrameType } from '@grafana/data/types';
 
 import { type HeatmapData } from '../fields';
 

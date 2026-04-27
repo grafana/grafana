@@ -1,4 +1,4 @@
-import { isObject } from '@grafana/data';
+import { isObject } from '@grafana/data/types';
 
 import { type K8sStatusCause, type Resource, type ResourceList } from './types';
 

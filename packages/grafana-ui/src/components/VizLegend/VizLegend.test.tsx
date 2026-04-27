@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { PanelContextProvider, SeriesVisibilityChangeMode } from '../PanelChrome';

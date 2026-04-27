@@ -1,4 +1,4 @@
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { renderLimitedComponents } from '@grafana/runtime';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 

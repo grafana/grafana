@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { type AbsoluteTimeRange, CoreApp, type EventBus, type FieldConfigSource, type PanelData, store, urlUtil } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import { type AbsoluteTimeRange, CoreApp, type FieldConfigSource, type PanelData } from '@grafana/data/types';
+import { store, urlUtil } from '@grafana/data/utils';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';

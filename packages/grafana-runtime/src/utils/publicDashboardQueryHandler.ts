@@ -1,6 +1,6 @@
 import { catchError, type Observable, of, switchMap } from 'rxjs';
 
-import { type DataQuery, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
+import type { DataQuery, DataQueryRequest, DataQueryResponse } from '@grafana/data/types';
 
 import { config } from '../config';
 import { getBackendSrv } from '../services/backendSrv';

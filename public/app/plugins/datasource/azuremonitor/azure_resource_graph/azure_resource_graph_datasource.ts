@@ -1,6 +1,6 @@
 import { filter, find, includes, startsWith } from 'lodash';
 
-import { type ScopedVars } from '@grafana/data';
+import type { ScopedVars } from '@grafana/data/types';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata/resourceTypes';

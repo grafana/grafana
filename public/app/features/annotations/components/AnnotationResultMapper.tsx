@@ -1,19 +1,20 @@
 import { css } from '@emotion/css';
 import { memo, useState, useEffect, useCallback } from 'react';
 
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   type SelectableValue,
-  getFieldDisplayName,
   type AnnotationEvent,
   type AnnotationEventMappings,
   type AnnotationEventFieldMapping,
-  formattedValueToString,
   AnnotationEventFieldSource,
-  getValueFormat,
-  type GrafanaTheme2,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
+import { Select, Tooltip, Label } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getAnnotationEventNames, type AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { type AnnotationQueryResponse } from '../types';

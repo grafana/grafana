@@ -3,14 +3,23 @@ import * as React from 'react';
 import { of, type OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID, getFieldDisplayName, type KeyValue, type SelectableValue, standardTransformers, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory, FieldMatcherID } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
 import {
   CalculateFieldMode,
   type CalculateFieldTransformerOptions,
   getNameFromOptions,
   defaultWindowOptions,
 } from '@grafana/data/internal';
+import {
+  DataTransformerID,
+  standardTransformers,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+  FieldMatcherID,
+} from '@grafana/data/transformations';
+import type { KeyValue, SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';

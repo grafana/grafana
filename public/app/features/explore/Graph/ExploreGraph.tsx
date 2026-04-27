@@ -2,8 +2,20 @@ import { identity, isEqual, sortBy } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type AbsoluteTimeRange, applyFieldOverrides, createFieldConfigRegistry, DashboardCursorSync, DataLinksContext, type EventBus, FieldColorModeId, type FieldConfigSource, getFrameDisplayName, type LoadingState, type SplitOpen, type ThresholdsConfig, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import { applyFieldOverrides, DataLinksContext, getFrameDisplayName } from '@grafana/data/field';
+import { createFieldConfigRegistry } from '@grafana/data/panel';
+import {
+  type AbsoluteTimeRange,
+  DashboardCursorSync,
+  FieldColorModeId,
+  type FieldConfigSource,
+  type LoadingState,
+  type SplitOpen,
+  type ThresholdsConfig,
+  type TimeRange,
+} from '@grafana/data/types';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
@@ -15,7 +27,8 @@ import {
   TooltipDisplayMode,
   type VizLegendOptions,
 } from '@grafana/schema';
-import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
+import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { type Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { type ExploreGraphStyle } from 'app/types/explore';

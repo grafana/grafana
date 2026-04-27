@@ -1,6 +1,6 @@
 import { type RefObject, useCallback } from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 

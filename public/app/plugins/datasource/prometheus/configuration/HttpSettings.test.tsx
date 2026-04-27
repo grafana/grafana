@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { type PromOptions } from '@grafana/prometheus';
 
 import { HttpSettings } from './HttpSettings';

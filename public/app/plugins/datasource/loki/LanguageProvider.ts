@@ -8,7 +8,7 @@ import {
   LanguageProvider,
   type ScopedVars,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type BackendSrvRequest, config } from '@grafana/runtime';
 
 import { LokiQueryType } from './dataquery.gen';

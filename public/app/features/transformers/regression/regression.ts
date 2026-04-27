@@ -2,8 +2,10 @@ import { PolynomialRegression } from 'ml-regression-polynomial';
 import { SimpleLinearRegression } from 'ml-regression-simple-linear';
 import { map } from 'rxjs';
 
-import { DataTransformerID, FieldMatcherID, type SynchronousDataTransformerInfo, fieldMatchers, getFieldDisplayName } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { DataTransformerID, FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
+import type { SynchronousDataTransformerInfo } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 export enum ModelType {

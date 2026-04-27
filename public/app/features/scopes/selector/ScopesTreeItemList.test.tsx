@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type ScopeNode } from '@grafana/data';
+import type { ScopeNode } from '@grafana/data/types';
 
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { type NodesMap, type SelectedScope, type TreeNode } from './types';

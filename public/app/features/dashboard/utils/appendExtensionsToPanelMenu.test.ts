@@ -1,4 +1,4 @@
-import { type PanelMenuItem, type PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { type PanelMenuItem, type PluginExtensionLink, PluginExtensionTypes } from '@grafana/data/types';
 
 import { appendExtensionsToPanelMenu, type AppendToPanelMenuOpts } from './appendExtensionsToPanelMenu';
 

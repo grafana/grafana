@@ -2,7 +2,9 @@ import { get } from 'lodash';
 import { useRef } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { usePluginContext, type UserStorage as UserStorageType, store } from '@grafana/data';
+import { usePluginContext } from '@grafana/data/context';
+import type { UserStorage as UserStorageType } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 
 import { config } from '../config';
 import { type BackendSrvRequest, getBackendSrv } from '../services';

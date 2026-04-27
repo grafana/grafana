@@ -1,23 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
-import {
-  Stack,
-  Text,
-  LinkButton,
-  Box,
-  TextLink,
-  CollapsableSection,
-  Tooltip,
-  Icon,
-  Modal,
-  Button,
-  useStyles2,
-} from '@grafana/ui';
+import { Stack, Text, LinkButton, Box, TextLink, CollapsableSection, Tooltip, Modal, Button } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { type CatalogPlugin } from '../types';

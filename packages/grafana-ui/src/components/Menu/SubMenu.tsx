@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
 import { memo, type CSSProperties, type ReactElement } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';

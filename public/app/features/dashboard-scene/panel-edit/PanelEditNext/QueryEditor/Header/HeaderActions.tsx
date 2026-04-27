@@ -1,6 +1,6 @@
 import { type RefObject, useCallback } from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';

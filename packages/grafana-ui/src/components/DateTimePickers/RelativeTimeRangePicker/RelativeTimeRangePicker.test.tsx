@@ -2,7 +2,7 @@ import { render, type RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { type RelativeTimeRange } from '@grafana/data';
+import type { RelativeTimeRange } from '@grafana/data/types';
 
 import { RelativeTimeRangePicker } from './RelativeTimeRangePicker';
 

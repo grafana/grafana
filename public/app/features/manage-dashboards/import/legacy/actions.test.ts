@@ -1,6 +1,6 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { type DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
+import { type DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data/types';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,

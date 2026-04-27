@@ -3,8 +3,9 @@ import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { type Action, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Action, DataLink } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -18,6 +19,7 @@ export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
   items?: T[];
   onChange: (items: T[]) => void;
   data: DataFrame[];
+  'data-testid'?: string;
   children: (
     item: T,
     index: number,
@@ -33,6 +35,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   onChange,
   data,
   children,
+  'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -131,7 +134,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={testId}>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-links" direction="vertical">
           {(provided) => (

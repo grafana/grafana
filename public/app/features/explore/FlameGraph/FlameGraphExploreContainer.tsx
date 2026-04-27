@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
-import { type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp } from '@grafana/data/types';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   dataFrames: DataFrame[];

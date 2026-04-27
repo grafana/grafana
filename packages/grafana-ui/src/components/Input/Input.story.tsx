@@ -1,7 +1,7 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 import { useState } from 'react';
 
-import { type KeyValue } from '@grafana/data';
+import type { KeyValue } from '@grafana/data/types';
 
 import { getAvailableIcons } from '../../types/icon';
 import { Button } from '../Button/Button';

@@ -1,4 +1,4 @@
-import { type PluginMeta } from '@grafana/data';
+import type { PluginMeta } from '@grafana/data/types';
 
 import { alertingApi } from './alertingApi';
 

@@ -6,7 +6,7 @@ import {
   type OrgVariableModel,
   type UserVariableModel,
   VariableHide,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 import { type DashboardState } from 'app/types/dashboard';

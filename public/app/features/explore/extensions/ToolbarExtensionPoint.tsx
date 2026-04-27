@@ -1,12 +1,12 @@
 import { type ReactElement, useMemo, useState } from 'react';
 
+import { getTimeZone } from '@grafana/data/datetime';
 import {
   type ExplorePanelsState,
   type PluginExtensionLink,
   PluginExtensionPoints,
   type RawTimeRange,
-  getTimeZone,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';

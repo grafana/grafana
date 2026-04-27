@@ -3,7 +3,7 @@ import { type Property } from 'csstype';
 import { type ElementType, forwardRef, type PropsWithChildren } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type ThemeSpacingTokens, type ThemeShape, type ThemeShadows } from '@grafana/data';
+import type { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { type AlignItems, type Direction, type FlexProps, type JustifyContent } from '../types';

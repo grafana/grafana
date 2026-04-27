@@ -46,6 +46,57 @@
     },
     "./dataframe": {
       "@grafana-app/source": "./src/dataframe/index.ts"
+    },
+    "./text": {
+      "@grafana-app/source": "./src/text/index.ts"
+    },
+    "./events": {
+      "@grafana-app/source": "./src/events/index.ts"
+    },
+    "./field": {
+      "@grafana-app/source": "./src/field/index.ts"
+    },
+    "./utils": {
+      "@grafana-app/source": "./src/utils/index.ts"
+    },
+    "./transformations": {
+      "@grafana-app/source": "./src/transformations/index.ts"
+    },
+    "./themes": {
+      "@grafana-app/source": "./src/themes/index.ts"
+    },
+    "./valueFormats": {
+      "@grafana-app/source": "./src/valueFormats/index.ts"
+    },
+    "./datetime": {
+      "@grafana-app/source": "./src/datetime/index.ts"
+    },
+    "./panel": {
+      "@grafana-app/source": "./src/panel/index.ts"
+    },
+    "./context": {
+      "@grafana-app/source": "./src/context/index.ts"
+    },
+    "./types": {
+      "@grafana-app/source": "./src/types/index.ts"
+    },
+    "./vector": {
+      "@grafana-app/source": "./src/vector/index.ts"
+    },
+    "./rbac": {
+      "@grafana-app/source": "./src/rbac/index.ts"
+    },
+    "./table": {
+      "@grafana-app/source": "./src/table/index.ts"
+    },
+    "./query": {
+      "@grafana-app/source": "./src/query/index.ts"
+    },
+    "./geo": {
+      "@grafana-app/source": "./src/geo/index.ts"
+    },
+    "./monaco": {
+      "@grafana-app/source": "./src/monaco/index.ts"
     }
   },
   "publishConfig": {

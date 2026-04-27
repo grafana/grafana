@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { type ComponentProps, useMemo } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
+import { InlineField, Select, SelectMenuOptions } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';

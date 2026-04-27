@@ -1,4 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
+import type { TypedVariableModel } from '@grafana/data/types';
 
 import { defaultVariablesFilter } from './defaultVariablesFilter';
 

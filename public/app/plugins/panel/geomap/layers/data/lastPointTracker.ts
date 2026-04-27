@@ -4,7 +4,10 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, PluginState, type EventBus } from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type PanelData, PluginState } from '@grafana/data/types';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 export interface LastPointConfig {

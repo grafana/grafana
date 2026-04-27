@@ -11,7 +11,7 @@ import {
   type DataSourceInstanceSettings,
   LoadingState,
   type ScopedVars,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 

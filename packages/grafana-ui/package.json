@@ -35,6 +35,30 @@
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
+    },
+    "./utils": {
+      "@grafana-app/source": "./src/utils/index.ts"
+    },
+    "./themes": {
+      "@grafana-app/source": "./src/themes/index.ts"
+    },
+    "./types": {
+      "@grafana-app/source": "./src/types/index.ts"
+    },
+    "./slate-plugins": {
+      "@grafana-app/source": "./src/slate-plugins/index.ts"
+    },
+    "./graveyard": {
+      "@grafana-app/source": "./src/graveyard/index.ts"
+    },
+    "./options": {
+      "@grafana-app/source": "./src/options/index.ts"
+    },
+    "./components/forms/legacy": {
+      "@grafana-app/source": "./src/components/Forms/Legacy/index.ts"
+    },
+    "./components/icons": {
+      "@grafana-app/source": "./src/components/icons/index.ts"
     }
   },
   "publishConfig": {

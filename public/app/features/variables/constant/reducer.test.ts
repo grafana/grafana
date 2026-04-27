@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type ConstantVariableModel } from '@grafana/data';
+import type { ConstantVariableModel } from '@grafana/data/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';

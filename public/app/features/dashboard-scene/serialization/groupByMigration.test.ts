@@ -3,7 +3,7 @@ import {
   type GroupByVariableModel,
   LoadingState,
   type TypedVariableModel,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import type { AdhocVariableKind, GroupByVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 

@@ -1,8 +1,15 @@
 import { type FC, type SyntheticEvent } from 'react';
 import { type CellRendererProps, type Column } from 'react-data-grid';
 
-import { type GrafanaTheme2, type KeyValue, type TimeRange, type FieldConfigSource, type ActionModel, type SelectableValue } from '@grafana/data';
-import { type DataFrame, type Field, type FieldType, type DataFrameWithValue, type FieldState } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type Field,
+  type FieldType,
+  type DataFrameWithValue,
+  type FieldState,
+} from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { KeyValue, TimeRange, FieldConfigSource, ActionModel, SelectableValue } from '@grafana/data/types';
 import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';

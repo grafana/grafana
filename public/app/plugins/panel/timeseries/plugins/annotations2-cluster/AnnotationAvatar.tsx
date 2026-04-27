@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   src: string | undefined;

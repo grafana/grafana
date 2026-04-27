@@ -3,9 +3,11 @@ import pluralize from 'pluralize';
 import { type ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
 import { AlertLabels, StateIcon } from '@grafana/alerting/unstable';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type Rule,
   type RuleGroupIdentifierV2,

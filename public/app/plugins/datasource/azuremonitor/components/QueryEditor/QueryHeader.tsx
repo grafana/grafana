@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CoreApp, LoadingState, type PanelData, type SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState, type PanelData, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';

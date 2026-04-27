@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';

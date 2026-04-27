@@ -1,8 +1,5 @@
-import {
-  type PanelDataSummary,
-  VisualizationSuggestionScore,
-  type VisualizationSuggestionsSupplier,
-} from '@grafana/data';
+import type { PanelDataSummary } from '@grafana/data/panel';
+import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 

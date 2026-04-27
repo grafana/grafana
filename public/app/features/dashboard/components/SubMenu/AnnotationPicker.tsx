@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, type JSX } from 'react';
 
-import { type AnnotationQuery, type EventBus, type GrafanaTheme2 } from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
 import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';

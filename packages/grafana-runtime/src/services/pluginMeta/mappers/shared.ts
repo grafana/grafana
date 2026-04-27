@@ -4,7 +4,7 @@ import {
   PluginLoadingStrategy,
   PluginSignatureStatus,
   PluginState,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 

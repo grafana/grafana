@@ -3,21 +3,15 @@ import { isEmpty } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type Labels, LoadingState, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type Labels, LoadingState, type TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import {
-  AxisPlacement,
-  BarAlignment,
-  LegendDisplayMode,
-  StackingMode,
-  Text,
-  TooltipDisplayMode,
-  useStyles2,
-} from '@grafana/ui';
+import { AxisPlacement, BarAlignment, LegendDisplayMode, StackingMode, Text, TooltipDisplayMode } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';

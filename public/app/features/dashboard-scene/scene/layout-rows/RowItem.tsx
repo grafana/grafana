@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';

@@ -1,14 +1,14 @@
 import { escape, isString } from 'lodash';
 
-import {
-  deprecationWarning,
-  type ScopedVars,
-  type TimeRange,
-  type AdHocVariableFilter,
-  type AdHocVariableModel,
-  type TypedVariableModel,
-  type ScopedVar,
-} from '@grafana/data';
+import type {
+  ScopedVars,
+  TimeRange,
+  AdHocVariableFilter,
+  AdHocVariableModel,
+  TypedVariableModel,
+  ScopedVar,
+} from '@grafana/data/types';
+import { deprecationWarning } from '@grafana/data/utils';
 import {
   getDataSourceSrv,
   setTemplateSrv,

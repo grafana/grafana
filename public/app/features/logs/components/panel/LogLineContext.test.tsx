@@ -1,7 +1,7 @@
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
-import { LogRowContextQueryDirection, LogsSortOrder, type SplitOpenOptions } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { LogRowContextQueryDirection, LogsSortOrder, type SplitOpenOptions } from '@grafana/data/types';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';

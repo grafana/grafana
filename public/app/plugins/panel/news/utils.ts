@@ -1,5 +1,5 @@
-import { dateTime } from '@grafana/data';
 import { FieldType, type DataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
 
 import { type Feed } from './types';
 

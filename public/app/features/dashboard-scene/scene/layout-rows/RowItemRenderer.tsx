@@ -3,11 +3,14 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Tooltip, useElementSelection } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { usePointerDistance } from '@grafana/ui/utils';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

@@ -3,9 +3,12 @@ import { useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsyncFn, useClickAway } from 'react-use';
 
-import { type AnnotationEventUIModel, type GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { AnnotationEventUIModel } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Button, Field, Stack, TextArea, usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';

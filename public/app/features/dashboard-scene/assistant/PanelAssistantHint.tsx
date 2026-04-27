@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { type MouseEvent, useCallback, useContext, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import {
   isSceneObject,
@@ -12,7 +12,8 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AssistantPopoverContext } from './AssistantPopoverContext';
 

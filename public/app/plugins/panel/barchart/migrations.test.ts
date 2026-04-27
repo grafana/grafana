@@ -1,4 +1,5 @@
-import { type FieldConfigSource, FieldMatcherID, type PanelModel } from '@grafana/data';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import type { FieldConfigSource, PanelModel } from '@grafana/data/types';
 
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 

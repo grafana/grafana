@@ -1,5 +1,5 @@
-import { VariableRefresh, type PanelData, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import { toDataFrame, FieldType } from '@grafana/data/dataframe';
+import { VariableRefresh, type PanelData, LoadingState, getDefaultTimeRange } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {

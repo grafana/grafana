@@ -1,4 +1,5 @@
-import { type PanelModel, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import type { PanelModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { TagsInput } from '@grafana/ui';
 

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { CoreApp, LoadingState, type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState, type QueryEditorProps, type SelectableValue } from '@grafana/data/types';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';

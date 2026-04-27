@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
+import type { StandardEditorContext } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   DataTransformerID,
-  type GrafanaTheme2,
-  type PanelOptionsEditorBuilder,
-  PluginState,
-  type StandardEditorContext,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import { PluginState } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
 import darkImage from '../images/dark/spatial.svg';

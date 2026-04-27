@@ -1,4 +1,4 @@
-import { type SliderMarks } from '@grafana/data';
+import type { SliderMarks } from '@grafana/data/types';
 
 import { type Orientation } from '../../types/orientation';
 
@@ -23,7 +23,7 @@ export interface SliderProps extends CommonSliderProps {
   onAfterChange?: (value?: number) => void;
   formatTooltipResult?: (value: number) => number;
   ariaLabelForHandle?: string;
-  inputId: string;
+  inputId?: string;
 }
 
 export interface RangeSliderProps extends CommonSliderProps {

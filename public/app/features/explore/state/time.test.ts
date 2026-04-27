@@ -1,6 +1,6 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreItemState } from 'app/types/explore';
 

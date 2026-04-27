@@ -1,7 +1,7 @@
 import { capitalize } from 'lodash';
 
 import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import {
   type Alert,
   type AlertingRule,

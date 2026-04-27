@@ -1,4 +1,7 @@
-import { type DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
+import { setWeekStart } from '@grafana/data/datetime';
+import { DashboardLoadedEvent } from '@grafana/data/events';
+import type { DataQuery } from '@grafana/data/types';
+import { locationUtil, store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';

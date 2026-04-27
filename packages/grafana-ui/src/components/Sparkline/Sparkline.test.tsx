@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 
-import { createTheme, type FieldSparkline, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
+import type { FieldSparkline } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
 
 import { Sparkline } from './Sparkline';
 

@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { ResultFormat } from '../../dataquery.gen';
 import { type AzureMonitorQuery } from '../../types/query';

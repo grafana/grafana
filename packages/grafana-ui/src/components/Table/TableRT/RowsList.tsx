@@ -5,8 +5,9 @@ import { type Cell, type Row, type TableState, type HeaderGroup } from 'react-ta
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
-import { DataHoverClearEvent, DataHoverEvent, type TimeRange, type InterpolateFunction } from '@grafana/data';
 import { type DataFrame, type Field, FieldType, hasTimeField } from '@grafana/data/dataframe';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data/events';
+import type { TimeRange, InterpolateFunction } from '@grafana/data/types';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';

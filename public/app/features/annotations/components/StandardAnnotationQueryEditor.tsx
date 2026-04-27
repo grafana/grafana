@@ -1,14 +1,14 @@
 import { PureComponent, type ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { DataSourcePluginContextProvider } from '@grafana/data/context';
 import {
   type AnnotationEventMappings,
   type AnnotationQuery,
   type DataSourceApi,
   type DataSourceInstanceSettings,
-  DataSourcePluginContextProvider,
   LoadingState,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';

@@ -4,11 +4,14 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { getMinMaxAndDelta, formattedValueToString, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getMinMaxAndDelta, getFieldColorModeForField } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, type VizLegendItem } from '@grafana/ui';
+import type { VizLegendItem } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';

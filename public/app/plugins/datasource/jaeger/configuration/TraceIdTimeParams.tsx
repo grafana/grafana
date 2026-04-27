@@ -1,11 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import {
-  type DataSourceJsonData,
-  type DataSourcePluginOptionsEditorProps,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 export interface TraceIdTimeParamsOptions {

@@ -1,17 +1,10 @@
 import { type Range } from 'uplot';
 
-import {
-  applyNullInsertThreshold,
-  // colorManipulator,
-  type FieldSparkline,
-  getFieldColorModeForField,
-  type GrafanaTheme2,
-  guessDecimals,
-  isLikelyAscendingVector,
-  nullToValue,
-  roundDecimals,
-} from '@grafana/data';
 import { type DataFrame, type FieldConfig, FieldType, sortDataFrame } from '@grafana/data/dataframe';
+import { type FieldSparkline, getFieldColorModeForField } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { applyNullInsertThreshold, isLikelyAscendingVector, nullToValue } from '@grafana/data/transformations';
+import { guessDecimals, roundDecimals } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import {
   AxisPlacement,

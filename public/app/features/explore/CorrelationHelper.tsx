@@ -3,26 +3,12 @@ import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import {
-  type DataLinkTransformationConfig,
-  type ExploreCorrelationHelperData,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataLinkTransformationConfig, ExploreCorrelationHelperData } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  Card,
-  Collapse,
-  DeleteButton,
-  Field,
-  Icon,
-  IconButton,
-  Input,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Card, Collapse, DeleteButton, Field, IconButton, Input, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getTransformationVars } from '../correlations/transformations';

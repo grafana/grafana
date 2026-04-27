@@ -1,12 +1,12 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
-import {
-  type DataQueryError,
-  type DataSourceApi,
-  type DataSourceInstanceSettings,
-  type DataTransformerConfig,
-  type PanelData,
-} from '@grafana/data';
+import type {
+  DataQueryError,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataTransformerConfig,
+  PanelData,
+} from '@grafana/data/types';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';

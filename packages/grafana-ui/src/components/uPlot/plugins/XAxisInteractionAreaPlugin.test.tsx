@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
-import type { BootData } from '@grafana/data';
+import type { BootData } from '@grafana/data/types';
 
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 

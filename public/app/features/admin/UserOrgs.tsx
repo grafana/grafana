@@ -1,9 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { memo, type ReactElement, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, OrgRole } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
+import { Button, ConfirmButton, Field, Modal, Tooltip, Stack, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, type OrgSelectItem } from 'app/core/components/Select/OrgPicker';

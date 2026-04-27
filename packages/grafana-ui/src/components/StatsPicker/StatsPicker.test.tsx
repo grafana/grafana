@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 
-import { ReducerID } from '@grafana/data';
+import { ReducerID } from '@grafana/data/transformations';
 
 import { Field } from '../Forms/Field';
 

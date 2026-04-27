@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { contentTypeOptions, type VariableSuggestion } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
+import { IconButton, Input, Stack, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

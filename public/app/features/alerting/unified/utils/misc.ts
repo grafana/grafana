@@ -1,7 +1,8 @@
 import { isString, sortBy } from 'lodash';
 
-import { type Labels, type UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
+import type { Labels } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';

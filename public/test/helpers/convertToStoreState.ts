@@ -1,4 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
+import type { TypedVariableModel } from '@grafana/data/types';
 
 import { getPreloadedState } from '../../app/features/variables/state/helpers';
 import { type VariablesState } from '../../app/features/variables/state/types';

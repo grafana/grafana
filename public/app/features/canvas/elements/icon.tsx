@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import { type CSSProperties } from 'react';
 
-import { type LinkModel } from '@grafana/data';
+import type { LinkModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig, type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';

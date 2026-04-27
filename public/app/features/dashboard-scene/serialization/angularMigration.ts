@@ -1,6 +1,7 @@
 import { defaults, cloneDeep } from 'lodash';
 
-import { type PanelModel as PanelModelFromData, type PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
+import type { PanelModel as PanelModelFromData } from '@grafana/data/types';
 import { autoMigrateAngular, type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 /**

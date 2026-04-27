@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { News } from 'app/plugins/panel/news/component/News';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import grotNewsSvg from 'img/grot-news.svg';

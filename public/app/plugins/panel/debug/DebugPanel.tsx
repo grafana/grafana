@@ -1,4 +1,4 @@
-import { type PanelProps } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
 
 import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';

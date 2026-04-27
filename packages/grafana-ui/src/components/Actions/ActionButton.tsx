@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { type ActionModel, type ActionVariableInput } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { ActionModel, ActionVariableInput } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';

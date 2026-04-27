@@ -3,7 +3,8 @@ import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Box, Button, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

@@ -2,7 +2,7 @@ import { partial } from 'lodash';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Controller, type DeepMap, type FieldError, type FieldErrors, useForm } from 'react-hook-form';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type Panel } from '@grafana/schema';

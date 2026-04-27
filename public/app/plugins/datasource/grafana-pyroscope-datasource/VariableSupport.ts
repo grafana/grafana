@@ -5,7 +5,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   type MetricFindValue,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { getProfileTypeLabel, VariableQueryEditor } from './VariableQueryEditor';
 import { type PyroscopeDataSource } from './datasource';

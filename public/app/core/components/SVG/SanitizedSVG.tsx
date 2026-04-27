@@ -1,6 +1,6 @@
 import SVG, { type Props } from 'react-inlinesvg';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 
 import { svgStyleCleanup } from './utils';
 

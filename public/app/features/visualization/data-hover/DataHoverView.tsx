@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
 
-import { formattedValueToString, getFieldDisplayName, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { Trans } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 import { renderValue } from './renderValue';

@@ -1,7 +1,7 @@
 import { debounce, union, without } from 'lodash';
 import { type PropsWithChildren, createContext, useContext, useEffect, useRef } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { config, getAppEvents } from '@grafana/runtime';
 import { AlertmanagerChoice, type GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';

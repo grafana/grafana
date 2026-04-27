@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';

@@ -1,4 +1,4 @@
-import { type ExploreUrlState } from '@grafana/data';
+import type { ExploreUrlState } from '@grafana/data/types';
 import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 

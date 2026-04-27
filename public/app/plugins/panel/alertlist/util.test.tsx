@@ -1,4 +1,5 @@
-import { createTheme, MappingType, ThresholdsMode } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { MappingType, ThresholdsMode } from '@grafana/data/types';
 import { BigValueColorMode } from '@grafana/ui';
 import { mockAlertWithState as withState } from 'app/features/alerting/unified/mocks';
 import { type Alert } from 'app/types/unified-alerting';

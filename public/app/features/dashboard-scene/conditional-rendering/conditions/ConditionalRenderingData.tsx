@@ -1,6 +1,6 @@
 import { type ReactElement, useMemo } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   type CancelActivationHandler,

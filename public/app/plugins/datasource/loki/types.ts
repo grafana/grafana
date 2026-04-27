@@ -1,4 +1,4 @@
-import { type DataQuery, type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import type { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data/types';
 
 import {
   type LokiDataQuery as LokiQueryFromSchema,

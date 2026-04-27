@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 import { hasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';

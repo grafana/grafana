@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { getDefaultTimeRange, InternalTimeZones } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { InternalTimeZones } from '@grafana/data/datetime';
+import { getDefaultTimeRange } from '@grafana/data/types';
 
 import { TableContainerWithTheme } from './TableContainer';
 

@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
 import { memo, type MouseEventHandler } from 'react';
 
-import { type DisplayValue, type DisplayValueAlignmentFactors, type FieldSparkline } from '@grafana/data';
+import type { FieldSparkline } from '@grafana/data/field';
+import type { DisplayValue, DisplayValueAlignmentFactors } from '@grafana/data/types';
 import { type PercentChangeColorMode, type VizTextDisplayOptions } from '@grafana/schema';
 
 import { type Themeable2 } from '../../types/theme';

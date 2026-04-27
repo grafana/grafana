@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { ColorPickerPopover } from './ColorPickerPopover';
 

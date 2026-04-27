@@ -1,4 +1,4 @@
-import { FeatureState } from '@grafana/data';
+import { FeatureState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { Badge, type BadgeProps } from '../Badge/Badge';

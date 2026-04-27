@@ -1,7 +1,8 @@
 import { render, type RenderResult, waitFor, within } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { PluginType, escapeStringForRegex } from '@grafana/data';
+import { escapeStringForRegex } from '@grafana/data/text';
+import { PluginType } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 

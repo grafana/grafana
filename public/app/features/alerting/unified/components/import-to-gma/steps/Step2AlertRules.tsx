@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,

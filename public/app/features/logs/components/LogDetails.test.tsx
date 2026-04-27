@@ -1,8 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LogLevel, type LogRowModel, createTheme, DataFrameType, CoreApp, PluginExtensionPoints, dateTime } from '@grafana/data';
 import { type Field, MutableDataFrame, FieldType, createDataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { createTheme } from '@grafana/data/themes';
+import { LogLevel, type LogRowModel, DataFrameType, CoreApp, PluginExtensionPoints } from '@grafana/data/types';
 import { setPluginLinksHook } from '@grafana/runtime';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../logsFrame';

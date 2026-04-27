@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { type FormEvent, useState, type ChangeEvent } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrameSchema, type FieldSchema } from '@grafana/data/dataframe';
-import { useStyles2, TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type Config = Record<string, any>;
 

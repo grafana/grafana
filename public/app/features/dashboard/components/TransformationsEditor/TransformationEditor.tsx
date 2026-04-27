@@ -1,11 +1,15 @@
 import { css } from '@emotion/css';
 import { createElement, useMemo } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type TransformerRegistryItem } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TransformerRegistryItem } from '@grafana/data/transformations';
+import type { DataTransformerConfig } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
+import { JSONFormatter, Drawer } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TransformationsEditorTransformation } from './types';
 

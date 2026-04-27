@@ -1,4 +1,4 @@
-import { LegacyGraphHoverClearEvent } from '@grafana/data';
+import { LegacyGraphHoverClearEvent } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';

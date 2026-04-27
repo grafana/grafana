@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import { type ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type PluginExtensionAddedFunctionConfig } from '@grafana/data';
+import type { AppPluginConfig, PluginExtensionAddedFunctionConfig } from '@grafana/data/types';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';

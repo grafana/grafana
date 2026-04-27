@@ -17,8 +17,10 @@ import cx from 'classnames';
 import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
-import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PluginExtensionLink, TraceKeyValuePair } from '@grafana/data/types';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';

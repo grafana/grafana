@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { VizOrientation } from '@grafana/data';
+import { VizOrientation } from '@grafana/data/types';
 
 import { VizRepeater, type VizRepeaterRenderValueProps } from './VizRepeater';
 

@@ -1,16 +1,15 @@
 import { firstValueFrom } from 'rxjs';
 
+import { getTimeZone } from '@grafana/data/datetime';
+import type { PanelPlugin } from '@grafana/data/panel';
 import {
-  getTimeZone,
   type InterpolateFunction,
   type LinkModel,
-  locationUtil,
   type PanelMenuItem,
-  type PanelPlugin,
   type PluginExtensionPanelContext,
   PluginExtensionPoints,
-  urlUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { locationUtil, urlUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';

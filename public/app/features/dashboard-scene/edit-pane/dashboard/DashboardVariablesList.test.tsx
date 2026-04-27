@@ -1,7 +1,7 @@
 import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 

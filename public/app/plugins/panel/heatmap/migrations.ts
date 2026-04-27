@@ -1,4 +1,4 @@
-import { type FieldConfigSource, type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
+import type { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data/types';
 import {
   AxisPlacement,
   ScaleDistribution,

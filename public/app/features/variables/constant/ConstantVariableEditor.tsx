@@ -1,6 +1,6 @@
 import { type FormEvent, memo } from 'react';
 
-import { type ConstantVariableModel } from '@grafana/data';
+import type { ConstantVariableModel } from '@grafana/data/types';
 import { ConstantVariableForm } from 'app/features/dashboard-scene/settings/variables/components/ConstantVariableForm';
 
 import { type VariableEditorProps } from '../editor/types';

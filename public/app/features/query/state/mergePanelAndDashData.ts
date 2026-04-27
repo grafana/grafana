@@ -1,8 +1,8 @@
 import { combineLatest, type Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { DataTopic, type PanelData } from '@grafana/data';
 import { arrayToDataFrame, type DataFrame } from '@grafana/data/dataframe';
+import { DataTopic, type PanelData } from '@grafana/data/types';
 
 import { type DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 

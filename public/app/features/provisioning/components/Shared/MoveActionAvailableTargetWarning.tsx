@@ -1,5 +1,6 @@
 import { t, Trans } from '@grafana/i18n';
-import { Box, Icon, Tooltip } from '@grafana/ui';
+import { Box, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 export function MoveActionAvailableTargetWarning() {
   return (

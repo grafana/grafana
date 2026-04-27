@@ -7,7 +7,7 @@ import {
   type PluginExtensionLink,
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionDataSourceConfigStatusContext,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { setPluginLinksHook, type UsePluginLinksOptions, setPluginComponentsHook, config } from '@grafana/runtime';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 

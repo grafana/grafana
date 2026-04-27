@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 

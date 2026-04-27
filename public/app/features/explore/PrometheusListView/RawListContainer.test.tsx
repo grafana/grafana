@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 
-import { type FormattedValue } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import type { FormattedValue } from '@grafana/data/valueFormats';
 
 import RawListContainer, { type RawListContainerProps } from './RawListContainer';
 

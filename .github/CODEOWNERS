@@ -617,6 +617,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/withLoadingIndicator.ts @grafana/access-squad @grafana/alerting-frontend
 /packages/grafana-data/src/valueFormats/ @grafana/dashboards-squad
 /packages/grafana-data/src/vector/ @grafana/dataviz-squad
+/packages/grafana-data/src/context/index.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/index.ts @grafana/grafana-frontend-platform
 
 # @grafana/e2e-selectors
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform

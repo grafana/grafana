@@ -2,10 +2,12 @@ import * as React from 'react';
 import { Component } from 'react';
 import { type default as uPlot, type AlignedData } from 'uplot';
 
-import { type DataLinkPostProcessor, FieldMatcherID, fieldMatchers, getLinksSupplier, type InterpolateFunction, type TimeRange, type TimeZone } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { getLinksSupplier } from '@grafana/data/field';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
+import type { DataLinkPostProcessor, InterpolateFunction, TimeRange, TimeZone } from '@grafana/data/types';
 import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema';
-import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
+import { VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
 import {
   type AxisProps,
   pluginLog,
@@ -14,6 +16,7 @@ import {
   UPlotChart,
   type UPlotConfigBuilder,
 } from '@grafana/ui/internal';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import { type GraphNGLegendEvent, type XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';

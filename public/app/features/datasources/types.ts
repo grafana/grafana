@@ -1,4 +1,4 @@
-import { type DataQuery, type DataSourceApi, type DataSourceJsonData, type DataSourcePlugin } from '@grafana/data';
+import type { DataQuery, DataSourceApi, DataSourceJsonData, DataSourcePlugin } from '@grafana/data/types';
 
 import { type RelativeUrl } from '../alerting/unified/utils/url';
 

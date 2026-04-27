@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { locationService, setRunRequest } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';

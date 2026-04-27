@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
-import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, type PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, useTheme2 } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { HttpSettings } from './HttpSettings';
 

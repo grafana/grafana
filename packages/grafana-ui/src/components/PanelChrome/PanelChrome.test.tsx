@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';

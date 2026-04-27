@@ -20,7 +20,7 @@ import 'swagger-ui-react/swagger-ui.css';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 
 import { Page } from './SwaggerPage';
 

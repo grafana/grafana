@@ -3,7 +3,7 @@ import { type RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 're
 import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { type SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

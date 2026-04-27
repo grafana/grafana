@@ -6,7 +6,7 @@ import {
   useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
   useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy/user';
-import { locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarred } from 'app/core/reducers/navBarTree';

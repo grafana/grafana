@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { MappingType } from '@grafana/data';
+import { MappingType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ValueMappingsEditorModal, type Props } from './ValueMappingsEditorModal';

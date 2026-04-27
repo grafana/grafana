@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 
-import { type CentralAlertHistorySceneV1Props } from '@grafana/data';
+import type { CentralAlertHistorySceneV1Props } from '@grafana/data/types';
 
 const CentralAlertHistoryScene = lazy(() => import('./CentralAlertHistoryScene'));
 

@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import type { GrafanaConfig } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 
 import { TextLink } from './TextLink';
 

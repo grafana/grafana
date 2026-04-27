@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, LanguageProvider, type SelectableValue, type TimeRange } from '@grafana/data';
+import { type AdHocVariableFilter, LanguageProvider, type SelectableValue, type TimeRange } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 

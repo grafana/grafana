@@ -1,4 +1,4 @@
-import { type DataFrame, type Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';

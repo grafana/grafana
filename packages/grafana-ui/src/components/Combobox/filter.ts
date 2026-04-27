@@ -1,4 +1,4 @@
-import { fuzzySearch } from '@grafana/data';
+import { fuzzySearch } from '@grafana/data/utils';
 
 import { type ComboboxOption } from './types';
 

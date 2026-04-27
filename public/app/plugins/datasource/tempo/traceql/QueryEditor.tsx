@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import { useState } from 'react';
 
-import { CoreApp, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, type QueryEditorProps } from '@grafana/data/types';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, InlineLabel, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, InlineLabel, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TempoDatasource } from '../datasource';
 import { defaultQuery, type MyDataSourceOptions, type TempoQuery } from '../types';

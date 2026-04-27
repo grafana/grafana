@@ -1,7 +1,7 @@
 import { type Observable, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { AlertState, type AlertStateInfo } from '@grafana/data';
+import { AlertState, type AlertStateInfo } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';

@@ -1,4 +1,4 @@
-import { type OrgRole, type SelectableValue, type WithAccessControlMetadata } from '@grafana/data';
+import type { OrgRole, SelectableValue, WithAccessControlMetadata } from '@grafana/data/types';
 
 import { type Role } from './accessControl';
 

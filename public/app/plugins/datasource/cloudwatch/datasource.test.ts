@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 
 import {
   type CloudWatchLogsQuery,

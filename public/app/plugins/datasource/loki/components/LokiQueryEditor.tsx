@@ -3,7 +3,7 @@ import { memo, type SyntheticEvent, useCallback, useEffect, useId, useState } fr
 import { usePrevious } from 'react-use';
 
 import { QueryWithAssistantButton } from '@grafana/assistant';
-import { CoreApp, LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   EditorHeader,

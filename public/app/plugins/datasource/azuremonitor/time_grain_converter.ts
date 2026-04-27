@@ -1,6 +1,6 @@
 import { includes, filter } from 'lodash';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
 
 export default class TimeGrainConverter {
   static createISO8601Duration(timeGrain: string | number, timeGrainUnit: string) {

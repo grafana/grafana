@@ -4,7 +4,7 @@ import { isBefore } from 'date-fns/isBefore';
 import { type ComponentProps } from 'react';
 
 import { type StateIcon } from '@grafana/alerting/unstable';
-import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
+import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data/datetime';
 import { type RuleHealth } from 'app/types/unified-alerting';
 import { type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

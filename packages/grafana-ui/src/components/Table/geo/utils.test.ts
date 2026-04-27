@@ -1,7 +1,7 @@
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
-import { createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { isGeometry, hasGeoCell } from './utils';
 

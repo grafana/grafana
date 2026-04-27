@@ -2,15 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
-import {
-  type FieldConfigSource,
-  filterFieldConfigOverrides,
-  type GrafanaTheme2,
-  isStandardFieldProp,
-  type PanelPluginMeta,
-  restoreCustomOverrideRules,
-  type SelectableValue,
-} from '@grafana/data';
+import { filterFieldConfigOverrides, isStandardFieldProp, restoreCustomOverrideRules } from '@grafana/data/panel';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { FieldConfigSource, PanelPluginMeta, SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -24,7 +18,8 @@ import {
   type VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';

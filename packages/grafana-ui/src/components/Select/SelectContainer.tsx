@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { components, type ContainerProps as BaseContainerProps, type GroupBase } from 'react-select';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';

@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { serializeStateToUrlParam } from '@grafana/data/utils';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';

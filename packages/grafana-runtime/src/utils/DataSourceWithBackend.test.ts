@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
+import { createDataFrame } from '@grafana/data/dataframe';
 import {
   type DataQuery,
   type DataQueryRequest,
@@ -8,11 +9,10 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   type DataSourceRef,
-  createDataFrame,
   type AdHocVariableFilter,
   type ScopedVars,
   getDefaultTimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { config } from '../config';
 

@@ -1,4 +1,4 @@
-﻿import { type OrgRole, type WithAccessControlMetadata } from '@grafana/data';
+﻿import type { OrgRole, WithAccessControlMetadata } from '@grafana/data/types';
 
 export interface ApiKey extends WithAccessControlMetadata {
   id?: number;

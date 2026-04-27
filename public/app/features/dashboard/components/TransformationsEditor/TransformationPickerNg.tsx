@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback, useId } from 'react';
 
-import { type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TransformerRegistryItem } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 

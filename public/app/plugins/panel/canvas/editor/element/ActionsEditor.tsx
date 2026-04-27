@@ -1,4 +1,5 @@
-import { type StandardEditorProps, type Action, VariableSuggestionsScope } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import { type Action, VariableSuggestionsScope } from '@grafana/data/types';
 import { ActionsInlineEditor } from 'app/features/actions/ActionsInlineEditor';
 import { type CanvasElementOptions } from 'app/features/canvas/element';
 

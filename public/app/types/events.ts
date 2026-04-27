@@ -1,4 +1,5 @@
-import { type AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data/events';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { type ButtonVariant } from '@grafana/ui';
 
 /**

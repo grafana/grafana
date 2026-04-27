@@ -1,7 +1,19 @@
 import { lastValueFrom, type Observable, of } from 'rxjs';
 
-import { type DataSourceInstanceSettings, dateTime, getDefaultTimeRange, LoadingState, PluginType, CoreApp, type DataSourceApi, type DataQueryRequest, getTimeZone, type PluginMetaInfo, type DataLink, NodeGraphDataFrameFieldNames } from '@grafana/data';
 import { type DataFrame, dataFrameToJSON, FieldType, createDataFrame } from '@grafana/data/dataframe';
+import { dateTime, getTimeZone } from '@grafana/data/datetime';
+import {
+  type DataSourceInstanceSettings,
+  getDefaultTimeRange,
+  LoadingState,
+  PluginType,
+  CoreApp,
+  type DataSourceApi,
+  type DataQueryRequest,
+  type PluginMetaInfo,
+  type DataLink,
+} from '@grafana/data/types';
+import { NodeGraphDataFrameFieldNames } from '@grafana/data/utils';
 import {
   type BackendDataSourceResponse,
   config,

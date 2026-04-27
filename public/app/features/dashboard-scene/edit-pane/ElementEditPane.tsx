@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';

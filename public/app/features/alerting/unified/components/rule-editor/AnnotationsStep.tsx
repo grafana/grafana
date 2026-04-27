@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, Stack, Text, TextArea } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { type RuleFormValues } from '../../types/rule-form';

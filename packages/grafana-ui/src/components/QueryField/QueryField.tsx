@@ -7,7 +7,7 @@ import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor, type EventHook, type Plugin } from 'slate-react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ClearPlugin } from '../../slate-plugins/clear';

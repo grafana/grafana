@@ -1,6 +1,6 @@
 import { type Subscription } from 'rxjs';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 
 import { type KeyedVariableIdentifier } from '../state/types';
 

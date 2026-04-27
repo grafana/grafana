@@ -3,14 +3,11 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import {
-  type GrafanaTheme2,
-  type PanelProps,
-  renderTextPanelMarkdown,
-  textUtil,
-  type InterpolateFunction,
-} from '@grafana/data';
-import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { renderTextPanelMarkdown, textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelProps, InterpolateFunction } from '@grafana/data/types';
+import { CodeEditor, ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, type Options, TextMode } from './panelcfg.gen';

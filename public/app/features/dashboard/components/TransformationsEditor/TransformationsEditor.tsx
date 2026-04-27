@@ -3,21 +3,15 @@ import { type ChangeEvent, createRef, type RefObject } from 'react';
 import * as React from 'react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type DataQueryRequest, type DataTransformerConfig, type PanelData, type SelectableValue, standardTransformersRegistry, type TransformerCategory } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { standardTransformersRegistry, type TransformerCategory } from '@grafana/data/transformations';
+import type { DataQueryRequest, DataTransformerConfig, PanelData, SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  ConfirmModal,
-  Container,
-  type Themeable,
-  withTheme,
-  IconButton,
-  ButtonGroup,
-  ScrollContainer,
-} from '@grafana/ui';
+import { Button, ConfirmModal, Container, IconButton, ButtonGroup, ScrollContainer } from '@grafana/ui';
+import { withTheme } from '@grafana/ui/themes';
+import type { Themeable } from '@grafana/ui/types';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { type PanelModel } from '../../state/PanelModel';

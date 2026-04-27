@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 export type DragHandlePosition = 'middle' | 'start' | 'end';
 

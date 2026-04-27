@@ -1,13 +1,10 @@
 // These are used in some other plugins for some reason
 
-import {
-  escapeStringForRegex,
-  type FieldOverrideContext,
-  getFieldDisplayName,
-  type PanelOptionsEditorBuilder,
-  ReducerID,
-  standardEditorsRegistry,
-} from '@grafana/data';
+import { getFieldDisplayName, standardEditorsRegistry } from '@grafana/data/field';
+import { escapeStringForRegex } from '@grafana/data/text';
+import { ReducerID } from '@grafana/data/transformations';
+import type { FieldOverrideContext } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 

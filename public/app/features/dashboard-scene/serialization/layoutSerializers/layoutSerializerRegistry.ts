@@ -1,4 +1,4 @@
-import { Registry, type RegistryItem } from '@grafana/data';
+import { Registry, type RegistryItem } from '@grafana/data/utils';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';

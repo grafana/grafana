@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type AdHocFiltersController, type AdHocFilterWithLabels } from '@grafana/scenes';
 

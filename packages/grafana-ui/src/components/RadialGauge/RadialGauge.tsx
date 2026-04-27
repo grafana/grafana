@@ -1,12 +1,7 @@
 import { useId, type ReactNode } from 'react';
 
-import {
-  type DisplayValueAlignmentFactors,
-  FALLBACK_COLOR,
-  type FieldDisplay,
-  ThresholdsMode,
-  type TimeRange,
-} from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
+import { type DisplayValueAlignmentFactors, FALLBACK_COLOR, ThresholdsMode, type TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

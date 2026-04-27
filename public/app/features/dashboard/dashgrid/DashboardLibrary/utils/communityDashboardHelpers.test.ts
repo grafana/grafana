@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   InputType,

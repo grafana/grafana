@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import * as React from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data/types';
 import { DataFrame } from '@grafana/data/dataframe';
 
 import { PanelContextRoot } from '../../components/PanelChrome/PanelContext';

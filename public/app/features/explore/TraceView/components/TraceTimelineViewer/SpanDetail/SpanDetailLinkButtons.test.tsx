@@ -1,4 +1,4 @@
-import { CoreApp, type TimeRange } from '@grafana/data';
+import { CoreApp, type TimeRange } from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 

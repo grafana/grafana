@@ -1,9 +1,6 @@
-import {
-  type FieldConfigOptionsRegistry,
-  type FieldConfigPropertyItem,
-  type FieldConfigSource,
-  Registry,
-} from '@grafana/data';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import type { FieldConfigPropertyItem, FieldConfigSource } from '@grafana/data/types';
+import { Registry } from '@grafana/data/utils';
 
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 

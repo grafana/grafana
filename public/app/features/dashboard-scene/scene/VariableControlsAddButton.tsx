@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { DashboardInteractions } from '../utils/interactions';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Stack } from '@grafana/ui';
 

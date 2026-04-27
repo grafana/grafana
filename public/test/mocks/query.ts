@@ -1,4 +1,4 @@
-import { CoreApp, type DataQueryRequest, getDefaultTimeRange } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, getDefaultTimeRange } from '@grafana/data/types';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
 export class MockQuery implements DataQuery {

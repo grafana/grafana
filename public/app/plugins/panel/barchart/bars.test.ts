@@ -1,7 +1,7 @@
 import type uPlot from 'uplot';
 
-import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { createTheme, type GrafanaTheme2 } from '@grafana/data/themes';
 import { ScaleDirection, ScaleOrientation, StackingMode, VisibilityMode } from '@grafana/schema';
 
 import { type BarsOptions, getConfig } from './bars';

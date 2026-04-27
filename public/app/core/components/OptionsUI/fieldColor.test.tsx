@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FieldColorModeId } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/data/types';
+import { Registry } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 
 import { FieldColorEditor } from './fieldColor';
@@ -34,11 +35,11 @@ const testRegistryItems = [
   },
 ];
 
-jest.mock('@grafana/data', () => {
-  const actualData = jest.requireActual('@grafana/data');
+jest.mock('@grafana/data/field', () => {
+  const actualData = jest.requireActual('@grafana/data/field');
   return {
     ...actualData,
-    fieldColorModeRegistry: new actualData.Registry(() => testRegistryItems),
+    fieldColorModeRegistry: new Registry(() => testRegistryItems),
   };
 });
 

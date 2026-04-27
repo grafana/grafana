@@ -2,7 +2,9 @@ import { useState, type ChangeEvent, useEffect } from 'react';
 
 import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
-import { Button, Icon, Stack, Checkbox, Text, Box, type IconName, Space, Tooltip } from '@grafana/ui';
+import { Button, Stack, Checkbox, Text, Box, Space, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import type { IconName } from '@grafana/ui/types';
 
 import { type ResourceTypeId, buildDependencyMaps, handleSelection, handleDeselection } from './resourceDependency';
 import { iconNameForResource, pluralizeResourceName } from './resourceInfo';

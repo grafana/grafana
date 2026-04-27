@@ -18,7 +18,7 @@ import {
   type QueryEditorProps,
   type DataSourcePluginMeta,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import {
   setDataSourceSrv,
   setEchoSrv,

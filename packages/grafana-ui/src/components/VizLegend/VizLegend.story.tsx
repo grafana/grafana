@@ -1,7 +1,8 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 import { type FC, useEffect, useState } from 'react';
 
-import { type DisplayValue, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DisplayValue } from '@grafana/data/types';
 import { LegendDisplayMode, type LegendPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';

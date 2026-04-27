@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
+import type { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data/types';
 import { useDispatch } from 'app/types/store';
 
 import { type VariablePickerProps } from '../../pickers/types';

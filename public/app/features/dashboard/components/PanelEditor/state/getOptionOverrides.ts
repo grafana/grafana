@@ -1,7 +1,7 @@
 import { get as lodashGet } from 'lodash';
 
-import { type FieldConfigPropertyItem, type FieldConfigSource } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { FieldConfigPropertyItem, FieldConfigSource } from '@grafana/data/types';
 
 import { type OptionPaneItemOverrideInfo } from '../types';
 

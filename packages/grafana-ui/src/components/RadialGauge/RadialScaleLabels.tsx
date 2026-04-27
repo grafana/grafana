@@ -1,6 +1,8 @@
 import { memo, useId } from 'react';
 
-import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type Threshold, ThresholdsMode } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';

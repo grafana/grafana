@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, type ScalarDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { type ScalarDimensionOptions } from '../types';

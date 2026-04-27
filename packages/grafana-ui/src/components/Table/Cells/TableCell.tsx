@@ -1,7 +1,7 @@
 import { type Cell } from 'react-table';
 
-import { type TimeRange, type InterpolateFunction } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { TimeRange, InterpolateFunction } from '@grafana/data/types';
 
 import { type TableStyles } from '../TableRT/styles';
 import {

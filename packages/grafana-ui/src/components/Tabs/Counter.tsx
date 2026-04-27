@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, locale } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { locale } from '@grafana/data/valueFormats';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

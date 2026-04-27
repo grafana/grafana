@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PageLayoutType } from '@grafana/data/types';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import NativeScrollbar from '../NativeScrollbar';

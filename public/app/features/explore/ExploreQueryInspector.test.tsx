@@ -3,7 +3,8 @@ import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
-import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
+import { InternalTimeZones } from '@grafana/data/datetime';
+import { LoadingState, getDefaultTimeRange } from '@grafana/data/types';
 import { type InspectorStream } from 'app/core/services/backend_srv';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';

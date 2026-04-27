@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
 
 import { type DashboardModel } from '../state/DashboardModel';

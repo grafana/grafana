@@ -1,12 +1,7 @@
 import { type Observable } from 'rxjs';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceRef,
-  getDataSourceRef,
-  type ScopedVars,
-  AppEvents,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars, AppEvents } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import {
   type BackendDataSourceResponse,
   type FetchResponse,

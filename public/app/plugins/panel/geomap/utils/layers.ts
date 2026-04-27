@@ -5,7 +5,10 @@ import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { Subject } from 'rxjs';
 
-import { getFrameMatchers, type MapLayerHandler, type MapLayerOptions, type PanelData, textUtil } from '@grafana/data';
+import type { MapLayerHandler, MapLayerOptions } from '@grafana/data/geo';
+import { textUtil } from '@grafana/data/text';
+import { getFrameMatchers } from '@grafana/data/transformations';
+import type { PanelData } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { type GeomapPanel } from '../GeomapPanel';

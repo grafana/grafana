@@ -2,7 +2,8 @@ import { Preview } from '@storybook/react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
-import { getBuiltInThemes, getTimeZone, getTimeZones, GrafanaTheme2 } from '@grafana/data';
+import { getTimeZone, getTimeZones } from '@grafana/data/datetime';
+import { getBuiltInThemes, GrafanaTheme2 } from '@grafana/data/themes';
 
 import '../../../public/vendor/flot/jquery.flot.js';
 import '../../../public/vendor/flot/jquery.flot.selection';

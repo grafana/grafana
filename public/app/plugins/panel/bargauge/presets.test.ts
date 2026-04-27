@@ -1,5 +1,5 @@
-import { getPanelDataSummary } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary } from '@grafana/data/panel';
 
 import { barGaugePresetsSupplier } from './presets';
 

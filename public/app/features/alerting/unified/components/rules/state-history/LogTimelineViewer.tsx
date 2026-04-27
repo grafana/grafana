@@ -1,11 +1,12 @@
 import { memo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type InterpolateFunction, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { InterpolateFunction, TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { VisibilityMode } from '@grafana/schema';
-import { LegendDisplayMode, useTheme2 } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 

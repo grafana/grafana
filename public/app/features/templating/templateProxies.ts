@@ -1,5 +1,6 @@
-import { getFieldDisplayName, formatLabels } from '@grafana/data';
 import { type Field, type DataFrame } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { formatLabels } from '@grafana/data/utils';
 
 /**
  * This object is created often, and only used when tmplates exist.  Using a proxy lets us delay

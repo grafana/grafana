@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 

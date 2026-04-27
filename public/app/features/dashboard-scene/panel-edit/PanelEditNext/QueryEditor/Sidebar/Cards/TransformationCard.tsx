@@ -1,4 +1,4 @@
-import { Icon } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryEditorTypeConfig } from '../../QueryEditorContext';

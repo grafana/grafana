@@ -4,8 +4,26 @@ import memoize from 'micro-memoize';
 import { type HeaderGroup, type Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
-import { type ActionModel, type DisplayValue, type DisplayValueAlignmentFactors, type FieldConfigSource, fieldReducers, formattedValueToString, getDisplayProcessor, getFieldDisplayName, type GrafanaTheme2, type LinkModel, reduceField, type SelectableValue } from '@grafana/data';
-import { type DataFrame, type Field, FieldType, isDataFrame, isDataFrameWithValue, isTimeSeriesFrame } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type Field,
+  FieldType,
+  isDataFrame,
+  isDataFrameWithValue,
+  isTimeSeriesFrame,
+} from '@grafana/data/dataframe';
+import { getDisplayProcessor, getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { fieldReducers, reduceField } from '@grafana/data/transformations';
+import type {
+  ActionModel,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+  FieldConfigSource,
+  LinkModel,
+  SelectableValue,
+} from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import {
   BarGaugeDisplayMode,
   type TableAutoCellOptions,

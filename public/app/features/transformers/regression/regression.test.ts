@@ -1,5 +1,12 @@
-import { type DataTransformContext } from '@grafana/data';
-import { type DataFrame, type DataFrameDTO, type Field, FieldType, toDataFrame, toDataFrameDTO } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type DataFrameDTO,
+  type Field,
+  FieldType,
+  toDataFrame,
+  toDataFrameDTO,
+} from '@grafana/data/dataframe';
+import type { DataTransformContext } from '@grafana/data/types';
 
 import { ModelType, getRegressionTransformer, type RegressionTransformerOptions } from './regression';
 

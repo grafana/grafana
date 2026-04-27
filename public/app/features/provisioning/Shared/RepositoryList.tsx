@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { Alert, Box, EmptyState, FilterInput, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';

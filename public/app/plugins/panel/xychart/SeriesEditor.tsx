@@ -2,19 +2,14 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import {
-  getFrameDisplayName,
-  type StandardEditorProps,
-  // getFieldDisplayName,
-  FrameMatcherID,
-  FieldMatcherID,
-  FieldNamePickerBaseNameMode,
-  type GrafanaTheme2,
-} from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { getFrameDisplayName, type StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FrameMatcherID, FieldMatcherID } from '@grafana/data/transformations';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { type Options, SeriesMapping, type XYSeriesConfig } from './panelcfg.gen';

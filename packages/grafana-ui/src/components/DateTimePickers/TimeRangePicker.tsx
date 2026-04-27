@@ -4,15 +4,9 @@ import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { memo, createRef, useState, useEffect, type JSX } from 'react';
 
-import {
-  rangeUtil,
-  type GrafanaTheme2,
-  dateTimeFormat,
-  type TimeOption,
-  type TimeRange,
-  dateMath,
-  getTimeZoneInfo,
-} from '@grafana/data';
+import { rangeUtil, dateTimeFormat, dateMath, getTimeZoneInfo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeOption, TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';

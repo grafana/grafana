@@ -1,11 +1,12 @@
 import { groupBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, getDisplayProcessor } from '@grafana/data';
 import { type DataFrame, type Field as DataFrameField, type DataFrameJSON, FieldType } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
 import { fieldIndexComparer } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';

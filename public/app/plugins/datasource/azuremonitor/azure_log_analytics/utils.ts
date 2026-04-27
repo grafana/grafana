@@ -1,4 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
+import type { TypedVariableModel } from '@grafana/data/types';
 
 import { type AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { type EngineSchema } from '../types/types';

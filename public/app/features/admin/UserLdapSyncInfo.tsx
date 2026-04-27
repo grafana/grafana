@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
 import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

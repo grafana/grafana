@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
+import type { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data/types';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';

@@ -1,8 +1,11 @@
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { FALLBACK_COLOR, formattedValueToString, getFieldColorModeForField, type GrafanaTheme2, MappingType, SpecialValueMatch, ThresholdsMode, colorManipulator } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldColorModeForField } from '@grafana/data/field';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data/themes';
+import { FALLBACK_COLOR, MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';

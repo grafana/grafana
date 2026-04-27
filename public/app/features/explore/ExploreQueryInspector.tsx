@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, LoadingState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, type TimeZone } from '@grafana/schema';
-import { TabbedContainer, type TabConfig, useStyles2 } from '@grafana/ui';
+import { TabbedContainer, type TabConfig } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';

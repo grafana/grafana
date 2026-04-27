@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { FIELD_NAME_FACET_KEY, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FIELD_NAME_FACET_KEY } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

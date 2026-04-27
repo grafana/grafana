@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
+import { monacoLanguageRegistry } from '@grafana/data/monaco';
+import { createTheme } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
+import { Stack, Select, type UserView, Button } from '@grafana/ui';
+import { Icon, UserIcon } from '@grafana/ui/components/icons';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 

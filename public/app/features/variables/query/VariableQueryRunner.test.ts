@@ -7,7 +7,7 @@ import {
   LoadingState,
   type QueryVariableModel,
   VariableSupportType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { getPreloadedState } from '../state/helpers';

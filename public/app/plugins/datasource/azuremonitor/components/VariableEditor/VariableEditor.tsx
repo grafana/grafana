@@ -2,7 +2,7 @@ import { get, isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';

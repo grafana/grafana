@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { PluginContext } from '@grafana/data';
+import { PluginContext } from '@grafana/data/context';
 
 interface PluginErrorBoundaryProps {
   children: React.ReactNode;

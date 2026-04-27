@@ -5,20 +5,12 @@ import { useAsync, useDebounce } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  Alert,
-  Button,
-  FilterInput,
-  Icon,
-  LoadingPlaceholder,
-  Modal,
-  Tooltip,
-  clearButtonStyles,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, FilterInput, LoadingPlaceholder, Modal, Tooltip, clearButtonStyles } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';

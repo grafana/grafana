@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, type PluginType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginErrorCode, PluginSignatureStatus, type PluginType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, List, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, List, PluginSignatureBadge, Stack, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 

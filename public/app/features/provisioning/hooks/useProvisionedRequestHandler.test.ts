@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { setAppEvents } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';

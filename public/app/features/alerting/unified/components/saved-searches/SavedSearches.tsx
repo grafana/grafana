@@ -48,9 +48,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Spinner, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PopupCard } from '../HoverCard';
 

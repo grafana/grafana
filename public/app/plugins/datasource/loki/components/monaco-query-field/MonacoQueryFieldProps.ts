@@ -1,4 +1,4 @@
-import { type HistoryItem, type TimeRange } from '@grafana/data';
+import type { HistoryItem, TimeRange } from '@grafana/data/types';
 
 import { type LokiDatasource } from '../../datasource';
 import { type LokiQuery } from '../../types';

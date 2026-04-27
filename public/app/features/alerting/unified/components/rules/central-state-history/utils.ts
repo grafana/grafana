@@ -1,8 +1,16 @@
 import { groupBy } from 'lodash';
 
-import { type GrafanaTheme2, MappingType, ThresholdsMode, getDisplayProcessor } from '@grafana/data';
-import { type DataFrame, type Field as DataFrameField, type DataFrameJSON, type Field, FieldType } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type Field as DataFrameField,
+  type DataFrameJSON,
+  type Field,
+  FieldType,
+} from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
 import { fieldIndexComparer } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { MappingType, ThresholdsMode } from '@grafana/data/types';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { isPromQLStyleMatcher, parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';

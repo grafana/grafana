@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 
-import { EventBusSrv, getTimeZone } from '@grafana/data';
+import { getTimeZone } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
 import { selectors } from '@grafana/e2e-selectors';
 import { stopQueryState } from 'app/core/utils/explore';
 import { type StoreState, useSelector } from 'app/types/store';

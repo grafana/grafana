@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';

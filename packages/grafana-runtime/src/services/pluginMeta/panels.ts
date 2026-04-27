@@ -1,4 +1,4 @@
-import { PluginType, type PanelPluginMeta } from '@grafana/data';
+import { PluginType, type PanelPluginMeta } from '@grafana/data/types';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';

@@ -1,5 +1,5 @@
-import { FieldMatcherID } from '@grafana/data';
 import { GroupByOperationID, type GroupToNestedTableTransformerOptionsV2 } from '@grafana/data/internal';
+import { FieldMatcherID } from '@grafana/data/transformations';
 
 import { DEFAULT_MATCHER_ID, appendNewRule, deleteRuleByIndex, getRuleKey, updateRuleByIndex } from './utils';
 

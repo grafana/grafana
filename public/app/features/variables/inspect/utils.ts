@@ -1,4 +1,5 @@
-import { type BaseVariableModel, DataLinkBuiltInVars } from '@grafana/data';
+import type { BaseVariableModel } from '@grafana/data/types';
+import { DataLinkBuiltInVars } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';

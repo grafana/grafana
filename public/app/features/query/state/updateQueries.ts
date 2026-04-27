@@ -1,4 +1,5 @@
-import { CoreApp, type DataSourceApi, getNextRefId, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import { CoreApp, type DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data/types';
 import { getTemplateSrv, isExpressionReference } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 

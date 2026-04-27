@@ -9,7 +9,7 @@ import {
   type PluginExtensions,
   AppPlugin,
   OrgRole,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 

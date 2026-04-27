@@ -1,20 +1,11 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type OrgRole } from '@grafana/data';
+import type { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Avatar,
-  type CellProps,
-  type Column,
-  InteractiveTable,
-  Pagination,
-  Stack,
-  TextLink,
-  Button,
-  IconButton,
-  Icon,
-} from '@grafana/ui';
+import { Avatar, type CellProps, InteractiveTable, Pagination, Stack, TextLink, Button, IconButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import type { Column } from '@grafana/ui/types';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type Role, AccessControlAction } from 'app/types/accessControl';

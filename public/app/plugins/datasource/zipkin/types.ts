@@ -1,4 +1,4 @@
-import { type DataQuery } from '@grafana/data';
+import type { DataQuery } from '@grafana/data/types';
 
 export type ZipkinSpan = {
   traceId: string;

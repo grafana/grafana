@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 
-import { DataSourcePlugin, DashboardLoadedEvent, type QueryEditorProps } from '@grafana/data';
+import { DashboardLoadedEvent } from '@grafana/data/events';
+import { DataSourcePlugin, type QueryEditorProps } from '@grafana/data/types';
 import { getAppEvents } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';
 

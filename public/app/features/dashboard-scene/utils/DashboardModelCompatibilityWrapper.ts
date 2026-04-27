@@ -1,12 +1,8 @@
 import { Subscription } from 'rxjs';
 
-import {
-  type AnnotationQuery,
-  DashboardCursorSync,
-  dateTimeFormat,
-  type DateTimeInput,
-  EventBusSrv,
-} from '@grafana/data';
+import { dateTimeFormat, type DateTimeInput } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { type AnnotationQuery, DashboardCursorSync } from '@grafana/data/types';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { behaviors, sceneGraph, type SceneObject, VizPanel } from '@grafana/scenes';
 

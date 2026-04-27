@@ -1,4 +1,4 @@
-import { GrafanaThemeType } from '@grafana/data';
+import { GrafanaThemeType } from '@grafana/data/types';
 
 /**
  * @deprecated

@@ -1,4 +1,4 @@
-import { type FormattedValue, formattedValueToString } from '@grafana/data';
+import { type FormattedValue, formattedValueToString } from '@grafana/data/valueFormats';
 
 import { measures } from './measure';
 

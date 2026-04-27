@@ -1,6 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 
 import { type FuncInstance } from '../gfunc';
 import {

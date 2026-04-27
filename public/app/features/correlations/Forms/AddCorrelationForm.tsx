@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { useCreateCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { config } from '@grafana/runtime';
-import { PanelContainer, useStyles2 } from '@grafana/ui';
+import { PanelContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { Wizard } from '../components/Wizard/Wizard';

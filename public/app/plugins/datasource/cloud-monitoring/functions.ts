@@ -1,6 +1,6 @@
 import { chunk, initial, startCase, uniqBy } from 'lodash';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
 import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';

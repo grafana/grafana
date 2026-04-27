@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data/types';
 import {
   CustomVariable,
   LocalValueVariable,

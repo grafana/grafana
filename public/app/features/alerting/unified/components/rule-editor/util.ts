@@ -1,7 +1,7 @@
 import { xor } from 'lodash';
 
-import { LoadingState, type PanelData, type ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { type DataFrame, isTimeSeriesFrames } from '@grafana/data/dataframe';
+import { LoadingState, type PanelData, type ThresholdsConfig, ThresholdsMode } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';

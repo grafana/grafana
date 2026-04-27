@@ -2,16 +2,15 @@ import { css } from '@emotion/css';
 import { type Dispatch, type SetStateAction, useEffect, useId, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
-  useStyles2,
   Button,
   CollapsableSection,
   Divider,
   Drawer,
   Field,
-  Icon,
   Input,
   Label,
   MultiSelect,
@@ -23,6 +22,8 @@ import {
   RadioButtonGroup,
   SecretInput,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type MapKeyCertConfigured, type LdapPayload } from 'app/types/ldap';
 
 import { GroupMappingComponent } from './LdapGroupMapping';

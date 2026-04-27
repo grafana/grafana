@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, type CustomCellRendererProps, IconButton, useTheme2 } from '@grafana/ui';
+import { ClipboardButton, type CustomCellRendererProps, IconButton } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { useLogDetailsContext } from '../LogDetailsContext';

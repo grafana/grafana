@@ -2,7 +2,8 @@
 // like returned by `new Date().getTime()`. this is needed because the "math"
 // has to be done on integer numbers.
 
-import { type TimeRange, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 
 // we are trying to be compatible with
 // https://github.com/grafana/loki/blob/089ec1b05f5ec15a8851d0e8230153e0eeb4dcec/pkg/querier/queryrange/split_by_interval.go#L327-L336

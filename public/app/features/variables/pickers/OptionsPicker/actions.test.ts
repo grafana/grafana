@@ -1,4 +1,4 @@
-import { type QueryVariableModel, VariableSort, VariableRefresh } from '@grafana/data';
+import { type QueryVariableModel, VariableSort, VariableRefresh } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';

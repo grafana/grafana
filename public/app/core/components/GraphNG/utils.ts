@@ -1,6 +1,8 @@
-import { outerJoinDataFrames, type TimeRange, applyNullInsertThreshold, roundDecimals } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
 import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN, nullToUndefThreshold } from '@grafana/data/internal';
+import { outerJoinDataFrames, applyNullInsertThreshold } from '@grafana/data/transformations';
+import type { TimeRange } from '@grafana/data/types';
+import { roundDecimals } from '@grafana/data/utils';
 import { GraphDrawStyle } from '@grafana/schema';
 
 import { type XYFieldMatchers } from './types';

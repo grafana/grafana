@@ -1,4 +1,4 @@
-import { urlUtil } from '@grafana/data';
+import { urlUtil } from '@grafana/data/utils';
 
 interface LogsPermalinkUrlState {
   logs?: {

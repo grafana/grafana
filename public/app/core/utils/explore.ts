@@ -2,6 +2,8 @@ import { customAlphabet } from 'nanoid';
 import { type Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { rangeUtil } from '@grafana/data/datetime';
+import { getNextRefId } from '@grafana/data/query';
 import {
   type AdHocVariableFilter,
   CoreApp,
@@ -10,20 +12,15 @@ import {
   type DataSourceApi,
   type DataSourceRef,
   DefaultTimeZone,
-  getNextRefId,
   type IntervalValues,
-  locationUtil,
   LogsDedupStrategy,
   LogsSortOrder,
-  rangeUtil,
   type RawTimeRange,
   type ScopedVars,
-  store,
   type TimeRange,
   type TimeZone,
-  toURLRange,
-  urlUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { locationUtil, store, toURLRange, urlUtil } from '@grafana/data/utils';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';

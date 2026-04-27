@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Spinner, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 /**
  * Discriminated union for compatibility check states.

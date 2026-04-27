@@ -1,6 +1,6 @@
 import type createVirtualEnvironment from '@locker/near-membrane-dom';
 
-import { type GrafanaPlugin, type PluginMeta } from '@grafana/data';
+import type { GrafanaPlugin, PluginMeta } from '@grafana/data/types';
 
 export type CompartmentDependencyModule = unknown;
 export type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => SandboxedPluginObject;

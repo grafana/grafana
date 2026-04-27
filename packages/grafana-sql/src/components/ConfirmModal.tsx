@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useRef, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type ConfirmModalProps = {
   isOpen: boolean;

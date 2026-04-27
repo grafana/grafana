@@ -1,4 +1,4 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';

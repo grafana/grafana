@@ -1,4 +1,4 @@
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { config, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,

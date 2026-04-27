@@ -3,10 +3,11 @@ import { uniq } from 'lodash';
 import { useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { type FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, Stack, useStyles2, type InputActionMeta } from '@grafana/ui';
+import { Select, Stack, type InputActionMeta } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { type TempoDatasource } from '../datasource';

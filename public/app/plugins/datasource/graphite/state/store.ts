@@ -1,7 +1,7 @@
 import { type AnyAction } from '@reduxjs/toolkit';
 import { type Action, type Dispatch } from 'redux';
 
-import { type DataQuery, type TimeRange } from '@grafana/data';
+import type { DataQuery, TimeRange } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { type GraphiteDatasource } from '../datasource';

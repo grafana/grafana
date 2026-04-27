@@ -2,8 +2,13 @@ import { invert } from 'lodash';
 import Prism, { type Grammar, Token } from 'prismjs';
 
 import { createAssistantContextItem } from '@grafana/assistant';
-import { type AbstractLabelMatcher, AbstractLabelOperator, type DataQueryResponse, type DataQueryRequest } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import {
+  type AbstractLabelMatcher,
+  AbstractLabelOperator,
+  type DataQueryResponse,
+  type DataQueryRequest,
+} from '@grafana/data/types';
 
 import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
 

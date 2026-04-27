@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type UrlQueryMap } from '@grafana/data';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { locationSearchToObject, locationService } from '@grafana/runtime';
 
 export function useQueryParams(): [UrlQueryMap, (values: UrlQueryMap, replace?: boolean) => void] {

@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, safePolygon, useFloating, useHover, useInteractions } from '@floating-ui/react';
 import React, { cloneElement, useCallback, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { isDataLayer, isSceneObject, type SceneVariable, SceneVariableSet, type SceneObject } from '@grafana/scenes';
-import { IconButton, Portal, useStyles2 } from '@grafana/ui';
+import { IconButton, Portal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

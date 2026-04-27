@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { SelectBase } from './SelectBase';
 import { SelectContainer, type SelectContainerProps } from './SelectContainer';

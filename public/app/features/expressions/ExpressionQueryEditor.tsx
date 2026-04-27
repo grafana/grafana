@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { type DataSourceApi, FeatureState, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type DataSourceApi, FeatureState, type QueryEditorProps } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FeatureBadge, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, FeatureBadge, IconButton, InlineField, type PopoverContent } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';

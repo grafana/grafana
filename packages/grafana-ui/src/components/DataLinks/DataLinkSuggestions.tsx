@@ -4,7 +4,8 @@ import { useRef, useMemo } from 'react';
 import * as React from 'react';
 import { useClickAway } from 'react-use';
 
-import { type VariableSuggestion, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { VariableSuggestion } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { List } from '../List/List';

@@ -2,7 +2,8 @@ import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
+import { Dropdown, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 

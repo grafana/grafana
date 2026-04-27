@@ -4,7 +4,7 @@ import {
   type PluginInclude,
   type NavModel,
   type NavModelItem,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';

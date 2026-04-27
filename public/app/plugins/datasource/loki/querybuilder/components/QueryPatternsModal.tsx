@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { type CoreApp, type GrafanaTheme2, getNextRefId } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { CoreApp } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Modal, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';

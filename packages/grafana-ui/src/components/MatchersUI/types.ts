@@ -1,7 +1,8 @@
 import type * as React from 'react';
 
-import { type RegistryItem, type FieldMatcherInfo } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { FieldMatcherInfo } from '@grafana/data/types';
+import type { RegistryItem } from '@grafana/data/utils';
 import { type MatcherScope } from '@grafana/schema';
 
 export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {

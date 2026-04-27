@@ -1,4 +1,4 @@
-import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 
 import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 

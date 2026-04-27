@@ -16,7 +16,7 @@ import {
   LiveChannelConnectionState,
   type LiveChannelId,
   toLiveChannelId,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import {
   type FetchResponse,
   type GrafanaLiveSrv,

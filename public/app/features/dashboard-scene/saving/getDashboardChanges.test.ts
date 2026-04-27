@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
+import type { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';

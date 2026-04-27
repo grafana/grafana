@@ -3,8 +3,18 @@ import { EMPTY, interval, Observable, of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
-import { type DataQueryRequest, type DataQueryResponse, type DataSourceApi, type DataSourceJsonData, type DataSourcePluginMeta, type DataSourceWithSupplementaryQueriesSupport, LoadingState, type RawTimeRange, SupplementaryQueryType } from '@grafana/data';
 import { MutableDataFrame } from '@grafana/data/dataframe';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type DataSourceWithSupplementaryQueriesSupport,
+  LoadingState,
+  type RawTimeRange,
+  SupplementaryQueryType,
+} from '@grafana/data/types';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';

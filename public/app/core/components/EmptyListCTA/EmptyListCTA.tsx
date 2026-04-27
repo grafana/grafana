@@ -3,7 +3,9 @@ import { type MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Alert, Button, CallToActionCard, Icon, type IconName, LinkButton } from '@grafana/ui';
+import { Alert, Button, CallToActionCard, LinkButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import type { IconName } from '@grafana/ui/types';
 
 export interface Props {
   title: string;

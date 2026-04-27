@@ -2,7 +2,7 @@ import debounce from 'debounce-promise';
 import { isNil } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';

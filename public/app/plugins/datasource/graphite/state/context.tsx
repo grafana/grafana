@@ -2,7 +2,7 @@ import { type AnyAction } from '@reduxjs/toolkit';
 import { createContext, type Dispatch, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type GraphiteDatasource } from '../datasource';

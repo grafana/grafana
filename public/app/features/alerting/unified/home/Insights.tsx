@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -15,7 +15,8 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { Icon, Text, Tooltip } from '@grafana/ui';
+import { Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';

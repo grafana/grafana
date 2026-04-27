@@ -8,16 +8,17 @@ import {
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type ScopedVars,
-  getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Button, InlineFormLabel, Modal, ScrollContainer, Stack, stylesFactory } from '@grafana/ui';
+import { Button, InlineFormLabel, Modal, ScrollContainer, Stack } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';

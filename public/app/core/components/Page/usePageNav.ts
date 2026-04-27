@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 
-import { type NavModel } from '@grafana/data';
+import type { NavModel } from '@grafana/data/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { store } from 'app/store/store';
 import { type StoreState, useSelector } from 'app/types/store';

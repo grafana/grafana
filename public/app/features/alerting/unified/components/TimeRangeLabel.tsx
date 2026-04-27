@@ -1,4 +1,5 @@
-import { type RelativeTimeRange, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { RelativeTimeRange } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 
 interface RuleTimeRangeLabelProps {

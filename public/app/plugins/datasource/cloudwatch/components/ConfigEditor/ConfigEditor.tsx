@@ -3,18 +3,15 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
-import {
-  rangeUtil,
-  type DataSourcePluginOptionsEditorProps,
-  onUpdateDatasourceJsonDataOption,
-  updateDatasourcePluginJsonDataOption,
-  DataSourceTestSucceeded,
-  DataSourceTestFailed,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import { DataSourceTestSucceeded, DataSourceTestFailed } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { onUpdateDatasourceJsonDataOption, updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
-import { Alert, Input, type FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
+import { Alert, Input, type FieldProps, Field, Divider } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { type SelectableResourceValue } from '../../resources/types';

@@ -1,6 +1,6 @@
-import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { toDataFrame, FieldType } from '@grafana/data/dataframe';
 import { DataTransformerID } from '@grafana/data/internal';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
 import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
 
 describe('spatial transformer', () => {

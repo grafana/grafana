@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Button, FilterPill, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, FilterPill, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getModKey } from '../../../core/utils/browser';
 import { type NodesMap, type ScopesMap, type SelectedScope } from '../../scopes/selector/types';

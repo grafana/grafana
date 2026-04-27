@@ -1,5 +1,5 @@
-import { type FieldConfigSource, type PanelTypeChangedHandler } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import type { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { getV2AngularMigrationHandler, getAngularPanelMigrationHandler } from './angularMigration';

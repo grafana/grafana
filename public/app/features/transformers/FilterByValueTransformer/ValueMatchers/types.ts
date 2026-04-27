@@ -1,5 +1,5 @@
-import { type RegistryItem } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { RegistryItem } from '@grafana/data/utils';
 import { type MatcherScope } from '@grafana/schema';
 
 export interface ValueMatcherUIRegistryItem<TOptions> extends RegistryItem {

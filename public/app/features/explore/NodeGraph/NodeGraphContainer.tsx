@@ -3,11 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
-import { applyFieldOverrides, type GrafanaTheme2, type SplitOpen } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { applyFieldOverrides } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SplitOpen } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 import { type StoreState } from 'app/types/store';
 

@@ -1,10 +1,11 @@
 import { type FormEvent } from 'react';
 
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, Icon, RadioButtonGroup, Stack, TextLink, Tooltip } from '@grafana/ui';
+import { Alert, FieldValidationMessage, RadioButtonGroup, Stack, TextLink, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';

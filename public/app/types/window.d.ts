@@ -1,4 +1,4 @@
-import { type BootData } from '@grafana/data';
+import type { BootData } from '@grafana/data/types';
 export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;

@@ -1,6 +1,7 @@
 import { each, map } from 'lodash';
 
-import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
+import { MappingType, VariableHide } from '@grafana/data/types';
+import { DataLinkBuiltInVars } from '@grafana/data/utils';
 import { type FieldConfigSource } from '@grafana/schema';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

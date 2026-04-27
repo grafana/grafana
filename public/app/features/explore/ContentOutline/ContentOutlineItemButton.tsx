@@ -2,10 +2,13 @@ import { cx, css } from '@emotion/css';
 import { type ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type IconName, isIconName, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type IconName, isIconName } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type TooltipPlacement } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 
 type CommonProps = {
   contentOutlineExpanded?: boolean;

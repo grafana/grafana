@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { LoadingState, type PanelProps } from '@grafana/data';
+import { LoadingState, type PanelProps } from '@grafana/data/types';
 
 import { TracesPanel } from './TracesPanel';
 

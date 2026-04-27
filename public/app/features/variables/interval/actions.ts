@@ -1,4 +1,4 @@
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
 import { type ThunkResult } from 'app/types/store';
 
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
+import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { config, getAppEvents } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from '../../dataquery.gen';

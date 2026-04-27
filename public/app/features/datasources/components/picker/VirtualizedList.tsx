@@ -4,9 +4,10 @@ import { useCallback, useRef } from 'react';
 import type * as React from 'react';
 import type { Observable } from 'rxjs';
 
-import type { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data/types';
 import type { FavoriteDatasources } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useKeyboardNavigatableList } from '../../hooks';
 

@@ -1,4 +1,4 @@
-import { Registry } from '@grafana/data';
+import { Registry } from '@grafana/data/utils';
 
 import { type CanvasElementItem, type CanvasElementOptions } from './element';
 import { buttonItem } from './elements/button';

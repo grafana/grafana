@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';

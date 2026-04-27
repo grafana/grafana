@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
+import { IconButton, Pagination } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';

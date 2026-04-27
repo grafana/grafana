@@ -1,4 +1,4 @@
-import { GrafanaThemeType } from '@grafana/data';
+import { GrafanaThemeType } from '@grafana/data/types';
 
 import { mockTheme } from './getTheme';
 import { selectThemeVariant } from './selectThemeVariant';

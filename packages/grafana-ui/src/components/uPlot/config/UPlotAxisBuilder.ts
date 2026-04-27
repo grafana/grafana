@@ -1,15 +1,10 @@
 import { type default as uPlot, type Axis } from 'uplot';
 
-import {
-  dateTimeFormat,
-  type DecimalCount,
-  type GrafanaTheme2,
-  guessDecimals,
-  isBooleanUnit,
-  roundDecimals,
-  systemDateFormats,
-  type TimeZone,
-} from '@grafana/data';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DecimalCount, TimeZone } from '@grafana/data/types';
+import { guessDecimals, roundDecimals } from '@grafana/data/utils';
+import { isBooleanUnit } from '@grafana/data/valueFormats';
 import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 
 import { measureText } from '../../../utils/measureText';

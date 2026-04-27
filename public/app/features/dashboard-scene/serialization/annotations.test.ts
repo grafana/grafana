@@ -1,4 +1,4 @@
-import { type AnnotationQuery, AnnotationEventFieldSource } from '@grafana/data';
+import { type AnnotationQuery, AnnotationEventFieldSource } from '@grafana/data/types';
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { transformV1ToV2AnnotationQuery, transformV2ToV1AnnotationQuery } from './annotations';

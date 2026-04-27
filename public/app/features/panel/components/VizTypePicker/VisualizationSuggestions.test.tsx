@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LoadingState, type PanelData, type PanelModel, getDefaultTimeRange } from '@grafana/data';
 import { toDataFrame, FieldType } from '@grafana/data/dataframe';
+import { LoadingState, type PanelData, type PanelModel, getDefaultTimeRange } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 

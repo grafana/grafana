@@ -1,6 +1,7 @@
 import { useAsync } from 'react-use';
 
-import { type SelectableValue, toOption } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';

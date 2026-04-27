@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
-import { type CustomVariableModel, type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data/types';
 import { type BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryRunner } from '../query-runner/CloudWatchLogsQueryRunner';

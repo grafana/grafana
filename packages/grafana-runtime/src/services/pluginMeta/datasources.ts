@@ -1,4 +1,4 @@
-import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data/types';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';

@@ -1,4 +1,5 @@
-import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
+import { DashboardLoadedEvent } from '@grafana/data/events';
+import { DataSourcePlugin } from '@grafana/data/types';
 import { initPluginTranslations } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 

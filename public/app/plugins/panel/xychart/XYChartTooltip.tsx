@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 
-import { colorManipulator, type InterpolateFunction, type LinkModel } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { colorManipulator } from '@grafana/data/themes';
+import type { InterpolateFunction, LinkModel } from '@grafana/data/types';
 import {
   VizTooltipContent,
   VizTooltipFooter,

@@ -3,8 +3,9 @@ import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { type CSVConfig, readCSV, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type CSVConfig, readCSV } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 
 import { withTheme2 } from '../../themes/ThemeContext';

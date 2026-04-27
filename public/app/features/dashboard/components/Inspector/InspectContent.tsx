@@ -1,16 +1,9 @@
 import { isEmpty } from 'lodash';
 import { useState } from 'react';
 
-import {
-  CoreApp,
-  type DataSourceApi,
-  formattedValueToString,
-  getValueFormat,
-  type PanelData,
-  type PanelPlugin,
-  LoadingState,
-  type DataQueryError,
-} from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
+import { CoreApp, type DataSourceApi, type PanelData, LoadingState, type DataQueryError } from '@grafana/data/types';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';

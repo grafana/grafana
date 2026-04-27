@@ -2,12 +2,11 @@ import { useCallback, useMemo } from 'react';
 
 import {
   DataTransformerID,
-  PluginState,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  type SelectableValue,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import { PluginState, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   InlineField,

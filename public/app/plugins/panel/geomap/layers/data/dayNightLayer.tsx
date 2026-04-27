@@ -9,13 +9,10 @@ import { Fill, Stroke, Style, Circle } from 'ol/style';
 import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData } from '@grafana/data/types';
 
 export enum ShowTime {
   From = 'from',

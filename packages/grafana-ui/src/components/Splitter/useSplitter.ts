@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useId, useRef } from 'react';
 import type * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type ComponentSize } from '../../types/size';

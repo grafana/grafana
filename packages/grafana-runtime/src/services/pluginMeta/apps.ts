@@ -1,4 +1,4 @@
-import { type AppPluginConfig, PluginType } from '@grafana/data';
+import { type AppPluginConfig, PluginType } from '@grafana/data/types';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';

@@ -1,17 +1,10 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 
-import {
-  type DataFrame,
-  FieldType,
-  type GrafanaTheme2,
-  MutableDataFrame,
-  type ThresholdsConfig,
-  ThresholdsMode,
-  type FieldConfig,
-  formattedValueToString,
-  type Field,
-} from '@grafana/data';
+import { type DataFrame, FieldType, MutableDataFrame, type FieldConfig, type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type ThresholdsConfig, ThresholdsMode } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';

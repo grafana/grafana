@@ -7,7 +7,7 @@ import {
   type LiveChannelPresenceStatus,
   LiveChannelConnectionState,
   LiveChannelEventType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import type { GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime';
 type ProvisioningResource = 'jobs' | 'repositories' | 'connections';
 

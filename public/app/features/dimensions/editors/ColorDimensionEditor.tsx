@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  type StandardEditorProps,
-  type FieldNamePickerBaseNameMode,
-} from '@grafana/data';
+import type { StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig } from '@grafana/schema';
-import { Combobox, ColorPicker, useStyles2 } from '@grafana/ui';
+import { Combobox, ColorPicker } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface ColorDimensionSettings {
   isClearable?: boolean;

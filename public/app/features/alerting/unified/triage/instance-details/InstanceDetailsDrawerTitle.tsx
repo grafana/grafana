@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo } from 'react';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { type Labels } from '@grafana/data';
+import type { Labels } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
 import { AccessControlAction } from 'app/types/accessControl';

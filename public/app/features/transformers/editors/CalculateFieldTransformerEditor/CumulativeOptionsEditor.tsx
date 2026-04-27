@@ -1,9 +1,10 @@
-import { ReducerID, type SelectableValue } from '@grafana/data';
 import {
   CalculateFieldMode,
   type CalculateFieldTransformerOptions,
   type CumulativeOptions,
 } from '@grafana/data/internal';
+import { ReducerID } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
 

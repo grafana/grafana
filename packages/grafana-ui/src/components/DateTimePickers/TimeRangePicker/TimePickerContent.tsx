@@ -1,16 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
-import {
-  type GrafanaTheme2,
-  isDateTime,
-  isValidGrafanaDuration,
-  rangeUtil,
-  type RawTimeRange,
-  type TimeOption,
-  type TimeRange,
-  type TimeZone,
-} from '@grafana/data';
+import { isDateTime, isValidGrafanaDuration, rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

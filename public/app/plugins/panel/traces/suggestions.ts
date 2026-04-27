@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import type { VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data/types';
 
 import { type TracesPanelOptions } from './TracesPanel';
 

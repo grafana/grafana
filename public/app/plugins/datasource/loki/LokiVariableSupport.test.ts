@@ -1,6 +1,7 @@
 import { firstValueFrom } from 'rxjs';
 
-import { dateTime, getDefaultTimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { getDefaultTimeRange } from '@grafana/data/types';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { type LokiDatasource } from './datasource';

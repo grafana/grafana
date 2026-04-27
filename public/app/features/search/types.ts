@@ -1,4 +1,4 @@
-import { type WithAccessControlMetadata } from '@grafana/data';
+import type { WithAccessControlMetadata } from '@grafana/data/types';
 
 import { type ManagerKind } from '../apiserver/types';
 

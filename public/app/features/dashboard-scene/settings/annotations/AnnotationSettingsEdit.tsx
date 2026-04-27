@@ -3,13 +3,9 @@ import { useId, useMemo } from 'react';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type AnnotationQuery,
-  type DataSourceInstanceSettings,
-  getDataSourceRef,
-  type GrafanaTheme2,
-  type SelectableValue,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { AnnotationQuery, DataSourceInstanceSettings, SelectableValue } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -24,12 +20,12 @@ import {
   Input,
   MultiSelect,
   Select,
-  useStyles2,
   Stack,
   Alert,
   type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';

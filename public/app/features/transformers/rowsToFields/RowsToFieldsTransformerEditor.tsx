@@ -1,4 +1,9 @@
-import { PluginState, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory } from '@grafana/data';
+import {
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data/transformations';
+import { PluginState } from '@grafana/data/types';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import darkImage from '../images/dark/rowsToFields.svg';

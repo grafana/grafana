@@ -4,10 +4,12 @@ import { startCase, uniqBy } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, type TimeRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
-import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@grafana/ui';
+import { getSelectStyles, Select, AsyncSelect } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { PreprocessorType, type TimeSeriesList, MetricKind, ValueTypes } from '../dataquery.gen';
 import type CloudMonitoringDatasource from '../datasource';

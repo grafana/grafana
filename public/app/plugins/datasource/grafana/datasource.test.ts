@@ -1,4 +1,5 @@
-import { type AnnotationQueryRequest, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { AnnotationQueryRequest, DataSourceInstanceSettings } from '@grafana/data/types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { GrafanaDatasource } from './datasource';

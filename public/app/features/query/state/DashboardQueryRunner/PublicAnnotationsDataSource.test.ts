@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceRef, type TimeRange } from '@grafana/data';
+import type { DataQueryRequest, DataSourceRef, TimeRange } from '@grafana/data/types';
 import { type BackendSrvRequest, type BackendSrv, config } from '@grafana/runtime';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';

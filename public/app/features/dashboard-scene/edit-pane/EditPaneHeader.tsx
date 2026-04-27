@@ -1,6 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
+import { Button, Menu, Stack, Dropdown, Sidebar } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';

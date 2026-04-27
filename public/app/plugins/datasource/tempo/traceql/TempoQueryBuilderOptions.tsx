@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useToggle } from 'react-use';
 
-import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp } from '@grafana/data/types';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
-import { AutoSizeInput, RadioButtonGroup, TextLink, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, RadioButtonGroup, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType, MetricsQueryType } from '../dataquery.gen';

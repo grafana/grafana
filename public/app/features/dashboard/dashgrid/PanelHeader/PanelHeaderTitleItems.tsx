@@ -1,14 +1,10 @@
 import { css, cx } from '@emotion/css';
 
-import {
-  AlertState,
-  type DataLink,
-  type GrafanaTheme2,
-  type LinkModel,
-  type PanelData,
-  type PanelModel,
-} from '@grafana/data';
-import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { AlertState, type DataLink, type LinkModel, type PanelData, type PanelModel } from '@grafana/data/types';
+import { PanelChrome, TimePickerTooltip, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PanelLinks } from '../PanelLinks';
 

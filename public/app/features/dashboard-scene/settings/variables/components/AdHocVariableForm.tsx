@@ -1,20 +1,17 @@
 import { css } from '@emotion/css';
 import { type FormEvent, useCallback } from 'react';
 
-import {
-  type DataSourceInstanceSettings,
-  type GrafanaTheme2,
-  type MetricFindValue,
-  type SelectableValue,
-  readCSV,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, MetricFindValue, SelectableValue } from '@grafana/data/types';
+import { readCSV } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';

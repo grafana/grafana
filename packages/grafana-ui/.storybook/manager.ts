@@ -1,5 +1,5 @@
 import { addons } from '@storybook/manager-api';
-import { getThemeById } from '@grafana/data';
+import { getThemeById } from '@grafana/data/themes';
 import { createStorybookTheme } from './storybookTheme';
 
 const systemTheme = getThemeById('system');

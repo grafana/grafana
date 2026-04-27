@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { ServiceAccountStateFilter, type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { type Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';

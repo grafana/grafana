@@ -10,7 +10,8 @@ import {
 } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkTarget } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { locationUtil } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 

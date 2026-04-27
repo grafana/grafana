@@ -2,7 +2,8 @@ import { render, screen, fireEvent, getDefaultNormalizer } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import { CoreApp, createTheme, LogLevel, type LogRowModel } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { CoreApp, LogLevel, type LogRowModel } from '@grafana/data/types';
 import { IconButton } from '@grafana/ui';
 
 import { LogRowMessage, MAX_CHARACTERS } from './LogRowMessage';

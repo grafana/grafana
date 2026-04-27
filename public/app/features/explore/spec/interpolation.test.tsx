@@ -1,6 +1,8 @@
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { type DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import type { DataQueryRequest } from '@grafana/data/types';
+import { serializeStateToUrlParam } from '@grafana/data/utils';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type LokiQuery } from '../../../plugins/datasource/loki/types';

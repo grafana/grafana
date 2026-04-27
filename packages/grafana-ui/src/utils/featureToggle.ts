@@ -1,4 +1,4 @@
-import { type FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 
 type FeatureToggleName = keyof FeatureToggles;
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Select } from '@grafana/ui';
 
 import { type PreprocessorType, type SLOQuery, type TimeSeriesList } from '../dataquery.gen';

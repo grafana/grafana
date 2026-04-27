@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, usePanelContext } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { type AnnotationTooltipProps } from './AnnotationTooltip2';

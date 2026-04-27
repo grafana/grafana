@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { css as cssReact, Global } from '@emotion/react';
 
-import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { usePluginComponents } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 

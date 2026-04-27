@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
 import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 

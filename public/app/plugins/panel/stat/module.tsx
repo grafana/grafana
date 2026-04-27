@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
 import { t } from '@grafana/i18n';
 import {
   BigValueColorMode,
@@ -7,7 +7,8 @@ import {
   BigValueTextMode,
   PercentChangeColorMode,
 } from '@grafana/schema';
-import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
+import { sharedSingleStatMigrationHandler } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';

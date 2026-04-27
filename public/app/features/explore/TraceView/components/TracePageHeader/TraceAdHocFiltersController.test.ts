@@ -1,4 +1,4 @@
-import { type SelectableValue, type TraceSearchProps } from '@grafana/data';
+import type { SelectableValue, TraceSearchProps } from '@grafana/data/types';
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { getTraceTagKeys, getTraceTagValues } from '../../utils/tags';

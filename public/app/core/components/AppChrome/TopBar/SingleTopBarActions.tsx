@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Components } from '@grafana/e2e-selectors';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';

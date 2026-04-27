@@ -1,7 +1,7 @@
 import { dump } from 'js-yaml';
 import * as React from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { type AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 import { DataSourceType, isSupportedExternalPrometheusFlavoredRulesSourceType } from '../../../../utils/datasource';

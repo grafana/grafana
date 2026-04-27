@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type AbsoluteTimeRange, type FieldConfigSource, type PanelData } from '@grafana/data';
+import type { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data/types';
 
 /**
  * Describes the properties that can be passed to the PanelRenderer.

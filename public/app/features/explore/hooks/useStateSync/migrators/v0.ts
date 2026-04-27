@@ -1,4 +1,4 @@
-import { type ExploreUrlState } from '@grafana/data';
+import type { ExploreUrlState } from '@grafana/data/types';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 
 import { type BaseExploreURL, type MigrationHandler } from './types';

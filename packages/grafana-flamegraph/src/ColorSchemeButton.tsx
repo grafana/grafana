@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Button, Dropdown, Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { ColorScheme, ColorSchemeDiff } from './types';

@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -18,7 +18,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, CodeEditor, Field, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
-import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
+import type { AbsoluteTimeRange, LogRowModel } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';

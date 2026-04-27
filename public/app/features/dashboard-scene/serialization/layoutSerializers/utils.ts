@@ -1,4 +1,4 @@
-import { getNextRefId } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
 import { config } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import {

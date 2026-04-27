@@ -1,4 +1,4 @@
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { InlineField, InlineFieldRow, Input, TextArea } from '@grafana/ui';
 
 import type InfluxDatasource from '../../../datasource';

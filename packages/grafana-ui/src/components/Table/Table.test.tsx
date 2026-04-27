@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { applyFieldOverrides } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
 
 import { Icon } from '../Icon/Icon';
 

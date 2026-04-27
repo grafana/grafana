@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import { type ExploreLogsPanelState, LogsSortOrder, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { type ExploreLogsPanelState, LogsSortOrder } from '@grafana/data/types';
 
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 

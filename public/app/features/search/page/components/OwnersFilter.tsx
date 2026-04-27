@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Icon, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
+import { MultiSelect, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useSearchTeamsQuery } from 'app/api/clients/legacy';
 import { extractErrorMessage } from 'app/api/utils';
 import { teamOwnerRef } from 'app/features/browse-dashboards/utils/dashboards';

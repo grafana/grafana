@@ -1,14 +1,14 @@
 import { type EntityState } from '@reduxjs/toolkit';
 
-import {
-  type PluginType,
-  type PluginSignatureStatus,
-  type PluginSignatureType,
-  type PluginDependencies,
-  type PluginErrorCode,
-  type WithAccessControlMetadata,
-} from '@grafana/data';
-import { type IconName } from '@grafana/ui';
+import type {
+  PluginType,
+  PluginSignatureStatus,
+  PluginSignatureType,
+  PluginDependencies,
+  PluginErrorCode,
+  WithAccessControlMetadata,
+} from '@grafana/data/types';
+import type { IconName } from '@grafana/ui/types';
 import { type PluginsState } from 'app/types/plugins';
 import { type StoreState } from 'app/types/store';
 

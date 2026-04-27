@@ -1,6 +1,6 @@
 import { get, set } from 'lodash';
 
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 
 import { AzureQueryType } from '../dataquery.gen';
 import { type Context, createContext } from '../mocks/datasource';

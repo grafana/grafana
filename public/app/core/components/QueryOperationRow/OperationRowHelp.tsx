@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { renderMarkdown } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;

@@ -4,8 +4,21 @@ import { type CSSProperties, memo, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { type DisplayProcessor, type DisplayValue, type DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldColorModeId, type FormattedValue, formattedValueToString, GAUGE_DEFAULT_MAXIMUM, GAUGE_DEFAULT_MINIMUM, getFieldColorMode, ThresholdsMode, type TimeSeriesValue, VizOrientation } from '@grafana/data';
 import { type FieldConfig } from '@grafana/data/dataframe';
+import { getFieldColorMode } from '@grafana/data/field';
+import {
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  FALLBACK_COLOR,
+  FieldColorModeId,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  ThresholdsMode,
+  type TimeSeriesValue,
+  VizOrientation,
+} from '@grafana/data/types';
+import { type FormattedValue, formattedValueToString } from '@grafana/data/valueFormats';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   BarGaugeDisplayMode,

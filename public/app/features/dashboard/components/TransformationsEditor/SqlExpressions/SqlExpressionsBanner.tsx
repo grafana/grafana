@@ -1,4 +1,4 @@
-import { LocalStorageValueProvider } from '@grafana/data';
+import { LocalStorageValueProvider } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, TextLink } from '@grafana/ui';
 

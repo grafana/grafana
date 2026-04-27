@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import RCCascader, { type FieldNames } from '@rc-component/cascader';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';

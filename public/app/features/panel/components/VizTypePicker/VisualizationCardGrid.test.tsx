@@ -1,8 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LoadingState, type PanelData, type PanelPluginVisualizationSuggestion, getDefaultTimeRange } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  LoadingState,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
+  getDefaultTimeRange,
+} from '@grafana/data/types';
 
 import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 

@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { type JSX } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Text, TextLink, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { type StoreState } from 'app/types/store';
 

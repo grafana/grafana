@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ActionVariableType } from '@grafana/data';
+import { ActionVariableType } from '@grafana/data/types';
 
 import { ActionVariablesEditor } from './ActionVariablesEditor';
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 
 export function useClipboardState() {

@@ -3,9 +3,11 @@ import { languages as prismLanguages } from 'prismjs';
 import { type FC, useMemo } from 'react';
 import { Editor } from 'slate-react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { promqlGrammar } from '@grafana/prometheus';
-import { SlatePrism, makeValue, useStyles2 } from '@grafana/ui';
+import { SlatePrism } from '@grafana/ui/slate-plugins';
+import { useStyles2 } from '@grafana/ui/themes';
+import { makeValue } from '@grafana/ui/utils';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { type RulesSource } from 'app/types/unified-alerting';
 

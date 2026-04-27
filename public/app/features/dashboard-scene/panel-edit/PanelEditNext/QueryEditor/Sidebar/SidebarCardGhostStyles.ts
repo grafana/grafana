@@ -1,6 +1,6 @@
 import { keyframes } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 const ghostBlobFloat = keyframes({
   '0%, 100%': {

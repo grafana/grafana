@@ -1,5 +1,6 @@
-import { getPanelDataSummary, type PanelPlugin, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getPanelDataSummary, type PanelPlugin } from '@grafana/data/panel';
+import type { PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getPresets } from './getPresets';

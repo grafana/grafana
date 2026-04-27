@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 
 import { logWarning } from '../Analytics';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';

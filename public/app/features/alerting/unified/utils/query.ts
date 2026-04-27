@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { type PromQuery } from '@grafana/prometheus';
 import { type DataQuery } from '@grafana/schema';
 import { type LokiQuery } from 'app/plugins/datasource/loki/types';

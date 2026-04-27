@@ -1,4 +1,4 @@
-import { type DashboardLoadedEvent } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data/events';
 let handler: (e: DashboardLoadedEvent<CloudWatchQuery>) => {};
 import { config, reportInteraction } from '@grafana/runtime';
 

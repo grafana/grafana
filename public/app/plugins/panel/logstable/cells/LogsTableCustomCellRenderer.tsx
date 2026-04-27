@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 
-import { formattedValueToString, getDisplayProcessor, type GrafanaTheme2 } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
-import { type CustomCellRendererProps, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDisplayProcessor } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { formattedValueToString } from '@grafana/data/valueFormats';
+import type { CustomCellRendererProps } from '@grafana/ui';
 import { MaybeWrapWithLink } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../constants';

@@ -1,6 +1,6 @@
 import { wellFormedPanelModel } from 'test/fixtures/panelModel.fixture';
 
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { mockFolderDTO } from 'app/features/browse-dashboards/fixtures/folder.fixture';
 
 import { dashlistMigrationHandler, type AngularModel } from './migrations';

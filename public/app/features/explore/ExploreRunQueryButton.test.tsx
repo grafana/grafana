@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { DatasourceSrvMock, type MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreItemState, type ExploreState } from 'app/types/explore';

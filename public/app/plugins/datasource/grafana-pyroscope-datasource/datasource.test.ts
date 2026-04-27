@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, CoreApp, makeTimeRange } from '@grafana/data';
+import { AbstractLabelOperator, CoreApp, makeTimeRange } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';

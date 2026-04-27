@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
 
 import { LiveChannelEditor } from './LiveChannelEditor';
 import { LivePanel } from './LivePanel';

@@ -1,4 +1,4 @@
-import { type PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { type PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 

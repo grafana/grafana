@@ -1,4 +1,5 @@
-import { type AnnotationQuery, getDataSourceRef, type NavModelItem } from '@grafana/data';
+import type { AnnotationQuery, NavModelItem } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 

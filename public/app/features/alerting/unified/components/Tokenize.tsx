@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Badge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PopupCard } from './HoverCard';
 import { builtinFunctions as FUNCTIONS, keywords as KEYWORDS } from './receivers/editor/language';

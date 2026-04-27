@@ -1,5 +1,5 @@
 import { type ResourceStats } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 

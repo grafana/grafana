@@ -2,12 +2,20 @@ const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 
 import { Subject } from 'rxjs';
 
-// Importing this way to be able to spy on grafana/data
-
-import * as grafanaData from '@grafana/data';
 import * as grafanaDataDataframe from '@grafana/data/dataframe';
-import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
+import * as grafanaDataThemes from '@grafana/data/themes';
+import * as grafanaDataTransformations from '@grafana/data/transformations';
+import { DataTransformerID } from '@grafana/data/transformations';
+import type * as grafanaDataTypes from '@grafana/data/types';
+import {
+  DataTopic,
+  getDefaultTimeRange,
+  LoadingState,
+  type DataSourceApi,
+  type TypedVariableModel,
+} from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -22,9 +30,9 @@ import {
 import { emptyResult } from './DashboardQueryRunner/utils';
 import { PanelQueryRunner, type QueryRunnerOptions } from './PanelQueryRunner';
 
-jest.mock('@grafana/data', () => ({
+jest.mock('@grafana/data/field', () => ({
   __esModule: true,
-  ...jest.requireActual('@grafana/data'),
+  ...jest.requireActual('@grafana/data/field'),
   applyFieldOverrides: applyFieldOverridesMock,
 }));
 
@@ -79,17 +87,17 @@ interface ScenarioContext {
   maxDataPoints?: number | null;
   dsInterval?: string;
   minInterval?: string;
-  scopedVars: grafanaData.ScopedVars;
+  scopedVars: grafanaDataTypes.ScopedVars;
 
   // Filled in by the Scenario runner
-  events?: grafanaData.PanelData[];
-  res?: grafanaData.PanelData;
-  queryCalledWith?: grafanaData.DataQueryRequest;
+  events?: grafanaDataTypes.PanelData[];
+  res?: grafanaDataTypes.PanelData;
+  queryCalledWith?: grafanaDataTypes.DataQueryRequest;
   runner: PanelQueryRunner;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
-const defaultPanelConfig: grafanaData.DataConfigSource = {
+const defaultPanelConfig: grafanaDataTypes.DataConfigSource = {
   getFieldOverrideOptions: () => undefined,
   getTransformations: () => undefined,
   getDataSupport: () => ({ annotations: false, alertStates: false }),
@@ -98,7 +106,7 @@ const defaultPanelConfig: grafanaData.DataConfigSource = {
 function describeQueryRunnerScenario(
   description: string,
   scenarioFn: ScenarioFn,
-  panelConfig?: grafanaData.DataConfigSource
+  panelConfig?: grafanaDataTypes.DataConfigSource
 ) {
   describe(description, () => {
     let setupFn = () => {};
@@ -143,7 +151,7 @@ function describeQueryRunnerScenario(
         name: 'TestDB',
         uid: 'TestDB-uid',
         interval: ctx.dsInterval,
-        query: (options: grafanaData.DataQueryRequest) => {
+        query: (options: grafanaDataTypes.DataQueryRequest) => {
           ctx.queryCalledWith = options;
           return Promise.resolve(response);
         },
@@ -168,7 +176,7 @@ function describeQueryRunnerScenario(
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
-        next: (data: grafanaData.PanelData) => {
+        next: (data: grafanaDataTypes.PanelData) => {
           ctx.res = data;
           ctx.events?.push(data);
         },
@@ -184,7 +192,7 @@ function describeQueryRunnerScenario(
 
 describe('PanelQueryRunner', () => {
   beforeAll(() => {
-    const { convertFrameTypeTransformer } = grafanaData.standardTransformers;
+    const { convertFrameTypeTransformer } = grafanaDataTransformations.standardTransformers;
     mockTransformationsRegistry([convertFrameTypeTransformer]);
   });
 
@@ -278,7 +286,7 @@ describe('PanelQueryRunner', () => {
     (ctx) => {
       it('should apply when field override options are set', async () => {
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -295,7 +303,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: grafanaData.createTheme(),
+        theme: grafanaDataThemes.createTheme(),
       }),
       getTransformations: () => undefined,
       getDataSupport: () => ({ annotations: false, alertStates: false }),
@@ -306,11 +314,11 @@ describe('PanelQueryRunner', () => {
     'transformations',
     (ctx) => {
       it('should apply when transformations are set', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.spyOn(grafanaDataTransformations, 'transformDataFrame');
         spy.mockClear();
 
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -331,7 +339,7 @@ describe('PanelQueryRunner', () => {
     (ctx) => {
       it('should re-categorize any anno frames returned by series transformations', async () => {
         ctx.runner.getData({ withTransforms: true, withFieldConfig: false }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             try {
               expect(data.series).toEqual([]);
               expect(data.annotations).toEqual([
@@ -358,7 +366,7 @@ describe('PanelQueryRunner', () => {
       getTransformations: () => [
         {
           id: DataTransformerID.convertFrameType,
-          topic: grafanaData.DataTopic.Series,
+          topic: DataTopic.Series,
           options: {
             targetType: FrameType.Exemplar,
           },
@@ -372,10 +380,10 @@ describe('PanelQueryRunner', () => {
     'getData',
     (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.spyOn(grafanaDataTransformations, 'transformDataFrame');
         spy.mockClear();
         ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -385,7 +393,7 @@ describe('PanelQueryRunner', () => {
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -403,7 +411,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: grafanaData.createTheme(),
+        theme: grafanaDataThemes.createTheme(),
       }),
       // @ts-ignore
       getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
@@ -415,10 +423,10 @@ describe('PanelQueryRunner', () => {
     'getData',
     (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'transformDataFrame');
+        const spy = jest.spyOn(grafanaDataTransformations, 'transformDataFrame');
         spy.mockClear();
         ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -428,7 +436,7 @@ describe('PanelQueryRunner', () => {
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
+          next: (data: grafanaDataTypes.PanelData) => {
             return data;
           },
         });
@@ -446,7 +454,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: grafanaData.createTheme(),
+        theme: grafanaDataThemes.createTheme(),
       }),
       // @ts-ignore
       getTransformations: () => [{}],
@@ -467,10 +475,10 @@ describe('PanelQueryRunner', () => {
     (ctx) => {
       it('should return snapshotted data', async () => {
         ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
-          next: (data: grafanaData.PanelData) => {
-            expect(data.state).toBe(grafanaData.LoadingState.Done);
+          next: (data: grafanaDataTypes.PanelData) => {
+            expect(data.state).toBe(LoadingState.Done);
             expect(data.series).toEqual(snapshotData);
-            expect(data.timeRange).toEqual(grafanaData.getDefaultTimeRange());
+            expect(data.timeRange).toEqual(getDefaultTimeRange());
             return data;
           },
         });
@@ -510,7 +518,7 @@ describe('PanelQueryRunner', () => {
           name: '${multi}',
           uid: '${multi}',
           interval: ctx.dsInterval,
-          query: (options: grafanaData.DataQueryRequest) => {
+          query: (options: grafanaDataTypes.DataQueryRequest) => {
             ctx.queryCalledWith = options;
             return Promise.resolve(response);
           },

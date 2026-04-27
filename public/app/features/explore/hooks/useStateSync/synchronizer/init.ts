@@ -1,7 +1,7 @@
 import { identity, isEqual } from 'lodash';
 import { type MutableRefObject } from 'react';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
 import { type LocationService } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';

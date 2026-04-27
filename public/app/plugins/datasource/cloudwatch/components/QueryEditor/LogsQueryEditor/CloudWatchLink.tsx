@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type PanelData } from '@grafana/data';
+import type { PanelData } from '@grafana/data/types';
 import { LinkButton } from '@grafana/ui';
 
 import { type AwsUrl, encodeUrl } from '../../../aws_url';

@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, type PluginMetaInfo, PluginType } from '@grafana/data/types';
 import { type monacoTypes } from '@grafana/ui';
 
 import { v2Tags, emptyTags, testIntrinsics } from '../SearchTraceQLEditor/mocks';

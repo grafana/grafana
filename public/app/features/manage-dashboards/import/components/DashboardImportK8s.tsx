@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { AppEvents, LoadingState } from '@grafana/data';
+import { AppEvents, LoadingState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
 import { Spinner, Stack } from '@grafana/ui';

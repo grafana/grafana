@@ -1,17 +1,13 @@
 import { cloneDeep, extend } from 'lodash';
 
+import { dateMath, isDateTime, rangeUtil, toUtc, dateTimeForTimeZone } from '@grafana/data/datetime';
 import {
-  dateMath,
   getDefaultTimeRange,
-  isDateTime,
-  rangeUtil,
   type RawTimeRange,
   type TimeRange,
-  toUtc,
   type IntervalValues,
   AppEvents,
-  dateTimeForTimeZone,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';

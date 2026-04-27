@@ -1,4 +1,5 @@
-import { dateTime, type QueryVariableModel, type TimeRange, type TypedVariableModel } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data/types';
 import { type VariableInterpolation } from '@grafana/runtime';
 import {
   ConstantVariable,

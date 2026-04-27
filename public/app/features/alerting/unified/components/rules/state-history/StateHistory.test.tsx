@@ -1,4 +1,4 @@
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 
 import { groupStateByLabels, matchKey } from './StateHistory';
 

@@ -1,4 +1,4 @@
-import { type BootData, type PanelPluginMeta } from '@grafana/data';
+import type { BootData, PanelPluginMeta } from '@grafana/data/types';
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { VisualizationSelectPaneTab } from '../../public/app/features/dashboard/components/PanelEditor/types';

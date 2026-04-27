@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 /**
  * Creates a debug logger gated by a localStorage key.

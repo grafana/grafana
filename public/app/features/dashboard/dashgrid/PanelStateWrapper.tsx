@@ -2,8 +2,24 @@ import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { type AbsoluteTimeRange, AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, DashboardCursorSync, type EventFilterOptions, type FieldConfigSource, getDataSourceRef, getDefaultTimeRange, LoadingState, type PanelData, type PanelPlugin, type PanelPluginMeta, PluginContextProvider, SetPanelAttentionEvent, type TimeRange, toUtc } from '@grafana/data';
+import { PluginContextProvider } from '@grafana/data/context';
 import { type DataFrame, toDataFrameDTO } from '@grafana/data/dataframe';
+import { toUtc } from '@grafana/data/datetime';
+import { AnnotationChangeEvent, type EventFilterOptions, SetPanelAttentionEvent } from '@grafana/data/events';
+import type { PanelPlugin } from '@grafana/data/panel';
+import {
+  type AbsoluteTimeRange,
+  type AnnotationEventUIModel,
+  CoreApp,
+  DashboardCursorSync,
+  type FieldConfigSource,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  type PanelPluginMeta,
+  type TimeRange,
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { RefreshEvent } from '@grafana/runtime';
 import { type VizLegendOptions } from '@grafana/schema';
 import {

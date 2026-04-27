@@ -16,7 +16,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { trace } from '../mocks';

@@ -1,8 +1,17 @@
 import { mapValues } from 'lodash';
 import { type Observable, Subject, type Subscription, type Unsubscribable } from 'rxjs';
 
-import { type DataQueryResponse, type LiveChannelAddress, LiveChannelConnectionState, type LiveChannelEvent, LiveChannelEventType, type LiveChannelLeaveEvent, LiveChannelScope, LoadingState } from '@grafana/data';
 import { type DataFrameJSON, dataFrameToJSON, FieldType, StreamingDataFrame } from '@grafana/data/dataframe';
+import {
+  type DataQueryResponse,
+  type LiveChannelAddress,
+  LiveChannelConnectionState,
+  type LiveChannelEvent,
+  LiveChannelEventType,
+  type LiveChannelLeaveEvent,
+  LiveChannelScope,
+  LoadingState,
+} from '@grafana/data/types';
 import { StreamingFrameAction } from '@grafana/runtime';
 
 import { isStreamingResponseData, type StreamingResponseData, StreamingResponseDataType } from '../data/utils';

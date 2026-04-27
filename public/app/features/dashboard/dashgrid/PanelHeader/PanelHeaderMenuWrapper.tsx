@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type LoadingState } from '@grafana/data';
+import type { LoadingState } from '@grafana/data/types';
 
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';

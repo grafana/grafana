@@ -1,5 +1,5 @@
-import { type SelectableValue } from '@grafana/data';
 import { dataFrameFromJSON } from '@grafana/data/dataframe';
+import type { SelectableValue } from '@grafana/data/types';
 import { getBackendSrv } from '@grafana/runtime';
 
 interface ChannelInfo {

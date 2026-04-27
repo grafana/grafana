@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { type AzureCredentials, AzureCloud, updateDatasourceCredentials } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type HttpSettingsBaseProps } from '@grafana/ui/internal';
 

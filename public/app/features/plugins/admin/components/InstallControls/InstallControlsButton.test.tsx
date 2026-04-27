@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 

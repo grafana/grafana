@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -16,8 +16,8 @@ import {
   TextLink,
   Label,
   Stack,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Form } from 'app/core/components/Form/Form';
 
 import { validateDashboardJson, validateGcomDashboard } from '../utils/validation';

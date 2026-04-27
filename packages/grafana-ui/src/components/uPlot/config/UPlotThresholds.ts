@@ -1,7 +1,8 @@
 import tinycolor from 'tinycolor2';
 import type uPlot from 'uplot';
 
-import { type GrafanaTheme2, type Threshold, type ThresholdsConfig, ThresholdsMode } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type Threshold, type ThresholdsConfig, ThresholdsMode } from '@grafana/data/types';
 import { type GraphThresholdsStyleConfig, GraphThresholdsStyleMode, ScaleOrientation } from '@grafana/schema';
 
 import { getGradientRange, scaleGradient } from './gradientFills';

@@ -1,4 +1,4 @@
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 
 import { buildParams } from './utils';
 

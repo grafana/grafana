@@ -1,4 +1,6 @@
-import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { dateTime, rangeUtil } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
+import { locationUtil, urlUtil } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';

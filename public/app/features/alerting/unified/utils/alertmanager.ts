@@ -1,7 +1,7 @@
 import { isEqual, uniqWith } from 'lodash';
 
 import { matchLabelsSet } from '@grafana/alerting/unstable';
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import {
   type AlertManagerCortexConfig,
   type Matcher,

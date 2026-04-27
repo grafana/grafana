@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, type PropsWithChildren } from 'react';
 
-import { dateTime, type DateTimeInput, type GrafanaTheme2 } from '@grafana/data';
+import { dateTime, type DateTimeInput } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';

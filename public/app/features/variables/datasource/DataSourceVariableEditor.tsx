@@ -1,6 +1,6 @@
 import { type FormEvent, memo, useEffect } from 'react';
 
-import { type DataSourceVariableModel, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
+import type { DataSourceVariableModel, SelectableValue, VariableWithMultiSupport } from '@grafana/data/types';
 import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DataSourceVariableForm';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 

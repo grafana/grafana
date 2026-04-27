@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import {
-  type FieldNamePickerConfigSettings,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import type {
+  FieldNamePickerConfigSettings,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+} from '@grafana/data/field';
 import { t } from '@grafana/i18n';
 import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';

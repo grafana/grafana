@@ -8,7 +8,7 @@ import {
   type VariableOption,
   type VariableWithMultiSupport,
   type VariableWithOptions,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';

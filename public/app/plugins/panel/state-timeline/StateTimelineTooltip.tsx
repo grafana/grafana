@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 
-import { type TimeRange, usePluginContext } from '@grafana/data';
+import { usePluginContext } from '@grafana/data/context';
 import { FieldType } from '@grafana/data/dataframe';
+import type { TimeRange } from '@grafana/data/types';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {

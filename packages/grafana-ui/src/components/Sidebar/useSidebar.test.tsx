@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 import { useSidebar, useSidebarSavedState } from './useSidebar';
 
@@ -21,8 +21,8 @@ function mockMatchMedia(shouldMatchMobile: boolean) {
   };
 }
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   store: {
     get: jest.fn(),
     set: jest.fn(),

@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import {
-  type DataSourceJsonData,
-  type DataSourcePluginOptionsEditorProps,
-  type GrafanaTheme2,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
-import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface NodeGraphOptions {
   enabled?: boolean;

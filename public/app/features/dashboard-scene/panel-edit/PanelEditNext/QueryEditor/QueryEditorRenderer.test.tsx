@@ -7,7 +7,7 @@ import {
   type DataSourceJsonData,
   getDefaultTimeRange,
   LoadingState,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 

@@ -1,4 +1,7 @@
-import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { SetPanelAttentionEvent } from '@grafana/data/events';
+import { LegacyGraphHoverClearEvent } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';

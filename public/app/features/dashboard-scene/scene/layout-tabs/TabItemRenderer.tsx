@@ -3,11 +3,16 @@ import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useLocation } from 'react-router';
 
-import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { locationUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { Box, Tab, TabContent, Tooltip, useElementSelection } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { usePointerDistance } from '@grafana/ui/utils';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

@@ -3,7 +3,9 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, type PanelData, type PanelPlugin } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import type { PanelPlugin } from '@grafana/data/panel';
+import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';

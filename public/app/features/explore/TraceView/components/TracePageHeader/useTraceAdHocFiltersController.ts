@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { type TraceSearchProps } from '@grafana/data';
+import type { TraceSearchProps } from '@grafana/data/types';
 import { type AdHocFiltersController, type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { type Trace } from '../types/trace';

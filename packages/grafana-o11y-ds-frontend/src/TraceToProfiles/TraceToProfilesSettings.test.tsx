@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { type TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesSettings';

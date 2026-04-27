@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type QueryEditorProps, type SelectableValue, toOption } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { QueryEditorProps, SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CloudWatchDatasource } from '../../datasource';
 import {

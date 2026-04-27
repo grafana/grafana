@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { type FieldDisplay } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
 import { type GradientStop, type RadialGaugeDimensions } from './types';

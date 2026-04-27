@@ -3,11 +3,12 @@ import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame, type EnumFieldConfig } from '@grafana/data/dataframe';
 import { type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import EnumMappingRow from './EnumMappingRow';
 

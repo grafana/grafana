@@ -1,6 +1,6 @@
 import { map } from 'lodash';
 
-import { type ScopedVars, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
+import type { ScopedVars, SelectableValue, VariableWithMultiSupport } from '@grafana/data/types';
 import { type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
 
 import { type AzureMonitorOption, type VariableOptionGroup } from '../types/types';

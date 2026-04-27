@@ -1,4 +1,5 @@
-import { type DataSourceApi, dateTime, type DataQuery } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { DataSourceApi, DataQuery } from '@grafana/data/types';
 
 import { type PanelModel } from '../dashboard/state/PanelModel';
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';

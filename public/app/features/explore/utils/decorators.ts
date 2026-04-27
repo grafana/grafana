@@ -2,8 +2,10 @@ import { groupBy, mapValues } from 'lodash';
 import { type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { type AbsoluteTimeRange, getDisplayProcessor, type PanelData, standardTransformers, DataLinkConfigOrigin, getRawDisplayProcessor, type DataSourceApi } from '@grafana/data';
 import { type DataFrame, FieldType, preProcessPanelData } from '@grafana/data/dataframe';
+import { getDisplayProcessor, getRawDisplayProcessor } from '@grafana/data/field';
+import { standardTransformers } from '@grafana/data/transformations';
+import { type AbsoluteTimeRange, type PanelData, DataLinkConfigOrigin, type DataSourceApi } from '@grafana/data/types';
 import { config, type CorrelationData } from '@grafana/runtime';
 import { getPanelPluginMetas, type PanelPluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';

@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { Alert, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardInteractions } from '../../utils/interactions';

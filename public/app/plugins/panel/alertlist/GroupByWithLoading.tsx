@@ -1,9 +1,10 @@
 import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Icon, MultiSelect } from '@grafana/ui';
+import { MultiSelect } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import {

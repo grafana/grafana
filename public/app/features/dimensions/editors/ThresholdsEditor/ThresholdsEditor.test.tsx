@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
-import { mockThemeContext } from '@grafana/ui';
+import { createTheme } from '@grafana/data/themes';
+import { type Threshold, ThresholdsMode } from '@grafana/data/types';
+import { mockThemeContext } from '@grafana/ui/themes';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';
 

@@ -1,6 +1,6 @@
 import { type Grammar } from 'prismjs';
 
-import { escapeRegex, parseFlags } from '@grafana/data';
+import { escapeRegex, parseFlags } from '@grafana/data/text';
 
 import { type LogListModel } from './processing';
 

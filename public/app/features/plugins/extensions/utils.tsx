@@ -3,18 +3,17 @@ import { cloneDeep, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
+import { PluginContextProvider } from '@grafana/data/context';
+import { isDateTime, dateTime } from '@grafana/data/datetime';
 import {
   type AppPluginConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionOpenModalOptions,
-  isDateTime,
-  dateTime,
-  PluginContextProvider,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionLink,
   PluginExtensionTypes,
-  urlUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { Modal } from '@grafana/ui';

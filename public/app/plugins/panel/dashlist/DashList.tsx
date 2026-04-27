@@ -2,7 +2,8 @@ import { take } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
-import { type InterpolateFunction, type PanelProps, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import type { InterpolateFunction, PanelProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
 import { getConfig } from 'app/core/config';

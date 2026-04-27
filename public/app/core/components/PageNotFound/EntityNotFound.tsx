@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Stack, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+import { Stack, EmptyState, LinkButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props {
   /**

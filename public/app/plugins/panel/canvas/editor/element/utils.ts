@@ -1,4 +1,5 @@
-import { AppEvents, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import { AppEvents } from '@grafana/data/types';
 import { type BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { createAbsoluteUrl, type RelativeUrl } from 'app/features/alerting/unified/utils/url';

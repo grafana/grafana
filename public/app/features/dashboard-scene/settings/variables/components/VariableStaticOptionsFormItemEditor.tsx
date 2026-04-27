@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import { type ChangeEventHandler } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
+import { IconButton, Input, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface VariableStaticOptionsFormItem {
   id: string;

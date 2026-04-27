@@ -1,7 +1,7 @@
 import { PureComponent, type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
-import { VizOrientation } from '@grafana/data';
+import { VizOrientation } from '@grafana/data/types';
 
 import { clamp } from '../../utils/clamp';
 import { calculateGridDimensions } from '../../utils/squares';

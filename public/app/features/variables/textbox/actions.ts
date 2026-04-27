@@ -1,4 +1,4 @@
-import { type UrlQueryValue } from '@grafana/data';
+import type { UrlQueryValue } from '@grafana/data/utils';
 import { type ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';

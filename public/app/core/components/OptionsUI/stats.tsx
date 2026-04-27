@@ -1,4 +1,4 @@
-import { type StandardEditorProps, type StatsPickerConfigSettings } from '@grafana/data';
+import type { StandardEditorProps, StatsPickerConfigSettings } from '@grafana/data/field';
 import { StatsPicker } from '@grafana/ui';
 
 export const StatsPickerEditor = ({

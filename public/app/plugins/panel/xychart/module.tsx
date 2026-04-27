@@ -1,6 +1,6 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { SeriesEditor } from './SeriesEditor';
 import { XYChartPanel2 } from './XYChartPanel';

@@ -14,7 +14,7 @@
 
 import Chance from 'chance';
 
-import { type TraceKeyValuePair } from '@grafana/data';
+import type { TraceKeyValuePair } from '@grafana/data/types';
 import {
   type TraceSpanData,
   type TraceProcess,

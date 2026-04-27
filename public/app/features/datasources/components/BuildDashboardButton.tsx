@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, type ComponentSize, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, LinkButton, Menu } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { ComponentSize } from '@grafana/ui/types';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';

@@ -1,7 +1,15 @@
 import { of } from 'rxjs';
 
-import { type DataSourceApi, getDefaultTimeRange, LoadingState, type PanelData, PluginType, type ScopedVars, VariableSupportType } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  type DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  PluginType,
+  type ScopedVars,
+  VariableSupportType,
+} from '@grafana/data/types';
 import { config, setRunRequest } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

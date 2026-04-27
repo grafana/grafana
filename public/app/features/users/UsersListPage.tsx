@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type OrgRole, renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
+import type { OrgRole } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

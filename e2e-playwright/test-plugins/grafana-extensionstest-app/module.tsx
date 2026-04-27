@@ -1,4 +1,4 @@
-import { AppPlugin, PluginExtensionPanelContext, PluginExtensionPoints } from '@grafana/data';
+import { AppPlugin, PluginExtensionPanelContext, PluginExtensionPoints } from '@grafana/data/types';
 import { App } from './components/App';
 import { QueryModal } from './components/QueryModal';
 import { selectQuery } from './utils/utils';

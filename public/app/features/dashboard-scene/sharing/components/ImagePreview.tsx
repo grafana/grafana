@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Alert, LoadingBar, Text, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingBar, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type ErrorState = {
   message: string;

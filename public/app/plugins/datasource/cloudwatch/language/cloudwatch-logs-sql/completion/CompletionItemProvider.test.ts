@@ -1,4 +1,4 @@
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 import { type Monaco, type monacoTypes } from '@grafana/ui';
 
 import { type LogGroup } from '../../../dataquery.gen';

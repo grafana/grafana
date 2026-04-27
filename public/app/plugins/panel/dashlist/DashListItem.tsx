@@ -1,5 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
-import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Link, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 

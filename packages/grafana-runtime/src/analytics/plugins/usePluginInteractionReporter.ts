@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { isDataSourcePluginContext, usePluginContext } from '@grafana/data';
+import { isDataSourcePluginContext, usePluginContext } from '@grafana/data/context';
 
 import { reportInteraction } from '../utils';
 

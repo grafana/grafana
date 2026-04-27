@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';

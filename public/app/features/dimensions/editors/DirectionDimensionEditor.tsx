@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 
-import {
-  type FieldNamePickerConfigSettings,
-  type SelectableValue,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import type {
+  FieldNamePickerConfigSettings,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+} from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { DirectionDimensionMode, type DirectionDimensionConfig, ConnectionDirection } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import { Registry } from '@grafana/data';
+import { Registry } from '@grafana/data/utils';
 
 import { getBasicValueMatchersUI } from './BasicMatcherEditor';
 import { getNoopValueMatchersUI } from './NoopMatcherEditor';

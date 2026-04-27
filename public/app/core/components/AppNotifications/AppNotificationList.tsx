@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { type AlertErrorPayload, type AlertPayload, AppEvents, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type AlertErrorPayload, type AlertPayload, AppEvents } from '@grafana/data/types';
+import { Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { hideAppNotification, notifyApp, selectVisible } from 'app/core/reducers/appNotification';

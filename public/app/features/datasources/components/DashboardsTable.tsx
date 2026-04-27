@@ -1,5 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type PluginDashboard } from 'app/types/plugins';
 
 export interface Props {

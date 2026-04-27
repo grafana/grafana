@@ -1,20 +1,13 @@
 import pluralize from 'pluralize';
 import * as React from 'react';
 
-import { type QueryEditorProps, type SelectableValue, rangeUtil, type DataQueryRequest } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { QueryEditorProps, SelectableValue, DataQueryRequest } from '@grafana/data/types';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import {
-  InlineField,
-  Select,
-  Alert,
-  Input,
-  InlineFieldRow,
-  type Themeable2,
-  withTheme2,
-  Stack,
-  InlineLabel,
-} from '@grafana/ui';
+import { InlineField, Select, Alert, Input, InlineFieldRow, Stack, InlineLabel } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { getManagedChannelInfo } from 'app/features/live/info';
 import { type SearchQuery } from 'app/features/search/service/types';
 

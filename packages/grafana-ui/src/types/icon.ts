@@ -1,11 +1,11 @@
-import { availableIconsIndex, type IconName } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { availableIconsIndex, type IconName } from '@grafana/data/types';
 
 import { type ComponentSize } from './size';
 
 // Exported from here for backwards compatibility
-export type { IconName } from '@grafana/data';
-export { toIconName } from '@grafana/data';
+export type { IconName } from '@grafana/data/types';
+export { toIconName } from '@grafana/data/types';
 
 export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';

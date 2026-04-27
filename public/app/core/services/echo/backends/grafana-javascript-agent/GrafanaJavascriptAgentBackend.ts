@@ -1,4 +1,4 @@
-import { escapeRegex } from '@grafana/data';
+import { escapeRegex } from '@grafana/data/text';
 import { type BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
 import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {

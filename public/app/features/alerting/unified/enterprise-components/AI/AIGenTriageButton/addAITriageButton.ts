@@ -1,6 +1,6 @@
 import { type ComponentType, createElement } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
 

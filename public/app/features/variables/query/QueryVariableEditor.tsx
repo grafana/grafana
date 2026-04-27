@@ -1,14 +1,14 @@
 import { type FormEvent, PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import {
-  type DataSourceInstanceSettings,
-  getDataSourceRef,
-  type QueryVariableModel,
-  type SelectableValue,
-  type VariableRefresh,
-  type VariableSort,
-} from '@grafana/data';
+import type {
+  DataSourceInstanceSettings,
+  QueryVariableModel,
+  SelectableValue,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
 import { type StoreState } from 'app/types/store';
 

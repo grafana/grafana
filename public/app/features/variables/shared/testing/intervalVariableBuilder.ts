@@ -1,4 +1,4 @@
-import { type IntervalVariableModel, type VariableRefresh } from '@grafana/data';
+import type { IntervalVariableModel, VariableRefresh } from '@grafana/data/types';
 
 import { OptionsVariableBuilder } from './optionsVariableBuilder';
 

@@ -2,7 +2,8 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
+import type { NavIndex } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';

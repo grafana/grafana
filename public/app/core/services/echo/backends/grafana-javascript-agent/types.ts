@@ -1,4 +1,4 @@
-import { type BuildInfo, type CurrentUserDTO } from '@grafana/data';
+import type { BuildInfo, CurrentUserDTO } from '@grafana/data/types';
 import { type InternalLoggerLevel } from '@grafana/faro-web-sdk';
 import { type EchoEvent, type EchoEventType } from '@grafana/runtime';
 

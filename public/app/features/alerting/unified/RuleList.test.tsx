@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels, store } from '@grafana/data';
 import { shallowCompare } from '@grafana/data/dataframe';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, type Labels } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogLabels, LogLabelsList, type Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { MetaInfoText, type MetaItemProps } from '../MetaInfoText';

@@ -3,8 +3,9 @@ import { noop } from 'lodash';
 import { useMemo, useState } from 'react';
 import Draggable, { type DraggableBounds } from 'react-draggable';
 
-import { type Threshold, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Threshold } from '@grafana/data/types';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 type OutOfBounds = 'top' | 'bottom' | 'none';
 

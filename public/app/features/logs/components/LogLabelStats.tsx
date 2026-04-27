@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type LogLabelStatsModel, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LogLabelStatsModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogLabelStatsRow } from './LogLabelStatsRow';
 

@@ -1,8 +1,14 @@
 import { firstValueFrom, timeout } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
-import { CoreApp, getDefaultTimeRange, LoadingState, type PanelPluginVisualizationSuggestion, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import {
+  CoreApp,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelPluginVisualizationSuggestion,
+  type TimeRange,
+} from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';

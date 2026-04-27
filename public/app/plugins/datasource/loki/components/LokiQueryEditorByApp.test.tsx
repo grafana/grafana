@@ -1,7 +1,7 @@
 import { render, type RenderResult, screen } from '@testing-library/react';
 import { noop } from 'lodash';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 
 import { createLokiDatasource } from '../mocks/datasource';
 

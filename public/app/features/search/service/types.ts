@@ -1,6 +1,6 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type SelectableValue } from '@grafana/data';
 import { type DataFrameView } from '@grafana/data/dataframe';
+import type { SelectableValue } from '@grafana/data/types';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { type PermissionLevel } from 'app/types/acl';
 

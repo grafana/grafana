@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator, type GrafanaTheme2, LogLevel } from '@grafana/data';
-import { styleMixins } from '@grafana/ui';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import { LogLevel } from '@grafana/data/types';
+import { styleMixins } from '@grafana/ui/themes';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;

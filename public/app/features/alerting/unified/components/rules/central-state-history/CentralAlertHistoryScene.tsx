@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { type CentralAlertHistorySceneV1Props, type GrafanaTheme2, VariableHide } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type CentralAlertHistorySceneV1Props, VariableHide } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
@@ -28,7 +29,6 @@ import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   Button,
   GraphGradientMode,
-  Icon,
   LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
@@ -36,8 +36,9 @@ import {
   Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogMessages, logInfo } from '../../../Analytics';
 

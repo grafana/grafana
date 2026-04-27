@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { type DataSourceApi, type SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
+import { type DataSourceApi, type SelectableValue, getDefaultTimeRange } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { type QueryBuilderOperationParamEditorProps, type VisualQueryModeller } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 

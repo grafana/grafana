@@ -1,4 +1,4 @@
-import { locationUtil, urlUtil } from '@grafana/data';
+import { locationUtil, urlUtil } from '@grafana/data/utils';
 import { locationService, navigationLogger } from '@grafana/runtime';
 
 import { contextSrv } from '../../services/context_srv';

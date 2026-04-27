@@ -1,7 +1,8 @@
 import { omitBy } from 'lodash';
 import { type Observable, of, throwError } from 'rxjs';
 
-import { deprecationWarning, validatePath } from '@grafana/data';
+import { validatePath } from '@grafana/data/text';
+import { deprecationWarning } from '@grafana/data/utils';
 import { type BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {

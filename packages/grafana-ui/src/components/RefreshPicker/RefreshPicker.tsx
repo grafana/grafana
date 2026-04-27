@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { formatDuration } from 'date-fns/formatDuration';
 import { memo } from 'react';
 
-import { type SelectableValue, parseDuration } from '@grafana/data';
+import { parseDuration } from '@grafana/data/datetime';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

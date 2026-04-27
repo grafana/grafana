@@ -1,6 +1,6 @@
 import { type ReactElement, useMemo, type JSX } from 'react';
 
-import { type PluginExtensionLink } from '@grafana/data';
+import type { PluginExtensionLink } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';

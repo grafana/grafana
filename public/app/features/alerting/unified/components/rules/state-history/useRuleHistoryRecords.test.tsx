@@ -1,5 +1,5 @@
-import { createTheme } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
 
 import { type LogRecord } from './common';
 import { logRecordsToDataFrame } from './useRuleHistoryRecords';

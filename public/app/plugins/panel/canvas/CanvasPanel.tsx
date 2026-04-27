@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
-import { type PanelProps } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { type PanelContext, PanelContextRoot } from '@grafana/ui';
 import { type CanvasFrameOptions } from 'app/features/canvas/frame';

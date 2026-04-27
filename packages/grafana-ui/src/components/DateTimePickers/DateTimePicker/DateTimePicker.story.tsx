@@ -2,7 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { type StoryFn, type Meta } from '@storybook/react';
 import { useState } from 'react';
 
-import { dateTime, type DateTime } from '@grafana/data';
+import { dateTime, type DateTime } from '@grafana/data/datetime';
 
 import { DateTimePicker } from './DateTimePicker';
 import mdx from './DateTimePicker.mdx';

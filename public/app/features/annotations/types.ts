@@ -1,4 +1,4 @@
-import { type AnnotationEvent, type PanelData, type TimeRange } from '@grafana/data';
+import type { AnnotationEvent, PanelData, TimeRange } from '@grafana/data/types';
 
 import { type DashboardModel } from '../dashboard/state/DashboardModel';
 import { type PanelModel } from '../dashboard/state/PanelModel';

@@ -1,7 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 import { type CSSProperties } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

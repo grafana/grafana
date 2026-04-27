@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginErrorCode } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls/InstallControlsButton';

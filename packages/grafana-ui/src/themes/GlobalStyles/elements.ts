@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2, type ThemeTypographyVariant } from '@grafana/data';
+import type { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data/themes';
 
 import { getFocusStyles } from '../mixins';
 

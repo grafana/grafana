@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type FieldConfigSource, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import type { FieldConfigSource, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 
 /**
  * Describes the properties that can be passed to the PanelDataErrorView.

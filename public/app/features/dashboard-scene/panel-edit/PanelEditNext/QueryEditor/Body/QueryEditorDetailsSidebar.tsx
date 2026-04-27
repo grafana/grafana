@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { type FocusEvent, useCallback, useRef } from 'react';
 
-import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   useActionsContext,

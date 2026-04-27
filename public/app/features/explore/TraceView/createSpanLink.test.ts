@@ -1,5 +1,10 @@
-import { type DataSourceInstanceSettings, type LinkModel, SupportedTransformationType, DataLinkConfigOrigin } from '@grafana/data';
 import { createDataFrame, FieldType, type DataFrame } from '@grafana/data/dataframe';
+import {
+  type DataSourceInstanceSettings,
+  type LinkModel,
+  SupportedTransformationType,
+  DataLinkConfigOrigin,
+} from '@grafana/data/types';
 import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';

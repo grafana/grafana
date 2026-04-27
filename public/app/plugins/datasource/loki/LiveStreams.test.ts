@@ -3,8 +3,9 @@ import { Observable, Subject, of, throwError, concat } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 
-import { formatLabels, type Labels } from '@grafana/data';
 import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
+import type { Labels } from '@grafana/data/types';
+import { formatLabels } from '@grafana/data/utils';
 
 import { LiveStreams } from './LiveStreams';
 import { type LokiTailResponse } from './types';

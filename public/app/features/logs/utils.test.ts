@@ -1,8 +1,17 @@
 import saveAs from 'file-saver';
 
-import { type AbsoluteTimeRange, type Labels, LogLevel, type LogRowModel, type LogsModel, LogsSortOrder, standardTransformers, DataFrameType } from '@grafana/data';
 import { FieldType, MutableDataFrame, type DataFrame, toDataFrame } from '@grafana/data/dataframe';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
+import { standardTransformers } from '@grafana/data/transformations';
+import {
+  type AbsoluteTimeRange,
+  type Labels,
+  LogLevel,
+  type LogRowModel,
+  type LogsModel,
+  LogsSortOrder,
+  DataFrameType,
+} from '@grafana/data/types';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 

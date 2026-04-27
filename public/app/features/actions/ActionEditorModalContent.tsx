@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { type Action, ActionType, type VariableSuggestion } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type Action, ActionType, type VariableSuggestion } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 

@@ -2,9 +2,11 @@ import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
-import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PanelRenderer } from '../PanelRenderer';
 

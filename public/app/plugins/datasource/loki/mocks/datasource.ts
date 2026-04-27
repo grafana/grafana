@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceSettings, PluginType } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { LokiDatasource } from '../datasource';

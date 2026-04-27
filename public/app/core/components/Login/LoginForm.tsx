@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { type ReactElement, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, Input, Field, useStyles2 } from '@grafana/ui';
+import { Button, Input, Field } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 

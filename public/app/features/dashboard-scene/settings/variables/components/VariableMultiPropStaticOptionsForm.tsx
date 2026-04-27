@@ -3,11 +3,13 @@ import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-p
 import { useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
-import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
+import { IconButton, Input, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
 

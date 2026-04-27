@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, LoadingState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { LoadingState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { EmptyState, Pagination, Stack, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';

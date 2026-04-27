@@ -1,13 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import type { JSX } from 'react';
 
-import {
-  type AppPluginConfig,
-  PluginContextProvider,
-  PluginExtensionPoints,
-  type PluginMeta,
-  PluginType,
-} from '@grafana/data';
+import { PluginContextProvider } from '@grafana/data/context';
+import { type AppPluginConfig, PluginExtensionPoints, type PluginMeta, PluginType } from '@grafana/data/types';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';

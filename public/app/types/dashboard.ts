@@ -1,4 +1,4 @@
-import { type DataQuery } from '@grafana/data';
+import type { DataQuery } from '@grafana/data/types';
 import { type Dashboard, type DataSourceRef } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';

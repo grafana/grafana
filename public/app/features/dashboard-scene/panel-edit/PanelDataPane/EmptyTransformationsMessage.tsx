@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { DataTransformerID, type GrafanaTheme2, standardTransformersRegistry, type TransformerRegistryItem } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  DataTransformerID,
+  standardTransformersRegistry,
+  type TransformerRegistryItem,
+} from '@grafana/data/transformations';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';

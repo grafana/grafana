@@ -3,7 +3,8 @@ import { sortBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
-import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelProps } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
@@ -16,8 +17,8 @@ import {
   Link,
   LoadingPlaceholder,
   ScrollContainer,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';

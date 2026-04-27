@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, type BasicValueMatcherOptions, type VariableSuggestion } from '@grafana/data';
+import { ValueMatcherID, type BasicValueMatcherOptions } from '@grafana/data/transformations';
+import type { VariableSuggestion } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';

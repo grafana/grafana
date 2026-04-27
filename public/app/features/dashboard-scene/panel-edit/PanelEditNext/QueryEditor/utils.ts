@@ -1,4 +1,6 @@
-import { type AlertState, type DataTransformerConfig, type GrafanaTheme2, TransformerCategory } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { TransformerCategory } from '@grafana/data/transformations';
+import type { AlertState, DataTransformerConfig } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type CustomTransformerDefinition } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';

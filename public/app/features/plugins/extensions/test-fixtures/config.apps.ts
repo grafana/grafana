@@ -1,4 +1,4 @@
-import { type AngularMeta, type AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
+import { type AngularMeta, type AppPluginConfig, PluginLoadingStrategy } from '@grafana/data/types';
 import { type AppPluginMetas } from '@grafana/runtime/internal';
 
 const app: AppPluginConfig = structuredClone({

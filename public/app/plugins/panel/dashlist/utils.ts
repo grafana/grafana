@@ -1,4 +1,5 @@
-import { DataLinkBuiltInVars, type PanelProps, urlUtil } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
+import { DataLinkBuiltInVars, urlUtil } from '@grafana/data/utils';
 
 import { appEvents } from '../../../core/app_events';
 import { useBusEvent } from '../../../core/hooks/useBusEvent';

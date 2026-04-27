@@ -1,7 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataFrameType, FieldMatcherID, standardEditorsRegistry } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { standardEditorsRegistry } from '@grafana/data/field';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import { DataFrameType } from '@grafana/data/types';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';

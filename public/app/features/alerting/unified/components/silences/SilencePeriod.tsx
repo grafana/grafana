@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 import { t } from '@grafana/i18n';
 import { Field, TimeRangeInput } from '@grafana/ui';
 

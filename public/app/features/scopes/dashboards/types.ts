@@ -1,4 +1,4 @@
-import { type ScopeDashboardBinding } from '@grafana/data';
+import type { ScopeDashboardBinding } from '@grafana/data/types';
 
 // TODO: replace with generate API client types
 export interface ScopeNavigationSpec {

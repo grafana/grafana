@@ -1,7 +1,14 @@
 import { createContext, useContext } from 'react';
 
-import { EventBusSrv, type EventBus, type DashboardCursorSync, type AnnotationEventUIModel, type ThresholdsConfig, type CoreApp, type DataLinkPostProcessor } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { EventBusSrv, type EventBus } from '@grafana/data/events';
+import type {
+  DashboardCursorSync,
+  AnnotationEventUIModel,
+  ThresholdsConfig,
+  CoreApp,
+  DataLinkPostProcessor,
+} from '@grafana/data/types';
 
 import { type AdHocFilterItem } from '../Table/types';
 

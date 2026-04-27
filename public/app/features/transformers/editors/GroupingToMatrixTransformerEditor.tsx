@@ -2,14 +2,13 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  type SelectableValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   type GroupingToMatrixTransformerOptions,
-  type SpecialValue,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import type { SelectableValue, SpecialValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';

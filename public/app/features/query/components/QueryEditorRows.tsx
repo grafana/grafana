@@ -1,16 +1,16 @@
 import { DragDropContext, type DragStart, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { PureComponent, type ReactNode } from 'react';
 
+import { type EventBusExtended } from '@grafana/data/events';
 import {
   CoreApp,
   type DataQuery,
   type DataSourceInstanceSettings,
-  type EventBusExtended,
   type HistoryItem,
   type PanelData,
-  getDataSourceRef,
   isSystemOverrideWithRef,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';

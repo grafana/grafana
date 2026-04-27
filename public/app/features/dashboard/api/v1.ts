@@ -1,4 +1,4 @@
-import { locationUtil, type UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';

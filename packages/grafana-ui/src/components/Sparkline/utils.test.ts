@@ -1,4 +1,6 @@
-import { createTheme, type Field, type FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
+import { type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import type { FieldSparkline } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
 
 import { getYRange, prepareConfig, preparePlotFrame } from './utils';
 

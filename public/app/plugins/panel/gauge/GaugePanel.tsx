@@ -2,17 +2,17 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import {
-  type DisplayValueAlignmentFactors,
   type FieldDisplay,
   getDisplayProcessor,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  type PanelProps,
-} from '@grafana/data';
+} from '@grafana/data/field';
+import type { DisplayValueAlignmentFactors, PanelProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenu, Stack, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
 import { type DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Options } from './panelcfg.gen';
 

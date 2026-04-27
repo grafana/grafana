@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogLevel, type LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  CoreApp,
+  getDefaultTimeRange,
+  LogLevel,
+  type LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { reportInteraction } from '@grafana/runtime';
 import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';

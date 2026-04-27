@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './migrations';

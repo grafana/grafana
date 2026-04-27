@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, LinkButton, Stack, Text, Toggletip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { GrafanaRulesSourceSymbol, type RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 

@@ -16,13 +16,25 @@ import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import { type CoreApp, dateTimeFormat, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceKeyValuePair, type TraceLog, type PluginExtensionResourceAttributesContext, PluginExtensionPoints, type IconName } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  type CoreApp,
+  type LinkModel,
+  type TimeRange,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type PluginExtensionResourceAttributesContext,
+  PluginExtensionPoints,
+  type IconName,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';

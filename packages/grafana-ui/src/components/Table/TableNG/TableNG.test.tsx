@@ -1,16 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {
-  applyFieldOverrides,
-  createTheme,
-  type DataFrame,
-  type DataLink,
-  type EventBus,
-  FieldType,
-  type LinkModel,
-  toDataFrame,
-} from '@grafana/data';
+import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import type { EventBus } from '@grafana/data/events';
+import { applyFieldOverrides } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import type { DataLink, LinkModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 

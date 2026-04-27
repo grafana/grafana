@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { type AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, type AdHocFiltersController } from '@grafana/scenes';
-import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { type Silence } from 'app/plugins/datasource/alertmanager/types';
 

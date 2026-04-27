@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { CollapsableSection, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface RenameEntry {
   originalName: string;

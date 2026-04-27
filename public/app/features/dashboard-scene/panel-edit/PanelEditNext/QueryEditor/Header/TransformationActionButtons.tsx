@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { FrameMatcherID } from '@grafana/data';
+import { FrameMatcherID } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 

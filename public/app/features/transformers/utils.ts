@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
-import { getFieldDisplayName, type TransformerCategory, type SelectableValue, getTimeZones, VariableOrigin, type VariableSuggestion, SpecialValue, type TransformerUIProps } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getTimeZones } from '@grafana/data/datetime';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { TransformerCategory, TransformerUIProps } from '@grafana/data/transformations';
+import { type SelectableValue, VariableOrigin, type VariableSuggestion, SpecialValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { FieldValidationMessage } from '@grafana/ui';

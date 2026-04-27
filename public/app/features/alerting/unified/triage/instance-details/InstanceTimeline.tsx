@@ -5,10 +5,13 @@ import {
   type CreateNotificationqueryNotificationEntry,
   type CreateNotificationqueryNotificationStatus,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 

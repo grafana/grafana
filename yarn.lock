@@ -2782,6 +2782,43 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/influxdb@workspace:public/app/plugins/datasource/influxdb":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/influxdb@workspace:public/app/plugins/datasource/influxdb"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/data": "npm:13.1.0-pre"
+    "@grafana/e2e-selectors": "npm:13.1.0-pre"
+    "@grafana/plugin-configs": "npm:13.1.0-pre"
+    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/runtime": "npm:13.1.0-pre"
+    "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/sql": "npm:13.1.0-pre"
+    "@grafana/ui": "npm:13.1.0-pre"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
+    "@testing-library/react": "npm:16.3.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:4.17.20"
+    "@types/node": "npm:24.10.1"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    jest: "npm:29.7.0"
+    lodash: "npm:^4.17.23"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-use: "npm:17.6.0"
+    rxjs: "npm:7.8.2"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.8.1"
+    typescript: "npm:6.0.2"
+    webpack: "npm:^5.105.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
@@ -20106,7 +20143,7 @@ __metadata:
     ora: "npm:^9.0.0"
     pdf-parse: "npm:^1.1.1"
     pluralize: "npm:^8.0.0"
-    postcss: "npm:8.5.6"
+    postcss: "npm:8.5.10"
     postcss-loader: "npm:8.1.1"
     postcss-reporter: "npm:7.1.0"
     postcss-scss: "npm:4.0.9"
@@ -27989,7 +28026,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.6, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
+"postcss@npm:8.5.10":
+  version: 8.5.10
+  resolution: "postcss@npm:8.5.10"
+  dependencies:
+    nanoid: "npm:^3.3.11"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10/7eac6169e535b63c8412e94d4f6047fc23efa3e9dde804b541940043c831b25f1cd867d83cd2c4371ad2450c8abcb42c208aa25668c1f0f3650d7f72faf711a8
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
   version: 8.5.6
   resolution: "postcss@npm:8.5.6"
   dependencies:

@@ -2,11 +2,12 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
-import { Button, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, TabsBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';

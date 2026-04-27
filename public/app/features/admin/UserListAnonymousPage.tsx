@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import { RadioButtonGroup, FilterInput } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { type StoreState } from 'app/types/store';
 

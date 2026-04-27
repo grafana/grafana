@@ -2,7 +2,8 @@ import { cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { FadeTransition, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { NestedEntry } from './NestedEntry';
 import getStyles from './styles';

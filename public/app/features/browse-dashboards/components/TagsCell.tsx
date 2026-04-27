@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { type CellProps } from 'react-table';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { TagList, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { TagList } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type DashboardsTreeItem } from '../types';
 

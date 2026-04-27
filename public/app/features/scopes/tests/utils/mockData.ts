@@ -1,4 +1,4 @@
-import { type ScopeDashboardBinding } from '@grafana/data';
+import type { ScopeDashboardBinding } from '@grafana/data/types';
 
 import { type ScopeNavigation } from '../../dashboards/types';
 

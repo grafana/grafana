@@ -1,4 +1,4 @@
-import { type KeyValue } from '@grafana/data';
+import type { KeyValue } from '@grafana/data/types';
 
 import { type AzureMonitorDataSourceSettings } from '../types/types';
 

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
+import { Button, ColorPicker } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type ArcOption, type Options as NodeGraphOptions } from '../panelcfg.gen';
 

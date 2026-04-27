@@ -1,14 +1,14 @@
 import { memo, useState, type FocusEvent, type FormEvent } from 'react';
 
+import { type RenameByRegexTransformerOptions } from '@grafana/data/internal';
+import { stringToJsRegex } from '@grafana/data/text';
 import {
   DataTransformerID,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  stringToJsRegex,
   TransformerCategory,
-} from '@grafana/data';
-import { type RenameByRegexTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 

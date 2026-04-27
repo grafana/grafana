@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

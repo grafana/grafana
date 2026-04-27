@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
+import { standardTransformersRegistry } from '@grafana/data/transformations';
+import type { DataTransformerConfig } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 

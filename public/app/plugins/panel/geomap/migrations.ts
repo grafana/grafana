@@ -1,16 +1,15 @@
 import { cloneDeep } from 'lodash';
 
+import { FrameGeometrySourceMode } from '@grafana/data/geo';
+import { fieldReducers, DataTransformerID } from '@grafana/data/transformations';
 import {
   type FieldConfigSource,
   type PanelModel,
   type PanelTypeChangedHandler,
   type Threshold,
   ThresholdsMode,
-  fieldReducers,
-  FrameGeometrySourceMode,
   type DataTransformerConfig,
-  DataTransformerID,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { ResourceDimensionMode } from '@grafana/schema';
 
 import { defaultMarkersConfig, type MarkersConfig } from './layers/data/markersLayer';

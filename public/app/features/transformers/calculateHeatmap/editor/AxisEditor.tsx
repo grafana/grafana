@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
-import { type SelectableValue, type StandardEditorProps, VariableOrigin } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import { type SelectableValue, VariableOrigin } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';

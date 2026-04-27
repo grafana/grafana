@@ -1,8 +1,8 @@
 import { type Decorator } from '@storybook/react';
 import * as React from 'react';
 
-import { getThemeById, ThemeContext } from '@grafana/data';
-import { GlobalStyles } from '@grafana/ui';
+import { getThemeById, ThemeContext } from '@grafana/data/themes';
+import { GlobalStyles } from '@grafana/ui/themes';
 
 interface ThemeableStoryProps {
   themeId: string;

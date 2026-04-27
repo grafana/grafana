@@ -1,6 +1,6 @@
 import { type HTMLAttributes, memo, useId, useMemo } from 'react';
 
-import { type FieldDisplay } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
 
 import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';

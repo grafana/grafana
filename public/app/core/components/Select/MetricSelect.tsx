@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 import { type Variable } from 'app/types/templates';

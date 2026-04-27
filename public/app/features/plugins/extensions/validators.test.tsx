@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
+import type { PluginContextType } from '@grafana/data/context';
 import {
   type AppPluginConfig,
-  type PluginContextType,
   type PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { createLogMock } from './logs/testUtils';
 import { basicApp } from './test-fixtures/config.apps';

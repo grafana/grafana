@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
+import { usePluginContext } from '@grafana/data/context';
+import { dateTime } from '@grafana/data/datetime';
+import { PluginLoadingStrategy } from '@grafana/data/types';
 import { config, type AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';

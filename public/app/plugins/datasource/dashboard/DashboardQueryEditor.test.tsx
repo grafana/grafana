@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, LoadingState, type PanelPluginMeta } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelPluginMeta } from '@grafana/data/types';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';

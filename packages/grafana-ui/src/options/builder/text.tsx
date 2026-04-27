@@ -1,4 +1,4 @@
-import { type PanelOptionsEditorBuilder } from '@grafana/data';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type OptionsWithTextFormatting } from '@grafana/schema';
 

@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 
-import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
+import { intervalToAbbreviatedDurationString } from '@grafana/data/datetime';
+import type { TraceKeyValuePair } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';

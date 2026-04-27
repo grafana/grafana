@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { ButtonSelect, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
+import { ButtonSelect } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { thresholdFunctions } from '../types';

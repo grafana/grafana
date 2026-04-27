@@ -1,7 +1,7 @@
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
 import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails } from '@openfeature/react-sdk';
 
-import { type FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';

@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import { type FC } from 'react';
 import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
   Field,
-  Icon,
   Input,
   RadioButtonList,
   SecretInput,
@@ -16,8 +15,9 @@ import {
   Stack,
   TextArea,
   Tooltip,
-  useStyles2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type NotificationChannelOption,
   type NotificationChannelSecureFields,

@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import {

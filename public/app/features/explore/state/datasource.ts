@@ -1,7 +1,7 @@
 // Libraries
 import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { type DataSourceApi, type HistoryItem } from '@grafana/data';
+import type { DataSourceApi, HistoryItem } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';

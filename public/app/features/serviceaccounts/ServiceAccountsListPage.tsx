@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useState, type JSX } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   ConfirmModal,
@@ -13,9 +14,9 @@ import {
   EmptyState,
   Box,
   Stack,
-  useStyles2,
   TextLink,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';

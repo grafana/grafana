@@ -1,15 +1,11 @@
 import { get as lodashGet } from 'lodash';
 
-import {
-  type EventBus,
-  type InterpolateFunction,
-  type PanelData,
-  type PanelPlugin,
-  type StandardEditorContext,
-  type VariableSuggestionsScope,
-  PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { StandardEditorContext } from '@grafana/data/field';
 import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
+import type { PanelPlugin } from '@grafana/data/panel';
+import type { InterpolateFunction, PanelData, VariableSuggestionsScope } from '@grafana/data/types';
+import { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';

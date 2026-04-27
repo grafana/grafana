@@ -1,11 +1,11 @@
+import { type SeriesToRowsTransformerOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
-import { type SeriesToRowsTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 
 import darkImage from '../images/dark/seriesToRows.svg';

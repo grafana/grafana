@@ -1,12 +1,8 @@
 import { type FormEvent, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataSourceInstanceSettings,
-  getDataSourceRef,
-  type SelectableValue,
-  type VariableRegexApplyTo,
-} from '@grafana/data';
+import type { DataSourceInstanceSettings, SelectableValue, VariableRegexApplyTo } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';

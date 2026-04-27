@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { type CustomVariableModel } from '@grafana/data';
+import type { CustomVariableModel } from '@grafana/data/types';
 import { type monacoTypes } from '@grafana/ui';
 
 import { type LogGroup } from '../../../dataquery.gen';

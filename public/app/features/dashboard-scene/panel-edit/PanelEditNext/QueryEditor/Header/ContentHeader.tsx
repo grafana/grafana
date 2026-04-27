@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
 import { type RefObject, useMemo, useRef } from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type ExpressionQuery } from 'app/features/expressions/types';

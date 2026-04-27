@@ -8,8 +8,15 @@ import {
   type CreateNotificationqueryResponse,
   generatedAPI as notificationsApi,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { type DataQueryRequest, type DataQueryResponse, type DataSourceGetTagKeysOptions, type DataSourceGetTagValuesOptions, type MetricFindValue, type TestDataSourceResponse } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import type {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  MetricFindValue,
+  TestDataSourceResponse,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';

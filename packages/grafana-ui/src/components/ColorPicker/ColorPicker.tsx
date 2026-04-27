@@ -8,7 +8,7 @@ import {
   useRef,
 } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { closePopover } from '../../utils/closePopover';

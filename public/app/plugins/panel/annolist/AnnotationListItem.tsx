@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { type MouseEvent } from 'react';
 
-import { type AnnotationEvent, type DateTimeInput, type GrafanaTheme2, type PanelProps } from '@grafana/data';
+import type { DateTimeInput } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { AnnotationEvent, PanelProps } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
-import { Card, RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Card, RenderUserContentAsHTML, TagList, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Options } from './panelcfg.gen';
 

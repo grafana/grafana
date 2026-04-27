@@ -8,12 +8,16 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, ScopedVars } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
-import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Button, Input, ModalsController, Portal, ScrollContainer } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 

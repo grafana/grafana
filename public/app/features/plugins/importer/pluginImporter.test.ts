@@ -1,14 +1,14 @@
+import { PanelPlugin } from '@grafana/data/panel';
 import {
   AppPlugin,
   type AppPluginMeta,
   DataSourcePlugin,
   type DataSourcePluginMeta,
-  PanelPlugin,
   type PanelPluginMeta,
   PluginLoadingStrategy,
   type PluginMeta,
   PluginType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';

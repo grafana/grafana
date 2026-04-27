@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data/types';
 
 export function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
   return {

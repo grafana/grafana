@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getSvgSize } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type RepoType } from '../Wizard/types';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';

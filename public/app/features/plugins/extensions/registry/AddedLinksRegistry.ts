@@ -1,7 +1,7 @@
 import { type ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
+import type { AppPluginConfig, IconName, PluginExtensionAddedLinkConfig } from '@grafana/data/types';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';

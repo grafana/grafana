@@ -1,6 +1,6 @@
 import { type ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
+import type { AppPluginConfig, PluginExtensionExposedComponentConfig } from '@grafana/data/types';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';

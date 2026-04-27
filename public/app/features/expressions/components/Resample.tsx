@@ -1,6 +1,6 @@
 import { type ChangeEvent } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 

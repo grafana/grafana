@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
-import { FALLBACK_COLOR, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FALLBACK_COLOR } from '@grafana/data/types';
 import { type LineStyle } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';

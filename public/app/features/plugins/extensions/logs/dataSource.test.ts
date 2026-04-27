@@ -1,7 +1,8 @@
 import { nanoid } from 'nanoid';
 import { lastValueFrom, of } from 'rxjs';
 
-import { type DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { type DataQueryRequest, LoadingState } from '@grafana/data/types';
 
 import { ExtensionsLogDataSource } from './dataSource';
 import { log } from './log';

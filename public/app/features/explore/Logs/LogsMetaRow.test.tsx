@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, store } from '@grafana/data';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 
 import { LogsMetaRow } from './LogsMetaRow';
 

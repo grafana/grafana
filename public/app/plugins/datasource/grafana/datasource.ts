@@ -2,8 +2,18 @@ import { isString } from 'lodash';
 import { from, merge, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { type AnnotationQuery, type AnnotationQueryRequest, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type TestDataSourceResponse, isValidLiveChannelAddress, parseLiveChannelAddress, LoadingState } from '@grafana/data';
 import { DataFrameView, MutableDataFrame, dataFrameFromJSON } from '@grafana/data/dataframe';
+import {
+  type AnnotationQuery,
+  type AnnotationQueryRequest,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type TestDataSourceResponse,
+  isValidLiveChannelAddress,
+  parseLiveChannelAddress,
+  LoadingState,
+} from '@grafana/data/types';
 import {
   DataSourceWithBackend,
   getDataSourceSrv,

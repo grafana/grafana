@@ -1,8 +1,19 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
-import { type AbsoluteTimeRange, CoreApp, EventBusSrv, type ExploreLogsPanelState, type LogLevel, type LogRowModel, type LogsMetaItem, LogsSortOrder, type SplitOpen, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { EventBusSrv } from '@grafana/data/events';
+import {
+  type AbsoluteTimeRange,
+  CoreApp,
+  type ExploreLogsPanelState,
+  type LogLevel,
+  type LogRowModel,
+  type LogsMetaItem,
+  LogsSortOrder,
+  type SplitOpen,
+  type TimeRange,
+} from '@grafana/data/types';
 
 import { type LogsVisualisationType } from '../../explore/Logs/constants';
 

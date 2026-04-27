@@ -2,7 +2,7 @@ import { type BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs
 import { isBoolean, omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 

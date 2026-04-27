@@ -1,7 +1,9 @@
 import uPlot, { type Series } from 'uplot';
 
-import { colorManipulator, FALLBACK_COLOR, type FieldColorMode, FieldColorModeId, type GrafanaTheme2, type ThresholdsConfig } from '@grafana/data';
 import { type DataFrameFieldIndex } from '@grafana/data/dataframe';
+import type { FieldColorMode } from '@grafana/data/field';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import { FALLBACK_COLOR, FieldColorModeId, type ThresholdsConfig } from '@grafana/data/types';
 import {
   BarAlignment,
   type BarConfig,

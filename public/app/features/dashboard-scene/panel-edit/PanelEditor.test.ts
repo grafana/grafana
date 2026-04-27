@@ -1,7 +1,9 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
 import { getPanelPlugin } from '@grafana/data/test';
+import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,

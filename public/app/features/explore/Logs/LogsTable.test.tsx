@@ -1,9 +1,11 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import { LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { toUtc } from '@grafana/data/datetime';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { LogsSortOrder } from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';

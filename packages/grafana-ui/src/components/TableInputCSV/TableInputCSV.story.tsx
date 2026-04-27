@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { type DataFrame } from '@grafana/data';
+import type { DataFrame } from '@grafana/data/dataframe';
 
 import { TableInputCSV } from './TableInputCSV';
 

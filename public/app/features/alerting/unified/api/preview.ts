@@ -1,8 +1,9 @@
 import { type Observable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 
-import { LoadingState, type PanelData, getDefaultTimeRange, withLoadingIndicator } from '@grafana/data';
 import { type DataFrameJSON, dataFrameFromJSON } from '@grafana/data/dataframe';
+import { LoadingState, type PanelData, getDefaultTimeRange } from '@grafana/data/types';
+import { withLoadingIndicator } from '@grafana/data/utils';
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 
 import {

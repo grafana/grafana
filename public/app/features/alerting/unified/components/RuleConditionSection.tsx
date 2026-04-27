@@ -2,19 +2,13 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2, ReducerID, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ReducerID } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Combobox,
-  type ComboboxOption,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Combobox, type ComboboxOption, InlineField, InlineFieldRow, Input, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ToLabel } from 'app/features/expressions/components/ToLabel';

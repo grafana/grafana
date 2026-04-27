@@ -1,4 +1,4 @@
-import { urlUtil } from '@grafana/data';
+import { urlUtil } from '@grafana/data/utils';
 import { locationService, logInfo } from '@grafana/runtime';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';

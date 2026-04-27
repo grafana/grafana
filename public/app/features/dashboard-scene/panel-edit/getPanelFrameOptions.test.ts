@@ -1,4 +1,4 @@
-import { type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import type { FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { type VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../edit-pane/shared';

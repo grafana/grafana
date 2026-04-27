@@ -1,4 +1,4 @@
-import { type DataQueryRequest } from '@grafana/data';
+import type { DataQueryRequest } from '@grafana/data/types';
 
 import { type CloudWatchLogsQuery } from '../dataquery.gen';
 import { type CloudWatchQuery } from '../types';

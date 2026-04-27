@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type FormEvent } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Stack, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';

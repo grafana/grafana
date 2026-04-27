@@ -1,7 +1,9 @@
 import { type ReactNode } from 'react';
 
-import { formattedValueToString, type InterpolateFunction, type LinkModel, usePluginContext } from '@grafana/data';
+import { usePluginContext } from '@grafana/data/context';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import type { InterpolateFunction, LinkModel } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,

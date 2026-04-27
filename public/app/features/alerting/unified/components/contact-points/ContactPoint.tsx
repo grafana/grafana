@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, type ReactNode } from 'react';
 
-import { type GrafanaTheme2, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';

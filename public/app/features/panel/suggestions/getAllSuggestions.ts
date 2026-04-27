@@ -1,5 +1,11 @@
-import { AppEvents, getPanelDataSummary, type PanelDataSummary, type PanelPlugin, type PanelPluginVisualizationSuggestion, type PreferredVisualisationType, VisualizationSuggestionScore } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getPanelDataSummary, type PanelDataSummary, type PanelPlugin } from '@grafana/data/panel';
+import {
+  AppEvents,
+  type PanelPluginVisualizationSuggestion,
+  type PreferredVisualisationType,
+  VisualizationSuggestionScore,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getListedPanelPluginMetas, getPanelPluginMeta } from '@grafana/runtime/internal';

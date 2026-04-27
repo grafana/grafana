@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { sceneGraph } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { type DashboardScene } from './DashboardScene';

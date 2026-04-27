@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
+import { colorManipulator } from '@grafana/data/themes';
+import { FALLBACK_COLOR, type PanelProps } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -11,11 +12,10 @@ import {
   VizLayout,
   VizLegend,
   type VizLegendItem,
-  useStyles2,
-  useTheme2,
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { getDataLinks } from '../status-history/utils';
 

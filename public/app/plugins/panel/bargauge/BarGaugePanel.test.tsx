@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
-import { dateMath, dateTime, type EventBus, LoadingState, type TimeRange, VizOrientation } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/dataframe';
+import { dateMath, dateTime } from '@grafana/data/datetime';
+import { type EventBus } from '@grafana/data/events';
+import { LoadingState, type TimeRange, VizOrientation } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   BarGaugeDisplayMode,

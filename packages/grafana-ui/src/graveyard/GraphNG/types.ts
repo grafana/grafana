@@ -1,4 +1,4 @@
-import { FieldMatcher } from '@grafana/data';
+import { FieldMatcher } from '@grafana/data/types';
 import { DataFrameFieldIndex } from '@grafana/data/dataframe';
 
 import { SeriesVisibilityChangeMode } from '../../components/PanelChrome';

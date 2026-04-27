@@ -1,19 +1,18 @@
 import { type SyntheticEvent, useState } from 'react';
 
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import {
-  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { ConfigSection, ConfigSubSection, DataSourceDescription, EditorStack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Collapse,
   Field,
-  Icon,
   Input,
   Label,
   SecretInput,
@@ -22,6 +21,7 @@ import {
   Switch,
   Tooltip,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { type MySQLOptions } from '../types';
 

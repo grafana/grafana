@@ -1,6 +1,6 @@
 import { type ReactNode, createContext, useEffect, useMemo, useState, useContext } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 
 type TimeRangeContextValue = TimeRangeContextHookValue & {
   // These are to be used internally and aren't passed to the users of the hook.

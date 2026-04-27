@@ -1,5 +1,6 @@
-import { AbstractLabelOperator, type TimeRange, dateTime, type ScopedVars } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { AbstractLabelOperator, type TimeRange, type ScopedVars } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';

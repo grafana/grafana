@@ -1,11 +1,11 @@
-import { type DecimalCount, type TimeZone } from '@grafana/data';
+import type { DecimalCount, TimeZone } from '@grafana/data/types';
 
 import kbn from './kbn';
 
 // Most of the methods in this file are deprecated
 // Stub the deprecation warning here to prevent polluting the test output
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   deprecationWarning: () => {},
 }));
 

@@ -1,6 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, type PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import { dateTimeParse } from '@grafana/data/datetime';
+import { PluginSignatureStatus, type PluginError, PluginType, PluginErrorCode } from '@grafana/data/types';
 import { config, featureEnabled } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';

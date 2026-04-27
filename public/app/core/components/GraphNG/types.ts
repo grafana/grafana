@@ -1,5 +1,5 @@
-import { type FieldMatcher } from '@grafana/data';
 import { type DataFrameFieldIndex } from '@grafana/data/dataframe';
+import type { FieldMatcher } from '@grafana/data/types';
 import { type SeriesVisibilityChangeMode } from '@grafana/ui';
 
 /**

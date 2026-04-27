@@ -4,9 +4,11 @@ import { type FeatureLike } from 'ol/Feature';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
-import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Collapse, TabContent } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 import { DataHoverRow } from './DataHoverRow';

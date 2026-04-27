@@ -1,5 +1,5 @@
-import { ReducerID } from '@grafana/data';
 import { type CalculateFieldTransformerOptions, type ReduceOptions } from '@grafana/data/internal';
+import { ReducerID } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 import { FilterPill, InlineField, Stack, StatsPicker } from '@grafana/ui';
 

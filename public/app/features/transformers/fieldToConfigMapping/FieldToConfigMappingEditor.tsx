@@ -1,10 +1,14 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { getFieldDisplayName, type GrafanaTheme2, ReducerID, type SelectableValue } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ReducerID } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
-import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
+import { Select, StatsPicker } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   configMapHandlers,

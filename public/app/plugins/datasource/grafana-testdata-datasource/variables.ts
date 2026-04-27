@@ -1,4 +1,4 @@
-import { type StandardVariableQuery, StandardVariableSupport } from '@grafana/data';
+import { type StandardVariableQuery, StandardVariableSupport } from '@grafana/data/types';
 
 import { type TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { type TestDataDataSource } from './datasource';

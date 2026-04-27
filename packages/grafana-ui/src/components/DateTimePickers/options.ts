@@ -1,4 +1,4 @@
-import { type TimeOption } from '@grafana/data';
+import type { TimeOption } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import { type ComboboxOption } from '../Combobox/types';

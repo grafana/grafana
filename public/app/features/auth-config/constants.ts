@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/data';
+import type { IconName } from '@grafana/data/types';
 
 export const BASE_PATH = 'admin/authentication/';
 

@@ -3,10 +3,12 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { AppEvents } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Box, ConfirmModal, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, ConfirmModal, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 

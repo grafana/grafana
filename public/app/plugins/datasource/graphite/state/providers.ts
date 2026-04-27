@@ -1,6 +1,6 @@
 import { eachRight, map, remove } from 'lodash';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components/helpers';
 import { type GraphiteSegment, type GraphiteTag, type GraphiteTagOperator } from '../types';

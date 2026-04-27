@@ -1,5 +1,6 @@
-import { DataLinkBuiltInVars, type GrafanaConfig, locationUtil, VariableOrigin } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { type GrafanaConfig, VariableOrigin } from '@grafana/data/types';
+import { DataLinkBuiltInVars, locationUtil } from '@grafana/data/utils';
 import { setTemplateSrv } from '@grafana/runtime';
 import { type DashboardLink } from '@grafana/schema';
 import { type ContextSrv } from 'app/core/services/context_srv';

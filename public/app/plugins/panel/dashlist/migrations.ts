@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { getBackendSrv } from '@grafana/runtime';
 import { type FolderDTO } from 'app/types/folders';
 

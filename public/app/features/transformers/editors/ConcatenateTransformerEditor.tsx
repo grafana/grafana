@@ -1,14 +1,14 @@
 import { memo, type ChangeEvent } from 'react';
 
+import { ConcatenateFrameNameMode, type ConcatenateTransformerOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
-  type SelectableValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
-import { ConcatenateFrameNameMode, type ConcatenateTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, Input, Select } from '@grafana/ui';
 

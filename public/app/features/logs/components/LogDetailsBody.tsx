@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 
-import { type CoreApp, type GrafanaTheme2, type LogRowModel } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { CoreApp, LogRowModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, type Themeable2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getLogRowStyles } from './getLogRowStyles';

@@ -4,9 +4,10 @@ import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

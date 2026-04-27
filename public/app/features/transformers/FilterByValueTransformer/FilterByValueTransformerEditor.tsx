@@ -1,14 +1,24 @@
 import { cloneDeep } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
-import { DataTransformerID, standardTransformers, type TransformerRegistryItem, type TransformerUIProps, getFieldDisplayName, type SelectableValue, ValueMatcherID, valueMatchers, TransformerCategory } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
 import {
   type FilterByValueFilter,
   FilterByValueMatch,
   type FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/internal';
+import {
+  DataTransformerID,
+  standardTransformers,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  ValueMatcherID,
+  valueMatchers,
+  TransformerCategory,
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 

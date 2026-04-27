@@ -2,12 +2,8 @@ import { noop } from 'lodash';
 import { type FormEvent, useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataSourceInstanceSettings,
-  type MetricFindValue,
-  type SelectableValue,
-  getDataSourceRef,
-} from '@grafana/data';
+import type { DataSourceInstanceSettings, MetricFindValue, SelectableValue } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';

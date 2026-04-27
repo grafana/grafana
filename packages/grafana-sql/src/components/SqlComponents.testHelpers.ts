@@ -1,4 +1,4 @@
-import { type TimeRange, PluginType } from '@grafana/data';
+import { type TimeRange, PluginType } from '@grafana/data/types';
 
 import { type DB, type SQLQuery, type SQLSelectableValue, type ValidationResults } from '../types';
 

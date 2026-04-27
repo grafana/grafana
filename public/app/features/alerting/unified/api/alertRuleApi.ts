@@ -1,4 +1,4 @@
-import { type RelativeTimeRange } from '@grafana/data';
+import type { RelativeTimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type RuleIdentifier, type RuleNamespace, type RulerDataSourceConfig } from 'app/types/unified-alerting';

@@ -1,7 +1,9 @@
 import { useId, useState } from 'react';
 
-import { type FieldConfigEditorBuilder, identityOverrideProcessor, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { identityOverrideProcessor, type StandardEditorProps } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
+import type { FieldConfigEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import {
   AxisColorMode,

@@ -1,5 +1,13 @@
-import { type DataQueryResponse, FieldColorModeId, NodeGraphDataFrameFieldNames as Fields, type TimeRange } from '@grafana/data';
-import { type DataFrame, DataFrameView, type FieldDTO, MutableDataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  DataFrameView,
+  type FieldDTO,
+  MutableDataFrame,
+  FieldType,
+  toDataFrame,
+} from '@grafana/data/dataframe';
+import { type DataQueryResponse, FieldColorModeId, type TimeRange } from '@grafana/data/types';
+import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/data/utils';
 
 export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';

@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 
+import { type JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import {
   DataTransformerID,
-  type SelectableValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
-import { type JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Combobox, InlineFieldRow, InlineField } from '@grafana/ui';

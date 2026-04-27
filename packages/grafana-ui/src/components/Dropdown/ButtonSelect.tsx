@@ -1,6 +1,6 @@
 import { memo, type HTMLAttributes, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';

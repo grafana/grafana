@@ -1,4 +1,5 @@
-import { type PanelMenuItem, urlUtil, type PluginExtensionLink } from '@grafana/data';
+import type { PanelMenuItem, PluginExtensionLink } from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';

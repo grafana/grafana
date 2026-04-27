@@ -9,8 +9,16 @@ import {
 } from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
 
-import { type LiveChannelStatusEvent, type LiveChannelEvent, LiveChannelEventType, LiveChannelConnectionState, type LiveChannelPresenceStatus, type LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
 import { type DataFrameJSON } from '@grafana/data/dataframe';
+import {
+  type LiveChannelStatusEvent,
+  type LiveChannelEvent,
+  LiveChannelEventType,
+  LiveChannelConnectionState,
+  type LiveChannelPresenceStatus,
+  type LiveChannelAddress,
+  isValidLiveChannelAddress,
+} from '@grafana/data/types';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive

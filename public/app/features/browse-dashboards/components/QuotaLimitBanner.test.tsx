@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { setBackendSrv } from '@grafana/runtime';
 import { QUOTAS_USAGE_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';

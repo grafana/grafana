@@ -1,4 +1,5 @@
-import { durationToMilliseconds, guessDecimals, isValidDuration, parseDuration, roundDecimals } from '@grafana/data';
+import { durationToMilliseconds, isValidDuration, parseDuration } from '@grafana/data/datetime';
+import { guessDecimals, roundDecimals } from '@grafana/data/utils';
 
 import { numberOrVariableValidator } from '../utils';
 

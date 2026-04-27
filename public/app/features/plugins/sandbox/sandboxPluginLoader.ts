@@ -1,7 +1,7 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { type ProxyTarget } from '@locker/near-membrane-shared';
 
-import { type BootData } from '@grafana/data';
+import type { BootData } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 

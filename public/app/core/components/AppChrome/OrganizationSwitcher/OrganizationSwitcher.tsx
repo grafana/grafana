@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -3,9 +3,11 @@ import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
-import { type GrafanaTheme2, PageLayoutType, type TimeZone } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PageLayoutType, type TimeZone } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { PageToolbar, useStyles2 } from '@grafana/ui';
+import { PageToolbar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';

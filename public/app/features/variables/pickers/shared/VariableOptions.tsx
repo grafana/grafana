@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { memo, type MouseEvent, type HTMLProps } from 'react';
 
-import { type GrafanaTheme2, type VariableOption } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { VariableOption } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Tooltip, clearButtonStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { Tooltip, clearButtonStyles } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import checkboxPng from 'img/checkbox.png';
 import checkboxWhitePng from 'img/checkbox_white.png';
 

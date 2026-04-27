@@ -6,11 +6,13 @@ import {
   useGetDashboardByUidQuery,
   useGetLibraryElementByUidQuery,
 } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
+import { type CellProps, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getSvgSize } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type LocalPlugin } from '../../plugins/admin/types';

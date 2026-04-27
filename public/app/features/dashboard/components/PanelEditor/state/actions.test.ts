@@ -1,4 +1,4 @@
-import { type PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
 import { getPanelPlugin } from '@grafana/data/test';
 import { type LibraryElementDTOMeta } from '@grafana/schema';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';

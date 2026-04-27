@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataQueryRequest, DataSourceApi, TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Spinner, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';

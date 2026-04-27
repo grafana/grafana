@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 function getStyles() {
   return {

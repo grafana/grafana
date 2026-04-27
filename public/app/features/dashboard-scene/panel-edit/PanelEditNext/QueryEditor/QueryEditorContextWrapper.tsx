@@ -1,9 +1,10 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
-import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 

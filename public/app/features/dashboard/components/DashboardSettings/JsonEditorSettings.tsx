@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 

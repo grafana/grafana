@@ -1,4 +1,4 @@
-import { type ScopeNode } from '@grafana/data';
+import type { ScopeNode } from '@grafana/data/types';
 
 import {
   closeNodes,

@@ -10,8 +10,9 @@ import {
 } from 'react';
 import { type DataGridHandle } from 'react-data-grid';
 
-import { type ActionModel, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { ActionModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TableCellTooltipPlacement } from '@grafana/schema';

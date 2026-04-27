@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Checkbox, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Checkbox, EmptyState, Spinner, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CatalogPlugin } from '../types';
 

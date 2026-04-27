@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { type DataSourceJsonData, type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import type { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 
 import { InlineSwitch } from '../../components/Switch/Switch';

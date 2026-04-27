@@ -1,4 +1,4 @@
-import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data/types';
 import { type GraphFieldConfig } from '@grafana/ui';
 import { getGeometryField, getDefaultLocationMatchers } from 'app/features/geo/utils/location';
 

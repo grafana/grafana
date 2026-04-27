@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));

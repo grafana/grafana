@@ -1,4 +1,5 @@
-import { FieldColorModeId, type FieldDisplay } from '@grafana/data';
+import type { FieldDisplay } from '@grafana/data/field';
+import { FieldColorModeId } from '@grafana/data/types';
 
 import { computeGradientFills } from './PieChart';
 

@@ -2,7 +2,7 @@ import { act, screen } from '@testing-library/react';
 import { useEffectOnce } from 'react-use';
 import { render } from 'test/test-utils';
 
-import { type TextBoxVariableModel } from '@grafana/data';
+import type { TextBoxVariableModel } from '@grafana/data/types';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { type GetVariables } from 'app/features/variables/state/selectors';

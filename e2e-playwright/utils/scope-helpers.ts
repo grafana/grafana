@@ -1,6 +1,6 @@
 import { expect, type Page, type Response } from '@playwright/test';
 
-import { type ScopeDashboardBindingSpec, type ScopeDashboardBindingStatus } from '@grafana/data';
+import type { ScopeDashboardBindingSpec, ScopeDashboardBindingStatus } from '@grafana/data/types';
 
 import { type Resource } from '../../public/app/features/apiserver/types';
 

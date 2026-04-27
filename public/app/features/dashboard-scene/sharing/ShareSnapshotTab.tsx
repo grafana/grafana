@@ -1,6 +1,6 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {

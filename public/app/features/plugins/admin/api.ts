@@ -1,4 +1,5 @@
-import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
+import type { PluginError, PluginMeta } from '@grafana/data/types';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';

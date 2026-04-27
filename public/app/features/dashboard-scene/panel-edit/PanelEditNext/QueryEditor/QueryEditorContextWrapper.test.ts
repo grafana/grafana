@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';

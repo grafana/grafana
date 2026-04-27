@@ -1,7 +1,14 @@
 import { lastValueFrom } from 'rxjs';
 
-import { LoadingState, type PanelData, getDefaultTimeRange, type DataSourceApi, type DataSourceInstanceSettings, type PanelPluginMeta } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import {
+  LoadingState,
+  type PanelData,
+  getDefaultTimeRange,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type PanelPluginMeta,
+} from '@grafana/data/types';
 import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';

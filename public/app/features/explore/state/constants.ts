@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { type TraceSearchProps } from '@grafana/data';
+import type { TraceSearchProps } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 export const DEFAULT_RANGE = {

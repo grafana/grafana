@@ -1,7 +1,28 @@
 import { type Observable } from 'rxjs';
 
-import { type DataQuery, type DataQueryRequest, type DataQueryResponse, DataTopic, dateTimeParse, getDefaultTimeRange, LoadingState, LogLevel, type LogRowModel, LogsDedupStrategy, LogsMetaKind, type LogsVolumeCustomMetaData, LogsVolumeType } from '@grafana/data';
-import { arrayToDataFrame, createDataFrame, type DataFrame, FieldType, sortDataFrame, toDataFrame } from '@grafana/data/dataframe';
+import {
+  arrayToDataFrame,
+  createDataFrame,
+  type DataFrame,
+  FieldType,
+  sortDataFrame,
+  toDataFrame,
+} from '@grafana/data/dataframe';
+import { dateTimeParse } from '@grafana/data/datetime';
+import {
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  DataTopic,
+  getDefaultTimeRange,
+  LoadingState,
+  LogLevel,
+  type LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaKind,
+  type LogsVolumeCustomMetaData,
+  LogsVolumeType,
+} from '@grafana/data/types';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 

@@ -1,6 +1,6 @@
 import { default as calculateSize } from 'calculate-size';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { type CompletionItemGroup, type CompletionItem, CompletionItemKind } from '../types/completion';
 

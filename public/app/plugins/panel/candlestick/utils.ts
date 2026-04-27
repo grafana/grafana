@@ -1,6 +1,6 @@
 import type uPlot from 'uplot';
 
-import { colorManipulator } from '@grafana/data';
+import { colorManipulator } from '@grafana/data/themes';
 
 import { VizDisplayMode, ColorStrategy, CandleStyle } from './panelcfg.gen';
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';

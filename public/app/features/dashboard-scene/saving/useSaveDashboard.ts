@@ -1,6 +1,6 @@
 import { useAsyncFn } from 'react-use';
 
-import { locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { type JSX, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 

@@ -2,15 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import {
-  CoreApp,
-  createTheme,
-  type DataSourceApi,
-  EventBusSrv,
-  LoadingState,
-  PluginExtensionTypes,
-  store,
-} from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { createTheme } from '@grafana/data/themes';
+import { CoreApp, type DataSourceApi, LoadingState, PluginExtensionTypes } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';

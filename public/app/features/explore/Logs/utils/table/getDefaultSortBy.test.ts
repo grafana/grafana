@@ -1,5 +1,5 @@
-import { DataFrameType, LogsSortOrder } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { DataFrameType, LogsSortOrder } from '@grafana/data/types';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 
 import { getDefaultTableSortBy } from './logsTable';

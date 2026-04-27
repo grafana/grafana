@@ -2,7 +2,8 @@ import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
+import { LinkButton, Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import {
   type DataSourceRuleGroupIdentifier,
   type DataSourceRulesSourceIdentifier,

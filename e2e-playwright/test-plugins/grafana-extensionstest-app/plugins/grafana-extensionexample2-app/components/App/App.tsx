@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AppRootProps } from '@grafana/data';
+import { AppRootProps } from '@grafana/data/types';
 
 export class App extends React.PureComponent<AppRootProps> {
   render() {

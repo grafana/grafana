@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, forwardRef } from 'react';
 
-import { type FeatureState, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { FeatureState } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { FeatureBadge } from '../FeatureBadge/FeatureBadge';

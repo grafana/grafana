@@ -3,8 +3,10 @@ import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useExpanded, type Column, type Row, type UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Button, IconButton, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';

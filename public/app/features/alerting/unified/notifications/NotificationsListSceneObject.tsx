@@ -10,7 +10,9 @@ import {
   type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -25,7 +27,6 @@ import {
 import {
   Alert,
   Badge,
-  Icon,
   LinkButton,
   LoadingBar,
   Pagination,
@@ -34,9 +35,10 @@ import {
   Text,
   TextLink,
   Tooltip,
-  useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { AlertEnrichments } from '../components/AlertEnrichments';

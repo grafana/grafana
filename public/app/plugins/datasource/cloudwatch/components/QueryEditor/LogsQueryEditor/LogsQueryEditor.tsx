@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useState, type JSX } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import type { QueryEditorProps, SelectableValue } from '@grafana/data/types';
 import { InlineSelect } from '@grafana/plugin-ui';
 
 import { type CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../../../dataquery.gen';

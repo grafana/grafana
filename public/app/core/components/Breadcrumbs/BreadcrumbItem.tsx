@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Breadcrumb } from './types';
 

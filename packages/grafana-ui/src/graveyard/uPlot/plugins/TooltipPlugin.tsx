@@ -4,7 +4,11 @@ import * as React from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
-import { arrayUtils, CartesianCoords2D, DashboardCursorSync, FALLBACK_COLOR, formattedValueToString, getDisplayProcessor, getFieldDisplayName, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { CartesianCoords2D, DashboardCursorSync, FALLBACK_COLOR, TimeZone } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
+import { GrafanaTheme2 } from '@grafana/data/themes';
+import { arrayUtils } from '@grafana/data/utils';
+import { getDisplayProcessor, getFieldDisplayName } from '@grafana/data/field';
 import { DataFrame, FieldType } from '@grafana/data/dataframe';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 

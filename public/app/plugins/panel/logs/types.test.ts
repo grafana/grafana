@@ -1,4 +1,4 @@
-import { CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data/types';
 
 import { isCoreApp } from './types';
 

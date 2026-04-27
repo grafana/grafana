@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 

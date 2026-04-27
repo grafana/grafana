@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
 import {
   type AdHocFiltersVariable,
@@ -9,7 +9,8 @@ import {
   type VariableValueOption,
   type VariableValueSingle,
 } from '@grafana/scenes';
-import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Spinner, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   groupByVariable: GroupByVariable | AdHocFiltersVariable;

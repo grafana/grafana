@@ -1,6 +1,7 @@
 import { Controller } from 'react-hook-form';
 
-import { locationUtil, OrgRole, type SelectableValue } from '@grafana/data';
+import { OrgRole, type SelectableValue } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
@@ -11,13 +12,13 @@ import {
   RadioButtonGroup,
   Field,
   FieldSet,
-  Icon,
   TextLink,
   Tooltip,
   Label,
   Stack,
   Alert,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
 

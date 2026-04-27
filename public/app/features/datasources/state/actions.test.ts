@@ -1,6 +1,6 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { type AppPluginMeta, type DataSourceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { type AppPluginMeta, type DataSourceSettings, type PluginMetaInfo, PluginType } from '@grafana/data/types';
 import { type DataSourceSrv, type FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { type getBackendSrv } from 'app/core/services/backend_srv';

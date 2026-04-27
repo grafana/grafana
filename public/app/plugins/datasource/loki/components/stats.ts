@@ -1,4 +1,5 @@
-import { type DateTime, isDateTime, type TimeRange } from '@grafana/data';
+import { type DateTime, isDateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 
 import { type LokiQueryType } from '../dataquery.gen';
 

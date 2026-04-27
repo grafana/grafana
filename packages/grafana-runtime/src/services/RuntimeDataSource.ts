@@ -4,7 +4,7 @@ import {
   type DataSourceInstanceSettings,
   PluginType,
   type TestDataSourceResponse,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 export abstract class RuntimeDataSource<TQuery extends DataQuery = DataQuery> extends DataSourceApi<TQuery> {
   public instanceSettings: DataSourceInstanceSettings;

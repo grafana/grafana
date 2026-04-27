@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings, type QueryEditorProps } from '@grafana/data';
+import type { DataSourceInstanceSettings, QueryEditorProps } from '@grafana/data/types';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';

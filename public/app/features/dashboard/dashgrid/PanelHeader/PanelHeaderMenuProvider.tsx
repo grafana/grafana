@@ -1,12 +1,12 @@
 import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
+import { getTimeZone } from '@grafana/data/datetime';
 import {
   type LoadingState,
   type PanelMenuItem,
   type PluginExtensionPanelContext,
   PluginExtensionPoints,
-  getTimeZone,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 
 import { type DashboardModel } from '../../state/DashboardModel';

@@ -3,7 +3,7 @@ import { useArgs } from '@storybook/preview-api';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useId } from 'react';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 
 import { Field } from '../Forms/Field';
 

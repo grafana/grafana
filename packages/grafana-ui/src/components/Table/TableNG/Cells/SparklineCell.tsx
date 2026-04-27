@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import * as React from 'react';
 
-import { getMinMaxAndDelta } from '@grafana/data';
 import { type FieldConfig, type Field, isDataFrameWithValue } from '@grafana/data/dataframe';
+import { getMinMaxAndDelta } from '@grafana/data/field';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,

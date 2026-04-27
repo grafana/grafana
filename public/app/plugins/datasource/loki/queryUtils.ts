@@ -1,7 +1,7 @@
 import { type SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { type DataQueryRequest } from '@grafana/data';
+import type { DataQueryRequest } from '@grafana/data/types';
 import {
   parser,
   LineFilter,

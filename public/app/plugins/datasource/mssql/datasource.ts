@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { type DataSourceInstanceSettings, type ScopedVars } from '@grafana/data';
+import type { DataSourceInstanceSettings, ScopedVars } from '@grafana/data/types';
 import { type LanguageDefinition } from '@grafana/plugin-ui';
 import { type TemplateSrv } from '@grafana/runtime';
 import {

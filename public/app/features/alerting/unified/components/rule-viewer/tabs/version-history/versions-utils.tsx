@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/data';
+import type { IconName } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type BadgeColor } from '@grafana/ui';
 import { type RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';

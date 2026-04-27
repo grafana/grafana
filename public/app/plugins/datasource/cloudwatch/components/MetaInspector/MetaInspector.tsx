@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { type MetadataInspectorProps } from '@grafana/data';
+import type { MetadataInspectorProps } from '@grafana/data/types';
 
 import { type CloudWatchDatasource } from '../../datasource';
 import { type CloudWatchQuery, type CloudWatchJsonData } from '../../types';

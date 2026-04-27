@@ -1,4 +1,5 @@
-import { type AbsoluteTimeRange, type TimeRange, toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import type { AbsoluteTimeRange, TimeRange } from '@grafana/data/types';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 
 export function copyLogsTableDashboardUrl(logId: string, timeRange: TimeRange): string | null {

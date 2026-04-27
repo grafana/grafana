@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { type HTMLAttributes } from 'react';
 
+import { sanitizeUrl } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   type DataSourceSettings as DataSourceSettingsType,
-  type GrafanaTheme2,
   PluginExtensionPoints,
   type PluginExtensionLink,
   type PluginExtensionDataSourceConfigStatusContext,
-} from '@grafana/data';
-import { sanitizeUrl } from '@grafana/data/internal';
+} from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -18,7 +18,8 @@ import {
   usePluginComponents,
   renderLimitedComponents,
 } from '@grafana/runtime';
-import { type AlertVariant, Alert, useTheme2, Link, useStyles2, Spinner } from '@grafana/ui';
+import { type AlertVariant, Alert, Link, Spinner } from '@grafana/ui';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';

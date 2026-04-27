@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 
 import assistantHeroImage from './images/assistant-hero.png';
 import dynamicDashboardsImage from './images/dynamic-dashboards.png';

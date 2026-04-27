@@ -1,7 +1,7 @@
 // Libraries
 import { memo } from 'react';
 
-import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 
 type Props = DataSourcePluginOptionsEditorProps;
 

@@ -3,7 +3,8 @@ import { type CSSProperties, type ReactElement, type ReactNode, useId, useState 
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { type GrafanaTheme2, LoadingState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { LoadingState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

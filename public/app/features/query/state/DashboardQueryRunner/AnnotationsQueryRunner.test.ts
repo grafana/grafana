@@ -1,6 +1,6 @@
 import { type Observable, of, throwError } from 'rxjs';
 
-import { type AnnotationQuery, type DataSourceApi, getDefaultTimeRange } from '@grafana/data';
+import { type AnnotationQuery, type DataSourceApi, getDefaultTimeRange } from '@grafana/data/types';
 import { type AnnotationQueryResponse } from 'app/features/annotations/types';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 

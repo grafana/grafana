@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
-import { readCSV } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/dataframe';
+import { readCSV } from '@grafana/data/utils';
 
 import { type FileImportResult } from './types';
 

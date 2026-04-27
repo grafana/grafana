@@ -1,4 +1,4 @@
-import { LogsSortOrder } from '@grafana/data';
+import { LogsSortOrder } from '@grafana/data/types';
 
 import { onSortOrderChange } from './onSortOrderChange';
 import { type Options } from './types';

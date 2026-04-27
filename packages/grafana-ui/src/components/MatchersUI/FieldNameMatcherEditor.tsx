@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';

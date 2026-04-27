@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { VariableHide } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import {
@@ -15,7 +16,8 @@ import {
   type SceneVariableState,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { useElementSelection } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';

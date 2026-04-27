@@ -1,4 +1,4 @@
-import { type BaseVariableModel } from '@grafana/data';
+import type { BaseVariableModel } from '@grafana/data/types';
 
 export enum VariableNameConstraints {
   MaxSize = 50,

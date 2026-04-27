@@ -1,6 +1,6 @@
 import { PureComponent } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { MetricFindQueryTypes } from '../dataquery.gen';

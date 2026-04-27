@@ -2,7 +2,7 @@ import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import {

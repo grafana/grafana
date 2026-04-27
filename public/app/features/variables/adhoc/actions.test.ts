@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type TypedVariableModel } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourcePluginMeta, TypedVariableModel } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';

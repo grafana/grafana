@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { Box, ErrorBoundaryAlert, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Box, ErrorBoundaryAlert, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { FIELD_NAMES } from '../constants';

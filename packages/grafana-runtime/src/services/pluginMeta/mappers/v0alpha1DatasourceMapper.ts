@@ -1,4 +1,4 @@
-import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data/types';
 
 import type { DatasourcePluginMetas, DatasourcePluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';

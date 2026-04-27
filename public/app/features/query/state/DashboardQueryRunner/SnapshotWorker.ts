@@ -1,6 +1,6 @@
 import { type Observable, of } from 'rxjs';
 
-import { type AnnotationEvent } from '@grafana/data';
+import type { AnnotationEvent } from '@grafana/data/types';
 
 import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
 

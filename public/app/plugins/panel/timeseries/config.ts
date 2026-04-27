@@ -1,6 +1,8 @@
 /* istanbul ignore file */
-import { FieldColorModeId, FieldConfigProperty, identityOverrideProcessor, type SetFieldConfigOptionsArgs } from '@grafana/data';
 import { FieldType, type Field } from '@grafana/data/dataframe';
+import { identityOverrideProcessor } from '@grafana/data/field';
+import type { SetFieldConfigOptionsArgs } from '@grafana/data/panel';
+import { FieldColorModeId, FieldConfigProperty } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
@@ -14,7 +16,8 @@ import {
   GraphThresholdsStyleMode,
   GraphTransform,
 } from '@grafana/schema';
-import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { getGraphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';

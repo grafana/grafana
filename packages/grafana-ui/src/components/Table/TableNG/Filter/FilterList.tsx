@@ -4,7 +4,9 @@ import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { type GrafanaTheme2, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

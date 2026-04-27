@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { LoadingState } from '@grafana/data/types';
 
 import { type Props, TextPanel } from './TextPanel';
 import { TextMode } from './panelcfg.gen';

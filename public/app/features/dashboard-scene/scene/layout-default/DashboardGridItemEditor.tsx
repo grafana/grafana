@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';

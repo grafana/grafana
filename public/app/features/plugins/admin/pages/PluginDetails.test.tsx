@@ -2,14 +2,14 @@ import { getDefaultNormalizer, type RenderResult, type SelectorMatcherOptions, w
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
+import { dateTimeFormatTimeAgo } from '@grafana/data/datetime';
+import { GrafanaEdition } from '@grafana/data/internal';
 import {
   PluginErrorCode,
   PluginSignatureStatus,
   PluginType,
-  dateTimeFormatTimeAgo,
   type WithAccessControlMetadata,
-} from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';

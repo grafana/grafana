@@ -1,4 +1,5 @@
-import { type TimeRange, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { TimeRange } from '@grafana/data/types';
 import type { GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { getMaxQueryEvaluationWindowSeconds, isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';

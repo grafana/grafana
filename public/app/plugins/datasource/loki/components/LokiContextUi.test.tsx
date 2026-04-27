@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { type LogRowModel, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { LogRowModel } from '@grafana/data/types';
 
 import { type LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { type ContextFilter, type LokiQuery } from '../types';

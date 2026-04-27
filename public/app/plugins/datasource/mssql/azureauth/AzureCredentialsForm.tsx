@@ -1,7 +1,7 @@
 import { type ChangeEvent } from 'react';
 
 import { type AzureCredentials, type AzureAuthType } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Select, Input } from '@grafana/ui';
 

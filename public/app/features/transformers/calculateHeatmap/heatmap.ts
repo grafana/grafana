@@ -1,8 +1,16 @@
 import { map } from 'rxjs';
 
-import { DataTransformerID, incrRoundUp, incrRoundDn, type SynchronousDataTransformerInfo, DataFrameType, getFieldDisplayName, getValueFormat, formattedValueToString, TransformationApplicabilityLevels, type TimeRange } from '@grafana/data';
 import { type DataFrame, FieldType, type Field } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
 import { isLikelyAscendingVector } from '@grafana/data/internal';
+import { DataTransformerID, incrRoundUp, incrRoundDn } from '@grafana/data/transformations';
+import {
+  type SynchronousDataTransformerInfo,
+  DataFrameType,
+  TransformationApplicabilityLevels,
+  type TimeRange,
+} from '@grafana/data/types';
+import { getValueFormat, formattedValueToString } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,

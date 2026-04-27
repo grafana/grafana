@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
-import { Button, Icon } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { DashboardCodePane } from 'app/features/dashboard-scene/edit-pane/DashboardCodePane';
 
 import { type ToolbarActionProps } from '../types';

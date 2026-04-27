@@ -1,4 +1,4 @@
-import { type VariableType } from '@grafana/data';
+import type { VariableType } from '@grafana/data/types';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';

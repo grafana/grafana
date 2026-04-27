@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { config, locationService } from '@grafana/runtime';
 import {
   type AlertManagerDataSourceJsonData,

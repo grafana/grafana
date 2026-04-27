@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { AppEvents, LoadingState, type NavModelItem } from '@grafana/data';
+import { AppEvents, LoadingState, type NavModelItem } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Spinner, Stack } from '@grafana/ui';

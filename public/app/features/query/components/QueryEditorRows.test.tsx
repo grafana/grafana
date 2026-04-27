@@ -1,7 +1,7 @@
 import { act, fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';

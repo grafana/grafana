@@ -1,4 +1,4 @@
-import { arrayToDataFrame, FieldType } from '@grafana/data';
+import { arrayToDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import { FlameGraphDataContainer, type LevelItem, type Options } from './dataTransform';
 

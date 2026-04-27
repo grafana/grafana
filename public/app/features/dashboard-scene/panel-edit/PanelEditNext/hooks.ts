@@ -3,7 +3,8 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../../edit-pane/shared';

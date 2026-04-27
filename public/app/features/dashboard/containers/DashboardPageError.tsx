@@ -1,4 +1,4 @@
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Alert, Box, EmptyState, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';

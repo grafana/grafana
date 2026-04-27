@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data/types';
 
 import { isQueryServiceCompatible } from './qscheck';
 

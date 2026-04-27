@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { type IconSize, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { IconSize } from '@grafana/ui/types';
 
 import { CollapseToggle } from '../../CollapseToggle';
 

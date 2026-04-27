@@ -1,4 +1,6 @@
-import { dateTime, type DataQuery, store } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { DataQuery } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { type default as RichHistoryStorage, RichHistoryStorageWarning } from '../history/RichHistoryStorage';

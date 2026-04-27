@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data/types';
 
 import { DataSourcePicker } from './DataSourcePicker';
 

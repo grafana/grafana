@@ -1,5 +1,14 @@
-import { CoreApp, type DataQueryError, getDefaultTimeRange, type DataSourceApi, dateTime, LoadingState, type PanelData, type DataQueryRequest } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import {
+  CoreApp,
+  type DataQueryError,
+  getDefaultTimeRange,
+  type DataSourceApi,
+  LoadingState,
+  type PanelData,
+  type DataQueryRequest,
+} from '@grafana/data/types';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
@@ -36,8 +45,8 @@ jest.mock('@grafana/runtime', () => ({
 const mockGetUrlSearchParams = jest.fn(() => {
   return {};
 });
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },

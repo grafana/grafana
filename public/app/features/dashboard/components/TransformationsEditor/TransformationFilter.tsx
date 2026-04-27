@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataTransformerConfig } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
-import { Field, Select, useStyles2 } from '@grafana/ui';
+import { Field, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 interface TransformationFilterProps {

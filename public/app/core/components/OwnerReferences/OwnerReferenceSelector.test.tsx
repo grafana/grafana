@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
-import { type FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 

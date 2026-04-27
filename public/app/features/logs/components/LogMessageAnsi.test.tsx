@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { UnThemedLogMessageAnsi as LogMessageAnsi } from './LogMessageAnsi';
 

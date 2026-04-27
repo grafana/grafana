@@ -1,4 +1,5 @@
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { formatPrometheusDuration } from '../../utils/time';
 

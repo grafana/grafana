@@ -1,6 +1,6 @@
 import { compact, each, findIndex, flatten, get, join, keyBy, last, map, reduce, without } from 'lodash';
 
-import { type ScopedVars } from '@grafana/data';
+import type { ScopedVars } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 
 import { type GraphiteDatasource } from './datasource';

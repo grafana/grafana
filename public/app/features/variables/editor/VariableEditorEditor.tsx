@@ -3,18 +3,21 @@ import { type FormEvent, PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
-  type GrafanaTheme2,
   LoadingState,
   type SelectableValue,
   type VariableHide,
   type VariableType,
   type VariableWithOptions,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, Stack, Icon, type Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';

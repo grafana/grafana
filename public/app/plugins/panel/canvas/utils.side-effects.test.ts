@@ -2,8 +2,8 @@
 // (canvas registry imports at line 17 instantiate elements and reference global config).
 // Pure functions without side effects are tested in utils.test.ts.
 
-import { PluginState } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { PluginState } from '@grafana/data/types';
 import { type CanvasElementItem, type CanvasElementOptions } from 'app/features/canvas/element';
 import { type ElementState } from 'app/features/canvas/runtime/element';
 

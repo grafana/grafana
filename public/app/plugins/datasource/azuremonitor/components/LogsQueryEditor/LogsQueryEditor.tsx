@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type PanelData, type TimeRange } from '@grafana/data';
+import type { PanelData, TimeRange } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';

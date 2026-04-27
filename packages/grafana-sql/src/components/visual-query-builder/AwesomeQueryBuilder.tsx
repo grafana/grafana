@@ -15,7 +15,8 @@ import {
 } from '@react-awesome-query-builder/ui';
 import { isString } from 'lodash';
 
-import { dateTime, toOption } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { toOption } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';

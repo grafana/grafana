@@ -4,16 +4,14 @@ import { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { type Observable } from 'rxjs';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import type { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
-import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { comparisonOperationOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';

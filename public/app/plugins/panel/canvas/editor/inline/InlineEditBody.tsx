@@ -3,11 +3,13 @@ import { get as lodashGet } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
-import { type GrafanaTheme2, type PanelOptionsEditorBuilder, type StandardEditorContext } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { StandardEditorContext } from '@grafana/data/field';
 import { type NestedValueAccess, type PanelOptionsSupplier } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';

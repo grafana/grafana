@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { type PropsWithChildren } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneObjectRef, type VizPanel } from '@grafana/scenes';
-import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getExpireOptions } from '../../ShareSnapshotTab';
 

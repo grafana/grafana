@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data/types';
 
 import { createLogLine } from '../mocks/logRow';
 

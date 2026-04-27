@@ -1,7 +1,7 @@
 import { defaultsDeep } from 'lodash';
 
-import { type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import type { VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';

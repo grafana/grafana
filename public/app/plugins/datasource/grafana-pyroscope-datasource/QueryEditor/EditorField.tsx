@@ -2,8 +2,11 @@ import { css } from '@emotion/css';
 import { type ComponentProps } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Field, Icon, type PopoverContent, ReactUtils, Tooltip, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Field, type PopoverContent, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import { ReactUtils } from '@grafana/ui/utils';
 
 interface EditorFieldProps extends ComponentProps<typeof Field> {
   label: string;

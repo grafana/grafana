@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
+import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import { toIconName } from '@grafana/ui/types';
+import { useForceUpdate } from '@grafana/ui/utils';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';

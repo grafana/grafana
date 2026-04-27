@@ -1,7 +1,7 @@
 import { render, act } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { type AnnotationQuery, type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import type { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data/types';
 import { type PromQuery } from '@grafana/prometheus';
 import { type DataQuery } from '@grafana/schema';
 

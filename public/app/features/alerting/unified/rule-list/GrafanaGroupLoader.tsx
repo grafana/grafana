@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Alert, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';

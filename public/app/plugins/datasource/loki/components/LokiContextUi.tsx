@@ -2,14 +2,16 @@ import { css } from '@emotion/css';
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { dateTime, type GrafanaTheme2, type LogRowModel, renderMarkdown, type SelectableValue } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { renderMarkdown } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LogRowModel, SelectableValue } from '@grafana/data/types';
 import { RawQuery } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
   Collapse,
-  Icon,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
@@ -18,8 +20,9 @@ import {
   RenderUserContentAsHTML,
   Spinner,
   Tooltip,
-  useStyles2,
 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   type LogContextProvider,

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type PanelPlugin, type GrafanaTheme2 } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -10,7 +11,6 @@ import {
   Tab,
   TabsBar,
   CodeEditor,
-  useStyles2,
   Field,
   InlineSwitch,
   Button,
@@ -21,6 +21,7 @@ import {
   Stack,
   TextLink,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types/accessControl';

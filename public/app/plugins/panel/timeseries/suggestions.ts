@@ -1,7 +1,14 @@
 import { defaultsDeep } from 'lodash';
 
-import { DataFrameType, DataTransformerID, type PanelPluginVisualizationSuggestion, type VisualizationSuggestion, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { DataTransformerID } from '@grafana/data/transformations';
+import {
+  DataFrameType,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestion,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle, type GraphFieldConfig, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

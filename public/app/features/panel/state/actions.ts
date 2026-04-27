@@ -1,4 +1,5 @@
-import { type DataTransformerConfig, type FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
+import { getPanelOptionsWithDefaults } from '@grafana/data/panel';
+import type { DataTransformerConfig, FieldConfigSource } from '@grafana/data/types';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { type LibraryElementDTO } from 'app/features/library-panels/types';

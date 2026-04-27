@@ -7,7 +7,7 @@ import {
   type QueryVariableModel,
   type VariableOption,
   type VariableType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { variableAdapters } from '../adapters';

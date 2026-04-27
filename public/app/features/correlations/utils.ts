@@ -5,8 +5,8 @@ import {
   generatedAPI as correlationsAPIv0alpha1,
   type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataLinkConfigOrigin } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { DataLinkConfigOrigin } from '@grafana/data/types';
 import {
   config,
   type CorrelationData,

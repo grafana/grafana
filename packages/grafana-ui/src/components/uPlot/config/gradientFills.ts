@@ -1,14 +1,9 @@
 import tinycolor from 'tinycolor2';
 import type uPlot from 'uplot';
 
-import {
-  colorManipulator,
-  type FieldColorMode,
-  FieldColorModeId,
-  type GrafanaTheme2,
-  type ThresholdsConfig,
-  ThresholdsMode,
-} from '@grafana/data';
+import type { FieldColorMode } from '@grafana/data/field';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import { FieldColorModeId, type ThresholdsConfig, ThresholdsMode } from '@grafana/data/types';
 import { ScaleOrientation } from '@grafana/schema';
 
 import { getCanvasContext } from '../../../utils/measureText';

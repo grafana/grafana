@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import { type DataQueryResponse, type QueryResultMetaNotice, type QueryResultMetaStat } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import type { DataQueryResponse, QueryResultMetaNotice, QueryResultMetaStat } from '@grafana/data/types';
 
 import { cloneQueryResponse, combineResponses } from './mergeResponses';
 import { getMockFrames } from './mocks/frames';

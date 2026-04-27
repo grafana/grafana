@@ -1,8 +1,9 @@
 import { type ReactElement } from 'react';
 
-import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
+import type { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Icon, SegmentAsync } from '@grafana/ui';
+import { SegmentAsync } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 

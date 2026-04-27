@@ -1,4 +1,4 @@
-import { type DataSourceApi, LoadingState, type TimeRange } from '@grafana/data';
+import { type DataSourceApi, LoadingState, type TimeRange } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type QueryVariable } from '@grafana/scenes';

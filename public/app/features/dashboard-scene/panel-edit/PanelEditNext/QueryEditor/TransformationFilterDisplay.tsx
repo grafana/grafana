@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataTransformerConfig } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
-import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
+import { Combobox, Field, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import {

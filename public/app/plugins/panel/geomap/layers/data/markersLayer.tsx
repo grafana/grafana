@@ -7,15 +7,11 @@ import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  FrameGeometrySourceMode,
-  type EventBus,
-  type PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import { type MapLayerRegistryItem, type MapLayerOptions, FrameGeometrySourceMode } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';

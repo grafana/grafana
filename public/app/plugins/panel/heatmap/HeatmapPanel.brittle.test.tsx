@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { ActionType, getDefaultTimeRange, HttpRequestMethod, LoadingState } from '@grafana/data';
 import { type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { ActionType, getDefaultTimeRange, HttpRequestMethod, LoadingState } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataTopic, HeatmapCalculationMode, TooltipDisplayMode } from '@grafana/schema';
 

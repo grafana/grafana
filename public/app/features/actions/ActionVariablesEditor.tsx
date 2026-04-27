@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { type ActionVariable, ActionVariableType } from '@grafana/data';
+import { type ActionVariable, ActionVariableType } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack, Combobox, type ComboboxOption } from '@grafana/ui';
 

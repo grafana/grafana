@@ -3,10 +3,12 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
-import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';

@@ -1,7 +1,7 @@
 import { merge, type Observable, ReplaySubject, Subject, Subscription, timer, type Unsubscribable } from 'rxjs';
 import { finalize, map, mapTo, mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
 
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { RefreshEvent } from '@grafana/runtime';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 

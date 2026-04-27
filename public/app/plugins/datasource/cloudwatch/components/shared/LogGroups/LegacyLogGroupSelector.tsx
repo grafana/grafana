@@ -2,7 +2,8 @@ import { debounce, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { AppEvents, type SelectableValue, toOption } from '@grafana/data';
+import { AppEvents, type SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { getAppEvents } from '@grafana/runtime';
 import { MultiSelect, type InputActionMeta } from '@grafana/ui';
 

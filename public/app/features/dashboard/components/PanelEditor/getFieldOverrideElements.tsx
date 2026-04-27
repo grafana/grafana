@@ -1,8 +1,17 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 
-import { type FieldConfigOptionsRegistry, type SelectableValue, isSystemOverride as isSystemOverrideGuard, type VariableSuggestionsScope, type DynamicConfigValue, type ConfigOverrideRule, fieldMatchers, type FieldConfigSource } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import { fieldMatchers } from '@grafana/data/transformations';
+import {
+  type SelectableValue,
+  isSystemOverride as isSystemOverrideGuard,
+  type VariableSuggestionsScope,
+  type DynamicConfigValue,
+  type ConfigOverrideRule,
+  type FieldConfigSource,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type MatcherScope } from '@grafana/schema';
@@ -11,10 +20,10 @@ import {
   getUniqueMatcherScopes,
   MatcherScopeSelector,
   buildScopeOptions,
-  useStyles2,
   ValuePicker,
   useFieldMatchersOptions,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';

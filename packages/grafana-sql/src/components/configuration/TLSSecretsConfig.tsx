@@ -1,12 +1,8 @@
-import {
-  type DataSourceJsonData,
-  type DataSourcePluginOptionsEditorProps,
-  type KeyValue,
-  onUpdateDatasourceSecureJsonDataOption,
-  updateDatasourcePluginResetOption,
-} from '@grafana/data';
+import type { DataSourceJsonData, DataSourcePluginOptionsEditorProps, KeyValue } from '@grafana/data/types';
+import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
-import { Field, Icon, Label, SecretTextArea, Tooltip, Stack } from '@grafana/ui';
+import { Field, Label, SecretTextArea, Tooltip, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 export interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;

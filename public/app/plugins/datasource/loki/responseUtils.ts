@@ -1,5 +1,6 @@
-import { type DataQueryResponse, isValidGoDuration, type Labels } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { isValidGoDuration } from '@grafana/data/datetime';
+import type { DataQueryResponse, Labels } from '@grafana/data/types';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';

@@ -1,8 +1,8 @@
 import { isEmpty } from 'lodash';
 import { type ReactElement, useId, useMemo } from 'react';
 
-import { type MatcherConfig, type SelectableValue } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { MatcherConfig, SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';

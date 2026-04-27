@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Field, useStyles2 } from '@grafana/ui';
+import { Field } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';

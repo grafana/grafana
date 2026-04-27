@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal, type ConfirmModalProps, ModalsContext } from '@grafana/ui';
 import { type ModalsContextState } from '@grafana/ui/internal';

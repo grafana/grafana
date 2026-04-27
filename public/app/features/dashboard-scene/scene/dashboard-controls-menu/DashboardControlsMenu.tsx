@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { config } from '@grafana/runtime';
 import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
-import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Menu, ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DataLayerControlEditWrapper } from '../DashboardDataLayerControls';

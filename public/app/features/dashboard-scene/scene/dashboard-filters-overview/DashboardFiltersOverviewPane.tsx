@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, sceneUtils } from '@grafana/scenes';
-import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
+import { Box, IconButton, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardEditPane } from '../../edit-pane/DashboardEditPane';
 

@@ -1,6 +1,7 @@
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
+import { Field, Label, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { type SQLOptions } from '../../types';
 

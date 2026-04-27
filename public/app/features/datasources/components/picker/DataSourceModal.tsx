@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { once } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Modal, useStyles2, Input, Icon, ScrollContainer } from '@grafana/ui';
+import { Modal, Input, ScrollContainer } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasources } from '../../hooks';

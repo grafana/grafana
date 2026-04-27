@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { type ComponentProps, useRef } from 'react';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data/dataframe';
 
 import { ColorScheme, PaneView, SelectedView, ViewMode } from '../types';
 

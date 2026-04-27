@@ -4,8 +4,9 @@
 import { useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
-import { getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import { getDisplayProcessor, useDataLinksContext } from '@grafana/data/field';
+import type { PanelProps } from '@grafana/data/types';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
@@ -14,10 +15,10 @@ import {
   TooltipPlugin2,
   type UPlotConfigBuilder,
   usePanelContext,
-  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';

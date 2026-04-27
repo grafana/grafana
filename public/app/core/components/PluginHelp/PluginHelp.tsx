@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data/text';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';

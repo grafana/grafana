@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash';
 import { type FormEvent, memo, useState } from 'react';
 
-import { rangeUtil, type TimeZone } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { TimeZone } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { CollapsableSection, Field, Input, Switch, TimeZonePicker, type WeekStart, WeekStartPicker } from '@grafana/ui';

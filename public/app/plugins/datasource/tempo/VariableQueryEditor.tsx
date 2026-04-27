@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type DataQuery, type SelectableValue, type TimeRange } from '@grafana/data';
+import type { DataQuery, SelectableValue, TimeRange } from '@grafana/data/types';
 import { InlineField, InlineFieldRow, type InputActionMeta, Select } from '@grafana/ui';
 
 import { type TempoDatasource } from './datasource';

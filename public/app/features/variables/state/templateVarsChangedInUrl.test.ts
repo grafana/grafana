@@ -1,4 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
+import type { TypedVariableModel } from '@grafana/data/types';
 import { type DashboardState } from 'app/types/dashboard';
 import { type StoreState } from 'app/types/store';
 

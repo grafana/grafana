@@ -1,6 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Icon, ToolbarButton } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { type ToolbarActionProps } from '../types';
 

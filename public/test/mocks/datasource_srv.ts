@@ -8,8 +8,8 @@ import {
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
   type DataSourceRef,
-  getDataSourceUID,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceUID } from '@grafana/data/utils';
 
 export class DatasourceSrvMock {
   constructor(

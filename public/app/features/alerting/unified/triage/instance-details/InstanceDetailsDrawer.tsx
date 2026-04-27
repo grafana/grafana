@@ -3,24 +3,14 @@ import { orderBy } from 'lodash';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2, type Labels } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Labels } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import {
-  Alert,
-  Box,
-  Button,
-  Drawer,
-  Icon,
-  LoadingBar,
-  LoadingPlaceholder,
-  Stack,
-  Text,
-  TextLink,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Alert, Box, Button, Drawer, LoadingBar, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';

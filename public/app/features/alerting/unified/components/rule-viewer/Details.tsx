@@ -3,10 +3,13 @@ import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isEmpty, isUndefined } from 'lodash';
 import { Fragment } from 'react/jsx-runtime';
 
-import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Link, Stack, Text, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { type GrafanaAlertingRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import type { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data/types';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';

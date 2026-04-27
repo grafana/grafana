@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './localStorageWithTTL';
 

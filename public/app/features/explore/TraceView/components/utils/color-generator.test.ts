@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createTheme } from '@grafana/data';
-import { colors } from '@grafana/ui';
+import { createTheme } from '@grafana/data/themes';
+import { colors } from '@grafana/ui/utils';
 
 import { getColorByKey, getFilteredColors, clear } from './color-generator';
 

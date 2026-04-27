@@ -1,6 +1,7 @@
 import { ChangeEvent } from 'react';
 import { Checkbox, InlineField, InlineSwitch, Input, SecretInput, Select } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, SelectableValue, toOption } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data/types';
+import { toOption } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { MyDataSourceOptions, MySecureJsonData } from '../types';
 

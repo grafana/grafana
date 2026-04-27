@@ -1,4 +1,5 @@
-import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
+import type { IntervalVariableModel, ScopedVars } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -16,7 +17,7 @@ import {
   VizPanelMenu,
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
-import { createLogger } from '@grafana/ui';
+import { createLogger } from '@grafana/ui/utils';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';

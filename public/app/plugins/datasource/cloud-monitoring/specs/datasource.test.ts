@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime'; // will use the version in __mocks__
 
 import CloudMonitoringDataSource from '../datasource';

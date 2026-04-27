@@ -1,6 +1,7 @@
 import uPlot from 'uplot';
 
-import { getDefaultTimeRange, createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { getDefaultTimeRange } from '@grafana/data/types';
 import { VisibilityMode } from '@grafana/schema';
 
 import { getConfig, type TimelineCoreOptions, shouldDrawYValue } from './timeline';

@@ -1,4 +1,6 @@
-import { FieldConfigProperty, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldConfigProperty } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';

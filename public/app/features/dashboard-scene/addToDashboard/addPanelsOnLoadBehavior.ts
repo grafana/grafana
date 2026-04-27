@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';

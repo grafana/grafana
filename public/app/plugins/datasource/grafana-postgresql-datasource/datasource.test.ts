@@ -1,8 +1,15 @@
 import { type Observable, of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { getDefaultTimeRange, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, dateTime, LoadingState } from '@grafana/data';
 import { dataFrameToJSON, FieldType, createDataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import {
+  getDefaultTimeRange,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  LoadingState,
+} from '@grafana/data/types';
 import {
   type BackendSrv,
   type DataSourceSrv,

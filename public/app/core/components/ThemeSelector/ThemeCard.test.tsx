@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, type ThemeRegistryItem } from '@grafana/data';
+import { createTheme, type ThemeRegistryItem } from '@grafana/data/themes';
 
 import { ThemeCard } from './ThemeCard';
 

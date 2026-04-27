@@ -3,9 +3,12 @@ import { type ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { type GrafanaTheme2, type DataSourceInstanceSettings, type VariableSuggestion } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data/types';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
+import { Button, DataLinkInput, Field, Input, Label, Tooltip, Select, Switch } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type DerivedFieldConfig } from '../types';
 

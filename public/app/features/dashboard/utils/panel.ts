@@ -1,14 +1,8 @@
 import { isString as _isString } from 'lodash';
 
-import {
-  type TimeRange,
-  AppEvents,
-  rangeUtil,
-  dateMath,
-  type PanelModel as IPanelModel,
-  dateTimeAsMoment,
-  store,
-} from '@grafana/data';
+import { rangeUtil, dateMath, dateTimeAsMoment } from '@grafana/data/datetime';
+import { type TimeRange, AppEvents, type PanelModel as IPanelModel } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';

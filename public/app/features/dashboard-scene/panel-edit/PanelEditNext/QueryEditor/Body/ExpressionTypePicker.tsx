@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
-import { Card, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Card, Text } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
 import { EXPRESSION_IMAGE_MAP } from '../../constants';

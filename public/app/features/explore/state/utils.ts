@@ -1,26 +1,23 @@
 import { uniq } from 'lodash';
 
+import { dateMath, type DateTime, isDateTime, toUtc } from '@grafana/data/datetime';
+import { type EventBusExtended } from '@grafana/data/events';
 import {
   type AbsoluteTimeRange,
   type DataSourceApi,
-  dateMath,
-  type DateTime,
-  type EventBusExtended,
   getDefaultTimeRange,
   type HistoryItem,
-  isDateTime,
   LoadingState,
   type LogRowModel,
   type PanelData,
   type RawTimeRange,
   type ScopedVars,
-  store,
   type TimeFragment,
   type TimeRange,
-  toUtc,
   type URLRange,
   type URLRangeValue,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';

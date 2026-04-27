@@ -1,6 +1,6 @@
 import logfmt from 'logfmt';
 
-import { type ScopedVars, type DataLinkTransformationConfig, SupportedTransformationType } from '@grafana/data';
+import { type ScopedVars, type DataLinkTransformationConfig, SupportedTransformationType } from '@grafana/data/types';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const getTransformationVars = (

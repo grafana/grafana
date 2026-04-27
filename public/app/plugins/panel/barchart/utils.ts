@@ -1,8 +1,17 @@
 import uPlot, { type Padding } from 'uplot';
 
-import { type FieldConfigSource, type GrafanaTheme2, cacheFieldDisplayNames, formattedValueToString, getDisplayProcessor, getFieldColorModeForField, getFieldSeriesColor, outerJoinDataFrames } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import {
+  cacheFieldDisplayNames,
+  getDisplayProcessor,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
+} from '@grafana/data/field';
 import { decoupleHideFromState } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { outerJoinDataFrames } from '@grafana/data/transformations';
+import type { FieldConfigSource } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
@@ -15,15 +24,9 @@ import {
   TooltipDisplayMode,
   VizOrientation,
 } from '@grafana/schema';
-import {
-  FIXED_UNIT,
-  ScaleDirection,
-  ScaleOrientation,
-  StackingMode,
-  UPlotConfigBuilder,
-  measureText,
-} from '@grafana/ui';
+import { FIXED_UNIT, ScaleDirection, ScaleOrientation, StackingMode, UPlotConfigBuilder } from '@grafana/ui';
 import { type AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
+import { measureText } from '@grafana/ui/utils';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 

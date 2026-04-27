@@ -2,8 +2,15 @@ import { type Property } from 'csstype';
 import { type FC } from 'react';
 import { type CellProps, type Column, type Row, type TableState, type UseExpandedRowProps } from 'react-table';
 
-import { type KeyValue, type SelectableValue, type TimeRange, type FieldConfigSource, type ActionModel, type InterpolateFunction } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import type {
+  KeyValue,
+  SelectableValue,
+  TimeRange,
+  FieldConfigSource,
+  ActionModel,
+  InterpolateFunction,
+} from '@grafana/data/types';
 import type * as schema from '@grafana/schema';
 
 import { type TableCellInspectorMode } from './TableCellInspector';

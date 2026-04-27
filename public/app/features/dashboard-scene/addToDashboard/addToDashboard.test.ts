@@ -1,4 +1,5 @@
-import { dateTime, store } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { store } from '@grafana/data/utils';
 
 import { addToDashboard } from './addToDashboard';
 

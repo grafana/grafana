@@ -1,4 +1,4 @@
-import { PluginSignatureType, PluginType } from '@grafana/data';
+import { PluginSignatureType, PluginType } from '@grafana/data/types';
 
 import { type RemotePlugin } from '../types';
 

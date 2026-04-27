@@ -5,7 +5,7 @@ import {
   type CoreApp,
   type AbstractQuery,
   AbstractLabelOperator,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type PromQuery } from '@grafana/prometheus';
 import { type DataQuery } from '@grafana/schema';
 

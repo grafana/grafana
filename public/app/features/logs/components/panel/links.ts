@@ -1,4 +1,4 @@
-import { type LinkModel } from '@grafana/data';
+import type { LinkModel } from '@grafana/data/types';
 
 import { type FieldDef } from '../logParser';
 

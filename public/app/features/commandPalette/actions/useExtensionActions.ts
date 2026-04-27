@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type PluginExtensionCommandPaletteContext, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionCommandPaletteContext, PluginExtensionPoints } from '@grafana/data/types';
 import { usePluginLinks } from '@grafana/runtime';
 
 import { type CommandPaletteAction } from '../types';

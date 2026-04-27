@@ -2,8 +2,8 @@ import { type Observable, throwError, timer } from 'rxjs';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { webSocket } from 'rxjs/webSocket';
 
-import { type KeyValue } from '@grafana/data';
 import { type DataFrame, FieldType, CircularDataFrame } from '@grafana/data/dataframe';
+import type { KeyValue } from '@grafana/data/types';
 
 import { appendResponseToBufferedData } from './liveStreamsResultTransformer';
 import { type LokiTailResponse } from './types';

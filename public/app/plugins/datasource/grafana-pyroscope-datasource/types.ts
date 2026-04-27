@@ -1,4 +1,4 @@
-import { type DataSourceJsonData } from '@grafana/data';
+import type { DataSourceJsonData } from '@grafana/data/types';
 
 import { type GrafanaPyroscopeDataQuery, type PyroscopeQueryType } from './dataquery.gen';
 

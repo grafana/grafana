@@ -1,4 +1,5 @@
-import { type PanelPluginMeta, escapeStringForRegex } from '@grafana/data';
+import { escapeStringForRegex } from '@grafana/data/text';
+import type { PanelPluginMeta } from '@grafana/data/types';
 
 import { filterPluginList } from './util';
 

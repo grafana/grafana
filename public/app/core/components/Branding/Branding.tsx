@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { type FC, type JSX } from 'react';
 
-import { colorManipulator, type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import type { NavModelItem } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import g8LoginDarkSvg from 'img/g8_login_dark.svg';
 import g8LoginLightSvg from 'img/g8_login_light.svg';
 import grafanaIconSvg from 'img/grafana_icon.svg';

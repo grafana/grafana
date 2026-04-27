@@ -3,9 +3,10 @@ import { useId } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 
 import { type CreateSessionApiArg } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
+import { Modal, Button, Stack, TextLink, Field, Input, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { maybeAPIError } from '../../../api/errors';

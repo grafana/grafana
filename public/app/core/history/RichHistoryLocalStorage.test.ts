@@ -1,4 +1,5 @@
-import { type DataQuery, store } from '@grafana/data';
+import type { DataQuery } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { createMonitoringLogger, type MonitoringLogger } from '@grafana/runtime';
 import { type RichHistoryQuery } from 'app/types/explore';
 

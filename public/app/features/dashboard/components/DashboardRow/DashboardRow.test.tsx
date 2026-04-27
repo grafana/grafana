@@ -1,7 +1,7 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';

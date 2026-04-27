@@ -10,7 +10,8 @@ import {
   sceneGraph,
   type VariableValueSingle,
 } from '@grafana/scenes';
-import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Spinner, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';

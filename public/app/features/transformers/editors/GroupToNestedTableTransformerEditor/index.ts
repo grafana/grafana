@@ -1,9 +1,10 @@
-import { PluginState, standardTransformers, TransformerCategory, type TransformerRegistryItem } from '@grafana/data';
 import {
   DataTransformerID,
   type GroupToNestedTableTransformerOptions,
   type GroupToNestedTableTransformerOptionsV2,
 } from '@grafana/data/internal';
+import { standardTransformers, TransformerCategory, type TransformerRegistryItem } from '@grafana/data/transformations';
+import { PluginState } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 import darkImage from '../../images/dark/groupToNestedTable.svg';

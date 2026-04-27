@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { firstValueFrom } from 'rxjs';
 
-import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
+import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data/utils';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   Box,
@@ -15,8 +15,8 @@ import {
   Text,
   type ComboboxOption,
   Alert,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { InfluxVersion } from '../../../types';
 

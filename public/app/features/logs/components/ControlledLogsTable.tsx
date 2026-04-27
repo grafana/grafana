@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef } from 'react';
 
-import { EventBusSrv, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { EventBusSrv } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogsTableWrap } from '../../explore/Logs/LogsTableWrap';
 

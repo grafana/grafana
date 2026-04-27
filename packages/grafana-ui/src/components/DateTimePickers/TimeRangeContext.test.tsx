@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react';
 import { useEffect } from 'react';
 
-import { makeTimeRange } from '@grafana/data';
+import { makeTimeRange } from '@grafana/data/types';
 
 import { type TimeRangeContextHookValue, TimeRangeProvider, useTimeRangeContext } from './TimeRangeContext';
 

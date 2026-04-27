@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type ScopeNode } from '@grafana/data';
+import type { ScopeNode } from '@grafana/data/types';
 
 import { useScopesServices } from '../ScopesContextProvider';
 

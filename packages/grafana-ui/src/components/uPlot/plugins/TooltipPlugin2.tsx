@@ -4,7 +4,8 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import type uPlot from 'uplot';
 
-import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { LinkModel } from '@grafana/data/types';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { type AdHocFilterModel } from '../../../internal';

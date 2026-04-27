@@ -2,9 +2,12 @@ import { css, cx } from '@emotion/css';
 import { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { OrgRole } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';

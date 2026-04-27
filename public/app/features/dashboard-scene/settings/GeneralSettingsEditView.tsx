@@ -1,6 +1,6 @@
 import { type ChangeEvent } from 'react';
 
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';

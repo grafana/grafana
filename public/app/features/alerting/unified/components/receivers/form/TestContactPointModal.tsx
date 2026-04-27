@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Label, Modal, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type GrafanaManagedContactPoint,
   type GrafanaManagedReceiverConfig,

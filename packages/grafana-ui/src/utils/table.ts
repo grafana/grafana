@@ -1,7 +1,7 @@
 import { type Row } from 'react-table';
 
-import { type LinkModel } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { LinkModel } from '@grafana/data/types';
 
 /**
  * @internal

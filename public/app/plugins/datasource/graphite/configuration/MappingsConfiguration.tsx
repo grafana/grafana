@@ -1,6 +1,7 @@
 import { type ChangeEvent, useState, type JSX } from 'react';
 
-import { Box, Button, Icon, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { Box, Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import MappingsHelp from './MappingsHelp';
 

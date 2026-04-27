@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import type { PanelModel } from '@grafana/data/types';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef, type DataTransformerConfig } from '@grafana/schema';
 

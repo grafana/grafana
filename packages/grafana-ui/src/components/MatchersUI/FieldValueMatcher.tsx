@@ -6,8 +6,8 @@ import {
   type FieldValueMatcherConfig,
   fieldReducers,
   ReducerID,
-  type SelectableValue,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 

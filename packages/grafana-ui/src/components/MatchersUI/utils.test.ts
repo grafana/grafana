@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import { type DataFrame, type Field, FieldType, FieldNamePickerBaseNameMode, toDataFrame } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { FieldNamePickerBaseNameMode } from '@grafana/data/field';
 import { type MatcherScope } from '@grafana/schema';
 
 import {

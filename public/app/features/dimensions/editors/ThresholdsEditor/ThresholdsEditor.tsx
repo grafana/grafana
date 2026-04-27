@@ -2,16 +2,13 @@ import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { type ChangeEvent, memo, useEffect, useRef, useState } from 'react';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  sortThresholds,
-  type Threshold,
-  type ThresholdsConfig,
-  ThresholdsMode,
-} from '@grafana/data';
+import { sortThresholds } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type SelectableValue, type Threshold, type ThresholdsConfig, ThresholdsMode } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ColorPicker, IconButton, Input, Label, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import { colors } from '@grafana/ui/utils';
 
 export interface Props {
   thresholds: ThresholdsConfig;

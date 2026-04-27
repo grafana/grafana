@@ -1,6 +1,7 @@
 import { useAsync } from 'react-use';
 
-import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 

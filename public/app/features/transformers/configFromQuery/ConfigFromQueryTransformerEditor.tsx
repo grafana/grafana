@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   FieldMatcherID,
-  type GrafanaTheme2,
-  PluginState,
-  type SelectableValue,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import { PluginState, type SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import darkImage from '../images/dark/configFromData.svg';

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
-import { CodeEditor, type Monaco, type monacoTypes, useTheme2 } from '@grafana/ui';
+import { CodeEditor, type Monaco, type monacoTypes } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from '../configuration/TagsTimeRangeSettings';
 import { type TempoDatasource } from '../datasource';

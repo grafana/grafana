@@ -1,4 +1,4 @@
-import { OrgRole } from '@grafana/data';
+import { OrgRole } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 

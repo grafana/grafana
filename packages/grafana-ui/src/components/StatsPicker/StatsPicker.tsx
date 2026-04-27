@@ -1,7 +1,7 @@
 import { difference } from 'lodash';
 import { memo, useEffect } from 'react';
 
-import { fieldReducers, type FieldReducerInfo } from '@grafana/data';
+import { fieldReducers, type FieldReducerInfo } from '@grafana/data/transformations';
 import { t } from '@grafana/i18n';
 
 import { Combobox, type ComboboxProps } from '../Combobox/Combobox';

@@ -1,7 +1,8 @@
 import { randomLcg } from 'd3-random';
 
-import { FieldColorModeId, NodeGraphDataFrameFieldNames } from '@grafana/data';
 import { type FieldDTO, FieldType, MutableDataFrame, type DataFrame, addRow } from '@grafana/data/dataframe';
+import { FieldColorModeId } from '@grafana/data/types';
+import { NodeGraphDataFrameFieldNames } from '@grafana/data/utils';
 
 import * as serviceMapResponseSmall from './testData/serviceMapResponse';
 import * as serviceMapResponsMedium from './testData/serviceMapResponseMedium';

@@ -1,5 +1,7 @@
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
-import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
+import { SetPanelAttentionEvent } from '@grafana/data/events';
+import { LegacyGraphHoverClearEvent } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { type LocationService, config } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';

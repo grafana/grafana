@@ -1,6 +1,6 @@
 import { type Observable } from 'rxjs';
 
-import { type PluginExtensionComponent } from '@grafana/data';
+import type { PluginExtensionComponent } from '@grafana/data/types';
 
 type GetObservablePluginComponentsOptions = {
   context?: object | Record<string, unknown>;

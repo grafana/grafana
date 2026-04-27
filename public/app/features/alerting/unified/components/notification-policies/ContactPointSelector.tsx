@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Alert, Select, type SelectCommonProps, Text } from '@grafana/ui';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';

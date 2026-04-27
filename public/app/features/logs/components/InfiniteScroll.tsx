@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { type ReactNode, type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-import { type AbsoluteTimeRange, CoreApp, type LogRowModel, type TimeRange, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import { type AbsoluteTimeRange, CoreApp, type LogRowModel, type TimeRange } from '@grafana/data/types';
 // import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, type TimeZone } from '@grafana/schema';
-import { Button, Icon } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { LoadingIndicator } from './LoadingIndicator';
 

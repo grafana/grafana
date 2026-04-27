@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TimeRangeLabel } from '../TimeRangeLabel';

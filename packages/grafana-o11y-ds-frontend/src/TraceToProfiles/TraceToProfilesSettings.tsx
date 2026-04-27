@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataSourceJsonData,
-  type DataSourceInstanceSettings,
-  type DataSourcePluginOptionsEditorProps,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type {
+  DataSourceJsonData,
+  DataSourceInstanceSettings,
+  DataSourcePluginOptionsEditorProps,
+} from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';

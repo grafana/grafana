@@ -1,7 +1,8 @@
 import { type Location } from 'history';
 import { pickBy } from 'lodash';
 
-import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import { locationUtil, urlUtil } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 

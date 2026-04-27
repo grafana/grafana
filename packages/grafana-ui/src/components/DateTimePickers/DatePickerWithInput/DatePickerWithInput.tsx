@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { type ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
-import { type GrafanaTheme2, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../../utils/floating';

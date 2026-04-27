@@ -1,4 +1,5 @@
-import { PluginExtension, PluginExtensionLink, SelectableValue, locationUtil } from '@grafana/data';
+import { PluginExtension, PluginExtensionLink, SelectableValue } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { isPluginExtensionLink, locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, ButtonSelect, Modal, Stack, ToolbarButton } from '@grafana/ui';
 import { testIds } from '../../testIds';

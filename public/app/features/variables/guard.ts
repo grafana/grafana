@@ -18,7 +18,7 @@ import {
   VariableSupportType,
   type VariableWithMultiSupport,
   type VariableWithOptions,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 import { type VariableQueryEditorType, type VariableQueryEditorProps } from './types';

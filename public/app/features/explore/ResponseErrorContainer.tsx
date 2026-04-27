@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { useSelector } from 'app/types/store';
 
 import { ErrorContainer } from './ErrorContainer';

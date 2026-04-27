@@ -1,4 +1,4 @@
-import { type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import type { DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data/types';
 import { type TemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 

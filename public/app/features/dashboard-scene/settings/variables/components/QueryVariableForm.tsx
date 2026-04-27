@@ -1,12 +1,7 @@
 import { type FormEvent, useCallback } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataSourceInstanceSettings,
-  type SelectableValue,
-  type TimeRange,
-  type VariableRegexApplyTo,
-} from '@grafana/data';
+import type { DataSourceInstanceSettings, SelectableValue, TimeRange, VariableRegexApplyTo } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';

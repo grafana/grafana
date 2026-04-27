@@ -12,7 +12,7 @@ import {
   type DataSourceInstanceSettings,
   type MetricFindValue,
   type ScopedVars,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { VariableSupport } from './VariableSupport';

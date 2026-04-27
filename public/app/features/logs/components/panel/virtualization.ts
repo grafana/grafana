@@ -1,6 +1,7 @@
 import ansicolor from 'ansicolor';
 
-import { BusEventWithPayload, type GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { type LogLineTimestampResolution } from './LogLine';
 import { type LogListFontSize } from './LogList';

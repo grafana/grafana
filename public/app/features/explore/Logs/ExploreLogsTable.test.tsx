@@ -1,16 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { toUtc } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import {
   type AbsoluteTimeRange,
-  EventBusSrv,
   type FieldConfigSource,
   LoadingState,
   LogsSortOrder,
   type PanelData,
-  toUtc,
-} from '@grafana/data';
-import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+} from '@grafana/data/types';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
@@ -46,8 +46,8 @@ jest.mock('@grafana/runtime', () => ({
 const mockGetUrlSearchParams = jest.fn(() => {
   return {};
 });
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },

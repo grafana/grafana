@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { DataQueryRequest } from '@grafana/data/types';
 import { type BackendSrv, type FetchResponse, type TemplateSrv } from '@grafana/runtime';
 
 import OpenTsDatasource from '../datasource';

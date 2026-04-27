@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import { type FormEventHandler, type KeyboardEventHandler, type ReactNode } from 'react';
 
-import { DocsId, type GrafanaTheme2, LocalStorageValueProvider, type TransformerRegistryItem } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TransformerRegistryItem } from '@grafana/data/transformations';
+import { DocsId, LocalStorageValueProvider } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Card, Container, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Card, Container, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

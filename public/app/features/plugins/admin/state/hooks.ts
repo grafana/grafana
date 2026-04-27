@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { type PluginError, type PluginType } from '@grafana/data';
+import type { PluginError, PluginType } from '@grafana/data/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';

@@ -3,11 +3,13 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceApi } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { TextArea, Button, IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';

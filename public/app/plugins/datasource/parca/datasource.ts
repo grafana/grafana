@@ -1,11 +1,6 @@
 import { type Observable, of } from 'rxjs';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type ScopedVars,
-} from '@grafana/data';
+import type { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars } from '@grafana/data/types';
 import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { type ParcaDataSourceOptions, type Query, type ProfileTypeMessage } from './types';

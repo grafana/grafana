@@ -1,5 +1,7 @@
-import { DataLinksContext, type EventBus, type LoadingState, type SplitOpen, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import { DataLinksContext } from '@grafana/data/field';
+import type { LoadingState, SplitOpen, TimeRange } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { usePanelPluginMeta } from '@grafana/runtime/internal';

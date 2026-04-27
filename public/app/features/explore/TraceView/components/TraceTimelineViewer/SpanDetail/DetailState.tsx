@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type TraceLog } from '@grafana/data';
+import type { TraceLog } from '@grafana/data/types';
 
 import { type TraceSpanReference } from '../../types/trace';
 

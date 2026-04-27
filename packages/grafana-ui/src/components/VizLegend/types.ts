@@ -1,8 +1,8 @@
 import type * as React from 'react';
 import type { JSX, ReactNode } from 'react';
 
-import { type DisplayValue } from '@grafana/data';
 import { type DataFrameFieldIndex } from '@grafana/data/dataframe';
+import type { DisplayValue } from '@grafana/data/types';
 import { type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {

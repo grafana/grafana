@@ -1,4 +1,5 @@
-import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import type { AdHocVariableModel, GroupByVariableModel, VariableModel } from '@grafana/data/types';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import { PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data/types';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';

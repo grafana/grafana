@@ -1,4 +1,4 @@
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { Trans } from '@grafana/i18n';
 import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';

@@ -1,4 +1,4 @@
-import { PluginLoadingStrategy, PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginLoadingStrategy, PluginSignatureStatus, PluginType } from '@grafana/data/types';
 
 import { v0alpha1Response } from '../test-fixtures/v0alpha1Response';
 import type { DatasourcePluginMetas } from '../types';

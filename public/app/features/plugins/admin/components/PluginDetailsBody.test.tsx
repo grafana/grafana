@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
-import { PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 

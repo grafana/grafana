@@ -1,4 +1,5 @@
-import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import type { GrafanaConfig } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {

@@ -1,6 +1,6 @@
 import { useMemo, type FormEvent } from 'react';
 
-import { type VariableRegexApplyTo, type SelectableValue } from '@grafana/data';
+import type { VariableRegexApplyTo, SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Stack, TextLink, RadioButtonGroup, Box } from '@grafana/ui';

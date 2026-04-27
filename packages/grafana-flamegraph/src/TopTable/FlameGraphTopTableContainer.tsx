@@ -2,8 +2,11 @@ import { css } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { applyFieldOverrides, type DataLinkClickEvent, type GrafanaTheme2, MappingType, escapeStringForRegex } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { applyFieldOverrides } from '@grafana/data/field';
+import { escapeStringForRegex } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type DataLinkClickEvent, MappingType } from '@grafana/data/types';
 import {
   IconButton,
   Table,
@@ -11,9 +14,8 @@ import {
   type TableCustomCellOptions,
   type TableFieldOptions,
   type TableSortByFieldState,
-  useStyles2,
-  useTheme2,
 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';

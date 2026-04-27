@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 
-import { type DataLink } from '@grafana/data';
 import { FieldType, type DataFrame, type Field } from '@grafana/data/dataframe';
+import type { DataLink } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { type DerivedFieldConfig } from './types';

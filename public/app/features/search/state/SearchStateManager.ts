@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import { type FormEvent } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';

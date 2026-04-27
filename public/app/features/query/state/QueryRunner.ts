@@ -2,8 +2,19 @@ import { cloneDeep } from 'lodash';
 import { from, type Observable, ReplaySubject, type Unsubscribable } from 'rxjs';
 import { first } from 'rxjs/operators';
 
-import { CoreApp, type DataQueryRequest, type DataSourceApi, type PanelData, rangeUtil, type ScopedVars, type QueryRunnerOptions, type QueryRunner as QueryRunnerSrv, LoadingState, type DataSourceRef } from '@grafana/data';
 import { preProcessPanelData } from '@grafana/data/dataframe';
+import { rangeUtil } from '@grafana/data/datetime';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type PanelData,
+  type ScopedVars,
+  LoadingState,
+  type DataSourceRef,
+  type QueryRunnerOptions,
+  type QueryRunner as QueryRunnerSrv,
+} from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 

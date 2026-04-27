@@ -1,7 +1,7 @@
 import React, { type FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { DataSourceVariable, type SceneVariable } from '@grafana/scenes';

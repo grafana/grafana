@@ -1,4 +1,4 @@
-import { PluginState } from '@grafana/data';
+import { PluginState } from '@grafana/data/types';
 import { config, type GrafanaBootConfig } from '@grafana/runtime';
 
 let grafanaConfig: GrafanaBootConfig = config;

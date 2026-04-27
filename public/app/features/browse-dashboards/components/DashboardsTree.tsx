@@ -5,10 +5,11 @@ import { type TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { type GrafanaTheme2, isTruthy } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { isTruthy } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { canSelectItems } from '../permissions';

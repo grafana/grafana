@@ -1,5 +1,5 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';

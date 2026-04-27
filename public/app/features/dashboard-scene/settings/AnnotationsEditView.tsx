@@ -1,10 +1,5 @@
-import {
-  type AnnotationQuery,
-  getDataSourceRef,
-  type NavModel,
-  type NavModelItem,
-  PageLayoutType,
-} from '@grafana/data';
+import { type AnnotationQuery, type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';

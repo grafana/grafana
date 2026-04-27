@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { AppEvents, locationUtil } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';

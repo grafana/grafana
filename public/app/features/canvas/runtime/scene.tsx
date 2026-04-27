@@ -5,7 +5,7 @@ import { type CSSProperties } from 'react';
 import { BehaviorSubject, ReplaySubject, Subject, type Subscription } from 'rxjs';
 import type Selecto from 'selecto';
 
-import { AppEvents, type PanelData, OneClickMode, ActionType } from '@grafana/data';
+import { AppEvents, type PanelData, OneClickMode, ActionType } from '@grafana/data/types';
 import { config, locationService } from '@grafana/runtime';
 import {
   type ColorDimensionConfig,

@@ -1,14 +1,14 @@
 import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
+import { ReducerID } from '@grafana/data/transformations';
 import {
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   type DataSourcePluginMeta,
   type PluginExtensionLink,
   PluginExtensionTypes,
-  ReducerID,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';

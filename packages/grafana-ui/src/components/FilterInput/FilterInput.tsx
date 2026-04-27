@@ -1,6 +1,6 @@
 import { forwardRef, useRef, type HTMLProps } from 'react';
 
-import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
+import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data/text';
 import { Trans } from '@grafana/i18n';
 
 import { useCombinedRefs } from '../../utils/useCombinedRefs';

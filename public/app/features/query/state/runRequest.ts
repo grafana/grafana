@@ -5,6 +5,7 @@ import { catchError, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/op
 
 // Utils & Services
 // Types
+import { dateMath } from '@grafana/data/datetime';
 import {
   CoreApp,
   type DataQueryError,
@@ -13,11 +14,10 @@ import {
   type DataQueryResponseData,
   type DataSourceApi,
   DataTopic,
-  dateMath,
   LoadingState,
   type PanelData,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { config, isMigrationHandler, migrateRequest, toDataQueryError, isExpressionReference } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Drawer, useStyles2, Text } from '@grafana/ui';
+import { Drawer, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 import grotNewsSvg from 'img/grot-news.svg';
 

@@ -3,14 +3,9 @@ import { css, cx } from '@emotion/css';
 import { useId, useState } from 'react';
 import * as React from 'react';
 
-import {
-  colorManipulator,
-  FieldColorModeId,
-  fieldColorModeRegistry,
-  type GrafanaTheme2,
-  type ThemeRichColor,
-  type ThemeVizHue,
-} from '@grafana/data';
+import { fieldColorModeRegistry } from '@grafana/data/field';
+import { colorManipulator, type GrafanaTheme2, type ThemeRichColor, type ThemeVizHue } from '@grafana/data/themes';
+import { FieldColorModeId } from '@grafana/data/types';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button/Button';

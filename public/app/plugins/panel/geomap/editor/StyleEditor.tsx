@@ -3,12 +3,8 @@ import { useId, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { type Observable, of } from 'rxjs';
 
-import {
-  type FieldConfigPropertyItem,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-  type FrameMatcher,
-} from '@grafana/data';
+import type { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data/field';
+import type { FieldConfigPropertyItem, FrameMatcher } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   type ScaleDimensionConfig,

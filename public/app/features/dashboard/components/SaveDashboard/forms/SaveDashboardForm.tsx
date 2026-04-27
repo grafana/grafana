@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
-import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Checkbox, TextArea, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 

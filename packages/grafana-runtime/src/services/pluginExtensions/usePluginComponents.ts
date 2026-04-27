@@ -1,4 +1,4 @@
-import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
+import type { ComponentTypeWithExtensionMeta } from '@grafana/data/types';
 
 export type UsePluginComponentsOptions = {
   extensionPointId: string;

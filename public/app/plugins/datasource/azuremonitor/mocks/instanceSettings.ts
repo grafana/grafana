@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data/types';
 
 import { type AzureMonitorDataSourceInstanceSettings } from '../types/types';
 

@@ -1,13 +1,8 @@
 import tinycolor from 'tinycolor2';
 
-import {
-  colorManipulator,
-  FALLBACK_COLOR,
-  type FieldDisplay,
-  getFieldColorMode,
-  type GrafanaTheme2,
-  ThresholdsMode,
-} from '@grafana/data';
+import { type FieldDisplay, getFieldColorMode } from '@grafana/data/field';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import { FALLBACK_COLOR, ThresholdsMode } from '@grafana/data/types';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { DEFAULT_DECIMALS } from './constants';

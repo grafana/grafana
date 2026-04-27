@@ -2,18 +2,19 @@ import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
+import { rangeUtil } from '@grafana/data/datetime';
 import {
   type DataSourceInstanceSettings,
   LoadingState,
   type PanelData,
   type RelativeTimeRange,
-  getDataSourceRef,
-  rangeUtil,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Card, Icon, Stack } from '@grafana/ui';
+import { Button, Card, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

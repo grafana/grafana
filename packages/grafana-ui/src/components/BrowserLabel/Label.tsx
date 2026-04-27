@@ -3,7 +3,7 @@ import { forwardRef, type HTMLAttributes, useCallback } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type HighlightPart } from '../../types/completion';

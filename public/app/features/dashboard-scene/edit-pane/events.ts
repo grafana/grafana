@@ -1,5 +1,5 @@
 // Extracted from shared.ts to avoid circular dependency through DashboardScene.
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventWithPayload } from '@grafana/data/events';
 import { type SceneObject } from '@grafana/scenes';
 
 export interface DashboardEditActionEventPayload {

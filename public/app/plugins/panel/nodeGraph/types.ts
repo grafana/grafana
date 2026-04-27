@@ -1,7 +1,7 @@
 import { type SimulationNodeDatum, type SimulationLinkDatum } from 'd3-force';
 
-import { type IconName } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import type { IconName } from '@grafana/data/types';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;

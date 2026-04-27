@@ -1,15 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  FeatureState,
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FeatureState, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { FeatureBadge, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { FeatureBadge, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';

@@ -1,4 +1,5 @@
-import { type TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
+import { type TimeRange, SupplementaryQueryType } from '@grafana/data/types';
 import { defaultTimeZone } from '@grafana/schema';
 
 export const createDefaultInitialState = () => {

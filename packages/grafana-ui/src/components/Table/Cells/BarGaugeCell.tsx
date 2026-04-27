@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { type ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { getFieldConfigWithMinMax } from '@grafana/data/field';
+import { type ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data/types';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../BarGauge/BarGauge';

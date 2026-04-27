@@ -1,4 +1,4 @@
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
 
 import { ARC_END } from './constants';
 import { type RadialGaugeDimensions, type RadialShape } from './types';

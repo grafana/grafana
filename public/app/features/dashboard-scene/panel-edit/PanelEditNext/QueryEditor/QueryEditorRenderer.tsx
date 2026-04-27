@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
+import { DataSourcePluginContextProvider } from '@grafana/data/context';
+import { CoreApp } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';

@@ -2,7 +2,7 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { LayoutModes, PluginType } from '@grafana/data';
+import { LayoutModes, PluginType } from '@grafana/data/types';
 import { setPluginLinksHook, setPluginComponentsHook, setPluginFunctionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';

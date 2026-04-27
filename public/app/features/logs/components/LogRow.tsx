@@ -1,12 +1,15 @@
 import { debounce } from 'lodash';
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type CoreApp, dateTimeFormat, type LogRowContextOptions, type LogRowModel, type LogsSortOrder, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { CoreApp, LogRowContextOptions, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { type PopoverContent, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';

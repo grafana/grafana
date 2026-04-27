@@ -1,9 +1,9 @@
-import { type TransformerUIProps } from '@grafana/data';
 import {
   type GroupToNestedTableTransformerOptions,
   type GroupToNestedTableTransformerOptionsV2,
   isV1GroupToNestedTableOptions,
 } from '@grafana/data/internal';
+import type { TransformerUIProps } from '@grafana/data/transformations';
 import { config } from '@grafana/runtime';
 
 import { GroupToNestedTableTransformerEditorV1 } from './EditorV1';

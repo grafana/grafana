@@ -4,19 +4,13 @@ import { type ChangeEvent } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { type CoreApp, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { CoreApp, TimeRange } from '@grafana/data/types';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  type HighlightPart,
-  Input,
-  Label,
-  LoadingPlaceholder,
-  withTheme2,
-  BrowserLabel as LokiLabel,
-  fuzzyMatch,
-  Stack,
-} from '@grafana/ui';
+import { Button, Input, Label, LoadingPlaceholder, BrowserLabel as LokiLabel, Stack } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { HighlightPart } from '@grafana/ui/types';
+import { fuzzyMatch } from '@grafana/ui/utils';
 
 import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';

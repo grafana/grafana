@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data/types';
 
 import { getPluginEntitlement } from '../api';
 import { type CatalogPlugin } from '../types';

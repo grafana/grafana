@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type FieldConfigOptionsRegistry, type GrafanaTheme2, type ConfigOverrideRule } from '@grafana/data';
+import type { FieldConfigOptionsRegistry } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { ConfigOverrideRule } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   isExpanded: boolean;

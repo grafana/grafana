@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { LocalValueVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, type ComboboxOption, Select } from '@grafana/ui';

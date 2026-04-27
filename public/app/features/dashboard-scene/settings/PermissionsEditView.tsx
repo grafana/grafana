@@ -1,4 +1,4 @@
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data/types';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { Page } from 'app/core/components/Page/Page';

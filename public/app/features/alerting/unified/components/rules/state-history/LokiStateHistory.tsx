@@ -5,10 +5,14 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type SelectableValue, type TimeRange, dateTime } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue, TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, Label, Select, Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useSlowQuery } from '../../../hooks/useSlowQuery';

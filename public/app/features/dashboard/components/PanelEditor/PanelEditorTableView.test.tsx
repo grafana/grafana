@@ -4,15 +4,10 @@ import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 import { TimeSrvStub } from 'test/specs/helpers';
 
-import {
-  dateTime,
-  EventBusSrv,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelData,
-  type PanelPlugin,
-  type TimeRange,
-} from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import type { PanelPlugin } from '@grafana/data/panel';
+import { getDefaultTimeRange, LoadingState, type PanelData, type TimeRange } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv, type TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

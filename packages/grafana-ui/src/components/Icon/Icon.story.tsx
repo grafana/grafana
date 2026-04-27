@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Meta } from '@storybook/react';
 import { type ChangeEvent, useState } from 'react';
 
-import { toIconName, type IconName } from '@grafana/data';
+import { toIconName, type IconName } from '@grafana/data/types';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getAvailableIcons } from '../../types/icon';

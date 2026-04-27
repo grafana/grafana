@@ -1,6 +1,6 @@
 import { Fragment, type JSX } from 'react';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { Trans } from '@grafana/i18n';
 import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';

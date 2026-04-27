@@ -1,10 +1,11 @@
-import { dateTimeFormatISO, type DateTimeInput, type DateTimeOptions, DataFrameType } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { dateTimeFormatISO, type DateTimeInput, type DateTimeOptions } from '@grafana/data/datetime';
+import { DataFrameType } from '@grafana/data/types';
 
 import { logSeriesToLogsModel } from './logsModel';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/datetime', () => ({
+  ...jest.requireActual('@grafana/data/datetime'),
   // this produces relative time, so the test-results would keep changing,
   // so we have to mock it
   dateTimeFormatTimeAgo: (p1: DateTimeInput, p2?: DateTimeOptions) =>

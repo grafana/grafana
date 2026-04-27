@@ -1,6 +1,6 @@
 import { components, IndicatorsContainerProps } from 'react-select';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/types';
 
 import { Icon } from '../../../Icon/Icon';
 import { Select } from '../../../Select/Select';

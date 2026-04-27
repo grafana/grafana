@@ -2,7 +2,8 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { dateTime, DefaultTimeZone } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { DefaultTimeZone } from '@grafana/data/types';
 
 import { TimeRangePicker } from './TimeRangePicker';
 

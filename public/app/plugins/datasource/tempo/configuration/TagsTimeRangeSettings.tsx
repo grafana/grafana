@@ -1,5 +1,7 @@
-import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { Combobox, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
+import { Combobox, InlineField, InlineFieldRow } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TempoJsonData } from '../types';
 

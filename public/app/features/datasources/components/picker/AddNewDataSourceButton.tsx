@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, type ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

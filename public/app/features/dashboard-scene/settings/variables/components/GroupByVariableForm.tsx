@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback } from 'react';
 
-import { type DataSourceInstanceSettings, type MetricFindValue, type SelectableValue, readCSV } from '@grafana/data';
+import type { DataSourceInstanceSettings, MetricFindValue, SelectableValue } from '@grafana/data/types';
+import { readCSV } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';

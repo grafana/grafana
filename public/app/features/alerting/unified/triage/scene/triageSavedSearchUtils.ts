@@ -5,7 +5,8 @@
  * query strings, preserving filters, groupBy selections, and time range.
  */
 
-import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
+import { dateMath } from '@grafana/data/datetime';
+import { type AdHocVariableFilter, type RawTimeRange, makeTimeRange } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
 

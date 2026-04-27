@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Tooltip } from '@grafana/ui';
+import { Box, Button, Checkbox, Field, Input, Space, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { type FolderDTO } from 'app/types/folders';
 

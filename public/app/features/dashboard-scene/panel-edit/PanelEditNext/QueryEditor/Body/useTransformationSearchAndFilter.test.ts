@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 
-import { standardTransformersRegistry, TransformerCategory } from '@grafana/data';
+import { standardTransformersRegistry, TransformerCategory } from '@grafana/data/transformations';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';

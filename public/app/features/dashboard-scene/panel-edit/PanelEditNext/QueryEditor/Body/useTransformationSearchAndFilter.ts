@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useCallback, useMemo, useState } from 'react';
 
-import { standardTransformersRegistry, type TransformerRegistryItem } from '@grafana/data';
+import { standardTransformersRegistry, type TransformerRegistryItem } from '@grafana/data/transformations';
 
 import { getTransformerCategories, type TransformerCategoryOption } from '../utils';
 

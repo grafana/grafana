@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react';
 
 import { type AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Select, Button, Field } from '@grafana/ui';
 

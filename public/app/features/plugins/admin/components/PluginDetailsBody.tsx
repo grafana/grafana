@@ -1,11 +1,16 @@
 import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType } from '@grafana/data';
+import { PluginContextProvider } from '@grafana/data/context';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginType } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
-import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { type CellProps, InteractiveTable, Stack, Carousel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { Column } from '@grafana/ui/types';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';

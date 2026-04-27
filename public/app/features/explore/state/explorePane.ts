@@ -1,16 +1,16 @@
 import { createAction, type PayloadAction } from '@reduxjs/toolkit';
 import { type AnyAction } from 'redux';
 
-import {
-  type TimeRange,
-  type HistoryItem,
-  type DataSourceApi,
-  type ExplorePanelsState,
-  type PreferredVisualisationType,
-  type RawTimeRange,
-  type ExploreCorrelationHelperData,
-  type EventBusExtended,
-} from '@grafana/data';
+import { type EventBusExtended } from '@grafana/data/events';
+import type {
+  TimeRange,
+  HistoryItem,
+  DataSourceApi,
+  ExplorePanelsState,
+  PreferredVisualisationType,
+  RawTimeRange,
+  ExploreCorrelationHelperData,
+} from '@grafana/data/types';
 import { type CorrelationData } from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';

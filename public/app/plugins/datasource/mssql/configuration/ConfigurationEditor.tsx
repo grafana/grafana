@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 import { type SyntheticEvent } from 'react';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data/types';
 import {
-  type DataSourcePluginOptionsEditorProps,
-  type GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
-  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
@@ -21,12 +20,12 @@ import {
   TextLink,
   SecretInput,
   Select,
-  useStyles2,
   SecureSocksProxySettings,
   Divider,
   Field,
   Switch,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {

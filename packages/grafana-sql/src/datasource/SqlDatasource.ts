@@ -1,8 +1,21 @@
 import { lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { getDefaultTimeRange, type DataQuery, type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type MetricFindValue, type ScopedVars, CoreApp, getSearchFilterScopedVar, type LegacyMetricFindQueryOptions, type VariableWithMultiSupport, type TimeRange } from '@grafana/data';
 import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
+import {
+  getDefaultTimeRange,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
+  CoreApp,
+  type LegacyMetricFindQueryOptions,
+  type VariableWithMultiSupport,
+  type TimeRange,
+} from '@grafana/data/types';
+import { getSearchFilterScopedVar } from '@grafana/data/utils';
 import { EditorMode } from '@grafana/plugin-ui';
 import {
   type BackendDataSourceResponse,

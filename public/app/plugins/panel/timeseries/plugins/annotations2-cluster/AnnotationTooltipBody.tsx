@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
-import { Stack, Tag, useStyles2 } from '@grafana/ui';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Stack, Tag } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export function AnnotationTooltipBody({
   text,

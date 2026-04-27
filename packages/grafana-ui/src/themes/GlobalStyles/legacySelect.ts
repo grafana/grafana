@@ -2,7 +2,7 @@
 // TODO we should aim to remove this for Grafana 12
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 export function getLegacySelectStyles(theme: GrafanaTheme2) {
   return css({

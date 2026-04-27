@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Spinner, ToolbarButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { NavToolbarActions } from '../../scene/NavToolbarActions';
 import { type PanelEditor } from '../PanelEditor';

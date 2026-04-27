@@ -1,15 +1,9 @@
 import { render } from '@testing-library/react';
 
-import {
-  type DisplayValue,
-  VizOrientation,
-  ThresholdsMode,
-  FALLBACK_COLOR,
-  type Field,
-  FieldType,
-  getDisplayProcessor,
-  createTheme,
-} from '@grafana/data';
+import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getDisplayProcessor } from '@grafana/data/field';
+import { createTheme } from '@grafana/data/themes';
+import { type DisplayValue, VizOrientation, ThresholdsMode, FALLBACK_COLOR } from '@grafana/data/types';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@grafana/schema';
 
 import {

@@ -1,4 +1,4 @@
-import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data/field';
 import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';

@@ -2,14 +2,11 @@ import { css } from '@emotion/css';
 import { Fragment, type ReactNode, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import {
-  type GrafanaTheme2,
-  type PanelData,
-  type PanelPluginMeta,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData, PanelPluginMeta, PanelPluginVisualizationSuggestion } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';

@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, MappingType, type StandardEditorProps, type ValueMapping } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { MappingType, type ValueMapping } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { Stack, ColorPicker, Button, Modal } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';

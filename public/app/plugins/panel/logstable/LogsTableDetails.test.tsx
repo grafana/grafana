@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, dateTime, EventBusSrv, LogLevel } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import { CoreApp, LogLevel } from '@grafana/data/types';
 import { type DataSourceSrv, getDataSourceSrv, usePluginLinks } from '@grafana/runtime';
 import { defaultTableOptions } from '@grafana/schema';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
@@ -103,6 +105,7 @@ const setup = (
     >
       <LogDetailsContext.Provider value={detailsData}>
         <LogsTableDetails
+          containerElement={null}
           options={{ ...baseOptions, ...optionsOverrides }}
           onOptionsChange={onOptionsChange}
           timeRange={timeRange}
@@ -194,7 +197,13 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
+          <LogsTableDetails
+            containerElement={null}
+            options={baseOptions}
+            onOptionsChange={jest.fn()}
+            timeRange={timeRange}
+            timeZone="UTC"
+          />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
@@ -244,7 +253,13 @@ describe('LogsTableDetails', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
         <LogDetailsContext.Provider value={detailsData}>
-          <LogsTableDetails options={baseOptions} onOptionsChange={jest.fn()} timeRange={timeRange} timeZone="UTC" />
+          <LogsTableDetails
+            containerElement={null}
+            options={baseOptions}
+            onOptionsChange={jest.fn()}
+            timeRange={timeRange}
+            timeZone="UTC"
+          />
         </LogDetailsContext.Provider>
       </PanelContextProvider>
     );
@@ -272,6 +287,47 @@ describe('LogsTableDetails', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(closeDetails).toHaveBeenCalledTimes(1);
+  });
+
+  test('calls replaceDetails when ArrowDown and ArrowUp navigate the log list', async () => {
+    const logA = createLogLine({
+      uid: 'a',
+      logLevel: LogLevel.info,
+      timeEpochMs: 1546297200000,
+      datasourceUid: lokiDS.uid,
+    });
+    const logB = createLogLine({
+      uid: 'b',
+      logLevel: LogLevel.warn,
+      timeEpochMs: 1546297200001,
+      datasourceUid: lokiDS.uid,
+    });
+    const logC = createLogLine({
+      uid: 'c',
+      logLevel: LogLevel.error,
+      timeEpochMs: 1546297200002,
+      datasourceUid: lokiDS.uid,
+    });
+    const allLogs = [logA, logB, logC];
+    const replaceDetails = jest.fn();
+
+    setup({ currentLog: logB, showDetails: allLogs, replaceDetails }, undefined, undefined, jest.fn(), allLogs);
+
+    await waitFor(() => {
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+    });
+
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(replaceDetails).toHaveBeenCalledTimes(1);
+    expect(replaceDetails).toHaveBeenCalledWith(logC);
+
+    replaceDetails.mockClear();
+
+    await userEvent.keyboard('{ArrowUp}');
+
+    expect(replaceDetails).toHaveBeenCalledTimes(1);
+    expect(replaceDetails).toHaveBeenCalledWith(logA);
   });
 
   test('forwards label filters to the panel ad-hoc filter handler', async () => {

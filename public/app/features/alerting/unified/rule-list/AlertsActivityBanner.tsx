@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   trackAlertsActivityBannerClickTry,

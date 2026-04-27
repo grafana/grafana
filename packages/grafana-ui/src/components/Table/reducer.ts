@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { getFieldDisplayName } from '@grafana/data';
+import { getFieldDisplayName } from '@grafana/data/field';
 
 import {
   type TableSortByFieldState,

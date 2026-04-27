@@ -3,7 +3,8 @@ import memoize from 'micro-memoize';
 import { useContext } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme, type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { type GrafanaTheme2, ThemeContext } from '@grafana/data/themes';
+import type { GrafanaTheme } from '@grafana/data/types';
 
 import { type Themeable, type Themeable2 } from '../types/theme';
 

@@ -1,4 +1,6 @@
-import { type DataSourceInstanceSettings, PanelPlugin, standardEditorsRegistry, ThresholdsMode } from '@grafana/data';
+import { standardEditorsRegistry } from '@grafana/data/field';
+import { PanelPlugin } from '@grafana/data/panel';
+import { type DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { BigValueColorMode, Button, Stack } from '@grafana/ui';

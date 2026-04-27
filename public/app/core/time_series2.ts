@@ -1,12 +1,8 @@
 import { isNumber, isFinite, escape } from 'lodash';
 
-import {
-  type DecimalCount,
-  formattedValueToString,
-  getValueFormat,
-  stringToJsRegex,
-  type ValueFormatter,
-} from '@grafana/data';
+import { stringToJsRegex } from '@grafana/data/text';
+import type { DecimalCount } from '@grafana/data/types';
+import { formattedValueToString, getValueFormat, type ValueFormatter } from '@grafana/data/valueFormats';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {

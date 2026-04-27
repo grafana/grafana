@@ -1,4 +1,5 @@
-import { dateTime, type UrlQueryMap } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -10,7 +11,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch, TextLink } from '@grafana/ui';
+import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';

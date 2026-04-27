@@ -2,21 +2,12 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import {
-  type CellProps,
-  type Column,
-  FilterInput,
-  Icon,
-  InteractiveTable,
-  Link,
-  LinkButton,
-  Spinner,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { type CellProps, FilterInput, InteractiveTable, Link, LinkButton, Spinner, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { Column } from '@grafana/ui/types';
 import {
   type Repository,
   useGetRepositoryFilesQuery,

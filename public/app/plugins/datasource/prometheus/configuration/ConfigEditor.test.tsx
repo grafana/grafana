@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { type PromOptions } from '@grafana/prometheus';
 
 import { ConfigEditor } from './ConfigEditor';

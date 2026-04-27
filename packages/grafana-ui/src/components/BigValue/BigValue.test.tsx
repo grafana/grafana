@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { BigValue, BigValueColorMode, BigValueGraphMode, type Props } from './BigValue';
 

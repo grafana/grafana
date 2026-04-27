@@ -1,6 +1,6 @@
 import { PureComponent, type ReactNode } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import type { QueryEditorProps } from '@grafana/data/types';
 
 import { type LokiDatasource } from '../datasource';
 import { shouldRefreshLabels } from '../languageUtils';

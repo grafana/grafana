@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, type JSX } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { inputPadding } from '../Forms/commonStyles';

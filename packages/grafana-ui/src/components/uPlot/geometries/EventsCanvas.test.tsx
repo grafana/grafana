@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import uPlot from 'uplot';
 
-import { createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';

@@ -1,6 +1,6 @@
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext } from 'react';
 
-import { type CoreApp } from '@grafana/data';
+import type { CoreApp } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 import { type SavedQuery } from 'app/features/explore/QueryLibrary/types';
 

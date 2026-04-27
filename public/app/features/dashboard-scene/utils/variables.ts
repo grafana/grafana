@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
+import type { AdHocVariableFilter, TypedVariableModel } from '@grafana/data/types';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

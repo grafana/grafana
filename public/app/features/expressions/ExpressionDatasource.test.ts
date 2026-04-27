@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';

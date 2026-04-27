@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import { Cascader, type CascaderOption } from '@grafana/ui';
 
 import { type PyroscopeDataSource } from '../datasource';

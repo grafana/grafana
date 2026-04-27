@@ -2,7 +2,7 @@ import { kebabCase } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Divider, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text } from '@grafana/ui';
 

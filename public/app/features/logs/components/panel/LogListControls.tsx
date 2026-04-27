@@ -3,19 +3,14 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize } from 'lodash';
 import { type MouseEvent, useCallback, useMemo } from 'react';
 
-import {
-  CoreApp,
-  type EventBus,
-  type GrafanaTheme2,
-  LogLevel,
-  LogsDedupDescription,
-  LogsDedupStrategy,
-  LogsSortOrder,
-  store,
-} from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type LogsVisualisationType } from '../../../explore/Logs/constants';
 import { DownloadFormat } from '../../utils';

@@ -6,8 +6,10 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
+import { systemDateFormats, type SystemDateFormatsState } from '@grafana/data/datetime';
 import { getPanelPlugin } from '@grafana/data/test';
+import type { PanelProps } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,

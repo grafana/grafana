@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import { type ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type VariableSizeList } from 'react-window';
 
-import { escapeRegex, type GrafanaTheme2 } from '@grafana/data';
 import { shallowCompare } from '@grafana/data/dataframe';
+import { escapeRegex } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, Input, useStyles2 } from '@grafana/ui';
+import { IconButton, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';

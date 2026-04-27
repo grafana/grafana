@@ -3,7 +3,7 @@ import { autoUpdate, offset, type Side, useFloating, useTransitionStyles } from 
 import { useLayoutEffect } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';

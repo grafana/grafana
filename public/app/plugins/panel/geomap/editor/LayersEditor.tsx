@@ -1,6 +1,6 @@
 import { type DropResult } from '@hello-pangea/dnd';
 
-import { type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
 import { Trans, t } from '@grafana/i18n';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';

@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useCallback } from 'react';
 
-import { type TextBoxVariableModel } from '@grafana/data';
+import type { TextBoxVariableModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 

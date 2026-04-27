@@ -1,13 +1,7 @@
 import { isString } from 'lodash';
 
-import {
-  type TimeRange,
-  toUtc,
-  type AbsoluteTimeRange,
-  type RawTimeRange,
-  dateTime,
-  type DateTime,
-} from '@grafana/data';
+import { toUtc, dateTime, type DateTime } from '@grafana/data/datetime';
+import type { TimeRange, AbsoluteTimeRange, RawTimeRange } from '@grafana/data/types';
 
 type CopiedTimeRangeResult = { range: RawTimeRange; isError: false } | { range: string; isError: true };
 

@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import { useState, useMemo, useEffect } from 'react';
 import { useAsyncFn, useDebounce } from 'react-use';
 
-import { formattedValueToString, getValueFormat, type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { Trans } from '@grafana/i18n';
-import { Icon, Spinner, useTheme2 } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type DB, type SQLQuery, type ValidationResults } from '../../types';
 

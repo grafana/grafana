@@ -1,6 +1,7 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type IconName, fuzzySearch } from '@grafana/data';
 import { type DataFrame, type DataFrameView } from '@grafana/data/dataframe';
+import type { IconName } from '@grafana/data/types';
+import { fuzzySearch } from '@grafana/data/utils';
 import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

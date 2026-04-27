@@ -1,6 +1,6 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { FeatureState } from '@grafana/data';
+import { FeatureState } from '@grafana/data/types';
 
 import { FeatureBadge } from './FeatureBadge';
 import mdx from './FeatureBadge.mdx';

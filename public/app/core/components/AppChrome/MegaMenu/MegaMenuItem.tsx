@@ -4,9 +4,12 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FeatureState, type NavModelItem, toIconName } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
+import { Text, IconButton, Stack, FeatureBadge } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';

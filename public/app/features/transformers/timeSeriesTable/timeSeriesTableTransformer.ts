@@ -1,7 +1,16 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID, type DataTransformerInfo, ReducerID, reduceField, TransformationApplicabilityLevels } from '@grafana/data';
-import { type DataFrame, type DataFrameWithValue, type Field, FieldType, MutableDataFrame, isTimeSeriesFrame, isTimeSeriesField } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type DataFrameWithValue,
+  type Field,
+  FieldType,
+  MutableDataFrame,
+  isTimeSeriesFrame,
+  isTimeSeriesField,
+} from '@grafana/data/dataframe';
+import { DataTransformerID, ReducerID, reduceField } from '@grafana/data/transformations';
+import { type DataTransformerInfo, TransformationApplicabilityLevels } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 
 /**

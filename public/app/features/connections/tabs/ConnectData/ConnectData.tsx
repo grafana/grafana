@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useId, useMemo, useState, type MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { PluginType, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PluginType, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';

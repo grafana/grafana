@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   initLastUsedDatasourceKeyForDashboard,

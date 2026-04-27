@@ -1,5 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data/types';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';

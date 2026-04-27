@@ -1,8 +1,8 @@
 import type { Grammar } from 'prismjs';
 import React, { type ReactNode } from 'react';
 
-import { CoreApp, type LinkModel, type ScopedVars } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { CoreApp, type LinkModel, type ScopedVars } from '@grafana/data/types';
 import { type LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { type LogListOptions } from 'app/features/logs/components/panel/LogList';
 

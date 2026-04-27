@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { type FC, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, LoadingState, type PanelData } from '@grafana/data/types';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';

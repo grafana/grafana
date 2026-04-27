@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { ReducerID } from '@grafana/data';
+import { ReducerID } from '@grafana/data/transformations';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, EventBusSrv, LogsSortOrder } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data/events';
+import { CoreApp, LogsSortOrder } from '@grafana/data/types';
 import { PanelContextProvider } from '@grafana/ui';
 
 import { DownloadFormat, downloadLogs } from '../../utils';

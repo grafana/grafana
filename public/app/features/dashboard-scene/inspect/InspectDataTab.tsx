@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,

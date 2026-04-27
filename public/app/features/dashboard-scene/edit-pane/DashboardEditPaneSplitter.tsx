@@ -2,18 +2,12 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useMedia } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
-import {
-  ElementSelectionContext,
-  useSidebar,
-  useStyles2,
-  useTheme2,
-  Sidebar,
-  type SidebarContextValue,
-} from '@grafana/ui';
+import { ElementSelectionContext, useSidebar, Sidebar, type SidebarContextValue } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

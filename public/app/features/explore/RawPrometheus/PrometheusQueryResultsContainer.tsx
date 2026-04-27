@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react';
 
-import { applyFieldOverrides, type PrometheusQueryResultsV1Props } from '@grafana/data';
+import { applyFieldOverrides } from '@grafana/data/field';
+import type { PrometheusQueryResultsV1Props } from '@grafana/data/types';
 import { config, getTemplateSrv } from '@grafana/runtime';
 
 const RawPrometheusContainerPureLazy = lazy(() =>
@@ -22,7 +23,7 @@ const RawPrometheusContainerPureLazy = lazy(() =>
  * Example usage in a plugin:
  * ```typescript
  * import { usePluginComponent } from '@grafana/runtime';
- * import { PluginExtensionExposedComponents } from '@grafana/data';
+ * import { PluginExtensionExposedComponents } from '@grafana/data/types';
  *
  * const { component: PrometheusQueryResults } = usePluginComponent(
  *   PluginExtensionExposedComponents.PrometheusQueryResultsV1

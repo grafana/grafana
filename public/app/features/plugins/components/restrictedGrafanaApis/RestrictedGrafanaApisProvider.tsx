@@ -1,6 +1,6 @@
 import { type PropsWithChildren, type ReactElement } from 'react';
 
-import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
+import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data/context';
 import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 

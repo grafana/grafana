@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
 import { selectors } from '@grafana/e2e-selectors';
 import { Switch } from '@grafana/ui';
 

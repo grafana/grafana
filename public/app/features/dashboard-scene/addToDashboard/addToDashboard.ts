@@ -1,4 +1,5 @@
-import { locationUtil, store, type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
+import { locationUtil, store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { type Panel } from '@grafana/schema';

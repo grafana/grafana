@@ -2,7 +2,9 @@ import { Observable, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
+import { type EventBusExtended } from '@grafana/data/events';
+import { PathValidationError } from '@grafana/data/text';
+import { AppEvents, DataQueryErrorType } from '@grafana/data/types';
 import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';

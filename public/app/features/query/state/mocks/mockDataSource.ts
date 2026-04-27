@@ -11,7 +11,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   type TestDataSourceResponse,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 export interface TestQuery extends DataQuery {
   q?: string;

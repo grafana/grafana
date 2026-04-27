@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
 import { type RouteWithID } from '@grafana/alerting';
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Text, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';

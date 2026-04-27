@@ -4,13 +4,8 @@ import { connect, type ConnectedProps } from 'react-redux';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import {
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  type NavModel,
-  type NavModelItem,
-  PageLayoutType,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { type FieldConfigSource, type NavModel, type NavModelItem, PageLayoutType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -19,13 +14,12 @@ import {
   InlineSwitch,
   ModalsController,
   RadioButtonGroup,
-  stylesFactory,
-  type Themeable2,
   ToolbarButton,
   ToolbarButtonRow,
-  withTheme2,
   Stack,
 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';

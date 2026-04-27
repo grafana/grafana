@@ -1,4 +1,4 @@
-import { type RelativeTimeRange } from '@grafana/data';
+import type { RelativeTimeRange } from '@grafana/data/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { type ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';

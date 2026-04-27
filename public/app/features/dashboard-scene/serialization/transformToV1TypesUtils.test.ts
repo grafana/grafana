@@ -1,4 +1,4 @@
-import { SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
+import { SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data/types';
 import { MappingType as MappingTypeV1 } from '@grafana/schema';
 import type { FieldConfigSource, SpecialValueMatch } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 

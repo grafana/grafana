@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
+import type { StandardEditorProps, NumberFieldConfigSettings } from '@grafana/data/field';
 
 import { NumberInput } from './NumberInput';
 

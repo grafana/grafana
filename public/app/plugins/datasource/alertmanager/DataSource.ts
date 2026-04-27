@@ -1,6 +1,11 @@
 import { lastValueFrom, type Observable, of } from 'rxjs';
 
-import { type DataQuery, type DataQueryResponse, DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import {
+  type DataQuery,
+  type DataQueryResponse,
+  DataSourceApi,
+  type DataSourceInstanceSettings,
+} from '@grafana/data/types';
 import { type BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { discoverAlertmanagerFeaturesByUrl } from '../../../features/alerting/unified/api/buildInfo';

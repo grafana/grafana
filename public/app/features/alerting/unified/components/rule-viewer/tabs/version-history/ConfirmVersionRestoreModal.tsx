@@ -1,7 +1,7 @@
 import { type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { urlUtil } from '@grafana/data';
+import { urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Text } from '@grafana/ui';
 import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';

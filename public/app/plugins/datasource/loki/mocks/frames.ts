@@ -1,5 +1,5 @@
-import { DataFrameType } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { DataFrameType } from '@grafana/data/types';
 
 export function getMockFrames() {
   const logFrameA: DataFrame = {

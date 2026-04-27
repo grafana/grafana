@@ -2,21 +2,13 @@ import { css } from '@emotion/css';
 import moment, { type Moment } from 'moment/moment';
 import { type ChangeEvent, useState } from 'react';
 
-import { dateTimeAsMoment, getTimeZoneInfo, type GrafanaTheme2, isDateTime, type SelectableValue } from '@grafana/data';
+import { dateTimeAsMoment, getTimeZoneInfo, isDateTime } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import {
-  Button,
-  Field,
-  FieldSet,
-  Input,
-  Select,
-  Stack,
-  Switch,
-  TimeOfDayPicker,
-  TimeZonePicker,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Field, FieldSet, Input, Select, Stack, Switch, TimeOfDayPicker, TimeZonePicker } from '@grafana/ui';
 import { getTimeZoneTitle, TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type TimeRegionConfig, type TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 

@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { type DataFrame, type DataFrameJSON } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 

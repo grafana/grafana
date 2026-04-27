@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 
-import { fieldReducers, type KeyValue, ReducerID } from '@grafana/data';
+import { fieldReducers, ReducerID } from '@grafana/data/transformations';
+import type { KeyValue } from '@grafana/data/types';
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 

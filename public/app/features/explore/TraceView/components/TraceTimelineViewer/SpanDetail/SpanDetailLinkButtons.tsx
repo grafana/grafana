@@ -1,20 +1,21 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
   CoreApp,
-  type GrafanaTheme2,
   type IconName,
   type LinkModel,
   PluginExtensionPoints,
   type RawTimeRange,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkButton, Dropdown, Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';

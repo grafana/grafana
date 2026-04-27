@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';

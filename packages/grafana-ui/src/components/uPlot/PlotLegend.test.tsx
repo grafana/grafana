@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data/dataframe';
+import { createTheme } from '@grafana/data/themes';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { PanelContextProvider } from '../PanelChrome/PanelContext';

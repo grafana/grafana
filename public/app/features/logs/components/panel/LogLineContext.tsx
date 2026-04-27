@@ -3,12 +3,32 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type AbsoluteTimeRange, CoreApp, type DataQueryResponse, type DataSourceApi, type DataSourceWithLogsContextSupport, dateTime, EventBusSrv, formattedValueToString, getValueFormat, type GrafanaTheme2, hasLogsContextSupport, LoadingState, type LogRowContextOptions, LogRowContextQueryDirection, type LogRowModel, LogsDedupStrategy, LogsSortOrder, store, type TimeRange } from '@grafana/data';
 import { shallowCompare } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  type AbsoluteTimeRange,
+  CoreApp,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceWithLogsContextSupport,
+  hasLogsContextSupport,
+  LoadingState,
+  type LogRowContextOptions,
+  LogRowContextQueryDirection,
+  type LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
+  type TimeRange,
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
+import { formattedValueToString, getValueFormat } from '@grafana/data/valueFormats';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 

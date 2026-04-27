@@ -3,20 +3,11 @@ import { take } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { type SceneQueryRunner } from '@grafana/scenes';
-import {
-  Box,
-  Button,
-  EmptyState,
-  LoadingBar,
-  ScrollContainer,
-  Stack,
-  Text,
-  useSplitter,
-  useStyles2,
-} from '@grafana/ui';
+import { Box, Button, EmptyState, LoadingBar, ScrollContainer, Stack, Text, useSplitter } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';

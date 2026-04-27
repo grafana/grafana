@@ -1,7 +1,16 @@
 import { from, type Observable, of } from 'rxjs';
 
-import { type AnnotationQuery, type DataQuery, type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse, DataSourceApi, type DataSourceJsonData, type DataSourcePluginMeta } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/dataframe';
+import {
+  type AnnotationQuery,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
+  DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+} from '@grafana/data/types';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 

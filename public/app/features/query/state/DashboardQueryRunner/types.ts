@@ -1,12 +1,6 @@
 import { type Observable } from 'rxjs';
 
-import {
-  type AlertStateInfo,
-  type AnnotationEvent,
-  type AnnotationQuery,
-  type DataSourceApi,
-  type TimeRange,
-} from '@grafana/data';
+import type { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data/types';
 
 import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
 

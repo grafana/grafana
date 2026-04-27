@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, type DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
+import { type DataQueryRequest, type DataQueryResponse, LoadingState } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';

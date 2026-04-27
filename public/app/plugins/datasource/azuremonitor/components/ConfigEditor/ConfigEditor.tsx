@@ -1,10 +1,7 @@
 import { PureComponent } from 'react';
 
-import {
-  type DataSourcePluginOptionsEditorProps,
-  type SelectableValue,
-  updateDatasourcePluginOption,
-} from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data/types';
+import { updateDatasourcePluginOption } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getBackendSrv, getTemplateSrv, isFetchError, type TemplateSrv, config } from '@grafana/runtime';

@@ -1,21 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  Card,
-  Collapse,
-  Field,
-  Input,
-  LoadingPlaceholder,
-  ScrollContainer,
-  Select,
-  Stack,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Card, Collapse, Field, Input, LoadingPlaceholder, ScrollContainer, Select, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import type AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
 import { AzureQueryType } from '../../dataquery.gen';

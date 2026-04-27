@@ -3,15 +3,11 @@ import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { uniqueId } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import {
-  type GrafanaTheme2,
-  MappingType,
-  type SelectableValue,
-  SpecialValueMatch,
-  type ValueMapping,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { MappingType, type SelectableValue, SpecialValueMatch, type ValueMapping } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
+import { Modal, ValuePicker, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 

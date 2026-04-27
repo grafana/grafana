@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { type TableCellHeight } from '@grafana/schema';
 
 export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type PanelProps } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { Alert, ScrollContainer, TextLink } from '@grafana/ui';

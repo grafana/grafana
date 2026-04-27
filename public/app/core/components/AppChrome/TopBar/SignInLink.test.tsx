@@ -1,6 +1,7 @@
 import { render } from 'test/test-utils';
 
-import { locationUtil, type GrafanaConfig } from '@grafana/data';
+import type { GrafanaConfig } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { type DisplayValue, formattedValueToString } from '@grafana/data';
+import type { DisplayValue } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';

@@ -1,5 +1,14 @@
-import { AppEvents, getDefaultTimeRange, getPanelDataSummary, LoadingState, type PanelData, type PanelPluginVisualizationSuggestion, PluginType, VisualizationSuggestionScore } from '@grafana/data';
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data/dataframe';
+import { getPanelDataSummary } from '@grafana/data/panel';
+import {
+  AppEvents,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
+  PluginType,
+  VisualizationSuggestionScore,
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {

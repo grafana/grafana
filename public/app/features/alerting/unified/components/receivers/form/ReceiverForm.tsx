@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';

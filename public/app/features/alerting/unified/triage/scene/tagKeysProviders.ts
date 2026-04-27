@@ -1,4 +1,4 @@
-import { type MetricFindValue, type TimeRange } from '@grafana/data';
+import type { MetricFindValue, TimeRange } from '@grafana/data/types';
 import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {

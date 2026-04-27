@@ -1,6 +1,8 @@
 import uPlot, { type Scale, type Range } from 'uplot';
 
-import { type DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
+import { incrRoundDn, incrRoundUp } from '@grafana/data/transformations';
+import type { DecimalCount } from '@grafana/data/types';
+import { isBooleanUnit } from '@grafana/data/valueFormats';
 import { type ScaleOrientation, type ScaleDirection, ScaleDistribution, StackingMode } from '@grafana/schema';
 
 import { PlotConfigBuilder } from '../types';

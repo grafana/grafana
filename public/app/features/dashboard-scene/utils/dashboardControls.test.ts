@@ -1,4 +1,4 @@
-import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import type { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data/types';
 import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import {

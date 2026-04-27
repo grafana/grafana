@@ -3,8 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState, LogsSortOrder, CoreApp, getDefaultTimeRange, LogsDedupStrategy, EventBusSrv, DataFrameType, LogSortOrderChangeEvent } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { EventBusSrv } from '@grafana/data/events';
+import {
+  LoadingState,
+  LogsSortOrder,
+  CoreApp,
+  getDefaultTimeRange,
+  LogsDedupStrategy,
+  DataFrameType,
+  LogSortOrderChangeEvent,
+} from '@grafana/data/types';
 import { config, getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';

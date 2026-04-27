@@ -1,6 +1,7 @@
 // TODO: migrate tests below to the builder
 
-import { createTheme, ThresholdsMode } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { ThresholdsMode } from '@grafana/data/types';
 import {
   GraphGradientMode,
   AxisPlacement,

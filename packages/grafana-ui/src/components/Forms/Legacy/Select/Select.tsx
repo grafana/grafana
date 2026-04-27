@@ -7,7 +7,8 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectableValue, ThemeContext } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/types';
+import { ThemeContext } from '@grafana/data/themes';
 
 import { ScrollContainer } from '../../../ScrollContainer/ScrollContainer';
 import { SingleValue } from '../../../Select/SingleValue';

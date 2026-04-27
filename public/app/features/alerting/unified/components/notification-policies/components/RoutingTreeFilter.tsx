@@ -3,7 +3,9 @@ import { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 

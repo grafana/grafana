@@ -2,9 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { type DataFrameView } from '@grafana/data/dataframe';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import { textUtil } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 
 import { type NewsItem } from '../types';

@@ -4,9 +4,8 @@ import {
   LiveChannelEventType,
   LoadingState,
   getDefaultTimeRange,
-  locationUtil,
-  store,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { locationUtil, store } from '@grafana/data/utils';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,

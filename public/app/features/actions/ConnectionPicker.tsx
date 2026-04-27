@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { ActionType, type DataSourceInstanceSettings } from '@grafana/data';
+import { ActionType, type DataSourceInstanceSettings } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Select } from '@grafana/ui';

@@ -1,9 +1,11 @@
-import { getFieldDisplayName, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { PanelPlugin } from '@grafana/data/panel';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type GraphFieldConfig } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';

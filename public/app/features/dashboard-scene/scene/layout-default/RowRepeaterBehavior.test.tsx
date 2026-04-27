@@ -1,5 +1,5 @@
-import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import type { VariableRefresh } from '@grafana/data/types';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SceneCanvasText,

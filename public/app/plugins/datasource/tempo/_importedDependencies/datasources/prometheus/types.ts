@@ -1,12 +1,12 @@
 import { type Observable } from 'rxjs';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceGetTagKeysOptions,
-  type DataSourceJsonData,
-  type MetricFindValue,
-} from '@grafana/data';
+import type {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceJsonData,
+  MetricFindValue,
+} from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 
 import { type Prometheus as GenPromQuery } from './dataquery.gen';

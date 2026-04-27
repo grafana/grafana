@@ -3,20 +3,14 @@ import { fromPairs, isEmpty, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
 import { type DataFrameJSON } from '@grafana/data/dataframe';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeRange } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Icon,
-  LoadingPlaceholder,
-  RefreshPicker,
-  Stack,
-  Text,
-  TimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, LoadingPlaceholder, RefreshPicker, Stack, Text, TimeRangePicker, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useRunBacktestMutation } from '../../api/backtestApi';
 import { type RuleFormValues } from '../../types/rule-form';

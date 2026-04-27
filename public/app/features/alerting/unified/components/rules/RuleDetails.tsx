@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Time } from 'app/features/explore/Time';
 import { type CombinedRule } from 'app/types/unified-alerting';
 

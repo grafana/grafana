@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

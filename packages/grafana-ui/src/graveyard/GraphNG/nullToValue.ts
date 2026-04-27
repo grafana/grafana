@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame } from '@grafana/data/dataframe';
 
 /** @deprecated */
 export function nullToValue(frame: DataFrame) {

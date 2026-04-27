@@ -5,7 +5,7 @@ import {
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceJsonDataOptionSelect,
   updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { Combobox, Input, Space, Button, Field, Checkbox, Box } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';

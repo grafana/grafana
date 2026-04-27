@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from 'react';
 
-import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data/types';
 // import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';

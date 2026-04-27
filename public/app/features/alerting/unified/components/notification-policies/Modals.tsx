@@ -2,7 +2,8 @@ import { groupBy } from 'lodash';
 import { type FC, type JSX, useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Modal, type ModalProps, Spinner, Stack } from '@grafana/ui';
+import { Button, Modal, type ModalProps, Spinner, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import {
   AlertState,
   type AlertmanagerGroup,

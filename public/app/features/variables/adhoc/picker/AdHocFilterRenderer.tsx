@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
+import type { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data/types';
 
 import { AdHocFilterKey } from './AdHocFilterKey';
 import { AdHocFilterValue } from './AdHocFilterValue';

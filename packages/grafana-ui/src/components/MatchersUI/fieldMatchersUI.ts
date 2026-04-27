@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { Registry, type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
+import { Registry } from '@grafana/data/utils';
 
 import { type ComboboxOption } from '../Combobox/types';
 import { selectableValueToComboboxOption } from '../Combobox/utils';

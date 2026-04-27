@@ -3,12 +3,12 @@ import { type PartialObserver, type Unsubscribable } from 'rxjs';
 
 import {
   type BusEvent,
-  CircularVector,
   DataHoverEvent,
   DataHoverClearEvent,
   DataSelectEvent,
   type EventBus,
-} from '@grafana/data';
+} from '@grafana/data/events';
+import { CircularVector } from '@grafana/data/vector';
 import { CustomScrollbar } from '@grafana/ui';
 
 interface Props {

@@ -1,12 +1,9 @@
 import { memo } from 'react';
 
-import {
-  type DisplayValue,
-  type DisplayValueAlignmentFactors,
-  type FieldSparkline,
-  formattedValueToString,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import type { FieldSparkline } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DisplayValue, DisplayValueAlignmentFactors } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 
 import { calculateFontSize } from '../../utils/measureText';
 

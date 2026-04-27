@@ -3,10 +3,12 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
-import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import {

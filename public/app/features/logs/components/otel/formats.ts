@@ -1,4 +1,4 @@
-import { type LogRowModel } from '@grafana/data';
+import type { LogRowModel } from '@grafana/data/types';
 
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type LogListModel, NEWLINES_REGEX } from '../panel/processing';

@@ -1,5 +1,5 @@
-import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data/types';
 
 import { type Options } from './panelcfg.gen';
 

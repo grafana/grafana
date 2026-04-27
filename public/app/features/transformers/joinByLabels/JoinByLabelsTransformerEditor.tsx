@@ -2,12 +2,11 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import {
-  PluginState,
-  type SelectableValue,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import { PluginState, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 

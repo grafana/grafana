@@ -1,4 +1,4 @@
-import { type Scope } from '@grafana/data';
+import type { Scope } from '@grafana/data/types';
 
 export function getEmptyScopeObject(name: string, title?: string): Scope {
   return {

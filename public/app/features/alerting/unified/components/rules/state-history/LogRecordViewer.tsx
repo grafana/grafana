@@ -4,9 +4,12 @@ import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { Stack, TagList } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { AlertStateTag } from '../AlertStateTag';

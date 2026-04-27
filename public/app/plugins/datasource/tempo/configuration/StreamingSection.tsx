@@ -1,10 +1,7 @@
 import React from 'react';
 
-import {
-  type DataSourceJsonData,
-  type DataSourcePluginOptionsEditorProps,
-  updateDatasourcePluginJsonDataOption,
-} from '@grafana/data';
+import type { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { updateDatasourcePluginJsonDataOption } from '@grafana/data/utils';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { InlineFieldRow, InlineField, InlineSwitch, Alert, Stack, TextLink } from '@grafana/ui';
 

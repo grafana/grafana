@@ -1,5 +1,6 @@
-import { getPanelDataSummary, type VisualizationSuggestion } from '@grafana/data';
 import { createDataFrame, type DataFrame, FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary } from '@grafana/data/panel';
+import type { VisualizationSuggestion } from '@grafana/data/types';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { type FieldConfig, type Options } from './panelcfg.gen';

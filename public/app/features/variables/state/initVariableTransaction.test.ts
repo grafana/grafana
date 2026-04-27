@@ -1,4 +1,4 @@
-import { type BaseVariableModel, type DataSourceRef, LoadingState } from '@grafana/data';
+import { type BaseVariableModel, type DataSourceRef, LoadingState } from '@grafana/data/types';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

@@ -1,4 +1,4 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { DashboardLoadedEvent } from '@grafana/data/events';
 import { reportInteraction } from '@grafana/runtime';
 import './module';
 

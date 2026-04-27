@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { type FieldConfigSource, FieldMatcherID, type GrafanaTheme2, LoadingState } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { FieldMatcherID } from '@grafana/data/transformations';
+import { type FieldConfigSource, LoadingState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
-import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType } from '../../types/rule-form';

@@ -14,9 +14,12 @@ import Highlighter from 'react-highlight-words';
 import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type TimeRange } from '@grafana/data';
+import { findHighlightChunksInText } from '@grafana/data/text';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { LogsDedupStrategy, type TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Tooltip } from '@grafana/ui';
+import { Button, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';

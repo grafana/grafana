@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 
 import { renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';

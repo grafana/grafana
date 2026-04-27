@@ -1,14 +1,14 @@
 import { type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
+import { rangeUtil } from '@grafana/data/datetime';
 import {
   type AnnotationQuery,
   CoreApp,
   type DataQueryRequest,
   type DataSourceApi,
-  rangeUtil,
   type ScopedVars,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { runRequest } from '../query/state/runRequest';
 

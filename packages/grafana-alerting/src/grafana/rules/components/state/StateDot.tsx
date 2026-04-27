@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface DotStylesProps {
   color: 'success' | 'error' | 'warning' | 'unknown' | 'info';

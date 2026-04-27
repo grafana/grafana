@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import {
-  type GrafanaTheme2,
-  type SelectableValue,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
+} from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import darkImage from '../images/dark/prepareTimeSeries.svg';
 import lightImage from '../images/light/prepareTimeSeries.svg';

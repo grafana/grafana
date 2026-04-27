@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type ActionItem, Actions } from '../../../Actions';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';

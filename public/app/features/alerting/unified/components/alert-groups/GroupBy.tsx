@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
+import { Label, MultiSelect, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';

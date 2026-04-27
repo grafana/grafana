@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import { type DataSourceSettings } from '@grafana/data';
+import type { DataSourceSettings } from '@grafana/data/types';
 
 import { type SQLOptions } from '../../types';
 

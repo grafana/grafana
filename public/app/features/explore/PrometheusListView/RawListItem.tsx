@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';

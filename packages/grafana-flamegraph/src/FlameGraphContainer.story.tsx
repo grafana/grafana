@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { createDataFrame } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { createDataFrame } from '@grafana/data/dataframe';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { type Props } from './FlameGraphContainer';

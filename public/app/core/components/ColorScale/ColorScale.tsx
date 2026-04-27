@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useTheme2 } from '@grafana/ui/themes';
 
 type Props = {
   colorPalette: string[];

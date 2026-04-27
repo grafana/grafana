@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, type ReactNode, useMemo } from 'react';
 
-import { type LogRowModel } from '@grafana/data';
+import type { LogRowModel } from '@grafana/data/types';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogRowMenuCell } from './LogRowMenuCell';

@@ -5,7 +5,7 @@ import {
   type DataSourcePluginMeta,
   PluginType,
   type PluginMetaInfo,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { useFavoriteDatasources } from './useFavoriteDatasources';
 

@@ -1,4 +1,5 @@
-import { type FeatureToggles, store } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 
 type AlertingPreviewToggles = Pick<FeatureToggles, 'alertingListViewV2'>;
 

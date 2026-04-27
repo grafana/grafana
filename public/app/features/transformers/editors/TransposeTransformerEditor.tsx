@@ -1,13 +1,12 @@
+import { type TransposeTransformerOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-  type SpecialValue,
-  type SelectableValue,
-} from '@grafana/data';
-import { type TransposeTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import type { SpecialValue, SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 

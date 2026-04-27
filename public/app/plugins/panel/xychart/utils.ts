@@ -1,6 +1,9 @@
-import { formattedValueToString, getFieldMatcher, getFieldDisplayName, FrameMatcherID, type MatcherConfig, FieldColorModeId, cacheFieldDisplayNames, FieldMatcherID, type FieldConfigSource } from '@grafana/data';
 import { type Field, FieldType, type DataFrame } from '@grafana/data/dataframe';
+import { getFieldDisplayName, cacheFieldDisplayNames } from '@grafana/data/field';
 import { decoupleHideFromState } from '@grafana/data/internal';
+import { getFieldMatcher, FrameMatcherID, FieldMatcherID } from '@grafana/data/transformations';
+import { type MatcherConfig, FieldColorModeId, type FieldConfigSource } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 

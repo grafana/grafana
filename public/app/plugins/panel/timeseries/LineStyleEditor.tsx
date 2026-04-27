@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';

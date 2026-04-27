@@ -1,11 +1,11 @@
+import { type MergeTransformerOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
-} from '@grafana/data';
-import { type MergeTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage } from '@grafana/ui';
 

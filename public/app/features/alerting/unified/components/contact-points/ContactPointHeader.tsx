@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { Fragment, type JSX, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';

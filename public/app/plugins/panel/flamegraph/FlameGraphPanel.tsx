@@ -1,4 +1,4 @@
-import { CoreApp, type PanelProps } from '@grafana/data';
+import { CoreApp, type PanelProps } from '@grafana/data/types';
 import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
 

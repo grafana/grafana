@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { type QueryEditorProps, type SelectableValue, type TimeRange } from '@grafana/data';
+import type { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data/types';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';

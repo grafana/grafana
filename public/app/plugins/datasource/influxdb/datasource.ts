@@ -2,10 +2,34 @@ import { map as _map, cloneDeep, extend, has, isString, omit, pick, reduce } fro
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { type AdHocVariableFilter, type AnnotationEvent, type DataQueryError, type DataQueryRequest, type DataQueryResponse, type DataSourceGetTagKeysOptions, type DataSourceGetTagValuesOptions, type DataSourceInstanceSettings, dateMath, type DateTime, escapeRegex, type MetricFindValue, type QueryResultMeta, type QueryVariableModel, type RawTimeRange, type ScopedVars, type TimeSeries } from '@grafana/data';
-import { type DataFrame, FieldType, TIME_SERIES_TIME_FIELD_NAME, TIME_SERIES_VALUE_FIELD_NAME, toDataFrame } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  FieldType,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  toDataFrame,
+} from '@grafana/data/dataframe';
+import { dateMath, type DateTime } from '@grafana/data/datetime';
+import { escapeRegex } from '@grafana/data/text';
+import type {
+  AdHocVariableFilter,
+  AnnotationEvent,
+  DataQueryError,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  DataSourceInstanceSettings,
+  MetricFindValue,
+  QueryResultMeta,
+  QueryVariableModel,
+  RawTimeRange,
+  ScopedVars,
+  TimeSeries,
+} from '@grafana/data/types';
 import {
   type BackendDataSourceResponse,
+  config,
   DataSourceWithBackend,
   type FetchResponse,
   getBackendSrv,
@@ -13,7 +37,6 @@ import {
   type TemplateSrv,
 } from '@grafana/runtime';
 import { QueryFormat, type SQLQuery } from '@grafana/sql';
-import config from 'app/core/config';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';

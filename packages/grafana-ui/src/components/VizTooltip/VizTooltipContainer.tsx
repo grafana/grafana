@@ -3,7 +3,8 @@ import { useState, type HTMLAttributes, useMemo, useRef, useLayoutEffect } from 
 import * as React from 'react';
 import { useWindowSize } from 'react-use';
 
-import { type Dimensions2D, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Dimensions2D } from '@grafana/data/types';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getTooltipContainerStyles } from '../../themes/mixins';

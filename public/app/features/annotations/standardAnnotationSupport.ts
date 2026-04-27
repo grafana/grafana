@@ -2,8 +2,19 @@ import { isString } from 'lodash';
 import { type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { type AnnotationEvent, AnnotationEventFieldSource, type AnnotationEventMappings, type AnnotationQuery, type AnnotationSupport, type DataSourceApi, type DataTransformContext, getFieldDisplayName, type KeyValue, standardTransformers } from '@grafana/data';
 import { type DataFrame, type Field, FieldType } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { standardTransformers } from '@grafana/data/transformations';
+import {
+  type AnnotationEvent,
+  AnnotationEventFieldSource,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type AnnotationSupport,
+  type DataSourceApi,
+  type DataTransformContext,
+  type KeyValue,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 

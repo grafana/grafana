@@ -6,7 +6,7 @@ import {
   type CheckType,
   useGetCheckTypeQuery,
 } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
 import { config, usePluginFunctions } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';

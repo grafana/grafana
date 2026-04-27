@@ -2,10 +2,13 @@ import { css } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { Button, ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import {

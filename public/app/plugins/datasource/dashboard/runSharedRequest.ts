@@ -9,7 +9,7 @@ import {
   LoadingState,
   type PanelData,
   DataTopic,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';

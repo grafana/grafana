@@ -1,4 +1,4 @@
-import { type OrgRole } from '@grafana/data';
+import type { OrgRole } from '@grafana/data/types';
 import { type OrgUser } from 'app/types/user';
 
 import { type UsersFetchResult, initialState } from '../state/reducers';

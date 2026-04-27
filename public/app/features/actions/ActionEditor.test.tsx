@@ -8,7 +8,7 @@ import {
   type VariableSuggestion,
   VariableOrigin,
   HttpRequestMethod,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { ActionEditor } from './ActionEditor';
 

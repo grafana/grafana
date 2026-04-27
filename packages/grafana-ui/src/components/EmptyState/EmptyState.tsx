@@ -3,7 +3,7 @@ import { type AriaRole, type ReactNode } from 'react';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Box } from '../Layout/Box/Box';

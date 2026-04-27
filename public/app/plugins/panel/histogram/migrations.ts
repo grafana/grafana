@@ -1,6 +1,6 @@
 import { isNil, omitBy } from 'lodash';
 
-import { type FieldConfigSource, type PanelTypeChangedHandler } from '@grafana/data';
+import type { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data/types';
 import { LegendDisplayMode, SortOrder, StackingMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { defaultHistogramConfig } from './config';

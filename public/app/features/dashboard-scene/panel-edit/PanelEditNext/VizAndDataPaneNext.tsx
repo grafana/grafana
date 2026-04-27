@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type PanelEditor } from '../PanelEditor';
 import { QueryEditorBanner } from '../QueryEditorBanner';

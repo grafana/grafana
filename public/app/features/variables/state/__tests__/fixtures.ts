@@ -19,7 +19,7 @@ import {
   VariableRefresh,
   VariableSort,
   type VariableType,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 function createBaseVariableModel<T extends VariableType>(type: T): BaseVariableModel & { type: T } {
   return {

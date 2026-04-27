@@ -1,10 +1,10 @@
+import { FieldMatcherID } from '@grafana/data/transformations';
 import {
   type ConfigOverrideRule,
   type DynamicConfigValue,
   FieldColorModeId,
   type FieldConfigSource,
-  FieldMatcherID,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 export const changeSeriesColorConfigFactory = (
   label: string,

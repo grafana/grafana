@@ -1,4 +1,4 @@
-import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 

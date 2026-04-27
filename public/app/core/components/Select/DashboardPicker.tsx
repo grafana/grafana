@@ -1,7 +1,7 @@
 import debounce from 'debounce-promise';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { type AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';

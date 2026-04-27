@@ -12,12 +12,12 @@ import {
   dateTimeFormat,
   type DateTime,
   dateTime,
-  type GrafanaTheme2,
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
-  type TimeZone,
-} from '@grafana/data';
+} from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeZone } from '@grafana/data/types';
 import { Components } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

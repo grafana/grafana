@@ -1,4 +1,4 @@
-import { createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data/dataframe';
 
 import {
   CollapsedMapBuilder,

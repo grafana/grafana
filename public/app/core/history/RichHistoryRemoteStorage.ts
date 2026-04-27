@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { type DataQuery } from '@grafana/data';
+import type { DataQuery } from '@grafana/data/types';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { type RichHistoryQuery } from 'app/types/explore';
 

@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type ConstantVariableModel } from '@grafana/data';
+import type { ConstantVariableModel } from '@grafana/data/types';
 
 import { dispatch } from '../../../store/store';
 import { type VariableAdapter } from '../adapters';

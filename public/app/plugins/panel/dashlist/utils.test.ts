@@ -1,4 +1,4 @@
-import { type PanelProps } from '@grafana/data';
+import type { PanelProps } from '@grafana/data/types';
 
 import { type Options } from './panelcfg.gen';
 import { useDashListUrlParams } from './utils';

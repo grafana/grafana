@@ -7,7 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
-import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
+import { Stack, Button, EmptyState, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';

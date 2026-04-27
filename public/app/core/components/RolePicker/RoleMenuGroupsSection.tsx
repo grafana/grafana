@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useState } from 'react';
 
-import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
+import { getSelectStyles } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { isNotDelegatable } from 'app/core/utils/roles';
 import { type Role } from 'app/types/accessControl';
 

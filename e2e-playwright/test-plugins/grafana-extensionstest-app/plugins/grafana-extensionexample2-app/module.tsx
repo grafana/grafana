@@ -1,4 +1,4 @@
-import { AppPlugin } from '@grafana/data';
+import { AppPlugin } from '@grafana/data/types';
 
 import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 import { testIds } from '../../testIds';

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DisplayValue } from '@grafana/data';
+import type { DisplayValue } from '@grafana/data/types';
 
 import { VizLegendStatsList } from './VizLegendStatsList';
 

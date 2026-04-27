@@ -1,6 +1,6 @@
 import { type Observable } from 'rxjs';
 
-import { type CoreApp, type DataQueryRequest, type DataQueryResponse, type ScopedVars } from '@grafana/data';
+import type { CoreApp, DataQueryRequest, DataQueryResponse, ScopedVars } from '@grafana/data/types';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { type PyroscopeDataSourceOptions, type ProfileTypeMessage, type Query } from './types';

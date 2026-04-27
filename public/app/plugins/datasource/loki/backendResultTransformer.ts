@@ -1,5 +1,5 @@
-import { type DataQueryResponse, type QueryResultMeta, type DataQueryError } from '@grafana/data';
 import { type DataFrame, isDataFrame, FieldType } from '@grafana/data/dataframe';
+import type { DataQueryResponse, QueryResultMeta, DataQueryError } from '@grafana/data/types';
 
 import { LokiQueryType } from './dataquery.gen';
 import { getDerivedFields } from './getDerivedFields';

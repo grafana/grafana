@@ -1,6 +1,6 @@
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { appEvents } from 'app/core/app_events';
 import { KioskMode } from 'app/types/dashboard';
 

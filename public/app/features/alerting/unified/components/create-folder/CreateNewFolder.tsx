@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, type ComponentSize, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, Label, Modal, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import type { ComponentSize } from '@grafana/ui/types';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';

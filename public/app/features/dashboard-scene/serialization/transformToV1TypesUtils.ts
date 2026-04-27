@@ -1,4 +1,7 @@
-import { type FieldConfigSource as FieldConfigSourceV1, SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
+import {
+  type FieldConfigSource as FieldConfigSourceV1,
+  SpecialValueMatch as SpecialValueMatchV1,
+} from '@grafana/data/types';
 import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,

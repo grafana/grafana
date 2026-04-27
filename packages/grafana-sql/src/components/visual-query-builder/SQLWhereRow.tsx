@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { type SelectableValue, type TypedVariableModel } from '@grafana/data';
+import type { SelectableValue, TypedVariableModel } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type QueryWithDefaults } from '../../defaults';

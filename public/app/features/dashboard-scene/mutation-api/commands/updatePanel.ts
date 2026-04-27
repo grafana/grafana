@@ -10,7 +10,7 @@
 import { mergeWith, cloneDeep, isArray } from 'lodash';
 import { type z } from 'zod';
 
-import { type FieldConfigSource } from '@grafana/data';
+import type { FieldConfigSource } from '@grafana/data/types';
 
 import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';

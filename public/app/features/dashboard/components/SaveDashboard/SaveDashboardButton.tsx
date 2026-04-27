@@ -1,7 +1,8 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, type ButtonVariant, type ComponentSize, ModalsController } from '@grafana/ui';
+import { Button, type ButtonVariant, ModalsController } from '@grafana/ui';
+import type { ComponentSize } from '@grafana/ui/types';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';

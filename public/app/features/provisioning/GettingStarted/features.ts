@@ -1,4 +1,4 @@
-import { type FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 

@@ -1,8 +1,9 @@
 import { from, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { getFieldDisplayName, type MetricFindValue, type PanelData, type QueryVariableModel } from '@grafana/data';
 import { FieldType, getProcessedDataFrames, isDataFrame } from '@grafana/data/dataframe';
+import { getFieldDisplayName } from '@grafana/data/field';
+import type { MetricFindValue, PanelData, QueryVariableModel } from '@grafana/data/types';
 import { type ThunkDispatch } from 'app/types/store';
 
 import { validateVariableSelectionState } from '../state/actions';

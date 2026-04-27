@@ -2,10 +2,11 @@ import { css, cx, keyframes } from '@emotion/css';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { type LibraryPanel } from '@grafana/schema';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   LibraryPanelsSearch,

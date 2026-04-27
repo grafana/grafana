@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type AnnotationEvent, type FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { type AnnotationEvent, type FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';

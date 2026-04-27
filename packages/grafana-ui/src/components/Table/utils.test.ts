@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { type Row } from 'react-table';
 
-import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
+import { type Field, FieldType, MutableDataFrame } from '@grafana/data/dataframe';
+import type { FieldConfigSource, SelectableValue } from '@grafana/data/types';
 
 import {
   calculateUniqueFieldValues,

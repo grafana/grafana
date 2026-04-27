@@ -1,0 +1,1 @@
+export { getNextRefId } from './refId';

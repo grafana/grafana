@@ -1,4 +1,4 @@
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from '@grafana/i18n';
 
 import { sendAppNotification } from './core/copy/appNotification';

@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 import { InlineField, Input, Stack } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data/types';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
 

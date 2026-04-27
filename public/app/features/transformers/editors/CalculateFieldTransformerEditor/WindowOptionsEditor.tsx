@@ -1,4 +1,3 @@
-import { ReducerID, type SelectableValue } from '@grafana/data';
 import {
   CalculateFieldMode,
   WindowAlignment,
@@ -6,6 +5,8 @@ import {
   type WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
+import { ReducerID } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';

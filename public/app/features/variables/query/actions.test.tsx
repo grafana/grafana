@@ -7,7 +7,7 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';

@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Grammar } from 'prismjs';
 
-import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
+import { CoreApp, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data/types';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';

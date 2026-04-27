@@ -4,21 +4,28 @@ import { PureComponent } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import AutoSizer, { type HorizontalSize } from 'react-virtualized-auto-sizer';
 
-import { type AbsoluteTimeRange, type EventBus, getNextRefId, type GrafanaTheme2, hasToggleableQueryFiltersSupport, LoadingState, type QueryFixAction, type RawTimeRange, type SplitOpenOptions, store, SupplementaryQueryType } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { type EventBus } from '@grafana/data/events';
+import { getNextRefId } from '@grafana/data/query';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
+  type AbsoluteTimeRange,
+  hasToggleableQueryFiltersSupport,
+  LoadingState,
+  type QueryFixAction,
+  type RawTimeRange,
+  type SplitOpenOptions,
+  SupplementaryQueryType,
+} from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import {
-  type AdHocFilterItem,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  ScrollContainer,
-  type Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { type AdHocFilterItem, ErrorBoundaryAlert, PanelContainer, ScrollContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';

@@ -1,7 +1,7 @@
 import Prism, { type Token } from 'prismjs';
 import { type Value } from 'slate';
 
-import { type TypeaheadOutput } from '@grafana/ui';
+import type { TypeaheadOutput } from '@grafana/ui/types';
 
 import { type CloudWatchDatasource } from '../../datasource';
 import { setupMockedTemplateService } from '../../mocks/CloudWatchDataSource';

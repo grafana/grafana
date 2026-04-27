@@ -1,11 +1,11 @@
 import { type Observable } from 'rxjs';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataQueryResponseData,
-  type TestDataSourceResponse,
-} from '@grafana/data';
+import type {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataQueryResponseData,
+  TestDataSourceResponse,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {

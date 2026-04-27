@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { AlertState, IconName } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Stack, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
 import { QueryEditorType } from './constants';

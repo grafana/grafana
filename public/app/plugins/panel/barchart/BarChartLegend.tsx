@@ -1,8 +1,9 @@
 import { includes } from 'lodash';
 import { memo } from 'react';
 
-import { FieldColorModeId, getFieldSeriesColor, type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
 import { type DataFrame, type Field } from '@grafana/data/dataframe';
+import { getFieldSeriesColor } from '@grafana/data/field';
+import { FieldColorModeId, type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data/types';
 import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import {
   type UPlotConfigBuilder,
@@ -10,9 +11,9 @@ import {
   type VizLayoutLegendProps,
   VizLegend,
   type VizLegendItem,
-  useTheme2,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];

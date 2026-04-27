@@ -6,8 +6,8 @@ import {
 } from './dashboard'; // Replace with the path to your actual module
 
 // Mock the store module
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   store: {
     exists: jest.fn(),
     getObject: jest.fn((_a, b) => b),
@@ -16,7 +16,7 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
-const data = jest.requireMock('@grafana/data');
+const data = jest.requireMock('@grafana/data/utils');
 
 describe('Last Used Datasource Local Storage', () => {
   beforeEach(() => {

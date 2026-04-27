@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type Labels } from '@grafana/data';
+import type { Labels } from '@grafana/data/types';
 import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
 import { getDefaultSilenceFormValues } from 'app/features/alerting/unified/components/silences/utils';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';

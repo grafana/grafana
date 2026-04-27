@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { OrgRole, type SelectableValue } from '@grafana/data';
+import { OrgRole, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -1,4 +1,4 @@
-import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings } from '@grafana/ui';
 

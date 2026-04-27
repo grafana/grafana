@@ -1,4 +1,4 @@
-import { type CoreApp } from '@grafana/data';
+import type { CoreApp } from '@grafana/data/types';
 
 import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
 

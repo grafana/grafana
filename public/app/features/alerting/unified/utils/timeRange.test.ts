@@ -1,4 +1,4 @@
-import { ReducerID } from '@grafana/data';
+import { ReducerID } from '@grafana/data/transformations';
 import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';

@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data/types';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
 import { type LogListContextData, type Props } from '../LogListContext';

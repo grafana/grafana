@@ -1,4 +1,5 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldConfigProperty } from '@grafana/data/types';
 import { checkFields } from '@grafana/flamegraph';
 
 import { FlameGraphPanel } from './FlameGraphPanel';

@@ -1,4 +1,4 @@
-import { type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
+import { type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data/types';
 import { type BigValueColorMode } from '@grafana/ui';
 
 export enum SortOrder {

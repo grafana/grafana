@@ -3,8 +3,8 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';

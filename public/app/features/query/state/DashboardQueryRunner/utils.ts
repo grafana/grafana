@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash';
 import { type Observable, of } from 'rxjs';
 
-import { type AnnotationEvent, type AnnotationQuery, type DataSourceApi } from '@grafana/data';
 import { type DataFrame, DataFrameView } from '@grafana/data/dataframe';
+import type { AnnotationEvent, AnnotationQuery, DataSourceApi } from '@grafana/data/types';
 import { config, toDataQueryError } from '@grafana/runtime';
 import { dispatch } from 'app/store/store';
 

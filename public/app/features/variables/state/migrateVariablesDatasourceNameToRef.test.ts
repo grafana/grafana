@@ -1,4 +1,4 @@
-import { type DataSourceRef } from '@grafana/data';
+import type { DataSourceRef } from '@grafana/data/types';
 
 import { adHocBuilder, queryBuilder } from '../shared/testing/builders';
 import { toVariablePayload } from '../utils';

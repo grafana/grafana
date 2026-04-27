@@ -1,4 +1,5 @@
-import { type Scope, type ScopeNode, type Store } from '@grafana/data';
+import type { Scope, ScopeNode } from '@grafana/data/types';
+import type { Store } from '@grafana/data/utils';
 import { locationService } from '@grafana/runtime';
 
 import { type ScopesApiClient } from '../ScopesApiClient';

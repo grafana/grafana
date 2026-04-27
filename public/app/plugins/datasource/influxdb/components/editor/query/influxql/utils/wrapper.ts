@@ -1,4 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
+import type { TypedVariableModel } from '@grafana/data/types';
 
 export function wrapRegex(v: TypedVariableModel): string {
   return `/^$${v.name}$/`;

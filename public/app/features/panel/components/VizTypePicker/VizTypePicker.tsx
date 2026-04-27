@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { EmptySearchResult, useStyles2 } from '@grafana/ui';
+import { EmptySearchResult } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { filterPluginList } from '../../state/util';
 

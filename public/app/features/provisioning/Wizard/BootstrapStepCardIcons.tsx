@@ -1,4 +1,5 @@
-import { Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 

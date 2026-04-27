@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LanguageProvider } from '@grafana/data';
+import type { LanguageProvider } from '@grafana/data/types';
 
 import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { type TempoDatasource } from '../datasource';

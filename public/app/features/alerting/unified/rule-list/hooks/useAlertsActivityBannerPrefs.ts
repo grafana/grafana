@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 const STORAGE_KEY_DISMISSED_UNTIL = 'grafana.alerting.alerts_activity_banner.dismissed_until';
 

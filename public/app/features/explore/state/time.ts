@@ -1,14 +1,13 @@
 import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
+import { dateTimeForTimeZone, rangeUtil } from '@grafana/data/datetime';
 import {
   type AbsoluteTimeRange,
   AppEvents,
-  dateTimeForTimeZone,
   LoadingState,
-  rangeUtil,
   type RawTimeRange,
   type TimeRange,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';

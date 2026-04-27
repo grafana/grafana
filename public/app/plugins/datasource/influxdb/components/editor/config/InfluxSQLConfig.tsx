@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 
-import {
-  type DataSourcePluginOptionsEditorProps,
-  type GrafanaTheme2,
-  onUpdateDatasourceSecureJsonDataOption,
-  updateDatasourcePluginResetOption,
-} from '@grafana/data';
-import { Field, InlineLabel, InlineSwitch, Input, SecretInput, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
+import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data/utils';
+import { Field, InlineLabel, InlineSwitch, Input, SecretInput } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 

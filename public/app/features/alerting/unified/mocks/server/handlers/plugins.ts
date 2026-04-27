@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
+import { PluginLoadingStrategy, type PluginMeta } from '@grafana/data/types';
 import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 

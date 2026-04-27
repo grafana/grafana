@@ -1,5 +1,11 @@
-import { FieldColorModeId, ThresholdsMode, type VisualizationPresetsSupplier, type VisualizationSuggestion, VizOrientation } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import {
+  FieldColorModeId,
+  ThresholdsMode,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
+  VizOrientation,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { BarGaugeSizing } from '@grafana/schema';
 import { type GraphFieldConfig } from '@grafana/ui';

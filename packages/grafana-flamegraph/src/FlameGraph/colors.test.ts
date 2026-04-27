@@ -1,4 +1,4 @@
-import { createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data/themes';
 
 import { getBarColorByPackage, getBarColorByValue } from './colors';
 

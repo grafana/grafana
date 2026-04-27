@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 
 import CheatSheet from './CheatSheet';
 import { QueryEditor } from './components/QueryEditor';

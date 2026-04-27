@@ -3,9 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
-import { EventBusSrv, type ExplorePanelsState, LoadingState, LogLevel, type LogRowModel, toUtc, type ExploreLogsPanelState, type DataQuery } from '@grafana/data';
 import { type DataFrame, createDataFrame } from '@grafana/data/dataframe';
+import { toUtc } from '@grafana/data/datetime';
+import { EventBusSrv } from '@grafana/data/events';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import {
+  type ExplorePanelsState,
+  LoadingState,
+  LogLevel,
+  type LogRowModel,
+  type ExploreLogsPanelState,
+  type DataQuery,
+} from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';

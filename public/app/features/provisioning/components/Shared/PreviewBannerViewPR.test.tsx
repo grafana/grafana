@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data/text';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
@@ -9,8 +9,8 @@ import { isValidRepoType } from '../../guards';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/text', () => ({
+  ...jest.requireActual('@grafana/data/text'),
   textUtil: {
     sanitizeUrl: jest.fn(),
   },

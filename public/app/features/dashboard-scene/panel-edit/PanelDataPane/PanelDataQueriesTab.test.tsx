@@ -2,9 +2,21 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
-import { CoreApp, type DataQuery, type DataQueryRequest, type DataSourceApi, type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef, LoadingState, type PanelData, PluginType, type TimeRange } from '@grafana/data';
 import { FieldType, toDataFrame } from '@grafana/data/dataframe';
 import { getPanelPlugin } from '@grafana/data/test';
+import {
+  CoreApp,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
+  LoadingState,
+  type PanelData,
+  PluginType,
+  type TimeRange,
+} from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -250,8 +262,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   store: {
     exists: jest.fn(),
     get: jest.fn(),
@@ -282,7 +294,7 @@ jest.mock('app/core/services/context_srv', () => ({
 
 const mockContextSrv = jest.mocked(contextSrv);
 
-const data = jest.requireMock('@grafana/data');
+const data = jest.requireMock('@grafana/data/utils');
 let deactivators = [] as Array<() => void>;
 
 describe('PanelDataQueriesTab', () => {

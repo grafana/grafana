@@ -1,4 +1,4 @@
-import { PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data/types';
 import { GoogleAuthType } from '@grafana/google-sdk';
 
 import CloudMonitoringDatasource from '../datasource';

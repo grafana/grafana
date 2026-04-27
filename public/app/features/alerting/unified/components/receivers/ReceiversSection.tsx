@@ -3,9 +3,11 @@ import * as React from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, MenuItem, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 

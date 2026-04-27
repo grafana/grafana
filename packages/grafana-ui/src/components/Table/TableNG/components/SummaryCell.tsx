@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import clsx from 'clsx';
 import { type ReactNode, useMemo } from 'react';
 
-import { type GrafanaTheme2, fieldReducers, ReducerID } from '@grafana/data';
 import { type Field } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { fieldReducers, ReducerID } from '@grafana/data/transformations';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TableFooterOptions } from '@grafana/schema';

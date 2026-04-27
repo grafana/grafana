@@ -2,7 +2,7 @@ import { type Meta } from '@storybook/react';
 import { useId, useMemo } from 'react';
 import ReactSelect, { createFilter } from 'react-select';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 
 import { Field } from '../Forms/Field';
 

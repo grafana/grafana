@@ -1,7 +1,9 @@
 import uPlot, { type Axis, type AlignedData, type Scale } from 'uplot';
 
-import { colorManipulator, dateTimeFormat, type GrafanaTheme2, systemDateFormats, type TimeZone } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTimeFormat, systemDateFormats } from '@grafana/data/datetime';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import type { TimeZone } from '@grafana/data/types';
 import {
   StackingMode,
   VisibilityMode,
@@ -10,8 +12,8 @@ import {
   type VizTextDisplayOptions,
   type VizLegendOptions,
 } from '@grafana/schema';
-import { measureText } from '@grafana/ui';
 import { timeUnitSize, type StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
+import { measureText } from '@grafana/ui/utils';
 
 const intervals = systemDateFormats.interval;
 

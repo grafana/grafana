@@ -1,6 +1,6 @@
 import { type ComponentType } from 'react';
 
-import { LoadingState, type SystemVariable, VariableHide } from '@grafana/data';
+import { LoadingState, type SystemVariable, VariableHide } from '@grafana/data/types';
 
 import { type VariableAdapter } from '../adapters';
 import { type VariableEditorProps } from '../editor/types';

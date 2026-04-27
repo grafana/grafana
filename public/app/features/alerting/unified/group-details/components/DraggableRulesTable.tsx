@@ -10,9 +10,11 @@ import {
 import { produce } from 'immer';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
-import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { type SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';

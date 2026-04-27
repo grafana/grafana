@@ -6,7 +6,7 @@ import {
   LiveChannelConnectionState,
   LiveChannelScope,
   isLiveChannelStatusEvent,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 import { CentrifugeService, type CentrifugeSrvDeps } from './service';
 

@@ -1,6 +1,6 @@
 import { type JSX, type ReactElement, useMemo } from 'react';
 
-import { type PluginExtensionLink } from '@grafana/data';
+import type { PluginExtensionLink } from '@grafana/data/types';
 import { Menu } from '@grafana/ui';
 
 type Props = {

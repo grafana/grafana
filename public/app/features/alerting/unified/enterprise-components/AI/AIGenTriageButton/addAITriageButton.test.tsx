@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { type ComponentType } from 'react';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/datetime';
 
 import { AITriageButtonComponent, type GenAITriageButtonProps, addAITriageButton } from './addAITriageButton';
 

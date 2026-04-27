@@ -1,7 +1,7 @@
 import { intersection } from 'lodash';
 import { useState, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Combobox } from '@grafana/ui';

@@ -3,10 +3,10 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   type DataSourceInstanceSettings,
   type DataSourceVariableModel,
-  matchPluginId,
   type VariableOption,
   VariableRefresh,
-} from '@grafana/data';
+} from '@grafana/data/types';
+import { matchPluginId } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';

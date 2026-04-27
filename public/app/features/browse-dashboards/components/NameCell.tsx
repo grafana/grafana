@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Avatar, IconButton, Link, Spinner, Text } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 import { getSvgSize } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';

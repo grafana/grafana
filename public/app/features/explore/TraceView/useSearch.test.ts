@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import React, { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { type TraceSearchProps } from '@grafana/data';
+import type { TraceSearchProps } from '@grafana/data/types';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 

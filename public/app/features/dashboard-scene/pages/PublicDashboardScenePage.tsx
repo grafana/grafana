@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PageLayoutType } from '@grafana/data/types';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';

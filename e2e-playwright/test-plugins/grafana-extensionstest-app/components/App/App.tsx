@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 
-import { AppRootProps } from '@grafana/data';
+import { AppRootProps } from '@grafana/data/types';
 
 import { ROUTES } from '../../constants';
 import { AddedComponents, AddedLinks, Config, ExposedComponents } from '../../pages';

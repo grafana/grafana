@@ -2,7 +2,9 @@ import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 
-import { type EventBus, type MapLayerOptions, type GrafanaTheme2 } from '@grafana/data';
+import { type EventBus } from '@grafana/data/events';
+import type { MapLayerOptions } from '@grafana/data/geo';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 
 import { standard } from './osm';
 

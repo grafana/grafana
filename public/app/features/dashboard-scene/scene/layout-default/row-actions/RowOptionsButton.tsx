@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
-import { Icon, ModalsController } from '@grafana/ui';
+import { ModalsController } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
 
 import { type OnRowOptionsUpdate } from './RowOptionsForm';
 import { RowOptionsModal } from './RowOptionsModal';

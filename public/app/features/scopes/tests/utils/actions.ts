@@ -1,7 +1,8 @@
 import { act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DateTime, makeTimeRange, dateMath } from '@grafana/data';
+import { type DateTime, dateMath } from '@grafana/data/datetime';
+import { makeTimeRange } from '@grafana/data/types';
 import { type MultiValueVariable, sceneGraph, type VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, type TimeZone } from '@grafana/schema';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

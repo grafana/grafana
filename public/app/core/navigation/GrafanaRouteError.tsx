@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import { type ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { PageLayoutType } from '@grafana/data/types';
+import { locationUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
+import { Button, ErrorWithStack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Page } from '../components/Page/Page';
 

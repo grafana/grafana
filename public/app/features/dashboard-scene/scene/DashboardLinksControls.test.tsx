@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react';
 
-import { toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/datetime';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
 

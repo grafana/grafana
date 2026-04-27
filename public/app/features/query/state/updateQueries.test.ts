@@ -1,8 +1,8 @@
-import {
-  type DataSourceApi,
-  type DataSourceWithQueryExportSupport,
-  type DataSourceWithQueryImportSupport,
-} from '@grafana/data';
+import type {
+  DataSourceApi,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
+} from '@grafana/data/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';

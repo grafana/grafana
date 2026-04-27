@@ -3,10 +3,13 @@ import { uniqueId } from 'lodash';
 import { type FC, Suspense, lazy, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData, dateTimeFormat } from '@grafana/data';
 import { type DataFrame, isTimeSeriesFrames } from '@grafana/data/dataframe';
+import { dateTimeFormat } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp, LoadingState, type PanelData } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';

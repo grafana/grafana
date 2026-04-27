@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
 
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import type Datasource from '../../datasource';

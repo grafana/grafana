@@ -1,15 +1,14 @@
 import { useCallback, type ChangeEvent } from 'react';
 
+import { getFieldDisplayName } from '@grafana/data/field';
+import { type FormatTimeTransformerOptions } from '@grafana/data/internal';
 import {
   DataTransformerID,
-  type SelectableValue,
   standardTransformers,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  getFieldDisplayName,
-  PluginState,
-} from '@grafana/data';
-import { type FormatTimeTransformerOptions } from '@grafana/data/internal';
+} from '@grafana/data/transformations';
+import { type SelectableValue, PluginState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 

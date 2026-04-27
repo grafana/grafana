@@ -1,6 +1,7 @@
 import { chain } from 'lodash';
 
-import { type DataSourceInstanceSettings, getDataSourceRef, type SelectableValue } from '@grafana/data';
+import type { DataSourceInstanceSettings, SelectableValue } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {

@@ -5,9 +5,10 @@ import { uniqueId } from 'lodash';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Card, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { type KeyValueField } from '../../../api/templateApi';

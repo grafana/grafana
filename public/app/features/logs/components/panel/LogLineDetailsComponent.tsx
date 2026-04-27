@@ -2,17 +2,13 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  DataFrameType,
-  type DataSourceApi,
-  type GrafanaTheme2,
-  hasLogsLabelTypesSupport,
-  store,
-  type TimeRange,
-} from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { DataFrameType, type DataSourceApi, hasLogsLabelTypesSupport, type TimeRange } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { Box, ControlledCollapse } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';

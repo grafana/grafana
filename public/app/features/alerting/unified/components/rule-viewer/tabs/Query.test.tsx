@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { type DataSourceApi } from '@grafana/data';
+import type { DataSourceApi } from '@grafana/data/types';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';

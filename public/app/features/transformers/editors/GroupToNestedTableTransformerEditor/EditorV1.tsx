@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
 import { useCallback, useId } from 'react';
 
-import { type GrafanaTheme2, ReducerID, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import {
   type GroupByFieldOptions,
   GroupByOperationID,
   type GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { ReducerID, type TransformerUIProps } from '@grafana/data/transformations';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Alert, Field, InlineField, Select, Stack, StatsPicker, Switch, useTheme2 } from '@grafana/ui';
+import { Alert, Field, InlineField, Select, Stack, StatsPicker, Switch } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { useAllFieldNamesFromDataFrames } from '../../utils';
 

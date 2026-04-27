@@ -1,9 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
-import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { intervalToAbbreviatedDurationString } from '@grafana/data/datetime';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';

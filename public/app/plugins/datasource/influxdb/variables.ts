@@ -1,7 +1,7 @@
 import { from, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
+import { CustomVariableSupport, type DataQueryRequest, type DataQueryResponse } from '@grafana/data/types';
 import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { InfluxVariableEditor } from './components/editor/variable/VariableQueryEditor';

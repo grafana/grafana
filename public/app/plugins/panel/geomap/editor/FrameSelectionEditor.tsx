@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 
-import { FrameMatcherID, type MatcherConfig, type StandardEditorProps } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import { FrameMatcherID } from '@grafana/data/transformations';
+import type { MatcherConfig } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '@grafana/ui/internal';
 

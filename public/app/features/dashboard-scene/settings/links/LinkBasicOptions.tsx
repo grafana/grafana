@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
 import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';

@@ -1,7 +1,7 @@
 import { useMemo, type JSX } from 'react';
 
 import { type AadCurrentUserCredentials, type AzureCredentials, instanceOfAzureCredential } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';

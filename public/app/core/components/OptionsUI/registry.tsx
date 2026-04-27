@@ -1,8 +1,37 @@
 import type { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 
-import { type FieldConfigPropertyItem, standardEditorsRegistry, type StandardEditorsRegistryItem, type ThresholdsConfig, type ThresholdsFieldConfigSettings, ThresholdsMode, thresholdsOverrideProcessor, type ValueMapping, type ValueMappingFieldConfigSettings, valueMappingsOverrideProcessor, type DataLink, dataLinksOverrideProcessor, type NumberFieldConfigSettings, numberOverrideProcessor, type StringFieldConfigSettings, stringOverrideProcessor, identityOverrideProcessor, type TimeZone, type FieldColor, type FieldColorConfigSettings, type StatsPickerConfigSettings, displayNameOverrideProcessor, type FieldNamePickerConfigSettings, booleanOverrideProcessor, type Action, type DataLinksFieldConfigSettings } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import {
+  standardEditorsRegistry,
+  type StandardEditorsRegistryItem,
+  type ThresholdsFieldConfigSettings,
+  thresholdsOverrideProcessor,
+  type ValueMappingFieldConfigSettings,
+  valueMappingsOverrideProcessor,
+  dataLinksOverrideProcessor,
+  type NumberFieldConfigSettings,
+  numberOverrideProcessor,
+  type StringFieldConfigSettings,
+  stringOverrideProcessor,
+  identityOverrideProcessor,
+  type FieldColorConfigSettings,
+  type StatsPickerConfigSettings,
+  displayNameOverrideProcessor,
+  type FieldNamePickerConfigSettings,
+  booleanOverrideProcessor,
+  type DataLinksFieldConfigSettings,
+} from '@grafana/data/field';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
+import {
+  type FieldConfigPropertyItem,
+  type ThresholdsConfig,
+  ThresholdsMode,
+  type ValueMapping,
+  type DataLink,
+  type TimeZone,
+  type FieldColor,
+  type Action,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { type FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';

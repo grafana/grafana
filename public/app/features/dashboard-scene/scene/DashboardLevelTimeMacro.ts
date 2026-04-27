@@ -1,4 +1,4 @@
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
 import { type FormatVariable, sceneGraph, type SceneObject } from '@grafana/scenes';
 
 /**

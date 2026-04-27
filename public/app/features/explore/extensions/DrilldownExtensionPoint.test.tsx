@@ -1,18 +1,22 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data/types';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { DrilldownExtensionPoint } from './DrilldownExtensionPoint';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+jest.mock('@grafana/data/types', () => ({
+  ...jest.requireActual('@grafana/data/types'),
   getDefaultTimeRange: jest.fn(() => ({
     raw: { from: 'now-1h', to: 'now' },
   })),
   getTimeZone: jest.fn(() => 'browser'),
+}));
+
+jest.mock('@grafana/data/utils', () => ({
+  ...jest.requireActual('@grafana/data/utils'),
   locationUtil: {
     assureBaseUrl: jest.fn((path: string) => `http://localhost${path}`),
   },

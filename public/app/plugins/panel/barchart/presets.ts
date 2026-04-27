@@ -1,5 +1,10 @@
-import { FieldColorModeId, type FieldConfigSource, type VisualizationPresetsSupplier, type VisualizationSuggestion } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import {
+  FieldColorModeId,
+  type FieldConfigSource,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';

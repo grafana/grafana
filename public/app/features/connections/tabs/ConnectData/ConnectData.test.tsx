@@ -2,7 +2,7 @@ import { render, type RenderResult, screen, waitFor } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data/types';
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';

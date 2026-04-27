@@ -2,8 +2,24 @@ import { groupBy } from 'lodash';
 import { EMPTY, from, merge, type Observable, of } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
 
-import { CoreApp, type DataLink, type DataQueryRequest, type DataQueryResponse, type DataQueryResponseData, type DataSourceGetTagKeysOptions, type DataSourceGetTagValuesOptions, type DataSourceInstanceSettings, dateTime, LoadingState, NodeGraphDataFrameFieldNames, rangeUtil, type ScopedVars, type SelectableValue, type TestDataSourceResponse, type TimeRange } from '@grafana/data';
 import { type DataFrame, type DataFrameDTO, type DataFrameJSON, FieldType } from '@grafana/data/dataframe';
+import { dateTime, rangeUtil } from '@grafana/data/datetime';
+import {
+  CoreApp,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataQueryResponseData,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
+  LoadingState,
+  type ScopedVars,
+  type SelectableValue,
+  type TestDataSourceResponse,
+  type TimeRange,
+} from '@grafana/data/types';
+import { NodeGraphDataFrameFieldNames } from '@grafana/data/utils';
 import { type NodeGraphOptions, type SpanBarOptions, type TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
   config,

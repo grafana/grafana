@@ -1,4 +1,5 @@
-import { type StandardEditorProps, VariableOrigin } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import { VariableOrigin } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { SuggestionsInput } from 'app/features/transformers/suggestionsInput/SuggestionsInput';

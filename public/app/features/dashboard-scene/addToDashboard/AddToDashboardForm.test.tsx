@@ -1,6 +1,6 @@
 import { render, act, screen, waitFor } from 'test/test-utils';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv, setEchoSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';

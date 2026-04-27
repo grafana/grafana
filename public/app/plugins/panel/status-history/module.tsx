@@ -1,8 +1,9 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldColorModeId, FieldConfigProperty } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, LegendDisplayMode, VisibilityMode } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';

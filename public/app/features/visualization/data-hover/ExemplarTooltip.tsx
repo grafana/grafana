@@ -1,4 +1,4 @@
-import { type LinkModel } from '@grafana/data';
+import type { LinkModel } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   VizTooltipContent,

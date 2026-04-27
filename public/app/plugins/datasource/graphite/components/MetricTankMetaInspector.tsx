@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { type MetadataInspectorProps, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import type { MetadataInspectorProps } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 
 import { type GraphiteDatasource } from '../datasource';
 import { getRollupNotice, getRuntimeConsolidationNotice, parseSchemaRetentions } from '../meta';

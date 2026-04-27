@@ -1,4 +1,5 @@
-import { DataTopic, type PanelOptionsEditorBuilder } from '@grafana/data';
+import { DataTopic } from '@grafana/data/types';
+import type { PanelOptionsEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import type * as common from '@grafana/schema';

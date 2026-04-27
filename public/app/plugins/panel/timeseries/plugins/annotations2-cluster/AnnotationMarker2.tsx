@@ -5,12 +5,15 @@ import * as React from 'react';
 import { type ReactNode, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { type ActionModel, type GrafanaTheme2, type InterpolateFunction, type LinkModel } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { ActionModel, InterpolateFunction, LinkModel } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
-import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';

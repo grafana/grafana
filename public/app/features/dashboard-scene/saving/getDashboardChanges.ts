@@ -1,4 +1,4 @@
-import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
+import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data/types';
 import { config } from '@grafana/runtime';
 import { type Dashboard, type VariableOption } from '@grafana/schema';
 import {

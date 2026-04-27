@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState, type JSX } from 'react';
 
-import { type GrafanaTheme2, type PanelPluginMeta, type SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelPluginMeta, SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+import { Button, MultiSelect } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;

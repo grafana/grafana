@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type AnnotationQuery } from '@grafana/data';
+import type { AnnotationQuery } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 

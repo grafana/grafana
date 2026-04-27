@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsyncFn, useMount, useMountedState } from 'react-use';
 import { type AsyncState } from 'react-use/lib/useAsyncFn';
 
-import { type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { QueryEditorProps } from '@grafana/data/types';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import {
   ButtonCascader,
@@ -13,13 +14,12 @@ import {
   InlineField,
   InlineFieldRow,
   RadioButtonGroup,
-  useTheme2,
   QueryField,
-  useStyles2,
   Modal,
   Stack,
   Button,
 } from '@grafana/ui';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 
 import { type ZipkinDatasource } from './datasource';
 import { type ZipkinQuery, type ZipkinQueryType, type ZipkinSpan } from './types';

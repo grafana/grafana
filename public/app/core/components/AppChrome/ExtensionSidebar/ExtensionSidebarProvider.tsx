@@ -1,7 +1,8 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
-import { PluginExtensionPoints, store } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data/types';
+import { store } from '@grafana/data/utils';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';

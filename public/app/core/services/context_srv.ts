@@ -1,14 +1,8 @@
 import { extend } from 'lodash';
 
-import {
-  type AnalyticsSettings,
-  type OrgRole,
-  rangeUtil,
-  type WithAccessControlMetadata,
-  userHasPermission,
-  userHasPermissionInMetadata,
-  userHasAnyPermission,
-} from '@grafana/data';
+import { rangeUtil } from '@grafana/data/datetime';
+import { userHasPermission, userHasPermissionInMetadata, userHasAnyPermission } from '@grafana/data/rbac';
+import type { AnalyticsSettings, OrgRole, WithAccessControlMetadata } from '@grafana/data/types';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';

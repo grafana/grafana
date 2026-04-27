@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 
-import { DataTransformerID, type DataTransformerConfig } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { DataTransformerID } from '@grafana/data/transformations';
+import type { DataTransformerConfig } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { NoOptionsIndicator } from './NoOptionsIndicator';

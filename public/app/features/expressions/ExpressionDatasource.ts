@@ -1,7 +1,15 @@
 import { from, lastValueFrom, map, mergeMap, type Observable } from 'rxjs';
 
-import { type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings, type DataSourcePluginMeta, PluginType, type ScopedVars, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  PluginType,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data/types';
 import { type SQLQuery } from '@grafana/plugin-ui';
 import {
   type BackendDataSourceResponse,

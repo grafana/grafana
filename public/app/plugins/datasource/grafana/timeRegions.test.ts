@@ -1,5 +1,5 @@
-import { dateTime } from '@grafana/data';
 import { toDataFrameDTO } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
 
 import { doTimeRegionQuery } from './timeRegions';
 

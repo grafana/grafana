@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data/types';
 
 import { ConfigEditor } from './components/ConfigEditor';
 import { OpenTsdbQueryEditor } from './components/OpenTsdbQueryEditor';

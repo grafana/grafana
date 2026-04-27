@@ -3,12 +3,14 @@ import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { type FieldNamePickerConfigSettings, type GrafanaTheme2, type StandardEditorsRegistryItem } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import type { FieldNamePickerConfigSettings, StandardEditorsRegistryItem } from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext } from '@grafana/ui';
 import { FieldNamePicker, frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';

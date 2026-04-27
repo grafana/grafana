@@ -1,4 +1,4 @@
-import { type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
+import type { CurrentUserDTO, GrafanaConfig, NavLinkDTO } from '@grafana/data/types';
 
 const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
 // Grafana can only fail to load once

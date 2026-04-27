@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type VizPanel } from '@grafana/scenes';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
 import { type AlertingRule, type CombinedRule } from 'app/types/unified-alerting';

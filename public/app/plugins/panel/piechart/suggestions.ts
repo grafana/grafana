@@ -1,7 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { type VisualizationSuggestion, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import {
+  type VisualizationSuggestion,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { defaultNumericVizOptions, SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 

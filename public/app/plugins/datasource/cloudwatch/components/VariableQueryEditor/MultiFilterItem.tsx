@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
-import { Alert, Input, useStyles2 } from '@grafana/ui';
+import { Alert, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CloudWatchDatasource } from '../../datasource';
 import { useEnsureVariableHasSingleSelection } from '../../hooks';

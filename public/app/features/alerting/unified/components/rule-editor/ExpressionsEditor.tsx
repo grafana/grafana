@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, type PanelData } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { PanelData } from '@grafana/data/types';
+import { useStyles2 } from '@grafana/ui/themes';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';

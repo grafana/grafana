@@ -1,4 +1,4 @@
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getServerStyles, type ServerData } from '../server';
 

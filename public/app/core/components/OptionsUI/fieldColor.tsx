@@ -3,19 +3,22 @@ import { type CSSProperties, type FC } from 'react';
 
 import {
   type StandardEditorProps,
+  fieldColorModeRegistry,
+  type FieldColorMode,
+  type FieldColorConfigSettings,
+  getFieldColorMode,
+} from '@grafana/data/field';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import {
   FieldColorModeId,
   type SelectableValue,
   type FieldColor,
-  fieldColorModeRegistry,
-  type FieldColorMode,
-  type GrafanaTheme2,
-  type FieldColorConfigSettings,
   type FieldColorSeriesByMode,
-  getFieldColorMode,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { ColorValueEditor } from './color';
 

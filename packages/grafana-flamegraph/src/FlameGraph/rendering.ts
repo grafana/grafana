@@ -1,8 +1,8 @@
 import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import {
   BAR_BORDER_WIDTH,

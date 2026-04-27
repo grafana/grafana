@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data/field';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';

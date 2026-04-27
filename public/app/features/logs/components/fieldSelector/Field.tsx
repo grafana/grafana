@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
+import { Checkbox } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getNormalizedFieldName } from '../panel/processing';
 

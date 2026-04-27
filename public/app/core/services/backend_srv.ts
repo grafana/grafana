@@ -26,7 +26,8 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data/types';
+import { deprecationWarning } from '@grafana/data/utils';
 import {
   type BackendSrv as BackendService,
   type BackendSrvRequest,

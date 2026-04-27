@@ -1,6 +1,7 @@
 import { memo, useEffect } from 'react';
 
-import { type AdHocVariableModel, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import type { AdHocVariableModel, DataSourceInstanceSettings } from '@grafana/data/types';
+import { getDataSourceRef } from '@grafana/data/utils';
 import { AdHocVariableForm } from 'app/features/dashboard-scene/settings/variables/components/AdHocVariableForm';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 

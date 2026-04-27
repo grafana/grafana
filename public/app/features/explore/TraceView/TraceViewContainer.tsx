@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { DataLinksContext, type SplitOpen, type TimeRange } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { DataLinksContext } from '@grafana/data/field';
+import type { SplitOpen, TimeRange } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { PanelChrome, useStyles2 } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type StoreState, useSelector } from 'app/types/store';
 
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';

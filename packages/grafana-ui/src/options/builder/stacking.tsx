@@ -1,5 +1,7 @@
-import { type FieldConfigEditorBuilder, type StandardEditorProps, identityOverrideProcessor, type SelectableValue } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { type StandardEditorProps, identityOverrideProcessor } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
+import type { FieldConfigEditorBuilder } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { type GraphFieldConfig, type StackingConfig, StackingMode } from '@grafana/schema';
 

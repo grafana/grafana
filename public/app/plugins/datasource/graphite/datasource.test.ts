@@ -2,8 +2,19 @@ import { isArray } from 'lodash';
 import moment from 'moment';
 import { type Observable, of } from 'rxjs';
 
-import { type AbstractLabelMatcher, AbstractLabelOperator, CoreApp, type DataQueryRequest, type DataQueryResponse, dateMath, dateTime, getFrameDisplayName, type MetricFindValue, PluginType, type ScopedVars } from '@grafana/data';
 import { FieldType } from '@grafana/data/dataframe';
+import { dateMath, dateTime } from '@grafana/data/datetime';
+import { getFrameDisplayName } from '@grafana/data/field';
+import {
+  type AbstractLabelMatcher,
+  AbstractLabelOperator,
+  CoreApp,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type MetricFindValue,
+  PluginType,
+  type ScopedVars,
+} from '@grafana/data/types';
 import {
   type BackendSrvRequest,
   config,

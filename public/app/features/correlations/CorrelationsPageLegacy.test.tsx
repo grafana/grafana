@@ -7,7 +7,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { SupportedTransformationType } from '@grafana/data';
+import { SupportedTransformationType } from '@grafana/data/types';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   type BackendSrv,

@@ -1,5 +1,6 @@
 import { type DataFrame } from '@grafana/data/dataframe';
-import { MenuItem, MenuGroup, ContextMenu, type IconName } from '@grafana/ui';
+import { MenuItem, MenuGroup, ContextMenu } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 
 import { type ClickedItemData, type PaneView, type SelectedView, type ViewMode } from '../types';
 

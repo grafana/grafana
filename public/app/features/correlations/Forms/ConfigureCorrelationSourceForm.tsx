@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Card, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Card, Field, FieldSet, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 

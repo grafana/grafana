@@ -1,4 +1,4 @@
-import { ReducerID } from '@grafana/data';
+import { ReducerID } from '@grafana/data/transformations';
 
 import { EvalFunction } from '../../alerting/state/alertDef';
 import { isReducerType } from '../guards';

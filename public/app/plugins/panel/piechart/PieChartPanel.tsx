@@ -1,26 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Subscription } from 'rxjs';
 
-import {
-  DataHoverClearEvent,
-  DataHoverEvent,
-  FALLBACK_COLOR,
-  FieldColorModeId,
-  type FieldDisplay,
-  formattedValueToString,
-  getFieldDisplayValues,
-  type PanelProps,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data/events';
+import { type FieldDisplay, getFieldDisplayValues } from '@grafana/data/field';
+import { FALLBACK_COLOR, FieldColorModeId, type PanelProps } from '@grafana/data/types';
+import { formattedValueToString } from '@grafana/data/valueFormats';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
-import {
-  SeriesVisibilityChangeBehavior,
-  usePanelContext,
-  useTheme2,
-  VizLayout,
-  VizLegend,
-  type VizLegendItem,
-} from '@grafana/ui';
+import { SeriesVisibilityChangeBehavior, usePanelContext, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { PieChart, computeGradientFills } from './PieChart';
 import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';

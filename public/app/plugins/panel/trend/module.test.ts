@@ -1,5 +1,6 @@
-import { getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
 import { createDataFrame, FieldType } from '@grafana/data/dataframe';
+import { getPanelDataSummary } from '@grafana/data/panel';
+import { VisualizationSuggestionScore } from '@grafana/data/types';
 import { GraphDrawStyle } from '@grafana/schema';
 
 import { plugin } from './module';

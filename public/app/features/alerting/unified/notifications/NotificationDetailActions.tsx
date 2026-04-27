@@ -1,6 +1,6 @@
 import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
-import { AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';

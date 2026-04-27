@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/utils';
 
 import { ContentOutline } from './ContentOutline';
 

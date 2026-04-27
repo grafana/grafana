@@ -1,4 +1,4 @@
-import { dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data/datetime';
 import { Trans } from '@grafana/i18n';
 import { InteractiveTable, Text } from '@grafana/ui';
 import { type SyncInfo } from 'app/types/ldap';

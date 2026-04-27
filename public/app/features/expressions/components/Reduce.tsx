@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CoreApp, type SelectableValue } from '@grafana/data';
+import { CoreApp, type SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
 

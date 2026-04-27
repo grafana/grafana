@@ -1,6 +1,6 @@
 import { startCase, uniq } from 'lodash';
 
-import { type ScopedVars, type SelectableValue } from '@grafana/data';
+import type { ScopedVars, SelectableValue } from '@grafana/data/types';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 

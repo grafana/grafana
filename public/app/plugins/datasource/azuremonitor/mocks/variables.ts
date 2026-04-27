@@ -4,7 +4,7 @@ import {
   LoadingState,
   VariableHide,
   type VariableOption,
-} from '@grafana/data';
+} from '@grafana/data/types';
 
 const initialVariableModelState: BaseVariableModel = {
   id: '00000000-0000-0000-0000-000000000000',

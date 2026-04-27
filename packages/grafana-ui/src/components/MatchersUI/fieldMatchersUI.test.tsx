@@ -2,7 +2,8 @@ import { render, screen, fireEvent, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { toDataFrame, FieldType, ReducerID, type FieldValueMatcherConfig } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data/dataframe';
+import { ReducerID, type FieldValueMatcherConfig } from '@grafana/data/transformations';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { FieldNameByRegexMatcherEditor, getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';

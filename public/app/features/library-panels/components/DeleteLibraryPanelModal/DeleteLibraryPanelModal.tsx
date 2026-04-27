@@ -1,8 +1,9 @@
 import { type FC, useEffect, useMemo, useReducer } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getModalStyles } from '../../styles';
 import { type LibraryElementDTO } from '../../types';

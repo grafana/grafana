@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { type PanelPlugin } from '@grafana/data';
+import type { PanelPlugin } from '@grafana/data/panel';
 import { t } from '@grafana/i18n';
 import { defaultDashboard } from '@grafana/schema';
 import { type DashboardInitError, DashboardInitPhase, type DashboardState } from 'app/types/dashboard';

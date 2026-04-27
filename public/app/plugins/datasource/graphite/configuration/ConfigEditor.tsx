@@ -1,12 +1,12 @@
 import { PureComponent } from 'react';
 
+import type { DataSourcePluginOptionsEditorProps } from '@grafana/data/types';
 import {
-  type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
   store,
-} from '@grafana/data';
+} from '@grafana/data/utils';
 import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '@grafana/ui';
 

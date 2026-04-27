@@ -3,13 +3,20 @@ import { useCallback, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, type DataQueryRequest, type DataSourceInstanceSettings, type DataSourceJsonData, dateTime, type TimeZone } from '@grafana/data';
 import { type DataFrame } from '@grafana/data/dataframe';
+import { dateTime } from '@grafana/data/datetime';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type TimeZone,
+} from '@grafana/data/types';
 import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 

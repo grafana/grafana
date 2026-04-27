@@ -1,4 +1,4 @@
-import { type PanelData } from '@grafana/data';
+import type { PanelData } from '@grafana/data/types';
 import {
   type ColorDimensionConfig,
   type ResourceDimensionConfig,

@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import { CoreApp } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Dropdown, Menu, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';

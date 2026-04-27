@@ -1,4 +1,6 @@
-import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import { identityOverrideProcessor, standardEditorsRegistry } from '@grafana/data/field';
+import { PanelPlugin } from '@grafana/data/panel';
+import { FieldConfigProperty } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import {
   TableCellDisplayMode,

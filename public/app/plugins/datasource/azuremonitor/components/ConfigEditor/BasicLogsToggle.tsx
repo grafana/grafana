@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
+import { Field, Switch, TextLink } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type AzureMonitorDataSourceJsonData } from '../../types/types';
 

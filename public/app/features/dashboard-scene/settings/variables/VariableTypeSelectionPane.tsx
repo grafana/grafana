@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -13,7 +13,8 @@ import {
   type SceneVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Card, Sidebar, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardScene } from '../../scene/DashboardScene';

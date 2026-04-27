@@ -1,6 +1,6 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
-import { type ThemeSpacingTokens } from '@grafana/data';
+import type { ThemeSpacingTokens } from '@grafana/data/themes';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';

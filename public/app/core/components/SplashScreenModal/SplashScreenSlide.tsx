@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data/themes';
+import { Badge } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type AccentColorKey, type SplashFeature } from './splashContent';
 

@@ -1,5 +1,5 @@
-import { LogLevel } from '@grafana/data';
 import { type Field, FieldType } from '@grafana/data/dataframe';
+import { LogLevel } from '@grafana/data/types';
 import { getLogLevelFromKey } from 'app/features/logs/utils';
 
 /**

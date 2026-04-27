@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { type Observer, Subject, type Subscription } from 'rxjs';
 
-import { useForceUpdate } from '@grafana/ui';
+import { useForceUpdate } from '@grafana/ui/utils';
 
 export class StateManagerBase<TState> {
   private _subject = new Subject<TState>();

@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Button, Segment, useStyles2 } from '@grafana/ui';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { SelectableValue } from '@grafana/data/types';
+import { Button, Segment } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FuncDefs } from '../gfunc';
 import { actions } from '../state/actions';

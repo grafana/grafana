@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Button, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';

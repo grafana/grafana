@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState } from '@grafana/data/types';
 import { type VizPanel } from '@grafana/scenes';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 

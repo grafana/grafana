@@ -7,7 +7,7 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceRef,
   LoadingState,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 

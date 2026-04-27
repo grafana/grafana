@@ -3,9 +3,33 @@ import { countBy, chain } from 'lodash';
 import { type MouseEvent } from 'react';
 import { lastValueFrom, map, type Observable } from 'rxjs';
 
-import { LogLevel, type LogRowModel, type LogLabelStatsModel, type LogsModel, LogsSortOrder, type QueryResultMeta, LogsVolumeType, NumericLogLevel, getFieldDisplayName, getDefaultTimeRange, locationUtil, urlUtil, dateTime, dateTimeFormat, type DataTransformerConfig, type CustomTransformOperator, transformDataFrame, type LogsMetaItem, store } from '@grafana/data';
-import { FieldCache } from '@grafana/data/dataframe';
-import { type DataFrame, type FieldConfig, FieldType, MutableDataFrame, getTimeField, type Field } from '@grafana/data/dataframe';
+import {
+  type DataFrame,
+  type FieldConfig,
+  FieldCache,
+  FieldType,
+  MutableDataFrame,
+  getTimeField,
+  type Field,
+} from '@grafana/data/dataframe';
+import { dateTime, dateTimeFormat } from '@grafana/data/datetime';
+import { getFieldDisplayName } from '@grafana/data/field';
+import { transformDataFrame } from '@grafana/data/transformations';
+import {
+  LogLevel,
+  type LogRowModel,
+  type LogLabelStatsModel,
+  type LogsModel,
+  LogsSortOrder,
+  type QueryResultMeta,
+  LogsVolumeType,
+  NumericLogLevel,
+  getDefaultTimeRange,
+  type DataTransformerConfig,
+  type CustomTransformOperator,
+  type LogsMetaItem,
+} from '@grafana/data/types';
+import { locationUtil, urlUtil, store } from '@grafana/data/utils';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
 

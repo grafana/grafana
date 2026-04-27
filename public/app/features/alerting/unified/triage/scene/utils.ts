@@ -1,4 +1,4 @@
-import { type TimeRange } from '@grafana/data';
+import type { TimeRange } from '@grafana/data/types';
 import { PrometheusDatasource } from '@grafana/prometheus';
 import { AdHocFiltersVariable, type SceneDataQuery, type SceneObject, sceneGraph } from '@grafana/scenes';
 import { useSceneContext, useVariableValue } from '@grafana/scenes-react';

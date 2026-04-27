@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
 import { EditorList } from '@grafana/plugin-ui';
 import { Field } from '@grafana/ui';

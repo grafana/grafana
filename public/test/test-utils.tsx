@@ -11,7 +11,7 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type FeatureToggles } from '@grafana/data';
+import type { FeatureToggles } from '@grafana/data/types';
 import {
   config,
   HistoryWrapper,

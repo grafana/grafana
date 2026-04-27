@@ -1,6 +1,8 @@
 import { useAsync } from 'react-use';
 
-import { getDefaultRelativeTimeRange, getNextRefId, locationUtil, urlUtil } from '@grafana/data';
+import { getNextRefId } from '@grafana/data/query';
+import { getDefaultRelativeTimeRange } from '@grafana/data/types';
+import { locationUtil, urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';

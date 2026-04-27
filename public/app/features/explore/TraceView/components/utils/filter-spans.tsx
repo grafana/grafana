@@ -14,12 +14,7 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import {
-  type SelectableValue,
-  type TraceKeyValuePair,
-  type TraceSearchProps,
-  type TraceSearchTag,
-} from '@grafana/data';
+import type { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data/types';
 
 import {
   KIND,

@@ -8,7 +8,7 @@ import {
   type DataSourceInstanceSettings,
   DataSourcePlugin,
   type ScopedVars,
-} from '@grafana/data';
+} from '@grafana/data/types';
 import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';

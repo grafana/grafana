@@ -1,7 +1,8 @@
 import { toLonLat } from 'ol/proj';
 import { useMemo, useCallback, useId } from 'react';
 
-import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
+import type { StandardEditorProps } from '@grafana/data/field';
+import type { SelectableValue } from '@grafana/data/types';
 import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';

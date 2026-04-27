@@ -1,4 +1,5 @@
-import { type UrlQueryMap, VariableRefresh } from '@grafana/data';
+import { VariableRefresh } from '@grafana/data/types';
+import type { UrlQueryMap } from '@grafana/data/utils';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';

@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import { memo, forwardRef, useMemo, useState, type JSX } from 'react';
 
-import { type GrafanaTheme2, type Labels } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { Labels } from '@grafana/data/types';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Tooltip } from '@grafana/ui';
+import { Icon } from '@grafana/ui/components/icons';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getNormalizedFieldName } from './panel/processing';
 

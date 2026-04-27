@@ -1,6 +1,5 @@
-import { DataFrameType, type Labels } from '@grafana/data';
-import { FieldCache } from '@grafana/data/dataframe';
-import { type DataFrame, FieldType, type FieldWithIndex } from '@grafana/data/dataframe';
+import { type DataFrame, FieldCache, FieldType, type FieldWithIndex } from '@grafana/data/dataframe';
+import { DataFrameType, type Labels } from '@grafana/data/types';
 
 import { parseLegacyLogsFrame } from './legacyLogsFrame';
 

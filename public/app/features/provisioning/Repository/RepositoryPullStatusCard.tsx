@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data/';
+import { type GrafanaTheme2 } from '@grafana/data/themes';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Grid, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { MessageList } from '../Shared/MessageList';

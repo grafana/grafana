@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CodeEditor, Field, IconButton, useStyles2 } from '@grafana/ui';
+import { CodeEditor, Field, IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { formatSQL } from '../../utils/formatSQL';
 

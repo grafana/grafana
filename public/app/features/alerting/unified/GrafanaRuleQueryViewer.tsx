@@ -2,12 +2,15 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data/themes';
+import type { DataSourceInstanceSettings, PanelData } from '@grafana/data/types';
+import { urlUtil } from '@grafana/data/utils';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql';
-import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';

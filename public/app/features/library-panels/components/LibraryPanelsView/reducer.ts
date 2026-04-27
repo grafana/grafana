@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { type AnyAction } from 'redux';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data/types';
 
 import { type LibraryElementDTO } from '../../types';
 

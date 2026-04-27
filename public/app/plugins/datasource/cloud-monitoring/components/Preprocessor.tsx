@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import type { SelectableValue } from '@grafana/data/types';
 import { EditorField } from '@grafana/plugin-ui';
 import { RadioButtonGroup } from '@grafana/ui';
 

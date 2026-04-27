@@ -4,8 +4,21 @@ import { lastValueFrom, merge, Observable, of, type OperatorFunction, pipe, thro
 import { catchError, map } from 'rxjs/operators';
 import { coerce, gte, SemVer, valid } from 'semver';
 
-import { type AbstractLabelMatcher, AbstractLabelOperator, type AbstractQuery, type DataQueryRequest, type DataQueryResponse, type DataSourceWithQueryExportSupport, dateMath, type DateTime, dateTime, getSearchFilterScopedVar, type MetricFindValue, type QueryResultMetaStat, type ScopedVars, type TimeRange } from '@grafana/data';
 import { type DataFrame, toDataFrame } from '@grafana/data/dataframe';
+import { dateMath, type DateTime, dateTime } from '@grafana/data/datetime';
+import {
+  type AbstractLabelMatcher,
+  AbstractLabelOperator,
+  type AbstractQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceWithQueryExportSupport,
+  type MetricFindValue,
+  type QueryResultMetaStat,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data/types';
+import { getSearchFilterScopedVar } from '@grafana/data/utils';
 import {
   type BackendSrvRequest,
   config,
