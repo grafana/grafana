@@ -15,6 +15,8 @@ export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
 export type {
   CodeMirrorCompletionMode,
   CodeMirrorCompletionSource,
+  CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
+  CodeMirrorExtension,
 } from './components/CodeMirror/types';
 export { TableNG } from './components/Table/TableNG/TableNG';
