@@ -79,10 +79,10 @@ type RemoteIndexStore interface {
 //
 // Object storage layout:
 //
-//	/<namespace>/<group>.<resource>/<index-key>/index_meta.json
-//	/<namespace>/<group>.<resource>/<index-key>/store/root.bolt
-//	/<namespace>/<group>.<resource>/<index-key>/store/*.zap
-//	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
+//	/<namespace>/<resource>.<group>/<index-key>/index_meta.json
+//	/<namespace>/<resource>.<group>/<index-key>/store/root.bolt
+//	/<namespace>/<resource>.<group>/<index-key>/store/*.zap
+//	/<namespace>/<resource>.<group>/<index-key>/meta.json  <- uploaded last, signals complete upload
 //
 // meta.json is uploaded last during upload and deleted first during delete,
 // serving as the completion signal.

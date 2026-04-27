@@ -1,4 +1,4 @@
-import { type MatcherContext } from 'expect';
+import { type MatcherContext, type ExpectationResult } from 'expect';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Context, toMatchSnapshot } from 'jest-snapshot';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -33,13 +33,15 @@ export function toMatchUPlotSnapshot(
   const [propertiesOrHint, hint] = rest;
   const snapshotName = snapshotHint ?? hint;
   const snapshotContext = this as Context;
-  const result = (
-    propertiesOrHint
-      ? toMatchSnapshot.call(snapshotContext, received, propertiesOrHint, snapshotName)
-      : snapshotName
-        ? toMatchSnapshot.call(snapshotContext, received, snapshotName)
-        : toMatchSnapshot.call(snapshotContext, received)
-  ) as SnapshotMismatch;
+  let baseResult: ExpectationResult;
+  if (propertiesOrHint) {
+    baseResult = toMatchSnapshot.call(snapshotContext, received, propertiesOrHint, snapshotName);
+  } else if (snapshotName) {
+    baseResult = toMatchSnapshot.call(snapshotContext, received, snapshotName);
+  } else {
+    baseResult = toMatchSnapshot.call(snapshotContext, received);
+  }
+  const result = baseResult as SnapshotMismatch;
 
   if (!process.env.CI && !result.pass && result.expected != null) {
     let parsedExpected;
