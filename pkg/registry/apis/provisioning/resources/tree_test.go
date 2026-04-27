@@ -352,6 +352,65 @@ func TestNewFolderTreeFromResourceList_MetadataHash(t *testing.T) {
 	})
 }
 
+func TestCollectSubtreeIDs(t *testing.T) {
+	// Build:  a → b → c
+	//         a → d
+	//         e (sibling root)
+	build := func() FolderTree {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A"}, "")
+		tree.Add(Folder{ID: "b", Title: "B"}, "a")
+		tree.Add(Folder{ID: "c", Title: "C"}, "b")
+		tree.Add(Folder{ID: "d", Title: "D"}, "a")
+		tree.Add(Folder{ID: "e", Title: "E"}, "")
+		return tree
+	}
+
+	t.Run("subtree from intermediate node includes only descendants", func(t *testing.T) {
+		set, missing, err := CollectSubtreeIDs(context.Background(), build(), []string{"b"})
+		require.NoError(t, err)
+		assert.Empty(t, missing)
+		assert.ElementsMatch(t, []string{"b", "c"}, keysOf(set))
+	})
+
+	t.Run("subtree from root includes whole tree branch", func(t *testing.T) {
+		set, missing, err := CollectSubtreeIDs(context.Background(), build(), []string{"a"})
+		require.NoError(t, err)
+		assert.Empty(t, missing)
+		assert.ElementsMatch(t, []string{"a", "b", "c", "d"}, keysOf(set))
+	})
+
+	t.Run("multiple roots are merged and deduplicated", func(t *testing.T) {
+		// a is the parent of b: requesting both should not double-count
+		set, missing, err := CollectSubtreeIDs(context.Background(), build(), []string{"a", "b", "e"})
+		require.NoError(t, err)
+		assert.Empty(t, missing)
+		assert.ElementsMatch(t, []string{"a", "b", "c", "d", "e"}, keysOf(set))
+	})
+
+	t.Run("missing roots reported, present roots still expanded", func(t *testing.T) {
+		set, missing, err := CollectSubtreeIDs(context.Background(), build(), []string{"a", "ghost"})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"ghost"}, missing)
+		assert.ElementsMatch(t, []string{"a", "b", "c", "d"}, keysOf(set))
+	})
+
+	t.Run("leaf root yields singleton", func(t *testing.T) {
+		set, missing, err := CollectSubtreeIDs(context.Background(), build(), []string{"c"})
+		require.NoError(t, err)
+		assert.Empty(t, missing)
+		assert.ElementsMatch(t, []string{"c"}, keysOf(set))
+	})
+}
+
+func keysOf(m map[string]struct{}) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
 func TestFolderTree_Add_SetsParentID(t *testing.T) {
 	tree := NewEmptyFolderTree()
 

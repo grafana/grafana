@@ -18,3 +18,12 @@ var (
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 )
+
+// Folder identifiers are kept as plain strings here so this package does not
+// have to import apps/folder. The typed Folder GVR/GVK live in
+// pkg/registry/apis/provisioning/resources/client.go where apps/folder is
+// already a dependency.
+const (
+	FolderResourceKind  = "Folder"
+	FolderResourceGroup = "folder.grafana.app"
+)

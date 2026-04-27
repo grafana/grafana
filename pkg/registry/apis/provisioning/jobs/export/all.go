@@ -29,12 +29,16 @@ func exportAll(ctx context.Context, repoName string, options provisioning.Export
 		return err
 	}
 
+	// ExportFolders runs unconditionally so the full unmanaged folder hierarchy
+	// is materialized in the repository before any dashboard write. Selective
+	// exports rely on this so a dashboard inside a non-requested folder still
+	// resolves to its real subdirectory rather than landing at the repo root.
 	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
 		return err
 	}
 
 	if len(options.Resources) > 0 {
-		return ExportSpecificResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
+		return ExportSpecificResources(ctx, options, clients, folderClient, repositoryResources, progress, generateNewUIDs)
 	}
 
 	return ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)

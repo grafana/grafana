@@ -236,6 +236,50 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	return nil
 }
 
+// CollectSubtreeIDs returns the set of folder UIDs reachable by walking down
+// from any of the requested rootIDs in src (each root and all of its
+// descendants). Roots that are not present in src are reported via the
+// missing return value so the caller can record per-resource errors;
+// overlapping roots are deduplicated.
+func CollectSubtreeIDs(ctx context.Context, src FolderTree, rootIDs []string) (subtree map[string]struct{}, missing []string, err error) {
+	parents := make(map[string]string, src.Count())
+	if walkErr := src.Walk(ctx, func(_ context.Context, f Folder, parent string) error {
+		parents[f.ID] = parent
+		return nil
+	}); walkErr != nil {
+		return nil, nil, fmt.Errorf("walk source folder tree: %w", walkErr)
+	}
+
+	subtree = make(map[string]struct{}, len(rootIDs))
+	queue := make([]string, 0, len(rootIDs))
+	for _, id := range rootIDs {
+		if _, ok := parents[id]; !ok {
+			missing = append(missing, id)
+			continue
+		}
+		if _, seen := subtree[id]; seen {
+			continue
+		}
+		subtree[id] = struct{}{}
+		queue = append(queue, id)
+	}
+
+	for i := 0; i < len(queue); i++ {
+		current := queue[i]
+		for child, parent := range parents {
+			if parent != current {
+				continue
+			}
+			if _, seen := subtree[child]; seen {
+				continue
+			}
+			subtree[child] = struct{}{}
+			queue = append(queue, child)
+		}
+	}
+	return subtree, missing, nil
+}
+
 // NewFolderTreeFromResourceList seeds a tree from the current managed resource listing.
 func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderTree {
 	tree := make(map[string]string, len(resources.Items))

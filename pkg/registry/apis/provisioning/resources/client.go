@@ -37,6 +37,14 @@ var (
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
+// String identifiers re-exported from apps/provisioning/pkg/resources so
+// callers in this package can compare ResourceRef values without having to
+// reach across module boundaries for the typed Folder GVK.
+const (
+	FolderResourceKind  = provisioningresources.FolderResourceKind
+	FolderResourceGroup = provisioningresources.FolderResourceGroup
+)
+
 // folderGVR builds the GVR for the folder API at the given version.
 func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
 	return schema.GroupVersionResource{

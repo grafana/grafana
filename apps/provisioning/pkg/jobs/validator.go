@@ -121,15 +121,24 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 		if r.Name == "" {
 			list = append(list, field.Required(path.Child("name"), "resource name is required"))
 		}
-		if r.Kind == "" {
+		// Group is checked against the kind-specific expected group below so
+		// callers cannot mix a Dashboard kind with a folder group or vice versa.
+		var expectedGroup string
+		switch r.Kind {
+		case "":
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
-		} else if r.Kind != resources.DashboardKind.Kind {
+		case resources.DashboardKind.Kind:
+			expectedGroup = resources.DashboardResource.Group
+		case resources.FolderResourceKind:
+			expectedGroup = resources.FolderResourceGroup
+		default:
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
-				fmt.Sprintf("only %s is supported for export", resources.DashboardKind.Kind)))
+				fmt.Sprintf("only %s and %s are supported for export",
+					resources.DashboardKind.Kind, resources.FolderResourceKind)))
 		}
-		if r.Group != "" && r.Group != resources.DashboardResource.Group {
+		if expectedGroup != "" && r.Group != "" && r.Group != expectedGroup {
 			list = append(list, field.Invalid(path.Child("group"), r.Group,
-				fmt.Sprintf("only %s is supported for export", resources.DashboardResource.Group)))
+				fmt.Sprintf("only %s is supported for %s export", expectedGroup, r.Kind)))
 		}
 	}
 
