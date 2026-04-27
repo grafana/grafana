@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { Fragment, type ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
 import {
   type HeaderGroup,
   type PluginHook,
@@ -204,7 +203,7 @@ export function InteractiveTable<TableData extends object>({
   const tableColumns = useMemo(() => {
     return getColumns<TableData>(columns, showExpandAll);
   }, [columns, showExpandAll]);
-  const id = useUniqueId();
+  const id = useId();
   const getRowHTMLID = useCallback(
     (row: Row<TableData>) => {
       return `${id}-${row.id}`.replace(/\s/g, '');
@@ -341,10 +340,6 @@ export function InteractiveTable<TableData extends object>({
     </div>
   );
 }
-
-const useUniqueId = () => {
-  return useMemo(() => uniqueId('InteractiveTable'), []);
-};
 
 const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
   sortIcon: css({

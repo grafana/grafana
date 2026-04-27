@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -41,6 +41,10 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // errStopping is returned when a write operation is rejected because the server is shutting down.
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
+// defaultBookmarkFrequency is how often periodic bookmark events are sent
+// to Watch clients that have AllowWatchBookmarks enabled.
+const defaultBookmarkFrequency = 10 * time.Second
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
@@ -234,6 +238,9 @@ type SearchOptions struct {
 	// Minimum build version for reusing file-based indexes. Ignored if nil.
 	MinBuildVersion *semver.Version
 
+	// Running Grafana build version. Used to detect if index was built by a newer version.
+	BuildVersion *semver.Version
+
 	// Number of workers to use for index rebuilds.
 	IndexRebuildWorkers int
 
@@ -326,6 +333,10 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+
+	// BookmarkFrequency controls how often periodic bookmark events are sent to
+	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
+	BookmarkFrequency time.Duration
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -421,6 +432,10 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.QOSConfig.MaxRetries = 3
 	}
 
+	if opts.BookmarkFrequency == 0 {
+		opts.BookmarkFrequency = defaultBookmarkFrequency
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -453,6 +468,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
+		bookmarkFrequency:              opts.BookmarkFrequency,
 	}
 
 	if opts.Search.Resources != nil {
@@ -549,6 +565,8 @@ type server struct {
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
+
+	bookmarkFrequency time.Duration
 }
 
 // Init implements ResourceServer.
@@ -904,6 +922,11 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
+		if apierrors.IsConflict(err) {
+			// Retryable concurrent-create conflict. Return as gRPC Aborted
+			// so client retry interceptors can handle it.
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
 		rsp.Error = AsErrorResult(err)
 	}
 	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
@@ -1561,10 +1584,28 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		mostRecentRV = s.mostRecentRV.Load()
 	}
 
-	var initialEventsRV int64 // resource version coming from the initial events
+	lastBookmarkRV := int64(-1)
+	sendBookmark := func(rv int64) error {
+		// Don't send repeated bookmarks if no new events were received.
+		if rv <= 0 || rv == lastBookmarkRV {
+			return nil
+		}
+
+		if err := srv.Send(&resourcepb.WatchEvent{
+			Type:     resourcepb.WatchEvent_BOOKMARK,
+			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
+		}); err != nil {
+			return fmt.Errorf("sending bookmark: %w", err)
+		}
+
+		lastBookmarkRV = rv
+		return nil
+	}
+
+	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
-		initialEventsRV, err = s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
@@ -1584,31 +1625,42 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-	}
-	if req.SendInitialEvents && req.AllowWatchBookmarks {
-		if err := srv.Send(&resourcepb.WatchEvent{
-			Type: resourcepb.WatchEvent_BOOKMARK,
-			Resource: &resourcepb.WatchEvent_Resource{
-				Version: initialEventsRV,
-			},
-		}); err != nil {
-			return err
+
+		lastEmittedRV = initialEventsRV
+		if req.AllowWatchBookmarks {
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 		}
 	}
 
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = initialEventsRV
+		since = lastEmittedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	// Set up periodic bookmark ticker when the client opted in.
+	var bookmarkC <-chan time.Time
+	if req.AllowWatchBookmarks && s.bookmarkFrequency > 0 {
+		ticker := time.NewTicker(s.bookmarkFrequency)
+		defer ticker.Stop()
+		bookmarkC = ticker.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-bookmarkC:
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 
 		case event, ok := <-stream:
 			if !ok {
@@ -1654,10 +1706,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if err := srv.Send(resp); err != nil {
 					return err
 				}
+				lastEmittedRV = event.ResourceVersion
 
 				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
+					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -1933,9 +1987,9 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
-	micro := rv
-	if isSnowflake(rv) {
-		micro = rvmanager.RVFromSnowflake(rv)
+	if IsSnowflake(rv) {
+		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
+		return time.UnixMilli(msec)
 	}
-	return time.UnixMicro(micro)
+	return time.UnixMicro(rv)
 }

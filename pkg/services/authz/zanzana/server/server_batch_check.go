@@ -31,6 +31,12 @@ type batchCheckItem struct {
 }
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
+	release, err := s.acquireSlot("BatchCheck", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 	span.SetAttributes(
@@ -249,14 +255,164 @@ func (s *Server) runGroupResourcePhase(
 	return len(checks), nil
 }
 
-// --- Dedup batcher: groups identical OpenFGA folder checks so each unique
-// (relation, folder, context) tuple is only checked once. ---
+// folderCheckEntry is one OpenFGA folder tuple check (relation + folder object + context).
+type folderCheckEntry struct {
+	correlationID string
+	relation      string
+	folderIdent   string
+	groupResource string
+	resource      common.ResourceInfo
+}
 
+func collectFolderPermissionChecks(items map[string]*batchCheckItem) []folderCheckEntry {
+	var entries []folderCheckEntry
+	for _, item := range items {
+		if item.resolved || !item.resource.IsGeneric() {
+			continue
+		}
+		folderIdent := item.resource.FolderIdent()
+		if folderIdent == "" {
+			continue
+		}
+		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
+			continue
+		}
+		relation := common.FolderPermissionRelation(item.relation)
+		entries = append(entries, folderCheckEntry{
+			correlationID: item.correlationID,
+			relation:      relation,
+			folderIdent:   folderIdent,
+			groupResource: item.resource.GroupResource(),
+			resource:      item.resource,
+		})
+	}
+	return entries
+}
+
+func collectFolderSubresourceChecks(items map[string]*batchCheckItem) []folderCheckEntry {
+	var entries []folderCheckEntry
+	for _, item := range items {
+		if item.resolved || !item.resource.IsGeneric() {
+			continue
+		}
+		folderIdent := item.resource.FolderIdent()
+		if folderIdent == "" {
+			continue
+		}
+		folderRelation := common.SubresourceRelation(item.relation)
+		if !common.IsSubresourceRelation(folderRelation) {
+			continue
+		}
+		for _, relation := range expandedSubresourcePermissionRelations(folderRelation) {
+			entries = append(entries, folderCheckEntry{
+				correlationID: item.correlationID,
+				relation:      relation,
+				folderIdent:   folderIdent,
+				groupResource: item.resource.GroupResource(),
+				resource:      item.resource,
+			})
+		}
+	}
+	return entries
+}
+
+// folderDedupKey identifies a unique OpenFGA folder check after deduplication.
 type folderDedupKey struct {
 	relation      string
 	folderIdent   string
 	groupResource string
 }
+
+func uniqueFolderCheckCount(entries []folderCheckEntry) int {
+	if len(entries) == 0 {
+		return 0
+	}
+	seen := make(map[folderDedupKey]struct{}, len(entries))
+	for _, e := range entries {
+		seen[folderDedupKey{relation: e.relation, folderIdent: e.folderIdent, groupResource: e.groupResource}] = struct{}{}
+	}
+	return len(seen)
+}
+
+// resolveFolderChecks runs folder permission or subresource checks, using BatchCheck when the
+// number of unique folder tuples is small and ListObjects when it exceeds FolderCheckBatchThreshold.
+func (s *Server) resolveFolderChecks(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	if len(entries) == 0 {
+		return 0, nil
+	}
+	if uniqueFolderCheckCount(entries) > s.getFolderCheckBatchThreshold() {
+		return s.resolveFolderChecksByList(ctx, store, subject, items, entries, contextuals)
+	}
+	return s.resolveFolderChecksByBatch(ctx, store, subject, items, entries, contextuals)
+}
+
+func (s *Server) getFolderCheckBatchThreshold() int {
+	if s.cfg.FolderCheckBatchThreshold > 0 {
+		return s.cfg.FolderCheckBatchThreshold
+	}
+	return 20
+}
+
+func (s *Server) resolveFolderChecksByList(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	type listGroupKey struct {
+		relation      string
+		groupResource string
+	}
+	groups := make(map[listGroupKey][]folderCheckEntry)
+	for _, e := range entries {
+		k := listGroupKey{relation: e.relation, groupResource: e.groupResource}
+		groups[k] = append(groups[k], e)
+	}
+
+	unique := uniqueFolderCheckCount(entries)
+
+	for key, groupEntries := range groups {
+		sample := groupEntries[0]
+		allowed := make(map[string]bool)
+		if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             key.relation,
+			User:                 subject,
+			Context:              sample.resource.Context(),
+			ContextualTuples:     contextuals,
+		}); err != nil {
+			return unique, err
+		}
+		for _, e := range groupEntries {
+			if !allowed[e.folderIdent] {
+				continue
+			}
+			item := items[e.correlationID]
+			if item.allowed {
+				continue
+			}
+			item.allowed = true
+			item.resolved = true
+			item.err = ""
+		}
+	}
+
+	return unique, nil
+}
+
+// --- Dedup batcher (BatchCheck path): groups identical OpenFGA folder checks so each unique
+// (relation, folder, context) tuple is only checked once. ---
 
 type dedupGroup struct {
 	check          *openfgav1.BatchCheckItem
@@ -333,41 +489,25 @@ func (b *dedupBatcher) resolve(results map[string]*openfgav1.BatchCheckSingleRes
 	}
 }
 
-// --- Phase implementations using dedupBatcher ---
-
-// runFolderPermissionPhase checks folder permission inheritance (e.g. can_get on a folder
-// grants access to all dashboards in that folder). Identical folder checks are deduplicated.
-func (s *Server) runFolderPermissionPhase(
+func (s *Server) resolveFolderChecksByBatch(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
+	entries []folderCheckEntry,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
 	batcher := newDedupBatcher()
-
-	for _, item := range items {
-		if item.resolved || !item.resource.IsGeneric() {
-			continue
-		}
-		folderIdent := item.resource.FolderIdent()
-		if folderIdent == "" {
-			continue
-		}
-		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
-			continue
-		}
-
-		relation := common.FolderPermissionRelation(item.relation)
-		key := folderDedupKey{relation: relation, folderIdent: folderIdent, groupResource: item.resource.GroupResource()}
-		batcher.add(key, item.correlationID, &openfgav1.BatchCheckItem{
+	for _, e := range entries {
+		key := folderDedupKey{relation: e.relation, folderIdent: e.folderIdent, groupResource: e.groupResource}
+		batcher.add(key, e.correlationID, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: relation,
-				Object:   folderIdent,
+				Relation: e.relation,
+				Object:   e.folderIdent,
 			},
 			ContextualTuples: contextuals,
-			Context:          item.resource.Context(),
+			Context:          e.resource.Context(),
 		})
 	}
 
@@ -385,6 +525,19 @@ func (s *Server) runFolderPermissionPhase(
 	return len(checks), nil
 }
 
+// runFolderPermissionPhase checks folder permission inheritance (e.g. can_get on a folder
+// grants access to all dashboards in that folder). Identical folder checks are deduplicated.
+func (s *Server) runFolderPermissionPhase(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items map[string]*batchCheckItem,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (int, error) {
+	entries := collectFolderPermissionChecks(items)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
+}
+
 // runFolderSubresourcePhase checks folder subresource access (e.g. folder_get, folder_set_edit).
 // Each item may expand into multiple relations; identical checks are deduplicated, and an item
 // is allowed if ANY of its expanded checks returns allowed.
@@ -395,47 +548,8 @@ func (s *Server) runFolderSubresourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	batcher := newDedupBatcher()
-
-	for _, item := range items {
-		if item.resolved || !item.resource.IsGeneric() {
-			continue
-		}
-		folderIdent := item.resource.FolderIdent()
-		if folderIdent == "" {
-			continue
-		}
-		folderRelation := common.SubresourceRelation(item.relation)
-		if !common.IsSubresourceRelation(folderRelation) {
-			continue
-		}
-
-		for _, relation := range expandedSubresourcePermissionRelations(folderRelation) {
-			key := folderDedupKey{relation: relation, folderIdent: folderIdent, groupResource: item.resource.GroupResource()}
-			batcher.add(key, item.correlationID, &openfgav1.BatchCheckItem{
-				TupleKey: &openfgav1.CheckRequestTupleKey{
-					User:     subject,
-					Relation: relation,
-					Object:   folderIdent,
-				},
-				ContextualTuples: contextuals,
-				Context:          item.resource.Context(),
-			})
-		}
-	}
-
-	checks := batcher.checks()
-	if len(checks) == 0 {
-		return 0, nil
-	}
-
-	results, err := s.doBatchCheck(ctx, store, checks)
-	if err != nil {
-		return len(checks), err
-	}
-
-	batcher.resolve(results, items)
-	return len(checks), nil
+	entries := collectFolderSubresourceChecks(items)
+	return s.resolveFolderChecks(ctx, store, subject, items, entries, contextuals)
 }
 
 func expandedSubresourcePermissionRelations(relation string) []string {

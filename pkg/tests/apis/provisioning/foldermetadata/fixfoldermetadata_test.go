@@ -28,10 +28,11 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	const repoName = "fix-meta-no-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			// A dashboard inside parent/child/ causes both folders to be
 			// created in Grafana during sync.
@@ -66,10 +67,11 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	const repoName = "fix-meta-valid-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -103,10 +105,11 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -138,10 +141,11 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},

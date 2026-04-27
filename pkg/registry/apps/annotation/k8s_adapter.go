@@ -2,6 +2,7 @@ package annotation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -15,9 +16,12 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupResource()
 
 var (
 	_ rest.Scoper               = (*k8sRESTAdapter)(nil)
@@ -162,6 +166,9 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil, apierrors.NewNotFound(annotationGR, name)
+		}
 		return nil, err
 	}
 
@@ -171,9 +178,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 	}
 	if !allowed {
 		// Return NotFound to avoid leaking existence.
-		return nil, apierrors.NewNotFound(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
-		)
+		return nil, apierrors.NewNotFound(annotationGR, name)
 	}
 
 	return annotation, nil
@@ -196,10 +201,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, err
 	}
 	if !allowed {
-		return nil, apierrors.NewForbidden(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
-			annotation.Name, fmt.Errorf("insufficient permissions"),
-		)
+		return nil, apierrors.NewForbidden(annotationGR, annotation.Name, fmt.Errorf("insufficient permissions"))
 	}
 
 	if annotation.Name == "" && annotation.GenerateName == "" {
@@ -209,6 +211,12 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, apierrors.NewUnauthorized("failed to get requester from context")
+	}
+	annotation.SetCreatedBy(user.GetUID())
 
 	return s.store.Create(ctx, annotation)
 }
@@ -226,6 +234,9 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil, false, apierrors.NewNotFound(annotationGR, name)
+		}
 		return nil, false, err
 	}
 
@@ -253,20 +264,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, err
 	}
 	if !allowed {
-		return nil, false, apierrors.NewForbidden(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
-			existing.Name, fmt.Errorf("insufficient permissions"),
-		)
+		return nil, false, apierrors.NewForbidden(annotationGR, existing.Name, fmt.Errorf("insufficient permissions"))
 	}
 	allowed, err = canAccessAnnotation(ctx, s.accessClient, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowed {
-		return nil, false, apierrors.NewForbidden(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
-			resource.Name, fmt.Errorf("insufficient permissions"),
-		)
+		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
 	}
 
 	updated, err := s.store.Update(ctx, resource)
@@ -282,6 +287,9 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil, false, apierrors.NewNotFound(annotationGR, name)
+		}
 		return nil, false, err
 	}
 
@@ -296,17 +304,15 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 			return nil, false, err
 		}
 		if !allowedRead {
-			return nil, false, apierrors.NewNotFound(
-				annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
-			)
+			return nil, false, apierrors.NewNotFound(annotationGR, name)
 		}
-		return nil, false, apierrors.NewForbidden(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
-			name, fmt.Errorf("insufficient permissions"),
-		)
+		return nil, false, apierrors.NewForbidden(annotationGR, name, fmt.Errorf("insufficient permissions"))
 	}
 
 	err = s.store.Delete(ctx, namespace, name)
+	if errors.Is(err, ErrNotFound) {
+		return nil, false, apierrors.NewNotFound(annotationGR, name)
+	}
 	return nil, false, err
 }
 

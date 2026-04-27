@@ -1,4 +1,6 @@
-import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import { addMilliseconds } from 'date-fns/addMilliseconds';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
+import { isBefore } from 'date-fns/isBefore';
 import { type ComponentProps } from 'react';
 
 import { type StateIcon } from '@grafana/alerting/unstable';

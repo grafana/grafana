@@ -1,48 +1,12 @@
-import { fireEvent, render, waitFor } from 'test/test-utils';
+import { fireEvent, render } from 'test/test-utils';
 
-import { type SqlExprContextValue } from './SqlExprContext';
+import { OpenAssistantButton } from '@grafana/assistant';
+
 import { SqlQueryActions, type SqlQueryActionsProps } from './SqlQueryActions';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   useStyles2: jest.fn().mockImplementation(() => ({})),
-}));
-
-// Mock lazy loaded GenAI components
-jest.mock('./GenAI/GenAISQLSuggestionsButton', () => ({
-  GenAISQLSuggestionsButton: ({ currentQuery, initialQuery }: { currentQuery: string; initialQuery: string }) => {
-    const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
-    return <div data-testid="suggestions-button">{text}</div>;
-  },
-}));
-
-jest.mock('./GenAI/GenAISQLExplainButton', () => ({
-  GenAISQLExplainButton: () => <div data-testid="explain-button">Explain query</div>,
-}));
-
-jest.mock('./GenAI/SuggestionsDrawerButton', () => ({
-  SuggestionsDrawerButton: () => <div data-testid="suggestions-badge">Suggestions Badge</div>,
-}));
-
-// Mock SqlExprContext
-const mockContextValue: SqlExprContextValue = {
-  handleOpenExplanation: jest.fn(),
-  shouldShowViewExplanation: false,
-  handleExplain: jest.fn(),
-  handleHistoryUpdate: jest.fn(),
-  handleOpenDrawer: jest.fn(),
-  suggestions: [],
-  explanation: '',
-  isExplanationOpen: false,
-  isDrawerOpen: false,
-  handleApplySuggestion: jest.fn(),
-  handleCloseDrawer: jest.fn(),
-  handleCloseExplanation: jest.fn(),
-};
-
-jest.mock('./SqlExprContext', () => ({
-  useSqlExprContext: () => mockContextValue,
-  SqlExprProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 describe('SqlQueryActions', () => {
@@ -53,85 +17,88 @@ describe('SqlQueryActions', () => {
     refIds: ['A'],
     initialQuery: `SELECT * FROM A LIMIT 10`,
     errorContext: [],
+    schemas: null,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset mock context to default values
-    Object.assign(mockContextValue, {
-      handleOpenExplanation: jest.fn(),
-      shouldShowViewExplanation: false,
-      handleExplain: jest.fn(),
-      handleHistoryUpdate: jest.fn(),
-      handleOpenDrawer: jest.fn(),
-      suggestions: [],
-      explanation: '',
-      isExplanationOpen: false,
-      isDrawerOpen: false,
-      handleApplySuggestion: jest.fn(),
-      handleCloseDrawer: jest.fn(),
-      handleCloseExplanation: jest.fn(),
-    });
   });
 
-  it('renders GenAI buttons with empty expression', async () => {
-    const customProps = { ...defaultProps, currentQuery: '' };
-    const { findByText } = render(<SqlQueryActions {...customProps} />);
-    expect(await findByText('Generate suggestion')).toBeInTheDocument();
-    expect(await findByText('Explain query')).toBeInTheDocument();
+  it('renders the Run query button', () => {
+    const { getByText } = render(<SqlQueryActions {...defaultProps} />);
+    expect(getByText('Run query')).toBeInTheDocument();
   });
 
-  it('renders GenAI buttons with non-empty expression', async () => {
-    const { findByText } = render(<SqlQueryActions {...defaultProps} />);
-    expect(await findByText('Generate suggestion')).toBeInTheDocument();
-    expect(await findByText('Explain query')).toBeInTheDocument();
+  it('calls executeQuery when Run query is clicked', () => {
+    const executeQuery = jest.fn();
+    const { getByText } = render(<SqlQueryActions {...defaultProps} executeQuery={executeQuery} />);
+    fireEvent.click(getByText('Run query'));
+    expect(executeQuery).toHaveBeenCalled();
   });
 
-  it('renders "Improve query" when currentQuery differs from initialQuery', async () => {
+  it('renders OpenAssistantButton for explain', () => {
+    render(<SqlQueryActions {...defaultProps} />);
+    expect(OpenAssistantButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/expressions/sql/explain',
+        title: 'Explain query',
+      }),
+      expect.anything()
+    );
+  });
+
+  it('renders OpenAssistantButton for suggestions with "Generate suggestion" when query matches initial', () => {
+    render(<SqlQueryActions {...defaultProps} />);
+    expect(OpenAssistantButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/expressions/sql/improve',
+        title: 'Generate suggestion',
+      }),
+      expect.anything()
+    );
+  });
+
+  it('renders OpenAssistantButton for suggestions with "Improve query" when query differs from initial', () => {
     const customProps = {
       ...defaultProps,
       currentQuery: 'SELECT * FROM A WHERE value > 10',
     };
-    const { findByText } = render(<SqlQueryActions {...customProps} />);
-    expect(await findByText('Improve query')).toBeInTheDocument();
+    render(<SqlQueryActions {...customProps} />);
+    expect(OpenAssistantButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/expressions/sql/improve',
+        title: 'Improve query',
+      }),
+      expect.anything()
+    );
   });
 
-  it('renders View explanation button when shouldShowViewExplanation is true', async () => {
-    mockContextValue.shouldShowViewExplanation = true;
-
-    const { findByText } = render(<SqlQueryActions {...defaultProps} />);
-    expect(await findByText('View explanation')).toBeInTheDocument();
+  it('does not render suggestions button when there are no refIds and no query', () => {
+    const customProps = {
+      ...defaultProps,
+      currentQuery: '',
+      refIds: [],
+    };
+    render(<SqlQueryActions {...customProps} />);
+    const suggestionsCall = (OpenAssistantButton as jest.Mock).mock.calls.find(
+      (call) => call[0]?.origin === 'grafana/expressions/sql/improve'
+    );
+    expect(suggestionsCall).toBeUndefined();
   });
 
-  it('renders Explain query button when shouldShowViewExplanation is false', async () => {
-    mockContextValue.shouldShowViewExplanation = false;
-
-    const { findByText } = render(<SqlQueryActions {...defaultProps} />);
-    expect(await findByText('Explain query')).toBeInTheDocument();
-  });
-
-  it('renders SuggestionsDrawerButton when there are suggestions', async () => {
-    mockContextValue.suggestions = ['suggestion1', 'suggestion2'];
-
-    const { findByTestId } = render(<SqlQueryActions {...defaultProps} />);
-    expect(await findByTestId('suggestions-badge')).toBeInTheDocument();
-  });
-
-  it('does not render SuggestionsDrawerButton when there are no suggestions', async () => {
-    mockContextValue.suggestions = [];
-
-    const { queryByTestId } = render(<SqlQueryActions {...defaultProps} />);
-    expect(await waitFor(() => queryByTestId('suggestions-badge'))).not.toBeInTheDocument();
-  });
-
-  it('calls handleOpenExplanation when View explanation is clicked', async () => {
-    const mockHandleOpen = jest.fn();
-    mockContextValue.shouldShowViewExplanation = true;
-    mockContextValue.handleOpenExplanation = mockHandleOpen;
-
-    const { findByText } = render(<SqlQueryActions {...defaultProps} />);
-    const button = await findByText('View explanation');
-    fireEvent.click(button);
-    expect(mockHandleOpen).toHaveBeenCalled();
+  it('renders suggestions button when there are refIds but no query', () => {
+    const customProps = {
+      ...defaultProps,
+      currentQuery: '',
+      refIds: ['A', 'B'],
+    };
+    render(<SqlQueryActions {...customProps} />);
+    expect(OpenAssistantButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/expressions/sql/improve',
+        title: 'Generate suggestion',
+      }),
+      expect.anything()
+    );
   });
 });

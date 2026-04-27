@@ -2,7 +2,9 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
+import { Modal } from '../Modal/Modal';
 
 import { Combobox } from './Combobox';
 import { type ComboboxOption } from './types';
@@ -716,6 +718,87 @@ describe('Combobox', () => {
 
       const inputByPlaceholderText = screen.getByPlaceholderText('Country');
       expect(inputByPlaceholderText).toBeInTheDocument();
+    });
+  });
+
+  describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
+      const { rerender } = render(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+
+      rerender(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen onIsOpenChange={jest.fn()} />
+      );
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('calls onIsOpenChange when the dropdown opens and closes', async () => {
+      const onIsOpenChange = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onIsOpenChange={onIsOpenChange} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('supports controlled isOpen with onIsOpenChange', async () => {
+      function Controlled() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={open} onIsOpenChange={setOpen} />
+        );
+      }
+      render(<Controlled />);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <Combobox options={options} value={null} onChange={jest.fn()} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <Combobox options={options} value={null} onChange={jest.fn()} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

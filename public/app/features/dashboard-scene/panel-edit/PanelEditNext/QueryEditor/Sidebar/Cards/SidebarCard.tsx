@@ -1,19 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { type ActionItem, Actions } from '../../../Actions';
-import {
-  QUERY_EDITOR_TYPE_CONFIG,
-  QueryEditorType,
-  SIDEBAR_CARD_HEIGHT,
-  SIDEBAR_CARD_INDENT,
-  SIDEBAR_CARD_SPACING,
-  getQueryEditorColors,
-} from '../../../constants';
+import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
+import { useQueryEditorTypeConfig } from '../../QueryEditorContext';
 import { getEditorBorderColor } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
@@ -31,6 +25,18 @@ interface SidebarCardProps {
   variant?: 'default' | 'ghost';
 }
 
+const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  if (e.shiftKey) {
+    // Shift+Click is used for range-selection of cards, not text.
+    e.preventDefault();
+  }
+  // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+  // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+  if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+    document.activeElement.blur();
+  }
+};
+
 export const SidebarCard = ({
   children,
   id,
@@ -44,7 +50,7 @@ export const SidebarCard = ({
   variant = 'default',
 }: SidebarCardProps) => {
   const theme = useTheme2();
-  const queryEditorColors = getQueryEditorColors(theme);
+  const typeConfig = useQueryEditorTypeConfig();
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
@@ -66,6 +72,10 @@ export const SidebarCard = ({
     setHasFocusWithin(false);
   }, []);
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey });
+  };
+
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -80,14 +90,14 @@ export const SidebarCard = ({
   };
 
   if (variant === 'ghost') {
-    const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
+    const config = typeConfig[item.type];
     return (
       <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <Icon name={typeConfig.icon} size="sm" className={styles.ghostCardIcon} />
+            <Icon name={config.icon} size="sm" className={styles.ghostCardIcon} />
             <span className={styles.ghostCardLabel}>
-              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
+              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: config.getLabel() })}
             </span>
           </div>
         </div>
@@ -99,14 +109,8 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
-        onMouseDown={(e) => {
-          // Prevent the browser's native text-selection behaviour when Shift is held
-          // (Shift+Click is used for range-selection of cards, not text).
-          if (e.shiftKey) {
-            e.preventDefault();
-          }
-        }}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -123,7 +127,7 @@ export const SidebarCard = ({
           <div>
             <div className={styles.cardContentIcons}>
               {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={queryEditorColors.error} />}
+              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
             </div>
             <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
               <Actions
@@ -167,9 +171,9 @@ function getStyles(
     isError: !!item.error,
   });
 
-  const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const hoverBackgroundColor = isSelected ? selectedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
+  const hoverSolidBg = isSelected ? selectedBg : theme.colors.background.secondary;
 
   const {
     ghostBackgroundColor,
@@ -194,7 +198,7 @@ function getStyles(
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
     borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-    background: `linear-gradient(270deg, ${hoverBackgroundColor} 70%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverSolidBg} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -208,13 +212,17 @@ function getStyles(
 
   const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
-    ? `1px solid color-mix(in srgb, ${themeColors.error} 50%, transparent)`
+    ? `1px solid ${theme.colors.error.border}`
     : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
 
   const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
 
   // Selection-based styling
-  const cardBackground = isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg;
+  const cardBackground = isSelected
+    ? selectedBg
+    : isPartOfSelection
+      ? selectionTintBg
+      : theme.colors.background.primary;
   const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
   const indicatorWidth = isSelected ? 3 : 2;
 

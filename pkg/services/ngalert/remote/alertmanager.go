@@ -650,7 +650,7 @@ func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string
 	status := alertingModels.IntegrationStatus{
 		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
 		LastNotifyAttemptDuration: model.Duration(duration).String(),
-		Name:                      cfg.Type,
+		Name:                      string(cfg.Type),
 		SendResolved:              false,
 	}
 	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
-	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +25,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -77,7 +76,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			generalFolderUID := ac.GeneralFolderUID
 			cmd.FolderUID = &generalFolderUID
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
@@ -97,7 +96,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 	if element.FolderID != 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
-		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
+		folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "failed to get folder", err)
 		}
@@ -242,9 +241,9 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 			// nolint:staticcheck
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
+			folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
-				if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+				if errors.Is(err, foldermodel.ErrAccessDenied) {
 					return response.Error(http.StatusForbidden, "access denied to folder", err)
 				}
 
@@ -266,7 +265,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 	if element.FolderID != 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
-		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
+		folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
 		}
@@ -406,8 +405,8 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		return response.Error(http.StatusNotFound, dashboards.ErrFolderNotFound.Error(), err)
 	}
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(http.StatusForbidden, dashboards.ErrFolderAccessDenied.Error(), err)
+	if errors.Is(err, foldermodel.ErrAccessDenied) {
+		return response.Error(http.StatusForbidden, foldermodel.ErrAccessDenied.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementHasConnections) {
 		return response.Error(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), err)
@@ -421,7 +420,7 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, model.ErrLibraryElementProvisionedFolder) {
 		return response.Error(http.StatusConflict, model.ErrLibraryElementProvisionedFolder.Error(), err)
 	}
-	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
+	if errors.Is(err, model.ErrLibraryElementInsufficientPermissions) {
 		return response.Error(http.StatusForbidden, err.Error(), err)
 	}
 
@@ -566,12 +565,12 @@ type libraryElementsK8sHandler struct {
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	folderService        folder.Service
+	folderService        foldermodel.Service
 	dashboardsService    dashboards.DashboardService
 	userService          user.Service
 }
 
-func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
+func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService foldermodel.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
 	gvr := schema.GroupVersionResource{
 		Group:    dashboardV0.APIGroup,
 		Version:  dashboardV0.APIVersion,
@@ -680,7 +679,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 	}
 
 	if folderUID != "" {
-		folder, err := lk8s.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{
+		folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
 			OrgID:        c.OrgID,
 			UID:          &folderUID,
 			SignedInUser: c.SignedInUser,

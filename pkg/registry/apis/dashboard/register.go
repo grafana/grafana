@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -1114,7 +1115,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
 			}
 			if apierrors.IsForbidden(err) {
-				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 			}
 			return err
 		}
@@ -1126,7 +1127,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		}
 
 		if !accessInfo.CanEdit {
-			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 		}
 	}
 
