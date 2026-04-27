@@ -3627,9 +3627,9 @@
         "declare-incident": "Nahlásit incident",
         "declare-incident-no-permission": "Nemáte oprávnění k přístupu k incidentu",
         "instance-details": "Podrobnosti o instanci",
+        "section-silence": "",
         "silence-button": "Potlačení",
-        "silence-no-permission": "Nemáte oprávnění k vytváření potlačení",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nemáte oprávnění k vytváření potlačení"
       },
       "labels-column-title": "Štítky",
       "no-firing-or-pending-instances": "Pro vybraný časový rozsah nemáte žádné výskyty výstrah ve stavu spuštění nebo čekání.",
@@ -11347,6 +11347,7 @@
       "label-numbers": "Čísla",
       "label-signature": "Podpis"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentální. Zobrazit komponentu pro správu zobrazených polí z protokolů.",
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
     "description-enable-logs-highlighting": "Použijte předdefinované barevné schéma pro zvýraznění příslušných částí řádků protokolu.",
@@ -11650,6 +11651,7 @@
         "common-labels": "Běžné štítky:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Běžné štítky",
     "name-deduplication": "Deduplikace",
     "name-details-mode": "Režim panelu Podrobnosti protokolu",
@@ -14971,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Domácí nástěnka",
       "home-dashboard-placeholder": "Výchozí nástěnka",

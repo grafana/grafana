@@ -14789,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "Error loading preferences",
+      "update-preferences": "Error updating preferences"
+    },
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
