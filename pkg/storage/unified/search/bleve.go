@@ -306,11 +306,13 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 
 	for key, idx := range unowned {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "unowned", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
 
 	for key, idx := range expired {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
@@ -357,6 +359,12 @@ func (b *bleveBackend) getUploadTracking(key resource.NamespacedResource) (time.
 		return time.Time{}, false
 	}
 	return t, true
+}
+
+func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	delete(b.lastUploadTime, key)
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -815,6 +823,7 @@ func (b *bleveBackend) closeAllIndexes() {
 	defer b.cacheMx.Unlock()
 
 	for key, idx := range b.cache {
+		b.clearUploadTracking(key)
 		if err := idx.stopUpdaterAndCloseIndex(); err != nil {
 			b.log.Error("Failed to close index", "err", err)
 		}

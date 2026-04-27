@@ -513,6 +513,33 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	assert.Equal(t, int64(2), count)
 }
 
+func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
+	be, _ := newTestBleveBackend(t, SnapshotOptions{})
+	key := newTestNsResource()
+	resourceDir := be.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	require.NoError(t, err)
+	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
+	require.NoError(t, setRV(index, 42))
+
+	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	idx.resourceVersion.Store(42)
+	idx.expiration = time.Now().Add(-time.Minute)
+
+	be.cacheMx.Lock()
+	be.cache[key] = idx
+	be.cacheMx.Unlock()
+	be.setUploadTracking(key, time.Now())
+
+	be.runEvictExpiredOrUnownedIndexes(time.Now())
+
+	assert.Nil(t, be.getCachedIndex(key, time.Now()))
+	_, ok := be.getUploadTracking(key)
+	assert.False(t, ok)
+}
+
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	bucket := memblob.OpenBucket(nil)
