@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { Icon } from '../Icon/Icon';
+import { Portal } from '../Portal/Portal';
 
 import { type MenuItemProps } from './MenuItem';
 import { useMenuFocus } from './hooks';
@@ -55,19 +56,21 @@ export const SubMenu = memo(({ parentItemRef, items, isOpen, close, customStyle 
         <Icon name="angle-right" className={styles.icon} />
       </div>
       {isOpen && (
-        <div
-          ref={refs.setFloating}
-          className={styles.subMenu}
-          data-testid={selectors.components.Menu.SubMenu.container}
-          style={{
-            ...floatingStyles,
-            ...customStyle,
-          }}
-        >
-          <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
-            {items}
+        <Portal>
+          <div
+            ref={refs.setFloating}
+            className={styles.subMenu}
+            data-testid={selectors.components.Menu.SubMenu.container}
+            style={{
+              ...floatingStyles,
+              ...customStyle,
+            }}
+          >
+            <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
+              {items}
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </>
   );

@@ -288,6 +288,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     active: css({
       background: theme.colors.action.hover,
+      outline: '1px solid transparent',
     }),
     destructive: css({
       color: theme.colors.error.text,
