@@ -213,12 +213,6 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
 	}
-	if q.Limit == 0 {
-		q.Limit = folderSearchLimit
-	}
-	if q.Page == 0 {
-		q.Page = 1
-	}
 
 	if q.UID != "" {
 		// the original get children query fails if the parent folder does not exist
@@ -227,6 +221,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	return ss.searchChildren(ctx, q)
+}
+
+// searchChildren returns the direct children of q.UID via k8sclient.Search.
+// It does not validate that q.UID exists; the caller is responsible.
+func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"searchChildren")
+	defer span.End()
+
+	if q.Limit == 0 {
+		q.Limit = folderSearchLimit
+	}
+	if q.Page == 0 {
+		q.Page = 1
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
@@ -262,7 +272,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	// for legacy mode. The post-filter alone would break pagination (returning
 	// 49 instead of 50 results), but this is acceptable as a temporary state
 	// until legacy search is fully removed.
-	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
+	allowK6Folder := q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount)
 	if !allowK6Folder {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_NAME,
@@ -304,6 +314,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 }
 
 // TODO use a single query to get the height of a folder
+// TODO: unused, remove.
 func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetHeight")
 	defer span.End()
@@ -415,76 +426,71 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+// GetDescendants returns all descendants of ancestorUID by walking the tree
+// level by level via k8sclient.Search. Cost scales with subtree size, not
+// org size.
+//
+// One Search per parent: fast for small subtrees (the common delete shape),
+// slow for very large ones (slower than a single List).
+//
+// The returned folders are minimal: only UID, ID, OrgID, ParentUID, Title and
+// ManagedBy are populated (the fields available on folder.FolderReference).
+// Callers needing fuller folders (Created, Updated, Description, ...) should
+// pass the returned UIDs to GetFolders.
+//
+// The traversal is bounded by ss.maxDepth. If the bound is exceeded a warning
+// is logged and the partial result is returned.
+func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestorUID string) ([]*folder.Folder, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendants")
 	defer span.End()
 
-	out, err := ss.list(ctx, orgID, v1.ListOptions{})
-	if err != nil {
+	// Validate the ancestor exists once. Without this we could not distinguish
+	// "not found" from "found but has no children".
+	if _, err := ss.Get(ctx, folder.GetFolderQuery{UID: &ancestorUID, OrgID: orgID}); err != nil {
 		return nil, err
 	}
 
-	// convert item to legacy folder format
-	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
-	if err != nil {
-		return nil, err
-	}
+	var out []*folder.Folder
+	queue := []string{ancestorUID}
+	visited := map[string]bool{ancestorUID: true}
+	// Mirrors the loop shape of GetHeight: depth starts at -1 and is
+	// incremented before each level is processed. After the loop, depth
+	// equals the deepest level reached; depth > maxDepth means we hit the
+	// cap with items still queued.
+	depth := -1
+	for len(queue) > 0 && depth <= ss.maxDepth {
+		levelSize := len(queue)
+		depth++
+		for i := 0; i < levelSize; i++ {
+			parent := queue[0]
+			queue = queue[1:]
 
-	nodes := map[string]*folder.Folder{}
-	for _, f := range folders {
-		nodes[f.UID] = f
-	}
-
-	tree := map[string]map[string]*folder.Folder{}
-
-	for uid, f := range nodes {
-		parentUID := f.ParentUID
-		if parentUID == "" {
-			parentUID = "general"
-		}
-
-		if tree[parentUID] == nil {
-			tree[parentUID] = map[string]*folder.Folder{}
-		}
-
-		tree[parentUID][uid] = f
-	}
-
-	descendantsMap := map[string]*folder.Folder{}
-	err = getDescendants(nodes, tree, ancestor_uid, descendantsMap, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	descendants := []*folder.Folder{}
-	for _, f := range descendantsMap {
-		descendants = append(descendants, f)
-	}
-
-	return descendants, nil
-}
-
-func getDescendants(
-	nodes map[string]*folder.Folder,
-	tree map[string]map[string]*folder.Folder,
-	ancestorUID string,
-	descendantsMap map[string]*folder.Folder,
-	seen map[string]bool,
-) error {
-	if seen == nil {
-		seen = map[string]bool{}
-	}
-	if seen[ancestorUID] {
-		return folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ancestorUID)
-	}
-	seen[ancestorUID] = true
-	for uid := range tree[ancestorUID] {
-		descendantsMap[uid] = nodes[uid]
-		if err := getDescendants(nodes, tree, uid, descendantsMap, seen); err != nil {
-			return err
+			children, err := ss.searchChildren(ctx, folder.GetChildrenQuery{UID: parent, OrgID: orgID})
+			if err != nil {
+				return nil, err
+			}
+			for _, ref := range children {
+				if visited[ref.UID] {
+					return nil, folder.ErrCircularReference.Errorf("circular reference detected at folder uid: %s", ref.UID)
+				}
+				visited[ref.UID] = true
+				out = append(out, &folder.Folder{
+					ID:        ref.ID,
+					OrgID:     orgID,
+					UID:       ref.UID,
+					ParentUID: ref.ParentUID,
+					Title:     ref.Title,
+					ManagedBy: ref.ManagedBy,
+				})
+				queue = append(queue, ref.UID)
+			}
 		}
 	}
-	return nil
+	if depth > ss.maxDepth {
+		ss.log.Warn("folder depth exceeds the maximum allowed depth, you might have a circular reference",
+			"uid", ancestorUID, "orgId", orgID, "maxDepth", ss.maxDepth)
+	}
+	return out, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
