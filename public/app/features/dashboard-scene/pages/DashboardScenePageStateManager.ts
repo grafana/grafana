@@ -55,6 +55,7 @@ import {
   type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
+import { getOrgTemplateExtension } from '../settings/enterprise-components/OrgTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -99,6 +100,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  orgTemplateUid?: string;
+  editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
 }
@@ -943,8 +946,33 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
       // Special handling for Template route - set up edit mode and dirty state
       if (config.featureToggles.orgDashboardTemplates && options.route === DashboardRoutes.Template) {
+        const editMode = !!options.editTemplate;
+
+        if (options.orgTemplateUid && editMode) {
+          // Land template-only flags onto scene.meta so downstream UI can detect "this is an
+          // org template" and the save drawer can build PUTs keyed on orgTemplateUid. Outer
+          // template spec fields (title/description/tags/...) are not cached here — consumers
+          // fetch them via useGetOrgDashboardTemplateQuery keyed on orgTemplateUid.
+          scene.setState({
+            meta: {
+              ...scene.state.meta,
+              isOrgTemplate: true,
+              orgTemplateUid: options.orgTemplateUid,
+              k8s: {
+                ...scene.state.meta.k8s,
+                resourceVersion: rsp.metadata.resourceVersion,
+              },
+            },
+          });
+        }
+
         scene.onEnterEditMode();
-        scene.setState({ isDirty: true });
+
+        // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
+        // starts clean — dirtiness should reflect real user edits.
+        if (!editMode) {
+          scene.setState({ isDirty: true });
+        }
       }
 
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
@@ -964,6 +992,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     uid,
     route,
     urlFolderUid,
+    orgTemplateUid,
+    editTemplate,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -1009,10 +1039,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
         case DashboardRoutes.Template: {
-          const templateSearchParams = new URLSearchParams(window.location.search);
-          const orgTemplateUid = templateSearchParams.get('orgTemplateUid');
           if (orgTemplateUid) {
-            rsp = await this.loadOrgTemplate(orgTemplateUid);
+            rsp = await this.loadOrgTemplate(orgTemplateUid, { editMode: !!editTemplate });
             break;
           }
           // Non-org templates are V1 only — throw to fallback
@@ -1061,12 +1089,43 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     return rsp;
   }
 
-  private async loadOrgTemplate(orgTemplateUid: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-    const namespace = 'default';
-    const response = await getBackendSrv().get(
-      `/apis/orgtemplate.grafana.app/v1alpha1/namespaces/${namespace}/orgdashboardtemplates/${orgTemplateUid}`
-    );
+  private async loadOrgTemplate(
+    orgTemplateUid: string,
+    { editMode }: { editMode: boolean }
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    const response = await getOrgTemplateExtension().loadTemplate(orgTemplateUid);
 
+    const resourceVersion = response.metadata?.resourceVersion ?? '0';
+
+    if (editMode) {
+      // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
+      // irrelevant actions and the save drawer can PUT back to the template resource.
+      // TODO: replace hasEditPermissionInFolders placeholder with a dedicated
+      // OrgDashboardTemplatesWrite permission when RBAC for this resource is introduced.
+      const canEditTemplate = contextSrv.hasEditPermissionInFolders;
+      return {
+        apiVersion: dashboardAPIVersionResolver.getV2(),
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          creationTimestamp: '',
+          name: '',
+          resourceVersion,
+        },
+        spec: response.spec.dashboard,
+        access: {
+          canSave: canEditTemplate,
+          canEdit: canEditTemplate,
+          canStar: false,
+          canShare: false,
+          canDelete: false,
+        },
+      };
+    }
+
+    // Use-template flow: unchanged legacy behavior. The embedded dashboard spec is hydrated
+    // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
+    // scene as an org template; no snapshot, no orgTemplateUid — this is not an edit of the
+    // template, it's a cloning flow.
     return {
       apiVersion: dashboardAPIVersionResolver.getV2(),
       kind: 'DashboardWithAccessInfo',
@@ -1305,8 +1364,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
     // Template dashboards: org templates use V2, gnet templates use V1
     if (options.route === DashboardRoutes.Template) {
-      const templateSearchParams = new URLSearchParams(window.location.search);
-      if (templateSearchParams.get('orgTemplateUid')) {
+      if (options.orgTemplateUid) {
         this.setActiveManager('v2');
       } else {
         this.setActiveManager('v1');

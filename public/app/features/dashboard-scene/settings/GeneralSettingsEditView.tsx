@@ -308,14 +308,16 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
             <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
           </Field>
-          <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <ProvisioningAwareFolderPicker
-              value={meta.folderUid}
-              onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
-              repositoryName={dashboard.getManagerIdentity()}
-              excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
-            />
-          </Field>
+          {!meta.isOrgTemplate && (
+            <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
+              <ProvisioningAwareFolderPicker
+                value={meta.folderUid}
+                onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+                repositoryName={dashboard.getManagerIdentity()}
+                excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
+              />
+            </Field>
+          )}
 
           {/* Render here so move-form load errors appear under the Move field. */}
           {showMoveModal && moveModalProps && (

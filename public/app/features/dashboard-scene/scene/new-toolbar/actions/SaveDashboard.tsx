@@ -15,6 +15,24 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   // In dashboard settings we still use the nav toolbar for a short while
   const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
 
+  // Org-template edit flow
+  if (meta.isOrgTemplate) {
+    if (!meta.canSave) {
+      return null;
+    }
+    return (
+      <Button
+        onClick={() => dashboard.openSaveDrawer({ updateOrgTemplate: true })}
+        tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
+        size={buttonSize}
+        variant={isDirty ? 'primary' : 'secondary'}
+        data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
+      >
+        <Trans i18nKey="dashboard.toolbar.new.save-template.label">Save</Trans>
+      </Button>
+    );
+  }
+
   // if we only can save
   if (isNew) {
     return (
@@ -74,7 +92,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
                 onClick={() => {
-                  dashboard.openSaveDrawer({ saveAsTemplate: true });
+                  dashboard.openSaveDrawer({ saveAsOrgTemplate: true });
                 }}
               />
             )}

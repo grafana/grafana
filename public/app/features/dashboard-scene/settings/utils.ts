@@ -65,7 +65,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.uid && dashboard.state.meta.canSave) {
+  if ((dashboard.state.uid || dashboard.state.meta.isOrgTemplate) && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),

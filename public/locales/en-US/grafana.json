@@ -6430,6 +6430,10 @@
         },
         "save-dashboard-short": "Save",
         "save-library-panel": "Save library panel",
+        "save-template": {
+          "label": "Save",
+          "tooltip": "Save template changes"
+        },
         "share": {
           "arrow": "Share",
           "title": "Share",
@@ -7478,7 +7482,8 @@
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
         "title-provisioned": "Provisioned dashboard",
-        "title-template": "Save as template"
+        "title-template": "Save as template",
+        "title-update-template": "Save template"
       }
     },
     "save-dashboard-form": {
@@ -7593,6 +7598,10 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template as a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
     },
     "template-saved-banner": {
       "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",

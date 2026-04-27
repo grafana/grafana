@@ -83,6 +83,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
+import { getOrgTemplateExtension } from '../settings/enterprise-components/OrgTemplateExtension';
 import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -548,6 +549,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    if (this.state.meta.isOrgTemplate) {
+      return getOrgTemplateExtension().restore(this, version);
+    }
+
     const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
@@ -584,11 +589,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public openSaveDrawer({
     saveAsCopy,
-    saveAsTemplate,
+    saveAsOrgTemplate,
+    updateOrgTemplate,
     onSaveSuccess,
   }: {
     saveAsCopy?: boolean;
-    saveAsTemplate?: boolean;
+    saveAsOrgTemplate?: boolean;
+    updateOrgTemplate?: boolean;
     onSaveSuccess?: () => void;
   }) {
     if (!this.state.isEditing) {
@@ -599,7 +606,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
-        saveAsTemplate,
+        saveAsOrgTemplate,
+        updateOrgTemplate,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
       }),

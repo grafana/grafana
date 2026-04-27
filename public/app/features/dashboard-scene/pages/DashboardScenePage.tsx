@@ -26,6 +26,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { TemplateDashboardEditBanner } from '../components/TemplateDashboardEditBanner';
 import { TemplateDashboardSavedBanner } from '../components/TemplateDashboardSavedBanner';
 import { TemplateDashboardUseBanner } from '../components/TemplateDashboardUseBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
@@ -63,6 +64,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        orgTemplateUid: queryParams.orgTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
       });
     }
 
@@ -86,6 +89,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
+    queryParams.orgTemplateUid,
+    queryParams.editTemplate,
   ]);
 
   useEffect(() => {
@@ -145,6 +150,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <TemplateDashboardSavedBanner templateName={dashboard.state.title} />
       <TemplateDashboardUseBanner dashboard={dashboard} />
+      <TemplateDashboardEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {config.featureToggles.orgDashboardTemplates && <TemplateDashboardModal />}
