@@ -6,7 +6,12 @@ import { locationService } from '@grafana/runtime';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_PANELS_LOCAL_STORAGE_KEY,
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_SORT,
+} from '../constants';
 import {
   reportDashboardListViewed,
   reportSearchFailedQueryInteraction,
@@ -70,6 +75,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   lastSearchTimestamp = 0;
 
+  protected sortStorageKey: string = SEARCH_SELECTED_SORT;
+
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
@@ -79,7 +86,18 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     const layout = getLocalStorageLayout();
-    const prevSort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
+    let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
+
+    // Guard against stale recently-deleted sort values persisted to the main sort key
+    // before this fix was introduced. Clear them so the main page renders correctly.
+    if (this.sortStorageKey === SEARCH_SELECTED_SORT && prevSort !== undefined) {
+      const recentlyDeletedValues: string[] = [...RECENTLY_DELETED_SORT_VALUES];
+      if (recentlyDeletedValues.includes(prevSort)) {
+        store.delete(SEARCH_SELECTED_SORT);
+        prevSort = undefined;
+      }
+    }
+
     const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
 
     this.setState({
@@ -102,7 +120,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
    * Updates internal and url state, then triggers a new search
    */
   setStateAndDoSearch(state: Partial<SearchState>) {
-    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
+    const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
 
     // Set internal state
     this.setState({ sort, ...state });
@@ -200,11 +218,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onSortChange = (sort: string | undefined) => {
     if (sort) {
-      localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+      store.set(this.sortStorageKey, sort);
       // Switch to list view if sort is set to preserve sort order when navigating back
       localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
     } else {
-      localStorage.removeItem(SEARCH_SELECTED_SORT);
+      store.delete(this.sortStorageKey);
     }
 
     if (this.state.layout === SearchLayout.Folders) {

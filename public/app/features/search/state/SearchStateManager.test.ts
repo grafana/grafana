@@ -1,11 +1,13 @@
 import { waitFor } from '@testing-library/react';
 import { delay, http, HttpResponse } from 'msw';
 
+import { store } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { SEARCH_SELECTED_SORT } from '../constants';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
@@ -91,6 +93,53 @@ describe('SearchStateManager', () => {
       expect(stm.state.query).toBe('');
       expect(stm.state.sort).toBe(undefined);
       expect(stm.state.folderUid).toBe('abc');
+    });
+
+    describe('stale recently-deleted sort guard', () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it('clears a recently-deleted sort value from the main key and ignores it', () => {
+        store.set(SEARCH_SELECTED_SORT, 'deleted-desc');
+        const stm = createSearchStateManager();
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBeUndefined();
+        expect(store.get(SEARCH_SELECTED_SORT)).toBeUndefined();
+      });
+
+      it('clears all recently-deleted vocabulary values from the main key', () => {
+        const recentlyDeletedValues = ['alpha-asc', 'alpha-desc', 'deleted-asc', 'deleted-desc', 'deletedby-asc', 'deletedby-desc'];
+        for (const value of recentlyDeletedValues) {
+          store.set(SEARCH_SELECTED_SORT, value);
+          const stm = createSearchStateManager();
+          stm.initStateFromUrl(undefined, false);
+
+          expect(stm.state.prevSort).toBeUndefined();
+          expect(store.get(SEARCH_SELECTED_SORT)).toBeUndefined();
+        }
+      });
+
+      it('preserves valid main-page sort values', () => {
+        store.set(SEARCH_SELECTED_SORT, 'name_sort');
+        const stm = createSearchStateManager();
+        store.set('grafana.search.layout', 'list');
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBe('name_sort');
+        expect(store.get(SEARCH_SELECTED_SORT)).toBe('name_sort');
+      });
+
+      it('preserves -name_sort as a valid main-page value', () => {
+        store.set(SEARCH_SELECTED_SORT, '-name_sort');
+        const stm = createSearchStateManager();
+        store.set('grafana.search.layout', 'list');
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBe('-name_sort');
+        expect(store.get(SEARCH_SELECTED_SORT)).toBe('-name_sort');
+      });
     });
 
     it('updates search results in order', async () => {
