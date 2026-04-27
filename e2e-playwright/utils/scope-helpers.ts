@@ -147,8 +147,85 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
     }
   });
 
-  // Note: Dashboard bindings and navigations routes are set up dynamically in applyScopes()
-  // with scope-specific URL patterns to avoid cache issues. They are not set up here.
+  // Generic fallback mocks for scope_navigations and scope_dashboard_bindings.
+  // These cover any request whose scope-param order doesn't match the URL patterns registered
+  // by applyScopes() (e.g. when the UI applies recent scopes in a different order).
+  // applyScopes() registers its handlers AFTER this function, so its more-specific patterns
+  // take precedence (Playwright uses LIFO ordering for overlapping routes).
+  const findScopeByFullName = (fullName: string, items: TestScope[]): TestScope | undefined => {
+    for (const item of items) {
+      if (`scope-${item.name}` === fullName) {
+        return item;
+      }
+      if (item.children) {
+        const found = findScopeByFullName(fullName, item.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return undefined;
+  };
+
+  await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations*`, async (route) => {
+    const url = new URL(route.request().url());
+    const requestedScopeNames = url.searchParams.getAll('scope');
+    const matchingScopes = requestedScopeNames
+      .map((name) => findScopeByFullName(name, scopes))
+      .filter((s): s is TestScope => s !== undefined);
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: matchingScopes.flatMap((scope) => {
+          if (!scope.dashboardUid || !scope.addLinks) {
+            return [];
+          }
+          return [
+            {
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: { name: `scope-${scope.name}-nav`, resourceVersion: '1', creationTimestamp: 'stamp' },
+              spec: { url: `/d/${scope.dashboardUid}`, scope: `scope-${scope.name}` },
+              status: { title: scope.dashboardTitle ?? scope.title },
+            },
+          ];
+        }),
+      }),
+    });
+  });
+
+  await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings*`, async (route) => {
+    const url = new URL(route.request().url());
+    const requestedScopeNames = url.searchParams.getAll('scope');
+    const matchingScopes = requestedScopeNames
+      .map((name) => findScopeByFullName(name, scopes))
+      .filter((s): s is TestScope => s !== undefined);
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: matchingScopes.flatMap((scope) => {
+          if (!scope.dashboardUid || !scope.addLinks) {
+            return [];
+          }
+          return [
+            {
+              kind: 'ScopeDashboardBinding',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: { name: 'scope', resourceVersion: '1', creationTimestamp: 'stamp' },
+              spec: { dashboard: scope.dashboardUid, scope: `scope-${scope.name}` },
+              status: { dashboardTitle: scope.dashboardTitle ?? scope.title },
+            },
+          ];
+        }),
+      }),
+    });
+  });
 }
 
 export type TestScope = {
@@ -228,7 +305,9 @@ export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
   const responsePromise = scopeNodeChildrenRequest(page, scopes);
 
   await click();
-  await responsePromise;
+  // Wait for either the network response (cold RTK Query cache) or the tree items to
+  // become visible (warm cache — no new request is made, data is served from cache).
+  await Promise.race([responsePromise, page.waitForSelector('[data-testid^="scopes-tree-"]', { state: 'visible' })]);
 }
 
 /**
@@ -308,7 +387,7 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
  * Applies the selected scopes and waits for the selector to close and page to settle.
  * Sets up routes dynamically with scope-specific URL patterns to avoid cache issues.
  */
-export async function applyScopes(page: Page, scopes?: TestScope[]) {
+export async function applyScopes(page: Page, scopes?: TestScope[], options?: { preventRedirect?: boolean }) {
   const click = async () => {
     await page.getByTestId('scopes-selector-apply').scrollIntoViewIfNeeded();
     await page.getByTestId('scopes-selector-apply').click({ force: true });
@@ -387,8 +466,16 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  // Mock scope_navigations endpoint with scope-specific URL pattern
+  // Mock scope_navigations endpoint with scope-specific URL pattern.
+  // Mirrors the shape of the scope_dashboard_bindings mock above so tests that
+  // depend on a populated drawer (search, grouping, navigate-to-first-dashboard)
+  // work identically against the navigations endpoint.
   await page.route(scopeNavigationsUrl, async (route) => {
+    // Capture the current page path at the time Apply is clicked.
+    // We add it as an extra navigation item so Grafana sees the current dashboard
+    // in the scope's navigation list and does NOT redirect away from it.
+    const currentPagePath = new URL(page.url()).pathname;
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -400,10 +487,12 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
             apiVersion: string;
             metadata: { name: string; resourceVersion: string; creationTimestamp: string };
             spec: { url: string; scope: string };
-            status: { title: string };
+            status: { title: string; groups?: string[] };
           }> = [];
 
-          // Create a scope navigation if dashboardUid is provided
+          // The first navigation for a scope must keep a clean `/d/{uid}` URL so that
+          // `isCurrentPath` matches exactly (powers the "active scope navigation" check
+          // and the fallback redirect target in ScopesSelectorService.redirectAfterApply).
           if (scope.dashboardUid && scope.addLinks) {
             navigations.push({
               kind: 'ScopeNavigation',
@@ -419,6 +508,77 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
               },
               status: {
                 title: scope.dashboardTitle ?? scope.title,
+              },
+            });
+          }
+
+          const baseUid = scope.dashboardUid ?? 'edediimbjhdz4b';
+
+          for (let i = 0; i < 10; i++) {
+            const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
+            navigations.push({
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: `scope-${scope.name}-nav-${i}-${Math.random().toString()}`,
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                url: `/d/${baseUid}/${Math.random().toString()}`,
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                title: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
+                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
+              },
+            });
+          }
+
+          // make sure there is always a navigation with no group
+          navigations.push({
+            kind: 'ScopeNavigation',
+            apiVersion: 'scope.grafana.app/v0alpha1',
+            metadata: {
+              name: `scope-${scope.name}-nav-no-group-${Math.random().toString()}`,
+              resourceVersion: '1',
+              creationTimestamp: 'stamp',
+            },
+            spec: {
+              url: `/d/${baseUid}/${Math.random().toString()}`,
+              scope: `scope-${scope.name}`,
+            },
+            status: {
+              title: (scope.dashboardTitle ?? 'A tall dashboard') + 'U123',
+            },
+          });
+
+          // When preventRedirect is set, include the current page in the navigation list so
+          // Grafana sees it as a valid scope destination and does NOT redirect away from it.
+          // Only add it when the current page is NOT already the scope's main dashboard
+          // (which is already first in the list).
+          //
+          // IMPORTANT: use only the /d/{uid} base path (no slug). Grafana's isCurrentPath
+          // compares getDashboardPathForComparison(currentPath) with normalizePath(spec.url).
+          // getDashboardPathForComparison strips the slug, so spec.url must also be slug-free
+          // for the comparison to succeed.
+          const currentPageBasePath = currentPagePath.split('/').slice(0, 3).join('/');
+          const mainPath = scope.dashboardUid ? `/d/${scope.dashboardUid}` : null;
+          if (options?.preventRedirect && mainPath && !currentPageBasePath.startsWith(mainPath)) {
+            navigations.push({
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: `scope-${scope.name}-nav-current-page`,
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                url: currentPageBasePath,
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                title: 'Current Dashboard',
               },
             });
           }
@@ -517,5 +677,5 @@ export async function setScopes(page: Page, scopeBindingSetting?: { uid: string;
   scopeName = await getScopeLeafName(page, 0);
   await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[0]);
 
-  await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
+  await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes, { preventRedirect: true }); //used only in mocked scopes version
 }

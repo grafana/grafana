@@ -20,8 +20,12 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
+    useScopesNavigationEndpoint: true,
   },
 });
+
+// This test has multiple sequential steps each requiring navigation and scope interactions.
+test.setTimeout(60_000);
 
 const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 
