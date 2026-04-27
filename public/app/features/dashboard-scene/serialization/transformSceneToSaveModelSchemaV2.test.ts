@@ -1849,32 +1849,19 @@ describe('validateDashboardSchemaV2', () => {
 
 describe('normalizeDataSourceRef', () => {
   let originalSrv: DataSourceSrv | undefined;
+  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
 
   beforeAll(() => {
-    originalSrv = (() => {
-      try {
-        return jest.requireActual('@grafana/runtime').getDataSourceSrv();
-      } catch {
-        return undefined;
-      }
-    })();
-
-    const mockSrv = {
-      getInstanceSettings: jest.fn((ref?: string | { uid?: string; type?: string } | null) => {
-        const nameOrUid = typeof ref === 'string' ? ref : ref?.uid;
-        if (nameOrUid === 'prometheus' || nameOrUid === 'prom-uid') {
-          return { uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' };
-        }
-        return undefined;
-      }),
-    };
-    setDataSourceSrv(mockSrv as unknown as DataSourceSrv);
+    try {
+      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
+    } catch {
+      originalSrv = undefined;
+    }
+    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
   });
 
   afterAll(() => {
-    if (originalSrv) {
-      setDataSourceSrv(originalSrv);
-    }
+    setDataSourceSrv(originalSrv as DataSourceSrv);
   });
 
   it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
@@ -1891,7 +1878,12 @@ describe('normalizeDataSourceRef', () => {
       type: 'prometheus',
       apiVersion: 'v1',
     });
+
+    // Falls back to a UID-only ref when the datasource is unknown.
+    getInstanceSettings.mockReturnValueOnce(undefined as never);
     expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+
+    // Template variables short-circuit and never call getInstanceSettings.
     expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
     expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });
