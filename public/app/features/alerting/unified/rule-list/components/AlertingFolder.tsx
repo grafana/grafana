@@ -178,8 +178,13 @@ export function AlertingFolder({ folder, groupFilter, namespaceFilter }: Alertin
       {/* Render rules in lightweight group containers */}
       {Array.from(rulesByGroup.entries()).map(([groupName, rulesInGroup]) => (
         <RuleGroupContainer key={groupName} groupName={groupName}>
-          {rulesInGroup.map(({ rule, group }) => (
-            <FolderRuleListItem key={rule.uid} rule={rule} group={group} namespaceName={folderName} />
+          {rulesInGroup.map(({ rule, group }, idx) => (
+            <FolderRuleListItem
+              key={`${group.folderUid}-${group.name}-${rule.uid ?? rule.name}-${idx}`}
+              rule={rule}
+              group={group}
+              namespaceName={folderName}
+            />
           ))}
         </RuleGroupContainer>
       ))}

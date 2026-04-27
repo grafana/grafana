@@ -18,7 +18,9 @@ export function RuleGroupContainer({ groupName, children }: RuleGroupContainerPr
           {groupName}
         </Text>
       </div>
-      {children}
+      <ul role="group" className={styles.rulesList}>
+        {children}
+      </ul>
     </li>
   );
 }
@@ -53,5 +55,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  rulesList: css({
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
   }),
 });

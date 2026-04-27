@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaPromRuleDTO, GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -113,10 +113,13 @@ export function useFolderRulesPagination({
     }
   }, [folderUid, getGrafanaGroups, hasMore, isLoading, pageSize]);
 
-  // Auto-fetch on first render
-  if (!hasFetchedRef.current && !isLoading) {
-    fetchMore();
-  }
+  // Auto-fetch on first render (effect avoids double-invocation under StrictMode)
+  useEffect(() => {
+    if (!hasFetchedRef.current && !isLoading) {
+      fetchMore();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     rulesByGroup,
