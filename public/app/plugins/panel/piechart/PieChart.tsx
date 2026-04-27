@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { localPoint } from '@visx/event';
 import { RadialGradient } from '@visx/gradient';
 import { Group } from '@visx/group';
@@ -148,6 +148,7 @@ export const PieChart = ({
                             pie={pie}
                             fill={fill}
                             openMenu={api.openMenu}
+                            targetClassName={api.targetClassName}
                             tooltipOptions={tooltipOptions}
                             gradientFills={gradientFills}
                           />
@@ -225,9 +226,20 @@ interface SliceProps {
   tooltipOptions: VizTooltipOptions;
   gradientFills?: Map<FieldDisplay, string>;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+  targetClassName?: string;
 }
 
-function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions, gradientFills }: SliceProps) {
+function PieSlice({
+  arc,
+  pie,
+  highlightState,
+  openMenu,
+  targetClassName,
+  fill,
+  tooltip,
+  tooltipOptions,
+  gradientFills,
+}: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
@@ -274,15 +286,34 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
     [eventBus, arc, tooltip, pie, tooltipOptions, gradientFills]
   );
 
+  const onKeyDown = useCallback((event: React.KeyboardEvent<SVGGElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      const rect = event.currentTarget.getBoundingClientRect();
+      event.currentTarget.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        })
+      );
+    }
+  }, []);
+
   const pieStyle = getSvgStyle(highlightState, styles);
 
   return (
     <g
       key={arc.data.display.title}
-      className={pieStyle}
+      className={cx(pieStyle, targetClassName)}
+      tabIndex={openMenu ? 0 : undefined}
+      role={openMenu ? 'button' : undefined}
+      aria-label={openMenu ? arc.data.display.title : undefined}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
       onClick={openMenu}
+      onKeyDown={openMenu ? onKeyDown : undefined}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />

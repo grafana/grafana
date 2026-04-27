@@ -6,6 +6,7 @@ import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, type MenuItemsGroup } from '../Menu/MenuGroup';
@@ -54,9 +55,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
   };
 
   // Use this class name (exposed via render prop) to add context menu indicator to the click target of the visualization
-  const targetClassName = css({
-    cursor: 'context-menu',
-  });
+  const targetClassName = styles.menuTarget;
 
   if (linksCounter > 1) {
     return (
@@ -76,6 +75,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         title={linkModel.title}
         style={{ ...style, overflow: 'hidden', display: 'flex' }}
         data-testid={selectors.components.DataLinksContextMenu.singleLink}
+        className={styles.link}
       >
         {children({})}
       </a>
@@ -86,5 +86,15 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
 const getStyles = (theme: GrafanaTheme2) => ({
   itemWrapper: css({
     fontSize: 12,
+  }),
+  link: css({
+    '&:focus, &:focus-visible': getFocusStyles(theme),
+  }),
+  menuTarget: css({
+    cursor: 'context-menu',
+    '&:focus, &:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '2px',
+    },
   }),
 });
