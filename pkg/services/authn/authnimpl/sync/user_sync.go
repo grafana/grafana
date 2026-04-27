@@ -745,6 +745,8 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
+// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
+// which is needed for role mapping in the case of SAML or for team sync.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -755,7 +757,6 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
 	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
-	id.Groups = usr.TeamUIDs
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin
