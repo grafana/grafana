@@ -22,13 +22,11 @@ declare global {
        *
        * @param uPlotEvents
        * @param size - canvas dimensions for the uplot-compare JSON payload
-       * @param debug
        * @param snapshotHint - optional Jest snapshot name passed to toMatchSnapshot
        */
       toMatchUPlotSnapshot(
         uPlotEvents: CanvasRenderingContext2DEvent[],
         size: { width: number; height: number },
-        debug = false,
         snapshotHint?: string
       ): CustomMatcherResult;
     }

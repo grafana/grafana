@@ -202,7 +202,7 @@ describe('HeatmapPanel (canvas)', () => {
     await waitFor(() =>
       expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
     );
-    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize, true);
+    expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize);
   };
 
   beforeEach(() => {
@@ -317,4 +317,6 @@ describe('HeatmapPanel (canvas)', () => {
       });
     });
   });
+  // describe('Exemplars');
+  // describe('Annotations');
 });
