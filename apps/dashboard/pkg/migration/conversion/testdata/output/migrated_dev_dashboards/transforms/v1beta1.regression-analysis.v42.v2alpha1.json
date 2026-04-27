@@ -1326,7 +1326,6 @@
       "transform"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2023-11-20T12:09:00.000Z",
       "to": "2023-11-20T12:09:13.000Z",
       "autoRefresh": "",
@@ -1351,7 +1350,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

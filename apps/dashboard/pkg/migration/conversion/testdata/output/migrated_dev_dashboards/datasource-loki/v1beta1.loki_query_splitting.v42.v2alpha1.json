@@ -291,7 +291,7 @@
                     },
                     "datasource": {
                       "type": "loki",
-                      "uid": "gdev-loki"
+                      "uid": "PDDA8E780A17E7EF1"
                     },
                     "refId": "A",
                     "hidden": false
@@ -426,7 +426,7 @@
                     },
                     "datasource": {
                       "type": "loki",
-                      "uid": "gdev-loki"
+                      "uid": "PDDA8E780A17E7EF1"
                     },
                     "refId": "do-not-chunk",
                     "hidden": false
@@ -1530,7 +1530,6 @@
     "preload": false,
     "tags": [],
     "timeSettings": {
-      "timezone": "",
       "from": "now-5m",
       "to": "now",
       "autoRefresh": "",
@@ -1555,7 +1554,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

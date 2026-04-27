@@ -51,7 +51,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "true,false,true,true,true,true,false,false"
@@ -65,7 +65,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "false,true,false,true,true,false,false,false,true,true"
@@ -79,7 +79,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "true,false,null,true,true"
@@ -93,7 +93,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "false,null,null,false,true,true"
@@ -198,7 +198,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "scenarioId": "csv_metric_values",
@@ -213,7 +213,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "false,true,false,true,true,false,false,false,true,true"
@@ -227,7 +227,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "true,false,true,true"
@@ -241,7 +241,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "false,true,false,true,true"
@@ -346,7 +346,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -458,7 +458,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "SensorA",
                         "scenarioId": "csv_metric_values",
@@ -473,7 +473,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "SensorB",
                         "scenarioId": "csv_metric_values",
@@ -488,7 +488,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "SensorA",
                         "scenarioId": "csv_metric_values",
@@ -673,7 +673,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

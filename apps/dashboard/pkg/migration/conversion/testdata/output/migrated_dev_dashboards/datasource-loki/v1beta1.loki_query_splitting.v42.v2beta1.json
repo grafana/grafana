@@ -289,7 +289,7 @@
                       "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "gdev-loki"
+                        "name": "PDDA8E780A17E7EF1"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -426,7 +426,7 @@
                       "group": "loki",
                       "version": "v0",
                       "datasource": {
-                        "name": "gdev-loki"
+                        "name": "PDDA8E780A17E7EF1"
                       },
                       "spec": {
                         "editorMode": "code",
@@ -1555,7 +1555,6 @@
     "preload": false,
     "tags": [],
     "timeSettings": {
-      "timezone": "",
       "from": "now-5m",
       "to": "now",
       "autoRefresh": "",
@@ -1580,7 +1579,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

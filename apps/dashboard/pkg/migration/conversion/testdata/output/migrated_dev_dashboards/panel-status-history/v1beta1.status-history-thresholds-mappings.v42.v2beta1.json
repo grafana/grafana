@@ -464,7 +464,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "random_walk",
@@ -1544,7 +1544,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

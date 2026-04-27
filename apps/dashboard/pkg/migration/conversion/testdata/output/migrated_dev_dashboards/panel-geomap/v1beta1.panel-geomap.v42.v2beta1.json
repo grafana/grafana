@@ -53,7 +53,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
@@ -173,7 +173,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
@@ -288,7 +288,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
@@ -409,7 +409,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
@@ -586,7 +586,6 @@
       "geomap"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
@@ -610,7 +609,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

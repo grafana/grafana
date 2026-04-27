@@ -47,7 +47,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,66"
@@ -122,7 +122,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,80"
@@ -205,7 +205,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,70"
@@ -286,7 +286,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,47"
@@ -371,7 +371,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,80.5"
@@ -453,7 +453,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,20.5"
@@ -578,7 +578,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,44"
@@ -666,7 +666,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,78"
@@ -839,7 +839,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "max": 90,
                         "min": 20,
@@ -931,7 +931,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,20"
@@ -1017,7 +1017,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,-50"
@@ -1103,7 +1103,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,38"
@@ -1189,7 +1189,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,22"
@@ -1270,7 +1270,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "1,20,90,30,5,55.5"
@@ -1615,7 +1615,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

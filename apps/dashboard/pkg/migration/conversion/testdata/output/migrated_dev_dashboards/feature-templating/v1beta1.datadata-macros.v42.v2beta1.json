@@ -1145,7 +1145,6 @@
       "templating"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2023-03-24T17:12:12.347Z",
       "to": "2023-03-24T17:42:12.347Z",
       "autoRefresh": "",
@@ -1204,7 +1203,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

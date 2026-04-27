@@ -49,7 +49,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -127,7 +127,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -213,7 +213,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -297,7 +297,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -385,7 +385,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -470,7 +470,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -604,7 +604,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -695,7 +695,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -874,7 +874,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "max": 90,
@@ -969,7 +969,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -1058,7 +1058,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -1147,7 +1147,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -1236,7 +1236,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -1320,7 +1320,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "scenarioId": "csv_metric_values",
@@ -1667,7 +1667,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

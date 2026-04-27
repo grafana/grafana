@@ -51,7 +51,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "10,25,null,null,50,10"
@@ -65,7 +65,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -223,7 +223,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "30,null,1,20,90,null,30,null,5,0,null,30"
@@ -540,7 +540,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "scenarioId": "csv_metric_values",
@@ -556,7 +556,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -1315,7 +1315,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -2286,7 +2286,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3220,7 +3220,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "scenarioId": "csv_metric_values",
@@ -3236,7 +3236,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3363,7 +3363,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3399,7 +3399,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3526,7 +3526,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3562,7 +3562,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3689,7 +3689,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "alias": "",
                         "csvWave": {
@@ -3724,7 +3724,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "scenarioId": "csv_metric_values",
                         "stringInput": "10,25,null,null,50,10"
@@ -4340,7 +4340,6 @@
       "transform"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2023-06-14T08:16:41.000Z",
       "to": "2023-06-14T08:18:25.000Z",
       "autoRefresh": "",
@@ -4365,7 +4364,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

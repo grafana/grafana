@@ -51,7 +51,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
                         "scenarioId": "csv_file"
@@ -359,7 +359,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
                         "scenarioId": "csv_file"
@@ -516,7 +516,6 @@
       "geomap"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
@@ -541,7 +540,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

@@ -992,7 +992,6 @@
       "transform"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2024-11-20T16:31:51.747Z",
       "to": "2024-11-20T22:28:15.688Z",
       "autoRefresh": "",
@@ -1017,7 +1016,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

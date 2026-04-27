@@ -3871,7 +3871,6 @@
       "datasource-test"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2018-03-15T12:30:00.000Z",
       "to": "2018-03-15T13:55:01.000Z",
       "autoRefresh": "",
@@ -3979,7 +3978,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

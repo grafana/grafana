@@ -51,7 +51,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
                         "scenarioId": "csv_file"
@@ -216,7 +216,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
                         "scenarioId": "csv_file"
@@ -354,7 +354,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
                         "scenarioId": "csv_file"
@@ -459,7 +459,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "grafana-testdata-datasource",
+                      "kind": "",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
                         "scenarioId": "csv_file"
@@ -618,7 +618,6 @@
       "graph-ng"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2021-07-13T22:13:30.740Z",
       "to": "2021-07-13T22:46:18.921Z",
       "autoRefresh": "",
@@ -643,7 +642,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

@@ -558,7 +558,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvContent": "rating_score,created_at,name\n3.5,2022-01-15 16:52:15,apple juice\n3.5,2022-05-04 15:32:03,beet juice\n4.5,2023-04-08 11:27:23,pineapple juice\n2.5,2024-03-23 15:02:17,cranberry juice\n2.75,2024-12-08 12:49:26,orange juice\n2,2024-12-24 15:31:05,grape juice\n4,2025-01-10 21:30:19,apple juice\n4.75,2025-04-05 14:05:03,tomato juice\n3.5,2025-05-02 16:59:34,pomegranate juice\n4.5,2025-06-01 18:10:25,orange juice",
@@ -1803,7 +1803,6 @@
       "demo"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2022-10-07T05:04:04.516Z",
       "to": "2022-10-07T17:04:04.516Z",
       "autoRefresh": "",
@@ -1828,7 +1827,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

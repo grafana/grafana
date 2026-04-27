@@ -363,7 +363,6 @@
       "templating"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-1h",
       "to": "now",
       "autoRefresh": "",
@@ -479,7 +478,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

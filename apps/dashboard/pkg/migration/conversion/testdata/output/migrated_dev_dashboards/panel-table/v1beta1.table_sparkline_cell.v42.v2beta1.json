@@ -659,7 +659,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
+                      "group": "",
                       "version": "v0",
                       "spec": {
                         "csvContent": "time,x\n2023-06-12T05:49:00Z,10\n2023-06-12T07:01:00Z,20\n2023-06-12T08:13:00Z,NaN\n2023-06-12T09:25:00Z,NaN\n2023-06-12T10:37:00Z,NaN\n2023-06-12T11:49:00Z,30\n2023-06-12T13:01:00Z,20\n2023-06-12T14:13:00Z,10\n2023-06-12T15:25:00Z,Inf\n2023-06-12T16:37:00Z,null\n2023-06-12T17:49:00Z,",
@@ -841,7 +841,6 @@
     "preload": false,
     "tags": [],
     "timeSettings": {
-      "timezone": "",
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
@@ -866,7 +865,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

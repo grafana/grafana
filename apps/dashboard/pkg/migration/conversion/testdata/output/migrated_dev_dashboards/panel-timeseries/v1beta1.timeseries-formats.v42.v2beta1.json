@@ -1054,7 +1054,6 @@
     "revision": 1,
     "tags": [],
     "timeSettings": {
-      "timezone": "",
       "from": "2023-02-24T16:37:21.358Z",
       "to": "2023-02-24T22:37:15.358Z",
       "autoRefresh": "",
@@ -1079,7 +1078,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

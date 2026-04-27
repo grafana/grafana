@@ -4607,7 +4607,6 @@
       "graph-ng"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "2021-12-14T04:26:06.000Z",
       "to": "2022-01-19T08:44:05.000Z",
       "autoRefresh": "",
@@ -4632,7 +4631,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }

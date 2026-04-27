@@ -3328,7 +3328,6 @@
       "demo"
     ],
     "timeSettings": {
-      "timezone": "",
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
@@ -3353,7 +3352,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1"
+      "storedVersion": "v1"
     }
   }
 }
