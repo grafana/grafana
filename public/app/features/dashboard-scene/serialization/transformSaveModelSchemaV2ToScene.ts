@@ -8,6 +8,7 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
+  ExperimentalIntervalVariable,
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
@@ -403,6 +404,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
       valuesFormat: variable.spec.valuesFormat || 'csv',
+      UNSAFE_useCombobox: true,
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -464,7 +466,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       intervals = getIntervalsFromQueryString('');
     }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
-    return new IntervalVariable({
+    return new ExperimentalIntervalVariable({
       ...commonProperties,
       value: currentInterval,
       intervals: intervals,

@@ -239,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     verticalAlign: 'middle',
     // No border for second element (inputs) as label and input border is shared
-    '> :nth-child(2)': css({
+    '> :nth-child(2) :first-child': css({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),

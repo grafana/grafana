@@ -3801,6 +3801,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/scenes@link:/Users/serge/dev/scenes/packages/scenes::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/scenes@link:/Users/serge/dev/scenes/packages/scenes::locator=grafana%40workspace%3A."
+  languageName: node
+  linkType: soft
+
 "@grafana/scenes@npm:7.3.8":
   version: 7.3.8
   resolution: "@grafana/scenes@npm:7.3.8"
@@ -19811,7 +19817,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.4.0"
+    "@grafana/scenes": "link:/Users/serge/dev/scenes/packages/scenes"
     "@grafana/scenes-react": "npm:7.4.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
