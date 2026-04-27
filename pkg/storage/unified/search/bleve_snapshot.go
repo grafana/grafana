@@ -82,7 +82,8 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	}
 
 	start := time.Now()
-	if _, err := store.DownloadIndex(ctx, key, candidate.key, destDir); err != nil {
+	downloadedMeta, err := store.DownloadIndex(ctx, key, candidate.key, destDir)
+	if err != nil {
 		_ = os.RemoveAll(destDir)
 		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
 		return nil, "", 0, fmt.Errorf("downloading snapshot: %w", err)
@@ -108,6 +109,19 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	if b.indexMetrics != nil {
 		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(elapsed.Seconds())
 	}
+
+	uploadedAt := candidate.meta.UploadTimestamp
+	if downloadedMeta != nil && !downloadedMeta.UploadTimestamp.IsZero() {
+		uploadedAt = downloadedMeta.UploadTimestamp
+	}
+	// A downloaded snapshot becomes the new upload baseline for this index.
+	if err := setSnapshotMutationCount(idx, 0); err != nil {
+		_ = idx.Close()
+		_ = os.RemoveAll(destDir)
+		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		return nil, "", 0, fmt.Errorf("resetting snapshot mutation count: %w", err)
+	}
+	b.setUploadTracking(key, uploadedAt)
 
 	logger.Info("Downloaded remote index snapshot", "elapsed", elapsed, "rv", rv, "directory", destDir)
 	return idx, name, rv, nil
