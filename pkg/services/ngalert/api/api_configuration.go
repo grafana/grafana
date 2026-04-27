@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -20,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/open-feature/go-sdk/openfeature"
 )
+
+// syncableAMImplementations lists the alertmanager datasource implementations
+// whose configuration the external AM sync worker can fetch.
+var syncableAMImplementations = []string{"mimir", "cortex"}
 
 type ConfigSrv struct {
 	datasourceService    datasources.DataSourceService
@@ -128,8 +134,14 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 				return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
 			}
 			impl := ds.JsonData.Get("implementation").MustString("")
-			if impl != "mimir" && impl != "cortex" {
-				return response.Error(http.StatusBadRequest, "datasource implementation must be mimir or cortex", nil)
+			if !slices.Contains(syncableAMImplementations, impl) {
+				var msg string
+				if impl == "prometheus" {
+					msg = `"prometheus" implementation is not supported for sync: vanilla Prometheus Alertmanager has no config API. Use the alertmanager import UI to upload config manually for these datasources.`
+				} else {
+					msg = fmt.Sprintf("%q implementation is not supported for sync (must be one of: %s)", impl, strings.Join(syncableAMImplementations, ", "))
+				}
+				return response.Error(http.StatusBadRequest, msg, nil)
 			}
 		}
 
