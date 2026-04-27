@@ -182,7 +182,15 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			}
 			meta, err := utils.MetaAccessor(item)
 			if err != nil {
-				return fmt.Errorf("extract meta accessor: %w", err)
+				// Mirror exportItem's MetaAccessor handling: record the
+				// failure on the job summary as an Ignored action and keep
+				// going. Returning the error here would abort ForEach and
+				// fail the entire export over a single malformed dashboard.
+				result := jobs.NewGVKResult(item.GetName(), item.GroupVersionKind()).
+					WithAction(repository.FileActionIgnored).
+					WithError(fmt.Errorf("extract meta accessor for dashboard %s: %w", item.GetName(), err))
+				progress.Record(ctx, result.Build())
+				return nil
 			}
 			if _, in := subtreeIDs[meta.GetFolder()]; !in {
 				return nil
