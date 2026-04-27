@@ -129,12 +129,12 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
 		case resources.DashboardKind.Kind:
 			expectedGroup = resources.DashboardResource.Group
-		case resources.FolderResourceKind:
-			expectedGroup = resources.FolderResourceGroup
+		case resources.FolderKind.Kind:
+			expectedGroup = resources.FolderResource.Group
 		default:
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
 				fmt.Sprintf("only %s and %s are supported for export",
-					resources.DashboardKind.Kind, resources.FolderResourceKind)))
+					resources.DashboardKind.Kind, resources.FolderKind.Kind)))
 		}
 		if expectedGroup != "" && r.Group != "" && r.Group != expectedGroup {
 			list = append(list, field.Invalid(path.Child("group"), r.Group,

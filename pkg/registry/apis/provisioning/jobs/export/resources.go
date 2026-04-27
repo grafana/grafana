@@ -119,7 +119,7 @@ func splitExportRefs(refs []provisioning.ResourceRef) (dashboards, folders, unsu
 		switch ref.Kind {
 		case resources.DashboardKind.Kind:
 			dashboards = append(dashboards, ref)
-		case resources.FolderResourceKind:
+		case resources.FolderKind.Kind:
 			folders = append(folders, ref)
 		default:
 			unsupported = append(unsupported, ref)
@@ -208,7 +208,7 @@ func exportFolderRefs(ctx context.Context,
 
 	rootIDs := make([]string, 0, len(refs))
 	for _, ref := range refs {
-		result := jobs.NewGroupKindResult(ref.Name, resources.FolderResourceGroup, resources.FolderResourceKind)
+		result := jobs.NewGroupKindResult(ref.Name, resources.FolderResource.Group, resources.FolderKind.Kind)
 
 		// A folder absent from the unmanaged listing is either missing, managed
 		// elsewhere, or an API error: differentiate via Get so the recorded
@@ -274,7 +274,7 @@ func exportFolderRefs(ctx context.Context,
 	// it into rootIDs, so this should normally be empty; record any survivors
 	// so the job still surfaces them rather than silently dropping.
 	for _, id := range missing {
-		result := jobs.NewGroupKindResult(id, resources.FolderResourceGroup, resources.FolderResourceKind).
+		result := jobs.NewGroupKindResult(id, resources.FolderResource.Group, resources.FolderKind.Kind).
 			WithError(fmt.Errorf("folder %q disappeared during export", id))
 		progress.Record(ctx, result.Build())
 		if err := progress.TooManyErrors(); err != nil {

@@ -109,6 +109,8 @@ github.com/grafana/grafana-app-sdk/logging v0.53.0 h1:o1ag3oZ6JbQfXUSvOLLUQ4Zzjw
 github.com/grafana/grafana-app-sdk/logging v0.53.0/go.mod h1:nC9fLZHZPZFSbGF135ucVbOkMymBB23grTK6uKiNyJo=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44 h1:/aHFQcMfdIWkNMGMAdx3URhRc9sulLVfhOKTw3xvQ8Y=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44/go.mod h1:EmAylyKtOt1DFHMmb9mOqITWsX0Czr76zK2LJ1f+pOs=
+github.com/grafana/grafana/apps/folder v0.0.0-20260427083824-7c10bb70e84b h1:ArrlOsI8oXMHGoMVWeri9uKpL/xuP2F0zXDWD66ZwcQ=
+github.com/grafana/grafana/apps/folder v0.0.0-20260427083824-7c10bb70e84b/go.mod h1:GzaBF28DqqTX1kkqBqgoU5ghOqQKvZnA9JE8/w7ejhg=
 github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
 github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6/go.mod h1:6ZLwJmNc+7dWXQ+NRBV09HZbg/XZ6yN7kWFf7w301Lo=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h1:Meoq0neEejGlmclgCInZM7EXl3Dw27zlGGwvEmJwvaY=
