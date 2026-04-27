@@ -9,7 +9,7 @@ import { setFolderAccessControl } from '../../../mocks/server/configure';
 import { setupDataSources } from '../../../testSetup/datasources';
 import { groupIdentifier } from '../../../utils/groupIdentifier';
 import * as misc from '../../../utils/misc';
-import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from '../abilityUtils';
+import { isLoading, isNotSupported, isPluginManaged, isProvisioned, isSupported } from '../abilityUtils';
 import { ExternalRuleAction, RuleAction, isInsufficientPermissions } from '../types';
 
 import {
@@ -152,7 +152,7 @@ describe('useRuleAdministrationAbility', () => {
 
     const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
-    await waitFor(() => expect(isAvailable(result.current.update)).toBe(true));
+    await waitFor(() => expect(isSupported(result.current.update)).toBe(true));
 
     // Non-existent plugin → isPluginManaged=false → editable
     expect(result.current.update.granted).toBe(true);
@@ -171,7 +171,7 @@ describe('useRuleAdministrationAbility', () => {
     await waitFor(() => expect(result.current).not.toBeUndefined());
 
     // Cloud rules without a connected ruler → NOT_SUPPORTED after loading
-    expect(isAvailable(result.current.update)).toBe(false);
+    expect(isSupported(result.current.update)).toBe(false);
   });
 
   it('returns NOT_SUPPORTED for restore and pause when rule is not Grafana-managed', async () => {
@@ -329,7 +329,7 @@ function RenderSilence({ rule }: { rule: ReturnType<typeof getGrafanaRule> }) {
   const silenceAbility = useRuleSilenceAbility(rule.rulerRule);
   return (
     <>
-      {isAvailable(silenceAbility) && 'applicable'}
+      {isSupported(silenceAbility) && 'applicable'}
       {silenceAbility.granted && 'granted'}
     </>
   );
@@ -369,7 +369,7 @@ describe('useRuleExportAbility', () => {
 
     const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
 
-    expect(isAvailable(result.current)).toBe(true);
+    expect(isSupported(result.current)).toBe(true);
   });
 
   it('returns NOT_SUPPORTED for cloud rules', () => {
@@ -548,7 +548,7 @@ describe('usePromRuleExportAbility', () => {
 
     const { result } = renderHook(() => usePromRuleExportAbility(promRule), { wrapper: wrapper() });
 
-    expect(isAvailable(result.current)).toBe(true);
+    expect(isSupported(result.current)).toBe(true);
     expect(result.current.granted).toBe(true);
   });
 });
