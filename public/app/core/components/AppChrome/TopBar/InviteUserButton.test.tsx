@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
-import { InviteUserButton } from './InviteUserButton';
+import { NavRightButton } from './InviteUserButton';
 
 // Mock the API hook
 const mockUseGetCurrentOrgQuotaQuery = jest.fn(() => ({ data: undefined }));
@@ -74,7 +74,7 @@ const mockMatchMedia = (matches: boolean) => {
   });
 };
 
-describe('InviteUserButton', () => {
+describe('NavRightButton', () => {
   const mockInviteUrl = 'https://example.com/invite?cnt=invite-user-top-bar';
 
   beforeEach(() => {
@@ -92,7 +92,7 @@ describe('InviteUserButton', () => {
       mockContextSrv.hasPermission.mockReturnValue(false);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
@@ -103,7 +103,7 @@ describe('InviteUserButton', () => {
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
@@ -118,7 +118,7 @@ describe('InviteUserButton', () => {
     it('should show text on large screens', () => {
       mockMatchMedia(true); // Large screen (≥lg)
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       const button = screen.getByRole('button', { name: /invite user/i });
       expect(button).toHaveTextContent('Invite');
@@ -127,7 +127,7 @@ describe('InviteUserButton', () => {
     it('should show icon only on small screens', () => {
       mockMatchMedia(false); // Small screen (<lg)
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       const button = screen.getByRole('button', { name: /invite user/i });
       expect(button).not.toHaveTextContent('Invite');
@@ -144,7 +144,7 @@ describe('InviteUserButton', () => {
     it('should track analytics and open invite URL when clicked', async () => {
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
@@ -163,7 +163,7 @@ describe('InviteUserButton', () => {
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.getByText('plugin-invite-button')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /invite user/i })).not.toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('InviteUserButton', () => {
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
     });
@@ -194,7 +194,7 @@ describe('InviteUserButton', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       // Should not crash when URL generation fails
       await user.click(screen.getByRole('button', { name: /invite user/i }));
@@ -212,7 +212,7 @@ describe('InviteUserButton', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const user = userEvent.setup();
 
-      render(<InviteUserButton />);
+      render(<NavRightButton />);
 
       // Should not crash when popup is blocked
       await user.click(screen.getByRole('button', { name: /invite user/i }));

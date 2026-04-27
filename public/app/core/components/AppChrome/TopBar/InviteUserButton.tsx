@@ -17,9 +17,9 @@ import {
   shouldRenderUpgradeUserButton,
 } from './InviteUserButtonUtils';
 
-export function InviteUserButton() {
+export function NavRightButton() {
   const { components } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.InviteUserButton,
+    extensionPointId: PluginExtensionPoints.NavRightButton,
   });
 
   return (
@@ -28,11 +28,11 @@ export function InviteUserButton() {
       components,
       limit: 1,
       pluginId: 'grafana-setupguide-app',
-    }) ?? <InviteUserButtonInner />
+    }) ?? <InviteUserButton />
   );
 }
 
-function InviteUserButtonInner() {
+function InviteUserButton() {
   const isLargeScreen = useMediaQueryMinWidth('lg');
   const shouldRender = shouldRenderInviteUserButton();
   const shouldCheckQuota = shouldRenderUpgradeUserButton();
