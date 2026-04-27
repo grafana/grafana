@@ -2557,8 +2557,8 @@
     {
       "metadata": {
         "name": "grafana.correlationsSkipLegacy",
-        "resourceVersion": "1777303087646",
-        "creationTimestamp": "2026-04-27T15:18:07Z"
+        "resourceVersion": "1777299668594",
+        "creationTimestamp": "2026-04-27T14:21:08Z"
       },
       "spec": {
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",

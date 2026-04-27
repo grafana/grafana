@@ -50,8 +50,9 @@ const (
 
 // Keys used to store internal data in index.
 const (
-	internalRVKey        = "rv"         // Encoded as big-endian int64
-	internalBuildInfoKey = "build_info" // Encoded as JSON of buildInfo struct
+	internalRVKey                    = "rv"                      // Encoded as big-endian int64
+	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
+	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
@@ -91,13 +92,14 @@ type BleveOptions struct {
 	Snapshot SnapshotOptions
 }
 
-// SnapshotOptions configures remote index snapshot handling in BuildIndex.
+// SnapshotOptions configures remote index snapshot handling in BuildIndex and
+// background upload scheduling.
 type SnapshotOptions struct {
 	// Store is the remote index store. When nil, the snapshot feature is disabled
-	// and no remote download is attempted.
+	// and no remote download/upload is attempted.
 	Store RemoteIndexStore
 
-	// MinDocCount is the minimum document count at which a remote snapshot download is attempted.
+	// MinDocCount is the minimum document count at which a remote snapshot download/upload is attempted.
 	// Must be >= FileThreshold to be meaningful; smaller resources are built in-process.
 	MinDocCount int64
 
@@ -109,6 +111,14 @@ type SnapshotOptions struct {
 	// build version of a remote snapshot. Snapshots with a lower version are
 	// considered only if no snapshot at or above this version is available.
 	MinBuildVersion *semver.Version
+
+	// UploadInterval is the minimum time between consecutive successful uploads
+	// for the same resource.
+	UploadInterval time.Duration
+
+	// MinDocChanges is the minimum resource version delta required before a new
+	// upload is attempted after a previous successful upload.
+	MinDocChanges int
 }
 
 type bleveBackend struct {
@@ -131,6 +141,9 @@ type bleveBackend struct {
 
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
+
+	uploadTrackingMu sync.Mutex
+	lastUploadTime   map[resource.NamespacedResource]time.Time
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -187,6 +200,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		indexMetrics:        indexMetrics,
 		selectableFields:    opts.SelectableFieldsForKinds,
 		runningBuildVersion: runningBuildVersion,
+		lastUploadTime:      map[resource.NamespacedResource]time.Time{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -300,14 +314,65 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 
 	for key, idx := range unowned {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "unowned", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
 
 	for key, idx := range expired {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
+}
+
+func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+	docCount, err := idx.index.DocCount()
+	if err != nil {
+		return false, fmt.Errorf("reading document count for %v: %w", key, err)
+	}
+	if int64(docCount) < b.opts.Snapshot.MinDocCount {
+		return false, nil
+	}
+
+	lastUploadTime, ok := b.getUploadTracking(key)
+	if !ok {
+		return true, nil
+	}
+	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
+		return false, nil
+	}
+
+	mutationCount, err := getSnapshotMutationCount(idx.index)
+	if err != nil {
+		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
+	}
+	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	b.lastUploadTime[key] = uploadedAt
+}
+
+func (b *bleveBackend) getUploadTracking(key resource.NamespacedResource) (time.Time, bool) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	t, ok := b.lastUploadTime[key]
+	if !ok {
+		return time.Time{}, false
+	}
+	return t, true
+}
+
+func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	delete(b.lastUploadTime, key)
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -766,6 +831,7 @@ func (b *bleveBackend) closeAllIndexes() {
 	defer b.cacheMx.Unlock()
 
 	for key, idx := range b.cache {
+		b.clearUploadTracking(key)
 		if err := idx.stopUpdaterAndCloseIndex(); err != nil {
 			b.log.Error("Failed to close index", "err", err)
 		}
@@ -827,6 +893,10 @@ type bleveIndex struct {
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
+
+	// Guards read-modify-write updates of the persisted snapshot mutation count
+	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
+	snapshotMutationMu sync.Mutex
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -883,7 +953,10 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		}
 	}
 
-	return b.index.Batch(batch)
+	if err := b.index.Batch(batch); err != nil {
+		return err
+	}
+	return b.addSnapshotMutationCount(int64(len(req.Items)))
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -905,6 +978,34 @@ func setRV(index bleve.Index, rv int64) error {
 	binary.BigEndian.PutUint64(buf, uint64(rv))
 
 	return index.SetInternal([]byte(internalRVKey), buf)
+}
+
+func setSnapshotMutationCount(index bleve.Index, count int64) error {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(count))
+	return index.SetInternal([]byte(internalSnapshotMutationCountKey), buf)
+}
+
+func getSnapshotMutationCount(index bleve.Index) (int64, error) {
+	raw, err := index.GetInternal([]byte(internalSnapshotMutationCountKey))
+	if err != nil {
+		return 0, err
+	}
+	if len(raw) < 8 {
+		return 0, nil
+	}
+	return int64(binary.BigEndian.Uint64(raw)), nil
+}
+
+func (b *bleveIndex) addSnapshotMutationCount(delta int64) error {
+	b.snapshotMutationMu.Lock()
+	defer b.snapshotMutationMu.Unlock()
+
+	current, err := getSnapshotMutationCount(b.index)
+	if err != nil {
+		return err
+	}
+	return setSnapshotMutationCount(b.index, current+delta)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
