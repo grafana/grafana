@@ -18,6 +18,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/google/uuid"
+	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -1115,16 +1116,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			break
 		}
 	}
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
-	defer stop()
+	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
+	defer iter.stop()
 
-	iter := kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: req.Options.Key.Namespace == "",
-		next:             next,
-	}
-	err := cb(&iter)
+	err := cb(iter)
 	if err != nil {
 		return 0, err
 	}
@@ -1132,13 +1127,137 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// kvListIterator implements ListIterator for KV storage
+const (
+	// maxKvListIteratorConsecutiveFailures caps back-to-back retries with zero
+	// progress; the counter resets when an attempt yields a key.
+	maxKvListIteratorConsecutiveFailures = 3
+	// maxKvListIteratorTotalAttempts bounds total retryable failures to stop
+	// slow-drip loops (1 key per attempt, always fails) from hanging.
+	maxKvListIteratorTotalAttempts = 10
+)
+
+// kvListIteratorBackoff is the default backoff config used between retry attempts.
+var kvListIteratorBackoff = backoff.Config{
+	MinBackoff: 500 * time.Millisecond,
+	MaxBackoff: 3 * time.Second,
+}
+
+var batchGetRetryLogger = log.New("kv-batchget-retry")
+
+type batchGetRetryPull struct {
+	ctx       context.Context
+	dataStore *dataStore
+	keys      []DataKey
+	nextIdx   int // next not-yet-yielded position in keys
+	stopFn    func()
+	retryBo   *backoff.Backoff
+
+	consecutiveFailures int
+	totalFailures       int
+
+	next func() (DataObj, error, bool)
+}
+
+// newBatchGetRetryPull builds a pull-style iterator over dataStore.BatchGet
+// that retries on kv.ErrRetryable failures.
+func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey) *batchGetRetryPull {
+	p := &batchGetRetryPull{
+		ctx:       ctx,
+		dataStore: ds,
+		keys:      keys,
+		retryBo:   backoff.New(ctx, kvListIteratorBackoff),
+	}
+	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, keys))
+	return p
+}
+
+// fetch reads the next (DataObj, err, hasMore) from the current pull.
+// Retryable errors are handled before returning.
+func (p *batchGetRetryPull) fetch() (DataObj, error, bool) {
+	obj, err, ok := p.next()
+	for ok && err != nil {
+		canRetry, retryErr := p.tryRetry(err)
+		if retryErr != nil {
+			return obj, retryErr, ok
+		}
+		if !canRetry {
+			return obj, err, ok
+		}
+		obj, err, ok = p.next()
+	}
+	return obj, err, ok
+}
+
+// tryRetry consumes a retry budget slot, waits the backoff, and
+// re-opens the pull at keys[nextIdx:] if the error is kv.ErrRetryable.
+// Returns (true, nil) if the caller may retry the current iteration
+// Returns (false, nil) if the error is not retryable or budget is exhausted
+// Returns (false, err) if the wait was aborted (e.g. ctx cancelled).
+func (p *batchGetRetryPull) tryRetry(err error) (bool, error) {
+	if !errors.Is(err, kv.ErrRetryable) {
+		return false, nil
+	}
+	p.totalFailures++
+	p.consecutiveFailures++
+	logArgs := []any{
+		"next_idx", p.nextIdx,
+		"remaining_keys", len(p.keys) - p.nextIdx,
+		"total_failures", p.totalFailures,
+		"consecutive_failures", p.consecutiveFailures,
+		"error", err,
+	}
+	if p.totalFailures >= maxKvListIteratorTotalAttempts {
+		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (total attempts)", logArgs...)
+		return false, nil
+	}
+	if p.consecutiveFailures >= maxKvListIteratorConsecutiveFailures {
+		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (consecutive failures)", logArgs...)
+		return false, nil
+	}
+	batchGetRetryLogger.Warn("kv BatchGet retrying after retryable error", logArgs...)
+	p.stop()
+	p.retryBo.Wait()
+	if bErr := p.retryBo.Err(); bErr != nil {
+		return false, bErr
+	}
+	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, p.keys[p.nextIdx:]))
+	return true, nil
+}
+
+// advance marks key as yielded and resets the consecutive-failure counter.
+func (p *batchGetRetryPull) advance(key DataKey) {
+	p.consecutiveFailures = 0
+	p.retryBo.Reset()
+	for i := p.nextIdx; i < len(p.keys); i++ {
+		if p.keys[i] == key {
+			p.nextIdx = i + 1
+			return
+		}
+	}
+}
+
+// stop closes the current pull.
+func (p *batchGetRetryPull) stop() {
+	if p.stopFn != nil {
+		p.stopFn()
+		p.stopFn = nil
+	}
+}
+
+// newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
+func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
+	return &kvListIterator{
+		listRV:           listRV,
+		isCrossNamespace: isCrossNamespace,
+		pull:             newBatchGetRetryPull(ctx, ds, keys),
+	}
+}
+
 type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
 
-	// pull-style iterator
-	next func() (DataObj, error, bool)
+	pull *batchGetRetryPull
 
 	// current item state
 	started        bool
@@ -1150,30 +1269,47 @@ type kvListIterator struct {
 	hasMore        bool
 }
 
+// stop closes the underlying pull. Callers should defer this.
+func (i *kvListIterator) stop() { i.pull.stop() }
+
 func (i *kvListIterator) Next() bool {
 	if !i.started {
 		i.started = true
-
-		i.nextDataObj, i.nextErr, i.hasMore = i.next()
+		i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
 	}
 
-	if !i.hasMore {
-		return false
+	for {
+		if !i.hasMore {
+			return false
+		}
+
+		i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+		if i.err != nil {
+			return false
+		}
+
+		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		if i.err != nil {
+			if i.shouldRetry(i.err) {
+				i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
+				continue
+			}
+			return false
+		}
+
+		// Success: advance past the yielded key and fetch next entry
+		i.pull.advance(i.currentDataObj.Key)
+		i.nextDataObj, i.nextErr, i.hasMore = i.pull.fetch()
+		return true
 	}
+}
 
-	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
-	if i.err != nil {
-		return false
+func (i *kvListIterator) shouldRetry(err error) bool {
+	canRetry, retryErr := i.pull.tryRetry(err)
+	if retryErr != nil {
+		i.err = retryErr
 	}
-
-	i.value, i.err = readAndClose(i.currentDataObj.Value)
-	if i.err != nil {
-		return false
-	}
-
-	i.nextDataObj, i.nextErr, i.hasMore = i.next()
-
-	return true
+	return canRetry
 }
 
 func (i *kvListIterator) Error() error {
@@ -1600,17 +1736,10 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV)
 
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
-	defer stop()
+	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false)
+	defer iter.stop()
 
-	iter := kvHistoryIterator{
-		listRV: listRV,
-		next:   next,
-	}
-
-	err := fn(&iter)
-	if err != nil {
+	if err := fn(iter); err != nil {
 		return 0, err
 	}
 
@@ -1687,18 +1816,10 @@ func (k *kvStorageBackend) processTrashEntries(
 	// Apply RV-based pagination: skip candidates already seen on previous pages.
 	candidates = applyPagination(candidates, lastSeenRV)
 
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, candidates))
-	defer stop()
+	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true)
+	defer iter.stop()
 
-	iter := kvHistoryIterator{
-		listRV:          listRV,
-		skipProvisioned: true,
-		next:            next,
-	}
-
-	err := fn(&iter)
-	if err != nil {
+	if err := fn(iter); err != nil {
 		return 0, err
 	}
 
@@ -1718,13 +1839,20 @@ func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 	}
 }
 
-// kvHistoryIterator implements ListIterator for KV storage history
+// newKvHistoryIterator builds a kvHistoryIterator over dataStore.BatchGet(keys).
+func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool) *kvHistoryIterator {
+	return &kvHistoryIterator{
+		listRV:          listRV,
+		skipProvisioned: skipProvisioned,
+		pull:            newBatchGetRetryPull(ctx, ds, keys),
+	}
+}
+
 type kvHistoryIterator struct {
 	listRV          int64
 	skipProvisioned bool
 
-	// pull-style iterator
-	next func() (DataObj, error, bool)
+	pull *batchGetRetryPull
 
 	// current item state
 	currentDataObj *DataObj
@@ -1733,46 +1861,63 @@ type kvHistoryIterator struct {
 	err            error
 }
 
+// stop closes the underlying pull. Callers should defer this.
+func (i *kvHistoryIterator) stop() { i.pull.stop() }
+
 func (i *kvHistoryIterator) Next() bool {
-	// Pull next item from the iterator
-	dataObj, err, ok := i.next()
-	if !ok {
-		return false
-	}
-	if err != nil {
-		i.err = err
-		return false
-	}
+	for {
+		dataObj, err, ok := i.pull.fetch()
+		if !ok {
+			return false
+		}
+		if err != nil {
+			i.err = err
+			return false
+		}
 
-	i.currentDataObj = &dataObj
+		i.currentDataObj = &dataObj
 
-	i.value, err = readAndClose(dataObj.Value)
-	if err != nil {
-		i.err = err
-		return false
+		i.value, err = readAndClose(dataObj.Value)
+		if err != nil {
+			if i.shouldRetry(err) {
+				continue
+			}
+			i.err = err
+			return false
+		}
+
+		// Extract the folder from the meta data
+		partial := &metav1.PartialObjectMetadata{}
+		if err := json.Unmarshal(i.value, partial); err != nil {
+			i.err = err
+			return false
+		}
+
+		meta, err := utils.MetaAccessor(partial)
+		if err != nil {
+			i.err = err
+			return false
+		}
+		i.folder = meta.GetFolder()
+
+		// Success: advance past the yielded key
+		i.pull.advance(dataObj.Key)
+
+		// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+		if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+			continue
+		}
+
+		return true
 	}
+}
 
-	// Extract the folder from the meta data
-	partial := &metav1.PartialObjectMetadata{}
-	err = json.Unmarshal(i.value, partial)
-	if err != nil {
-		i.err = err
-		return false
+func (i *kvHistoryIterator) shouldRetry(err error) bool {
+	canRetry, retryErr := i.pull.tryRetry(err)
+	if retryErr != nil {
+		i.err = retryErr
 	}
-
-	meta, err := utils.MetaAccessor(partial)
-	if err != nil {
-		i.err = err
-		return false
-	}
-	i.folder = meta.GetFolder()
-
-	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
-	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-		return i.Next()
-	}
-
-	return true
+	return canRetry
 }
 
 func (i *kvHistoryIterator) Error() error {
