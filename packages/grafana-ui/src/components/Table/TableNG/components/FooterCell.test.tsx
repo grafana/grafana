@@ -38,16 +38,16 @@ describe('FooterCell', () => {
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
     });
 
-    it('returns the EmptyCell component for an empty array', () => {
-      // FooterCell returns the EmptyCell function reference (not <EmptyCell />)
-      // for the fallthrough cases; callers are responsible for rendering it.
-      expect(FooterCell({ value: [] })).toBe(EmptyCell);
+    it('renders an empty cell for an empty array', () => {
+      const { container } = render(<FooterCell value={[]} />);
+      expect(container.querySelector('span')!.innerHTML).toBe('&nbsp;');
     });
   });
 
   describe('undefined value', () => {
-    it('returns the EmptyCell component for undefined', () => {
-      expect(FooterCell({ value: undefined })).toBe(EmptyCell);
+    it('renders an empty cell for undefined', () => {
+      const { container } = render(<FooterCell value={undefined} />);
+      expect(container.querySelector('span')!.innerHTML).toBe('&nbsp;');
     });
   });
 });
@@ -105,10 +105,11 @@ describe('getFooterValue', () => {
       expect(screen.getByText('99')).toBeInTheDocument();
     });
 
-    it('returns EmptyCell when the entry at the given index is undefined', () => {
-      // footerValues has only one entry; index 2 is out of bounds → undefined.
-      // FooterCell returns EmptyCell for undefined values; callers render it.
-      expect(getFooterValue(2, [['ignored']], false)).toBe(EmptyCell);
+    it('renders an empty cell when the entry at the given index is undefined', () => {
+      // footerValues has only one entry; index 2 is out of bounds.
+      const result = getFooterValue(2, [[{ Sum: 'ignored' }]], false);
+      const { container } = render(result as React.ReactElement);
+      expect(container.querySelector('span')!.innerHTML).toBe('&nbsp;');
     });
   });
 });

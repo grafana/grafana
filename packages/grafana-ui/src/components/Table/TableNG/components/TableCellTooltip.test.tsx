@@ -7,7 +7,8 @@ import { createTheme, type DataFrame, type Field, FieldType, toDataFrame } from 
 
 import { type TableCellRenderer } from '../types';
 
-import { TableCellTooltip } from './TableCellTooltip';
+import { TableCellTooltip, TableCellTooltipProps } from './TableCellTooltip';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 const theme = createTheme();
 
@@ -39,9 +40,9 @@ function makeGridRef(element?: HTMLElement): RefObject<DataGridHandle | null> {
 
 const defaultClasses = { tooltipWrapper: '', tooltipCaret: '', tooltipContent: '' };
 
-function makeProps(overrides: Record<string, unknown> = {}) {
+function makeProps(overrides: Partial<TableCellTooltipProps> = {}): Omit<TableCellTooltipProps, 'children'> {
   return {
-    cellOptions: { type: 'auto' as const },
+    cellOptions: { type: TableCellDisplayMode.Auto },
     classes: defaultClasses,
     data: makeData(),
     field: makeField(),
