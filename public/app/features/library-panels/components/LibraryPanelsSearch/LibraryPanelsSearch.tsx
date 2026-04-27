@@ -171,7 +171,26 @@ const SearchControls = memo(
           [styles.containerTight]: variant === LibraryPanelsSearchVariant.Tight,
         })}
       >
-        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
+        {showSort && (
+          <SortPicker
+            value={sortDirection}
+            onChange={onSortChange}
+            getSortOptions={async () => {
+              // This needs to match whatever is defined in
+              // pkg/services/libraryelements/database.go#getAllLibraryElements
+              return [
+                {
+                  value: 'alpha-asc',
+                  label: t('library-panels.search-controls.label.alphabetically-az', 'Alphabetically (A–Z)'),
+                },
+                {
+                  value: 'alpha-desc',
+                  label: t('library-panels.search-controls.label.alphabetically-za', 'Alphabetically (Z–A)'),
+                },
+              ];
+            }}
+          />
+        )}
         {(showFolderFilter || showPanelFilter) && (
           <div
             className={cx(styles.filterContainer, {

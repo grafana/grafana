@@ -361,7 +361,6 @@
 /scripts/build/ @grafana/grafana-developer-enablement-squad
 /scripts/list-release-artifacts.sh @grafana/grafana-developer-enablement-squad
 /scripts/releasefinder.sh @baldm0mma
-/.trivyignore @grafana/grafana-backend-services-squad
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
@@ -432,7 +431,6 @@
 i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
-/e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
@@ -805,7 +803,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
@@ -1331,7 +1328,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
-/.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad

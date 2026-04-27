@@ -789,10 +789,10 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			specMap := spec.(map[string]interface{})
 
 			// Create a large number of panels
-			var largePanelArray []map[string]interface{}
+			largePanelArray := make([]map[string]interface{}, 0, 500000)
 
 			// Create 500000 simple panels with unique IDs (to exceed max allowed request size)
-			for i := 0; i < 500000; i++ {
+			for i := range 500000 {
 				// Create a simple panel with minimal properties
 				panel := map[string]interface{}{
 					"id":          i,

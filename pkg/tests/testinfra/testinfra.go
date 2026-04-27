@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -270,7 +269,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// Search upwards in directory tree for project root
 	var rootDir string
 	found := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		rootDir = filepath.Join(rootDir, "..")
 
 		dir, err := filepath.Abs(rootDir)
@@ -604,6 +603,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
 		require.NoError(t, err)
 	}
+	if opts.UnifiedAlertingEmailsToOrgOnly {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -728,6 +733,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("resource_version_batch_transaction_timeout", opts.UnifiedStorageResourceVersionBatchTransactionTimeout.String())
+		require.NoError(t, err)
+	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -774,6 +785,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
+		require.NoError(t, err)
+	}
+	// nil means "use the ini default" (100). Non-nil writes the value, including
+	// 0 which disables the size check.
+	if opts.ProvisioningMaxIncrementalChanges != nil {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_incremental_changes", fmt.Sprintf("%d", *opts.ProvisioningMaxIncrementalChanges))
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -916,6 +935,7 @@ type GrafanaOpts struct {
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	UnifiedAlertingAllowedIntegrations    []string
+	UnifiedAlertingEmailsToOrgOnly        bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int
@@ -925,29 +945,35 @@ type GrafanaOpts struct {
 	UnifiedStorageDisableSearch           bool
 	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
-	PermittedProvisioningPaths            string
-	ProvisioningAllowedTargets            []string
-	ProvisioningRepositoryTypes           []string
-	ProvisioningMaxResourcesPerRepository int64
-	ProvisioningMaxRepositories           int64
-	ProvisioningFolderAPIVersion          string
-	GrafanaComSSOAPIToken                 string
-	LicensePath                           string
-	EnableRecordingRules                  bool
-	EnableSCIM                            bool
-	RBACSingleOrganization                bool
-	APIServerRuntimeConfig                string
-	DisableControllers                    bool
-	DisableDBCleanup                      bool
-	MigrationParquetBuffer                bool
-	EnableSQLKVBackend                    bool
-	SecretsManagerEnableDBMigrations      bool
-	OpenFeatureAPIEnabled                 bool
-	DisableAuthZClientCache               bool
-	ZanzanaReconciliationInterval         time.Duration
-	ZanzanaReconcilerMode                 setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                   bool
-	DisableZanzanaServerCheckQueryCache   bool
+	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, sets
+	// [unified_storage] resource_version_batch_transaction_timeout in the test
+	// server's ini. Bounds one batched RV WithTx; used by provisioning
+	// integration tests on slow CI.
+	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
+	PermittedProvisioningPaths                           string
+	ProvisioningAllowedTargets                           []string
+	ProvisioningRepositoryTypes                          []string
+	ProvisioningMaxResourcesPerRepository                int64
+	ProvisioningMaxRepositories                          int64
+	ProvisioningFolderAPIVersion                         string
+	ProvisioningMaxIncrementalChanges                    *int
+	GrafanaComSSOAPIToken                                string
+	LicensePath                                          string
+	EnableRecordingRules                                 bool
+	EnableSCIM                                           bool
+	RBACSingleOrganization                               bool
+	APIServerRuntimeConfig                               string
+	DisableControllers                                   bool
+	DisableDBCleanup                                     bool
+	MigrationParquetBuffer                               bool
+	EnableSQLKVBackend                                   bool
+	SecretsManagerEnableDBMigrations                     bool
+	OpenFeatureAPIEnabled                                bool
+	DisableAuthZClientCache                              bool
+	ZanzanaReconciliationInterval                        time.Duration
+	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                                  bool
+	DisableZanzanaServerCheckQueryCache                  bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int

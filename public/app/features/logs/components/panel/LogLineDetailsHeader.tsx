@@ -15,13 +15,28 @@ import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
 
 interface Props {
+  closeDetails: () => void;
+  detailsMode: LogLineDetailsMode;
   focusLogLine?: (log: LogListModel) => void;
+  inlineNoScroll?: boolean;
   log: LogListModel;
   search: string;
+  setInlineNoScroll?(inlineNoScroll: boolean): void;
+  setDetailsMode?(mode: LogLineDetailsMode): void;
   onSearch(newSearch: string): void;
 }
 
-export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
+export const LogLineDetailsHeader = ({
+  closeDetails,
+  detailsMode,
+  focusLogLine,
+  inlineNoScroll,
+  log,
+  search,
+  setDetailsMode,
+  setInlineNoScroll,
+  onSearch,
+}: Props) => {
   const {
     displayedFields,
     getRowContextQuery,
@@ -38,7 +53,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
-  const { closeDetails, detailsMode, setDetailsMode, toggleDetails } = useLogDetailsContext();
+  const { toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -101,12 +116,25 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
       store.set(`${logOptionsStorageKey}.detailsMode`, newMode);
     }
 
-    setDetailsMode(newMode);
+    setDetailsMode?.(newMode);
 
     reportInteractionWrapper('logs_log_line_details_header_toggle_details_mode', {
       newMode,
     });
   }, [detailsMode, logOptionsStorageKey, reportInteractionWrapper, setDetailsMode]);
+
+  const toggleDetailsScroll = useCallback(() => {
+    const newState = !inlineNoScroll;
+    if (logOptionsStorageKey) {
+      store.set(`${logOptionsStorageKey}.inlineDetailsNoScrolls`, newState);
+    }
+
+    setInlineNoScroll?.(newState);
+
+    reportInteractionWrapper('logs_log_line_details_header_toggle_inline_no_scroll', {
+      scroll: !newState,
+    });
+  }, [inlineNoScroll, logOptionsStorageKey, reportInteractionWrapper, setInlineNoScroll]);
 
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
@@ -243,16 +271,31 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
             tabIndex={0}
           />
         )}
-        <div className={`${styles.divider} ${styles.dividerMargin}`} />
-        <IconButton
-          name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
-          tooltip={
-            detailsMode === 'inline'
-              ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
-              : t('logs.log-line-details.inline-mode', 'Display inline')
-          }
-          onClick={toggleDetailsMode}
-        />
+        {setDetailsMode && (
+          <>
+            <div className={`${styles.divider} ${styles.dividerMargin}`} />
+            {detailsMode === 'inline' && inlineNoScroll !== undefined && (
+              <IconButton
+                name={inlineNoScroll === true ? 'compress-arrows' : 'expand-arrows'}
+                tooltip={
+                  inlineNoScroll === true
+                    ? t('logs.log-line-details.inline-with-scrolls', 'Switch to condensed view')
+                    : t('logs.log-line-details.inline-no-scrolls', 'Switch to expanded view')
+                }
+                onClick={toggleDetailsScroll}
+              />
+            )}
+            <IconButton
+              name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
+              tooltip={
+                detailsMode === 'inline'
+                  ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
+                  : t('logs.log-line-details.inline-mode', 'Display inline')
+              }
+              onClick={toggleDetailsMode}
+            />
+          </>
+        )}
         <div className={styles.divider} />
         {detailsMode === 'sidebar' ? (
           <IconButton
@@ -285,8 +328,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
-    borderTopLeftRadius: theme.shape.radius.default,
-    borderTopRightRadius: theme.shape.radius.default,
+    borderTopLeftRadius: mode === 'inline' ? theme.shape.radius.default : undefined,
+    borderTopRightRadius: mode === 'inline' ? theme.shape.radius.default : undefined,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
@@ -295,8 +338,6 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     height: theme.spacing(5.5),
     marginBottom: theme.spacing(1),
     padding: theme.spacing(0.5, 1),
-    position: 'sticky',
-    top: 0,
   }),
   icons: css({
     display: 'flex',

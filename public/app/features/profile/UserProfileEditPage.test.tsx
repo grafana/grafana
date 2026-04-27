@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
+import { setBackendSrv, setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
@@ -164,6 +164,7 @@ async function getTestContext(overrides: Partial<Props & { components: Component
   const components = overrides.components || [];
 
   jest.clearAllMocks();
+  setBackendSrv(backendSrv);
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
     .spyOn(backendSrv, 'get')
