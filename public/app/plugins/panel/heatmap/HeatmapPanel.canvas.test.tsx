@@ -5,7 +5,9 @@ import type uPlot from 'uplot';
 import {
   createDataFrame,
   DataFrameType,
+  DataTopic,
   dateTime,
+  type Field,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -14,7 +16,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AxisPlacement, TooltipDisplayMode } from '@grafana/schema';
-import { measureText as uPlotAxisMeasureText } from '@grafana/ui';
+import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
@@ -136,6 +138,42 @@ const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
   },
 });
 
+function createExemplarFrame(overrides?: { timeValues?: number[]; values?: number[]; additionalFields?: Field[] }) {
+  const timeValues = overrides?.timeValues ?? [1];
+  const values = overrides?.values ?? [0];
+  const additionalFields = overrides?.additionalFields ?? [];
+
+  return toDataFrame({
+    name: 'exemplar',
+    meta: { custom: { resultType: 'exemplar' } },
+    fields: [
+      { name: 'Time', type: FieldType.time, values: timeValues },
+      { name: 'Value', type: FieldType.number, values },
+      ...additionalFields,
+    ],
+  });
+}
+
+function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: string[]; timeEnd?: number[] }) {
+  const timeValues = overrides?.timeValues ?? [1];
+  const text = overrides?.text ?? ['Deployment'];
+  const frame = {
+    name: 'annotation',
+    meta: { dataTopic: DataTopic.Annotations },
+    fields: [
+      { name: 'time', type: FieldType.time, values: timeValues },
+      { name: 'text', type: FieldType.string, values: text },
+      overrides?.timeEnd
+        ? { name: 'timeEnd', type: FieldType.number, config: {}, values: overrides.timeEnd }
+        : undefined,
+      overrides?.timeEnd
+        ? { name: 'isRegion', type: FieldType.boolean, config: {}, values: overrides.timeEnd.map((v) => v != null) }
+        : undefined,
+    ].filter((f) => f != null),
+  };
+  return toDataFrame(frame);
+}
+
 /**
  * Renders HeatmapPanel with the given data and options.
  * Reusable across tests to avoid duplicating setup.
@@ -209,7 +247,7 @@ describe('HeatmapPanel (canvas)', () => {
     applyDefaultUPlotAxisMeasureTextMock();
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
-      const builder = realPrepConfig(opts);
+      const builder: UPlotConfigBuilder = realPrepConfig(opts);
       builder.addHook('drawAxes', (u: uPlot) => {
         uPlotInstance = u;
         uPlotAxisEvents = u.ctx.__getEvents();
@@ -317,6 +355,38 @@ describe('HeatmapPanel (canvas)', () => {
       });
     });
   });
-  // describe('Exemplars');
-  // describe('Annotations');
+  describe('Exemplars', () => {
+    it('renders', async () => {
+      const exemplarFrame = createExemplarFrame({
+        timeValues: [1, 2, 3, 4, 5, 6],
+        values: [0, 1, 0, 1, 1, 1],
+      });
+
+      // Heatmap exemplars are rendered entirely within the canvas
+      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [exemplarFrame] });
+      await assertCanvasOutput();
+    });
+  });
+  describe('Annotations', () => {
+    it('renders points', async () => {
+      const annoFrame = createAnnotationFrame({
+        timeValues: [1, 2, 3, 4, 5, 6],
+      });
+
+      // only asserts on the canvas portions of the annotation (i.e. the dotted line)
+      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [annoFrame] });
+      await assertCanvasOutput();
+    });
+
+    it('Regression: does NOT render regions', async () => {
+      const annoFrame = createAnnotationFrame({
+        timeValues: [2, 5],
+        timeEnd: [3, 6],
+      });
+
+      // Heatmap does not currently support annotation regions!
+      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [annoFrame] });
+      await assertCanvasOutput();
+    });
+  });
 });
