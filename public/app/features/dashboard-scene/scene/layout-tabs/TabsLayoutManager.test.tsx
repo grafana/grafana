@@ -7,7 +7,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { getLegacySlugForRowOrTab, getSlugForRowOrTab } from '../layouts-shared/utils';
+import { getLegacySlugForRowOrTab } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';

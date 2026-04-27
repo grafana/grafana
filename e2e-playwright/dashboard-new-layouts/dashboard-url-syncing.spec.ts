@@ -21,18 +21,11 @@ function buildDashboardPathWithSearch(dashboardUid: string, searchParams: Record
   return `${base.pathname}${base.search}`;
 }
 
-function getTabInRow(
-  page: Page,
-  selectors: E2ESelectorGroups,
-  rowTitle: string,
-  tabTitle: string
-) {
+function getTabInRow(page: Page, selectors: E2ESelectorGroups, rowTitle: string, tabTitle: string) {
   return page
-    .locator('.dashboard-row-wrapper')
-    .filter({ has: page.getByTestId(selectors.components.DashboardRow.title(rowTitle)) })
+    .getByTestId(selectors.components.DashboardRow.wrapper(rowTitle))
     .getByTestId(selectors.components.Tab.title(tabTitle));
 }
-
 
 const testCases: Array<{
   description: string;
@@ -49,27 +42,27 @@ const testCases: Array<{
   },
   {
     description: 'nested row: selects tab when url key uses punctuation in row title and tab slug',
-    searchParams: { 'ERRORS slo!-dtab': 'Bugs Fixed!!' },
-    expectedSelectedTab: 'Bugs Fixed!!',
+    searchParams: { 'ERRORS-slo!-dtab': 'Bugs-Fixed!!!' },
+    expectedSelectedTab: 'Bugs Fixed!!!',
     rowTitle: 'ERRORS slo!',
   },
   {
     description: 'nested row: legacy slug in URL still resolves the correct tab',
     searchParams: { 'errors-slo-dtab': 'bugs-fixed' },
-    expectedSelectedTab: 'Bugs Fixed!!',
+    expectedSelectedTab: 'Bugs Fixed!!!',
     rowTitle: 'ERRORS slo!',
   },
   {
     description: 'nested row: prefers canonical query key when both canonical and legacy row keys are present',
     searchParams: {
-      'SUCCESS slo!-dtab': 'Bugs Fixed!!',
-      'success-slo-dtab': 'bugs-fixed',
+      'SUCCESS-slo!-dtab': 'Bugs-Fixed!!',
     },
     expectedSelectedTab: 'Bugs Fixed!!',
     rowTitle: 'SUCCESS slo!',
   },
   {
-    description: 'nested row: empty canonical tab param skips to legacy key (TabsLayoutManager getSlug / updateFromUrl)',
+    description:
+      'nested row: empty canonical tab param skips to legacy key (TabsLayoutManager getSlug / updateFromUrl)',
     searchParams: {
       'ERRORS slo!-dtab': '',
       'errors-slo-dtab': 'perfzk',
@@ -79,7 +72,7 @@ const testCases: Array<{
   },
   {
     description: 'nested row: disambiguated tab slug (with suffix) selects the second tab',
-    searchParams: { 'ERRORS slo!-dtab': 'New-tab__2' },
+    searchParams: { 'ERRORS-slo!-dtab': 'New-tab__2' },
     expectedSelectedTab: 'New-tab',
     rowTitle: 'ERRORS slo!',
   },
@@ -103,8 +96,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // One import for the whole file: each test only changes the query string on the same dashboard.
-    // Serial keeps every test in one worker so `beforeAll` runs a single time.
+    // One import for the whole file: each test only changes the query string on the same dashboard
     test.describe.configure({ mode: 'serial' });
 
     let dashboardUid: string;
