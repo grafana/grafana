@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ActiveTab } from '../components/rule-viewer/RuleViewer';
+import { ActiveTab } from '../components/rule-viewer/activeTab';
 
 import { useSyncedUrlDrawerParam } from './useSyncedUrlDrawerParam';
 

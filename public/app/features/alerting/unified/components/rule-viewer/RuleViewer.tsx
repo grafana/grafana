@@ -70,6 +70,7 @@ import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
+import { ActiveTab } from './activeTab';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -77,16 +78,6 @@ import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
-
-export enum ActiveTab {
-  Query = 'query',
-  Instances = 'instances',
-  History = 'history',
-  Notifications = 'notifications',
-  Routing = 'routing',
-  VersionHistory = 'version-history',
-  Enrichment = 'enrichment',
-}
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
