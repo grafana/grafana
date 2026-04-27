@@ -103,7 +103,6 @@ func resolveLegacyStringDatasource(ctx context.Context, name string, provider sc
 	return name, ""
 }
 
-// buildDashboardDataSourceRef builds a DashboardDataSourceRef from a (uid, type) pair.
 func buildDashboardDataSourceRef(uid, typ string) *dashv2alpha1.DashboardDataSourceRef {
 	if uid == "" {
 		return nil
