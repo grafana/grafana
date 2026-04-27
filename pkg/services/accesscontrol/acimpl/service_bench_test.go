@@ -355,7 +355,7 @@ func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInU
 		UserID:  userID,
 		OrgID:   1,
 		OrgRole: org.RoleViewer,
-		Teams:   teamIDs,
+		TeamIDs: teamIDs,
 	}
 
 	return acService, signedInUser
