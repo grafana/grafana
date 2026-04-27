@@ -13,5 +13,3 @@ Use the right place to ask questions, report problems, and propose changes.
 {{< admonition type="note" >}}
 **Not sure where to start?** Open a new topic in the forum! Maintainers and community members will redirect you if a GitHub issue or pull request is more appropriate.
 {{< /admonition >}}
-
-
