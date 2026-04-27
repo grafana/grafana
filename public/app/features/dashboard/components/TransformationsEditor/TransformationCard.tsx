@@ -78,7 +78,12 @@ export function TransformationCard({
         <Text variant="bodySmall">{description || ''}</Text>
         {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt={transform.name} />}
         {!isApplicable && applicabilityDescription !== null && (
-          <IconButton className={styles.applicableInfoButton} name="info-circle" tooltip={applicabilityDescription} />
+          <IconButton
+            className={styles.applicableInfoButton}
+            name="info-circle"
+            tooltip={applicabilityDescription}
+            data-testid={selectors.components.Transforms.applicabilityInfo}
+          />
         )}
       </Card.Description>
     </Card>

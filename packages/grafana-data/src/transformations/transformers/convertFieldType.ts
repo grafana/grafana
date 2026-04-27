@@ -168,6 +168,11 @@ function fieldToNumberField(field: Field): Field {
       toBeConverted = toBeConverted.replace(/,/g, '');
     }
 
+    if (toBeConverted == null || toBeConverted === '') {
+      numValues[n] = null;
+      continue;
+    }
+
     const number = +toBeConverted;
 
     numValues[n] = Number.isFinite(number) ? number : null;

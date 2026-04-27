@@ -15,4 +15,8 @@ export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add'
 
 export interface DashboardSidebarPane extends SceneObject {
   getId(): DashboardSidebarPaneName;
+  /** Some panes like code editor require a wider pane  */
+  minWidth?: number;
+  /** Exclude this pane from the go back history */
+  excludeFromHistory?: boolean;
 }

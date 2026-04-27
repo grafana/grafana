@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1190,8 +1189,8 @@ func verifyDirEntriesCount(t *testing.T, dir string, count int) {
 
 func indexTestDocs(ns resource.NamespacedResource, docs int, listRV int64) resource.BuildFn {
 	return func(index resource.ResourceIndex) (int64, error) {
-		var items []*resource.BulkIndexItem
-		for i := 0; i < docs; i++ {
+		items := make([]*resource.BulkIndexItem, 0, docs)
+		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
 				Doc: &resource.IndexableDocument{
@@ -1217,8 +1216,8 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		cnt++
 
-		var items []*resource.BulkIndexItem
-		for i := 0; i < docs; i++ {
+		items := make([]*resource.BulkIndexItem, 0, docs)
+		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
 				Doc: &resource.IndexableDocument{
@@ -1249,8 +1248,8 @@ func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs
 
 		cnt++
 
-		var items []*resource.BulkIndexItem
-		for i := 0; i < docs; i++ {
+		items := make([]*resource.BulkIndexItem, 0, docs)
+		for i := range docs {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
 				Doc: &resource.IndexableDocument{
@@ -1373,8 +1372,8 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	be, _ := setupBleveBackend(t)
 
 	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
-		var items []*resource.BulkIndexItem
-		for i := 0; i < 5; i++ {
+		items := make([]*resource.BulkIndexItem, 0, 5)
+		for i := range 5 {
 			items = append(items, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
 				Doc: &resource.IndexableDocument{
@@ -1429,7 +1428,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	updates := atomic.NewInt64(0)
 	searches := atomic.NewInt64(0)
 	const searchConcurrency = 25
-	for i := 0; i < searchConcurrency; i++ {
+	for i := range searchConcurrency {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -1442,7 +1441,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				}
 
 				idx := be.GetIndex(ns)
-				_, err = idx.UpdateIndex(ctx)
+				_, err := idx.UpdateIndex(ctx)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
@@ -1515,7 +1514,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	updatedRVs := map[int64]int{}
 
 	const searchConcurrency = 25
-	for i := 0; i < searchConcurrency; i++ {
+	for range searchConcurrency {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -1573,7 +1572,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
-	for i := 0; i < searchConcurrency; i++ {
+	for range searchConcurrency {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

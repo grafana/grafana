@@ -1,6 +1,8 @@
 package encryption
 
 import (
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -22,46 +24,64 @@ type DataKeyMetrics struct {
 func newDataKeyMetrics() *DataKeyMetrics {
 	return &DataKeyMetrics{
 		CreateDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "create_data_key_duration_seconds",
-			Help:      "Duration of create data key operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "create_data_key_duration_seconds",
+			Help:                            "Duration of create data key operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		GetDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "get_data_key_duration_seconds",
-			Help:      "Duration of get data key operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "get_data_key_duration_seconds",
+			Help:                            "Duration of get data key operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		GetCurrentDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "get_current_data_key_duration_seconds",
-			Help:      "Duration of get current data key operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "get_current_data_key_duration_seconds",
+			Help:                            "Duration of get current data key operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		ListDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "list_data_keys_duration_seconds",
-			Help:      "Duration of list data keys operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "list_data_keys_duration_seconds",
+			Help:                            "Duration of list data keys operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		DisableDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "disable_data_keys_duration_seconds",
-			Help:      "Duration of disable data keys operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "disable_data_keys_duration_seconds",
+			Help:                            "Duration of disable data keys operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		DeleteDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "delete_data_key_duration_seconds",
-			Help:      "Duration of delete data key operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "delete_data_key_duration_seconds",
+			Help:                            "Duration of delete data key operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
 }
@@ -93,11 +113,14 @@ func newGlobalDataKeyMetrics() *GlobalDataKeyMetrics {
 	return &GlobalDataKeyMetrics{
 
 		DisableAllDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "disable_all_data_keys_duration_seconds",
-			Help:      "Duration of disable all data keys operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "disable_all_data_keys_duration_seconds",
+			Help:                            "Duration of disable all data keys operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
 }

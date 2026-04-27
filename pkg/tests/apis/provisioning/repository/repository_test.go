@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -814,17 +815,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
-
-	// Wait for repository to be fully deleted before subtests run
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted before subtests")
+	common.WaitForResourcesDeleted(t, ctx, helper.DashboardsV1.Resource, "dashboards")
+	helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -899,6 +891,79 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
+}
+
+func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	var webhookCreateCalls atomic.Int32
+
+	repoFactory := helper.GetEnv().GithubRepoFactory
+	repoFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "Branch not protected",
+				}))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("[]"))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostReposHooksByOwnerByRepo,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				webhookCreateCalls.Add(1)
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+					Message: "failed to create webhook",
+				}))
+			}),
+		),
+	)
+	helper.SetGithubRepositoryFactory(repoFactory)
+
+	repoName := "webhook-create-failure-cooldown"
+	input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"SyncEnabled":   false,
+		"WorkflowsJSON": `["write"]`,
+		"Token":         "test-token",
+	})
+	input.Object["spec"].(map[string]any)["webhook"] = map[string]any{
+		"baseUrl": "https://grafana.example.com",
+	}
+
+	_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	t.Cleanup(func() {
+		_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+	})
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
+		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
+	}, 30*time.Second, 200*time.Millisecond, "repository should record the initial webhook failure")
+
+	require.Never(t, func() bool {
+		return webhookCreateCalls.Load() > 1
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
 }
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
@@ -1148,6 +1213,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
 	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
 }
+
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
@@ -1445,32 +1511,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete repository")
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-	}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		foundDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		for _, v := range foundDashboards.Items {
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-		}
-	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be released")
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		foundFolders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		assert.NoError(t, err, "can list values")
-		for _, v := range foundFolders.Items {
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-		}
-	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+	helper.WaitForRepositoryDeleted(t, ctx, repo)
+	common.WaitForResourcesReleased(t, ctx, helper.DashboardsV1.Resource, "dashboards")
+	common.WaitForResourcesReleased(t, ctx, helper.Folders.Resource, "folders")
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
@@ -1509,10 +1552,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
 		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
@@ -1556,10 +1596,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err, "should delete repository")
 
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
 		require.NoError(t, err, "classic dashboard should still exist after release")
@@ -2406,7 +2443,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	results := make(chan result, numRepos)
 
 	// Create repositories concurrently
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -2481,7 +2518,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	require.Equal(t, numRepos, successCount, "All repositories should be created successfully")
 
 	// Verify all repositories exist and have their secure tokens
-	for i := 0; i < numRepos; i++ {
+	for i := range numRepos {
 		repoName := fmt.Sprintf("concurrent-repo-%d", i)
 		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 		require.NoError(t, err, "Repository %s should exist", repoName)

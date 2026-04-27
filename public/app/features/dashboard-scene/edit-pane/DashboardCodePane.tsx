@@ -18,6 +18,7 @@ export interface DashboardCodePaneProps {
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
+  public minWidth = 700;
 
   public getId() {
     return 'code' as const;
@@ -85,7 +86,10 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.code-pane.header', 'Edit as code')} />
+      <Sidebar.PaneHeader
+        title={t('dashboard.code-pane.header', 'Edit as code')}
+        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+      />
       <div className={styles.content}>
         {errorAlert}
         <div className={styles.editorContainer}>

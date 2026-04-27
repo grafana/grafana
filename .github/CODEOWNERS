@@ -69,7 +69,7 @@
 /go.sum @grafana/grafana-backend-group
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
-/.citools @grafana/grafana-developer-enablement-squad
+/.citools @grafana/grafana-backend-servicdes-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
@@ -361,7 +361,6 @@
 /scripts/build/ @grafana/grafana-developer-enablement-squad
 /scripts/list-release-artifacts.sh @grafana/grafana-developer-enablement-squad
 /scripts/releasefinder.sh @baldm0mma
-/.trivyignore @grafana/grafana-backend-services-squad
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
@@ -432,7 +431,6 @@
 i18next.config.ts @grafana/grafana-frontend-platform
 /public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
-/e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-frontend
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
@@ -464,6 +462,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-restore-v1.spec.ts @grafana/grafana-frontend-navigation
+/e2e-playwright/dashboards-suite/dashboard-restore-v2.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-share-externally-create.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-internally.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-snapshot-create.spec.ts @grafana/sharing-squad
@@ -640,9 +640,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
-# @grafana/prometheus
-/packages/grafana-prometheus/ @grafana/data-sources-plugins
-
 # @grafana/runtime
 /packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
@@ -806,8 +803,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/.husky/pre-commit @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
@@ -1082,6 +1077,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-deb.sh @grafana/grafana-backend-services-squad
 /scripts/build-rpm.sh @grafana/grafana-backend-services-squad
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
+scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/grafana-frontend-platform
@@ -1104,7 +1100,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/trigger_docker_build.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_grafana_packer.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-developer-enablement-squad
-/scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
@@ -1319,8 +1314,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
-/.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
-/.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
@@ -1335,7 +1328,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
-/.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
+/.github/workflows/govulncheck.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad

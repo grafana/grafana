@@ -17,6 +17,39 @@ func (_m *MockQuotaTracker) EXPECT() *MockQuotaTracker_Expecter {
 	return &MockQuotaTracker_Expecter{mock: &_m.Mock}
 }
 
+// AllowOverLimit provides a mock function with given fields: n
+func (_m *MockQuotaTracker) AllowOverLimit(n int) {
+	_m.Called(n)
+}
+
+// MockQuotaTracker_AllowOverLimit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AllowOverLimit'
+type MockQuotaTracker_AllowOverLimit_Call struct {
+	*mock.Call
+}
+
+// AllowOverLimit is a helper method to define mock.On call
+//   - n int
+func (_e *MockQuotaTracker_Expecter) AllowOverLimit(n interface{}) *MockQuotaTracker_AllowOverLimit_Call {
+	return &MockQuotaTracker_AllowOverLimit_Call{Call: _e.mock.On("AllowOverLimit", n)}
+}
+
+func (_c *MockQuotaTracker_AllowOverLimit_Call) Run(run func(n int)) *MockQuotaTracker_AllowOverLimit_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int))
+	})
+	return _c
+}
+
+func (_c *MockQuotaTracker_AllowOverLimit_Call) Return() *MockQuotaTracker_AllowOverLimit_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockQuotaTracker_AllowOverLimit_Call) RunAndReturn(run func(int)) *MockQuotaTracker_AllowOverLimit_Call {
+	_c.Run(run)
+	return _c
+}
+
 // Release provides a mock function with no fields
 func (_m *MockQuotaTracker) Release() {
 	_m.Called()

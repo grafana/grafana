@@ -18,7 +18,7 @@ import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafan
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useUserDefinedVariables } from '../../utils/variables';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -228,11 +228,11 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   useEffect(() => setNewValue(value), [value]);
 
-  const variables = sceneGraph.getVariables(getDashboardSceneFor(model));
+  const variables = useUserDefinedVariables(model);
 
   const variableNames: ComboboxOption[] = useMemo(
-    () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
-    [variables.state.variables]
+    () => variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
+    [variables]
   );
 
   const operatorOptions: Array<ComboboxOption<VariableConditionValueOperator>> = useMemo(

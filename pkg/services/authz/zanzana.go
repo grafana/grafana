@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -87,7 +89,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 }
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
-func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider) (zanzana.Server, error) {
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (zanzana.Server, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zServer.NewNoopServer(), nil
@@ -100,12 +102,19 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	return srv, nil
+}
+
+// ProvideReconcileCRDs returns the OSS list of CRDs. Role and RoleBinding are
+// noop-implemented in OSS (pkg/registry/apis/iam/api_installer.go) and are
+// omitted — listing them would fail the whole namespace reconcile.
+func ProvideReconcileCRDs() []schema.GroupVersionResource {
+	return reconciler.DefaultCRDs
 }
 
 // ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server
@@ -247,7 +256,7 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (*Zanzana, error) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
@@ -271,6 +280,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 		reg:           reg,
 		tracer:        tracer,
 		storeProvider: storeProvider,
+		reconcileCRDs: reconcileCRDs,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -289,6 +299,7 @@ type Zanzana struct {
 	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
 	storeProvider zStore.StoreProvider
+	reconcileCRDs []schema.GroupVersionResource
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -297,7 +308,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -327,7 +338,6 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
-		z.features,
 		authenticatorInterceptor,
 		z.tracer,
 		prometheus.DefaultRegisterer,

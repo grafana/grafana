@@ -29,6 +29,37 @@ function addTransformationButton(page: Page) {
   return page.getByLabel('Add transformation');
 }
 
+async function switchDatasource(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  datasourceName: string
+) {
+  // Datasource picker is only rendered for datasource-backed query cards (not expressions).
+  const queryACard = page.locator('[data-query-sidebar-card="A"]').first();
+  if ((await queryACard.count()) > 0) {
+    await queryACard.click();
+    await expect(queryACard).toHaveAttribute('aria-pressed', 'true');
+  }
+
+  const dataSourceInput = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.inputV2);
+  await expect(dataSourceInput).toBeVisible();
+  await dataSourceInput.fill(datasourceName);
+
+  const dataSourceList = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.dataSourceList);
+  await expect(dataSourceList).toBeVisible();
+  await dataSourceList.getByText(datasourceName).first().click();
+}
+
+async function ensureTestDataDatasource(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+  const testDataScenarioSelect = page.getByRole('combobox', { name: 'Scenario' });
+  if ((await testDataScenarioSelect.count()) === 0) {
+    await switchDatasource(dashboardPage, page, selectors, 'gdev-testdata');
+  }
+  await expect(testDataScenarioSelect.first()).toBeVisible();
+  return testDataScenarioSelect;
+}
+
 // ---------------------------------------------------------------------------
 // Layout & Navigation
 // ---------------------------------------------------------------------------
@@ -182,37 +213,6 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
 // Datasource Switching
 // ---------------------------------------------------------------------------
 test.describe('Query Editor Next: Datasource Switching', { tag: ['@panels', '@queryEditorNext'] }, () => {
-  async function switchDatasource(
-    dashboardPage: DashboardPage,
-    page: Page,
-    selectors: E2ESelectorGroups,
-    datasourceName: string
-  ) {
-    // Datasource picker is only rendered for datasource-backed query cards (not expressions).
-    const queryACard = page.locator('[data-query-sidebar-card="A"]').first();
-    if ((await queryACard.count()) > 0) {
-      await queryACard.click();
-      await expect(queryACard).toHaveAttribute('aria-pressed', 'true');
-    }
-
-    const dataSourceInput = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.inputV2);
-    await expect(dataSourceInput).toBeVisible();
-    await dataSourceInput.fill(datasourceName);
-
-    const dataSourceList = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.dataSourceList);
-    await expect(dataSourceList).toBeVisible();
-    await dataSourceList.getByText(datasourceName).first().click();
-  }
-
-  async function ensureTestDataDatasource(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
-    const testDataScenarioSelect = page.getByRole('combobox', { name: 'Scenario' });
-    if ((await testDataScenarioSelect.count()) === 0) {
-      await switchDatasource(dashboardPage, page, selectors, 'gdev-testdata');
-    }
-    await expect(testDataScenarioSelect.first()).toBeVisible();
-    return testDataScenarioSelect;
-  }
-
   test('switching datasource updates query editor content', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
@@ -347,6 +347,91 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
     await page.getByRole('button', { name: 'SQL', exact: true }).click();
 
     await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Query State Preservation
+// ---------------------------------------------------------------------------
+test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', '@queryEditorNext'] }, () => {
+  // Regression cover for https://github.com/grafana/grafana/pull/117785. Each SQL Expression's
+  // Monaco onChange fires synchronously as the user types; if QueryEditorRenderer's handleChange
+  // routes those updates by the currently selected refId instead of the originating query's
+  // refId, a late onChange from the unmounting editor clobbers the newly selected query.
+  test("switching between SQL expressions preserves each expression's content", async ({ gotoDashboardPage, page }) => {
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+
+    async function addSqlExpression() {
+      await addQueryOrExpressionButton(page).click();
+      await page.getByRole('menuitem', { name: 'Add expression' }).click();
+      await page.getByRole('button', { name: 'SQL', exact: true }).click();
+      await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
+    }
+
+    const fillActiveSqlEditor = (text: string) =>
+      page.getByTestId('sql-expression-editor').locator('.monaco-editor textarea').fill(text);
+
+    await addSqlExpression();
+    await fillActiveSqlEditor('SELECT 1 FROM A');
+
+    await addSqlExpression();
+    await fillActiveSqlEditor('SELECT 2 FROM A');
+
+    const cardB = page.locator('[data-query-sidebar-card="B"]');
+    const cardC = page.locator('[data-query-sidebar-card="C"]');
+
+    await cardB.click();
+    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
+
+    await cardC.click();
+    await expect(cardC).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('SELECT 2 FROM A')).toBeVisible();
+
+    await cardB.click();
+    await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
+  });
+
+  // Regression cover for https://github.com/grafana/grafana/issues/122956. Prometheus' Monaco
+  // query field only commits its value via onBlur; @hello-pangea/dnd's capture-phase mousedown
+  // preventDefault suppresses the native focus transfer, so without the imperative blur in
+  // SidebarCard.handleMouseDown the editor unmounts with pending edits unflushed.
+  test('preserves pending Prometheus query edits when switching cards without blurring', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+
+    await switchDatasource(dashboardPage, page, selectors, 'gdev-prometheus');
+    await page.getByRole('radio', { name: 'Code' }).click();
+
+    const monacoTextarea = page.locator('.monaco-editor textarea').first();
+    await expect(monacoTextarea).toBeVisible({ timeout: 15_000 });
+
+    await addQueryOrExpressionButton(page).click();
+    await page.getByRole('menuitem', { name: 'Add query' }).click();
+    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
+
+    const cardA = page.locator('[data-query-sidebar-card="A"]');
+    const cardB = page.locator('[data-query-sidebar-card="B"]');
+
+    await cardA.click();
+    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
+
+    const queryText = 'up{job="grafana"}';
+    await monacoTextarea.fill(queryText);
+
+    // Switch straight to B without clicking outside the editor first. The editor is still
+    // focused at this point, so this is the exact path that previously lost edits. The
+    // `delay` separates mousedown from mouseup so Monaco's `setTimeout(0)`-deferred blur
+    // can fire before React unmounts the editor — matching a real human click.
+    await cardB.click({ delay: 50 });
+    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
+
+    await cardA.click();
+    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText(queryText)).toBeVisible();
   });
 });
 

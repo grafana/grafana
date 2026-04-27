@@ -4,12 +4,18 @@ This package contains the authorization server implementation.
 
 ## Feature toggles
 
-The following feature toggles need to be activated:
+The following feature toggle needs to be activated:
 
 ```ini
 [feature_toggles]
 authZGRPCServer = true
-grpcServer = true
+```
+
+The gRPC server also needs to be enabled:
+
+```ini
+[grpc_server]
+enabled = true
 ```
 
 ## Configuration

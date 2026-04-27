@@ -337,7 +337,7 @@ describe('UnconfiguredPanelComp', () => {
         expect(screen.getByRole('button', { name: /use saved query/i })).toBeInTheDocument();
       });
 
-      it('opens the query library drawer with dashboard context on click', async () => {
+      it('opens the query library drawer with unconfigured-panel context on click', async () => {
         const mockOpenDrawer = jest.fn();
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: mockOpenDrawer, queryLibraryEnabled: true });
         buildDashboard({ isEditing: true });
@@ -347,7 +347,9 @@ describe('UnconfiguredPanelComp', () => {
         await user.hover(root);
         await user.click(screen.getByRole('button', { name: /use saved query/i }));
 
-        expect(mockOpenDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: 'dashboard' } }));
+        expect(mockOpenDrawer).toHaveBeenCalledWith(
+          expect.objectContaining({ options: { context: 'unconfigured-panel' } })
+        );
       });
 
       describe('onSelectQuery callback', () => {

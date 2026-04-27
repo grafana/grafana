@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import * as React from 'react';
 
 import {
   type FieldConfigOptionsRegistry,
@@ -9,7 +8,6 @@ import {
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
-  type GrafanaTheme2,
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
@@ -24,6 +22,7 @@ import {
   buildScopeOptions,
   useStyles2,
   ValuePicker,
+  useFieldMatchersOptions,
 } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -287,34 +286,35 @@ export function getFieldOverrideCategories(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
-      customRender: function renderAddButton() {
-        const options = fieldMatchersUI.selectOptions().options;
-        return (
-          <AddOverrideButtonContainer key="Add override">
-            <ValuePicker
-              icon="plus"
-              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
-              variant="secondary"
-              menuPlacement="auto"
-              isFullWidth={true}
-              size="md"
-              options={options}
-              onChange={(value) => onOverrideAdd(value)}
-            />
-          </AddOverrideButtonContainer>
-        );
-      },
+      customRender: () => <AddButtonWrapper key="Add override" onOverrideAdd={onOverrideAdd} />,
     })
   );
 
   return categories;
 }
 
-function AddOverrideButtonContainer({ children }: { children: React.ReactNode }) {
-  const styles = useStyles2(getBorderTopStyles);
-  return <div className={styles}>{children}</div>;
-}
+function AddButtonWrapper({ onOverrideAdd }: { onOverrideAdd: (value: SelectableValue<string>) => void }) {
+  const options = useFieldMatchersOptions();
+  const styles = useStyles2((theme) =>
+    css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: `${theme.spacing(2)}`,
+      display: 'flex',
+    })
+  );
 
-function getBorderTopStyles(theme: GrafanaTheme2) {
-  return css({ borderTop: `1px solid ${theme.colors.border.weak}`, padding: `${theme.spacing(2)}`, display: 'flex' });
+  return (
+    <div className={styles}>
+      <ValuePicker
+        icon="plus"
+        label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
+        variant="secondary"
+        menuPlacement="auto"
+        isFullWidth={true}
+        size="md"
+        options={options}
+        onChange={(value) => onOverrideAdd(value)}
+      />
+    </div>
+  );
 }
