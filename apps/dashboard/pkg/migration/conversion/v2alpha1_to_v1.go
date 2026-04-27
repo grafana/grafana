@@ -1940,6 +1940,8 @@ func transformVariableHideFromEnum(hide dashv2alpha1.DashboardVariableHide) inte
 		return 1
 	case dashv2alpha1.DashboardVariableHideHideVariable:
 		return 2
+	case dashv2alpha1.DashboardVariableHideInControlsMenu:
+		return 3
 	default:
 		return 0
 	}
