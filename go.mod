@@ -107,7 +107,7 @@ require (
 	github.com/grafana/nanogit/gittest v0.10.2 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
-	github.com/grafana/pyroscope/api v1.3.0 // @grafana/data-sources-plugins
+	github.com/grafana/pyroscope/api v1.5.0 // @grafana/data-sources-plugins
 	github.com/grafana/schemads v0.0.9 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
