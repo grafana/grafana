@@ -6,7 +6,6 @@ import {
   createDataFrame,
   DataFrameType,
   DataTopic,
-  dateTime,
   type Field,
   FieldType,
   getDefaultTimeRange,
@@ -189,7 +188,6 @@ function renderHeatmapPanel(
     replaceVariables: (v: string) => string;
     width: number;
     height: number;
-    timeRange: typeof canvasTestTimeRange;
   }>
 ) {
   const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
@@ -200,16 +198,10 @@ function renderHeatmapPanel(
       timeRange: getDefaultTimeRange(),
       ...dataOverrides,
     },
-    ...{ ...panelPropsOverrides, width, height, timeRange: canvasTestTimeRange },
+    ...{ ...panelPropsOverrides, width, height },
   });
   return render(<HeatmapPanel {...props} />);
 }
-
-const canvasTestTimeRange = {
-  from: dateTime(0),
-  to: dateTime(10_000),
-  raw: { from: '0', to: '10000' },
-};
 
 describe('HeatmapPanel (canvas)', () => {
   let prepConfigSpy: jest.SpyInstance;
