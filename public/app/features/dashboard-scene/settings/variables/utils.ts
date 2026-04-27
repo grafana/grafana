@@ -184,6 +184,7 @@ export function getVariableEditor(type: EditableVariableType) {
 export interface CommonVariableProperties {
   name: string;
   label?: string;
+  key?: string;
 }
 
 function getDefaultDatasourceRef(): DataSourceRef | undefined {

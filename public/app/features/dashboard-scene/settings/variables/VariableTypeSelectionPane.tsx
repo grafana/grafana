@@ -43,7 +43,7 @@ export interface VariableAddPaneState extends SceneObjectState {
 
 export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> implements DashboardSidebarPane {
   public static Component = VariableAddPaneRenderer;
-  public disableGoBack = true;
+  public excludeFromHistory = true;
 
   public getId() {
     return 'variable-type-selection' as const;
@@ -99,7 +99,7 @@ export class VariableTypeChangePane
   implements DashboardSidebarPane
 {
   public static Component = VariableTypeChangePaneRenderer;
-  public disableGoBack = true;
+  public excludeFromHistory = true;
 
   public getId() {
     return 'variable-type-selection' as const;
@@ -128,7 +128,11 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
         return;
       }
 
-      const newVariable = getVariableScene(type, { name: variable.state.name, label: variable.state.label });
+      const newVariable = getVariableScene(type, {
+        name: variable.state.name,
+        label: variable.state.label,
+        key: variable.state.key,
+      });
 
       dashboardEditActions.changeVariableType({
         source: variableSet,

@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
   type ElementSelectionContextItem,
@@ -333,12 +335,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       document.activeElement.blur();
     }
 
-    this.setState({
+    const newState: DashboardEditPaneState = {
+      ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
-      previousState: selected.length ? getStateForPaneHistory(this.state) : undefined,
+    };
+
+    this.setState({
+      ...newState,
+      previousState: selected.length ? getStateForPaneHistory(this.state, newState) : undefined,
     });
   }
 
@@ -461,14 +468,26 @@ function trySwitchingToSourceTab(source: SceneObject) {
   }
 }
 
-function getStateForPaneHistory(state: DashboardEditPaneState | undefined): DashboardEditPaneState | undefined {
-  if (!state || !state.openPane) {
+function getStateForPaneHistory(
+  currentState: DashboardEditPaneState | undefined,
+  newState?: DashboardEditPaneState
+): DashboardEditPaneState | undefined {
+  if (!currentState || !currentState.openPane) {
     return undefined;
   }
 
-  if (state.openPane?.disableGoBack) {
-    return getStateForPaneHistory(state.previousState!);
+  if (currentState.openPane?.excludeFromHistory) {
+    return getStateForPaneHistory(currentState.previousState!, newState);
   }
 
-  return state;
+  // If newState is same dont create an duplcate history entry
+  if (
+    newState &&
+    newState.openPane?.getId() === currentState.openPane?.getId() &&
+    isEqual(newState.selectionContext.selected, currentState.selectionContext.selected)
+  ) {
+    return getStateForPaneHistory(currentState.previousState, newState);
+  }
+
+  return currentState;
 }
