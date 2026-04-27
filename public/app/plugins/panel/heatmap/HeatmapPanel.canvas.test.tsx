@@ -56,8 +56,6 @@ function applyDefaultUPlotAxisMeasureTextMock() {
   );
 }
 
-applyDefaultUPlotAxisMeasureTextMock();
-
 /**
  * Generates a 2D array of heatmap bucket values for testing.
  * Each row corresponds to a bucket (y-axis), each column to a time point (x-axis).
@@ -111,31 +109,15 @@ function createHeatmapRowsFrame(overrides?: {
 }
 
 /**
- * Returns default HeatmapPanel options merged with any overrides.
- * Uses full defaultOptions from types.ts to ensure all required fields are present.
+ * Scrubs canvas events output to remove noop from snapshot output
+ * @todo move to canvas testing utils somewhere
+ * @param events
  */
-function getDefaultHeatmapPanelOptions(overrides?: Partial<Options>): Options {
-  return {
-    ...fullDefaultOptions,
-    ...defaultOptions,
-    ...overrides,
-  };
-}
-
 function scrubOutput(events: CanvasRenderingContext2DEvent[]): Array<Omit<CanvasRenderingContext2DEvent, 'transform'>> {
   return events.map(({ transform, ...event }) =>
     event.props.path ? { ...event, props: { ...event.props, path: scrubOutput(event.props.path) } } : event
   );
 }
-
-const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
-  legend: { show: false },
-  tooltip: {
-    mode: TooltipDisplayMode.Single,
-    yHistogram: false,
-    showColorScale: false,
-  },
-});
 
 function createExemplarFrame(overrides?: { timeValues?: number[]; values?: number[]; additionalFields?: Field[] }) {
   const timeValues = overrides?.timeValues ?? [1];
@@ -190,7 +172,19 @@ function renderHeatmapPanel(
     height: number;
   }>
 ) {
-  const mergedOptions: Options = { ...defaultPanelOptions, ...optionsOverrides };
+  const mergedOptions: Options = {
+    ...fullDefaultOptions,
+    ...defaultOptions,
+    ...{
+      legend: { show: false },
+      tooltip: {
+        mode: TooltipDisplayMode.Single,
+        yHistogram: false,
+        showColorScale: false,
+      },
+    },
+    ...optionsOverrides,
+  };
   const props = getPanelProps<Options>(mergedOptions, {
     data: {
       state: LoadingState.Done,
