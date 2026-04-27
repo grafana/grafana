@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8testing "k8s.io/client-go/testing"
 )
 
@@ -127,4 +130,64 @@ func TestRepositoryStatusPatcher_Patch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
+	}
+	ops := []map[string]interface{}{
+		{"op": "replace", "path": "/status/health", "value": map[string]interface{}{"healthy": true}},
+	}
+
+	t.Run("transient conflict is retried and succeeds", func(t *testing.T) {
+		var calls int32
+		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
+		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
+			n := atomic.AddInt32(&calls, 1)
+			if n == 1 {
+				return true, nil, apierrors.NewConflict(
+					schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
+					"test-repo",
+					fmt.Errorf("requested RV does not match current RV"),
+				)
+			}
+			return true, &provisioning.Repository{}, nil
+		})
+
+		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
+		require.NoError(t, err)
+		require.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should retry once after conflict")
+	})
+
+	t.Run("persistent conflict surfaces the error", func(t *testing.T) {
+		var calls int32
+		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
+		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
+			atomic.AddInt32(&calls, 1)
+			return true, nil, apierrors.NewConflict(
+				schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
+				"test-repo",
+				fmt.Errorf("requested RV does not match current RV"),
+			)
+		})
+
+		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unable to update repo with job status")
+		require.Greater(t, atomic.LoadInt32(&calls), int32(1), "patch should retry at least once before giving up")
+	})
+
+	t.Run("non-conflict errors are not retried", func(t *testing.T) {
+		var calls int32
+		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
+		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
+			atomic.AddInt32(&calls, 1)
+			return true, nil, fmt.Errorf("boom")
+		})
+
+		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
+		require.Error(t, err)
+		require.Equal(t, int32(1), atomic.LoadInt32(&calls), "non-conflict errors should not be retried")
+	})
 }

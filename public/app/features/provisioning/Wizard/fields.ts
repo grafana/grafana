@@ -175,8 +175,14 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.bitbucket.url-pattern',
+              'Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)'
+            ),
+          },
         },
       },
       branch: {

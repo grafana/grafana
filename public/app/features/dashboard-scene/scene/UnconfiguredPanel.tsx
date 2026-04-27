@@ -148,7 +148,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
           ]);
         }
       },
-      options: { context: 'dashboard' },
+      options: { context: 'unconfigured-panel' },
     });
   };
 

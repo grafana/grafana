@@ -40,7 +40,7 @@ export type QueryLibraryContextType = {
    */
   renderSavedQueryButtons: (
     query: DataQuery,
-    app?: CoreApp,
+    app?: CoreApp | string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
     datasourceFilters?: string[],
