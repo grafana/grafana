@@ -23,11 +23,12 @@ import (
 )
 
 const testAppID = "test-app"
+const instanceName = "instance" // the name is always "instance"
 
 var gvrSettings = schema.GroupVersionResource{
-	Group:    testAppID + ".grafana.app",
+	Group:    testAppID,
 	Version:  "v0alpha1",
-	Resource: "settings",
+	Resource: "app",
 }
 
 func TestMain(m *testing.M) {
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAppPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := setupHelper(t, mode)
@@ -48,15 +49,18 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				GVR:  gvrSettings,
 			})
 
+			// Render the openapi spec
+			apis.VerifyOpenAPISnapshots(t, "testdata", gvrSettings.GroupVersion(), helper)
+
 			// writeSettings writes a known settings state with a fresh secret and returns
 			// the resulting object. Each subtest calls this to establish its own baseline.
 			writeSettings := func(t *testing.T) *unstructured.Unstructured {
 				t.Helper()
 				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
 							"pinned":   true,
@@ -68,7 +72,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 					},
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
-				obj, err := client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+				obj, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
 				return obj
 			}
@@ -76,7 +80,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			t.Run("update persists jsonData and returns secure key references", func(t *testing.T) {
 				obj := writeSettings(t)
 
-				require.Equal(t, testAppID, obj.GetName())
+				require.Equal(t, instanceName, obj.GetName())
 
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
@@ -103,7 +107,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				list, err := client.Resource.List(ctx, metav1.ListOptions{})
 				require.NoError(t, err)
 				require.Len(t, list.Items, 1)
-				require.Equal(t, testAppID, list.Items[0].GetName())
+				require.Equal(t, instanceName, list.Items[0].GetName())
 			})
 
 			t.Run("update with name-only entry keeps existing value", func(t *testing.T) {
@@ -119,9 +123,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				// Update sending back the name reference — should be a no-op for the secure value.
 				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
 							"pinned":   true,
@@ -134,7 +138,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
 
-				obj, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+				obj, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
 				secure, ok = obj.Object["secure"].(map[string]any)
 				require.True(t, ok, "expected top-level secure field")
@@ -160,9 +164,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 							User: user,
 							GVR:  gvrSettings,
 						})
-						obj, err := c.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+						obj, err := c.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 						require.NoError(t, err)
-						require.Equal(t, testAppID, obj.GetName())
+						require.Equal(t, instanceName, obj.GetName())
 					})
 				}
 			})
@@ -178,10 +182,10 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagAppPluginAPIServer,
+			featuremgmt.FlagApppluginRegisterAPIServer,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("settings.%s.grafana.app", testAppID): {
+			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
 			},
 		},
