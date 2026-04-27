@@ -23,10 +23,6 @@ const (
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagStorage
-	// Configurable storage for dashboards, datasources, and resources
-	FlagStorage = "storage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -569,6 +565,10 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
+
+	// FlagGrafanaAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
 
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature

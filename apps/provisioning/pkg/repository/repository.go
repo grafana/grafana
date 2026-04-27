@@ -169,6 +169,13 @@ type Hooks interface {
 	OnDelete(ctx context.Context) error
 }
 
+// WebhookSecretRotator is implemented by repositories that support periodic
+// webhook secret rotation. The controller calls RotateWebhookSecret when the
+// secret is due for rotation based on the configured interval.
+type WebhookSecretRotator interface {
+	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
+}
+
 type FileAction string
 
 const (

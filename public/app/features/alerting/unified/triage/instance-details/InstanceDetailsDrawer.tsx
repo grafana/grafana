@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
@@ -323,9 +323,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
             <InstanceDetailsDrawerTitle
               {...sharedTitleProps}
               rule={rule.grafana_alert}
-              titleText={t('alerting.triage.instance-details-drawer.silence-title-with-name', 'Silence {{name}}', {
-                name: rule.grafana_alert.title,
-              })}
+              sectionLabel={<Trans i18nKey="alerting.triage.instance-details-drawer.section-silence">Silence</Trans>}
+              titleText={rule.grafana_alert.title}
               hideActions
               showAlertState={false}
               titleSection={<DrawerBackButton onClick={handleBack} />}

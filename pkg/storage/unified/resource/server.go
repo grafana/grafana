@@ -238,6 +238,9 @@ type SearchOptions struct {
 	// Minimum build version for reusing file-based indexes. Ignored if nil.
 	MinBuildVersion *semver.Version
 
+	// Running Grafana build version. Used to detect if index was built by a newer version.
+	BuildVersion *semver.Version
+
 	// Number of workers to use for index rebuilds.
 	IndexRebuildWorkers int
 

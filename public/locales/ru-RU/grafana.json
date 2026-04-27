@@ -3627,9 +3627,9 @@
         "declare-incident": "Сообщить об инциденте",
         "declare-incident-no-permission": "У вас нет разрешения на доступ к инциденту",
         "instance-details": "Сведения об экземпляре",
+        "section-silence": "",
         "silence-button": "Временное отключение",
-        "silence-no-permission": "У вас нет разрешения на создание временных отключений",
-        "silence-title-with-name": ""
+        "silence-no-permission": "У вас нет разрешения на создание временных отключений"
       },
       "labels-column-title": "Метки",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -5696,6 +5696,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-filters-set": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -11346,6 +11347,7 @@
       "label-numbers": "Номера",
       "label-signature": "Подпись"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Экспериментальная функция. Показывает компонент для управления отображаемыми полями из журналов.",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала.",
@@ -11649,6 +11651,7 @@
         "common-labels": "Общие метки:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Общие метки",
     "name-deduplication": "Дедупликация",
     "name-details-mode": "Сведения о журналах на панели",
@@ -13287,6 +13290,7 @@
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном API",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
@@ -14270,7 +14274,6 @@
       "hide": "Скрыть {{type}}",
       "hide-help": "Скрыть справку по источнику данных",
       "hide-transformation-help": "Скрыть справку по преобразованию",
-      "inspector": "Проверка запросов",
       "more-actions": "Другие действия с {{type}}",
       "remove": "Удалить {{type}}",
       "remove-transformation-filter": "Удалить фильтр",
@@ -14282,6 +14285,31 @@
     "alerts": {
       "no-alerts": "Для этой панели нет правил оповещений",
       "no-alerts-description": "Создайте правило оповещений, чтобы получать уведомления, когда ваши данные будут соответствовать определенным условиям."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Удалить запрос?",
@@ -14319,6 +14347,7 @@
     },
     "footer": {
       "edit-option": "Редактировать {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Интервал",
         "max-data-points": "Макс. количество точек данных",
@@ -14329,6 +14358,7 @@
       "placeholder": {
         "no-limit": "Без ограничения"
       },
+      "query-inspector": "",
       "query-options": "Параметры запроса"
     },
     "header": {
@@ -14943,6 +14973,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",

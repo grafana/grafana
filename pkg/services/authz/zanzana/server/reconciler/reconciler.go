@@ -69,6 +69,7 @@ type Config struct {
 	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
 	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
 	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	ListPageSize        int                           // Page size when listing CRDs from the Kubernetes API (default 1000)
 	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
@@ -84,6 +85,13 @@ func (c Config) zanzanaReadPageSize() int32 {
 		return 100
 	}
 	return int32(c.ZanzanaReadPageSize)
+}
+
+func (c Config) listPageSize() int64 {
+	if c.ListPageSize <= 0 {
+		return 1000
+	}
+	return int64(c.ListPageSize)
 }
 
 // defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
