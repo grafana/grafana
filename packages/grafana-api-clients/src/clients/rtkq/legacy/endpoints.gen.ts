@@ -3912,6 +3912,7 @@ export type AddDataSourceCommand = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   secureJsonData?: {
     [key: string]: string;
   };
@@ -4003,6 +4004,7 @@ export type UpdateDataSourceCommand = {
   isDefault?: boolean;
   jsonData?: Json;
   name?: string;
+  ordinal?: number;
   secureJsonData?: {
     [key: string]: string;
   };

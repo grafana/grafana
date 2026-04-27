@@ -71,6 +71,13 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetIsDefault(ds.IsDefault).
 		SetReadOnly(ds.ReadOnly)
 
+	if ds.IsDefault {
+		ds.Ordinal = 1
+	}
+	if ds.Ordinal > 0 {
+		obj.Spec.Set("ordinal", ds.Ordinal)
+	}
+
 	if ds.JsonData != nil && !ds.JsonData.IsEmpty() {
 		obj.Spec.SetJSONData(ds.JsonData.Interface())
 	}

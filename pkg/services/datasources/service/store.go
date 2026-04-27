@@ -346,8 +346,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		// When changing the default, also update the ordinal values
-		rawSQL := "UPDATE data_source SET is_default=?, ordinal=2 WHERE is_default=? org_id=? AND id <> ?"
+		// When changing the default, also update the ordinal value
+		rawSQL := "UPDATE data_source SET is_default=?, ordinal=2 WHERE is_default=? AND org_id=? AND id <> ?"
 		if _, err := sess.Exec(rawSQL, false, true, ds.OrgID, ds.ID); err != nil {
 			return err
 		}

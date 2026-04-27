@@ -16,6 +16,7 @@
       "bbb": true,
       "ccc": 1.234
     },
+    "ordinal": 1,
     "title": "Hello testdata",
     "url": "http://something/",
     "withCredentials": true
