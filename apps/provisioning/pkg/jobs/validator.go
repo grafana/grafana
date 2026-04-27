@@ -10,6 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -110,6 +111,25 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 	if opts.Path != "" {
 		if err := safepath.IsSafe(opts.Path); err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "push", "path"), opts.Path, err.Error()))
+		}
+	}
+
+	// Empty Resources is valid: the worker falls back to exporting every
+	// unmanaged resource (legacy behavior).
+	for i, r := range opts.Resources {
+		path := field.NewPath("spec", "push", "resources").Index(i)
+		if r.Name == "" {
+			list = append(list, field.Required(path.Child("name"), "resource name is required"))
+		}
+		if r.Kind == "" {
+			list = append(list, field.Required(path.Child("kind"), "resource kind is required"))
+		} else if r.Kind != resources.DashboardKind.Kind {
+			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
+				fmt.Sprintf("only %s is supported for export", resources.DashboardKind.Kind)))
+		}
+		if r.Group != "" && r.Group != resources.DashboardResource.Group {
+			list = append(list, field.Invalid(path.Child("group"), r.Group,
+				fmt.Sprintf("only %s is supported for export", resources.DashboardResource.Group)))
 		}
 	}
 

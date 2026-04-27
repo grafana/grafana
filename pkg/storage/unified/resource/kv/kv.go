@@ -18,6 +18,15 @@ var ErrEmptyValue = errors.New("key must have a value")
 var ErrKeyAlreadyExists = errors.New("key already exists")
 var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
 
+// ErrRetryable marks a transient error that a caller iterating a KV stream
+// (Keys, Get, BatchGet) may retry by re-opening the call from a known
+// resume point.
+//
+// KV implementations may opt-in to wrap backend-specific
+// transient errors (gRPC status codes, SQL driver errors, retryable
+// filesystem errors) with this sentinel.
+var ErrRetryable = errors.New("retryable error")
+
 // KeyValue represents a key-value pair returned by BatchGet
 type KeyValue struct {
 	Key   string
