@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type RouteMatchInfo, type RouteWithID } from '@grafana/alerting';
+import { type RouteWithID } from '@grafana/alerting';
 
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 
@@ -17,7 +17,7 @@ const mockRoute = (partial: Partial<RouteWithID> = {}): RouteWithID => ({
   ...partial,
 });
 
-const mockRouteMatchInfo = (route: RouteWithID): RouteMatchInfo<RouteWithID> => ({
+const mockRouteMatchInfo = (route: RouteWithID) => ({
   route,
   matchDetails: [],
   matched: true,
