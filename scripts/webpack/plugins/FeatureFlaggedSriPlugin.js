@@ -7,9 +7,11 @@ const PLUGIN_NAME = 'FeatureFlaggedSRIPlugin';
 const FEATURE_TOGGLE_WRAP = ['if (window.__grafanaAssetSriChecksEnabled) {', '}'];
 
 /**
- * Webpack plugin that wraps Webpack runtime integrity checks in a feature flag
- * This allows us to disable SRI checks in both the initial chunks but also in the
- * dynamically loaded chunks.
+ * Webpack plugin that wraps Webpack runtime integrity checks in a feature flag.
+ * This allows us to enable/disable SRI checks in both the initial chunks and the dynamically loaded chunks.
+ * The Webpack SRI plugin needs to be enabled for this plugin to work, as it relies on the presence
+ * of the integrity attribute in the generated script tags to identify where to wrap the feature flag.
+ *
  */
 class FeatureFlaggedSRIPlugin {
   /**
