@@ -202,7 +202,7 @@ require (
 	golang.org/x/net v0.52.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
-	golang.org/x/text v0.35.0 // @grafana/grafana-backend-group
+	golang.org/x/text v0.36.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.256.0 // @grafana/grafana-backend-group
