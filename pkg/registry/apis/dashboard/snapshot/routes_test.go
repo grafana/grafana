@@ -587,7 +587,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	}
 
 	t.Run("denies anonymous access", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), false)
+		auth := NewSnapshotAuthorizer(acmock.New())
 
 		// No user in context
 		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
@@ -599,7 +599,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	})
 
 	t.Run("allows anonymous get", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), false)
+		auth := NewSnapshotAuthorizer(acmock.New())
 
 		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
 			isResource: true,
@@ -611,7 +611,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	})
 
 	t.Run("allows anonymous get dashboard subresource", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), false)
+		auth := NewSnapshotAuthorizer(acmock.New())
 
 		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
 			isResource:  true,
@@ -624,7 +624,7 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	})
 
 	t.Run("denies anonymous create", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), false)
+		auth := NewSnapshotAuthorizer(acmock.New())
 
 		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
 			isResource: true,
@@ -637,7 +637,6 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("authenticated user with permissions can access regular create", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
-			false,
 		)
 
 		ctx := identity.WithRequester(context.Background(), testUser)
@@ -653,7 +652,6 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("authenticated user can access delete/{deleteKey} custom route", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsDelete}}),
-			false,
 		)
 
 		ctx := identity.WithRequester(context.Background(), testUser)
@@ -669,8 +667,8 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
-	t.Run("public mode denies anonymous delete/{deleteKey}", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), true)
+	t.Run("denies anonymous delete/{deleteKey}", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(acmock.New())
 
 		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
 			isResource:  true,
@@ -685,7 +683,6 @@ func TestSnapshotAuthorizer(t *testing.T) {
 	t.Run("authenticated user without permissions is denied", func(t *testing.T) {
 		auth := NewSnapshotAuthorizer(
 			acmock.New().WithPermissions([]accesscontrol.Permission{}),
-			false,
 		)
 
 		ctx := identity.WithRequester(context.Background(), testUser)

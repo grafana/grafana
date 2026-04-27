@@ -1114,7 +1114,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
-	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl, b.snapshotOptions.PublicMode)
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

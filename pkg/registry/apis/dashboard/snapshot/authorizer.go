@@ -11,9 +11,9 @@ import (
 )
 
 // NewSnapshotAuthorizer returns an authorizer that maps k8s verbs to snapshot RBAC actions.
-// When publicMode is true, anonymous GET requests for snapshots and the dashboard subresource
-// are allowed without RBAC checks (mirroring legacy SnapshotPublicMode behavior).
-func NewSnapshotAuthorizer(accessControl ac.AccessControl, publicMode bool) authorizer.Authorizer {
+// Anonymous GET requests for snapshots and the dashboard subresource are allowed without
+// RBAC checks (mirroring legacy SnapshotPublicMode behavior).
+func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
