@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { chain, truncate } from 'lodash';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type NavModelItem, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -36,6 +36,7 @@ import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
 import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
@@ -89,9 +90,6 @@ export enum ActiveTab {
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
-
-const ENRICHMENT_VIEW_NAME_QUERY_PARAM = 'enrichment';
-const ENRICHMENT_EDIT_NAME_QUERY_PARAM = 'enrichment_edit';
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
@@ -434,12 +432,7 @@ const PrometheusConsistencyCheck = withErrorBoundary(
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
-export function useActiveTab(): [
-  ActiveTab,
-  (tab: ActiveTab) => void,
-  UrlQueryMap,
-  (values: UrlQueryMap, replace?: boolean) => void,
-] {
+export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
   const tabFromQuery = queryParams.tab;
 
@@ -449,7 +442,7 @@ export function useActiveTab(): [
     setQueryParams({ tab });
   };
 
-  return [activeTab, setActiveTab, queryParams, setQueryParams];
+  return [activeTab, setActiveTab];
 }
 
 function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
@@ -459,46 +452,8 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 }
 
 function usePageNav(rule: CombinedRule) {
-  const [activeTab, setActiveTab, queryParams, setQueryParams] = useActiveTab();
-  const previousActiveTab = useRef<ActiveTab | null>(null);
-
-  // Deep-link: `?enrichment=<metadata.name>` or `?enrichment_edit=<metadata.name>` should open the Alert Enrichment tab
-  // even if `tab` is omitted.
-  useEffect(() => {
-    const rawView = queryParams[ENRICHMENT_VIEW_NAME_QUERY_PARAM];
-    const rawEdit = queryParams[ENRICHMENT_EDIT_NAME_QUERY_PARAM];
-    const hasExplicitValidTab = isValidTab(queryParams.tab);
-    let readName: string | undefined;
-    if (typeof rawView === 'string') {
-      readName = rawView;
-    } else if (Array.isArray(rawView) && rawView.length > 0) {
-      readName = String(rawView[0]);
-    }
-
-    let editName: string | undefined;
-    if (typeof rawEdit === 'string') {
-      editName = rawEdit;
-    } else if (Array.isArray(rawEdit) && rawEdit.length > 0) {
-      editName = String(rawEdit[0]);
-    }
-    if ((readName || editName) && !hasExplicitValidTab && activeTab !== ActiveTab.Enrichment) {
-      setActiveTab(ActiveTab.Enrichment);
-    }
-  }, [queryParams, activeTab, setActiveTab]);
-
-  // Drop enrichment query params so they do not linger on other tabs.
-  useEffect(() => {
-    if (previousActiveTab.current === ActiveTab.Enrichment && activeTab !== ActiveTab.Enrichment) {
-      setQueryParams(
-        {
-          [ENRICHMENT_VIEW_NAME_QUERY_PARAM]: undefined,
-          [ENRICHMENT_EDIT_NAME_QUERY_PARAM]: undefined,
-        },
-        true
-      );
-    }
-    previousActiveTab.current = activeTab;
-  }, [activeTab, setQueryParams]);
+  const [activeTab, setActiveTab] = useActiveTab();
+  useEnrichmentUrlParams({ activeTab, setActiveTab });
 
   const { annotations, promRule, rulerRule } = rule;
 
