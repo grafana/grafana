@@ -392,7 +392,7 @@ func TestList(t *testing.T) {
 		require.Equal(t, 2, len(keepers))
 		for _, keeper := range keepers {
 			// Only k1 should have `active` set to true because
-			// it is the active keeper set to active.
+			// it is the keeper set to active.
 			require.Equal(t, keeper.Name == k1.Name, keeper.Status.Active)
 		}
 	})
