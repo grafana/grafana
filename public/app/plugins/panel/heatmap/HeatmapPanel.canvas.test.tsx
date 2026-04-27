@@ -287,7 +287,7 @@ describe('HeatmapPanel (canvas)', () => {
           { series: [createDenseHeatmapFrameWithOrdinalY()] },
           {
             color: {
-              scheme: 'UNUSED-FOR-OPACITY-BUT-STILL-REQUIRED-IN-TYPES',
+              scheme: 'UNUSED-FOR-OPACITY',
               steps: 20,
               exponent: 2,
               fill: 'red',
@@ -302,7 +302,16 @@ describe('HeatmapPanel (canvas)', () => {
       it('scheme', async () => {
         renderHeatmapPanel(
           { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          { color: { steps: 20, exponent: 2, fill: '', reverse: false, scheme: 'BuGn', mode: HeatmapColorMode.Scheme } }
+          {
+            color: {
+              steps: 20,
+              exponent: 2,
+              fill: 'UNUSED-FOR-SCHEME',
+              reverse: false,
+              scheme: 'BuGn',
+              mode: HeatmapColorMode.Scheme,
+            },
+          }
         );
         await assertCanvasOutput();
       });
