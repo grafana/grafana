@@ -141,6 +141,7 @@ func bundle(id string, pluginType plugins.Type) *plugins.FoundBundle {
 	return &plugins.FoundBundle{
 		Primary: plugins.FoundPlugin{
 			JSONData: plugins.JSONData{ID: id, Type: pluginType},
+			FS:       plugins.NewFakeFS(), // no schema
 		},
 	}
 }
@@ -150,7 +151,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 		return &AppPluginAPIBuilder{
 			pluginJSON: plugins.JSONData{ID: pluginID},
 			groupVersion: schema.GroupVersion{
-				Group:   pluginID + ".grafana.app",
+				Group:   pluginID,
 				Version: apppluginv0alpha1.VERSION,
 			},
 		}
@@ -158,7 +159,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 
 	newRI := func(pluginID string) utils.ResourceInfo {
 		return apppluginv0alpha1.SettingsResourceInfo.WithGroupAndShortName(
-			pluginID+".grafana.app", pluginID,
+			pluginID, pluginID,
 		)
 	}
 
@@ -179,7 +180,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 
 		b.applyDefaultStorageConfig(opts, ri)
 
-		_, exists := storageOpts.UnifiedStorageConfig["settings.my-app.grafana.app"]
+		_, exists := storageOpts.UnifiedStorageConfig["app.my-app"]
 		require.False(t, exists)
 	})
 
@@ -195,7 +196,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 
 		b.applyDefaultStorageConfig(opts, ri)
 
-		cfg, exists := storageOpts.UnifiedStorageConfig["settings.my-app.grafana.app"]
+		cfg, exists := storageOpts.UnifiedStorageConfig["app.my-app"]
 		require.True(t, exists)
 		require.Equal(t, rest.Mode2, cfg.DualWriterMode)
 	})
@@ -204,8 +205,8 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 		b := newBuilder("my-app")
 		storageOpts := &options.StorageOptions{
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				appPluginSettingsWildcard:     {DualWriterMode: rest.Mode2},
-				"settings.my-app.grafana.app": {DualWriterMode: rest.Mode4},
+				appPluginSettingsWildcard: {DualWriterMode: rest.Mode2},
+				"app.my-app":              {DualWriterMode: rest.Mode4},
 			},
 		}
 		opts := builder.APIGroupOptions{StorageOpts: storageOpts}
@@ -213,7 +214,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 
 		b.applyDefaultStorageConfig(opts, ri)
 
-		cfg := storageOpts.UnifiedStorageConfig["settings.my-app.grafana.app"]
+		cfg := storageOpts.UnifiedStorageConfig["app.my-app"]
 		require.Equal(t, rest.Mode4, cfg.DualWriterMode)
 	})
 
@@ -224,15 +225,16 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 			},
 		}
 		opts := builder.APIGroupOptions{StorageOpts: storageOpts}
+		pluginIDs := []string{"owner-a-app", "owner-b-app", "owner-c-app"}
 
-		for _, pluginID := range []string{"app-a", "app-b", "app-c"} {
+		for _, pluginID := range pluginIDs {
 			b := newBuilder(pluginID)
 			ri := newRI(pluginID)
 			b.applyDefaultStorageConfig(opts, ri)
 		}
 
-		for _, pluginID := range []string{"app-a", "app-b", "app-c"} {
-			key := "settings." + pluginID + ".grafana.app"
+		for _, pluginID := range pluginIDs {
+			key := "app." + pluginID
 			cfg, exists := storageOpts.UnifiedStorageConfig[key]
 			require.True(t, exists, "expected config for %s", pluginID)
 			require.Equal(t, rest.Mode1, cfg.DualWriterMode)

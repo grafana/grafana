@@ -212,9 +212,9 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 // appPluginSettingsWildcard is a config key that applies to all app plugin settings
 // resources when no plugin-specific override exists. Configure it as:
 //
-//	[unified_storage.settings.*-app]
+//	[unified_storage.app.*-app]
 //	dualWriterMode = 1 // or 5
-const appPluginSettingsWildcard = "settings.*-app"
+const appPluginSettingsWildcard = "app.*-app"
 
 // applyDefaultStorageConfig injects a wildcard unified storage config entry for this
 // plugin's settings resource if no plugin-specific config exists. This allows operators

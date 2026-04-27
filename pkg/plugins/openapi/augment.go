@@ -186,9 +186,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 				delete(oas.Paths.Paths, k)
 				k = strings.Replace(k, routePrefix, appRoutePrefix, 1)
 				v.Parameters = removeName(v.Parameters)
-				// for _, op := range builder.GetPathOperations(&v.PathProps) {
-				// 	op.Parameters = removeName(op.Parameters)
-				// }
 				oas.Paths.Paths[k] = v
 			}
 		}
