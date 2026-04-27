@@ -5,7 +5,7 @@ import Highlighter from 'react-highlight-words';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, FieldSet, Label, useStyles2 } from '@grafana/ui';
+import { Field, Label, useStyles2 } from '@grafana/ui';
 import { getLabelStyles } from '@grafana/ui/internal';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
