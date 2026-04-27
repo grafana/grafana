@@ -186,23 +186,30 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 // folder itself, every descendant folder, and every dashboard inside the
 // subtree is written to the repository — while a sibling folder's dashboard
 // stays out of the export.
+//
+// Hierarchy under test:
+//
+//	parent/  (requested)
+//	 ├─ child/
+//	 │   ├─ grandchild/
+//	 │   │   └─ dash-in-grandchild
+//	 │   └─ dash-in-child
+//	 └─ dash-in-parent
+//	sibling/  (NOT requested)
+//	 └─ dash-in-sibling
 func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	// Build:  parent/  (requested)
-	//          ├─ child/
-	//          │    └─ dash-in-child
-	//          └─ dash-in-parent
-	//         sibling/  (NOT requested)
-	//          └─ dash-in-sibling
 	parent := makeFolder(t, helper, ctx, "parent-title", "")
 	child := makeFolder(t, helper, ctx, "child-title", parent.GetName())
+	grandchild := makeFolder(t, helper, ctx, "grandchild-title", child.GetName())
 	sibling := makeFolder(t, helper, ctx, "sibling-title", "")
 
-	dashInParent := makeDashboardInFolder(t, helper, ctx, "Dash in parent", parent.GetName())
-	dashInChild := makeDashboardInFolder(t, helper, ctx, "Dash in child", child.GetName())
-	dashInSibling := makeDashboardInFolder(t, helper, ctx, "Dash in sibling", sibling.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash in parent", parent.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash in child", child.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash in grandchild", grandchild.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash in sibling", sibling.GetName())
 
 	const repo = "selective-export-folder-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -210,8 +217,8 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive(t *test
 		SyncTarget:         "instance",
 		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    3,
+		ExpectedDashboards: 4,
+		ExpectedFolders:    4,
 	})
 
 	helper.DebugState(t, repo, "BEFORE FOLDER-RECURSIVE EXPORT")
@@ -229,24 +236,189 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive(t *test
 	helper.DebugState(t, repo, "AFTER FOLDER-RECURSIVE EXPORT")
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	// Both subtree dashboards should be written under their natural folder
-	// paths. ExportFolders runs ahead of the selective path so the parent
-	// directory hierarchy resolves regardless of which folders were requested.
-	parentDash := filepath.Join(helper.ProvisioningPath, "parent-title", "dash-in-parent.json")
-	require.FileExists(t, parentDash, "dashboard in requested folder should be exported")
-	childDash := filepath.Join(helper.ProvisioningPath, "parent-title", "child-title", "dash-in-child.json")
-	require.FileExists(t, childDash, "dashboard in descendant folder should be exported recursively")
+	// ExportFolders runs ahead of the selective path so every unmanaged folder
+	// — including the sibling that was NOT requested — has its directory
+	// materialized in the repository. This pin keeps that contract: paths for
+	// any future selective export still resolve regardless of which folders
+	// the caller named.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title"),
+		"requested folder directory should exist")
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title"),
+		"descendant folder directory should exist")
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title", "grandchild-title"),
+		"deeply-nested descendant folder directory should exist")
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "sibling-title"),
+		"sibling folder directory still emitted by ExportFolders even though not requested")
+
+	// Subtree dashboards land in their natural subdirectories.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "dash-in-parent.json"),
+		"dashboard in requested folder should be exported")
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title", "dash-in-child.json"),
+		"dashboard in descendant folder should be exported recursively")
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "parent-title", "child-title", "grandchild-title", "dash-in-grandchild.json"),
+		"dashboard in deeply-nested descendant folder should be exported recursively")
 
 	// The sibling dashboard sits outside the requested subtree and must be
-	// excluded even though ExportFolders emitted the sibling folder dir.
+	// excluded even though the sibling folder dir was emitted.
 	siblingDash := filepath.Join(helper.ProvisioningPath, "sibling-title", "dash-in-sibling.json")
 	_, err := os.Stat(siblingDash)
 	require.True(t, os.IsNotExist(err),
 		"dashboard outside the requested subtree should not be exported: %s", siblingDash)
+}
 
-	_ = dashInParent
-	_ = dashInChild
-	_ = dashInSibling
+// TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_MultipleRoots
+// pins the multi-root behavior: naming two unrelated folders in the same
+// request exports both subtrees and leaves a third unrelated folder's
+// dashboards out.
+func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_MultipleRoots(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	teamA := makeFolder(t, helper, ctx, "team-a", "")
+	teamB := makeFolder(t, helper, ctx, "team-b", "")
+	teamC := makeFolder(t, helper, ctx, "team-c", "")
+
+	makeDashboardInFolder(t, helper, ctx, "Dash team a", teamA.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash team b", teamB.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Dash team c", teamC.GetName())
+
+	const repo = "selective-export-folder-multi-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    3,
+	})
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: teamA.GetName(), Kind: "Folder", Group: "folder.grafana.app"},
+				{Name: teamB.GetName(), Kind: "Folder", Group: "folder.grafana.app"},
+			},
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "team-a", "dash-team-a.json"),
+		"dashboard in first requested root should be exported")
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "team-b", "dash-team-b.json"),
+		"dashboard in second requested root should be exported")
+
+	excluded := filepath.Join(helper.ProvisioningPath, "team-c", "dash-team-c.json")
+	_, err := os.Stat(excluded)
+	require.True(t, os.IsNotExist(err),
+		"dashboard in non-requested folder should not be exported: %s", excluded)
+}
+
+// TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_NotFound
+// asserts that naming a folder UID the API does not know about ends the job in
+// error state with the missing UID surfaced in JobStatus.Errors. A real
+// folder named alongside it still has its subtree exported — partial-write
+// behavior matches the dashboard NotFound case.
+func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_NotFound(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	real := makeFolder(t, helper, ctx, "real-folder", "")
+	makeDashboardInFolder(t, helper, ctx, "Real dash", real.GetName())
+
+	const repo = "selective-export-folder-notfound-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+	})
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: real.GetName(), Kind: "Folder", Group: "folder.grafana.app"},
+				{Name: "ghost-folder-uid", Kind: "Folder", Group: "folder.grafana.app"},
+			},
+		},
+	}
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"missing folder ref should escalate the job to error state")
+
+	foundError := false
+	for _, e := range jobObj.Status.Errors {
+		if strings.Contains(e, "ghost-folder-uid") {
+			foundError = true
+			break
+		}
+	}
+	require.True(t, foundError,
+		"expected an error mentioning the missing folder UID; got: %v", jobObj.Status.Errors)
+
+	// The real folder's dashboard should still be written despite the sibling
+	// ref failing — the per-folder error is recorded and the rest of the
+	// export proceeds.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "real-folder", "real-dash.json"),
+		"present folder's dashboard should still be exported despite a missing sibling ref")
+}
+
+// TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_MixedWithDashboard
+// pins the mixed-kind contract: a single request can name a Folder ref AND a
+// standalone Dashboard ref; both paths run and each writes the expected files.
+func TestIntegrationProvisioning_ExportSpecificResources_FolderRecursive_MixedWithDashboard(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	folder := makeFolder(t, helper, ctx, "mix-folder", "")
+	unrelated := makeFolder(t, helper, ctx, "unrelated-folder", "")
+
+	makeDashboardInFolder(t, helper, ctx, "Dash in mix folder", folder.GetName())
+	makeDashboardInFolder(t, helper, ctx, "Unrelated dash", unrelated.GetName())
+	soloDash := makeDashboardInFolder(t, helper, ctx, "Solo dash", "")
+
+	const repo = "selective-export-folder-mixed-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 3,
+		ExpectedFolders:    2,
+	})
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: folder.GetName(), Kind: "Folder", Group: "folder.grafana.app"},
+				{Name: soloDash.GetName(), Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	// Folder ref expanded to its dashboard.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "mix-folder", "dash-in-mix-folder.json"),
+		"dashboard inside the requested folder should be exported")
+	// Standalone Dashboard ref.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "solo-dash.json"),
+		"standalone dashboard ref should be exported at the repo root")
+
+	// Unrelated folder's dashboard was neither named nor inside a requested
+	// subtree — must be excluded.
+	excluded := filepath.Join(helper.ProvisioningPath, "unrelated-folder", "unrelated-dash.json")
+	_, err := os.Stat(excluded)
+	require.True(t, os.IsNotExist(err),
+		"dashboard outside any requested ref should not be exported: %s", excluded)
 }
 
 // makeFolder creates an unmanaged folder via the folder API. parentUID is the
@@ -276,18 +448,21 @@ func makeFolder(t *testing.T, helper *common.ProvisioningTestHelper, ctx context
 }
 
 // makeDashboardInFolder creates an unmanaged dashboard whose
-// grafana.app/folder annotation places it inside folderUID.
+// grafana.app/folder annotation places it inside folderUID. When folderUID is
+// empty the annotation is omitted so the dashboard lives at the namespace root.
 func makeDashboardInFolder(t *testing.T, helper *common.ProvisioningTestHelper, ctx context.Context, title, folderUID string) *unstructured.Unstructured {
 	t.Helper()
+	annotations := map[string]interface{}{}
+	if folderUID != "" {
+		annotations["grafana.app/folder"] = folderUID
+	}
 	dashboard := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "dashboard.grafana.app/v1",
 			"kind":       "Dashboard",
 			"metadata": map[string]interface{}{
-				"name": slugify(title),
-				"annotations": map[string]interface{}{
-					"grafana.app/folder": folderUID,
-				},
+				"name":        slugify(title),
+				"annotations": annotations,
 			},
 			"spec": map[string]interface{}{
 				"title":         title,
