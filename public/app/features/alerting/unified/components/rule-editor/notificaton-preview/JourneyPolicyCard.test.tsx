@@ -4,6 +4,8 @@ import { type LabelMatcher, type RouteWithID } from '@grafana/alerting';
 
 import { JourneyPolicyCard } from './JourneyPolicyCard';
 
+jest.mock('../../../useRouteGroupsMatcher');
+
 describe('JourneyPolicyCard', () => {
   const mockMatchers: LabelMatcher[] = [
     { label: 'severity', type: '=', value: 'critical' },
