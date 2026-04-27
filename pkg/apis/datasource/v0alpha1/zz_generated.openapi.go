@@ -530,9 +530,8 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 					},
 					"ordinal": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"isDefault": {
@@ -586,7 +585,7 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"title", "ordinal", "jsonData"},
+				Required: []string{"title", "jsonData"},
 			},
 		},
 		Dependencies: []string{

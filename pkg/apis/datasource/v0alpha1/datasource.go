@@ -130,7 +130,7 @@ type GenericDataSourceSpec struct {
 
 	Access   DsAccess `json:"access,omitempty"`
 	ReadOnly bool     `json:"readOnly,omitempty"`
-	Ordinal  int64    `json:"ordinal,omitzero"`
+	Ordinal  int64    `json:"ordinal,omitempty,omitzero"`
 
 	// Deprecated: use ordinal=1
 	IsDefault bool `json:"isDefault,omitempty"`
