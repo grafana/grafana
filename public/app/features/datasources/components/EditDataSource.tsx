@@ -128,8 +128,9 @@ export function EditDataSourceView({
   const validators = useRef(new Set<() => Promise<boolean> | boolean>());
   const validationErrorsRef = useRef<Record<string, string>>({});
 
-  const validation = useMemo(
-    (): DataSourceConfigValidationAPI => ({
+  const validationRef = useRef<DataSourceConfigValidationAPI | null>(null);
+  if (!validationRef.current) {
+    validationRef.current = {
       registerValidation(validator) {
         validators.current.add(validator);
         return () => validators.current.delete(validator);
@@ -154,10 +155,9 @@ export function EditDataSourceView({
           validationErrorsRef.current = next;
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }),
-    []
-  );
+    };
+  }
+  const validation = validationRef.current;
   const retryAdvisorCheck = useRetryDatasourceAdvisorCheck();
   // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
   // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
