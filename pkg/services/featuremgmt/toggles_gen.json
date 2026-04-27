@@ -1033,9 +1033,9 @@
     },
     {
       "metadata": {
-        "name": "appplugin.registerAPIServer",
-        "resourceVersion": "1777311686595",
-        "creationTimestamp": "2026-04-27T17:41:26Z"
+        "name": "appplugins.registerAPIServer",
+        "resourceVersion": "1777319865396",
+        "creationTimestamp": "2026-04-27T19:57:45Z"
       },
       "spec": {
         "description": "Registers an API server for each backend app plugin exposing a settings endpoint",

@@ -73,7 +73,7 @@ func RegisterAPIService(
 	decrypter decrypt.DecryptService,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
 		return nil, nil
 	}
 

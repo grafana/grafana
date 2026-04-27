@@ -19,13 +19,17 @@ type shimDTO struct {
 	dto *pluginsettings.DTO
 }
 
+// This can be removed when we no longer support loading directly from the legacy SQL store
 func withShimDTO(ctx context.Context) context.Context {
-	return context.WithValue(ctx, ctxAppDTO{}, shimDTO{})
+	return context.WithValue(ctx, ctxAppDTO{}, &shimDTO{})
 }
 
-func shimFromContext(ctx context.Context) (shimDTO, bool) {
-	shim, ok := ctx.Value(ctxAppDTO{}).(shimDTO)
-	return shim, ok
+func shimFromContext(ctx context.Context) *shimDTO {
+	shim, ok := ctx.Value(ctxAppDTO{}).(*shimDTO)
+	if !ok {
+		return nil
+	}
+	return shim
 }
 
 // Gets plugin context with decrypted secure values
@@ -39,7 +43,6 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 	if !ok {
 		return ctx, backend.PluginContext{}, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
 	}
-
 	if !settings.Spec.Enabled {
 		return ctx, backend.PluginContext{}, k8serrors.NewBadRequest("plugin is not enabled")
 	}
@@ -53,8 +56,8 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 	}
 
 	if len(settings.Secure) > 0 {
-		shim, ok := shimFromContext(ctx)
-		if ok && shim.dto != nil && b.pluginSettings != nil {
+		shim := shimFromContext(ctx)
+		if shim != nil && shim.dto != nil && b.pluginSettings != nil {
 			// Odd this does not have an error???!!
 			instance.DecryptedSecureJSONData = b.pluginSettings.DecryptedValues(shim.dto)
 		} else {

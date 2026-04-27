@@ -122,8 +122,8 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
-		shim, ok := shimFromContext(ctx)
-		if ok {
+		shim := shimFromContext(ctx)
+		if shim != nil {
 			shim.dto = ps // passes the raw values back for decryption
 		}
 

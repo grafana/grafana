@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAppPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := setupHelper(t, mode)
@@ -50,7 +50,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			})
 
 			// Render the openapi spec
-			apis.VerifyOpenAPISnapshots(t, "testdata", gvrSettings.GroupVersion(), helper)
+			if mode == rest.Mode5 {
+				apis.VerifyOpenAPISnapshots(t, "testdata", gvrSettings.GroupVersion(), helper)
+			}
 
 			// writeSettings writes a known settings state with a fresh secret and returns
 			// the resulting object. Each subtest calls this to establish its own baseline.
@@ -182,7 +184,7 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagApppluginRegisterAPIServer,
+			featuremgmt.FlagApppluginsRegisterAPIServer,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			fmt.Sprintf("app.%s", testAppID): {
