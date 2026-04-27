@@ -676,11 +676,6 @@ func useNamespaceFromPath(path string, user *user.SignedInUser) {
 			if err == nil {
 				user.Namespace = ns.Value
 				user.OrgID = ns.OrgID
-				// Anonymous users may have org 0; use 'default' namespace (public mode)
-				if user.OrgID == 0 {
-					user.OrgID = 1
-					user.Namespace = "default"
-				}
 			}
 		}
 	}

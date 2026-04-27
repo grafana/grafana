@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -280,8 +282,11 @@ func handleDeleteByKey(accessControl ac.AccessControl, storageGetter func() rest
 		}
 		snapList, ok := obj.(*dashv0.SnapshotList)
 		if !ok || len(snapList.Items) == 0 {
-			errhttp.Write(ctx, fmt.Errorf("snapshot not found for delete key"), w)
+			errhttp.Write(ctx, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), ""), w)
 			return
+		}
+		if len(snapList.Items) > 1 {
+			klog.Warningf("multiple snapshots found for delete key in namespace %q (count=%d); deleting only the first", namespace, len(snapList.Items))
 		}
 		snapshotName := snapList.Items[0].Name
 

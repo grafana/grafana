@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
@@ -423,6 +424,102 @@ func TestCreateExternalSnapshot(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.Empty(t, receivedReq.Header.Get("Authorization"))
+	})
+}
+
+func TestHandleDeleteByKey(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	deletePerms := func() accesscontrol.AccessControl {
+		return acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsDelete}})
+	}
+
+	t.Run("looks up by deleteKey field selector and deletes by snapshot name", func(t *testing.T) {
+		const deleteKey = "delete-key-abc"
+		const snapshotName = "snap-xyz-123"
+
+		listed := dashv0.Snapshot{}
+		listed.Name = snapshotName
+
+		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
+			return opts != nil && opts.FieldSelector != nil &&
+				opts.FieldSelector.String() == "spec.deleteKey="+deleteKey
+		})).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{listed}}, nil)
+		mockStorage.On("Delete", mock.Anything, snapshotName, mock.Anything, mock.Anything).
+			Return(&dashv0.Snapshot{}, true, nil)
+
+		routes := GetRoutes(
+			dashboardsnapshots.NewMockService(t),
+			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+			deletePerms(),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboards.NewFakeDashboardService(t),
+		)
+
+		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/"+deleteKey, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace, "deleteKey": deleteKey})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[1].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		mockStorage.AssertCalled(t, "Delete", mock.Anything, snapshotName, mock.Anything, mock.Anything)
+	})
+
+	t.Run("returns 404 and skips delete when no snapshot matches deleteKey", func(t *testing.T) {
+		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage.On("List", mock.Anything, mock.Anything).
+			Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{}}, nil)
+
+		routes := GetRoutes(
+			dashboardsnapshots.NewMockService(t),
+			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+			deletePerms(),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboards.NewFakeDashboardService(t),
+		)
+
+		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/missing-key", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace, "deleteKey": "missing-key"})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[1].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusNotFound, recorder.Code)
+		mockStorage.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("returns 403 without delete permission", func(t *testing.T) {
+		mockStorage := grafanarest.NewMockStorage(t)
+
+		routes := GetRoutes(
+			dashboardsnapshots.NewMockService(t),
+			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+			acmock.New().WithPermissions([]accesscontrol.Permission{}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboards.NewFakeDashboardService(t),
+		)
+
+		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/some-key", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace, "deleteKey": "some-key"})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[1].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+		mockStorage.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
 	})
 }
 
