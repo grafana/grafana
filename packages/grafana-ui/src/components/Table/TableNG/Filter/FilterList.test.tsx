@@ -31,9 +31,7 @@ describe('FilterList', () => {
         { value: 'banana', label: 'banana' },
         { value: 'cherry', label: 'cherry' },
       ];
-      render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />
-      );
+      render(<FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />);
       expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: 'banana' })).toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: 'cherry' })).toBeInTheDocument();
@@ -56,13 +54,7 @@ describe('FilterList', () => {
     it('matches case-insensitively by default', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
       render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="APPLE"
-          operator={containsOp()}
-        />
+        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="APPLE" operator={containsOp()} />
       );
       expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
     });
@@ -85,13 +77,7 @@ describe('FilterList', () => {
     it('shows "No values" label when no options match the search', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
       render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="zzz"
-          operator={containsOp()}
-        />
+        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="zzz" operator={containsOp()} />
       );
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
@@ -101,7 +87,13 @@ describe('FilterList', () => {
     it('EQUALS shows only the item with the matching numeric value', () => {
       const options = numericOptions([10, 20, 30]);
       render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="20" operator={op(FilterOperator.EQUALS)} />
+        <FilterList
+          options={options}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="20"
+          operator={op(FilterOperator.EQUALS)}
+        />
       );
       expect(screen.queryByRole('checkbox', { name: '10' })).not.toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: '20' })).toBeInTheDocument();
@@ -111,7 +103,13 @@ describe('FilterList', () => {
     it('NOT_EQUALS excludes the item with the matching value', () => {
       const options = numericOptions([10, 20, 30]);
       render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="20" operator={op(FilterOperator.NOT_EQUALS)} />
+        <FilterList
+          options={options}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="20"
+          operator={op(FilterOperator.NOT_EQUALS)}
+        />
       );
       expect(screen.getByRole('checkbox', { name: '10' })).toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
@@ -121,7 +119,13 @@ describe('FilterList', () => {
     it('GREATER shows only values strictly greater than the threshold', () => {
       const options = numericOptions([10, 20, 30]);
       render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="20" operator={op(FilterOperator.GREATER)} />
+        <FilterList
+          options={options}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="20"
+          operator={op(FilterOperator.GREATER)}
+        />
       );
       expect(screen.queryByRole('checkbox', { name: '10' })).not.toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
@@ -147,7 +151,13 @@ describe('FilterList', () => {
     it('LESS shows only values strictly less than the threshold', () => {
       const options = numericOptions([10, 20, 30]);
       render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="20" operator={op(FilterOperator.LESS)} />
+        <FilterList
+          options={options}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="20"
+          operator={op(FilterOperator.LESS)}
+        />
       );
       expect(screen.getByRole('checkbox', { name: '10' })).toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: '20' })).not.toBeInTheDocument();
@@ -213,9 +223,7 @@ describe('FilterList', () => {
         { value: 'b', label: 'Beta' },
       ];
       const onChange = jest.fn();
-      render(
-        <FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />
-      );
+      render(<FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />);
 
       const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
       await user.click(selectAll.querySelector('input')!);
@@ -253,13 +261,7 @@ describe('FilterList', () => {
       const onChange = jest.fn();
       // All three are selected, but search filters to only "ap*" items
       render(
-        <FilterList
-          options={options}
-          values={options}
-          onChange={onChange}
-          searchFilter="ap"
-          operator={containsOp()}
-        />
+        <FilterList options={options} values={options} onChange={onChange} searchFilter="ap" operator={containsOp()} />
       );
 
       const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
@@ -279,9 +281,7 @@ describe('FilterList', () => {
         { value: 'b', label: 'Beta' },
       ];
       const onChange = jest.fn();
-      render(
-        <FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />
-      );
+      render(<FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />);
 
       await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
 
@@ -316,9 +316,7 @@ describe('FilterList', () => {
   describe('"Select all" checkbox label', () => {
     it('shows "Select all" when no values are selected', () => {
       const options: SelectableValue[] = [{ value: 'a', label: 'Alpha' }];
-      render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />
-      );
+      render(<FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />);
       expect(screen.getByRole('checkbox', { name: /Select all/ })).toBeInTheDocument();
     });
 

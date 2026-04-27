@@ -16,7 +16,7 @@ function makeRows(fieldName: string, values: string[]) {
   return values.map((v, i) => ({ __depth: 0, __index: i, [fieldName]: v }));
 }
 
-const defaultOperator = operatorSelectableValues()[('Contains' as const)];
+const defaultOperator = operatorSelectableValues()['Contains' as const];
 
 function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {}) {
   const buttonElement = document.createElement('button');

@@ -13,9 +13,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 const theme = createTheme();
 
 // Minimal renderer that renders the value as text so we can assert on it.
-const TestRenderer: TableCellRenderer = ({ value }) => (
-  <div data-testid="tooltip-content">{String(value)}</div>
-);
+const TestRenderer: TableCellRenderer = ({ value }) => <div data-testid="tooltip-content">{String(value)}</div>;
 
 function makeField(values: unknown[] = ['hello']): Field {
   return { name: 'Status', type: FieldType.string, values, config: {} };
@@ -276,7 +274,11 @@ describe('TableCellTooltip', () => {
 
     it('passes the field value at the given rowIdx to the renderer', async () => {
       const user = userEvent.setup();
-      renderInRdgCell({ field: makeField(['row-zero', 'row-one']), data: makeData(['row-zero', 'row-one']), rowIdx: 1 });
+      renderInRdgCell({
+        field: makeField(['row-zero', 'row-one']),
+        data: makeData(['row-zero', 'row-one']),
+        rowIdx: 1,
+      });
       await user.click(screen.getByRole('button', { name: CARET_LABEL }));
       expect(screen.getByText('row-one')).toBeInTheDocument();
     });
