@@ -648,6 +648,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		false,
 		nil, // adminConfigStore - not needed when datasource sync feature flag is off
 		nil, // datasourceService - not needed when datasource sync feature flag is off
+		nil, // httpClientProvider - not needed when datasource sync feature flag is off
 		moaOpts...,
 	)
 	require.NoError(t, err)

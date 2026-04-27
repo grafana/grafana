@@ -95,6 +95,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		false,
 		nil, // adminConfigStore - not needed in this test
 		nil, // datasourceService - not needed in this test
+		nil, // httpClientProvider - not needed in this test
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)

@@ -19,6 +19,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -117,6 +118,7 @@ func buildSyncTestMOA(
 		false,
 		adminCfgStore,
 		dsService,
+		httpclient.NewProvider(),
 	)
 	require.NoError(t, err)
 	return moa, cs
@@ -279,10 +281,14 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
-	moa.httpClient = &http.Client{Timeout: 50 * time.Millisecond}
+
+	// Bound the parent context so the request returns quickly via context cancellation
+	// rather than the HTTP client's hard 10s timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
 
 	start := time.Now()
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.syncExternalAMs(ctx, []int64{1})
 	elapsed := time.Since(start)
 
 	assert.Less(t, elapsed, 5*time.Second)

@@ -114,10 +114,18 @@ func (moa *MultiOrgAlertmanager) fetchExtraConfig(ctx context.Context, orgID int
 }
 
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex datasource.
+// It builds an HTTP client off the datasource service's HTTP transport so TLS, basic auth,
+// bearer tokens, custom headers, OAuth pass-through and other middlewares are applied
+// transparently from the datasource's stored configuration.
 func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, error) {
 	configURL, err := moa.buildMimirConfigURL(ds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build config URL: %w", err)
+	}
+
+	transport, err := moa.datasourceService.GetHTTPTransport(ctx, ds, moa.httpClientProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build datasource HTTP transport: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, configURL, nil)
@@ -125,22 +133,7 @@ func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datas
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	if ds.BasicAuth {
-		password := moa.decryptFn(ctx, ds.SecureJsonData, "basicAuthPassword", "")
-		req.SetBasicAuth(ds.BasicAuthUser, password)
-	}
-
-	headers, err := moa.datasourceService.CustomHeaders(ctx, ds)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get custom headers: %w", err)
-	}
-	for key, values := range headers {
-		for _, v := range values {
-			req.Header.Add(key, v)
-		}
-	}
-
-	resp, err := moa.httpClient.Do(req)
+	resp, err := transport.RoundTrip(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}

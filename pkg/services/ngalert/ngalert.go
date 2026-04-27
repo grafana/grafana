@@ -301,6 +301,7 @@ func (ng *AlertNG) init() error {
 		skipClustering,
 		ng.store,
 		ng.DataSourceService,
+		ng.httpClientProvider,
 		opts...,
 	)
 	if err != nil {

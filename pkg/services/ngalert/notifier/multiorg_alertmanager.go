@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -123,8 +123,8 @@ type MultiOrgAlertmanager struct {
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 
-	datasourceService datasources.DataSourceService
-	httpClient        *http.Client
+	datasourceService  datasources.DataSourceService
+	httpClientProvider httpclient.Provider
 
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
@@ -158,6 +158,7 @@ func NewMultiOrgAlertmanager(
 	skipClustering bool,
 	adminConfigStore store.AdminConfigurationStore,
 	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -178,7 +179,7 @@ func NewMultiOrgAlertmanager(
 		metrics:                     m,
 		ns:                          ns,
 		datasourceService:           datasourceService,
-		httpClient:                  &http.Client{Timeout: 30 * time.Second},
+		httpClientProvider:          httpClientProvider,
 		peer:                        &NilPeer{},
 	}
 
