@@ -23,6 +23,7 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { type DashboardSidebarPane } from './types';
+import { DashboardInteractions } from '../utils/interactions';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -126,7 +127,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
             icon="list-ui-alt"
-            onClick={() => editPane.openPane(new DashboardOutline({}))}
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              editPane.openPane(new DashboardOutline({}));
+            }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}

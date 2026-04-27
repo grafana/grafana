@@ -1,5 +1,6 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
+import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,6 +14,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
+import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { DashboardInteractions } from '../utils/interactions';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -110,14 +113,17 @@ describe('DashboardEditPaneRenderer', () => {
     expect(scene.state.editPane.state.isDocked).toBe(false);
   });
 
-  // describe('outline interactions tracking', () => {
-  //   it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
-  //     const user = userEvent.setup();
-  //     const scene = buildTestScene();
-  //     render(<DashboardEditPaneRenderer editPane={scene.state.editPane} dashboard={scene} />);
-  //     const outlineButton = screen.getByTestId(selectors.components.PanelEditor.Outline.section);
-  //     await user.click(outlineButton);
-  //     expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
-  //   });
-  // });
+  describe('outline interactions tracking', () => {
+    it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      const outlineButton = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
+      await user.click(outlineButton);
+      expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
+    });
+  });
 });
