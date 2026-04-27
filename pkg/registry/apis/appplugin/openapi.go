@@ -3,11 +3,13 @@ package appplugin
 import (
 	"fmt"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/openapi"
 )
@@ -57,21 +59,58 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	}
 
 	// Set explicit apiVersion and kind on the datasource
-	ds, ok := oas.Components.Schemas[apppluginV0.Settings{}.OpenAPIModelName()]
+	ps, ok := oas.Components.Schemas[apppluginV0.Settings{}.OpenAPIModelName()]
 	if !ok {
 		return nil, fmt.Errorf("missing settings type")
 	}
-	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
-	ds.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
+	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
+	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
-	if schema.IsZero() {
-		return oas, nil
+	// Always transform results
+	switch {
+	case schema.IsZero():
+		schema = defaultSchema()
+	case schema.SettingsSchema.IsZero():
+		schema.SettingsSchema = defaultSchema().SettingsSchema
 	}
 
 	return openapi.AugmentOpenAPI(oas, openapi.PluginOptions{
 		Schema:   schema,
-		Resource: ds,
+		Resource: ps,
 		SpecName: "SettingsSpec",
 		Path:     root + "namespaces/{namespace}/app",
+		IsApp:    true,
 	})
+}
+
+func defaultSchema() *pluginschema.PluginSchema {
+	return &pluginschema.PluginSchema{
+		SettingsSchema: &pluginschema.Settings{
+			Spec: &spec.Schema{
+				SchemaProps: spec.SchemaProps{ // The jsonSchema object
+					Type:                 []string{"object"},
+					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+				},
+			},
+		},
+		SettingsExamples: &pluginschema.SettingsExamples{
+			Examples: map[string]*spec3.Example{
+				"empty": {
+					ExampleProps: spec3.ExampleProps{
+						Summary: "example",
+						Value: apppluginV0.Settings{
+							ObjectMeta: v1.ObjectMeta{
+								Name: apppluginV0.INSTANCE_NAME,
+							},
+							Spec: apppluginV0.SettingsSpec{
+								Enabled:  true,
+								Pinned:   true,
+								JsonData: kcommon.Unstructured{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }

@@ -122,7 +122,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginv0alpha1.Settings,
 	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
-	if err == nil {
+	if ps != nil {
+		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
+		obj.SetResourceVersion(fmt.Sprintf("%d", ps.Updated.UnixMicro()))
+
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
@@ -176,7 +179,7 @@ func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObj
 	return nil, fmt.Errorf("not supported")
 }
 
-func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*apppluginv0alpha1.Settings, error) {
 	p, ok := obj.(*apppluginv0alpha1.Settings)
 	if !ok {
 		return nil, fmt.Errorf("expected Settings object")
@@ -197,6 +200,5 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
 	}
-
-	return s.Get(ctx, s.pluginID, nil)
+	return s.get(ctx)
 }
