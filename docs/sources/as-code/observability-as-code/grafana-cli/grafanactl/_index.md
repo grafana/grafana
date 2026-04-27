@@ -101,11 +101,17 @@ By default, the CLI uses a context named `default`. To configure it use:
 ```bash
 grafanactl config set contexts.default.grafana.server http://localhost:3000
 grafanactl config set contexts.default.grafana.org-id 1
+```
 
-# Authenticate with a service account token
+Authenticate with a service account token:
+
+```bash
 grafanactl config set contexts.default.grafana.token service-account-token
+```
 
-# Or use basic authentication
+Or use basic authentication:
+
+```bash
 grafanactl config set contexts.default.grafana.user admin
 grafanactl config set contexts.default.grafana.password admin
 ```
