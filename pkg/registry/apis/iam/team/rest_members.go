@@ -8,22 +8,17 @@ import (
 	"net/url"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"github.com/grafana/authlib/types"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 var (
@@ -33,18 +28,12 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
-	return &TeamMembersREST{
-		log:      log.New("grafana-apiserver.team.members"),
-		client:   client,
-		tracer:   tracer,
-		features: features,
-	}
+func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
+	return &TeamMembersREST{getter: getter, tracer: tracer, features: features}
 }
 
 type TeamMembersREST struct {
-	log      log.Logger
-	client   resourcepb.ResourceIndexClient
+	getter   rest.Getter
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
 }
@@ -73,7 +62,7 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 }
 
 // Connect implements rest.Connecter.
-func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
@@ -84,9 +73,6 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
-
-		// Authorization is handled by the TeamAuthorizer at the K8s authorizer level.
-		// This handler assumes the request has already been authorized.
 
 		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
@@ -119,57 +105,43 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			limit = common.DefaultListLimit
 		}
 
-		// Get namespace from the request context
-		authInfo, ok := types.AuthInfoFrom(ctx)
+		span.SetAttributes(attribute.Int("limit", limit),
+			attribute.Int("page", page),
+			attribute.Int("offset", offset),
+			attribute.String("name", name))
+
+		// Subresource handlers receive a ctx without the namespace value set;
+		// inject it so the downstream Getter can resolve orgID.
+		teamObj, err := s.getter.Get(common.WithSubresourceNamespace(ctx), name, &metav1.GetOptions{})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		t, ok := teamObj.(*iamv0alpha1.Team)
 		if !ok {
-			responder.Error(apierrors.NewUnauthorized("no identity found"))
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("unexpected team object type %T", teamObj)))
 			return
 		}
 
-		searchRequest := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Group:     iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group,
-					Resource:  iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource,
-					Namespace: authInfo.GetNamespace(),
-				},
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
-						Operator: string(selection.Equals),
-						Values:   []string{name},
-					},
-				},
-			},
-			Limit:   int64(limit),
-			Offset:  int64(offset),
-			Page:    int64(page),
-			Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
-			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT,
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
-				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
-			},
+		// Slice spec.members before mapping to skip work outside the requested page.
+		total := len(t.Spec.Members)
+		start := min(offset, total)
+		end := min(start+limit, total)
+		window := t.Spec.Members[start:end]
+
+		items := make([]iamv0alpha1.GetTeamMembersTeamUser, len(window))
+		for i, m := range window {
+			items[i] = iamv0alpha1.GetTeamMembersTeamUser{
+				User:       m.Name,
+				Team:       name,
+				Permission: string(m.Permission),
+				External:   m.External,
+			}
 		}
 
-		searchResult, err := s.client.Search(ctx, searchRequest)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		parsedResult, err := parseResults(searchResult)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		result := &iamv0alpha1.GetTeamMembersResponse{
-			GetTeamMembersBody: parsedResult,
-		}
-
-		responder.Object(http.StatusOK, result)
+		responder.Object(http.StatusOK, &iamv0alpha1.GetTeamMembersResponse{
+			GetTeamMembersBody: iamv0alpha1.GetTeamMembersBody{Items: items},
+		})
 	}), nil
 }
 
@@ -181,70 +153,4 @@ func (s *TeamMembersREST) NewConnectOptions() (runtime.Object, bool, string) {
 // ConnectMethods implements rest.Connecter.
 func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
-}
-
-func parseResults(result *resourcepb.ResourceSearchResponse) (iamv0alpha1.GetTeamMembersBody, error) {
-	if result == nil {
-		return iamv0alpha1.GetTeamMembersBody{}, nil
-	}
-	if result.Error != nil {
-		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
-	}
-	if result.Results == nil {
-		return iamv0alpha1.GetTeamMembersBody{}, nil
-	}
-
-	subjectNameIDX := -1
-	teamRefIDX := -1
-	permissionIDX := -1
-	externalIDX := -1
-
-	for i, v := range result.Results.Columns {
-		if v == nil {
-			continue
-		}
-
-		switch v.Name {
-		case builders.TEAM_BINDING_SUBJECT:
-			subjectNameIDX = i
-		case builders.TEAM_BINDING_TEAM:
-			teamRefIDX = i
-		case builders.TEAM_BINDING_PERMISSION:
-			permissionIDX = i
-		case builders.TEAM_BINDING_EXTERNAL:
-			externalIDX = i
-		}
-	}
-
-	if subjectNameIDX < 0 {
-		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
-	}
-	if teamRefIDX < 0 {
-		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
-	}
-	if permissionIDX < 0 {
-		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
-	}
-	if externalIDX < 0 {
-		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
-	}
-
-	body := iamv0alpha1.GetTeamMembersBody{
-		Items: make([]iamv0alpha1.GetTeamMembersTeamUser, len(result.Results.Rows)),
-	}
-
-	for i, row := range result.Results.Rows {
-		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
-		}
-
-		body.Items[i] = iamv0alpha1.GetTeamMembersTeamUser{
-			User:       string(row.Cells[subjectNameIDX]),
-			Team:       string(row.Cells[teamRefIDX]),
-			Permission: string(row.Cells[permissionIDX]),
-			External:   string(row.Cells[externalIDX]) == "true",
-		}
-	}
-
-	return body, nil
 }
