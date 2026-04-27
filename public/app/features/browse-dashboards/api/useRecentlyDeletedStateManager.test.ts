@@ -45,7 +45,7 @@ describe('TrashStateManager', () => {
   describe('onSortChange', () => {
     it('writes to the recently-deleted key, not the main sort key', () => {
       const stm = createTrashStateManager();
-      jest.spyOn(stm, 'doSearch' as keyof TrashStateManager).mockResolvedValue(undefined);
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
       stm.onSortChange('deleted-desc');
 
       expect(store.get(SEARCH_SELECTED_SORT_DELETED)).toBe('deleted-desc');
@@ -54,7 +54,7 @@ describe('TrashStateManager', () => {
 
     it('removes the recently-deleted key when sort is cleared', () => {
       const stm = createTrashStateManager();
-      jest.spyOn(stm, 'doSearch' as keyof TrashStateManager).mockResolvedValue(undefined);
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
       store.set(SEARCH_SELECTED_SORT_DELETED, 'deleted-desc');
       stm.onSortChange(undefined);
 
