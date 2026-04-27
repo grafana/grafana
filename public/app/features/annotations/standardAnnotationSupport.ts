@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { type Observable, of, type OperatorFunction } from 'rxjs';
+import { from, type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -12,10 +12,11 @@ import {
   type DataSourceApi,
   type DataTransformContext,
   type Field,
+  DataTransformerID,
   FieldType,
   getFieldDisplayName,
   type KeyValue,
-  standardTransformers,
+  standardTransformersRegistry,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -72,9 +73,13 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           interpolate: (v: string) => v,
         };
 
-        return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}, ctx),
-          map((d) => d[0])
+        return from(standardTransformersRegistry.get(DataTransformerID.merge).transformation()).pipe(
+          mergeMap((t) =>
+            of(data).pipe(
+              t.operator({}, ctx),
+              map((d) => d[0])
+            )
+          )
         );
       })
     );
