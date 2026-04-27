@@ -84,7 +84,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -108,7 +108,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.3.0 // @grafana/data-sources-plugins
-	github.com/grafana/schemads v0.0.9 // @grafana/data-sources
+	github.com/grafana/schemads v0.0.11 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend

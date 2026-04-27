@@ -473,6 +473,8 @@ github.com/baidubce/bce-sdk-go v0.9.222 h1:DzH3xbvg7GbvAbpCRNDIQjDThx6ZHt68TCvpc
 github.com/baidubce/bce-sdk-go v0.9.222/go.mod h1:zbYJMQwE4IZuyrJiFO8tO8NbtYiKTFTbwh4eIsqjVdg=
 github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY=
 github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 h1:mXoPYz/Ul5HYEDvkta6I8/rnYM5gSdSV2tJ6XbZuEtY=
+github.com/blevesearch/bleve_index_api v1.3.0 h1:DsMpWVjFNlBw9/6pyWf59XoqcAkhHj3H0UWiQsavb6E=
+github.com/blevesearch/bleve_index_api v1.3.0/go.mod h1:xvd48t5XMeeioWQ5/jZvgLrV98flT2rdvEJ3l/ki4Ko=
 github.com/blevesearch/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:kDy+zgJFJJoJYBvdfBSiZYBbdsUL0XcjHYWezpQBGPA=
 github.com/blevesearch/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:9eJDeqxJ3E7WnLebQUlPD7ZjSce7AnDb9vjGmMCbD0A=
 github.com/blevesearch/goleveldb v1.0.1 h1:iAtV2Cu5s0GD1lwUiekkFHe2gTMCCNVj2foPclDLIFI=
@@ -1003,6 +1005,8 @@ github.com/mitchellh/iochan v1.0.0 h1:C+X3KsSTLFVBr/tK1eYN/vs4rJcvsiLU338UhYPJWe
 github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mithrandie/readline-csvq v1.3.0 h1:VTJEOGouJ8j27jJCD4kBBbNTxM0OdBvE1aY1tMhlqE8=
 github.com/mithrandie/readline-csvq v1.3.0/go.mod h1:FKyYqDgf/G4SNov7SMFXRWO6LQLXIOeTog/NB97FZl0=
+github.com/moby/moby/api v1.54.0/go.mod h1:8mb+ReTlisw4pS6BRzCMts5M49W5M7bKt1cJy/YbAqc=
+github.com/moby/moby/client v0.3.0/go.mod h1:HJgFbJRvogDQjbM8fqc1MCEm4mIAGMLjXbgwoZp6jCQ=
 github.com/moby/sys/mount v0.3.4 h1:yn5jq4STPztkkzSKpZkLcmjue+bZJ0u2AuQY1iNI1Ww=
 github.com/moby/sys/mount v0.3.4/go.mod h1:KcQJMbQdJHPlq5lcYT+/CjatWM4PuxKe+XLSVS4J6Os=
 github.com/moby/sys/mountinfo v0.7.2 h1:1shs6aH5s4o5H2zQLn796ADW1wMrIwHsyJ2v9KouLrg=
