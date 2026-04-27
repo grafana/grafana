@@ -30,7 +30,7 @@ const (
 type snapshotCandidate struct {
 	key     ulid.ULID
 	meta    *IndexMeta
-	version *semver.Version // always non-nil; unparseable entries are dropped earlier
+	version *semver.Version // always non-nil; pickBestSnapshot drops unparseable entries
 	tier    int             // 0 = best, 2 = last resort
 }
 
@@ -129,15 +129,14 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	var droppedAge, droppedUnparseable int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
-		if m == nil {
-			continue
-		}
 		// Hard filter: age.
 		if maxAge > 0 && now.Sub(m.UploadTimestamp) > maxAge {
 			droppedAge++
 			continue
 		}
-		// Hard filter: unparseable version (we can't tier it).
+		// Hard filter: unparseable version (we can't tier it). Metadata validation
+		// lives here rather than in the store so we don't have to duplicate it
+		// across store implementations.
 		v, err := semver.NewVersion(m.GrafanaBuildVersion)
 		if err != nil {
 			droppedUnparseable++
@@ -189,8 +188,10 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 
 // snapshotTier returns the preference tier of v relative to the configured
 // lower bound (minVersion) and the running Grafana version. Lower = better.
+// running must be non-nil; the caller (NewBleveBackend) enforces this when the
+// snapshot feature is enabled.
 func snapshotTier(v, minVersion, running *semver.Version) int {
-	if running != nil && v.Compare(running) > 0 {
+	if v.Compare(running) > 0 {
 		return 2 // newer than running Grafana: last resort
 	}
 	if minVersion != nil && v.Compare(minVersion) < 0 {

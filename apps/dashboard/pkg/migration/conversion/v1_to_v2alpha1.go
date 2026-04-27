@@ -929,6 +929,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case 2:
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case 3:
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
@@ -942,6 +944,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case "hideVariable":
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case "inControlsMenu":
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
