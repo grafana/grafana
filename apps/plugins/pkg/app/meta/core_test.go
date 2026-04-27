@@ -276,48 +276,107 @@ func TestNewCoreProviderWithTTL(t *testing.T) {
 
 func TestAssetProvider(t *testing.T) {
 	const staticRoot = "/srv/grafana/public"
-	p := newAssetProvider(staticRoot)
 
-	// Non-decoupled plugins: FS.Base() points directly to the plugin directory (no /dist).
-	// module  → "core:plugin/<name>"
-	// baseUrl → "app/plugins/<type>/<name>"
-	t.Run("non-decoupled datasource", func(t *testing.T) {
-		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/prometheus"}}
+	// CDN assets: paths are returned relative to staticRootPath so the frontend
+	// can prepend a CDN domain.
+	t.Run("cdn assets", func(t *testing.T) {
+		p := newAssetProvider(true, staticRoot)
 
-		module, err := p.Module(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "core:plugin/prometheus", module)
+		// Non-decoupled plugins: FS.Base() points directly to the plugin directory (no /dist).
+		// module  → "core:plugin/<name>"
+		// baseUrl → "app/plugins/<type>/<name>"
+		t.Run("non-decoupled datasource", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/prometheus"}}
 
-		baseURL, err := p.AssetPath(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "app/plugins/datasource/prometheus", baseURL)
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "core:plugin/prometheus", module)
+
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "app/plugins/datasource/prometheus", baseURL)
+		})
+
+		t.Run("non-decoupled panel", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"}}
+
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "core:plugin/alertlist", module)
+
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "app/plugins/panel/alertlist", baseURL)
+		})
+
+		// Decoupled plugins: FS.Base() points to the /dist directory.
+		// module  → "app/plugins/<type>/<name>/dist/module.js"
+		// baseUrl → "app/plugins/<type>/<name>/dist"
+		t.Run("decoupled datasource (grafana-testdata-datasource)", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/grafana-testdata-datasource/dist"}}
+
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist/module.js", module)
+
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist", baseURL)
+		})
 	})
 
-	t.Run("non-decoupled panel", func(t *testing.T) {
-		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"}}
+	// Non-CDN (on-prem) assets: paths use "plugins/<id>/..." so the frontend can
+	// prepend "public/" just as it prepends a CDN domain in cloud deployments.
+	t.Run("non-cdn assets", func(t *testing.T) {
+		p := newAssetProvider(false, staticRoot)
 
-		module, err := p.Module(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "core:plugin/alertlist", module)
+		// Non-decoupled plugins: module is still "core:plugin/<name>"; AssetPath
+		// returns "plugins/<id>" and the frontend prepends "public/".
+		t.Run("non-decoupled datasource", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{
+				FS:       &stubFS{base: staticRoot + "/app/plugins/datasource/prometheus"},
+				JsonData: plugins.JSONData{ID: "prometheus"},
+			}
 
-		baseURL, err := p.AssetPath(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "app/plugins/panel/alertlist", baseURL)
-	})
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "core:plugin/prometheus", module)
 
-	// Decoupled plugins: FS.Base() points to the /dist directory.
-	// module  → "app/plugins/<type>/<name>/dist/module.js"
-	// baseUrl → "app/plugins/<type>/<name>/dist"
-	t.Run("decoupled datasource (grafana-testdata-datasource)", func(t *testing.T) {
-		pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/datasource/grafana-testdata-datasource/dist"}}
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "plugins/prometheus", baseURL)
+		})
 
-		module, err := p.Module(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist/module.js", module)
+		t.Run("non-decoupled panel", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{
+				FS:       &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"},
+				JsonData: plugins.JSONData{ID: "alertlist"},
+			}
 
-		baseURL, err := p.AssetPath(pi)
-		require.NoError(t, err)
-		assert.Equal(t, "app/plugins/datasource/grafana-testdata-datasource/dist", baseURL)
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "core:plugin/alertlist", module)
+
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "plugins/alertlist", baseURL)
+		})
+
+		// Decoupled plugins: module and AssetPath both use "plugins/<id>/..." paths.
+		t.Run("decoupled datasource (grafana-testdata-datasource)", func(t *testing.T) {
+			pi := pluginassets.PluginInfo{
+				FS:       &stubFS{base: staticRoot + "/app/plugins/datasource/grafana-testdata-datasource/dist"},
+				JsonData: plugins.JSONData{ID: "grafana-testdata-datasource"},
+			}
+
+			module, err := p.Module(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "plugins/grafana-testdata-datasource/module.js", module)
+
+			baseURL, err := p.AssetPath(pi)
+			require.NoError(t, err)
+			assert.Equal(t, "plugins/grafana-testdata-datasource", baseURL)
+		})
 	})
 }
 
