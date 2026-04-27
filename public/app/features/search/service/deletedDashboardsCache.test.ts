@@ -40,13 +40,10 @@ function makeDisplayList(display: Display[]): DisplayList {
 
 type MockResult = { data?: DisplayList; error?: unknown };
 
-// The dispatched RTK Query thunk returns a `QueryActionCreatorResult` — a thenable that also
-// exposes `.unsubscribe()`. Production awaits the thenables via `Promise.allSettled` and calls
-// `.unsubscribe()` in a `finally` block, so tests must return a shape that matches both.
-function mockSubscription(
-  result: MockResult | Error,
-  unsubscribe: jest.Mock = jest.fn()
-): PromiseLike<MockResult> & { unsubscribe: jest.Mock } {
+// The dispatched RTK Query thunk returns a `QueryActionCreatorResult` — a thenable.
+// Production awaits the thenables via `Promise.allSettled`, so tests must return a
+// shape that satisfies `PromiseLike`.
+function mockSubscription(result: MockResult | Error): PromiseLike<MockResult> {
   return {
     then(onFulfilled, onRejected) {
       if (result instanceof Error) {
@@ -54,7 +51,6 @@ function mockSubscription(
       }
       return Promise.resolve(result).then(onFulfilled, onRejected);
     },
-    unsubscribe,
   };
 }
 
@@ -149,43 +145,16 @@ describe('resolveDeletedByDisplayMap', () => {
     expect(cache.get('user:alice')).toBe('Alice');
   });
 
-  it('unsubscribes from the RTK Query cache entry after resolving', async () => {
-    const unsubscribe = jest.fn();
-    mockDispatch.mockReturnValue(
-      mockSubscription(
-        { data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) },
-        unsubscribe
-      )
-    );
-
-    await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
-
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-  });
-
-  it('unsubscribes from the RTK Query cache entry even when the thunk rejects', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const unsubscribe = jest.fn();
-    mockDispatch.mockReturnValue(mockSubscription(new Error('boom'), unsubscribe));
-
-    await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
-
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-    consoleError.mockRestore();
-  });
-
   it('logs and marks UIDs as unknown when RTK Query resolves with an error result', async () => {
     // RTK Query query thunks are `SafePromise`s — on request failure they resolve with
     // an `{ error, data: undefined }` shape rather than rejecting. Production routes the error
     // through `getMessageFromError`, which falls back to `JSON.stringify` for plain objects.
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const unsubscribe = jest.fn();
-    mockDispatch.mockReturnValue(mockSubscription({ error: { status: 500, data: 'upstream failure' } }, unsubscribe));
+    mockDispatch.mockReturnValue(mockSubscription({ error: { status: 500, data: 'upstream failure' } }));
 
     const map = await resolveDeletedByDisplayMap(new Set(['user:alice']), new Map());
 
     expect(map.get('user:alice')).toBe(DELETED_BY_UNKNOWN);
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to resolve deleted dashboard user displays:',
       expect.stringContaining('500')
@@ -316,18 +285,13 @@ describe('resolveDeletedByDisplayMap', () => {
     }
 
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const unsubscribeA = jest.fn();
-    const unsubscribeB = jest.fn();
     mockDispatch
       .mockReturnValueOnce(
-        mockSubscription(
-          {
-            data: makeDisplayList([{ identity: { type: 'user', name: 'u0000' }, displayName: 'Alice' }]),
-          },
-          unsubscribeA
-        )
+        mockSubscription({
+          data: makeDisplayList([{ identity: { type: 'user', name: 'u0000' }, displayName: 'Alice' }]),
+        })
       )
-      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
+      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed')));
 
     const map = await resolveDeletedByDisplayMap(uids, new Map());
 
@@ -338,9 +302,6 @@ describe('resolveDeletedByDisplayMap', () => {
     // Second batch's UIDs: DELETED_BY_UNKNOWN (batch failed).
     expect(map.get('user:u0200')).toBe(DELETED_BY_UNKNOWN);
     expect(map.get('user:u0249')).toBe(DELETED_BY_UNKNOWN);
-    // Both batches' subscriptions unsubscribed.
-    expect(unsubscribeA).toHaveBeenCalledTimes(1);
-    expect(unsubscribeB).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
   });
 
@@ -351,19 +312,15 @@ describe('resolveDeletedByDisplayMap', () => {
     }
 
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const unsubscribeA = jest.fn();
-    const unsubscribeB = jest.fn();
     mockDispatch
-      .mockReturnValueOnce(mockSubscription(new Error('batch-1 failed'), unsubscribeA))
-      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed'), unsubscribeB));
+      .mockReturnValueOnce(mockSubscription(new Error('batch-1 failed')))
+      .mockReturnValueOnce(mockSubscription(new Error('batch-2 failed')));
 
     const map = await resolveDeletedByDisplayMap(uids, new Map());
 
     for (let i = 0; i < 250; i++) {
       expect(map.get(`user:u${String(i).padStart(4, '0')}`)).toBe(DELETED_BY_UNKNOWN);
     }
-    expect(unsubscribeA).toHaveBeenCalledTimes(1);
-    expect(unsubscribeB).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
   });
 });
@@ -401,10 +358,7 @@ describe('DeletedDashboardsCache', () => {
     });
 
     // First IAM call fails — batch returns an error result.
-    const unsubscribe1 = jest.fn();
-    mockDispatch.mockReturnValueOnce(
-      mockSubscription({ error: { status: 500, data: 'IAM unavailable' } }, unsubscribe1)
-    );
+    mockDispatch.mockReturnValueOnce(mockSubscription({ error: { status: 500, data: 'IAM unavailable' } }));
 
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -416,12 +370,8 @@ describe('DeletedDashboardsCache', () => {
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
 
     // Second IAM call succeeds — same UID now resolves.
-    const unsubscribe2 = jest.fn();
     mockDispatch.mockReturnValueOnce(
-      mockSubscription(
-        { data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) },
-        unsubscribe2
-      )
+      mockSubscription({ data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]) })
     );
 
     const secondResult = await deletedDashboardsCache.get();

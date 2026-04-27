@@ -135,16 +135,14 @@ export async function resolveDeletedByDisplayMap(
     batches.push(keys.slice(i, i + IAM_DISPLAY_BATCH_SIZE));
   }
 
-  // Explicit type so TS picks the AppDispatch overload that preserves `.unsubscribe()`.
-  type Subscription = ReturnType<ReturnType<typeof iamAPIv0alpha1.endpoints.getDisplayMapping.initiate>>;
-  const subscriptions: Subscription[] = [];
+  const promises = [];
   try {
     for (const keyBatch of batches) {
-      subscriptions.push(
+      promises.push(
         dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: keyBatch }, { subscribe: false }))
       );
     }
-    const responses = await Promise.allSettled(subscriptions);
+    const responses = await Promise.allSettled(promises);
 
     const fetched = new Map<string, string>();
     for (const uid of keys) {
