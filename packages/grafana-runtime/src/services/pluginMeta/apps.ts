@@ -2,6 +2,7 @@ import { type AppPluginConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaWarning } from './logging';
@@ -34,7 +35,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     return;
