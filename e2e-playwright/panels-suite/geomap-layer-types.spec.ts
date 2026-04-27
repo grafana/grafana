@@ -223,8 +223,6 @@ test.describe(
       selectors,
       page,
     }) => {
-      test.fail();
-
       await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
 
       const symbolInput = page.getByPlaceholder(/select a symbol/i);
