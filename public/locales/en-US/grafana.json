@@ -13566,6 +13566,7 @@
       "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
       "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
+      "go-to-dashboards": "Go to dashboards",
       "job-error": "An error occurred while processing orphaned resources",
       "job-success": "Orphaned resources processed successfully",
       "job-warning": "Some resources were processed with warnings. Please review the results.",
