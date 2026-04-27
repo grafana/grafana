@@ -39,6 +39,7 @@ type AzureMonitorDatasource struct {
 	// subscriptionCacheEntry. Values are inserted on successful fetch and
 	// served until expiresAt. Zero-value-ready.
 	subscriptionCache sync.Map
+
 	// subscriptionFlights coalesces concurrent lookups for the same cacheKey
 	// so that a burst of queries against the same subscription only performs
 	// one upstream HTTP call.
