@@ -1,10 +1,11 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import { AlertLabel, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
 import { Divider, Drawer, Text, TextLink } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
+import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 
 import { ConnectionLine } from './ConnectionLine';
@@ -23,11 +24,22 @@ type NotificationPolicySidebarProps = {
 };
 
 export function NotificationPolicySidebar({ journeys, labels, onClose }: NotificationPolicySidebarProps) {
-  if (journeys.length === 0) {
+  // The default tree's metadata.name is ROOT_ROUTE_NAME ("user-defined"); treat that as no name
+  // so downstream rendering shows "Default policy" rather than the internal identifier.
+  const normalizedJourneys = useMemo(
+    () =>
+      journeys.map(({ journey, policyName }) => ({
+        journey,
+        policyName: policyName !== ROOT_ROUTE_NAME ? policyName : undefined,
+      })),
+    [journeys]
+  );
+
+  if (normalizedJourneys.length === 0) {
     return null;
   }
 
-  const isSingleJourney = journeys.length === 1;
+  const isSingleJourney = normalizedJourneys.length === 1;
 
   return (
     <Drawer
@@ -36,10 +48,10 @@ export function NotificationPolicySidebar({ journeys, labels, onClose }: Notific
         isSingleJourney ? (
           <>
             <Trans i18nKey="alerting.notification-route.notification-policy">Notification policy</Trans>
-            {journeys[0].policyName && (
+            {normalizedJourneys[0].policyName && (
               <Text color="secondary" variant="bodySmall">
                 {' '}
-                ⋅ {journeys[0].policyName}
+                ⋅ {normalizedJourneys[0].policyName}
               </Text>
             )}
           </>
@@ -50,7 +62,7 @@ export function NotificationPolicySidebar({ journeys, labels, onClose }: Notific
       onClose={onClose}
     >
       <Stack direction="column" gap={2}>
-        {journeys.map(({ journey }, journeyIndex) => {
+        {normalizedJourneys.map(({ journey, policyName }, journeyIndex) => {
           const finalRouteMatchInfo = journey.at(-1);
           // Labels the final policy evaluated but did not match on.
           const nonMatchingLabels = finalRouteMatchInfo?.matchDetails.filter((detail) => !detail.match) ?? [];
@@ -74,6 +86,7 @@ export function NotificationPolicySidebar({ journeys, labels, onClose }: Notific
                         route={routeInfo.route}
                         isRoot={index === 0}
                         isFinalRoute={index === journey.length - 1}
+                        policyName={index === 0 ? policyName : undefined}
                       />
                     </Fragment>
                   ))}
