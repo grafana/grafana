@@ -77,7 +77,8 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Exist()
+		existing := &ngmodels.AdminConfiguration{}
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Get(existing)
 		if err != nil {
 			return err
 		}
@@ -87,7 +88,7 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 			return err
 		}
 
-		_, err = sess.Table("ngalert_configuration").AllCols().Update(cmd.AdminConfiguration)
+		_, err = sess.Table("ngalert_configuration").ID(existing.ID).AllCols().Update(cmd.AdminConfiguration)
 		return err
 	})
 }
