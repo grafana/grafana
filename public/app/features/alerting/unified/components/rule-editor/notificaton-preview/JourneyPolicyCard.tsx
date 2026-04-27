@@ -35,11 +35,14 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false,
       <Stack direction="column" gap={0.5}>
         {/* root route indicator — render the tree name for named policy trees, fall back to
             DefaultPolicyIndicator when policyName is undefined (the default tree). */}
-        {isRoot && (policyName ? (
-          <Text element="h2" variant="body" weight="medium">{policyName}</Text>
-        ) : (
-          <DefaultPolicyIndicator />
-        ))}
+        {isRoot &&
+          (policyName ? (
+            <Text element="h2" variant="body" weight="medium">
+              {policyName}
+            </Text>
+          ) : (
+            <DefaultPolicyIndicator />
+          ))}
 
         {/* Matchers */}
         {hasMatchers ? (

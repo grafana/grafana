@@ -125,11 +125,7 @@ export const AlertInstanceNotificationAction = ({
         <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
       </Button>
       {isOpen && isFresh && journeys.length > 0 && (
-        <NotificationPolicySidebar
-          journeys={journeys}
-          labels={matched.labels}
-          onClose={() => setIsOpen(false)}
-        />
+        <NotificationPolicySidebar journeys={journeys} labels={matched.labels} onClose={() => setIsOpen(false)} />
       )}
     </>
   );
