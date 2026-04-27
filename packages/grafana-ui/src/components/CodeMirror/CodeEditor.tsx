@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { EditorView, type Extension } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -10,13 +10,18 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
-import { type CodeMirrorCompletionMode, type CodeMirrorCompletionSource, type CodeMirrorEditorProps } from './types';
+import {
+  type CodeMirrorCompletionMode,
+  type CodeMirrorCompletionSource,
+  type CodeMirrorEditorProps,
+  type CodeMirrorExtension,
+} from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
   mode: CodeMirrorCompletionMode
-): Extension[] => {
+): CodeMirrorExtension[] => {
   if (!sources || sources.length === 0) {
     return [];
   }
@@ -30,7 +35,10 @@ const getCompletionExtensions = (
   return [autocompletion(), ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }]))];
 };
 
-const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledby: string | undefined): Extension[] => {
+const getAccessibilityExtensions = (
+  ariaLabel: string | undefined,
+  ariaLabelledby: string | undefined
+): CodeMirrorExtension[] => {
   if (!ariaLabel && !ariaLabelledby) {
     return [];
   }

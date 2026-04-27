@@ -3,6 +3,8 @@ import { type Extension } from '@codemirror/state';
 
 export type CodeMirrorCompletionSource = CompletionSource;
 
+export type CodeMirrorExtension = Extension;
+
 export type CodeMirrorCompletionMode = 'override' | 'merge';
 
 export type CodeMirrorEditorLanguage = 'json' | 'sql';
@@ -46,5 +48,5 @@ export interface CodeMirrorEditorProps {
    * Additional CodeMirror extensions to layer on top of the defaults.
    * Use this for linting, custom keymaps, themes, etc.
    */
-  extensions?: Extension[];
+  extensions?: CodeMirrorExtension[];
 }
