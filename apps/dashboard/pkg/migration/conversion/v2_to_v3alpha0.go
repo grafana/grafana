@@ -46,7 +46,7 @@ func Convert_V2_to_V3alpha0(in *dashv2.Dashboard, out *dashv3alpha0.Dashboard, s
 	// double-represented (runtime ambiguity: rule vs inline block on the same
 	// element).
 	out.Spec.Rules = promoteConditionalRenderingToRules_V2_to_V3alpha0(&in.Spec)
-	clearLayoutConditionalRendering_V3alpha0(&out.Spec.Layout)
+	clearV3alpha0LayoutConditionalRendering(v3alpha0LayoutViewFromTabOrdered(&out.Spec.Layout))
 
 	return nil
 }
@@ -117,7 +117,7 @@ func promoteConditionalRenderingToRules_V2_to_V3alpha0(in *dashv2.DashboardSpec)
 	// element reference, not on the element itself. We walk the layout tree
 	// rooted at in.Layout to find every conditionalRendering block and its
 	// implied target.
-	walkTabLayoutForConditionalRendering_V2(&in.Layout, func(targetElementName string, targetLayoutItemName string, cr *dashv2.DashboardConditionalRenderingGroupKind) {
+	walkV2LayoutForConditionalRendering(v2LayoutViewFromTabOrdered(&in.Layout), func(targetElementName string, targetLayoutItemName string, cr *dashv2.DashboardConditionalRenderingGroupKind) {
 		if cr == nil {
 			return
 		}
@@ -128,7 +128,32 @@ func promoteConditionalRenderingToRules_V2_to_V3alpha0(in *dashv2.DashboardSpec)
 	return rules
 }
 
-// walkLayoutForConditionalRendering_V2 descends the layout tree. For each
+// v2LayoutView is a structural view over v2's layout disjunction types.
+// Codegen emits two disjunction types with the same field set but different
+// type names (one for the top-level / tab-nested slot, one for the row-nested
+// slot), so we project both onto a common view to walk the tree with a single
+// traversal.
+type v2LayoutView struct {
+	autoGrid *dashv2.DashboardAutoGridLayoutKind
+	rows     *dashv2.DashboardRowsLayoutKind
+	tabs     *dashv2.DashboardTabsLayoutKind
+}
+
+func v2LayoutViewFromTabOrdered(l *dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) v2LayoutView {
+	if l == nil {
+		return v2LayoutView{}
+	}
+	return v2LayoutView{autoGrid: l.AutoGridLayoutKind, rows: l.RowsLayoutKind, tabs: l.TabsLayoutKind}
+}
+
+func v2LayoutViewFromRowOrdered(l *dashv2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) v2LayoutView {
+	if l == nil {
+		return v2LayoutView{}
+	}
+	return v2LayoutView{autoGrid: l.AutoGridLayoutKind, rows: l.RowsLayoutKind, tabs: l.TabsLayoutKind}
+}
+
+// walkV2LayoutForConditionalRendering descends the layout tree. For each
 // layout item that carries a conditionalRendering block, the visit callback is
 // invoked with a target descriptor (either an element name or a layout-item
 // name — never both).
@@ -141,19 +166,16 @@ func promoteConditionalRenderingToRules_V2_to_V3alpha0(in *dashv2.DashboardSpec)
 // GridLayoutItemSpec in v2 does NOT carry conditionalRendering; the grid layout
 // predates the feature. Only the newer auto-grid / rows / tabs layouts carry
 // the field.
-func walkRowLayoutForConditionalRendering_V2(layout *dashv2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, visit func(elementName, layoutItemName string, cr *dashv2.DashboardConditionalRenderingGroupKind)) {
-	if layout == nil {
-		return
-	}
-	if layout.AutoGridLayoutKind != nil {
-		for _, item := range layout.AutoGridLayoutKind.Spec.Items {
+func walkV2LayoutForConditionalRendering(view v2LayoutView, visit func(elementName, layoutItemName string, cr *dashv2.DashboardConditionalRenderingGroupKind)) {
+	if view.autoGrid != nil {
+		for _, item := range view.autoGrid.Spec.Items {
 			if item.Spec.ConditionalRendering != nil {
 				visit(item.Spec.Element.Name, "", item.Spec.ConditionalRendering)
 			}
 		}
 	}
-	if layout.RowsLayoutKind != nil {
-		for _, row := range layout.RowsLayoutKind.Spec.Rows {
+	if view.rows != nil {
+		for _, row := range view.rows.Spec.Rows {
 			title := ""
 			if row.Spec.Title != nil {
 				title = *row.Spec.Title
@@ -161,11 +183,11 @@ func walkRowLayoutForConditionalRendering_V2(layout *dashv2.DashboardGridLayoutK
 			if row.Spec.ConditionalRendering != nil {
 				visit("", title, row.Spec.ConditionalRendering)
 			}
-			walkRowLayoutForConditionalRendering_V2(&row.Spec.Layout, visit)
+			walkV2LayoutForConditionalRendering(v2LayoutViewFromRowOrdered(&row.Spec.Layout), visit)
 		}
 	}
-	if layout.TabsLayoutKind != nil {
-		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
+	if view.tabs != nil {
+		for _, tab := range view.tabs.Spec.Tabs {
 			title := ""
 			if tab.Spec.Title != nil {
 				title = *tab.Spec.Title
@@ -173,44 +195,7 @@ func walkRowLayoutForConditionalRendering_V2(layout *dashv2.DashboardGridLayoutK
 			if tab.Spec.ConditionalRendering != nil {
 				visit("", title, tab.Spec.ConditionalRendering)
 			}
-			walkTabLayoutForConditionalRendering_V2(&tab.Spec.Layout, visit)
-		}
-	}
-}
-
-func walkTabLayoutForConditionalRendering_V2(layout *dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, visit func(elementName, layoutItemName string, cr *dashv2.DashboardConditionalRenderingGroupKind)) {
-	if layout == nil {
-		return
-	}
-	if layout.AutoGridLayoutKind != nil {
-		for _, item := range layout.AutoGridLayoutKind.Spec.Items {
-			if item.Spec.ConditionalRendering != nil {
-				visit(item.Spec.Element.Name, "", item.Spec.ConditionalRendering)
-			}
-		}
-	}
-	if layout.RowsLayoutKind != nil {
-		for _, row := range layout.RowsLayoutKind.Spec.Rows {
-			title := ""
-			if row.Spec.Title != nil {
-				title = *row.Spec.Title
-			}
-			if row.Spec.ConditionalRendering != nil {
-				visit("", title, row.Spec.ConditionalRendering)
-			}
-			walkRowLayoutForConditionalRendering_V2(&row.Spec.Layout, visit)
-		}
-	}
-	if layout.TabsLayoutKind != nil {
-		for _, tab := range layout.TabsLayoutKind.Spec.Tabs {
-			title := ""
-			if tab.Spec.Title != nil {
-				title = *tab.Spec.Title
-			}
-			if tab.Spec.ConditionalRendering != nil {
-				visit("", title, tab.Spec.ConditionalRendering)
-			}
-			walkTabLayoutForConditionalRendering_V2(&tab.Spec.Layout, visit)
+			walkV2LayoutForConditionalRendering(v2LayoutViewFromTabOrdered(&tab.Spec.Layout), visit)
 		}
 	}
 }
@@ -293,59 +278,49 @@ func convertConditionItems_V2_to_V3alpha0(in []dashv2.DashboardConditionalRender
 	return out
 }
 
-// clearLayoutConditionalRendering_V3alpha0 walks the v3alpha0 layout tree and
+// v3alpha0LayoutView is the v3alpha0 analogue of v2LayoutView — same
+// motivation (two disjunction types, identical field set) collapsed to one
+// walker.
+type v3alpha0LayoutView struct {
+	autoGrid *dashv3alpha0.DashboardAutoGridLayoutKind
+	rows     *dashv3alpha0.DashboardRowsLayoutKind
+	tabs     *dashv3alpha0.DashboardTabsLayoutKind
+}
+
+func v3alpha0LayoutViewFromTabOrdered(l *dashv3alpha0.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) v3alpha0LayoutView {
+	if l == nil {
+		return v3alpha0LayoutView{}
+	}
+	return v3alpha0LayoutView{autoGrid: l.AutoGridLayoutKind, rows: l.RowsLayoutKind, tabs: l.TabsLayoutKind}
+}
+
+func v3alpha0LayoutViewFromRowOrdered(l *dashv3alpha0.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) v3alpha0LayoutView {
+	if l == nil {
+		return v3alpha0LayoutView{}
+	}
+	return v3alpha0LayoutView{autoGrid: l.AutoGridLayoutKind, rows: l.RowsLayoutKind, tabs: l.TabsLayoutKind}
+}
+
+// clearV3alpha0LayoutConditionalRendering walks the v3alpha0 layout tree and
 // nils every ConditionalRendering pointer on AutoGrid items, Rows, and Tabs.
 // Called after promoteConditionalRenderingToRules_V2_to_V3alpha0 so the
 // promoted rules are the sole representation of visibility predicates.
-//
-// Mirrors walkTab/walkRow but mutates v3alpha0 output rather than visiting v2
-// input. Two variants because the Go-generated disjunction type names differ
-// between top-level and row-nested layouts.
-func clearLayoutConditionalRendering_V3alpha0(layout *dashv3alpha0.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) {
-	if layout == nil {
-		return
-	}
-	if layout.AutoGridLayoutKind != nil {
-		for i := range layout.AutoGridLayoutKind.Spec.Items {
-			layout.AutoGridLayoutKind.Spec.Items[i].Spec.ConditionalRendering = nil
+func clearV3alpha0LayoutConditionalRendering(view v3alpha0LayoutView) {
+	if view.autoGrid != nil {
+		for i := range view.autoGrid.Spec.Items {
+			view.autoGrid.Spec.Items[i].Spec.ConditionalRendering = nil
 		}
 	}
-	if layout.RowsLayoutKind != nil {
-		for i := range layout.RowsLayoutKind.Spec.Rows {
-			layout.RowsLayoutKind.Spec.Rows[i].Spec.ConditionalRendering = nil
-			clearLayoutConditionalRenderingRowNested_V3alpha0(&layout.RowsLayoutKind.Spec.Rows[i].Spec.Layout)
+	if view.rows != nil {
+		for i := range view.rows.Spec.Rows {
+			view.rows.Spec.Rows[i].Spec.ConditionalRendering = nil
+			clearV3alpha0LayoutConditionalRendering(v3alpha0LayoutViewFromRowOrdered(&view.rows.Spec.Rows[i].Spec.Layout))
 		}
 	}
-	if layout.TabsLayoutKind != nil {
-		for i := range layout.TabsLayoutKind.Spec.Tabs {
-			layout.TabsLayoutKind.Spec.Tabs[i].Spec.ConditionalRendering = nil
-			clearLayoutConditionalRendering_V3alpha0(&layout.TabsLayoutKind.Spec.Tabs[i].Spec.Layout)
-		}
-	}
-}
-
-// Row-nested variant. Go codegen emits a different disjunction-type name for
-// the layout field on RowsLayoutRowSpec vs the top-level DashboardSpec even
-// though the content is structurally identical.
-func clearLayoutConditionalRenderingRowNested_V3alpha0(layout *dashv3alpha0.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) {
-	if layout == nil {
-		return
-	}
-	if layout.AutoGridLayoutKind != nil {
-		for i := range layout.AutoGridLayoutKind.Spec.Items {
-			layout.AutoGridLayoutKind.Spec.Items[i].Spec.ConditionalRendering = nil
-		}
-	}
-	if layout.RowsLayoutKind != nil {
-		for i := range layout.RowsLayoutKind.Spec.Rows {
-			layout.RowsLayoutKind.Spec.Rows[i].Spec.ConditionalRendering = nil
-			clearLayoutConditionalRenderingRowNested_V3alpha0(&layout.RowsLayoutKind.Spec.Rows[i].Spec.Layout)
-		}
-	}
-	if layout.TabsLayoutKind != nil {
-		for i := range layout.TabsLayoutKind.Spec.Tabs {
-			layout.TabsLayoutKind.Spec.Tabs[i].Spec.ConditionalRendering = nil
-			clearLayoutConditionalRendering_V3alpha0(&layout.TabsLayoutKind.Spec.Tabs[i].Spec.Layout)
+	if view.tabs != nil {
+		for i := range view.tabs.Spec.Tabs {
+			view.tabs.Spec.Tabs[i].Spec.ConditionalRendering = nil
+			clearV3alpha0LayoutConditionalRendering(v3alpha0LayoutViewFromTabOrdered(&view.tabs.Spec.Tabs[i].Spec.Layout))
 		}
 	}
 }
