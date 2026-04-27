@@ -46,8 +46,15 @@ export const getChainRailStyles = (theme: GrafanaTheme2) => ({
       position: 'absolute',
       boxSizing: 'border-box',
       left: '13px',
-      top: '50%',
-      marginTop: '-6px',
+      // Align the dot's centre with the status icon's centre.
+      // Derived from ListItem.tsx:
+      //   <li> padding-top theme.spacing(1) = 8px
+      // + .statusIcon marginTop theme.spacing(0.5) = 4px
+      // + half of the 16x16 status icon = 8px      → icon centre at 20px
+      // - half of the 12x12 dot = 6px              → dot top at 14px
+      // If ListItem's padding or .statusIcon's margin changes, update here.
+      top: '14px',
+      marginTop: 0,
       marginLeft: 0,
       width: '12px',
       height: '12px',
