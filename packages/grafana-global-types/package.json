@@ -1,0 +1,14 @@
+{
+  "name": "@types/grafana-globals",
+  "version": "0.0.1",
+  "private": true,
+  "types": "./index.d.ts",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@formatjs/intl-durationformat": "^0.7.0",
+    "@grafana/data": "workspace:*",
+    "@grafana/scenes": "7.4.0",
+    "@testing-library/jest-dom": "6.6.4",
+    "react-table": "7.8.0"
+  }
+}

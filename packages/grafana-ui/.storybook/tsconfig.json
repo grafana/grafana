@@ -4,5 +4,5 @@
     "noUnusedLocals": false
   },
   "extends": "../tsconfig.json",
-  "include": ["../src/**/*.ts*", "../../../public/app/types/svg.d.ts"]
+  "include": ["../src/**/*.ts*"]
 }

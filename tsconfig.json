@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
-    "types": ["systemjs", "webpack-env", "gtag.js", "trusted-types"],
+    "types": ["systemjs", "webpack-env", "gtag.js", "trusted-types", "grafana-globals"],
     "paths": {
       "@grafana/schema/dist/esm/*": ["./packages/grafana-schema/src/*"],
       "*": ["./public/*"]

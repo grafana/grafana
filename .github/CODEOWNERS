@@ -557,7 +557,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-data/tsconfig.json @grafana/grafana-frontend-platform
 /packages/grafana-data/test/ @grafana/grafana-frontend-platform
-/packages/grafana-data/typings/ @grafana/grafana-frontend-platform
 /packages/grafana-data/scripts/ @grafana/grafana-frontend-platform
 
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
@@ -774,6 +773,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/openapi
 /packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
 
+# @types/grafana-globals
+/packages/grafana-global-types/ @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
