@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -152,8 +153,14 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Nil(t, instance, "Expected instance to be nil")
 			} else {
 				require.NotNil(t, instance, "Expected instance to be created")
-				if !cmp.Equal(instance, *tt.expectedModel) {
-					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel))
+				dsInfo, ok := instance.(types.DatasourceInfo)
+				require.True(t, ok, "Expected instance to be DatasourceInfo")
+				require.NotNil(t, dsInfo.Cache, "Expected per-instance cache to be initialised")
+				// Cache holds *sync.Map pointers and is verified separately above; ignore it
+				// in the structural diff so we don't compare opaque mutex state.
+				ignoreCache := cmpopts.IgnoreFields(types.DatasourceInfo{}, "Cache")
+				if !cmp.Equal(dsInfo, *tt.expectedModel, ignoreCache) {
+					t.Errorf("Unexpected instance: %v", cmp.Diff(dsInfo, *tt.expectedModel, ignoreCache))
 				}
 			}
 		})
