@@ -2,11 +2,13 @@ package team
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -27,6 +30,18 @@ const (
 	TeamResourceGroup = "iam.grafana.app"
 )
 
+// Column names emitted by the member-filtered search branch. The user-teams
+// REST handler reads these cells inline so it doesn't need a follow-up Team Get.
+const (
+	teamMembersColPermission = "permission"
+	teamMembersColExternal   = "external"
+)
+
+var teamMembersResultColumns = []*resourcepb.ResourceTableColumnDefinition{
+	{Name: teamMembersColPermission, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+	{Name: teamMembersColExternal, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN},
+}
+
 // TeamSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
 // Used by both ConvertToSortOptions (unified→legacy) and ConvertToSortParams (legacy→unified).
 func TeamSortFieldMapping() map[string]string {
@@ -36,24 +51,40 @@ func TeamSortFieldMapping() map[string]string {
 	}
 }
 
-// LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
+// LegacyTeamSearchClient is the legacy adapter for Team-resource searches.
+//
+// It serves two flavors of search and dispatches on the request's field
+// filters:
+//
+//   - members=<userUID>: returns the teams the given user belongs to, with
+//     the user's permission and external flag emitted as inline cells. Backed
+//     by legacy.ListUserTeams; column shape is teamMembersResultColumns.
+//   - everything else: returns teams matched by title / uid / legacy id,
+//     backed by team.Service.SearchTeams; columns follow the requested
+//     fields plus the standard name/title defaults.
+//
+// Callers must know which shape they asked for — the column set differs
+// between the two branches.
 type LegacyTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
 	teamService team.Service
+	store       legacy.LegacyIdentityStore
 	log         log.Logger
 	tracer      trace.Tracer
 }
 
 // NewLegacyTeamSearchClient creates a new LegacyTeamSearchClient.
-func NewLegacyTeamSearchClient(teamService team.Service, tracer trace.Tracer) *LegacyTeamSearchClient {
+func NewLegacyTeamSearchClient(teamService team.Service, store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyTeamSearchClient {
 	return &LegacyTeamSearchClient{
 		teamService: teamService,
+		store:       store,
 		log:         log.New("grafana-apiserver.teams.legacy-search"),
 		tracer:      tracer,
 	}
 }
 
-// Search searches for teams in the legacy search engine.
+// Search searches for teams in the legacy backend. See the type doc for the
+// dispatch rules between the general and member-filtered branches.
 func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "team.legacysearch")
 	defer span.End()
@@ -72,6 +103,10 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
+	}
+
+	if userUID := userUIDFilter(req); userUID != "" {
+		return c.searchByMember(ctx, req, signedInUser, userUID)
 	}
 
 	title, err := titleFromRequirements(req.Options)
@@ -124,6 +159,108 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 	list.TotalHits = res.TotalCount
 
 	return list, nil
+}
+
+// searchByMember resolves a `members=<userUID>` filter on the Team resource
+// against the legacy team_member table. Rows carry the user's permission and
+// external flag inline as cells so the user-teams handler doesn't need a
+// follow-up Team Get.
+func (c *LegacyTeamSearchClient) searchByMember(ctx context.Context, req *resourcepb.ResourceSearchRequest, signedInUser identity.Requester, userUID string) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "team.legacy-members-search")
+	defer span.End()
+
+	logger := c.log.FromContext(ctx)
+
+	if c.store == nil {
+		return nil, errors.New("legacy identity store not configured")
+	}
+
+	ns := claims.NamespaceInfo{
+		Value: signedInUser.GetNamespace(),
+		OrgID: signedInUser.GetOrgID(),
+	}
+
+	limit := int(req.Limit)
+	offset := int(req.Offset)
+	if req.Page > 1 {
+		offset = (int(req.Page) - 1) * limit
+	}
+
+	// legacy.ListUserTeams paginates via a `Continue` cursor (id >= last+1),
+	// not an offset, so we can't ask SQL for the requested page directly.
+	// Walk the cursor, stopping as soon as we have enough rows to satisfy
+	// the requested window, then slice in memory.
+	want := offset + limit
+	const pageSize = 500
+	var items []legacy.UserTeam
+	var continueToken int64
+	for {
+		p, err := c.store.ListUserTeams(ctx, ns, legacy.ListUserTeamsQuery{
+			UserUID:    userUID,
+			Pagination: common.Pagination{Limit: pageSize, Continue: continueToken},
+		})
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "list user teams failed")
+			logger.Error("failed to list user teams", "user", userUID, "error", err)
+			return nil, fmt.Errorf("list user teams: %w", err)
+		}
+		items = append(items, p.Items...)
+		if p.Continue == 0 || len(items) >= want {
+			break
+		}
+		continueToken = p.Continue
+	}
+
+	start := min(offset, len(items))
+	end := min(start+limit, len(items))
+	window := items[start:end]
+	logger.Debug("legacy user-teams search resolved",
+		"user", userUID,
+		"namespace", ns.Value,
+		"limit", limit,
+		"offset", offset,
+		"page", req.Page,
+		"fetched", len(items),
+		"returned", len(window),
+	)
+
+	rows := make([]*resourcepb.ResourceTableRow, 0, len(window))
+	for _, item := range window {
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns.Value,
+				Group:     TeamResourceGroup,
+				Resource:  TeamResource,
+				Name:      item.UID,
+			},
+			Cells: [][]byte{
+				[]byte(common.MapTeamPermission(item.Permission)),
+				[]byte(strconv.FormatBool(item.External)),
+			},
+		})
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: teamMembersResultColumns,
+			Rows:    rows,
+		},
+	}, nil
+}
+
+// userUIDFilter extracts the value of the members=<userUID> field selector
+// from the search request, returning "" if not set.
+func userUIDFilter(req *resourcepb.ResourceSearchRequest) string {
+	if req == nil || req.Options == nil {
+		return ""
+	}
+	key := resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS
+	for _, r := range req.Options.Fields {
+		if r != nil && r.Key == key && len(r.Values) > 0 {
+			return r.Values[0]
+		}
+	}
+	return ""
 }
 
 func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {

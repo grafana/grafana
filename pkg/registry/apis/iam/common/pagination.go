@@ -41,11 +41,11 @@ func PaginationFromListQuery(query url.Values) Pagination {
 	}
 }
 
-// SubresourcePagination is the limit/offset/page tuple that the iam
-// subresource HTTP handlers (e.g. /teams/{name}/members, /users/{name}/teams)
+// ResourcePagination is the limit/offset/page tuple that the iam
+// resource HTTP handlers (e.g. /teams/{name}/members, /users/{name}/teams)
 // accept on their query string. Different handlers used to inline the same
 // parsing block; PaginationFromQuery centralizes it.
-type SubresourcePagination struct {
+type ResourcePagination struct {
 	Limit  int
 	Offset int
 	Page   int
@@ -55,7 +55,7 @@ type SubresourcePagination struct {
 var ErrLimitTooLarge = errors.New("limit parameter exceeds maximum")
 
 // PaginationFromQuery parses limit / offset / page from a parsed query
-// string and applies the same defaults as the IAM subresources used to
+// string and applies the same defaults as the IAM resources used to
 // inline:
 //   - limit defaults to DefaultListLimit, capped at MaxListLimit
 //   - if offset is set, page is derived from it
@@ -63,8 +63,8 @@ var ErrLimitTooLarge = errors.New("limit parameter exceeds maximum")
 //
 // Returns ErrLimitTooLarge if limit > MaxListLimit (callers usually map this
 // to a 400 Bad Request).
-func PaginationFromQuery(q url.Values) (SubresourcePagination, error) {
-	p := SubresourcePagination{Limit: DefaultListLimit, Page: 1}
+func PaginationFromQuery(q url.Values) (ResourcePagination, error) {
+	p := ResourcePagination{Limit: DefaultListLimit, Page: 1}
 
 	if q.Has("limit") {
 		p.Limit, _ = strconv.Atoi(q.Get("limit"))
