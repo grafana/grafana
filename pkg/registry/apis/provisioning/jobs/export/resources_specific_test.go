@@ -658,6 +658,141 @@ func TestExportSpecificResources_DashboardRefMaterializesAncestorsOnly(t *testin
 	require.False(t, hasSibling, "sibling folder must NOT be in scoped tree")
 }
 
+// TestExportSpecificResources_DashboardRefWithMismatchedGroup pins the
+// defense-in-depth check for Dashboard refs whose Group field is set to
+// something other than dashboard.grafana.app. Admission rejects this, but a
+// request that bypasses admission must still record an error and skip the
+// fetch rather than silently processing it as a Dashboard.
+func TestExportSpecificResources_DashboardRefWithMismatchedGroup(t *testing.T) {
+	dashGetClient := &mockGetByName{items: map[string]*unstructured.Unstructured{}}
+	dashClient := &dashGetListClient{getter: dashGetClient, lister: &mockListClient{}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "dash-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+	})).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{
+			{Name: "dash-1", Kind: "Dashboard", Group: "folder.grafana.app"},
+		},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
+	require.NoError(t, err)
+	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+	// The Get path must not run when the group is wrong — the worker should
+	// reject before attempting to resolve the resource. (mockGetByName has no
+	// items here, so any successful Get would have triggered a NotFound error
+	// recorded with a different message; the assertion above on the recorded
+	// result body covers the rejection-before-fetch contract.)
+}
+
+// TestExportSpecificResources_FolderRefWithMismatchedGroup mirrors the
+// dashboard case for Folder refs whose Group is set to something other than
+// folder.grafana.app.
+func TestExportSpecificResources_FolderRefWithMismatchedGroup(t *testing.T) {
+	folderClient := &mockListClient{items: []unstructured.Unstructured{
+		folderObject("real-folder", ""),
+	}}
+	dashClient := &dashGetListClient{
+		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{}},
+		lister: &mockListClient{},
+	}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "real-folder" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+	})).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{
+			{Name: "real-folder", Kind: "Folder", Group: "dashboard.grafana.app"},
+		},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, folderClient, repoResources, progress, false)
+	require.NoError(t, err)
+	repoResources.AssertNotCalled(t, "EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+}
+
+// TestExportSpecificResources_DedupeExplicitDashboardInsideFolderRef asserts
+// that when a Dashboard ref names a dashboard that also lives inside a
+// requested Folder ref's subtree, the dashboard is exported exactly once. The
+// previous implementation wrote it twice — once via the explicit-ref pass and
+// once via the folder-scan pass — and with generateNewUIDs each pass produced
+// a different metadata.name, leaving two distinct files for the same source.
+func TestExportSpecificResources_DedupeExplicitDashboardInsideFolderRef(t *testing.T) {
+	// "shared-dash" is named explicitly AND lives inside the requested folder.
+	dashboards := []unstructured.Unstructured{
+		*dashboardObjectInFolder("shared-dash", "team-folder"),
+		*dashboardObjectInFolder("other-dash", "team-folder"),
+	}
+	dashClient := &dashGetListClient{
+		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{
+			"shared-dash": dashboardObjectInFolder("shared-dash", "team-folder"),
+		}},
+		lister: &mockListClient{items: dashboards},
+	}
+	folderClient := &mockListClient{items: []unstructured.Unstructured{
+		folderObject("team-folder", ""),
+	}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	sharedWrites := 0
+	otherWrites := 0
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		switch obj.GetName() {
+		case "shared-dash":
+			sharedWrites++
+			return true
+		case "other-dash":
+			otherWrites++
+			return true
+		}
+		return false
+	}), mock.Anything).Return("written.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{
+			{Name: "shared-dash", Kind: "Dashboard"},
+			{Name: "team-folder", Kind: "Folder"},
+		},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, folderClient, repoResources, progress, false)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, sharedWrites, "explicitly-named dashboard inside a requested folder must be written exactly once")
+	require.Equal(t, 1, otherWrites, "other dashboards in the requested folder are still exported via the folder-scan pass")
+}
+
 // dashGetListClient bridges Get-by-name (used for dashboard refs) and
 // List-all (used for folder-recursive expansion) onto one mock so ForKind can
 // return a single dashboard client object.

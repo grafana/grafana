@@ -157,20 +157,29 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		}
 	}
 
-	// Write resolved dashboard refs.
+	// Write resolved dashboard refs and remember their UIDs so the folder-scan
+	// pass below does not re-export them. Without this dedupe a request that
+	// mixes a Dashboard ref and a Folder ref containing that same dashboard
+	// would write the dashboard twice — and with generateNewUIDs=true each
+	// pass would generate a different metadata.name, producing two distinct
+	// repository files for the same source dashboard.
+	exportedDashboardUIDs := make(map[string]struct{}, len(dashboardItems))
 	for _, item := range dashboardItems {
+		exportedDashboardUIDs[item.GetName()] = struct{}{}
 		if err := exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
 			return err
 		}
 	}
 
 	// Walk all dashboards once and write any whose folder annotation lands in
-	// a requested subtree. Done after dashboard refs so a dashboard that was
-	// also explicitly named (and already written above) is skipped via the
-	// resources_seen guard implicit in ErrAlreadyInRepository handling.
+	// a requested subtree. Skip UIDs already written via an explicit Dashboard
+	// ref above so the subtree pass cannot duplicate or shadow them.
 	if len(folderRootIDs) > 0 {
 		progress.SetMessage(ctx, "export dashboards in selected folders")
 		if err := resources.ForEach(ctx, dashClient, func(item *unstructured.Unstructured) error {
+			if _, already := exportedDashboardUIDs[item.GetName()]; already {
+				return nil
+			}
 			meta, err := utils.MetaAccessor(item)
 			if err != nil {
 				return fmt.Errorf("extract meta accessor: %w", err)
@@ -230,10 +239,10 @@ func loadUnmanagedFolderTree(ctx context.Context, folderClient dynamic.ResourceI
 }
 
 // resolveDashboardRefs Get-fetches every Dashboard ref. Items that fail to
-// resolve (not found, transport error) are recorded as non-Ignored errors so
-// the job state escalates. For each resolved dashboard the ancestor folder
-// chain is added to the requiredFolders set so the materialization step covers
-// the dashboard's natural path.
+// resolve (not found, transport error, mismatched group) are recorded as
+// non-Ignored errors so the job state escalates. For each resolved dashboard
+// the ancestor folder chain is added to the requiredFolders set so the
+// materialization step covers the dashboard's natural path.
 func resolveDashboardRefs(ctx context.Context,
 	refs []provisioning.ResourceRef,
 	folderTree resources.FolderTree,
@@ -244,6 +253,18 @@ func resolveDashboardRefs(ctx context.Context,
 	resolved := make([]*unstructured.Unstructured, 0, len(refs))
 	for _, ref := range refs {
 		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
+
+		// Defense in depth: admission rejects mismatched kind/group pairs, but
+		// a request that bypasses admission must not be silently processed
+		// against the wrong resource type.
+		if ref.Group != "" && ref.Group != resources.DashboardResource.Group {
+			result.WithError(fmt.Errorf("dashboard ref %q has group %q; expected %q", ref.Name, ref.Group, resources.DashboardResource.Group))
+			progress.Record(ctx, result.Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return nil, nil, err
+			}
+			continue
+		}
 
 		item, err := dashClient.Get(ctx, ref.Name, metav1.GetOptions{})
 		if err != nil {
@@ -288,6 +309,18 @@ func resolveFolderRefs(ctx context.Context,
 	rootIDs := make([]string, 0, len(refs))
 	for _, ref := range refs {
 		result := jobs.NewGroupKindResult(ref.Name, resources.FolderResource.Group, resources.FolderKind.Kind)
+
+		// Defense in depth: admission rejects mismatched kind/group pairs, but
+		// a request that bypasses admission must not be silently processed
+		// against the wrong resource type.
+		if ref.Group != "" && ref.Group != resources.FolderResource.Group {
+			result.WithError(fmt.Errorf("folder ref %q has group %q; expected %q", ref.Name, ref.Group, resources.FolderResource.Group))
+			progress.Record(ctx, result.Build())
+			if err := progress.TooManyErrors(); err != nil {
+				return nil, err
+			}
+			continue
+		}
 
 		// A folder absent from the unmanaged listing is either missing, managed
 		// elsewhere, or an API error: differentiate via Get so the recorded

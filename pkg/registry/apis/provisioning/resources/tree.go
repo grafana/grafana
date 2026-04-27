@@ -286,9 +286,15 @@ func ProjectSubset(src FolderTree, include map[string]struct{}) FolderTree {
 // missing return value so the caller can record per-resource errors;
 // overlapping roots are deduplicated.
 func CollectSubtreeIDs(ctx context.Context, src FolderTree, rootIDs []string) (subtree map[string]struct{}, missing []string, err error) {
-	parents := make(map[string]string, src.Count())
+	// Build a parent->children adjacency list once so the BFS below is O(n+e)
+	// instead of O(n*queue_length): a previous version rescanned every parent
+	// pair on each queued node, which devolves to O(n^2) at MaxNumberOfFolders
+	// (~10k) and ~100M iterations per export.
+	children := make(map[string][]string)
+	known := make(map[string]struct{}, src.Count())
 	if walkErr := src.Walk(ctx, func(_ context.Context, f Folder, parent string) error {
-		parents[f.ID] = parent
+		known[f.ID] = struct{}{}
+		children[parent] = append(children[parent], f.ID)
 		return nil
 	}); walkErr != nil {
 		return nil, nil, fmt.Errorf("walk source folder tree: %w", walkErr)
@@ -297,7 +303,7 @@ func CollectSubtreeIDs(ctx context.Context, src FolderTree, rootIDs []string) (s
 	subtree = make(map[string]struct{}, len(rootIDs))
 	queue := make([]string, 0, len(rootIDs))
 	for _, id := range rootIDs {
-		if _, ok := parents[id]; !ok {
+		if _, ok := known[id]; !ok {
 			missing = append(missing, id)
 			continue
 		}
@@ -309,11 +315,7 @@ func CollectSubtreeIDs(ctx context.Context, src FolderTree, rootIDs []string) (s
 	}
 
 	for i := 0; i < len(queue); i++ {
-		current := queue[i]
-		for child, parent := range parents {
-			if parent != current {
-				continue
-			}
+		for _, child := range children[queue[i]] {
 			if _, seen := subtree[child]; seen {
 				continue
 			}
