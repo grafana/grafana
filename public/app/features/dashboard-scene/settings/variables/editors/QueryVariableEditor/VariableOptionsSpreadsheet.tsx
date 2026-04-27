@@ -1,18 +1,27 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, DraggableProvidedDragHandleProps, Droppable, DropResult } from '@hello-pangea/dnd';
+import {
+  DragDropContext,
+  Draggable,
+  type DraggableProvidedDragHandleProps,
+  Droppable,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { useCallback, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
+import {
+  type StaticOptionsOrderType,
+  type StaticOptionsType,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { useGetPropertiesFromOptions } from '../../components/VariableValuesPreview';
 
 import { SortSelector } from './SortSelector';
-import { ClipboardTextFormat, detectClipboardTextFormat, parseClipboardText, useClipboard } from './clipboard';
+import { type ClipboardTextFormat, detectClipboardTextFormat, parseClipboardText, useClipboard } from './clipboard';
 
 type SpreadsheetOption = VariableValueOption & {
   id: string;
@@ -461,20 +470,11 @@ function SpreadsheetRow(props: SpreadsheetRowProps) {
 function getPasteTooltip(format: ClipboardTextFormat): string {
   switch (format) {
     case 'csv':
-      return t(
-        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-csv',
-        'Add CSV data from clipboard to the options below'
-      );
+      return t('dashboard-scene.variable-options-spreadsheet.tooltip-paste-csv', 'Paste CSV data');
     case 'json':
-      return t(
-        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-json',
-        'Add JSON data from clipboard to the options below'
-      );
+      return t('dashboard-scene.variable-options-spreadsheet.tooltip-paste-json', 'Paste JSON data');
     case 'tsv':
-      return t(
-        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-spreadsheet',
-        'Add spreadsheet data from clipboard to the options below'
-      );
+      return t('dashboard-scene.variable-options-spreadsheet.tooltip-paste-spreadsheet', 'Paste spreadsheet data');
     default:
       return t('dashboard-scene.variable-options-spreadsheet.tooltip-nothing-to-paste', 'Nothing to paste');
   }

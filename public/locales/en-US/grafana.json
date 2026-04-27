@@ -7811,9 +7811,9 @@
     "variable-options-spreadsheet": {
       "aria-label-paste-static-options-from-clipboard": "Paste static options from clipboard",
       "tooltip-nothing-to-paste": "Nothing to paste",
-      "tooltip-paste-csv": "Add CSV data from clipboard to the options below",
-      "tooltip-paste-json": "Add JSON data from clipboard to the options below",
-      "tooltip-paste-spreadsheet": "Add spreadsheet data from clipboard to the options below"
+      "tooltip-paste-csv": "Paste CSV data",
+      "tooltip-paste-json": "Paste JSON data",
+      "tooltip-paste-spreadsheet": "Paste spreadsheet data"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
