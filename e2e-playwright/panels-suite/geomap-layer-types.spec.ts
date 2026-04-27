@@ -240,7 +240,7 @@ test.describe(
 
       // Pick an icon from the new folder
       await resourcePickerDialog.getByPlaceholder('Search').fill('0-plus');
-      await resourcePickerDialog.getByRole('button', { name: '0-plus' }).click();
+      await resourcePickerDialog.getByRole('button', { name: '0-plus', exact: true }).click();
 
       // Confirm the selection
       await resourcePickerDialog.getByRole('button', { name: 'Select' }).click();
