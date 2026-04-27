@@ -3570,9 +3570,9 @@
         "declare-incident": "인시던트 선언",
         "declare-incident-no-permission": "Incident에 접근할 권한이 없습니다.",
         "instance-details": "인스턴스 세부 정보",
+        "section-silence": "",
         "silence-button": "알림 끄기",
-        "silence-no-permission": "알림 끄기를 만들 수 있는 권한이 없습니다.",
-        "silence-title-with-name": ""
+        "silence-no-permission": "알림 끄기를 만들 수 있는 권한이 없습니다."
       },
       "labels-column-title": "라벨",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
@@ -11158,6 +11158,7 @@
       "label-numbers": "숫자",
       "label-signature": "서명"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "실험적 기능. 로그에 표시되는 필드를 관리하는 컴포넌트를 표시합니다.",
     "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
     "description-enable-logs-highlighting": "사전 정의된 색상 구성을 사용하여 로그 라인의 관련 부분을 강조 표시합니다.",
@@ -11452,6 +11453,7 @@
         "common-labels": "일반 라벨:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "일반 라벨",
     "name-deduplication": "중복 제거",
     "name-details-mode": "로그 세부 정보 패널 모드",
@@ -14695,6 +14697,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "홈 대시보드",
       "home-dashboard-placeholder": "기본 대시보드",

@@ -5383,7 +5383,8 @@
       "metadata": {
         "name": "storage",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2022-03-17T17:19:23Z"
+        "creationTimestamp": "2022-03-17T17:19:23Z",
+        "deletionTimestamp": "2026-04-24T11:46:06Z"
       },
       "spec": {
         "description": "Configurable storage for dashboards, datasources, and resources",

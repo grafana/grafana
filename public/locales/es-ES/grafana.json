@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "No tienes permiso para acceder al incidente.",
         "instance-details": "Detalles de la instancia",
+        "section-silence": "",
         "silence-button": "Permanecer en silencio",
-        "silence-no-permission": "No tienes permiso para crear silenciamientos.",
-        "silence-title-with-name": ""
+        "silence-no-permission": "No tienes permiso para crear silenciamientos."
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Números",
       "label-signature": "Firma"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Muestra un componente para gestionar los campos mostrados de los logs.",
     "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
     "description-enable-logs-highlighting": "Utiliza un esquema de color predefinido para resaltar las partes relevantes de las líneas del log.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Etiquetas comunes:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comunes",
     "name-deduplication": "Desduplicación",
     "name-details-mode": "Modo de panel de detalles de logs",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Panel de control de inicio",
       "home-dashboard-placeholder": "Panel de control por defecto",

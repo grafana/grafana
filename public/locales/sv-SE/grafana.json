@@ -3589,9 +3589,9 @@
         "declare-incident": "Deklarera incident",
         "declare-incident-no-permission": "Du saknar behörighet att komma åt incidenten",
         "instance-details": "Instansdetaljer",
+        "section-silence": "",
         "silence-button": "Tystnad",
-        "silence-no-permission": "Du saknar behörighet att skapa tystnader",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Du saknar behörighet att skapa tystnader"
       },
       "labels-column-title": "Etiketter",
       "no-firing-or-pending-instances": "Du har inga varningsinstanser i ett utlösande eller väntande tillstånd för det valda tidsintervallet.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Nummer",
       "label-signature": "Underskrift"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentellt. Visa en komponent för att hantera de visade fälten från loggarna.",
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
     "description-enable-logs-highlighting": "Använd ett fördefinierat färgschema för att markera relevanta delar av loggraderna.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Vanliga etiketter:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Vanliga etiketter",
     "name-deduplication": "Avduplicering",
     "name-details-mode": "Panelläge för loggdetaljer",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Heminstrumentpanel",
       "home-dashboard-placeholder": "Standardinstrumentpanel",

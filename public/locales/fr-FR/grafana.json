@@ -3589,9 +3589,9 @@
         "declare-incident": "Déclarer un incident",
         "declare-incident-no-permission": "Vous n’avez pas l’autorisation d’accéder à l’incident",
         "instance-details": "Détails de l’instance",
+        "section-silence": "",
         "silence-button": "Mise en sourdine",
-        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine"
       },
       "labels-column-title": "Étiquettes",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
@@ -11221,6 +11221,7 @@
       "label-numbers": "Nombres",
       "label-signature": "Signature"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "En phase de test. Afficher un composant permettant de gérer les champs affichés à partir des journaux.",
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
     "description-enable-logs-highlighting": "Utiliser un code couleurs prédéfini pour mettre en évidence les parties pertinentes des lignes de journal.",
@@ -11518,6 +11519,7 @@
         "common-labels": "Étiquettes communes :"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Étiquettes communes",
     "name-deduplication": "Déduplication",
     "name-details-mode": "Mode du panneau de détails des journaux",
@@ -14787,6 +14789,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Tableau de bord d'accueil",
       "home-dashboard-placeholder": "Tableau de bord par défaut",
