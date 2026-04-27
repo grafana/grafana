@@ -6,7 +6,7 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -69,6 +69,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import {
   getPersistedDSFor,
   getElementDatasource,
+  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
@@ -1843,5 +1844,55 @@ describe('validateDashboardSchemaV2', () => {
     expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
       true
     );
+  });
+});
+
+describe('normalizeDataSourceRef', () => {
+  let originalSrv: DataSourceSrv | undefined;
+
+  beforeAll(() => {
+    originalSrv = (() => {
+      try {
+        return jest.requireActual('@grafana/runtime').getDataSourceSrv();
+      } catch {
+        return undefined;
+      }
+    })();
+
+    const mockSrv = {
+      getInstanceSettings: jest.fn((ref?: string | { uid?: string; type?: string } | null) => {
+        const nameOrUid = typeof ref === 'string' ? ref : ref?.uid;
+        if (nameOrUid === 'prometheus' || nameOrUid === 'prom-uid') {
+          return { uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' };
+        }
+        return undefined;
+      }),
+    };
+    setDataSourceSrv(mockSrv as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    if (originalSrv) {
+      setDataSourceSrv(originalSrv);
+    }
+  });
+
+  it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
+    const ref = { uid: 'abc', type: 'prometheus' };
+    expect(normalizeDataSourceRef(ref)).toBe(ref);
+
+    expect(normalizeDataSourceRef(undefined)).toBeUndefined();
+    expect(normalizeDataSourceRef(null)).toBeUndefined();
+  });
+
+  it('resolves a string datasource into a DataSourceRef', () => {
+    expect(normalizeDataSourceRef('prometheus')).toEqual({
+      uid: 'prom-uid',
+      type: 'prometheus',
+      apiVersion: 'v1',
+    });
+    expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+    expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
+    expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });
 });

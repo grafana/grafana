@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -18,7 +18,6 @@ import {
 import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
-import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -959,10 +958,17 @@ export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undef
   if (!ds) {
     return undefined;
   }
-  if (typeof ds === 'object' && isEmptyObject(ds)) {
-    return ds;
+
+  if (typeof ds === 'string') {
+    if (ds.startsWith('$')) {
+      return { uid: ds };
+    }
+
+    const instance = getDataSourceSrv().getInstanceSettings(ds);
+    return instance ? getDataSourceRef(instance) : { uid: ds };
   }
-  return migrateDatasourceNameToRef(ds, { returnDefaultAsNull: true }) ?? undefined;
+
+  return ds;
 }
 
 /**
