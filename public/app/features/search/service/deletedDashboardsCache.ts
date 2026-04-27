@@ -140,7 +140,6 @@ export async function resolveDeletedByDisplayMap(
   const subscriptions: Subscription[] = [];
   try {
     for (const keyBatch of batches) {
-      // One-shot fetch — RTK Query keeps no cache entry; `.unsubscribe()` below is defensive.
       subscriptions.push(
         dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: keyBatch }, { subscribe: false }))
       );
@@ -187,10 +186,6 @@ export async function resolveDeletedByDisplayMap(
       result.set(uid, DELETED_BY_UNKNOWN);
     }
     return result;
-  } finally {
-    for (const sub of subscriptions) {
-      sub.unsubscribe();
-    }
   }
 }
 
