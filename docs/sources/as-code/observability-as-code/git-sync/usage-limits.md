@@ -61,7 +61,7 @@ If you're an on-prem user, you can customize your limits via configuration setti
 
 ### Nested folders
 
-Git Sync supports up to four nested folders within a repository. A deeper folder structure creates performance issues.
+Git Sync supports up to four nested folders within a repository.
 
 ## Compatible Git providers
 
