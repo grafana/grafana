@@ -8,7 +8,7 @@ exports[`drawMarkers candle with volume events 1`] = `
   },
   {
     "props": {
-      "height": 333,
+      "height": 332,
       "width": 675,
       "x": 100,
       "y": 17,

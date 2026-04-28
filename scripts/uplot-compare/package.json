@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "json-diff-kit": "1.0.35"
   },
   "devDependencies": {
     "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules",
