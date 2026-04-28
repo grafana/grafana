@@ -274,8 +274,9 @@ const useGetGrafanaContactPoint = (
         };
       }
       // Until the list request settles, avoid surfacing the primary GET error (e.g. 404 when `name` is a title).
-      // RTK Query can briefly report not-loading before `isFetched` flips after `skip` becomes false.
-      if (!listQuery.isFetched) {
+      // Use `status` — `isFetched` is absent on some RTK Query union members (e.g. uninitialized).
+      const listRequestCompleted = listQuery.status === 'fulfilled' || listQuery.status === 'rejected';
+      if (!listRequestCompleted) {
         return {
           ...listQuery,
           data: undefined,
