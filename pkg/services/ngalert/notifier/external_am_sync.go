@@ -26,6 +26,14 @@ type mimirConfigResponse struct {
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 }
 
+// External AM sync failure reasons used as the `reason` label on
+// ExternalAMConfigSyncFailures.
+const (
+	syncReasonDatasourceLookup = "datasource_lookup"
+	syncReasonMimirFetch       = "mimir_fetch"
+	syncReasonSave             = "save"
+)
+
 // syncExternalAMs fetches the alertmanager configuration from an external Mimir/Cortex datasource
 // for each org that has one configured and persists it to the database. The main sync loop then
 // picks up the fresh config and applies it on the same tick. It is a no-op when the feature flag
@@ -53,25 +61,45 @@ func (moa *MultiOrgAlertmanager) syncExternalAMs(ctx context.Context, orgIDs []i
 			continue
 		}
 
+		orgIDStr := fmt.Sprintf("%d", orgID)
 		start := time.Now()
 
-		ec, err := moa.fetchExtraConfig(ctx, orgID, uid)
+		fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		ds, err := moa.datasourceService.GetDataSource(fetchCtx, &datasources.GetDataSourceQuery{
+			UID:   uid,
+			OrgID: orgID,
+		})
 		if err != nil {
-			moa.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "error", err)
-			moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues(fmt.Sprintf("%d", orgID), "error").Inc()
+			cancel()
+			moa.logger.Warn("Failed to look up external AM datasource", "org_id", orgID, "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonDatasourceLookup).Inc()
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}
 
-		if err = moa.SaveExtraConfiguration(ctx, orgID, *ec); err != nil {
+		mimirCfg, err := moa.fetchMimirConfig(fetchCtx, ds)
+		cancel()
+		if err != nil {
+			moa.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonMimirFetch).Inc()
+			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
+			continue
+		}
+
+		ec := apimodels.ExtraConfiguration{
+			Identifier:         uid,
+			AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
+			TemplateFiles:      mimirCfg.TemplateFiles,
+		}
+		if err = moa.SaveExtraConfiguration(ctx, orgID, ec); err != nil {
 			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "error", err)
-			moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues(fmt.Sprintf("%d", orgID), "error").Inc()
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonSave).Inc()
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}
 
 		moa.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
-		moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues(fmt.Sprintf("%d", orgID), "success").Inc()
+		moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
 		moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 	}
 }
@@ -105,32 +133,6 @@ func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Cont
 		return false, err
 	}
 	return cfg != nil && cfg.ExternalAlertmanagerUID != nil && *cfg.ExternalAlertmanagerUID != "", nil
-}
-
-// fetchExtraConfig retrieves the Mimir/Cortex alertmanager configuration for a single org
-// and returns it as an ExtraConfiguration. Uses a 10-second per-org timeout.
-func (moa *MultiOrgAlertmanager) fetchExtraConfig(ctx context.Context, orgID int64, datasourceUID string) (*apimodels.ExtraConfiguration, error) {
-	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	ds, err := moa.datasourceService.GetDataSource(fetchCtx, &datasources.GetDataSourceQuery{
-		UID:   datasourceUID,
-		OrgID: orgID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get datasource: %w", err)
-	}
-
-	cfg, err := moa.fetchMimirConfig(fetchCtx, ds)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch Mimir config: %w", err)
-	}
-
-	return &apimodels.ExtraConfiguration{
-		Identifier:         datasourceUID,
-		AlertmanagerConfig: cfg.AlertmanagerConfig,
-		TemplateFiles:      cfg.TemplateFiles,
-	}, nil
 }
 
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex datasource.

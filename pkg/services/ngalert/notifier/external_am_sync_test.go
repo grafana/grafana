@@ -260,8 +260,8 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 	require.Len(t, cfg.ExtraConfigs, 1)
 	assert.Equal(t, "ds-2", cfg.ExtraConfigs[0].Identifier)
 
-	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "error")))
-	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("2", "success")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("2")))
 }
 
 func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
@@ -295,7 +295,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	adminCfg.AssertExpectations(t)
 	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
-	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "error")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
 
 func TestSyncExternalAMs_SuccessPath(t *testing.T) {
@@ -323,7 +323,7 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	assert.Equal(t, "mimir-uid", cfg.ExtraConfigs[0].Identifier)
 	assert.NotEmpty(t, cfg.ExtraConfigs[0].AlertmanagerConfig)
 
-	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "success")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 }
 
 func TestSyncExternalAMs_NoOpDoesNotPolluteHistory(t *testing.T) {
@@ -352,7 +352,7 @@ func TestSyncExternalAMs_NoOpDoesNotPolluteHistory(t *testing.T) {
 	require.Len(t, cs.historicConfigs[1], 1, "no-op sync should not write a new history row")
 
 	// Both ticks should still be counted as successful syncs.
-	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "success")))
+	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 }
 
 func TestBuildMimirConfigURL(t *testing.T) {
