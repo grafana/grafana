@@ -2319,6 +2319,13 @@ The `[grafana_net]` configuration is still accepted and parsed as `[grafana_com]
 Default is https://grafana.com.
 The default authentication identity provider for Grafana Cloud.
 
+#### `proxy_token`
+
+Default is empty.
+A dedicated API token for plugin catalog browsing and plugin installs via `grafana-cli`. Requires the `dedicatedGrafanaComProxyAPIToken` [feature toggle]({{< relref "#feature_toggles" >}}) to be enabled.
+
+Set via environment variable: `GF_GRAFANA_COM_PROXY_TOKEN`.
+
 <hr>
 
 ### `[tracing.jaeger]`
