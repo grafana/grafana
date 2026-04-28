@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTransformSearchResponse(t *testing.T) {
@@ -257,5 +259,82 @@ func TestTransformTraceResponse(t *testing.T) {
 
 		frame := TransformTraceResponse(trace, "test")
 		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace.golden", frame, false)
+	})
+}
+
+func TestLogTimestampConversion(t *testing.T) {
+	t.Run("converts log timestamps from microseconds to milliseconds", func(t *testing.T) {
+		// startTime = 1605873894680409 µs, log at 1605873894681000 µs → 591µs after start
+		trace := types.TraceResponse{
+			TraceID: "abc123",
+			Spans: []types.Span{
+				{
+					TraceID:       "abc123",
+					SpanID:        "span1",
+					OperationName: "test-op",
+					StartTime:     1605873894680409,
+					Duration:      1000,
+					Logs: []types.TraceLog{
+						{
+							Timestamp: 1605873894681000, // µs
+							Fields:    []types.KeyValueType{{Key: "event", Type: "string", Value: "cache-miss"}},
+						},
+					},
+					ProcessID: "p1",
+				},
+			},
+			Processes: map[string]types.TraceProcess{
+				"p1": {ServiceName: "test-service"},
+			},
+		}
+
+		frame := TransformTraceResponse(trace, "test")
+		logsField := frame.Fields[8] // logs column
+		raw := logsField.At(0).(json.RawMessage)
+		var logs []types.TraceLog
+		if err := json.Unmarshal(raw, &logs); err != nil {
+			t.Fatalf("unmarshal logs: %v", err)
+		}
+
+		// 1605873894681000 µs / 1000 = 1605873894681.0 ms
+		assert.InDelta(t, 1605873894681.0, logs[0].Timestamp, 0.001)
+	})
+
+	t.Run("preserves sub-millisecond precision in log timestamps", func(t *testing.T) {
+		// timestamp 1605873894680700 µs → 1605873894680.7 ms (0.7 fractional part must be kept)
+		trace := types.TraceResponse{
+			TraceID: "abc123",
+			Spans: []types.Span{
+				{
+					TraceID:       "abc123",
+					SpanID:        "span1",
+					OperationName: "test-op",
+					StartTime:     1605873894680409,
+					Duration:      1000,
+					Logs: []types.TraceLog{
+						{
+							Timestamp: 1605873894680700, // µs — has 0.7 ms fractional part
+							Fields:    []types.KeyValueType{{Key: "event", Type: "string", Value: "grpc-call"}},
+						},
+					},
+					ProcessID: "p1",
+				},
+			},
+			Processes: map[string]types.TraceProcess{
+				"p1": {ServiceName: "test-service"},
+			},
+		}
+
+		frame := TransformTraceResponse(trace, "test")
+		logsField := frame.Fields[8]
+		raw := logsField.At(0).(json.RawMessage)
+		var logs []types.TraceLog
+		if err := json.Unmarshal(raw, &logs); err != nil {
+			t.Fatalf("unmarshal logs: %v", err)
+		}
+
+		// Must preserve the 0.7ms fractional part, not truncate to 1605873894680
+		assert.InDelta(t, 1605873894680.7, logs[0].Timestamp, 0.001)
+		assert.NotEqual(t, float64(1605873894680), logs[0].Timestamp)
 	})
 }
