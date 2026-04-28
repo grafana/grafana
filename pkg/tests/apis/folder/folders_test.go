@@ -398,7 +398,7 @@ func getFromBothAPIs(t *testing.T,
 	helper *apis.K8sTestHelper,
 	client *apis.K8sResourceClient,
 	uid string,
-// Optionally match some expect some values
+	// Optionally match some expect some values
 	expect *folder.Folder,
 ) *unstructured.Unstructured {
 	t.Helper()
