@@ -59,6 +59,9 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
     url: repository.url,
     branch: repository.branch,
     filePath: readmePath,
+    // readmePath is relative to the repository's configured root, so we prefix
+    // with repository.path to point at the actual file inside the host repo.
+    pathPrefix: repository.path,
   });
 
   if (isError || !fileData) {
@@ -68,6 +71,7 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
       url: repository.url,
       branch: repository.branch,
       filePath: readmePath,
+      pathPrefix: repository.path,
       template: buildReadmeTemplate(folderTitle),
     });
 

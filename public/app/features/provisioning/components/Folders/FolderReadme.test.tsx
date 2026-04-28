@@ -177,6 +177,24 @@ describe('FolderReadmeContent', () => {
       expect(value).toContain('# Test Folder');
     });
 
+    it('prefixes the create URL with the repository path when configured', () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: { ...mockRepository, path: 'ops/resources' },
+        folder: mockFolder,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        status: 'ready' as never,
+      });
+      mockUseGetRepositoryFilesWithPathQuery.mockReturnValue(emptyQueryResult());
+
+      render(<FolderReadmeContent folderUID="test-folder" />);
+
+      const createLink = screen.getByRole('link', { name: /Create README on GitHub/i });
+      const href = createLink.getAttribute('href') ?? '';
+      expect(new URL(href).searchParams.get('filename')).toBe('ops/resources/dashboards/team-a/README.md');
+    });
+
     it('reports an interaction when the create-on-host button is clicked', async () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
@@ -249,6 +267,30 @@ describe('FolderReadmeContent', () => {
 
       const editLink = screen.getByRole('link', { name: /Edit on GitHub/i });
       expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
+    });
+
+    it('prefixes the edit URL with the repository path when configured', () => {
+      mockUseGetResourceRepositoryView.mockReturnValue({
+        repository: { ...mockRepository, path: 'ops/resources' },
+        folder: mockFolder,
+        isLoading: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        status: 'ready' as never,
+      });
+      mockUseGetRepositoryFilesWithPathQuery.mockReturnValue(
+        emptyQueryResult({
+          data: { resource: { file: { content: '# hi' } } } as never,
+        })
+      );
+
+      render(<FolderReadmeContent folderUID="test-folder" />);
+
+      const editLink = screen.getByRole('link', { name: /Edit on GitHub/i });
+      expect(editLink).toHaveAttribute(
+        'href',
+        'https://github.com/owner/repo/edit/main/ops/resources/dashboards/team-a/README.md'
+      );
     });
 
     it('handles a string file body directly', () => {
