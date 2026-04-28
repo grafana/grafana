@@ -10,6 +10,7 @@ import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { pulseApi } from 'app/features/pulse/api/pulseApi';
 import { type StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -45,6 +46,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         // API clients that are not in the api-clients package
         // Anything here is likely to be deprecated
         publicDashboardApi.middleware,
+        pulseApi.middleware,
         browseDashboardsAPI.middleware,
 
         // Legacy API clients that come from the api-clients package

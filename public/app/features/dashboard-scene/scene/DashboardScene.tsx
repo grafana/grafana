@@ -108,6 +108,7 @@ import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PulseDrawer } from './PulseDrawer';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -987,6 +988,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
+    });
+  }
+
+  public onShowPulseDrawer(panelId?: number) {
+    this.setState({
+      overlay: new PulseDrawer({ panelId }),
     });
   }
 

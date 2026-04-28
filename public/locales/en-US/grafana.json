@@ -6444,6 +6444,10 @@
         "playlist-previous": "Go to previous dashboard",
         "playlist-stop": "Stop playlist",
         "public-dashboard": "Public",
+        "pulse": {
+          "label": "Pulse",
+          "tooltip": "Open Pulse — start or join the conversation about this dashboard"
+        },
         "save-dashboard": {
           "label": "Save",
           "tooltip": "Save changes"
@@ -6464,6 +6468,10 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "pulse": {
+        "label": "Pulse",
+        "tooltip": "Open Pulse — start or join the conversation about this dashboard"
+      },
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
@@ -12587,6 +12595,7 @@
       "more": "More...",
       "new-alert-rule": "New alert rule",
       "paste-styles": "Paste styles",
+      "pulse": "Pulse on this panel",
       "query": "Query",
       "remove": "Remove",
       "replace-library-panel": "Replace library panel",
@@ -14057,6 +14066,49 @@
       "last-active-label": "Last active",
       "origin-label": "Origin",
       "role-label": "Role"
+    }
+  },
+  "pulse": {
+    "composer": {
+      "editor-aria": "Pulse composer",
+      "hint": "Cmd/Ctrl+Enter to send · @user · #panel",
+      "input-aria": "Pulse message",
+      "placeholder": "Pulse on this dashboard… (@ for users, # for panels)",
+      "remove-mention": "Remove mention",
+      "send": "Send pulse"
+    },
+    "drawer": {
+      "back": "Back to threads",
+      "cancel": "Cancel",
+      "empty-body": "Use Pulse to leave context-aware comments on this dashboard. Your team will be notified.",
+      "empty-cta": "Start the first pulse",
+      "empty-title": "Nothing to discuss yet",
+      "loading": "Loading pulses…",
+      "new-thread": "Start a pulse",
+      "start-on-dashboard": "Start a pulse on this dashboard",
+      "start-on-panel": "Start a pulse on panel #{{id}}",
+      "thread-default-title": "Conversation started {{when}}",
+      "thread-meta_one": "{{count}} pulse · last activity {{when}}",
+      "thread-meta_other": "{{count}} pulse · last activity {{when}}",
+      "thread-missing": "Thread not found.",
+      "threads-on-dashboard": "Pulses on this dashboard",
+      "threads-on-panel": "Pulses on panel #{{id}}",
+      "title": "Pulse",
+      "title-panel": "Pulse · panel #{{id}}"
+    },
+    "thread": {
+      "author-bot": "Automation #{{id}}",
+      "author-user": "User #{{id}}",
+      "back": "Back to threads",
+      "delete": "Delete pulse",
+      "delete-cancel": "Cancel",
+      "delete-confirm": "Delete",
+      "edited": "(edited)",
+      "empty": "No pulses yet.",
+      "loading": "Loading…",
+      "reply-placeholder": "Reply… (@ for users, # for panels)",
+      "tombstone": "This pulse was deleted.",
+      "untitled": "Conversation"
     }
   },
   "query": {
