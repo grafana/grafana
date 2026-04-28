@@ -2,6 +2,7 @@ package apierrors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -59,11 +60,9 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
 		},
 		{
-			// Apiserver-wrapped form. errors.Is matches via Unwrap so it
-			// routes to the same 400 branch; message has the errutil prefix.
 			name:  "folder title empty (apiserver wrapped)",
 			input: folder.ErrAPITitleEmpty,
-			want:  response.Error(http.StatusBadRequest, folder.ErrAPITitleEmpty.Error(), nil),
+			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
 		},
 		{
 			name:  "dashboard type mismatch",
@@ -82,8 +81,29 @@ func TestToFolderErrorResponse(t *testing.T) {
 		},
 		{
 			name:  "folder cannot be parent of itself",
-			input: folder.ErrFolderCannotBeParentOfItself.Errorf("folder cannot be parent of itself"),
-			want:  response.Error(http.StatusBadRequest, "[folder.cannot-be-parent-of-itself] folder cannot be parent of itself", nil),
+			input: folder.ErrFolderCannotBeParentOfItself,
+			want:  response.Error(http.StatusBadRequest, "folder cannot be parent of itself", nil),
+		},
+		{
+			name:  "folder cannot be parent of itself (apiserver wrapped)",
+			input: folder.ErrAPIFolderCannotBeParentOfItself,
+			want:  response.Error(http.StatusBadRequest, "folder cannot be parent of itself", nil),
+		},
+		{
+			name:  "invalid uid",
+			input: folder.ErrInvalidUID,
+			want:  response.Error(http.StatusBadRequest, "invalid uid for folder provided", nil),
+		},
+		{
+			name:  "invalid uid (apiserver wrapped)",
+			input: folder.ErrAPIInvalidUID,
+			want:  response.Error(http.StatusBadRequest, "invalid uid for folder provided", nil),
+		},
+		{
+			// Custom-context wrappers (non-errutil) keep their added context.
+			name:  "folder title empty wrapped with custom context",
+			input: fmt.Errorf("save folder: %w", folder.ErrTitleEmpty),
+			want:  response.Error(http.StatusBadRequest, "save folder: folder title cannot be empty", nil),
 		},
 		// --- 403 Forbidden ---
 		{
@@ -224,6 +244,8 @@ func TestErrorsIs_UnwrapsAPIWrappers(t *testing.T) {
 		legacy  error
 	}{
 		{"title empty", folder.ErrAPITitleEmpty, folder.ErrTitleEmpty},
+		{"invalid uid", folder.ErrAPIInvalidUID, folder.ErrInvalidUID},
+		{"folder cannot be parent of itself", folder.ErrAPIFolderCannotBeParentOfItself, folder.ErrFolderCannotBeParentOfItself},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -23,18 +23,22 @@ var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errut
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
-var ErrFolderCannotBeParentOfItself = errutil.BadRequest("folder.cannot-be-parent-of-itself", errutil.WithPublicMessage("Folder cannot be parent of itself"))
-var ErrInvalidUID = errutil.BadRequest("folder.invalid-uid", errutil.WithPublicMessage("Invalid uid for folder provided"))
 
-// TODO: evaluate if we can remove legacy errors and only have wrapped k8s errors
+// TODO: evaluate if we can remove legacy errors and only have k8s ones
+var ErrTitleEmpty = errors.New("folder title cannot be empty")
+var ErrInvalidUID = errors.New("invalid uid for folder provided")
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 var ErrVersionMismatch = errors.New("the folder has been changed by someone else")
 var ErrSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
 var ErrAccessDenied = errors.New("access denied to folder")
 
-// ErrAPITitleEmpty wraps the legacy ErrTitleEmpty error (/api) into an apiserver (/apis) error for it to be handled as 400.
+// Wraps legacy errors (/api) into an apiserver (/apis) error for them to be handled as 400.
 var ErrAPITitleEmpty = errutil.BadRequest("folder.title-empty", errutil.WithPublicMessage("Folder title cannot be empty")).
 	Errorf("%w", ErrTitleEmpty)
-var ErrTitleEmpty = errors.New("folder title cannot be empty")
+var ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid", errutil.WithPublicMessage("Invalid uid for folder provided")).
+	Errorf("%w", ErrInvalidUID)
+var ErrAPIFolderCannotBeParentOfItself = errutil.BadRequest("folder.cannot-be-parent-of-itself", errutil.WithPublicMessage("Folder cannot be parent of itself")).
+	Errorf("%w", ErrFolderCannotBeParentOfItself)
 
 var ErrMoveAccessDenied = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
 var ErrAccessEscalation = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))

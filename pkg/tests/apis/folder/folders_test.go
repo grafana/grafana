@@ -1161,7 +1161,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
-			expectedMessage:        folder.ErrAPITitleEmpty.Error(),
+			expectedMessage:        folder.ErrTitleEmpty.Error(),
 			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
@@ -2474,17 +2474,17 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 		{
 			name:        "title empty",
 			folder:      func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
-			expectedMsg: "[folder.title-empty] folder title cannot be empty",
+			expectedMsg: "folder title cannot be empty",
 		},
 		{
 			name:        "reserved uid",
 			folder:      func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
-			expectedMsg: "[folder.invalid-uid] reserved UID \"general\" cannot be used",
+			expectedMsg: "invalid uid for folder provided",
 		},
 		{
 			name:        "parent of itself",
 			folder:      func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
-			expectedMsg: "[folder.cannot-be-parent-of-itself] folder cannot be parent of itself",
+			expectedMsg: "folder cannot be parent of itself",
 		},
 		{
 			name: "max depth exceeded",

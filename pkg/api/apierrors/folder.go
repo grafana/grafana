@@ -10,11 +10,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// stableFolderErrSentinels are folder errors whose legacy /api/folders message are kept stable.
+var stableFolderErrSentinels = []error{
+	folder.ErrTitleEmpty,
+	folder.ErrInvalidUID,
+	folder.ErrFolderCannotBeParentOfItself,
+}
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
@@ -32,6 +40,14 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
 		errors.Is(err, folder.ErrMaximumDepthReached) ||
 		errors.Is(err, folder.ErrInvalidUID) {
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) {
+			for _, s := range stableFolderErrSentinels {
+				if errors.Is(err, s) {
+					return response.Error(http.StatusBadRequest, s.Error(), nil)
+				}
+			}
+		}
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 

@@ -444,7 +444,7 @@ func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64
 
 	// do not allow the creation of folder with uid "general"
 	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
-		return 0, "", folder.ErrInvalidUID.Errorf("reserved UID %q cannot be used", result.UID)
+		return 0, "", folder.ErrInvalidUID
 	}
 
 	// When we expect folders in unified storage, they should have a manager indicated.

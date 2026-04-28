@@ -65,7 +65,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return folder.ErrInvalidUID.Errorf("reserved UID %q cannot be used", id)
+		return folder.ErrAPIInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -100,7 +100,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	if parentName == f.Name {
-		return folder.ErrFolderCannotBeParentOfItself.Errorf("folder cannot be parent of itself")
+		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
 	// note: `parents` will include itself as the last item
