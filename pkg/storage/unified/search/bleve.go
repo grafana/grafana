@@ -244,17 +244,21 @@ func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
 }
 
 func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
-	// Check index with read-lock first.
-	b.cacheMx.RLock()
-	idx := b.cache[key]
-	b.cacheMx.RUnlock()
-
+	idx := b.peekCachedIndex(key)
 	if idx == nil {
 		return nil
 	}
-
 	idx.lastFetchedFromCache.Store(now.UnixMilli())
 	return idx
+}
+
+// peekCachedIndex returns the cached index for key without refreshing its last-fetched
+// timestamp. Use this from background scans that should not keep unowned indexes alive
+// against eviction in runEvictExpiredOrUnownedIndexes.
+func (b *bleveBackend) peekCachedIndex(key resource.NamespacedResource) *bleveIndex {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+	return b.cache[key]
 }
 
 func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResource) {
@@ -405,14 +409,13 @@ func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
 }
 
 func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
-	now := time.Now()
 	for _, key := range b.GetOpenIndexes() {
-		idx := b.getCachedIndex(key, now)
+		idx := b.peekCachedIndex(key)
 		if idx == nil || idx.indexStorage != indexStorageFile {
 			continue
 		}
 
-		shouldUpload, err := b.shouldUpload(key, idx, now)
+		shouldUpload, err := b.shouldUpload(key, idx, time.Now())
 		if err != nil {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
