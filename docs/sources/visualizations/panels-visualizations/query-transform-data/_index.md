@@ -330,11 +330,11 @@ If the query returns more data points than the max data points setting, then the
 You can limit the number of points to improve query performance or smooth the visualized line.
 The default value is the width (or number of pixels) of the graph, because you can only visualize as many data points as the graph panel has room to display.
 
-Because the default depends on the panel's pixel width, the same dashboard can show different query results depending on the panel's size on screen.
-When you click **View** in the panel menu, the panel expands to fill the window.
-This changes the dashboard's grid layout, and gives the panel more pixels with which to render.
-With more pixels, Grafana can request more data points, which increases the resolution and reduces the step size between points.
-As a result, the same query can return a more detailed series in view mode than inline in the dashboard.
+Because the default is tied to the panel’s pixel width, the same dashboard will always show identical query results regardless of how large the panel appears on screen.
+When you click View in the panel menu, the panel expands to fill the window.
+This keeps the dashboard’s grid layout unchanged, while giving the panel more pixels to render.
+With more pixels, Grafana requests fewer data points, which lowers the resolution and increases the step size between points.
+As a result, the same query can return a less detailed series in view mode than when displayed inline in the dashboard.
 
 To get a consistent query result in both views, set **Max data points** to a fixed value.
 For example, if you set **Max data points** to `100`, Grafana requests at most 100 points regardless of the panel's pixel width, so the query resolution stays the same whether the panel is in the dashboard or in view mode.
