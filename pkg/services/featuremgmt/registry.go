@@ -545,15 +545,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourcesQuerierRawOutput",
-			Description:     "use raw output mode for the data source querier",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: false,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
