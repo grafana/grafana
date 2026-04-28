@@ -15,6 +15,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -79,8 +80,18 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       title = vizPanel.state.title ?? libPanelModel.title;
     }
 
+    const timeRange =
+      libPanelModel.timeFrom || libPanelModel.timeShift
+        ? new PanelTimeRange({
+            timeFrom: libPanelModel.timeFrom,
+            timeShift: libPanelModel.timeShift,
+            hideTimeOverride: libPanelModel.hideTimeOverride,
+          })
+        : undefined;
+
     const vizPanelState: VizPanelState = {
       title,
+      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange),
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
@@ -91,12 +102,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       $data: createPanelDataProvider(libPanelModel),
     };
 
-    if (libPanelModel.timeFrom || libPanelModel.timeShift) {
-      vizPanelState.$timeRange = new PanelTimeRange({
-        timeFrom: libPanelModel.timeFrom,
-        timeShift: libPanelModel.timeShift,
-        hideTimeOverride: libPanelModel.hideTimeOverride,
-      });
+    if (timeRange) {
+      vizPanelState.$timeRange = timeRange;
     }
 
     vizPanel.setState(vizPanelState);
