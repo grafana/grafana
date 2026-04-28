@@ -40,6 +40,8 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   description: 'match the field name',
   defaultOptions: '',
 
+  validateOptions: (options): options is string => typeof options === 'string',
+
   get: (name: string): FieldMatcher => {
     const uniqueNames = new Set<string>([name]);
 

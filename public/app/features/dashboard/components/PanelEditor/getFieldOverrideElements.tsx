@@ -8,6 +8,7 @@ import {
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
+  areMatcherOptionsValid,
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
@@ -96,7 +97,21 @@ export function getFieldOverrideCategories(
       overrideNum: idx + 1,
     });
     const overrideId = `panel-options-override-${idx}`;
-    const matcherUi = fieldMatchersUI.get(override.matcher.id);
+    const matcherUi = fieldMatchersUI.getIfExists(override.matcher.id);
+
+    if (!matcherUi) {
+      console.warn(`Unknown field matcher id: "${override.matcher.id}", skipping override rule`);
+      continue;
+    }
+
+    if (!areMatcherOptionsValid(matcherUi.matcher, override.matcher.options)) {
+      console.warn(
+        `Invalid options for field matcher "${override.matcher.id}", skipping override rule`,
+        override.matcher.options
+      );
+      continue;
+    }
+
     const configPropertiesOptions = registry.selectOptions(
       undefined,
       (item) => !item.hideFromOverrides,

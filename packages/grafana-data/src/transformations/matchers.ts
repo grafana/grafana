@@ -102,3 +102,10 @@ export function getValueMatcher(config: MatcherConfig): ValueMatcher {
   }
   return info.get(config.options);
 }
+
+export function areMatcherOptionsValid<TOptions>(
+  matcher: FieldMatcherInfo<TOptions> | FrameMatcherInfo<TOptions>,
+  options: unknown
+): options is TOptions {
+  return matcher.validateOptions ? matcher.validateOptions(options) : true;
+}

@@ -284,6 +284,7 @@ export {
   getFieldMatcher,
   getFrameMatchers,
   getValueMatcher,
+  areMatcherOptionsValid,
 } from './transformations/matchers';
 export { type FieldValueMatcherConfig } from './transformations/matchers/fieldValueMatcher';
 export { DataTransformerID } from './transformations/transformers/ids';

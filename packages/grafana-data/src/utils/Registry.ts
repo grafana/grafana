@@ -29,6 +29,14 @@ export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
    * Default options used if nothing else is specified
    */
   defaultOptions?: TOptions;
+
+  /**
+   * Optional runtime type guard for `options`. Used by `areMatcherOptionsValid`
+   * to drop malformed configs (wrong shape from old/foreign authors, schema
+   * drift, etc.). Implement only when `get(options)` would crash or silently
+   * misbehave on a bad shape; otherwise leave undefined and accept anything.
+   */
+  validateOptions?: (options: unknown) => options is TOptions;
 }
 
 interface RegistrySelectInfo {

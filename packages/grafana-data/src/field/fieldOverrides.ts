@@ -10,7 +10,7 @@ import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDat
 import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
-import { fieldMatchers } from '../transformations/matchers';
+import { areMatcherOptionsValid, fieldMatchers } from '../transformations/matchers';
 import { type ScopedVars, type DataContextScopedVar } from '../types/ScopedVars';
 import {
   type DataFrame,
@@ -121,10 +121,19 @@ export function applyFieldOverrides(
       if ((rule.matcher.scope ?? 'series') !== scope) {
         continue;
       }
+
       const info = fieldMatchers.getIfExists(rule.matcher.id);
 
       if (!info) {
         console.warn(`Unknown field matcher id: "${rule.matcher.id}", skipping override rule`);
+        continue;
+      }
+
+      if (!areMatcherOptionsValid(info, rule.matcher.options)) {
+        console.warn(
+          `Invalid options for field matcher "${rule.matcher.id}", skipping override rule`,
+          rule.matcher.options
+        );
         continue;
       }
 
