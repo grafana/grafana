@@ -162,7 +162,17 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
   const ownerReference = teams.map(teamOwnerRef);
 
   const result = await dispatch(
-    dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate({ ownerReference, type: 'folder' })
+    dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(
+      {
+        ownerReference,
+        type: 'folder',
+      },
+      {
+        // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need this
+        // not to be cached.
+        forceRefetch: true,
+      }
+    )
   ).unwrap();
 
   const hits = result.hits ?? [];

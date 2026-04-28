@@ -63,6 +63,13 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+/**
+ * Refetches children of a folder after changes that should be reflected in the redux state which is then rendered
+ * in the dashboard browse page.
+ *
+ * For this to work properly the requests have to be uncached themselves here so make sure any RTK query used here
+ * does not use builtin cache.
+ */
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {

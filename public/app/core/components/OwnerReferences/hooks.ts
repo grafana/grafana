@@ -1,5 +1,9 @@
 import { useUpdateFolderMutation, useGetFolderQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { dispatch } from 'app/store/store';
 
 /**
  * Get the owner references for a resource.
@@ -21,8 +25,8 @@ export const useGetOwnerReferences = ({ resourceId }: { resourceId: string }) =>
 export const useSetOwnerReference = ({ resourceId }: { resourceId: string }) => {
   const [updateFolder, result] = useUpdateFolderMutation();
   return [
-    (ownerReference: OwnerReference) =>
-      updateFolder({
+    async (ownerReference: OwnerReference) => {
+      const folderResult = updateFolder({
         name: resourceId,
         patch: [
           {
@@ -31,7 +35,12 @@ export const useSetOwnerReference = ({ resourceId }: { resourceId: string }) => 
             value: [ownerReference],
           },
         ],
-      }),
+      });
+      await folderResult;
+      // This updates browse dashboards page.
+      dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+      return folderResult;
+    },
     result,
   ] as const;
 };
@@ -44,8 +53,8 @@ export const useSetOwnerReference = ({ resourceId }: { resourceId: string }) => 
 export const useRemoveOwnerReferences = ({ resourceId }: { resourceId: string }) => {
   const [updateFolder, result] = useUpdateFolderMutation();
   return [
-    () => {
-      return updateFolder({
+    async () => {
+      const folderResult = updateFolder({
         name: resourceId,
         patch: [
           {
@@ -54,6 +63,10 @@ export const useRemoveOwnerReferences = ({ resourceId }: { resourceId: string })
           },
         ],
       });
+      await folderResult;
+      // This updates browse dashboards page.
+      dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+      return folderResult;
     },
     result,
   ] as const;

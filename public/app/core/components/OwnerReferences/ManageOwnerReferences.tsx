@@ -34,13 +34,13 @@ export const ManageOwnerReferences = ({
       });
 
       if (!ownerRef) {
-        await removeOwnerReference().unwrap();
+        await removeOwnerReference();
         notify.success(t('manage-owner-references.folder-owner-removed', 'Folder owner removed'));
         onSave();
         return;
       }
 
-      await setOwnerReference(ownerRef).unwrap();
+      await setOwnerReference(ownerRef);
       notify.success(t('manage-owner-references.folder-owner-updated', 'Folder owner updated'));
       setOwnerRef(null);
       onSave();
