@@ -826,18 +826,25 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 	return panel
 }
 
-// readV2QueryExpression pulls the query expression and refId out of one v2
-// queries[] entry. The v2 schema (matching what grafana-assistant-app's
-// extractor reads) puts the expression at m.spec.query.spec.<expr> with
-// refId on m.spec. Falls back to m.spec.<expr> and m.<expr> for variants.
+// readV2QueryExpression pulls the query expression, refId, and datasource
+// reference out of one v2 queries[] entry. The v2 schema (matching what
+// grafana-assistant-app's extractor reads) puts the expression at
+// m.spec.query.spec.<expr> with refId on m.spec and datasource at
+// m.spec.query.datasource. The datasource ref carries `name` (v2 references
+// datasources by name); we put whatever identifier is present into
+// DatasourceUID so consumers can map each query back to its datasource.
+// Falls back to m.spec.<expr> / m.<expr> with corresponding datasource paths.
 func readV2QueryExpression(m map[string]any) PanelQueryInfo {
 	if specMap, _ := m["spec"].(map[string]any); specMap != nil {
 		var q PanelQueryInfo
 		if rid, _ := specMap["refId"].(string); rid != "" {
 			q.RefID = rid
 		}
-		// Schema path: m.spec.query.spec.<expr>
+		// Schema path: m.spec.query.spec.<expr>, datasource at m.spec.query.datasource.
 		if query, _ := specMap["query"].(map[string]any); query != nil {
+			if ds, _ := query["datasource"].(map[string]any); ds != nil {
+				q.DatasourceUID = pickDatasourceRef(ds)
+			}
 			if qspec, _ := query["spec"].(map[string]any); qspec != nil {
 				if expr := pickExpression(qspec); expr != "" {
 					q.Expression = expr
@@ -845,14 +852,35 @@ func readV2QueryExpression(m map[string]any) PanelQueryInfo {
 				}
 			}
 		}
-		// Variant: m.spec.<expr>
+		// Variant: m.spec.<expr> with datasource at m.spec.datasource.
+		if q.DatasourceUID == "" {
+			if ds, _ := specMap["datasource"].(map[string]any); ds != nil {
+				q.DatasourceUID = pickDatasourceRef(ds)
+			}
+		}
 		if expr := pickExpression(specMap); expr != "" {
 			q.Expression = expr
 			return q
 		}
 	}
-	// Flat fallback: m.<expr>
-	return PanelQueryInfo{Expression: pickExpression(m)}
+	// Flat fallback: m.<expr> with datasource at m.datasource.
+	q := PanelQueryInfo{Expression: pickExpression(m)}
+	if ds, _ := m["datasource"].(map[string]any); ds != nil {
+		q.DatasourceUID = pickDatasourceRef(ds)
+	}
+	return q
+}
+
+// pickDatasourceRef returns whichever identifier a datasource ref carries,
+// preferring `uid` (v1-style or denormalized) over `name` (schema-correct v2).
+func pickDatasourceRef(ds map[string]any) string {
+	if uid, _ := ds["uid"].(string); uid != "" {
+		return uid
+	}
+	if name, _ := ds["name"].(string); name != "" {
+		return name
+	}
+	return ""
 }
 
 func pickExpression(m map[string]any) string {

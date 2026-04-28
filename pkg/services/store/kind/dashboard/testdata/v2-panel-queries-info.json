@@ -24,6 +24,7 @@
       "queries": [
         {
           "refId": "A",
+          "datasourceUid": "my-prom",
           "expression": "rate(http_requests_total[5m])"
         }
       ]
@@ -41,6 +42,7 @@
       "queries": [
         {
           "refId": "A",
+          "datasourceUid": "my-loki",
           "expression": "{app=\"api\"} |= \"error\""
         }
       ]
