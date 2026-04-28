@@ -106,7 +106,10 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     if (!folderDTO) {
       return undefined;
     }
-    const model = buildNavModel(folderDTO);
+    // Treat the folder as provisioned whenever the provisioning view sees a
+    // repository for it, even if the folder DTO itself doesn't carry the
+    // managed-by annotation (true for repo-root folders).
+    const model = buildNavModel(folderDTO, undefined, { isProvisionedFolder: !!repository });
 
     // Set the "Dashboards" tab to active
     const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
@@ -115,7 +118,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       dashboardsTab.active = true;
     }
     return model;
-  }, [folderDTO]);
+  }, [folderDTO, repository]);
 
   const hasSelection = useHasSelection();
 

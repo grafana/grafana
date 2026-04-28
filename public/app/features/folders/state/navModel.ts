@@ -16,9 +16,24 @@ export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folder
 export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+interface BuildNavModelOptions {
+  /**
+   * Treat the folder as provisioned regardless of `folder.managedBy`. Useful
+   * when the caller has stronger context (e.g. provisioning settings tell us
+   * the folder is the repository root or a sub-folder of a repo, even when
+   * the folder DTO doesn't carry the manager annotation).
+   */
+  isProvisionedFolder?: boolean;
+}
+
+export function buildNavModel(
+  folder: FolderDTO | FolderParent,
+  parentsArg?: FolderParent[],
+  options: BuildNavModelOptions = {}
+): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
-  const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
+  const detectedProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
+  const isProvisioned = options.isProvisionedFolder ?? detectedProvisioned;
 
   const children: NavModelItem[] = [];
 

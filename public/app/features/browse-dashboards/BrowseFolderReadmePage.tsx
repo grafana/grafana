@@ -21,7 +21,7 @@ export function BrowseFolderReadmePage() {
   const { uid: folderUID = '' } = useParams();
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
-  const { repoType, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
+  const { repoType, isReadOnlyRepo, repository } = useGetResourceRepositoryView({ folderName: folderUID });
 
   // Fire one tab-view event per folder once the repository type is known.
   const reportedFolderUID = useRef<string | null>(null);
@@ -39,7 +39,7 @@ export function BrowseFolderReadmePage() {
     if (!folderDTO) {
       return undefined;
     }
-    const model = buildNavModel(folderDTO);
+    const model = buildNavModel(folderDTO, undefined, { isProvisionedFolder: !!repository });
 
     const readmeTabID = getReadmeTabID(folderDTO.uid);
     const readmeTab = model.children?.find((child) => child.id === readmeTabID);
@@ -47,7 +47,7 @@ export function BrowseFolderReadmePage() {
       readmeTab.active = true;
     }
     return model;
-  }, [folderDTO]);
+  }, [folderDTO, repository]);
 
   const isProvisionedFolder = folderDTO?.managedBy === ManagerKind.Repo;
 
