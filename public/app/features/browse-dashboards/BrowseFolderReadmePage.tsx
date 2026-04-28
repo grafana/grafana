@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { reportInteraction } from '@grafana/runtime';
+import { Stack, Text } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { FolderRepo } from 'app/core/components/NestedFolderPicker/FolderRepo';
 import { Page } from 'app/core/components/Page/Page';
 
 import { type GrafanaRouteComponentProps } from '../../core/navigation/types';
@@ -49,6 +51,15 @@ export function BrowseFolderReadmePage() {
 
   const isProvisionedFolder = folderDTO?.managedBy === ManagerKind.Repo;
 
+  const renderTitle = folderDTO
+    ? (title: string) => (
+        <Stack alignItems="center" gap={2}>
+          <Text element="h1">{title}</Text>
+          <FolderRepo folder={folderDTO} />
+        </Stack>
+      )
+    : undefined;
+
   const onEditTitle =
     folderUID && !isProvisionedFolder
       ? async (newValue: string) => {
@@ -69,6 +80,7 @@ export function BrowseFolderReadmePage() {
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={onEditTitle}
+      renderTitle={renderTitle}
       actions={
         folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />
       }
