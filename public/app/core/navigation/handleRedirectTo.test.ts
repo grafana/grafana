@@ -12,7 +12,6 @@ describe('handleRedirectTo', () => {
   const originalGetSearch = locationService.getSearch;
   const originalIsSignedIn = contextSrv.user.isSignedIn;
   const originalOrgId = contextSrv.user.orgId;
-  const originalCanParse = URL.canParse;
 
   beforeEach(() => {
     sessionStorage.clear();
@@ -37,17 +36,6 @@ describe('handleRedirectTo', () => {
     mockLocationService.replace = jest.fn();
     mockLocationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
 
-    // JSDOM in this test environment does not provide URL.canParse(), but the production code uses it.
-    // Mirror the browser behavior so these tests exercise the real same-origin/orgId branch.
-    URL.canParse = (url, base) => {
-      try {
-        new URL(url, base);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
     contextSrv.user.isSignedIn = false;
     contextSrv.user.orgId = 1;
   });
@@ -58,7 +46,6 @@ describe('handleRedirectTo', () => {
     contextSrv.user.isSignedIn = originalIsSignedIn;
     contextSrv.user.orgId = originalOrgId;
     Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
-    URL.canParse = originalCanParse;
     jest.restoreAllMocks();
   });
 

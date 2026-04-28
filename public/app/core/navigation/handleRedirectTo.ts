@@ -41,23 +41,25 @@ export function handleRedirectTo(): void {
     return;
   }
 
-  if (URL.canParse(decodedRedirectTo, window.location.origin)) {
-    const redirectUrl = new URL(decodedRedirectTo, window.location.origin);
+  let redirectUrl: URL | undefined;
 
-    // Only allow same-origin redirects to avoid an open redirect via the redirectTo query param.
-    // Note that `window.location.origin` is only used in `new URL()` if the first param isn't
-    // an absolute URL.
-    if (redirectUrl.origin === window.location.origin) {
-      const redirectOrgId = redirectUrl.searchParams.get('orgId');
+  try {
+    redirectUrl = new URL(decodedRedirectTo, window.location.origin);
+  } catch {}
 
-      if (redirectOrgId) {
-        const targetOrgId = Number(redirectOrgId);
+  // Only allow same-origin redirects to avoid an open redirect via the redirectTo query param.
+  // Note that `window.location.origin` is only used in `new URL()` if the first param isn't
+  // an absolute URL.
+  if (redirectUrl?.origin === window.location.origin) {
+    const redirectOrgId = redirectUrl.searchParams.get('orgId');
 
-        if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
-          const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
-          window.location.replace(urlToRedirectTo);
-          return;
-        }
+    if (redirectOrgId) {
+      const targetOrgId = Number(redirectOrgId);
+
+      if (Number.isFinite(targetOrgId) && targetOrgId !== contextSrv.user.orgId) {
+        const urlToRedirectTo = locationUtil.assureBaseUrl(decodedRedirectTo);
+        window.location.replace(urlToRedirectTo);
+        return;
       }
     }
   }
