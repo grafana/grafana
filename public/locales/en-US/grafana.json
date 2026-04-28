@@ -14285,6 +14285,10 @@
     "buttons": {
       "restore": "Restore"
     },
+    "limit-banner": {
+      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
+      "at-limit-title": "Deleted dashboards limit reached"
+    },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
       "no-deleted-dashboards-text": "When you delete a dashboard, it will be kept in the history for up to 12 months before being permanently deleted. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
