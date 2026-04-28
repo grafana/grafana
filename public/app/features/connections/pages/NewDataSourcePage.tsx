@@ -1,8 +1,16 @@
+import { useEffect } from 'react';
+
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { NewDataSource } from 'app/features/datasources/components/NewDataSource';
 
 export function NewDataSourcePage() {
+  // CUJ-only signal: starts datasource_configure journey when page loads directly
+  useEffect(() => {
+    reportInteraction('connections_new_datasource_page_view', {}, { silent: true });
+  }, []);
+
   return (
     <Page
       navId={'connections-datasources'}
