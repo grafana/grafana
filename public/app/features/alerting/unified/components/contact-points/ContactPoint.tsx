@@ -28,7 +28,7 @@ import {
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
-  /** Alerts Activity instance drawer: open-configuration / view-details in new tab with embed styling. */
+  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
   instanceDrawerEmbed?: boolean;
 }
 
@@ -101,7 +101,10 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   );
 };
 
-/** Full integration rows (icon, routing summary, delivery diagnostics) — shared with instance drawer. */
+/**
+ * Renders each integration for the notifications list card; shares {@link ContactPointReceiverMetadataRow}
+ * with the instance drawer integration section (different layout component).
+ */
 export function ContactPointIntegrationRows({ contactPoint }: { contactPoint: ContactPointWithMetadata }) {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
 

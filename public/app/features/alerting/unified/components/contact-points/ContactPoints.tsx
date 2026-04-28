@@ -273,7 +273,7 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   pageSize?: number;
-  /** Alerts Activity instance drawer contact point list. */
+  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
   instanceDrawerEmbed?: boolean;
   /**
    * If the search string matches nothing (e.g. stale title after rename) but receivers exist,

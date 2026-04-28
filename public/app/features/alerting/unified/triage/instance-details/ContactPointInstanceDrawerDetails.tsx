@@ -15,9 +15,6 @@ export interface ContactPointInstanceDrawerDetailsProps {
   contactPoint: ContactPointWithMetadata;
 }
 
-/**
- * Contact point body for the alert instance drawer — avoids the notifications page card chrome and duplicate title.
- */
 export function ContactPointInstanceDrawerDetails({ contactPoint }: ContactPointInstanceDrawerDetailsProps) {
   const { selectedAlertmanager } = useAlertmanager();
   const [deleteTrigger] = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
