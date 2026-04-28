@@ -923,15 +923,15 @@
       "button-view-details": "View details",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
-      "label-delete": "Delete",
-      "label-manage-permissions": "Manage permissions",
-      "tooltip-history": "View the history of notification attempts made to this contact point",
-      "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI",
       "integration-heading": "{{name}} · {{type}}",
       "label-addresses": "Addresses",
+      "label-delete": "Delete",
       "label-destination": "Destination",
+      "label-manage-permissions": "Manage permissions",
       "label-notifier-diagnostics": "Notifier status (diagnostics)",
-      "label-receiver-meta-description": "Description"
+      "label-receiver-meta-description": "Description",
+      "tooltip-history": "View the history of notification attempts made to this contact point",
+      "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-instance-drawer": {
       "aria-usage-policies": "Open notification policies that use this contact point",
@@ -977,6 +977,8 @@
       "receiver-summary": {
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
       },
+      "search-fallback-body": "No contact point matched \\\"{{term}}\\\" (for example the name may have changed). Showing all contact points.",
+      "search-fallback-title": "Filter had no matches",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
@@ -1143,7 +1145,6 @@
       "tooltip-expand-row": "Expand row"
     },
     "edit-contact-point": {
-      "receiver-not-found-body": "Sorry, this contact point does not seem to exist.",
       "text-loading": "Loading...",
       "title-failed-to-fetch-contact-point": "Failed to fetch contact point",
       "title-receiver-not-found": "Receiver not found"
