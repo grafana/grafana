@@ -139,10 +139,19 @@ jobs:
     permissions:
       contents: read
       id-token: write
+
     steps:
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+
+      # /v1/ci/data/repo/grafana/grafana/meticulous-ui | api-token
       - name: Run Meticulous tests
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
-          api-token: ${{ secrets.METICULOUS_API_TOKEN }}
+          api-token: ${{ env.METICULOUS_API_TOKEN }}
           image-tag: ${{ needs.push-docker-image.outputs.IMAGE }}
           container-port: 3000
