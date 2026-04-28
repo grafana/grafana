@@ -177,7 +177,7 @@ export function resourceToSearchResult(
 
     const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
     if (deletedByUid) {
-      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? deletedByUid;
+      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
     }
 
     const hit = {

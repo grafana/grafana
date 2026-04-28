@@ -159,12 +159,12 @@ function makeResourceList(items: Array<Resource<DashboardDataDTO>>): ResourceLis
 }
 
 describe('resourceToSearchResult', () => {
-  it('extracts the grafana.app/updatedBy annotation as field.deletedBy', () => {
+  it('falls back to DELETED_BY_UNKNOWN when no display map is provided', () => {
     const list = makeResourceList([makeDeletedItem({ name: 'a', deletedByUid: 'user:alice' })]);
 
     const [hit] = resourceToSearchResult(list);
 
-    expect(hit.field.deletedBy).toBe('user:alice');
+    expect(hit.field.deletedBy).toBe(DELETED_BY_UNKNOWN);
   });
 
   it('leaves field.deletedBy unset when the annotation is missing', () => {
