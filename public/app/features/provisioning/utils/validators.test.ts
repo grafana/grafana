@@ -1,4 +1,4 @@
-import { validateNoHiddenCharacters } from './validators';
+import { validateNoHiddenCharacters, validateNoUserInfoInUrl } from './validators';
 
 describe('validateNoHiddenCharacters', () => {
   // Should pass for valid inputs
@@ -79,5 +79,63 @@ describe('validateNoHiddenCharacters', () => {
 
   it('returns error for en space (U+2002)', () => {
     expect(validateNoHiddenCharacters('abc\u2002def')).toEqual(expect.stringContaining('hidden'));
+  });
+});
+
+describe('validateNoUserInfoInUrl', () => {
+  // Valid inputs
+  it('returns true for a clean HTTPS URL', () => {
+    expect(validateNoUserInfoInUrl('https://github.com/owner/repo')).toBe(true);
+  });
+
+  it('returns true for a URL with @ in the path (not userinfo)', () => {
+    expect(validateNoUserInfoInUrl('https://github.com/owner@scope/repo')).toBe(true);
+  });
+
+  it('returns true for empty string', () => {
+    expect(validateNoUserInfoInUrl('')).toBe(true);
+  });
+
+  it('returns true for undefined', () => {
+    expect(validateNoUserInfoInUrl(undefined)).toBe(true);
+  });
+
+  it('returns true for malformed URL (defers to pattern)', () => {
+    expect(validateNoUserInfoInUrl('not a url')).toBe(true);
+  });
+
+  it('returns true for whitespace-only string', () => {
+    expect(validateNoUserInfoInUrl('   ')).toBe(true);
+  });
+
+  // Invalid inputs
+  it('returns error for URL with username and password', () => {
+    expect(validateNoUserInfoInUrl('https://user:token@github.com/owner/repo')).toEqual(
+      expect.stringContaining('must not include a username or password')
+    );
+  });
+
+  it('returns error for URL with username only', () => {
+    expect(validateNoUserInfoInUrl('https://user@github.com/owner/repo')).toEqual(
+      expect.stringContaining('must not include a username or password')
+    );
+  });
+
+  it('returns error for URL with password only (empty username)', () => {
+    expect(validateNoUserInfoInUrl('https://:token@github.com/owner/repo')).toEqual(
+      expect.stringContaining('must not include a username or password')
+    );
+  });
+
+  it('returns error for URL-encoded credentials', () => {
+    expect(validateNoUserInfoInUrl('https://user:%24TOKEN@github.com/owner/repo')).toEqual(
+      expect.stringContaining('must not include a username or password')
+    );
+  });
+
+  it('returns error for URL with leading/trailing whitespace around credentials', () => {
+    expect(validateNoUserInfoInUrl('  https://user:token@github.com/owner/repo  ')).toEqual(
+      expect.stringContaining('must not include a username or password')
+    );
   });
 });
