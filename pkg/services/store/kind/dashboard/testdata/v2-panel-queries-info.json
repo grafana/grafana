@@ -6,10 +6,6 @@
   ],
   "datasource": [
     {
-      "uid": "prom-flat",
-      "type": "prometheus"
-    },
-    {
       "uid": "my-prom"
     },
     {
@@ -48,24 +44,6 @@
           "refId": "A",
           "datasourceUid": "my-loki",
           "expression": "{app=\"api\"} |= \"error\""
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "title": "Flat-shape query (legacy)",
-      "type": "TimeseriesPanel",
-      "datasource": [
-        {
-          "uid": "prom-flat",
-          "type": "prometheus"
-        }
-      ],
-      "queries": [
-        {
-          "refId": "B",
-          "datasourceUid": "prom-flat",
-          "expression": "up"
         }
       ]
     }

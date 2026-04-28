@@ -59,26 +59,6 @@
             }
           }
         }
-      },
-      "panel-c": {
-        "kind": "Panel",
-        "spec": {
-          "id": 3,
-          "title": "Flat-shape query (legacy)",
-          "vizConfig": { "kind": "TimeseriesPanel", "spec": {} },
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "refId": "B",
-                  "datasource": { "uid": "prom-flat", "type": "prometheus" },
-                  "expr": "up"
-                }
-              ]
-            }
-          }
-        }
       }
     },
     "layout": { "kind": "GridLayout", "spec": {} }
