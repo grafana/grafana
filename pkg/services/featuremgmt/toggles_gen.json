@@ -1046,6 +1046,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorBatchAPI",
+        "resourceVersion": "1782267315125",
+        "creationTimestamp": "2026-06-24T02:15:15Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-24T13:32:09Z"

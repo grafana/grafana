@@ -27,6 +27,7 @@ declare module "@openfeature/core" {
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
+    | "azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
