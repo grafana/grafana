@@ -1,9 +1,10 @@
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneVariableSet, type SceneVariable, UrlSyncContextProvider } from '@grafana/scenes';
 import { type VariableKind, defaultCustomVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button, ConfirmModal, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
@@ -28,6 +29,15 @@ import {
 } from 'app/features/dashboard-scene/utils/globalDashboardVariables';
 
 import { GlobalDashboardVariablesTable } from './GlobalDashboardVariablesTable';
+
+type FolderItemDTO = {
+  uid: string;
+  title: string;
+  managedBy?: string;
+};
+
+type FolderInfoByUid = Record<string, FolderItemDTO>;
+type RouteParams = { variableName?: string };
 
 function isVariableKindSpec(spec: unknown): spec is VariableKind {
   return typeof spec === 'object' && spec !== null && 'kind' in spec && 'spec' in spec;
@@ -60,7 +70,24 @@ function validateGlobalVariableName(name: string): string | undefined {
   return undefined;
 }
 
+async function listAllFolders(): Promise<FolderInfoByUid> {
+  const limit = 50;
+  let page = 1;
+  const byUid: FolderInfoByUid = {};
+  while (true) {
+    const folders = await getBackendSrv().get<FolderItemDTO[]>('/api/folders', { page, limit });
+    for (const folder of folders) {
+      byUid[folder.uid] = folder;
+    }
+    if (folders.length < limit) {
+      return byUid;
+    }
+    page += 1;
+  }
+}
+
 export default function GlobalDashboardVariablesPage() {
+  const { variableName } = useParams<RouteParams>();
   // The k8s client bakes the resolved API version into its URL at construction time
   // (ScopedResourceClient caches `this.url`). `dashboardAPIVersionResolver.getV2()`
   // returns a beta fallback when the resolver hasn't run yet — which is exactly the
@@ -69,8 +96,10 @@ export default function GlobalDashboardVariablesPage() {
   // where the backend actually registers the Variables resource (v2).
   const [client, setClient] = useState<ReturnType<typeof getDashboardVariablesK8sClient> | null>(null);
   const [items, setItems] = useState<Array<Resource<VariableKind>>>([]);
+  const [foldersByUid, setFoldersByUid] = useState<FolderInfoByUid>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string>();
+  const [routeError, setRouteError] = useState<string>();
   const [editing, setEditing] = useState<Resource<VariableKind> | 'new' | null>(null);
   const [folderUid, setFolderUid] = useState<string | undefined>();
   const [variableScene, setVariableScene] = useState<SceneVariable | null>(null);
@@ -80,6 +109,48 @@ export default function GlobalDashboardVariablesPage() {
     () => (variableScene ? new SceneVariableSet({ variables: [variableScene] }) : null),
     [variableScene]
   );
+  const titleCollator = useMemo(() => new Intl.Collator(), []);
+  const tableGroups = useMemo(() => {
+    const orgVariables: Array<Resource<VariableKind>> = [];
+    const variablesByFolder = new Map<string, Array<Resource<VariableKind>>>();
+
+    for (const item of items) {
+      const folderUid = item.metadata.labels?.[VARIABLE_FOLDER_LABEL_KEY];
+      if (!folderUid) {
+        orgVariables.push(item);
+        continue;
+      }
+
+      const folderInfo = foldersByUid[folderUid];
+      if (folderInfo?.managedBy) {
+        continue;
+      }
+
+      const list = variablesByFolder.get(folderUid) ?? [];
+      list.push(item);
+      variablesByFolder.set(folderUid, list);
+    }
+
+    const folderGroups = Array.from(variablesByFolder.entries())
+      .map(([folderUid, variables]) => ({
+        id: `folder:${folderUid}`,
+        title:
+          foldersByUid[folderUid]?.title ??
+          t('global-variables.table.folder-fallback', 'Folder: {{uid}}', { uid: folderUid }),
+        variables,
+      }))
+      .sort((a, b) => titleCollator.compare(a.title, b.title));
+
+    if (orgVariables.length > 0) {
+      folderGroups.unshift({
+        id: 'org',
+        title: t('global-variables.table.organization', 'Organization'),
+        variables: orgVariables,
+      });
+    }
+
+    return folderGroups;
+  }, [items, foldersByUid, titleCollator]);
 
   useEffect(() => {
     if (!config.featureToggles.globalDashboardVariables) {
@@ -106,8 +177,9 @@ export default function GlobalDashboardVariablesPage() {
     setLoading(true);
     setLoadError(undefined);
     try {
-      const rsp = await client.list({});
+      const [rsp, folders] = await Promise.all([client.list({}), listAllFolders().catch(() => ({}))]);
       setItems(rsp.items);
+      setFoldersByUid(folders);
     } catch (e) {
       setLoadError(String(e));
     } finally {
@@ -122,6 +194,39 @@ export default function GlobalDashboardVariablesPage() {
     reloadList();
   }, [client, reloadList]);
 
+  useEffect(() => {
+    if (!variableName) {
+      setRouteError(undefined);
+      if (editing && editing !== 'new') {
+        setEditing(null);
+        setVariableScene(null);
+        setFolderUid(undefined);
+      }
+      return;
+    }
+
+    if (loading) {
+      return;
+    }
+
+    const row = items.find((item) => item.metadata.name === variableName);
+    if (!row) {
+      setRouteError(
+        t('global-variables.page.variable-not-found', 'Variable "{{name}}" was not found.', {
+          name: variableName,
+        })
+      );
+      setEditing(null);
+      setVariableScene(null);
+      return;
+    }
+
+    setRouteError(undefined);
+    if (editing === 'new' || editing?.metadata.name !== row.metadata.name) {
+      startEdit(row);
+    }
+  }, [editing, items, loading, variableName]);
+
   const openNew = () => {
     setFolderUid(undefined);
     const kind = defaultCustomVariableKind();
@@ -132,7 +237,7 @@ export default function GlobalDashboardVariablesPage() {
     setEditing('new');
   };
 
-  const openEdit = (row: Resource<VariableKind>) => {
+  const startEdit = (row: Resource<VariableKind>) => {
     if (!isVariableKindSpec(row.spec)) {
       return;
     }
@@ -141,6 +246,11 @@ export default function GlobalDashboardVariablesPage() {
     const v = createSceneVariableFromVariableModel(spec);
     setVariableScene(v);
     setEditing(row);
+  };
+
+  const openEdit = (row: Resource<VariableKind>) => {
+    locationService.push(`/dashboard/variables/${encodeURIComponent(row.metadata.name)}`);
+    startEdit(row);
   };
 
   const onTypeChange = (type: EditableVariableType) => {
@@ -170,9 +280,14 @@ export default function GlobalDashboardVariablesPage() {
     }
     kind = stripSpecOrigin(kind);
 
-    const annotations: Record<string, string> = {
-      ...(editing !== 'new' && editing && editing !== 'new' ? editing.metadata.annotations : {}),
-    };
+    const annotations: Record<string, string> = {};
+    if (editing && editing !== 'new') {
+      for (const [key, value] of Object.entries(editing.metadata.annotations ?? {})) {
+        if (typeof value === 'string') {
+          annotations[key] = value;
+        }
+      }
+    }
     if (folderUid) {
       annotations[AnnoKeyFolder] = folderUid;
     } else {
@@ -190,7 +305,7 @@ export default function GlobalDashboardVariablesPage() {
           },
           spec: kind,
         });
-      } else if (editing && editing !== 'new') {
+      } else if (editing) {
         const row = editing;
         await client.update({
           ...row,
@@ -203,6 +318,7 @@ export default function GlobalDashboardVariablesPage() {
       }
       setEditing(null);
       setVariableScene(null);
+      locationService.push('/dashboard/variables');
       await reloadList();
     } catch (e) {
       console.error(e);
@@ -224,7 +340,7 @@ export default function GlobalDashboardVariablesPage() {
 
   if (!config.featureToggles.globalDashboardVariables) {
     return (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas}>
+      <Page navId="dashboards/browse" layout={PageLayoutType.Standard} className="">
         <Page.Contents>
           <Alert title={t('global-variables.page.disabled', 'Feature disabled')} severity="info">
             {t(
@@ -239,7 +355,7 @@ export default function GlobalDashboardVariablesPage() {
 
   if (!contextSrv.isEditor) {
     return (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas}>
+      <Page navId="dashboards/browse" layout={PageLayoutType.Standard}>
         <Page.Contents>
           <Alert title={t('global-variables.page.access-denied', 'Access denied')} severity="error">
             {t('global-variables.page.editor-only', 'Only editors and administrators can manage global variables.')}
@@ -251,12 +367,21 @@ export default function GlobalDashboardVariablesPage() {
 
   const pageNav = {
     text: t('global-variables.page.nav', 'Variables'),
+    url: '/dashboard/variables',
     subTitle: t('global-variables.page.subtitle', 'Organization and folder-scoped dashboard variables'),
   };
+  const detailPageNav =
+    editing && editing !== 'new'
+      ? {
+          text: editing.spec.spec.name ?? editing.metadata.name,
+          url: `/dashboard/variables/${encodeURIComponent(editing.metadata.name)}`,
+          parentItem: pageNav,
+        }
+      : pageNav;
 
   if (editing && variableScene && variableSet) {
     return (
-      <Page navId="dashboards/variables" pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <Page navId="dashboards/variables" pageNav={detailPageNav} layout={PageLayoutType.Standard}>
         <Page.Contents>
           <Stack direction="column" gap={2}>
             <div>
@@ -281,6 +406,7 @@ export default function GlobalDashboardVariablesPage() {
                 onGoBack={() => {
                   setEditing(null);
                   setVariableScene(null);
+                  locationService.push('/dashboard/variables');
                 }}
                 onDelete={() => {}}
                 hideDelete
@@ -295,6 +421,7 @@ export default function GlobalDashboardVariablesPage() {
                 onClick={() => {
                   setEditing(null);
                   setVariableScene(null);
+                  locationService.push('/dashboard/variables');
                 }}
               >
                 {t('global-variables.page.cancel', 'Cancel')}
@@ -307,7 +434,7 @@ export default function GlobalDashboardVariablesPage() {
   }
 
   return (
-    <Page navId="dashboards/variables" pageNav={pageNav} layout={PageLayoutType.Canvas}>
+    <Page navId="dashboards/variables" pageNav={pageNav} layout={PageLayoutType.Standard}>
       <Page.Contents>
         <Stack direction="column" gap={2}>
           <Stack justifyContent="flex-start">
@@ -320,10 +447,15 @@ export default function GlobalDashboardVariablesPage() {
               {loadError}
             </Alert>
           )}
+          {routeError && (
+            <Alert title={t('global-variables.page.route-error', 'Variable not found')} severity="warning">
+              {routeError}
+            </Alert>
+          )}
           {loading ? (
             <LoadingPlaceholder text={t('global-variables.page.loading', 'Loading...')} />
           ) : (
-            <GlobalDashboardVariablesTable items={items} onEdit={openEdit} onDelete={setDeleteTarget} />
+            <GlobalDashboardVariablesTable groups={tableGroups} onEdit={openEdit} onDelete={setDeleteTarget} />
           )}
         </Stack>
         {deleteTarget && (

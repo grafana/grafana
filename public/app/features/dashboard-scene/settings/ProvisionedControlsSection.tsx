@@ -66,7 +66,7 @@ export function SourceIcon({
   origin: ControlSourceRef | undefined;
   /**
    * When provided, the icon consults the global-variables registry to render a
-   * brackets badge for runtime-only globals. Pass `undefined` for non-variable sources
+   * distinct badge for runtime-only globals. Pass `undefined` for non-variable sources
    * (e.g. provisioned dashboard links), which never have a global equivalent.
    */
   variable?: SceneVariable;
@@ -85,7 +85,7 @@ export function SourceIcon({
           { scope }
         )}
       >
-        <Icon name="brackets" className={styles.iconMuted} aria-hidden />
+        <Icon name="filter" className={styles.iconMuted} aria-hidden />
       </Tooltip>
     );
   }
