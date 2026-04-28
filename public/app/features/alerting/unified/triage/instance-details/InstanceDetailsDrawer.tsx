@@ -28,14 +28,18 @@ import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { useCanViewContactPoints } from '../../hooks/useAbilities';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
+import { ContactPointDrawer } from './ContactPointDrawer';
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
+import { EditContactPointDrawer } from './EditContactPointDrawer';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
@@ -72,10 +76,11 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
-/** Drawer stack view state. This file currently renders `instance-details` and `silence`. */
+/** Drawer stack view state for instance details and drilldowns. */
 type DrawerView =
   | { type: 'instance-details' }
-  | { type: 'contact-point-list'; receiverName: string }
+  | { type: 'contact-point-list'; receiverName: string; receiverResourceId?: string }
+  | { type: 'edit-contact-point'; receiverResourceName: string; displayTitle?: string }
   | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
   | { type: 'silence' }
   | { type: 'declare-incident' };
@@ -84,6 +89,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
   const theme = useTheme2();
+  const canViewContactPoints = useCanViewContactPoints();
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
@@ -221,6 +227,21 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     setViewStack((current) => [...current, { type: 'silence' }]);
   }, []);
 
+  const handleOpenContactPoint = useCallback((receiverName: string) => {
+    setViewStack((current) => [...current, { type: 'contact-point-list', receiverName }]);
+  }, []);
+
+  const handleOpenEditContactPoint = useCallback((receiverResourceName: string, displayTitle?: string) => {
+    setViewStack((current) => {
+      const next = [...current];
+      const listIdx = next.findIndex((v) => v.type === 'contact-point-list');
+      if (listIdx !== -1 && next[listIdx].type === 'contact-point-list') {
+        next[listIdx] = { ...next[listIdx], receiverResourceId: receiverResourceName };
+      }
+      return [...next, { type: 'edit-contact-point', receiverResourceName, displayTitle }];
+    });
+  }, []);
+
   const sharedTitleProps = useMemo(
     () => ({
       instanceLabels,
@@ -288,6 +309,15 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
             stateHistoryFetching={stateHistoryFetching}
             stateHistoryError={stateHistoryError}
             loadingBarRef={ref}
+            onOpenContactPoint={canViewContactPoints ? handleOpenContactPoint : undefined}
+            contactPointPermissionText={
+              canViewContactPoints
+                ? undefined
+                : t(
+                    'alerting.instance-details.contact-point-no-permission-tooltip',
+                    'You do not have permission to open contact points from here.'
+                  )
+            }
           />
         ) : (
           <Box ref={ref}>
@@ -344,6 +374,71 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
         </Drawer>
       </>
+    );
+  }
+
+  if (activeView.type === 'edit-contact-point') {
+    const parentEntry = viewStack.length >= 2 ? viewStack[viewStack.length - 2] : undefined;
+    const receiverNameForList =
+      parentEntry?.type === 'contact-point-list'
+        ? parentEntry.receiverName
+        : (activeView.displayTitle ?? activeView.receiverResourceName);
+    const receiverResourceIdForList =
+      parentEntry?.type === 'contact-point-list' ? parentEntry.receiverResourceId : undefined;
+
+    return (
+      <AlertmanagerProvider accessType="instance">
+        <>
+          <Drawer
+            title={renderDrilldownTitle(
+              t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
+                name: receiverNameForList,
+              })
+            )}
+            onClose={handleDrawerClose}
+            width={drawerWidth}
+          >
+            <ContactPointDrawer
+              listSearchQuery={receiverNameForList}
+              receiverResourceId={receiverResourceIdForList}
+              onEditContactPoint={handleOpenEditContactPoint}
+            />
+          </Drawer>
+          <Drawer
+            title={renderDrilldownTitle(
+              t('alerting.triage.instance-details-drawer.edit-contact-point-title', 'Edit {{name}}', {
+                name: activeView.displayTitle ?? activeView.receiverResourceName,
+              })
+            )}
+            onClose={handleDrawerClose}
+            width={drawerWidth}
+          >
+            <EditContactPointDrawer contactPointName={activeView.receiverResourceName} onSaveSuccess={popTopView} />
+          </Drawer>
+        </>
+      </AlertmanagerProvider>
+    );
+  }
+
+  if (activeView.type === 'contact-point-list') {
+    return (
+      <Drawer
+        title={renderDrilldownTitle(
+          t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
+            name: activeView.receiverName,
+          })
+        )}
+        onClose={handleDrawerClose}
+        width={drawerWidth}
+      >
+        <AlertmanagerProvider accessType="instance">
+          <ContactPointDrawer
+            listSearchQuery={activeView.receiverName}
+            receiverResourceId={activeView.receiverResourceId}
+            onEditContactPoint={canViewContactPoints ? handleOpenEditContactPoint : undefined}
+          />
+        </AlertmanagerProvider>
+      </Drawer>
     );
   }
 
