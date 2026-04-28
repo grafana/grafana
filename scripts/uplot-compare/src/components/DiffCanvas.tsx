@@ -31,14 +31,18 @@ export function DiffCanvas({
 }: DiffCanvasProps) {
   const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
-  const differ = new Differ({
-    detectCircular: true,
-    maxDepth: Infinity,
-    showModifications: true,
-    arrayDiffMethod: 'lcs',
-  });
+  const differ = React.useMemo(
+    () =>
+      new Differ({
+        detectCircular: true,
+        maxDepth: Infinity,
+        showModifications: true,
+        arrayDiffMethod: 'lcs',
+      }),
+    []
+  );
 
-  const diff = differ.diff(expected, actual);
+  const diff = React.useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
 
   React.useEffect(() => {
     const diffContext = diffCanvasRef.current?.getContext('2d');
