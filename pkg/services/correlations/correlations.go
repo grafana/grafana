@@ -3,7 +3,6 @@ package correlations
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -128,13 +127,12 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 // app platform service functions
 
 type CorrelationsK8sService struct {
-	RouteRegister     routing.RouteRegister
-	log               log.Logger
-	AccessControl     accesscontrol.AccessControl
-	QuotaService      quota.Service
-	k8sClientInitOnce sync.Once
-	clientGen         resource.ClientGenerator
-	k8sClient         client.K8sHandler
+	RouteRegister routing.RouteRegister
+	log           log.Logger
+	AccessControl accesscontrol.AccessControl
+	QuotaService  quota.Service
+	clientGen     resource.ClientGenerator
+	k8sClient     client.K8sHandler
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
@@ -171,6 +169,9 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 		return Correlation{}, err
 	}
 	legacyCorr, err := convertUnstructuredToCorrelation(*appPlatformCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
 	return *legacyCorr, nil
 }
 
