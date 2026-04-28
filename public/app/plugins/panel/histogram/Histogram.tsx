@@ -19,16 +19,9 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
-import {
-  type Themeable2,
-  UPlotConfigBuilder,
-  UPlotChart,
-  VizLayout,
-  PlotLegend,
-  measureText,
-  UPLOT_AXIS_FONT_SIZE,
-} from '@grafana/ui';
+import { UPlotConfigBuilder, UPlotChart, VizLayout, PlotLegend, measureText, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import { defaultFieldConfig, type FieldConfig, type Options } from './panelcfg.gen';
 

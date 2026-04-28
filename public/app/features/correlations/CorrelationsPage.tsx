@@ -19,13 +19,11 @@ import {
   LoadingPlaceholder,
   Alert,
   InteractiveTable,
-  type Column,
-  type CellProps,
-  type SortByFn,
   Pagination,
   TextLink,
 } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { Column, CellProps, SortByFn } from '@grafana/ui/types';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { contextSrv } from 'app/core/services/context_srv';

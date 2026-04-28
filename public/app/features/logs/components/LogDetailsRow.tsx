@@ -16,15 +16,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  ClipboardButton,
-  DataLinkButton,
-  IconButton,
-  type PopoverContent,
-  type Themeable2,
-  Tooltip,
-} from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, type PopoverContent, Tooltip } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 import { getLabelTypeFromRow } from '../utils';

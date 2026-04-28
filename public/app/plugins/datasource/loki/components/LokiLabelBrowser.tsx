@@ -6,17 +6,9 @@ import { FixedSizeList } from 'react-window';
 
 import { type CoreApp, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  type HighlightPart,
-  Input,
-  Label,
-  LoadingPlaceholder,
-  BrowserLabel as LokiLabel,
-  fuzzyMatch,
-  Stack,
-} from '@grafana/ui';
+import { Button, Input, Label, LoadingPlaceholder, BrowserLabel as LokiLabel, fuzzyMatch, Stack } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { HighlightPart } from '@grafana/ui/types';
 
 import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';

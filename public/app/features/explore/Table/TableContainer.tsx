@@ -15,8 +15,9 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { type AdHocFilterItem, PanelChrome, type Themeable2, PanelContextProvider } from '@grafana/ui';
+import { type AdHocFilterItem, PanelChrome, PanelContextProvider } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { TEMPO_STREAMING_PROGRESS_REF_ID } from 'app/plugins/datasource/tempo/streaming';
 import {
   hasDeprecatedParentRowIndex,

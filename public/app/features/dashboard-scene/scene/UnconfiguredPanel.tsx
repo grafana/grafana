@@ -14,7 +14,6 @@ import {
   Dropdown,
   EmptyState,
   Icon,
-  type IconName,
   Menu,
   Stack,
   Text,
@@ -22,6 +21,7 @@ import {
   usePanelContext,
 } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';

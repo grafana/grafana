@@ -4,7 +4,7 @@ import React from 'react';
 
 import { CoreApp, type GrafanaTheme, type GrafanaTheme2, toUtc } from '@grafana/data';
 import { config, reportInteraction, type TemplateSrv } from '@grafana/runtime';
-import { type Themeable } from '@grafana/ui';
+import type { Themeable } from '@grafana/ui/types';
 
 import QueryField from './QueryField';
 import { createTempoDatasource } from './test/mocks';

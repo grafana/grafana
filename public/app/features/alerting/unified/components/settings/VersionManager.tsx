@@ -5,18 +5,9 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Badge,
-  Button,
-  type CellProps,
-  type Column,
-  ConfirmModal,
-  InteractiveTable,
-  Stack,
-  Text,
-} from '@grafana/ui';
+import { Alert, Badge, Button, ConfirmModal, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { CellProps, Column } from '@grafana/ui/types';
 import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 

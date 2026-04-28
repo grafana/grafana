@@ -1,5 +1,5 @@
 import { type NavModelItem } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 
 export interface CreateActionGroup {
   parentId: string;

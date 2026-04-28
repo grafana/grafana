@@ -8,8 +8,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
-  type CellProps,
-  type Column,
   EmptyState,
   FilterInput,
   IconButton,
@@ -23,6 +21,7 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { CellProps, Column } from '@grafana/ui/types';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';

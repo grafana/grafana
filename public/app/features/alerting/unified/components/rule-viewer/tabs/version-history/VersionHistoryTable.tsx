@@ -3,8 +3,9 @@ import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Button, Checkbox, type Column, InteractiveTable, Stack, Text } from '@grafana/ui';
+import { Badge, Button, Checkbox, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { Column } from '@grafana/ui/types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';
 import { type RuleIdentifier } from 'app/types/unified-alerting';

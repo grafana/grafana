@@ -11,9 +11,9 @@ import {
   LinkButton,
   type MonacoEditor,
   Segment,
-  type Themeable2,
 } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import type InfluxDatasource from '../../../../datasource';
 import { type InfluxQuery } from '../../../../types';

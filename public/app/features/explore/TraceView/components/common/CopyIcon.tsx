@@ -17,8 +17,9 @@ import cx from 'classnames';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, type IconName, Tooltip } from '@grafana/ui';
+import { Button, Tooltip } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 
 const getStyles = () => ({
   CopyIcon: css({

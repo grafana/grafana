@@ -9,8 +9,9 @@ import {
   type Field,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, Select, Alert, Input, InlineFieldRow, type Themeable2, Stack, InlineLabel } from '@grafana/ui';
+import { InlineField, Select, Alert, Input, InlineFieldRow, Stack, InlineLabel } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { getManagedChannelInfo } from 'app/features/live/info';
 import { type SearchQuery } from 'app/features/search/service/types';
 

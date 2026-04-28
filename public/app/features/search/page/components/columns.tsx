@@ -13,7 +13,8 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { Checkbox, Icon, TagList, Text, Tooltip } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';

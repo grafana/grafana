@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { type Column, Icon, InteractiveTable } from '@grafana/ui';
+import { Icon, InteractiveTable } from '@grafana/ui';
+import type { Column } from '@grafana/ui/types';
 import { type LdapPermissions } from 'app/types/ldap';
 
 interface Props {

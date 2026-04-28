@@ -5,8 +5,9 @@ import { useMeasure } from 'react-use';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { Button, ConfirmModal, type IconName, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import {

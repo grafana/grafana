@@ -8,8 +8,6 @@ import {
   Avatar,
   Box,
   Button,
-  type CellProps,
-  type Column,
   ConfirmModal,
   type FetchDataFunc,
   Icon,
@@ -21,6 +19,7 @@ import {
   TextLink,
   Tooltip,
 } from '@grafana/ui';
+import type { CellProps, Column } from '@grafana/ui/types';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';

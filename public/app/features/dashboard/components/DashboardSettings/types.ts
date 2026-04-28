@@ -1,7 +1,7 @@
 import { type ComponentType } from 'react';
 
 import { type NavModel } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 
 import { type DashboardModel } from '../../state/DashboardModel';
 

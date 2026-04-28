@@ -1,6 +1,7 @@
 import { type HTMLAttributes } from 'react';
 
-import { Button, type IconSize } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import type { IconSize } from '@grafana/ui/types';
 
 interface Props extends Omit<HTMLAttributes<HTMLButtonElement>, 'onToggle'> {
   isCollapsed: boolean;

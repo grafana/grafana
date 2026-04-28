@@ -9,9 +9,10 @@ import {
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type CellProps, Stack, Text, Icon } from '@grafana/ui';
+import { Stack, Text, Icon } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { CellProps } from '@grafana/ui/types';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type LocalPlugin } from '../../plugins/admin/types';

@@ -13,7 +13,8 @@ import {
   checkBinaryValueType,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { getFieldTypeIconName } from '@grafana/ui/types';
 
 import { LABEL_WIDTH } from './constants';
 

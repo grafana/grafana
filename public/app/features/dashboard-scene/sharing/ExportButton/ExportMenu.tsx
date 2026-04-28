@@ -3,7 +3,8 @@ import { useCallback, useContext, useMemo } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { type IconName, Menu, ModalsContext } from '@grafana/ui';
+import { Menu, ModalsContext } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { type DashboardScene } from '../../scene/DashboardScene';

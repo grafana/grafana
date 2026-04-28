@@ -4,8 +4,9 @@ import { memo } from 'react';
 import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, type IconName } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 
 export interface FooterLink {
   target: LinkTarget;

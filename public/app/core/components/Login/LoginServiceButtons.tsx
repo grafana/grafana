@@ -3,8 +3,9 @@ import { pickBy } from 'lodash';
 
 import { type GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, type IconName, LinkButton, Stack } from '@grafana/ui';
+import { Icon, LinkButton, Stack } from '@grafana/ui';
 import { useStyles2, useTheme2 } from '@grafana/ui/themes';
+import type { IconName } from '@grafana/ui/types';
 import config from 'app/core/config';
 
 export interface LoginService {

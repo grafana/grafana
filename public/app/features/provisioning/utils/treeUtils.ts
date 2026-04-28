@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';

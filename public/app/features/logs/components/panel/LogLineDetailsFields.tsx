@@ -14,8 +14,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, type IconSize } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconSize } from '@grafana/ui/types';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';

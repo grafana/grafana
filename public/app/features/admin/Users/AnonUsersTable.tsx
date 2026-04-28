@@ -1,17 +1,8 @@
 import { useMemo } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import {
-  Avatar,
-  type CellProps,
-  type Column,
-  InteractiveTable,
-  Stack,
-  Badge,
-  Tooltip,
-  Pagination,
-  type FetchDataFunc,
-} from '@grafana/ui';
+import { Avatar, InteractiveTable, Stack, Badge, Tooltip, Pagination, type FetchDataFunc } from '@grafana/ui';
+import type { CellProps, Column } from '@grafana/ui/types';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { type UserAnonymousDeviceDTO } from 'app/types/user';
 

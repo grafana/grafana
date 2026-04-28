@@ -4,17 +4,9 @@ import { PureComponent } from 'react';
 import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  FileDropzone,
-  Stack,
-  InlineField,
-  InlineFieldRow,
-  Modal,
-  RadioButtonGroup,
-  type Themeable2,
-} from '@grafana/ui';
+import { Button, FileDropzone, Stack, InlineField, InlineFieldRow, Modal, RadioButtonGroup } from '@grafana/ui';
 import { withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';

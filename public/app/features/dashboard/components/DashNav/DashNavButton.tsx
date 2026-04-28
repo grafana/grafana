@@ -5,8 +5,9 @@ import * as React from 'react';
 
 // Components
 import { type GrafanaTheme2 } from '@grafana/data';
-import { type IconName, type IconType, type IconSize, IconButton } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { IconName, IconType, IconSize } from '@grafana/ui/types';
 
 interface Props {
   icon?: IconName;

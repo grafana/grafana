@@ -6,8 +6,8 @@ import { connect, type MapStateToProps } from 'react-redux';
 import { type AnnotationQuery, type DataQuery, type TypedVariableModel, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
-import type { Themeable2 } from '@grafana/ui';
 import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
+import type { Themeable2 } from '@grafana/ui/types';
 import { type StoreState } from 'app/types/store';
 
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';

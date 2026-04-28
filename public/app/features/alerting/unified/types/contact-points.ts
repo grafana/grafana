@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 
 export const INTEGRATION_ICONS: Record<string, IconName> = {
   discord: 'discord',

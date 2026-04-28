@@ -46,7 +46,7 @@
       "@grafana-app/source": "./src/themes/index.ts"
     },
     "./types": {
-      "@grafana-app/source": "./src/internal/index.ts"
+      "@grafana-app/source": "./src/types/index.ts"
     },
     "./utils": {
       "@grafana-app/source": "./src/internal/index.ts"

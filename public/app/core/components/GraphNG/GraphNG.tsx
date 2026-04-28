@@ -15,7 +15,7 @@ import {
   type TimeZone,
 } from '@grafana/data';
 import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema';
-import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
+import { VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
 import {
   type AxisProps,
   pluginLog,
@@ -24,6 +24,7 @@ import {
   UPlotChart,
   type UPlotConfigBuilder,
 } from '@grafana/ui/internal';
+import type { Themeable2 } from '@grafana/ui/types';
 
 import { type GraphNGLegendEvent, type XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';

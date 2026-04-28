@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Badge, type BadgeColor, type IconName } from '@grafana/ui';
+import { Badge, type BadgeColor } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';

@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text } from '@grafana/ui';
+import { Box, Card, Grid, InteractiveTable, LinkButton, Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { CellProps } from '@grafana/ui/types';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';

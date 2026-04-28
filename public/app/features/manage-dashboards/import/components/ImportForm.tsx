@@ -3,7 +3,8 @@ import { Controller, type FieldErrors, type UseFormReturn } from 'react-hook-for
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
+import { Button, Field, Stack, Input, Legend } from '@grafana/ui';
+import type { FormFieldErrors, FormsOnSubmit } from '@grafana/ui/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 

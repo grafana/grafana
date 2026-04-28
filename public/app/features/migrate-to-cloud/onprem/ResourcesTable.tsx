@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { type MigrateDataResponseItemDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { InteractiveTable, Pagination, Stack, type Column, type FetchDataFunc } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack, type FetchDataFunc } from '@grafana/ui';
+import type { Column } from '@grafana/ui/types';
 
 import { type LocalPlugin } from '../../plugins/admin/types';
 

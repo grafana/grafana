@@ -369,6 +369,7 @@ export * from './graveyard';
 export * from './options';
 export * from './slate-plugins';
 export * from './themes';
+export * from './types';
 
 export {
   ElementSelectionContext,

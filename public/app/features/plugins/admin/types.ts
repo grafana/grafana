@@ -8,7 +8,7 @@ import {
   type PluginErrorCode,
   type WithAccessControlMetadata,
 } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { type PluginsState } from 'app/types/plugins';
 import { type StoreState } from 'app/types/store';
 

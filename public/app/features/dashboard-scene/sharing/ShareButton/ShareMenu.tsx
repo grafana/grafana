@@ -5,7 +5,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { type IconName, Menu, ModalsContext } from '@grafana/ui';
+import { Menu, ModalsContext } from '@grafana/ui';
+import type { IconName } from '@grafana/ui/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

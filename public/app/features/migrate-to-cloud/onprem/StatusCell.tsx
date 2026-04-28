@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
-import { type CellProps, Text, Stack, Button } from '@grafana/ui';
+import { Text, Stack, Button } from '@grafana/ui';
+import type { CellProps } from '@grafana/ui/types';
 
 import { type ResourceTableItem } from './types';
 
