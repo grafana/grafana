@@ -4461,9 +4461,7 @@
       "create-on-github": "Create README on GitHub",
       "create-on-gitlab": "Create README on GitLab",
       "edit-readme": "Edit README",
-      "hint-action": "See details",
-      "hint-body": "The README explains how this folder is organized and where to find the dashboards you need.",
-      "hint-title": "New to this folder?",
+      "hint": "Looking for an overview of this folder? <2>See the README</2>",
       "not-found": "No README.md file found in this folder.",
       "not-provisioned": "This folder is not managed by a Git repository.",
       "parse-error": "Unable to display README content."
