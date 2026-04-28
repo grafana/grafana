@@ -25,6 +25,8 @@ type BleveIndexMetrics struct {
 
 	IndexSnapshotDownloads        *prometheus.CounterVec
 	IndexSnapshotDownloadDuration prometheus.Histogram
+	IndexSnapshotUploads          *prometheus.CounterVec
+	IndexSnapshotUploadDuration   prometheus.Histogram
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -109,10 +111,26 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
+		IndexSnapshotUploads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_uploads_total",
+			Help: "Number of remote index snapshot upload attempts, by outcome.",
+		}, []string{"status"}), // status: success, skip_no_changes, skip_lock_contention, error
+		IndexSnapshotUploadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_snapshot_upload_duration_seconds",
+			Help:                            "Duration of successful remote index snapshot uploads, including snapshot creation.",
+			Buckets:                         IndexCreationBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
 	}
 
 	// Initialize labels.
 	m.OpenIndexes.WithLabelValues("file").Set(0)
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
 	return m
 }
