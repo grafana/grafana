@@ -33,7 +33,6 @@ import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsE
 function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
-  const rootId = useId();
   const titleId = useId();
   const descriptionId = useId();
   const backgroundId = useId();
