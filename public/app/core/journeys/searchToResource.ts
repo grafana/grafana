@@ -10,6 +10,15 @@ import { collectUnsubs, str } from './utils';
  * Start triggers:
  *   - command_palette_opened — user opens the command palette
  *
+ * Events (point-in-time):
+ *   - search_query — user typed in the palette (debounced at the source, one per burst).
+ *     Carries `hasQuery` and bucketed `queryLength`; never the raw query string.
+ *
+ * Mid-journey:
+ *   - command_palette_action_selected sets `resourceType`, `actionId`, `actionName`,
+ *     and `interactionMode` (`keyboard` | `mouse` | `unknown`) so we can see how
+ *     the user activated the result.
+ *
  * End conditions:
  *   - success: dashboards_init_dashboard_completed — dashboard loaded after palette action
  *   - success: grafana_browse_dashboards_page_view — folder browse page loaded after folder selection
@@ -47,6 +56,17 @@ onJourneyInstance('search_to_resource', (handle) => {
         resourceType: selectedResourceType,
         actionId,
         actionName: str(props.actionName),
+        interactionMode: str(props.interactionMode ?? 'unknown'),
+      });
+    })
+  );
+
+  // Each debounced typing burst becomes a point-in-time event on the journey.
+  add(
+    onInteraction('command_palette_search_query', (props) => {
+      handle.recordEvent('search_query', {
+        hasQuery: str(props.hasQuery ?? 'false'),
+        queryLength: str(props.queryLength ?? 'empty'),
       });
     })
   );

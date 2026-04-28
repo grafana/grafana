@@ -17,6 +17,7 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
@@ -68,17 +69,53 @@ function CommandPaletteContents() {
 
   // Report interaction when opened/closed
   useEffect(() => {
+    resetCommandPaletteInputMode();
     reportInteraction('command_palette_opened');
     return () => {
       reportInteraction('command_palette_closed', undefined, { silent: true });
     };
   }, []);
 
+  // CUJ-only signal: debounce typing into the palette so we record one event
+  // per typing burst instead of one per keystroke. Skip the initial empty render.
+  const hasTypedSearchRef = useRef(false);
+  useEffect(() => {
+    const q = searchQuery ?? '';
+    if (!hasTypedSearchRef.current && q.length === 0) {
+      return;
+    }
+    hasTypedSearchRef.current = true;
+    const handle = setTimeout(() => {
+      const len = q.length;
+      const queryLength = len === 0 ? 'empty' : len <= 3 ? '1-3' : len <= 10 ? '4-10' : '11+';
+      reportInteraction(
+        'command_palette_search_query',
+        { hasQuery: len > 0 ? 'true' : 'false', queryLength },
+        { silent: true }
+      );
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
+  // Track input modality so onSelectAction (which doesn't see the originating
+  // event) can report whether the activation came from keyboard or mouse.
+  const onPointerDownCapture = useCallback(() => setCommandPaletteInputMode('mouse'), []);
+  const onKeyDownCapture = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Tab') {
+      setCommandPaletteInputMode('keyboard');
+    }
+  }, []);
+
   return (
     <KBarPositioner className={styles.positioner}>
       <KBarAnimator className={styles.animator}>
         <FocusScope contain autoFocus restoreFocus>
-          <div {...overlayProps} {...dialogProps}>
+          <div
+            {...overlayProps}
+            {...dialogProps}
+            onPointerDownCapture={onPointerDownCapture}
+            onKeyDownCapture={onKeyDownCapture}
+          >
             <div className={styles.searchContainer}>
               <Icon name="search" size="md" className={styles.searchIcon} />
               <AncestorBreadcrumbs />
