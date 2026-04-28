@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
+      "loading": "",
       "output-data": "Çıktı verileri",
       "title-debug-transformation": "Dönüşümde hata ayıklama"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Ara"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Seçimi temizle"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA değeri"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Kapat",
       "dock": "Yerleştir",
+      "go-back": "",
       "hide": "Gizle",
       "show": "Göster",
       "undock": "Çıkar"
@@ -11908,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tümü",
-      "title-filtered": "Tümü (filtrelenmiş)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tümünü temizle"
@@ -16008,6 +16019,9 @@
         "grouping-to-matrix": "Matrise gruplandırma"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Giriş verilerinden bir histogram hesaplayın."
@@ -16342,6 +16356,9 @@
       "label-time-field": "Zaman alanı",
       "tooltip-statistic-should-calculated-series": "Bu zaman serisi için hesaplanacak istatistik.",
       "tooltip-time-field": "Zaman serisi için kullanılacak zaman alanı. Seçilmezse bulunan ilk alan kullanılır."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "İlk alan adı",

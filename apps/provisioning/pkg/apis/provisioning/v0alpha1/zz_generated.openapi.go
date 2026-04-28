@@ -610,9 +610,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			ResourceRef{}.OpenAPIModelName()},
 	}
 }
 

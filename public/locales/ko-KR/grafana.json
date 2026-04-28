@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "입력 데이터",
+      "loading": "",
       "output-data": "출력 데이터",
       "title-debug-transformation": "변환 디버그"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "검색"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "선택 초기화"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 값"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "닫기",
       "dock": "도킹",
+      "go-back": "",
       "hide": "숨기기",
       "show": "표시",
       "undock": "도킹 해제"
@@ -11842,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "전체",
-      "title-filtered": "전체(필터링됨)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "전체 초기화"
@@ -15915,6 +15926,9 @@
         "grouping-to-matrix": "행렬로 그룹화"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "입력 데이터를 토대로 히스토그램을 계산합니다."
@@ -16249,6 +16263,9 @@
       "label-time-field": "시간 필드",
       "tooltip-statistic-should-calculated-series": "이 시계열에 대해 계산해야 하는 통계입니다.",
       "tooltip-time-field": "시계열에 사용할 시간 필드입니다. 선택하지 않으면 처음 찾은 항목을 사용합니다."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "첫 번째 필드 이름",
