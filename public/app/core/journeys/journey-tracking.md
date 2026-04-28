@@ -97,7 +97,8 @@ The framework uses a hybrid architecture: a metadata-only registry for governanc
 ```
 ┌─────────────────────────────────────────────────────┐
 │ JOURNEY_REGISTRY (journeyRegistry.ts)               │
-│ Static metadata: type, owner, SLO, timeout          │
+│ Static metadata: type, description, owner, timeout, │
+│ parents (optional)                                  │
 │ No runtime logic - pure data                        │
 └─────────────┬───────────────────────────────────────┘
               │ init()
