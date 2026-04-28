@@ -108,7 +108,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		span.SetAttributes(attribute.Int("limit", limit),
 			attribute.Int("page", page),
 			attribute.Int("offset", offset),
-			attribute.String("name", name))
+			attribute.String("team.name", name))
 
 		// Subresource handlers receive a ctx without the namespace value set;
 		// inject it so the downstream Getter can resolve orgID.
@@ -124,10 +124,21 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		}
 
 		// Slice spec.members before mapping to skip work outside the requested page.
+		// Page stability depends on the storage ordering of spec.members — we don't
+		// sort here, so two consecutive page reads racing a concurrent write can
+		// overlap or skip entries. Callers needing a stable view should re-list.
 		total := len(t.Spec.Members)
-		start := min(offset, total)
-		end := min(start+limit, total)
-		window := t.Spec.Members[start:end]
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > total {
+			offset = total
+		}
+		end := offset + limit
+		if end > total {
+			end = total
+		}
+		window := t.Spec.Members[offset:end]
 
 		items := make([]iamv0alpha1.GetTeamMembersTeamUser, len(window))
 		for i, m := range window {

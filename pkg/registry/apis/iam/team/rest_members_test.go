@@ -125,6 +125,50 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.Equal(t, "u4", resp.Items[1].User)
 	})
 
+	t.Run("clamps negative offset to zero", func(t *testing.T) {
+		g := &mockGetter{team: teamWithMembers("team1",
+			member("u1", "member", false),
+			member("u2", "member", false),
+		)}
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		responder := &mockResponder{}
+
+		h, _ := handler.Connect(ctx, "team1", nil, responder)
+		req := httptest.NewRequest(http.MethodGet, "/members?limit=2&offset=-1", nil).WithContext(ctx)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+
+		require.True(t, responder.called)
+		require.NoError(t, responder.err)
+		resp := responder.obj.(*iamv0alpha1.GetTeamMembersResponse)
+		require.Len(t, resp.Items, 2)
+		require.Equal(t, "u1", resp.Items[0].User)
+		require.Equal(t, "u2", resp.Items[1].User)
+	})
+
+	t.Run("clamps negative page to zero offset", func(t *testing.T) {
+		g := &mockGetter{team: teamWithMembers("team1",
+			member("u1", "member", false),
+			member("u2", "member", false),
+		)}
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		responder := &mockResponder{}
+
+		h, _ := handler.Connect(ctx, "team1", nil, responder)
+		req := httptest.NewRequest(http.MethodGet, "/members?limit=2&page=-1", nil).WithContext(ctx)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+
+		require.True(t, responder.called)
+		require.NoError(t, responder.err)
+		resp := responder.obj.(*iamv0alpha1.GetTeamMembersResponse)
+		require.Len(t, resp.Items, 2)
+		require.Equal(t, "u1", resp.Items[0].User)
+		require.Equal(t, "u2", resp.Items[1].User)
+	})
+
 	t.Run("rejects limit above max", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1")}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
