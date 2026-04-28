@@ -1,3 +1,4 @@
+import { compare } from 'fast-json-patch';
 import { debounce } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
@@ -167,17 +168,25 @@ export class DashboardSceneChangeTracker {
     return false;
   }
 
-  private detectSaveModelChanges() {
-    const changedDashboard = this._dashboard.getSaveModel();
-    const initialDashboard = this._dashboard.getInitialSaveModel();
-
+  private getClonedSaveModels() {
+    const changedDashboard = this._dashboard.getSaveModel?.();
+    const initialDashboard = this._dashboard.getInitialSaveModel?.();
+    if (!changedDashboard || !initialDashboard) {
+      return null;
+    }
     // Objects must be stringify to ensure they are clonable, so they don't contain functions
-    const changed =
-      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
-    const initial =
-      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+    return {
+      changed: typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard,
+      initial: typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard,
+    };
+  }
 
-    this._changesWorker?.postMessage({ initial, changed });
+  private detectSaveModelChanges() {
+    const models = this.getClonedSaveModels();
+    if (!models) {
+      return;
+    }
+    this._changesWorker?.postMessage({ initial: models.initial, changed: models.changed });
   }
 
   private hasMetadataChanges() {
@@ -200,6 +209,15 @@ export class DashboardSceneChangeTracker {
     this._changesWorker = createWorker();
   }
 
+  private checkForChangesImmediately() {
+    const models = this.getClonedSaveModels();
+    if (!models) {
+      return;
+    }
+    const ops = compare(models.initial, models.changed);
+    this.updateIsDirty(ops.length > 0 || this.hasMetadataChanges());
+  }
+
   public startTrackingChanges() {
     if (!this._changesWorker) {
       this.init();
@@ -212,6 +230,8 @@ export class DashboardSceneChangeTracker {
 
       this.updateIsDirty(!!e.data.hasChanges);
     };
+
+    this.checkForChangesImmediately();
 
     const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
 
