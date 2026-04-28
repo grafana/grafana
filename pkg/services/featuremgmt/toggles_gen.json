@@ -1049,12 +1049,27 @@
       "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-04T10:56:35Z"
+        "creationTimestamp": "2025-03-04T10:56:35Z",
+        "deletionTimestamp": "2026-04-24T10:33:47Z"
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
         "codeowner": "@grafana/frontend-ops",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.frontend.tools.dashboardTemplates",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Enables the template dashboard assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -1821,6 +1836,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource resource requests, frontend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.chunkedQueryStreaming",
         "resourceVersion": "1776098015598",
         "creationTimestamp": "2026-04-13T16:33:35Z"
@@ -1829,6 +1858,20 @@
         "description": "Allow requesting query results as chunked jsonl rather than single json blob",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.config.ui.useNewDatasourceCRUDAPIs",
+        "resourceVersion": "1776951232418",
+        "creationTimestamp": "2026-04-23T13:33:52Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests, frontend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2495,6 +2538,32 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.assetSriChecks",
+        "resourceVersion": "1777026827859",
+        "creationTimestamp": "2026-04-24T10:33:47Z"
+      },
+      "spec": {
+        "description": "Enables SRI checks for Grafana JavaScript assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/frontend-ops",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.correlationsSkipLegacy",
+        "resourceVersion": "1777299668594",
+        "creationTimestamp": "2026-04-27T14:21:08Z"
+      },
+      "spec": {
+        "description": "Route any calls to legacy correlations endpoints to call through to app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
         "expression": "false"
       }
     },

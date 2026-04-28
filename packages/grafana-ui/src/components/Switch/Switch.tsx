@@ -206,6 +206,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       background: theme.colors.text.secondary,
       boxShadow: theme.shadows.z1,
       left: 0,
+      pointerEvents: 'none',
       top: '50%',
       transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
       [theme.transitions.handleMotion('no-preference')]: {

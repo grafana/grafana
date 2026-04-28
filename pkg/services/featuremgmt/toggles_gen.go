@@ -566,6 +566,10 @@ const (
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
 
+	// FlagGrafanaAssetSriChecks
+	// Enables SRI checks for Grafana JavaScript assets
+	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
+
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
@@ -957,4 +961,8 @@ const (
 	// FlagAlertingRulesAPIV2
 	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
 	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
+
+	// FlagGrafanaCorrelationsSkipLegacy
+	// Route any calls to legacy correlations endpoints to call through to app platform
+	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 )
