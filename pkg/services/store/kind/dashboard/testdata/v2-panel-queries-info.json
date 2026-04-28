@@ -10,8 +10,10 @@
       "type": "prometheus"
     },
     {
-      "uid": "default.uid",
-      "type": "default.type"
+      "uid": "my-prom"
+    },
+    {
+      "uid": "my-loki"
     }
   ],
   "panels": [
@@ -21,8 +23,7 @@
       "type": "TimeseriesPanel",
       "datasource": [
         {
-          "uid": "default.uid",
-          "type": "default.type"
+          "uid": "my-prom"
         }
       ],
       "queries": [
@@ -39,8 +40,7 @@
       "type": "LogsPanel",
       "datasource": [
         {
-          "uid": "default.uid",
-          "type": "default.type"
+          "uid": "my-loki"
         }
       ],
       "queries": [

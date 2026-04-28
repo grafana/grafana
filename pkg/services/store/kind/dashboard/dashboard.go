@@ -790,23 +790,13 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 							if !ok {
 								continue
 							}
-							// Datasource lives at queries[].spec.datasource in
-							// the v2 fixtures we've seen. (Older flat form
-							// queries[].datasource is preserved for backward
-							// compat with whatever the existing parser was
-							// targeting.)
-							ds, _ := m["datasource"].(map[string]any)
-							if ds == nil {
-								if specMap, _ := m["spec"].(map[string]any); specMap != nil {
-									ds, _ = specMap["datasource"].(map[string]any)
-								}
-							}
-							if ds != nil {
-								uid, _ := ds["uid"].(string)
-								typ, _ := ds["type"].(string)
-								if uid != "" {
-									panel.Datasource = append(panel.Datasource, DataSourceRef{UID: uid, Type: typ})
-								}
+							// Pull the datasource ref using the same path
+							// priority readV2QueryExpression uses, so the
+							// per-query DatasourceUID and the panel-level
+							// aggregation always agree on which datasource
+							// the query references.
+							if ds := readV2QueryDatasourceRef(m); ds != nil {
+								panel.Datasource = append(panel.Datasource, *ds)
 							}
 
 							if qe := readV2QueryExpression(m); qe.Expression != "" {
@@ -826,24 +816,26 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 	return panel
 }
 
-// readV2QueryExpression pulls the query expression, refId, and datasource
-// reference out of one v2 queries[] entry. The v2 schema puts the expression at
-// m.spec.query.spec.<expr> with refId on m.spec and datasource at
-// m.spec.query.datasource. The datasource ref carries `name` (v2 references
-// datasources by name); we put whatever identifier is present into
-// DatasourceUID so consumers can map each query back to its datasource.
-// Falls back to m.spec.<expr> / m.<expr> with corresponding datasource paths.
+// readV2QueryExpression pulls the refId, datasource, and expression out of
+// one v2 queries[] entry. Tries three path shapes in order — schema-correct
+// (m.spec.query.spec.<expr> with refId on m.spec and datasource at
+// m.spec.query.datasource), nested-spec variant (m.spec.<expr>,
+// m.spec.datasource), and flat fallback (m.<expr> with refId/datasource at
+// root). Datasource extraction is shared with readV2QueryDatasourceRef so
+// the per-query DatasourceUID and the panel-level Datasource aggregation
+// always agree.
 func readV2QueryExpression(m map[string]any) PanelQueryInfo {
+	q := PanelQueryInfo{}
+	if ds := readV2QueryDatasourceRef(m); ds != nil {
+		q.DatasourceUID = ds.UID
+	}
+
 	if specMap, _ := m["spec"].(map[string]any); specMap != nil {
-		var q PanelQueryInfo
 		if rid, _ := specMap["refId"].(string); rid != "" {
 			q.RefID = rid
 		}
-		// Schema path: m.spec.query.spec.<expr>, datasource at m.spec.query.datasource.
+		// Schema path: m.spec.query.spec.<expr>.
 		if query, _ := specMap["query"].(map[string]any); query != nil {
-			if ds, _ := query["datasource"].(map[string]any); ds != nil {
-				q.DatasourceUID = pickDatasourceRef(ds)
-			}
 			if qspec, _ := query["spec"].(map[string]any); qspec != nil {
 				if expr := pickExpression(qspec); expr != "" {
 					q.Expression = expr
@@ -851,38 +843,61 @@ func readV2QueryExpression(m map[string]any) PanelQueryInfo {
 				}
 			}
 		}
-		// Variant: m.spec.<expr> with datasource at m.spec.datasource.
-		if q.DatasourceUID == "" {
-			if ds, _ := specMap["datasource"].(map[string]any); ds != nil {
-				q.DatasourceUID = pickDatasourceRef(ds)
-			}
-		}
+		// Variant: m.spec.<expr>.
 		if expr := pickExpression(specMap); expr != "" {
 			q.Expression = expr
 			return q
 		}
 	}
-	// Flat fallback: m.<expr> with refId/datasource at the root.
-	q := PanelQueryInfo{Expression: pickExpression(m)}
-	if rid, _ := m["refId"].(string); rid != "" {
-		q.RefID = rid
-	}
-	if ds, _ := m["datasource"].(map[string]any); ds != nil {
-		q.DatasourceUID = pickDatasourceRef(ds)
+	// Flat: m.<expr> with refId at root.
+	q.Expression = pickExpression(m)
+	if q.RefID == "" {
+		if rid, _ := m["refId"].(string); rid != "" {
+			q.RefID = rid
+		}
 	}
 	return q
 }
 
-// pickDatasourceRef returns whichever identifier a datasource ref carries,
-// preferring `uid` (v1-style or denormalized) over `name` (schema-correct v2).
-func pickDatasourceRef(ds map[string]any) string {
-	if uid, _ := ds["uid"].(string); uid != "" {
-		return uid
+// readV2QueryDatasourceRef walks the same path priority as
+// readV2QueryExpression to find a v2 query's datasource. Returns nil when
+// no datasource is referenced. UID holds whichever identifier was present
+// (uid or name); Type may be empty for v2 schema-correct refs which only
+// declare name.
+func readV2QueryDatasourceRef(m map[string]any) *DataSourceRef {
+	// Schema path: m.spec.query.datasource.
+	if specMap, _ := m["spec"].(map[string]any); specMap != nil {
+		if query, _ := specMap["query"].(map[string]any); query != nil {
+			if ds, _ := query["datasource"].(map[string]any); ds != nil {
+				return dsRefFromMap(ds)
+			}
+		}
+		// Variant: m.spec.datasource.
+		if ds, _ := specMap["datasource"].(map[string]any); ds != nil {
+			return dsRefFromMap(ds)
+		}
 	}
-	if name, _ := ds["name"].(string); name != "" {
-		return name
+	// Flat: m.datasource.
+	if ds, _ := m["datasource"].(map[string]any); ds != nil {
+		return dsRefFromMap(ds)
 	}
-	return ""
+	return nil
+}
+
+// dsRefFromMap pulls a DataSourceRef from a {uid?, name?, type?} map. Prefers
+// `uid` (v1-style or denormalized) over `name` (schema-correct v2). Returns
+// nil when neither identifier is present.
+func dsRefFromMap(ds map[string]any) *DataSourceRef {
+	uid, _ := ds["uid"].(string)
+	name, _ := ds["name"].(string)
+	typ, _ := ds["type"].(string)
+	if uid == "" {
+		uid = name
+	}
+	if uid == "" {
+		return nil
+	}
+	return &DataSourceRef{UID: uid, Type: typ}
 }
 
 func pickExpression(m map[string]any) string {
