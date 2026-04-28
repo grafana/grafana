@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*correlationsV0.Correlation, error) {
+func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 	cfg, err := ToSpecConfig(orig.Config)
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*corre
 		ObjectMeta: v1.ObjectMeta{
 			Name:      orig.UID,
 			UID:       types.UID(orig.UID), // required for PATCH to work in legacy storage
-			Namespace: namespacer(orig.OrgID),
+			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		},
 		Spec: correlationsV0.CorrelationSpec{
 			Label: orig.Label,
