@@ -13,6 +13,7 @@ export type ResolvedPayload = {
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   width?: number;
   height?: number;
+  snapshotAssertionPassed?: boolean;
 };
 
 export interface ComparePlotsProps {
