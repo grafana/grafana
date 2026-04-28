@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "輸入資料",
+      "loading": "",
       "output-data": "輸出資料",
       "title-debug-transformation": "偵錯轉換"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜尋"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "清空選項"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "關閉",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隱藏",
       "show": "顯示",
       "undock": "取消停靠"
@@ -11842,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已篩選）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -15915,6 +15926,9 @@
         "grouping-to-matrix": "分組到矩陣"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "從輸入資料計算直方圖。"
@@ -16249,6 +16263,9 @@
       "label-time-field": "時間欄位",
       "tooltip-statistic-should-calculated-series": "應該為此時間系列計算的統計資料。",
       "tooltip-time-field": "將用於時間系列的時間欄位。如果未選擇，將使用第一個找到的欄位。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一個欄位名稱",

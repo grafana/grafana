@@ -115,7 +115,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 		uploadedAt = downloadedMeta.UploadTimestamp
 	}
 	// A downloaded snapshot becomes the new upload baseline for this index.
-	if err := setSnapshotMutationCount(idx, 0); err != nil {
+	if err := writeSnapshotMutationCount(idx, 0); err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
 		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)

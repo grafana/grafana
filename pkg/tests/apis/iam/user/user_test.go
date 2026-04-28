@@ -20,12 +20,6 @@ var gvrTeams = schema.GroupVersionResource{
 	Resource: "teams",
 }
 
-var gvrTeamBindings = schema.GroupVersionResource{
-	Group:    "iam.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "teambindings",
-}
-
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
