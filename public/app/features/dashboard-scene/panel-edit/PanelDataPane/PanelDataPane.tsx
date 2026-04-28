@@ -19,6 +19,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { trackSidebarViewChange } from '../PanelEditNext/tracking';
+
 import { type PanelDataPaneTab, type PanelEditorInterface, TabId } from './types';
 
 function isPanelEditor(obj: object): obj is PanelEditorInterface {
@@ -42,6 +44,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
   public onChangeTab = (tab: PanelDataPaneTab) => {
+    trackSidebarViewChange(tab.tabId, { silent: true });
     this.setState({ tab: tab.tabId });
   };
 

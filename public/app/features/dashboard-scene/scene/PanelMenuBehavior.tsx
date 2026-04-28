@@ -93,7 +93,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
-          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
     }

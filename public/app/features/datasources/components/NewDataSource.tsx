@@ -2,6 +2,7 @@ import { type Action } from 'redux';
 
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
@@ -72,7 +73,13 @@ export function NewDataSourceView({
           )}
         />
         <div className="page-action-bar__spacer" />
-        <LinkButton href={ROUTES.DataSources} fill="outline" variant="secondary" icon="arrow-left">
+        <LinkButton
+          href={ROUTES.DataSources}
+          fill="outline"
+          variant="secondary"
+          icon="arrow-left"
+          onClick={() => reportInteraction('connections_new_datasource_cancelled', {}, { silent: true })}
+        >
           <Trans i18nKey="datasources.new-data-source-view.cancel">Cancel</Trans>
         </LinkButton>
       </div>

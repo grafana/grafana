@@ -205,6 +205,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['dashboard-cujs'],
     }),
     withAuth({
+      name: 'journey-tracking',
+      testDir: path.join(testDirRoot, '/journey-tracking'),
+      use: {
+        featureToggles: {
+          cujTracking: true,
+        },
+      },
+    }),
+    withAuth({
       name: 'grafana-e2etest-panel',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
     }),
