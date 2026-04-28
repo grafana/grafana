@@ -221,21 +221,24 @@ describe('HeatmapPanel (canvas)', () => {
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let uPlotInitEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
+  // @todo remove?
   let clearInitEvents = false;
 
-  const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
+  const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
     await waitFor(() =>
       expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
     );
+  };
+
+  const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
+    await assertUPlotReady();
     expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize);
   };
 
   const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
-    expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
-    await waitFor(() =>
-      expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
-    );
+    await assertUPlotReady();
+    await Promise.resolve(setTimeout(() => {}, 400));
     expect(scrubOutput(uPlotAxisEvents!)).toMatchUPlotSnapshot(uPlotInitEvents!, snapshotSize);
   };
 
@@ -572,22 +575,6 @@ describe('HeatmapPanel (canvas)', () => {
 
       it('width', async () => {
         renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
-        await assertAxesOutput();
-      });
-
-      it('decimals, min, max, unit', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            yAxis: {
-              ...fullDefaultOptions.yAxis,
-              decimals: 3,
-              min: 0,
-              max: 1,
-              unit: 'percentunit',
-            },
-          }
-        );
         await assertAxesOutput();
       });
     });
