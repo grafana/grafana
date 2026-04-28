@@ -50,7 +50,7 @@ func fail(reason string) validationResult {
 	}
 }
 
-func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
+func (s *standardStorageService) detectMimeType(_ context.Context, _ *user.SignedInUser, uploadRequest *UploadRequest) string {
 	if strings.HasSuffix(uploadRequest.Path, ".svg") {
 		if util.IsSVG(uploadRequest.Contents) {
 			return "image/svg+xml"
@@ -83,11 +83,7 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	}
 
 	switch req.EntityType {
-	case EntityTypeJSON:
-		fallthrough
-	case EntityTypeFolder:
-		fallthrough
-	case EntityTypeDashboard:
+	case EntityTypeJSON, EntityTypeFolder:
 		// TODO: add proper validation
 		if !json.Valid(req.Contents) {
 			return fail("invalid json")
