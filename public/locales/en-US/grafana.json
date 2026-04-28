@@ -3589,9 +3589,9 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "section-silence": "Silence",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences",
-        "silence-title-with-name": "Silence {{name}}"
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
         "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-by-az": "Deleted by (A–Z)",
+        "deleted-by-za": "Deleted by (Z–A)",
         "deleted-newest": "Deleted (newest first)",
         "deleted-oldest": "Deleted (oldest first)"
       }
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Input data",
+      "loading": "Loading editor...",
       "output-data": "Output data",
       "title-debug-transformation": "Debug transformation"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "Folder",
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10124,12 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "code-mirror": {
+      "error-label": "CodeMirror editor failed to load",
+      "language-load-failed": "Syntax highlighting failed to load",
+      "language-load-failed-description": "The editor will continue without language-specific features.",
+      "loading-placeholder": "Loading editor"
+    },
     "color-picker": {
       "input-label": "RGBA value"
     },
@@ -10465,6 +10475,7 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "go-back": "Go back",
       "hide": "Hide",
       "show": "Show",
       "undock": "Undock"
@@ -11221,6 +11232,7 @@
       "label-numbers": "Numbers",
       "label-signature": "Signature"
     },
+    "description-allow-download": "When controls are enabled, show an option to download the logs on display.",
     "description-enable-field-selector": "Experimental. Show a component to manage the displayed fields from the logs.",
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines.",
@@ -11518,6 +11530,7 @@
         "common-labels": "Common labels:"
       }
     },
+    "name-allow-download": "Display download control",
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
@@ -11906,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All",
-      "title-filtered": "All (filtered)"
+      "title-deselect": "Deselect all",
+      "title-deselect-filtered": "Deselect all (filtered)",
+      "title-select": "Select all",
+      "title-select-filtered": "Select all (filtered)"
     },
     "clear": {
       "title": "Clear all"
@@ -14272,6 +14287,10 @@
     "buttons": {
       "restore": "Restore"
     },
+    "limit-banner": {
+      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
+      "at-limit-title": "Deleted dashboards limit reached"
+    },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
       "no-deleted-dashboards-text": "When you delete a dashboard, it will be kept in the history for up to 12 months before being permanently deleted. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
@@ -14433,6 +14452,10 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-by-header": "Deleted by",
+      "deleted-by-removed": "Deleted account",
+      "deleted-by-unknown-short": "<0></0> Unknown",
+      "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
@@ -14787,6 +14810,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "Error loading preferences",
+      "update-preferences": "Error updating preferences"
+    },
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
@@ -16002,6 +16029,9 @@
         "grouping-to-matrix": "Grouping to matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found."
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calculate a histogram from input data."
@@ -16336,6 +16366,9 @@
       "label-time-field": "Time field",
       "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series.",
       "tooltip-time-field": "The time field that will be used for the time series. If not selected the first found will be used."
+    },
+    "transformation-editor": {
+      "loading": "Loading editor..."
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "First field name",

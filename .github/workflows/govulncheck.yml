@@ -1,0 +1,54 @@
+name: govulncheck
+
+on:
+  push:
+    paths:
+      - '**/*.go'
+      - .github/workflows/govulncheck.yml
+      - .citools/src/govulncheck/**
+      - go.*
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**/*.go'
+      - .github/workflows/govulncheck.yml
+      - .citools/src/govulncheck/**
+      - go.*
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-x64-xlarge-io
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+      - name: Run govulncheck on all modules
+        run: |
+          set -euo pipefail
+
+          GOVULNCHECK=$(GOWORK=off go tool -n -modfile="$GITHUB_WORKSPACE/.citools/src/govulncheck/go.mod" govulncheck)
+
+          failed=0
+          for dir in $(go list -m -f '{{.Dir}}'); do
+            [ -f "$dir/.nolint" ] && continue
+            if output=$(cd "$dir" && "$GOVULNCHECK" ./... 2>&1); then
+              echo "ok $dir"
+            else
+              echo ""
+              echo "=== FAIL $dir ==="
+              echo "$output"
+              echo "=== END $dir ==="
+              echo ""
+              failed=1
+            fi
+          done
+          exit $failed

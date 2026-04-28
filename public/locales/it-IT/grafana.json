@@ -3589,9 +3589,9 @@
         "declare-incident": "Dichiara incidente",
         "declare-incident-no-permission": "Non disponi dell'autorizzazione per accedere a Incidente",
         "instance-details": "Dettagli dell'istanza",
+        "section-silence": "",
         "silence-button": "Silenzia",
-        "silence-no-permission": "Non disponi dell'autorizzazione necessaria per creare silenzi",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Non disponi dell'autorizzazione necessaria per creare silenzi"
       },
       "labels-column-title": "Etichette",
       "no-firing-or-pending-instances": "Non sono presenti istanze di avviso in stato di attivazione o in sospeso per l'intervallo di tempo selezionato.",
@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Dati di input",
+      "loading": "",
       "output-data": "Dati di uscita",
       "title-debug-transformation": "Esegui il debug della trasformazione"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cerca"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Cancella selezione"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valore RGBA"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Chiudi",
       "dock": "Aggancia",
+      "go-back": "",
       "hide": "Nascondi",
       "show": "Mostra",
       "undock": "Sgancia"
@@ -11221,6 +11230,7 @@
       "label-numbers": "Numeri",
       "label-signature": "Firma"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Sperimentale. Mostra un componente per gestire i campi visualizzati nei registri.",
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
     "description-enable-logs-highlighting": "Utilizza uno schema di colorazione predefinito per evidenziare le parti rilevanti delle righe del registro.",
@@ -11518,6 +11528,7 @@
         "common-labels": "Etichette comuni:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etichette comuni",
     "name-deduplication": "Deduplicazione",
     "name-details-mode": "Modalità pannello dettagli registro",
@@ -11906,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tutti",
-      "title-filtered": "Tutti (filtrati)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Cancella tutto"
@@ -14787,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Pannello di controllo principale",
       "home-dashboard-placeholder": "Dashboard predefinito",
@@ -16002,6 +16019,9 @@
         "grouping-to-matrix": "Raggruppamento in matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcola un istogramma dai dati di input."
@@ -16336,6 +16356,9 @@
       "label-time-field": "Campo dell'ora",
       "tooltip-statistic-should-calculated-series": "La statistica che dovrebbe essere calcolata per questa serie temporale.",
       "tooltip-time-field": "Il campo temporale che verrà utilizzato per la serie temporale. Se non selezionato, verrà utilizzato il primo trovato."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome del primo campo",

@@ -1675,6 +1675,8 @@ export type ExportJobOptions = {
   message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
+  /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
+  resources?: ResourceRef[];
 };
 export type JobSpec = {
   /** Possible enum values:
