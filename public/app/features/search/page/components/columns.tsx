@@ -184,7 +184,9 @@ export const generateColumns = (
                 )}
               >
                 <Text variant="body" truncate>
-                  <Icon name="exclamation-triangle" /> {t('search.results-table.deleted-by-unknown-short', 'Unknown')}
+                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                    <Icon name="exclamation-triangle" /> Unknown
+                  </Trans>
                 </Text>
               </Tooltip>
             ) : (

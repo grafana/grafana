@@ -14441,7 +14441,7 @@
       "datasource-header": "Data source",
       "deleted-by-header": "Deleted by",
       "deleted-by-removed": "Deleted account",
-      "deleted-by-unknown-short": "Unknown",
+      "deleted-by-unknown-short": "<0></0> Unknown",
       "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
