@@ -110,6 +110,7 @@ jobs:
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
+          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_OUTPUT"
       - name: Add PR status check
         env:
           GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
@@ -127,3 +128,17 @@ jobs:
            -f 'output[title]=Docker image' \
            -f "output[summary]=${IMAGE}" \
            -f "output[text]=${IMAGE}"
+  meticulous:
+    needs: push-docker-image
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Run Meticulous tests
+        uses: alwaysmeticulous/report-diffs-action/upload-container@v1
+        with:
+          api-token: ${{ secrets.METICULOUS_API_TOKEN }}
+          image-tag: ${{ needs.push-docker-image.outputs.IMAGE }}
+          container-port: 3000
