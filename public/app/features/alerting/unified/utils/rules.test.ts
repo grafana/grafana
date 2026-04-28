@@ -203,6 +203,14 @@ describe('getRulerGroupReadOnlyStatus', () => {
     expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'provisioned' });
   });
 
+  it('prefers plugin over federated when both apply', () => {
+    const group = {
+      rules: [mockRulerAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } })],
+      source_tenants: ['tenant-1'],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
   it('reports readOnly=false for a group with no rules', () => {
     expect(getRulerGroupReadOnlyStatus({ rules: [] })).toEqual({ readOnly: false });
   });

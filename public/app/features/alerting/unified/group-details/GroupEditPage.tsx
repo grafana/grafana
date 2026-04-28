@@ -202,6 +202,8 @@ function GroupEditBody({ rulerGroup, groupIdentifier }: GroupEditBodyProps) {
           </Trans>
         </Alert>
       );
+    default:
+      return <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />;
   }
 }
 
