@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../../http_api/snapshot/ # /docs/grafana/<GRAFANA_VERSION>/http_api/snapshot/
-  - ../../../../developers/http_api/snapshot/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/snapshot/
+  - ../../../../http_api/snapshot/ # /docs/grafana/next/http_api/snapshot/
+  - ../../../../developers/http_api/snapshot/ # /docs/grafana/next/developers/http_api/snapshot/
   - ../../../../developer-resources/api-reference/http-api/snapshot/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/snapshot/
 description: Grafana HTTP API

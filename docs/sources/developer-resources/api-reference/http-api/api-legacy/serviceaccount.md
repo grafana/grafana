@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../../http_api/serviceaccount/ # /docs/grafana/<GRAFANA_VERSION>/http_api/serviceaccount/
-  - ../../../../developers/http_api/serviceaccount/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/serviceaccount/
+  - ../../../../http_api/serviceaccount/ # /docs/grafana/next/http_api/serviceaccount/
+  - ../../../../developers/http_api/serviceaccount/ # /docs/grafana/next/developers/http_api/serviceaccount/
   - ../../../../developer-resources/api-reference/http-api/serviceaccount/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/serviceaccount/
 description: Grafana service account HTTP API

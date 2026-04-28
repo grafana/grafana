@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../../http_api/admin/ # /docs/grafana/<GRAFANA_VERSION>/http_api/admin/
-  - ../../../../developers/http_api/admin/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/
+  - ../../../../http_api/admin/ # /docs/grafana/next/http_api/admin/
+  - ../../../../developers/http_api/admin/ # /docs/grafana/next/developers/http_api/admin/
   - ../../../../developer-resources/api-reference/http-api/admin/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/admin/
 description: Grafana Admin HTTP API

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../../http_api/access_control/ # /docs/grafana/<GRAFANA_VERSION>/http_api/access_control/
-  - ../../../../http_api/accesscontrol/ # /docs/grafana/<GRAFANA_VERSION>/http_api/accesscontrol/
-  - ../../../../developers/http_api/access_control/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
+  - ../../../../http_api/access_control/ # /docs/grafana/next/http_api/access_control/
+  - ../../../../http_api/accesscontrol/ # /docs/grafana/next/http_api/accesscontrol/
+  - ../../../../developers/http_api/access_control/ # /docs/grafana/next/developers/http_api/access_control/
   - ../../../../developer-resources/api-reference/http-api/access-control/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/access_control/
 description: ''

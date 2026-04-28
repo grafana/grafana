@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../../http_api/library_element/ # /docs/grafana/<GRAFANA_VERSION>/http_api/library_element/
-  - ../../../../developers/http_api/library_element/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/library_element/
+  - ../../../../http_api/library_element/ # /docs/grafana/next/http_api/library_element/
+  - ../../../../developers/http_api/library_element/ # /docs/grafana/next/developers/http_api/library_element/
   - ../../../../developer-resources/api-reference/http-api/library_element/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/library_element/
 description: Grafana Library Element HTTP API

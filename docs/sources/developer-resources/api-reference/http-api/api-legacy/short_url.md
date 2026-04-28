@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../../http_api/short_url/ # /docs/grafana/<GRAFANA_VERSION>/http_api/short_url/
-  - ../../../../developers/http_api/short_url/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/short_url/
+  - ../../../../http_api/short_url/ # /docs/grafana/next/http_api/short_url/
+  - ../../../../developers/http_api/short_url/ # /docs/grafana/next/developers/http_api/short_url/
   - ../../../../developer-resources/api-reference/http-api/short_url/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/short_url/
 description: Grafana Short URL HTTP API
