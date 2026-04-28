@@ -331,7 +331,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				})
 				require.Equal(t, folder.ErrAccessDenied, err)
 			})
-
 		})
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
