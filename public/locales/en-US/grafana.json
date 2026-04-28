@@ -3166,9 +3166,7 @@
       "deleting": "Deleting",
       "text-federated": "Federated",
       "text-provisioned": "Provisioned",
-      "ungrouped": "Ungrouped",
-      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
-      "unknown-rule": "Unknown Rule"
+      "ungrouped": "Ungrouped"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
