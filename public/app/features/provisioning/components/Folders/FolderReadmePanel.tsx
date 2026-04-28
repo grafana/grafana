@@ -72,7 +72,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
             href={editUrl}
             target="_blank"
             rel="noopener noreferrer"
-            icon="external-link-alt"
+            icon="pen"
             variant="secondary"
             fill="text"
             size="sm"
