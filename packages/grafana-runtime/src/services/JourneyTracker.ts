@@ -188,7 +188,7 @@ export function getJourneyTracker(): JourneyTracker {
 }
 
 // ---------------------------------------------------------------------------
-// Split registration API (Proposal 3 - Hybrid)
+// JourneyRegistry: split start / end registration
 // ---------------------------------------------------------------------------
 
 /**
