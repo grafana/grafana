@@ -62,6 +62,63 @@ describe('handleRedirectTo', () => {
     jest.restoreAllMocks();
   });
 
+  it('clears the stored redirect when handling URL login', () => {
+    const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+    mockLocationService.getSearch.mockReturnValue(new URLSearchParams('auth_token=test-token'));
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/grafana/d/test?orgId=2'));
+
+    handleRedirectTo();
+
+    expect(sessionStorage.getItem(RedirectToUrlKey)).toBeNull();
+    expect(window.location.replace).not.toHaveBeenCalled();
+    expect(locationService.replace).not.toHaveBeenCalled();
+  });
+
+  it('stores redirectTo from non-root paths and removes it from the URL', () => {
+    const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+    const replaceStateSpy = jest.spyOn(window.history, 'replaceState');
+    const queryParams = new URLSearchParams();
+    queryParams.set('redirectTo', '/grafana/d/test?orgId=2');
+    queryParams.set('foo', 'bar');
+    mockLocationService.getSearch.mockReturnValue(queryParams);
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        pathname: '/login',
+      },
+    });
+
+    handleRedirectTo();
+
+    expect(sessionStorage.getItem(RedirectToUrlKey)).toBe(encodeURIComponent('/grafana/d/test?orgId=2'));
+    expect(queryParams.has('redirectTo')).toBe(false);
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/login');
+    expect(window.location.replace).not.toHaveBeenCalled();
+    expect(locationService.replace).not.toHaveBeenCalled();
+  });
+
+  it('does not consume the stored redirect before the user is signed in', () => {
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/grafana/d/test?orgId=2'));
+
+    handleRedirectTo();
+
+    expect(sessionStorage.getItem(RedirectToUrlKey)).toBe(encodeURIComponent('/grafana/d/test?orgId=2'));
+    expect(window.location.replace).not.toHaveBeenCalled();
+    expect(locationService.replace).not.toHaveBeenCalled();
+  });
+
+  it('hard redirects goto URLs through the backend', () => {
+    contextSrv.user.isSignedIn = true;
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/goto/abc123'));
+
+    handleRedirectTo();
+
+    expect(window.location.replace).toHaveBeenCalledWith('/grafana/goto/abc123');
+    expect(locationService.replace).not.toHaveBeenCalled();
+  });
+
   it('does not hard redirect cross-origin URLs even when orgId changes', () => {
     contextSrv.user.isSignedIn = true;
     contextSrv.user.orgId = 1;
