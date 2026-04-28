@@ -11,8 +11,7 @@ interface Props {
 
 /**
  * Renders a README markdown payload produced by the provisioning files API.
- * Used by the dedicated README tab and by the inline "show details" expand
- * inside the FolderReadmeHint banner.
+ * Used by the dedicated README tab.
  */
 export function RenderedReadme({ file }: Props) {
   const styles = useStyles2(getStyles);
