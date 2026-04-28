@@ -1161,7 +1161,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
-			expectedMessage:        folder.ErrTitleEmpty.Error(),
+			expectedMessage:        folder.ErrAPITitleEmpty.Error(),
 			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
@@ -2435,8 +2435,10 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 	}
 }
 
-// TestIntegrationFolderMaxDepthReturns400 asserts k8s apiserver can convert error to a metav1.Status
-func TestIntegrationFolderMaxDepthReturns400(t *testing.T) {
+// TestIntegrationFolderValidationReturns400 asserts the folder admission
+// validator surfaces structured 4xx responses (and stable messages consumed
+// by provisioning) rather than "Unhandled Error" 500s.
+func TestIntegrationFolderValidationReturns400(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
@@ -2447,54 +2449,81 @@ func TestIntegrationFolderMaxDepthReturns400(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 	})
-
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
 		GVR:  gvr,
 	})
 
-	// Default MaxNestedFolderDepth is 4 — five levels of nesting are allowed.
-	parentUID := ""
-	for i := 1; i <= 5; i++ {
-		md := map[string]any{
-			"name": fmt.Sprintf("max-depth-%d", i),
-		}
+	makeFolder := func(name, title, parentUID string) *unstructured.Unstructured {
+		md := map[string]any{"name": name}
 		if parentUID != "" {
 			md["annotations"] = map[string]any{utils.AnnoKeyFolder: parentUID}
 		}
-		f := &unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": md,
-				"spec":     map[string]any{"title": fmt.Sprintf("Max depth %d", i)},
-			},
-		}
-		out, err := client.Resource.Create(context.Background(), f, metav1.CreateOptions{})
-		require.NoErrorf(t, err, "creating folder at depth %d should succeed", i)
-		parentUID = out.GetName()
+		return &unstructured.Unstructured{Object: map[string]any{
+			"metadata": md,
+			"spec":     map[string]any{"title": title},
+		}}
 	}
 
-	// Sixth level exceeds the limit and must fail with HTTP 400, not 500.
-	overflow := &unstructured.Unstructured{
-		Object: map[string]any{
-			"metadata": map[string]any{
-				"name":        "max-depth-6",
-				"annotations": map[string]any{utils.AnnoKeyFolder: parentUID},
+	cases := []struct {
+		name        string
+		setup       func(t *testing.T) string
+		folder      func(parentUID string) *unstructured.Unstructured
+		expectedMsg string
+	}{
+		{
+			name:        "title empty",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
+			expectedMsg: "[folder.title-empty] folder title cannot be empty",
+		},
+		{
+			name:        "reserved uid",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
+			expectedMsg: "[folder.invalid-uid] reserved UID \"general\" cannot be used",
+		},
+		{
+			name:        "parent of itself",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
+			expectedMsg: "[folder.cannot-be-parent-of-itself] folder cannot be parent of itself",
+		},
+		{
+			name: "max depth exceeded",
+			setup: func(t *testing.T) string {
+				parentUID := ""
+				for i := 1; i <= 5; i++ {
+					out, err := client.Resource.Create(context.Background(),
+						makeFolder(fmt.Sprintf("max-depth-%d", i), fmt.Sprintf("Max depth %d", i), parentUID),
+						metav1.CreateOptions{})
+					require.NoErrorf(t, err, "creating folder at depth %d should succeed", i)
+					parentUID = out.GetName()
+				}
+				return parentUID
 			},
-			"spec": map[string]any{"title": "Max depth 6"},
+			folder: func(parentUID string) *unstructured.Unstructured {
+				return makeFolder("max-depth-6", "Max depth 6", parentUID)
+			},
+			expectedMsg: "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4",
 		},
 	}
-	_, err := client.Resource.Create(context.Background(), overflow, metav1.CreateOptions{})
-	require.Error(t, err, "creating folder beyond max depth must error")
-	require.Falsef(t, apierrors.IsInternalError(err),
-		"apiserver surfaced max-depth error as HTTP 500 (regression of alert #1782995): %v", err)
-	require.Truef(t, apierrors.IsBadRequest(err),
-		"expected HTTP 400 BadRequest from max-depth violation; got: %v (%T)", err, err)
 
-	// Provisioning parses this message — keep format stable.
-	const expectedMsg = "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4"
-	var statusErr *apierrors.StatusError
-	require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
-	require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
-	require.Equal(t, expectedMsg, statusErr.ErrStatus.Message)
-	require.Equal(t, expectedMsg, err.Error())
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var parentUID string
+			if tc.setup != nil {
+				parentUID = tc.setup(t)
+			}
+			_, err := client.Resource.Create(context.Background(), tc.folder(parentUID), metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Falsef(t, apierrors.IsInternalError(err),
+				"apiserver surfaced as HTTP 500 (regression of alert #1782995): %v", err)
+			require.Truef(t, apierrors.IsBadRequest(err),
+				"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+			require.Equal(t, tc.expectedMsg, statusErr.ErrStatus.Message)
+			require.Equal(t, tc.expectedMsg, err.Error())
+		})
+	}
 }

@@ -30,7 +30,8 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
 		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
-		errors.Is(err, folder.ErrMaximumDepthReached) {
+		errors.Is(err, folder.ErrMaximumDepthReached) ||
+		errors.Is(err, folder.ErrInvalidUID) {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
