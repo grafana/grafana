@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -48,6 +51,35 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		m.SetError()
 		defer m.Record()
 
-		responder.Error(fmt.Errorf("TODO, proxy: %s", r.pluginJSON.ID))
+		clonedReq, err := proxyRequest(req)
+		if err != nil {
+			backend.Logger.Error("failed to create proxy request", "error", err)
+			m.SetError()
+			responder.Error(err)
+			return
+		}
+
+		// TODO... actually proxy!!!
+		_, err = w.Write([]byte(fmt.Sprintf("TODO, proxy: %s", clonedReq.URL.Path)))
+		if err != nil {
+			responder.Error(err)
+		}
 	}), nil
+}
+
+func proxyRequest(req *http.Request) (*http.Request, error) {
+	idx := strings.LastIndex(req.URL.Path, "/proxy")
+	if idx < 0 {
+		return nil, fmt.Errorf("expected resource path") // 400?
+	}
+
+	clonedReq := req.Clone(req.Context())
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resources"):], "/")
+
+	clonedReq.URL = &url.URL{
+		Path:     rawURL,
+		RawQuery: clonedReq.URL.RawQuery,
+	}
+
+	return clonedReq, nil
 }

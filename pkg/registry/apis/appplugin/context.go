@@ -75,11 +75,17 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 
 			instance.DecryptedSecureJSONData = make(map[string]string)
 			for k, sv := range settings.Secure {
-				v := lookup[sv.Name]
+				v, ok := lookup[sv.Name]
+				if !ok {
+					continue // or error?
+				}
 				if v.Error() != nil {
 					return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure value: %s / %w", k, err)
 				}
-				instance.DecryptedSecureJSONData[k] = string(*v.Value())
+				val := v.Value()
+				if val != nil {
+					instance.DecryptedSecureJSONData[k] = string(*val)
+				}
 			}
 		}
 	}
