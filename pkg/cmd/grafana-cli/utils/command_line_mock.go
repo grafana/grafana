@@ -159,7 +159,7 @@ func (_m *MockCommandLine) GcomToken() string {
 	return r0
 }
 
-func (_m *MockCommandLine) PluginInstallToken() string {
+func (_m *MockCommandLine) GrafanaComProxyAPIToken() string {
 	ret := _m.Called()
 
 	var r0 string

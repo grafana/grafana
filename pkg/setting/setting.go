@@ -537,8 +537,8 @@ type Cfg struct {
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
 
-	// PluginInstallToken is the dedicated auth token for plugin-related requests to Grafana.com.
-	PluginInstallToken string
+	// GrafanaComProxyAPIToken is the dedicated auth token for Grafana.com proxy requests and plugin installs.
+	GrafanaComProxyAPIToken string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -756,14 +756,14 @@ type InstallPlugin struct {
 	URL     string `json:"url,omitempty"`
 }
 
-// ResolvePluginInstallToken must be called after OpenFeature is initialized.
-// It sets PluginInstallToken to the dedicated token when the pluginsDedicatedInstallToken
-// flag is enabled and install_token is configured; otherwise falls back to sso_api_token.
-func (cfg *Cfg) ResolvePluginInstallToken() {
-	if openfeature.NewDefaultClient().Boolean(context.Background(), "pluginsDedicatedInstallToken", false, openfeature.EvaluationContext{}) && cfg.PluginInstallToken != "" {
+// ResolveGrafanaComProxyAPIToken must be called after OpenFeature is initialized.
+// It sets GrafanaComProxyAPIToken to the dedicated token when the dedicatedGrafanaComProxyAPIToken
+// flag is enabled and proxy_token is configured; otherwise falls back to sso_api_token.
+func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "dedicatedGrafanaComProxyAPIToken", false, openfeature.EvaluationContext{}) && cfg.GrafanaComProxyAPIToken != "" {
 		return
 	}
-	cfg.PluginInstallToken = cfg.GrafanaComSSOAPIToken
+	cfg.GrafanaComProxyAPIToken = cfg.GrafanaComSSOAPIToken
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -828,6 +828,7 @@ func RedactedValue(key, value string) string {
 		"API_TOKEN$",
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
+		"PROXY_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1673,6 +1674,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 

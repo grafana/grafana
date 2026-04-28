@@ -99,7 +99,7 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 		repoURL:   c.PluginRepoURL(),
 		pluginURL: c.PluginURL(),
 		pluginDir: c.PluginDirectory(),
-		gcomToken: c.PluginInstallToken(),
+		gcomToken: c.GrafanaComProxyAPIToken(),
 	}
 }
 

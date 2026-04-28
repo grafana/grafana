@@ -263,7 +263,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-08-29,cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
-2026-04-28,pluginsDedicatedInstallToken,experimental,@grafana/plugins-platform-backend,false,false,false
+2026-04-29,dedicatedGrafanaComProxyAPIToken,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newVizSuggestions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true

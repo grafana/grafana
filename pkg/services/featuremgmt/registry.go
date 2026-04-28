@@ -2258,8 +2258,8 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "pluginsDedicatedInstallToken",
-			Description: "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",
+			Name:        "dedicatedGrafanaComProxyAPIToken",
+			Description: "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true},
 			Owner:       grafanaPluginsPlatformSquad,

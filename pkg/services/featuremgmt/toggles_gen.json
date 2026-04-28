@@ -2042,6 +2042,47 @@
     },
     {
       "metadata": {
+        "name": "dedicatedGnetProxyToken",
+        "resourceVersion": "1777400900377",
+        "creationTimestamp": "2026-04-28T18:28:20Z",
+        "deletionTimestamp": "2026-04-29T00:45:54Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dedicatedGrafanaComProxyAPIToken",
+        "resourceVersion": "1777425647409",
+        "creationTimestamp": "2026-04-29T01:20:47Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dedicatedGrafanaComProxyToken",
+        "resourceVersion": "1777423554751",
+        "creationTimestamp": "2026-04-29T00:45:54Z",
+        "deletionTimestamp": "2026-04-29T01:20:47Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
         "resourceVersion": "1775137669107",
         "creationTimestamp": "2024-04-16T14:52:47Z",
@@ -4501,7 +4542,8 @@
       "metadata": {
         "name": "pluginsDedicatedInstallToken",
         "resourceVersion": "1777390418301",
-        "creationTimestamp": "2026-04-28T15:33:38Z"
+        "creationTimestamp": "2026-04-28T15:33:38Z",
+        "deletionTimestamp": "2026-04-28T18:28:20Z"
       },
       "spec": {
         "description": "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",

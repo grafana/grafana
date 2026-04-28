@@ -14,7 +14,6 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -383,62 +382,58 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
 		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
+}
 
-	testProvider := oftesting.NewTestProvider()
-	err := openfeature.SetProviderAndWait(testProvider)
-	require.NoError(t, err)
+func TestResolveGrafanaComProxyAPIToken(t *testing.T) {
+	skipStaticRootValidation = true
 
-	flagEnabled := map[string]memprovider.InMemoryFlag{
-		"pluginsDedicatedInstallToken": {
-			State:          memprovider.Enabled,
-			DefaultVariant: "enabled",
-			Variants:       map[string]any{"enabled": true},
-		},
+	setProvider := func(t *testing.T, flagOn bool) {
+		t.Helper()
+		variant := "disabled"
+		if flagOn {
+			variant = "enabled"
+		}
+		p := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			"dedicatedGrafanaComProxyAPIToken": {
+				State:          memprovider.Enabled,
+				DefaultVariant: variant,
+				Variants:       map[string]any{"enabled": true, "disabled": false},
+			},
+		})
+		require.NoError(t, openfeature.SetProviderAndWait(p))
+		t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
 	}
-	flagDisabled := map[string]memprovider.InMemoryFlag{
-		"pluginsDedicatedInstallToken": {
-			State:          memprovider.Enabled,
-			DefaultVariant: "disabled",
-			Variants:       map[string]any{"disabled": false},
-		},
-	}
 
-	t.Run("PluginInstallToken falls back to sso_api_token when flag is off", func(t *testing.T) {
-		defer testProvider.Cleanup()
-		testProvider.UsingFlags(t, flagDisabled)
+	t.Run("falls back to sso_api_token when flag is off", func(t *testing.T) {
+		setProvider(t, false)
 		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
-		t.Setenv("GF_PLUGINS_INSTALL_TOKEN", "dedicated-token")
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "dedicated-token")
 
 		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
-		require.NoError(t, err)
-		cfg.ResolvePluginInstallToken()
-		require.Equal(t, "sso-token", cfg.PluginInstallToken)
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "sso-token", cfg.GrafanaComProxyAPIToken)
 	})
 
-	t.Run("PluginInstallToken uses dedicated token when flag is on and install_token is set", func(t *testing.T) {
-		defer testProvider.Cleanup()
-		testProvider.UsingFlags(t, flagEnabled)
+	t.Run("uses dedicated token when flag is on and proxy_token is set", func(t *testing.T) {
+		setProvider(t, true)
 		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
-		t.Setenv("GF_PLUGINS_INSTALL_TOKEN", "dedicated-token")
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "dedicated-token")
 
 		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
-		require.NoError(t, err)
-		cfg.ResolvePluginInstallToken()
-		require.Equal(t, "dedicated-token", cfg.PluginInstallToken)
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "dedicated-token", cfg.GrafanaComProxyAPIToken)
 	})
 
-	t.Run("PluginInstallToken falls back to sso_api_token when flag is on but install_token is not set", func(t *testing.T) {
-		defer testProvider.Cleanup()
-		testProvider.UsingFlags(t, flagEnabled)
+	t.Run("falls back to sso_api_token when flag is on but proxy_token is not set", func(t *testing.T) {
+		setProvider(t, true)
 		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
 
 		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
-		require.NoError(t, err)
-		cfg.ResolvePluginInstallToken()
-		require.Equal(t, "sso-token", cfg.PluginInstallToken)
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+		cfg.ResolveGrafanaComProxyAPIToken()
+		require.Equal(t, "sso-token", cfg.GrafanaComProxyAPIToken)
 	})
 }
 
@@ -662,6 +657,12 @@ func TestRedactedValue(t *testing.T) {
 			desc:     "client token",
 			key:      "token",
 			value:    "test",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "proxy_token",
+			key:      "GF_GRAFANA_COM_PROXY_TOKEN",
+			value:    "some-token",
 			expected: RedactedPassword,
 		},
 	}
