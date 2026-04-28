@@ -64,6 +64,7 @@ export function toMatchUPlotSnapshot(
       uPlotCanvasEvents: uPlotCanvasEvents,
       width: payloadWidth,
       height: payloadHeight,
+      snapshotAssertionPassed: result.pass,
     };
 
     const { fullPath, publicBasename } = resolveUPlotComparePayloadWriteTarget(testName);

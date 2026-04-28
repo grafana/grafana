@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-import { isUPlotComparePayload } from '../testUtils.ts';
+import { isUPlotComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
 import type { ResolvedPayload, UPlotComparePayload } from '../types.ts';
 
+import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { ComparePlots } from './ComparePlots.tsx';
 
 /** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
@@ -53,6 +54,9 @@ export const CompareUPlotCanvases = ({
   const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
   const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
+  const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = React.useState<
+    Record<string, boolean | undefined>
+  >({});
 
   /**
    * @todo route with links instead so folks can open each in a new tab
@@ -85,6 +89,7 @@ export const CompareUPlotCanvases = ({
         actual: raw.actual,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
         ...readPayloadDimensions(raw),
+        snapshotAssertionPassed: raw.snapshotAssertionPassed,
       },
     });
   }, []);
@@ -162,6 +167,34 @@ export const CompareUPlotCanvases = ({
 
   React.useEffect(() => {
     let cancelled = false;
+    const loadSnapshotAssertionFlags = async () => {
+      const entries = await Promise.all(
+        PUBLIC_PAYLOAD_FILES.map(async (basename): Promise<[string, boolean | undefined]> => {
+          try {
+            const res = await fetch(payloadFetchUrl(basename));
+            if (!res.ok) {
+              return [basename, undefined];
+            }
+            const data: unknown = await res.json();
+            return [basename, readSnapshotAssertionPassed(data)];
+          } catch {
+            return [basename, undefined];
+          }
+        })
+      );
+      if (!cancelled) {
+        setFileSnapshotAssertionPassed(Object.fromEntries(entries));
+      }
+    };
+
+    void loadSnapshotAssertionFlags();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
     const loadFileModifiedDates = async () => {
       const entries = await Promise.all(
         PUBLIC_PAYLOAD_FILES.map(async (basename): Promise<[string, string]> => {
@@ -227,7 +260,12 @@ export const CompareUPlotCanvases = ({
                 className={`compare-file-item${selectedFile === basename ? ' is-selected' : ''}`}
                 onClick={() => loadPayloadFromPublicFile(basename, 'push')}
               >
-                <span>{basename}</span>
+                <span className="compare-file-item-header">
+                  <span className="compare-file-name">{basename}</span>
+                  {typeof fileSnapshotAssertionPassed[basename] === 'boolean' ? (
+                    <AssertionStatusBadge passed={fileSnapshotAssertionPassed[basename]} compact />
+                  ) : null}
+                </span>
                 <span className="compare-file-modified">
                   {fileModifiedLabels[basename] ? `Modified: ${fileModifiedLabels[basename]}` : 'Modified: unknown'}
                 </span>
