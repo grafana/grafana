@@ -219,10 +219,7 @@ describe('HeatmapPanel (canvas)', () => {
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
   let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
-  let uPlotInitEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
-  // @todo remove?
-  let clearInitEvents = false;
 
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
@@ -238,8 +235,7 @@ describe('HeatmapPanel (canvas)', () => {
 
   const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     await assertUPlotReady();
-    await Promise.resolve(setTimeout(() => {}, 400));
-    expect(scrubOutput(uPlotAxisEvents!)).toMatchUPlotSnapshot(uPlotInitEvents!, snapshotSize);
+    expect(scrubOutput(uPlotAxisEvents!)).toMatchUPlotSnapshot([], snapshotSize);
   };
 
   beforeEach(() => {
@@ -247,16 +243,6 @@ describe('HeatmapPanel (canvas)', () => {
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
       const builder: UPlotConfigBuilder = realPrepConfig(opts);
-
-      builder.addHook('init', (u: uPlot) => {
-        uPlotInstance = u;
-        uPlotInitEvents = u.ctx.__getEvents();
-        if (clearInitEvents) {
-          u.ctx.__clearDrawCalls();
-          u.ctx.__clearEvents();
-          u.ctx.__clearPath();
-        }
-      });
 
       builder.addHook('drawAxes', (u: uPlot) => {
         uPlotInstance = u;
@@ -531,16 +517,6 @@ describe('HeatmapPanel (canvas)', () => {
       raw: { from: 'now-4s', to: 'now' },
     };
     const stableRowsTimeValues = [1000, 2000, 3000];
-
-    beforeEach(() => {
-      clearAxisEvents = false;
-      clearInitEvents = true;
-    });
-
-    afterEach(() => {
-      clearAxisEvents = true;
-      clearInitEvents = false;
-    });
 
     describe('X Axis', () => {
       it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge, HeatmapCellLayout.auto, HeatmapCellLayout.unknown])(
