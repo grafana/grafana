@@ -476,7 +476,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 				}
 				visited[ref.UID] = true
 				out = append(out, &folder.Folder{
-					ID:        ref.ID,
+					ID:        ref.ID, // nolint:staticcheck
 					OrgID:     orgID,
 					UID:       ref.UID,
 					ParentUID: ref.ParentUID,
