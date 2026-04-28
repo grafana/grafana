@@ -918,7 +918,9 @@
       "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
       "button-history": "History",
+      "button-open-configuration": "Open configuration",
       "button-view": "View",
+      "button-view-details": "View details",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
@@ -3588,11 +3590,10 @@
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
         "back": "Back",
-        "contact-point-title": "Contact point: {{name}}",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
-        "edit-contact-point-title": "Edit {{name}}",
         "instance-details": "Instance details",
+        "section-contact-point": "Contact Point",
         "section-silence": "Silence",
         "silence-button": "Silence",
         "silence-no-permission": "You do not have permission to create silences"

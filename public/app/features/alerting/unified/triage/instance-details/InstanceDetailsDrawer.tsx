@@ -39,7 +39,6 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { ContactPointDrawer } from './ContactPointDrawer';
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
-import { EditContactPointDrawer } from './EditContactPointDrawer';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
@@ -79,8 +78,7 @@ interface InstanceDetailsDrawerProps {
 /** Drawer stack view state for instance details and drilldowns. */
 type DrawerView =
   | { type: 'instance-details' }
-  | { type: 'contact-point-list'; receiverName: string; receiverResourceId?: string }
-  | { type: 'edit-contact-point'; receiverResourceName: string; displayTitle?: string }
+  | { type: 'contact-point-list'; receiverName: string }
   | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
   | { type: 'silence' }
   | { type: 'declare-incident' };
@@ -93,7 +91,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
+  const closeContactPointTimerRef = useRef<number | undefined>(undefined);
   const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
+  const [isClosingContactPointDrawer, setIsClosingContactPointDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
   const silenceDrawerCloseAnimationMs = Number(theme.transitions.duration.standard ?? 180);
@@ -159,8 +159,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       window.clearTimeout(closeSilenceTimerRef.current);
       closeSilenceTimerRef.current = undefined;
     }
+    if (closeContactPointTimerRef.current !== undefined) {
+      window.clearTimeout(closeContactPointTimerRef.current);
+      closeContactPointTimerRef.current = undefined;
+    }
     resetSilencePanelStyles();
     setIsClosingSilenceDrawer(false);
+    setIsClosingContactPointDrawer(false);
     setViewStack([{ type: 'instance-details' }]);
     onClose();
   };
@@ -169,6 +174,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return () => {
       if (closeSilenceTimerRef.current !== undefined) {
         window.clearTimeout(closeSilenceTimerRef.current);
+      }
+      if (closeContactPointTimerRef.current !== undefined) {
+        window.clearTimeout(closeContactPointTimerRef.current);
       }
       resetSilencePanelStyles();
     };
@@ -214,9 +222,28 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     });
   }, [animateCloseTopDrawer, isClosingSilenceDrawer, silenceDrawerCloseAnimationMs, resetSilencePanelStyles]);
 
+  const animateCloseContactPointDrawer = useCallback(() => {
+    if (isClosingContactPointDrawer) {
+      return;
+    }
+    setIsClosingContactPointDrawer(true);
+    animateCloseTopDrawer(() => {
+      closeContactPointTimerRef.current = window.setTimeout(() => {
+        resetSilencePanelStyles();
+        popTopView();
+        setIsClosingContactPointDrawer(false);
+        closeContactPointTimerRef.current = undefined;
+      }, silenceDrawerCloseAnimationMs);
+    });
+  }, [animateCloseTopDrawer, isClosingContactPointDrawer, silenceDrawerCloseAnimationMs, resetSilencePanelStyles]);
+
   const handleBack = () => {
     if (activeView.type === 'silence') {
       animateCloseSilenceDrawer();
+      return;
+    }
+    if (activeView.type === 'contact-point-list') {
+      animateCloseContactPointDrawer();
       return;
     }
 
@@ -229,17 +256,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   const handleOpenContactPoint = useCallback((receiverName: string) => {
     setViewStack((current) => [...current, { type: 'contact-point-list', receiverName }]);
-  }, []);
-
-  const handleOpenEditContactPoint = useCallback((receiverResourceName: string, displayTitle?: string) => {
-    setViewStack((current) => {
-      const next = [...current];
-      const listIdx = next.findIndex((v) => v.type === 'contact-point-list');
-      if (listIdx !== -1 && next[listIdx].type === 'contact-point-list') {
-        next[listIdx] = { ...next[listIdx], receiverResourceId: receiverResourceName };
-      }
-      return [...next, { type: 'edit-contact-point', receiverResourceName, displayTitle }];
-    });
   }, []);
 
   const sharedTitleProps = useMemo(
@@ -377,68 +393,30 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   }
 
-  if (activeView.type === 'edit-contact-point') {
-    const parentEntry = viewStack.length >= 2 ? viewStack[viewStack.length - 2] : undefined;
-    const receiverNameForList =
-      parentEntry?.type === 'contact-point-list'
-        ? parentEntry.receiverName
-        : (activeView.displayTitle ?? activeView.receiverResourceName);
-    const receiverResourceIdForList =
-      parentEntry?.type === 'contact-point-list' ? parentEntry.receiverResourceId : undefined;
-
-    return (
-      <AlertmanagerProvider accessType="instance">
-        <>
-          <Drawer
-            title={renderDrilldownTitle(
-              t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
-                name: receiverNameForList,
-              })
-            )}
-            onClose={handleDrawerClose}
-            width={drawerWidth}
-          >
-            <ContactPointDrawer
-              listSearchQuery={receiverNameForList}
-              receiverResourceId={receiverResourceIdForList}
-              onEditContactPoint={handleOpenEditContactPoint}
-            />
-          </Drawer>
-          <Drawer
-            title={renderDrilldownTitle(
-              t('alerting.triage.instance-details-drawer.edit-contact-point-title', 'Edit {{name}}', {
-                name: activeView.displayTitle ?? activeView.receiverResourceName,
-              })
-            )}
-            onClose={handleDrawerClose}
-            width={drawerWidth}
-          >
-            <EditContactPointDrawer contactPointName={activeView.receiverResourceName} onSaveSuccess={popTopView} />
-          </Drawer>
-        </>
-      </AlertmanagerProvider>
+  if (activeView.type === 'contact-point-list' || isClosingContactPointDrawer) {
+    const contactPointEntry = viewStack.find(
+      (v): v is { type: 'contact-point-list'; receiverName: string } => v.type === 'contact-point-list'
     );
-  }
+    const receiverTitle = contactPointEntry?.receiverName ?? '';
 
-  if (activeView.type === 'contact-point-list') {
     return (
-      <Drawer
-        title={renderDrilldownTitle(
-          t('alerting.triage.instance-details-drawer.contact-point-title', 'Contact point: {{name}}', {
-            name: activeView.receiverName,
-          })
-        )}
-        onClose={handleDrawerClose}
-        width={drawerWidth}
-      >
-        <AlertmanagerProvider accessType="instance">
-          <ContactPointDrawer
-            listSearchQuery={activeView.receiverName}
-            receiverResourceId={activeView.receiverResourceId}
-            onEditContactPoint={canViewContactPoints ? handleOpenEditContactPoint : undefined}
-          />
-        </AlertmanagerProvider>
-      </Drawer>
+      <>
+        <Drawer title={renderMainDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+          {getInstanceDetailsBody()}
+        </Drawer>
+        <Drawer
+          title={renderDrilldownTitle(
+            receiverTitle,
+            t('alerting.triage.instance-details-drawer.section-contact-point', 'Contact Point')
+          )}
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          <AlertmanagerProvider accessType="instance">
+            <ContactPointDrawer listSearchQuery={receiverTitle} />
+          </AlertmanagerProvider>
+        </Drawer>
+      </>
     );
   }
 

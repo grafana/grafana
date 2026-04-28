@@ -6,6 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { ContactPoint } from './ContactPoint';
@@ -28,8 +29,7 @@ describe('ContactPoint', () => {
     ]);
   });
 
-  it('invokes onEditContactPoint with resource id and display name when Edit is clicked', async () => {
-    const onEditContactPoint = jest.fn();
+  it('instance drawer embed: Open configuration link uses receiver URL in a new tab when user can edit', async () => {
     const contactPoint: ContactPointWithMetadata = {
       id: 'bmV3LWNvbnRhY3QtcG9pbnQ',
       name: 'new-contact-point',
@@ -44,13 +44,28 @@ describe('ContactPoint', () => {
       },
     };
 
-    const { user } = renderWithProvider(
-      <ContactPoint contactPoint={contactPoint} onEditContactPoint={onEditContactPoint} />
-    );
+    renderWithProvider(<ContactPoint contactPoint={contactPoint} instanceDrawerEmbed />);
 
-    await user.click(await screen.findByTestId('edit-action'));
+    const link = await screen.findByTestId('open-configuration-action');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveAttribute('href', '/alerting/notifications/receivers/bmV3LWNvbnRhY3QtcG9pbnQ/edit');
+    expect(link).toHaveTextContent('Open configuration');
+  });
 
-    expect(onEditContactPoint).toHaveBeenCalledTimes(1);
-    expect(onEditContactPoint).toHaveBeenCalledWith('bmV3LWNvbnRhY3QtcG9pbnQ', 'new-contact-point');
+  it('instance drawer embed: View details when contact point is not editable', async () => {
+    const contactPoint: ContactPointWithMetadata = {
+      name: 'provisioned-cp',
+      policies: [],
+      grafana_managed_receiver_configs: [],
+      provenance: KnownProvenance.File,
+    };
+
+    renderWithProvider(<ContactPoint contactPoint={contactPoint} instanceDrawerEmbed />);
+
+    const link = await screen.findByTestId('view-details-action');
+    expect(link).toHaveTextContent('View details');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('href', '/alerting/notifications/receivers/provisioned-cp/edit');
   });
 });

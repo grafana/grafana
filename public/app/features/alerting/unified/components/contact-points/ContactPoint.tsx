@@ -32,14 +32,11 @@ function getReceiverResourceId(contactPoint: ContactPointWithMetadata): string {
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
-  /**
-   * When set, Edit opens this handler instead of navigating to the full-page editor.
-   * Passes the receiver API identifier (K8s resource name when using the notifications API) and optional display title.
-   */
-  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
+  /** Alerts Activity instance drawer: open-configuration / view-details in new tab with embed styling. */
+  instanceDrawerEmbed?: boolean;
 }
 
-export const ContactPoint = ({ contactPoint, onEditContactPoint }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint, instanceDrawerEmbed }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
@@ -60,11 +57,7 @@ export const ContactPoint = ({ contactPoint, onEditContactPoint }: ContactPointP
               resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
           }
-          onEditClick={
-            onEditContactPoint
-              ? () => onEditContactPoint(getReceiverResourceId(contactPoint), contactPoint.name)
-              : undefined
-          }
+          instanceDrawerEmbed={instanceDrawerEmbed}
         />
 
         {showFullMetadata ? (
