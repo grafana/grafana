@@ -66,7 +66,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
-  }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
+  }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
