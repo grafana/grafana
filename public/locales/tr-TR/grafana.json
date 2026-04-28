@@ -3589,9 +3589,9 @@
         "declare-incident": "Olay bildir",
         "declare-incident-no-permission": "Olaya erişim izniniz yok",
         "instance-details": "Örnek ayrıntıları",
+        "section-silence": "",
         "silence-button": "Sessize alma",
-        "silence-no-permission": "Sessize alma oluşturma izniniz yok",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Sessize alma oluşturma izniniz yok"
       },
       "labels-column-title": "Etiketler",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
@@ -4400,12 +4400,13 @@
       "button-label": "Klasör seçin",
       "clear-selection": "Seçimi temizle",
       "empty-message": "Klasör bulunamadı",
-      "error-title": "Klasörler yüklenirken hata oluştu",
+      "error-title": "",
       "non-folder-item": "Klasörsüz {{itemKind}} {{itemUID}}",
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
       "shared-with-me": "Benimle paylaşılan",
       "team-folders": "Ekip klasörleri",
+      "team-folders-error-title": "",
       "unknown-error": "Bilinmeyen hata"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Ek açıklamalar ve uyarılar",
         "dashboard": "Pano",
         "element": "Bileşen",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Bağlantılar",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
@@ -5633,6 +5636,7 @@
         "panels": "Paneller",
         "row": "Satır",
         "rows": "Satırlar",
+        "section-filters-set": "",
         "tab": "Sekme",
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
@@ -5650,8 +5654,10 @@
           "title": "Satır başlığı"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Değişken ekle",
         "title": "Değişkenler"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Satır başlığını gizle",
           "title": "Başlık"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Değişkenler"
         },
@@ -6362,6 +6371,9 @@
             "title": "Değişkene göre tekrar et"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Değişkenler"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Kütüphane panelini kaydet",
         "share": {
           "arrow": "Paylaş",
-          "title": "Paylaş",
           "tooltip": "Bağlantıyı kopyala"
         },
         "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
@@ -6477,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
+      "loading": "",
       "output-data": "Çıktı verileri",
       "title-debug-transformation": "Dönüşümde hata ayıklama"
     },
@@ -7074,6 +7086,16 @@
       "sql-name": "SQL ile dönüştür",
       "sql-transformation-description": "Verilerinizi MySQL benzeri söz dizimiyle işleyin"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7544,7 @@
       "affected-dashboards_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "İptal",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
@@ -7529,6 +7552,11 @@
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
       "form-loading-error": "Form yüklenirken hata oluştu",
       "form-loading-error-unknown": "Form yüklenirken beklenmedik bir hata oluştu.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Açıklama",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
@@ -7546,6 +7574,9 @@
       "disabled-tooltip": "Uyarı kuralları oluşturmadan önce panoyu kaydedin",
       "new-alert-rule": "Yeni uyarı kuralı",
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Aynı anda birden fazla değerin seçilmesini sağlar",
@@ -7642,6 +7673,13 @@
       "page-nav": {
         "text": {
           "settings": "Ayarlar"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8232,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Ara"
     },
     "resource-dimension-editor": {
@@ -8618,6 +8657,7 @@
         "copy-link": "Bağlantıyı günlük kaydı satırına kopyala",
         "copy-to-clipboard": "Panoya kopyala",
         "inspect-value": "Değeri incele",
+        "show-details": "",
         "view-log-line": "Günlük kaydı satırını göster"
       }
     },
@@ -10082,6 +10122,12 @@
     "cascader": {
       "clear-button": "Seçimi temizle"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA değeri"
     },
@@ -10427,6 +10473,7 @@
     "sidebar": {
       "close": "Kapat",
       "dock": "Yerleştir",
+      "go-back": "",
       "hide": "Gizle",
       "show": "Göster",
       "undock": "Çıkar"
@@ -11087,6 +11134,12 @@
       "update-all": "Tümünü güncelle",
       "num-affected_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>",
       "num-affected_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11177,6 +11230,7 @@
       "label-numbers": "Sayılar",
       "label-signature": "İmza"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Deneysel. Günlük kayıtlarında görüntülenen alanları yönetmek için bir bileşen gösterin.",
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili kısımlarını vurgulamak için önceden tanımlanmış bir renklendirme şeması kullanın.",
@@ -11286,6 +11340,8 @@
       "fields-section": "Alanlar",
       "hide-log-line": "Günlük satırını gizle",
       "inline-mode": "Satır içi görüntüle",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Bağlantı değeri",
       "links-section": "Bağlantılar",
       "log-attributes-field": "Günlük kaydı öznitelikleri",
@@ -11472,6 +11528,7 @@
         "common-labels": "Ortak etiketler:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Ortak etiketler",
     "name-deduplication": "Yinelenenleri kaldırma",
     "name-details-mode": "Günlük kaydı ayrıntı paneli modu",
@@ -11534,13 +11591,13 @@
   "logstable": {
     "category-table": "Günlük Kayıtları Tablosu",
     "description-show-controls": "Tablo kontrollerini göster",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Her satırın ilk sütunundaki günlük kaydı satırı bağlantı düğmesini etkinleştirir/devre dışı bırakır",
       "name": "Günlük kaydı bağlantısını kopyala düğmesini göster"
-    },
-    "show-inspect-button": {
-      "description": "Her satırın ilk sütunundaki günlük kaydı satırı inceleme düğmesini etkinleştirir/devre dışı bırakır",
-      "name": "İncele düğmesini göster"
     }
   },
   "manage-dashbaords": {
@@ -11860,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tümü",
-      "title-filtered": "Tümü (filtrelenmiş)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tümünü temizle"
@@ -12956,9 +13015,7 @@
       "update-available": "Güncelleme mevcut!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Eklenti kullanımı, panolar genelinde kullanım bulabilmek için yeni arama dizini gerektirir. Lütfen özellik anahtarını etkinleştirin",
       "num-usages": "{{pluginName}}, <2>{{numUsages}}</2> kez kullanılıyor.",
-      "title-missing-feature-toggle-panel-title-search": "Eksik özellik geçişi: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} henüz herhangi bir panoda kullanılmıyor"
     },
     "plugins-errors-info": {
@@ -13106,6 +13163,7 @@
       "token-user-description": "Depoya API belirteciyle erişmek için kullanılacak kullanıcı adı",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Bitbucket depo URL'si",
+      "url-pattern": "",
       "url-required": "Depo URL'si gereklidir"
     },
     "bootstrap-step": {
@@ -14059,7 +14117,6 @@
       "hide": "{{type}} ögesini gizle",
       "hide-help": "Veri kaynağı yardımını gizle",
       "hide-transformation-help": "Dönüştürme yardımını gizle",
-      "inspector": "Sorgu denetçisi",
       "more-actions": "Diğer {{type}} işlemleri",
       "remove": "{{type}} ögesini kaldır",
       "remove-transformation-filter": "Filtreyi kaldır",
@@ -14071,6 +14128,27 @@
     "alerts": {
       "no-alerts": "Bu panel için uyarı kuralı yok",
       "no-alerts-description": "Verileriniz belirli koşulları karşıladığında bildirim almak için bir uyarı kuralı oluşturun."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Bu sorguyu silmek istediğinizden emin misiniz?",
@@ -14108,6 +14186,7 @@
     },
     "footer": {
       "edit-option": "{{label}} ögesini düzenle",
+      "inspect-queries": "",
       "label": {
         "interval": "Aralık",
         "max-data-points": "Maksimum veri noktaları",
@@ -14118,6 +14197,7 @@
       "placeholder": {
         "no-limit": "Sınır yok"
       },
+      "query-inspector": "",
       "query-options": "Sorgu Seçenekleri"
     },
     "header": {
@@ -14720,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Ana Pano",
       "home-dashboard-placeholder": "Varsayılan pano",
@@ -15889,6 +15973,7 @@
           "group-by": "Gruplandırma ölçütü"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Yok sayıldı",
       "placeholder-select-stats": "İstatistikleri seç"
     },
@@ -15900,6 +15985,16 @@
         "group-by": "Gruplandırma ölçütü"
       },
       "title-calc-alert": "Hiçbir alan gruplanmıyorsa hesaplamaların etkisi olmaz"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15923,6 +16018,9 @@
       "name": {
         "grouping-to-matrix": "Matrise gruplandırma"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16258,6 +16356,9 @@
       "label-time-field": "Zaman alanı",
       "tooltip-statistic-should-calculated-series": "Bu zaman serisi için hesaplanacak istatistik.",
       "tooltip-time-field": "Zaman serisi için kullanılacak zaman alanı. Seçilmezse bulunan ilk alan kullanılır."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "İlk alan adı",

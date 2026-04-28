@@ -65,7 +65,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return folder.ErrInvalidUID
+		return folder.ErrAPIInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -73,6 +73,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to read metadata from object: %w", err)
 	}
 
+	// UID format is only validated on create. On update the Kubernetes API server enforces
+	// that the object name (which maps to the UID) is immutable, so re-validating here
+	// would be redundant.
 	if !util.IsValidShortUID(id) {
 		return dashboards.ErrDashboardInvalidUid
 	}
@@ -84,7 +87,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	f.Spec.Title = strings.TrimSpace(f.Spec.Title)
 
 	if f.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
@@ -97,7 +100,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	if parentName == f.Name {
-		return folder.ErrFolderCannotBeParentOfItself
+		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
 	// note: `parents` will include itself as the last item
@@ -109,7 +112,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
-		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
+		return folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
 	return nil
@@ -135,7 +138,7 @@ func validateOnUpdate(ctx context.Context,
 	obj.Spec.Title = strings.TrimSpace(obj.Spec.Title)
 
 	if obj.Spec.Title == "" {
-		return folder.ErrTitleEmpty
+		return folder.ErrAPITitleEmpty
 	}
 
 	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {

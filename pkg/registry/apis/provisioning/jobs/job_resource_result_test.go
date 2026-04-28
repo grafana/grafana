@@ -381,6 +381,29 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
 	})
+
+	t.Run("FolderDepthExceededError classifies as ReasonFolderDepthExceeded", func(t *testing.T) {
+		depthErr := resources.NewFolderDepthExceededError("a/b/c/d/e/", errors.New("folder max depth exceeded, max depth is 4"))
+		result := NewResourceResult().WithError(depthErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Nil(t, result.Error(), "depth-exceeded should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "depth-exceeded should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderDepthExceededError classifies as ReasonFolderDepthExceeded", func(t *testing.T) {
+		depthErr := resources.NewFolderDepthExceededError("a/b/c/d/e/", errors.New("folder max depth exceeded, max depth is 4"))
+		pathErr := &resources.PathCreationError{
+			Path: "a/b/c/d/e/",
+			Err:  fmt.Errorf("ensure folder exists: %w", depthErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "a/b/c/d/e/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Nil(t, result.Error(), "depth-exceeded should be a warning even when wrapped through PathCreationError")
+		assert.NotNil(t, result.Warning())
+	})
 }
 
 func TestIsNonFailingWarning(t *testing.T) {

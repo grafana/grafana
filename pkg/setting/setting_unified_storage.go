@@ -60,6 +60,10 @@ var MigratedUnifiedResources = map[string]bool{
 // underscore in the resource portion of the env var name maps unambiguously
 // back to a dot. The key names are matched from a known list
 // ([knownUnifiedStorageKeys]) to preserve their original camelCase.
+//
+// Env vars that do not match a known camelCase resource suffix are treated
+// as keys on the bare [unified_storage] section (lowercased snake_case),
+// e.g. GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB → migration_cache_size_kb.
 func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	envPrefix := EnvSectionPrefix("unified_storage")
 
@@ -81,6 +85,7 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 
 		// Try to match a known key suffix. The key is always the last component
 		// after the final underscore that matches a known key name.
+		matched := false
 		for envKeySuffix, iniKeyName := range knownUnifiedStorageKeys {
 			suffix := "_" + envKeySuffix
 			if !strings.HasSuffix(remainder, suffix) {
@@ -96,8 +101,21 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 			cfg.Raw.Section(sectionName).Key(iniKeyName).SetValue(envValue)
 			cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
 				fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			matched = true
 			break
 		}
+		if matched {
+			continue
+		}
+
+		// Fallback: bare [unified_storage] section key (lowercased snake_case).
+		keyName := strings.ToLower(remainder)
+		if keyName == "" {
+			continue
+		}
+		cfg.Raw.Section("unified_storage").Key(keyName).SetValue(envValue)
+		cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+			fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 	}
 }
 
@@ -156,6 +174,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -197,6 +216,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
 	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
+	cfg.TenantWatcherUsePolling = section.Key("tenant_watcher_use_polling").MustBool(false)
+	cfg.TenantWatcherPollInterval = section.Key("tenant_watcher_poll_interval").MustDuration(1 * time.Hour)
 
 	// tenant deleter
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)
@@ -216,6 +237,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
+	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
@@ -241,6 +263,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
 		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
 	}
+
+	// Vector storage (separate pgvector database)
+	vectorSection := cfg.Raw.Section("database_vector")
+	cfg.VectorDBHost = vectorSection.Key("db_host").String()
+	cfg.VectorDBPort = vectorSection.Key("db_port").MustString("5432")
+	cfg.VectorDBName = vectorSection.Key("db_name").String()
+	cfg.VectorDBUser = vectorSection.Key("db_user").String()
+	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
+	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

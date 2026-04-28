@@ -164,6 +164,11 @@
         window.__grafanaRenderBindingSupported = true;
       [[end]]
 
+      [[if .AssetSriChecksEnabled]]
+        // For enabling SRI checks on dynamically loaded Grafana assets
+        window.__grafanaAssetSriChecksEnabled = true;
+      [[end]]
+
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
       // global config
       window.grafanaBootData = {
@@ -409,6 +414,11 @@
 
           document.body.classList.add(isLightTheme ? "theme-light" : "theme-dark");
 
+          const lang = window.grafanaBootData.user.language;
+          if (lang) {
+            document.documentElement.lang = lang;
+          }
+
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
 
@@ -444,8 +454,21 @@
     </script>
     [[end]]
 
-    [[range $asset := .Assets.JSFiles]]
+    [[if .AssetSriChecksEnabled ]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[else]]
+      [[range $asset := .Assets.JSFiles]]
       <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
+      [[end]]
     [[end]]
 
      <script nonce="[[.Nonce]]">

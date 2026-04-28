@@ -225,7 +225,7 @@ export function transformToOTLP(data: MutableDataFrame): {
     const span = data.get(i);
 
     // Group spans based on service
-    if (!services[span.serviceName]) {
+    if (services[span.serviceName] === undefined) {
       services[span.serviceName] = result.batches.length;
       result.batches.push({
         resource: {

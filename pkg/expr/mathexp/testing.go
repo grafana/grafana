@@ -9,7 +9,7 @@ import (
 func GenerateNumber(value *float64) Number {
 	size := rand.Intn(5)
 	labels := make(map[string]string, size)
-	for i := 0; i < size; i++ {
+	for range size {
 		labels[util.GenerateShortUID()] = util.GenerateShortUID()
 	}
 	result := NewNumber(util.GenerateShortUID(), labels)

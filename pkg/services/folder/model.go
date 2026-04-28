@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached")) // Important: keep error msgID stable for other services to consume (provisioning)
 var ErrBadRequest = errutil.BadRequest("folder.bad-request")
 var ErrDatabaseError = errutil.Internal("folder.database-error")
 var ErrConflict = errutil.Conflict("folder.conflict")
@@ -22,13 +22,24 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
-var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
+var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
 
-var ErrVersionMismatch = errors.New("the folder has been changed by someone else")
+// TODO: evaluate if we can remove legacy errors and only have k8s ones
 var ErrTitleEmpty = errors.New("folder title cannot be empty")
-var ErrSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
 var ErrInvalidUID = errors.New("invalid uid for folder provided")
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
+var ErrVersionMismatch = errors.New("the folder has been changed by someone else")
+var ErrSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
 var ErrAccessDenied = errors.New("access denied to folder")
+
+// Wraps legacy errors (/api) into an apiserver (/apis) error for them to be handled as 400.
+var ErrAPITitleEmpty = errutil.BadRequest("folder.title-empty", errutil.WithPublicMessage("Folder title cannot be empty")).
+	Errorf("%w", ErrTitleEmpty)
+var ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid", errutil.WithPublicMessage("Invalid uid for folder provided")).
+	Errorf("%w", ErrInvalidUID)
+var ErrAPIFolderCannotBeParentOfItself = errutil.BadRequest("folder.cannot-be-parent-of-itself", errutil.WithPublicMessage("Folder cannot be parent of itself")).
+	Errorf("%w", ErrFolderCannotBeParentOfItself)
+
 var ErrMoveAccessDenied = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
 var ErrAccessEscalation = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))

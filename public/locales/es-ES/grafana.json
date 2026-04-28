@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "No tienes permiso para acceder al incidente.",
         "instance-details": "Detalles de la instancia",
+        "section-silence": "",
         "silence-button": "Permanecer en silencio",
-        "silence-no-permission": "No tienes permiso para crear silenciamientos.",
-        "silence-title-with-name": ""
+        "silence-no-permission": "No tienes permiso para crear silenciamientos."
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -4400,12 +4400,13 @@
       "button-label": "Seleccionar carpeta",
       "clear-selection": "Eliminar selección",
       "empty-message": "No se ha encontrado ninguna carpeta",
-      "error-title": "Error al cargar las carpetas",
+      "error-title": "",
       "non-folder-item": "{{itemKind}} {{itemUID}} no es una carpeta",
       "root-title": "Dashboards",
       "search-placeholder": "Buscar carpetas",
       "shared-with-me": "Compartida conmigo",
       "team-folders": "Carpetas de equipo",
+      "team-folders-error-title": "",
       "unknown-error": "Error desconocido"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Anotaciones y alertas",
         "dashboard": "Panel de control",
         "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
         "link-set": "Enlaces",
         "local-variable": "Variable local",
         "multiple-elements": "Múltiples elementos",
@@ -5633,6 +5636,7 @@
         "panels": "Paneles",
         "row": "Fila",
         "rows": "Filas",
+        "section-filters-set": "",
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
@@ -5650,8 +5654,10 @@
           "title": "Encabezado de fila"
         }
       },
+      "section-filters": {
+        "title": ""
+      },
       "section-variables": {
-        "add-tooltip": "Añadir variable",
         "title": "Variables"
       },
       "variable": {
@@ -6203,6 +6209,9 @@
           "hide-header": "Ocultar encabezado de fila",
           "title": "Título"
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6362,6 +6371,9 @@
             "title": "Repetir por variable"
           }
         },
+        "section-filters": {
+          "title": ""
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6442,7 +6454,6 @@
         "save-library-panel": "Guardar panel de librería",
         "share": {
           "arrow": "Compartir",
-          "title": "Compartir",
           "tooltip": "Copiar enlace"
         },
         "unlink-library-panel": "Desvincular panel de librería"
@@ -6477,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Datos de entrada",
+      "loading": "",
       "output-data": "Datos de salida",
       "title-debug-transformation": "Depurar transformación"
     },
@@ -7074,6 +7086,16 @@
       "sql-name": "Transformar con SQL",
       "sql-transformation-description": "Manipula tus datos utilizando una sintaxis similar a MySQL"
     },
+    "filters-list": {
+      "add-filter": "",
+      "reorder-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7522,6 +7544,7 @@
       "affected-dashboards_other": "Esta actualización afectará a <1>{{count}} dashboards.</1> Los siguientes dashboards que utilizan el panel se verán afectados:"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este dashboard no se puede guardar desde la interfaz de usuario de Grafana porque se ha aprovisionado desde otra fuente. Copia el JSON o guárdalo en un archivo a continuación; luego puedes actualizar el dashboard en la fuente de aprovisionamiento.",
       "copy-json-to-clipboard": "Copiar JSON al portapapeles",
@@ -7529,6 +7552,11 @@
       "file-path": "<strong>Ruta del archivo:</strong> {{filePath}}",
       "form-loading-error": "Error al cargar el formulario",
       "form-loading-error-unknown": "Se ha producido un error inesperado al cargar el formulario.",
+      "format": {
+        "classic": "",
+        "model-label": "",
+        "v2-resource": ""
+      },
       "label-description": "Descripción",
       "label-target-folder": "Carpeta de destino",
       "label-title": "Título",
@@ -7546,6 +7574,9 @@
       "disabled-tooltip": "Guarda el dashboard antes de crear reglas de alerta.",
       "new-alert-rule": "Nueva regla de alerta",
       "title-no-alerting-capable-query-found": "No se ha encontrado ninguna consulta con capacidad de alerta"
+    },
+    "section-filters-list": {
+      "add-filter": ""
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Permite seleccionar varios valores al mismo tiempo",
@@ -7642,6 +7673,13 @@
       "page-nav": {
         "text": {
           "settings": "Configuración"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
         }
       }
     },
@@ -8232,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Buscar"
     },
     "resource-dimension-editor": {
@@ -8618,6 +8657,7 @@
         "copy-link": "Copiar enlace a línea de log",
         "copy-to-clipboard": "Copiar al portapapeles",
         "inspect-value": "Inspeccionar valor",
+        "show-details": "",
         "view-log-line": "Ver línea de log"
       }
     },
@@ -10082,6 +10122,12 @@
     "cascader": {
       "clear-button": "Eliminar selección"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valor RGBA"
     },
@@ -10427,6 +10473,7 @@
     "sidebar": {
       "close": "Cerrar",
       "dock": "Acoplar",
+      "go-back": "",
       "hide": "Ocultar",
       "show": "Mostrar",
       "undock": "Desacoplar"
@@ -11087,6 +11134,12 @@
       "update-all": "Actualizar todo",
       "num-affected_one": "Esta actualización afectará a <1>{{count}} dashboards.</1>",
       "num-affected_other": "Esta actualización afectará a <1>{{count}} dashboards.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11177,6 +11230,7 @@
       "label-numbers": "Números",
       "label-signature": "Firma"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Muestra un componente para gestionar los campos mostrados de los logs.",
     "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
     "description-enable-logs-highlighting": "Utiliza un esquema de color predefinido para resaltar las partes relevantes de las líneas del log.",
@@ -11286,6 +11340,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar línea de log",
       "inline-mode": "Mostrar en línea",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor del enlace",
       "links-section": "Enlaces",
       "log-attributes-field": "Atributos del log",
@@ -11472,6 +11528,7 @@
         "common-labels": "Etiquetas comunes:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comunes",
     "name-deduplication": "Desduplicación",
     "name-details-mode": "Modo de panel de detalles de logs",
@@ -11534,13 +11591,13 @@
   "logstable": {
     "category-table": "Tabla de logs",
     "description-show-controls": "Mostrar controles de la tabla",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Habilita/deshabilita el botón de enlace a la línea de log en la primera columna de cada fila.",
       "name": "Mostrar botón para copiar enlace del log"
-    },
-    "show-inspect-button": {
-      "description": "Habilita/deshabilita el botón de inspección de la línea de log en la primera columna de cada fila.",
-      "name": "Mostrar botón de inspección"
     }
   },
   "manage-dashbaords": {
@@ -11860,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Todo",
-      "title-filtered": "Todo (filtrado)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Borrar todo"
@@ -12956,9 +13015,7 @@
       "update-available": "¡Actualización disponible!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "El uso del plugin requiere el nuevo índice de búsqueda para encontrar el uso en todos los paneles. Habilita la opción de alternar características",
       "num-usages": "{{pluginName}} se utiliza <2>{{numUsages}}</2> veces.",
-      "title-missing-feature-toggle-panel-title-search": "Falta el conmutador de características: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} todavía no se utiliza en ningún dashboard"
     },
     "plugins-errors-info": {
@@ -13106,6 +13163,7 @@
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con el token de API.",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio de Bitbucket",
+      "url-pattern": "",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "bootstrap-step": {
@@ -14059,7 +14117,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ayuda de la fuente de datos",
       "hide-transformation-help": "Ocultar ayuda para la transformación",
-      "inspector": "Inspector de consultas",
       "more-actions": "Más acciones de {{type}}",
       "remove": "Eliminar {{type}}",
       "remove-transformation-filter": "Eliminar filtro",
@@ -14071,6 +14128,27 @@
     "alerts": {
       "no-alerts": "No hay reglas de alerta para este panel.",
       "no-alerts-description": "Crea una regla de alerta para recibir notificaciones cuando tus datos cumplan determinadas condiciones."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "¿Seguro que quieres eliminar esta consulta?",
@@ -14108,6 +14186,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Puntos de datos máximos",
@@ -14118,6 +14197,7 @@
       "placeholder": {
         "no-limit": "Sin límite"
       },
+      "query-inspector": "",
       "query-options": "Opciones de consulta"
     },
     "header": {
@@ -14720,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Panel de control de inicio",
       "home-dashboard-placeholder": "Panel de control por defecto",
@@ -15889,6 +15973,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Seleccionar estadísticas"
     },
@@ -15900,6 +15985,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Los cálculos no tendrán efecto si no se agrupan campos"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15923,6 +16018,9 @@
       "name": {
         "grouping-to-matrix": "Agrupar en matriz"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16258,6 +16356,9 @@
       "label-time-field": "Campo de tiempo",
       "tooltip-statistic-should-calculated-series": "La estadística que debe calcularse para esta serie temporal.",
       "tooltip-time-field": "El campo de tiempo que se utilizará para la serie temporal. Si no se selecciona, se utilizará el primero que se encuentre."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nombre del primer campo",

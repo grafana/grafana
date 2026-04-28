@@ -4,8 +4,8 @@ import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
-import deuteranopia_protanopia_dark from './themeDefinitions/deuteranopia_protanopia_dark.json';
-import deuteranopia_protanopia_light from './themeDefinitions/deuteranopia_protanopia_light.json';
+import deut_prot_dark from './themeDefinitions/deut_prot_dark.json';
+import deut_prot_light from './themeDefinitions/deut_prot_light.json';
 import gildedgrove from './themeDefinitions/gildedgrove.json';
 import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
@@ -28,8 +28,8 @@ const extraThemes: { [key: string]: unknown } = {
   aubergine,
   debug,
   desertbloom,
-  deuteranopia_protanopia_dark,
-  deuteranopia_protanopia_light,
+  deut_prot_dark,
+  deut_prot_light,
   gildedgrove,
   gloom,
   mars,

@@ -11,6 +11,7 @@ awsconfig
 /reports
 /e2e/tmp
 /scripts/grafana-server/tmp
+/scripts/uplot-compare/dist
 vendor/
 /docs/menu.yaml
 /requests
@@ -276,3 +277,5 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 .specs
 .playwright-mcp/
 overrides.yaml
+
+.profiles

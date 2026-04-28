@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1670,18 +1672,13 @@ func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 	}
 }
 
-type mockDirectRestConfigProvider struct {
-	restConfig *rest.Config
-}
-
-func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
-	return m.restConfig
-}
-
-func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
-
-func (m *mockDirectRestConfigProvider) IsReady() bool {
-	return true
+// testClientGenerator creates a resource.ClientGenerator backed by a test HTTP server.
+func testClientGenerator(serverURL string) resource.ClientGenerator {
+	return apiserver.ProvideClientGenerator(apiserver.RestConfigProviderFunc(
+		func(_ context.Context) (*rest.Config, error) {
+			return &rest.Config{Host: serverURL}, nil
+		},
+	))
 }
 
 func contextWithReqContext() context.Context {
@@ -1708,9 +1705,7 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 	} else {
 		ts := httptest.NewServer(http.HandlerFunc(s.serverResponse))
 		t.Cleanup(ts.Close)
-		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, &mockDirectRestConfigProvider{
-			restConfig: &rest.Config{Host: ts.URL},
-		}, tracer)
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, testClientGenerator(ts.URL), tracer)
 	}
 
 	ctx := contextWithReqContext()
