@@ -17,7 +17,6 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/open-feature/go-sdk/openfeature"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -147,6 +146,7 @@ type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error)
+	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -599,12 +599,19 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 	}
 
 	logger := srv.logger.FromContext(c.Req.Context())
-
-	// Refuse manual imports when external Alertmanager sync is enabled on the
-	// instance: the sync worker would overwrite the imported config on its next tick.
 	ctx := c.Req.Context()
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
-		return response.Error(http.StatusConflict, "alertmanager configuration import is disabled while external alertmanager sync is enabled", nil)
+
+	// Refuse manual imports when external Alertmanager sync is configured for
+	// this org (either via the operator-level ini setting or per-org admin
+	// config): the sync worker would overwrite the imported config on its next
+	// tick.
+	syncConfigured, err := srv.am.IsExternalAMSyncConfiguredForOrg(ctx, c.GetOrgID())
+	if err != nil {
+		logger.Error("Failed to check external AM sync configuration", "error", err)
+		return response.Error(http.StatusInternalServerError, "failed to check external alertmanager sync configuration", err)
+	}
+	if syncConfigured {
+		return response.Error(http.StatusConflict, "alertmanager configuration import is disabled while external alertmanager sync is configured for this organization", nil)
 	}
 
 	dryRun, err := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader)

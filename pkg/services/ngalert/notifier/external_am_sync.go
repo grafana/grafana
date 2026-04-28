@@ -3,6 +3,7 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
@@ -85,6 +87,24 @@ func (moa *MultiOrgAlertmanager) resolveExternalAMUID(orgID int64, adminCfgsByOr
 		return *cfg.ExternalAlertmanagerUID
 	}
 	return ""
+}
+
+// IsExternalAMSyncConfiguredForOrg reports whether external Alertmanager sync
+// configuration exists for the given org. It returns true when the operator-level
+// ini setting is non-empty (applies to all orgs) OR the org's admin configuration
+// has a non-empty ExternalAlertmanagerUID. Mirrors the precedence in
+// resolveExternalAMUID. It does not consider whether the sync feature flag is on —
+// gating on configuration alone is intentional so the convert API stays consistent
+// with the persisted admin_config regardless of feature-flag state.
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Context, orgID int64) (bool, error) {
+	if moa.settings.UnifiedAlerting.ExternalAlertmanagerUID != "" {
+		return true, nil
+	}
+	cfg, err := moa.adminConfigStore.GetAdminConfiguration(orgID)
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+		return false, err
+	}
+	return cfg != nil && cfg.ExternalAlertmanagerUID != nil && *cfg.ExternalAlertmanagerUID != "", nil
 }
 
 // fetchExtraConfig retrieves the Mimir/Cortex alertmanager configuration for a single org
