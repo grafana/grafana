@@ -2,7 +2,10 @@ package pulse
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/live"
 )
 
 // EventAction is the kind of pulse activity broadcast on a Live channel.
@@ -63,3 +66,56 @@ func (noopPublisher) Publish(int64, Event) error { return nil }
 
 // NoopPublisher is exposed so wire and tests can substitute it explicitly.
 func NoopPublisher() Publisher { return noopPublisher{} }
+
+// ChannelPublisher is the small surface a transport (Grafana Live) must
+// implement to receive pulse events. We accept (orgID, channel, []byte)
+// so the wire bridge can prefix the K8s namespace on its side.
+type ChannelPublisher interface {
+	Publish(orgID int64, channel string, data []byte) error
+}
+
+// NewLivePublisher wraps a transport-level publisher (e.g. Grafana Live)
+// in our event-shaped Publisher. The channel layout is
+// `grafana/pulse/<resourceKind>/<resourceUID>` so subscribers only see
+// events for the specific resource they opened.
+func NewLivePublisher(p ChannelPublisher) Publisher {
+	return &livePublisher{transport: p}
+}
+
+type livePublisher struct {
+	transport ChannelPublisher
+}
+
+// ProvideChannelPublisher is the wire provider that adapts the Grafana
+// Live service into a pulse-shaped ChannelPublisher. It exists in the
+// pulse package so the live package never has to import pulse.
+func ProvideChannelPublisher(g *live.GrafanaLive) ChannelPublisher {
+	if g == nil {
+		return noopChannelPublisher{}
+	}
+	return &liveChannelAdapter{live: g}
+}
+
+type liveChannelAdapter struct {
+	live *live.GrafanaLive
+}
+
+func (a *liveChannelAdapter) Publish(orgID int64, channel string, data []byte) error {
+	return a.live.PulseChannelPublish(orgID, channel, data)
+}
+
+type noopChannelPublisher struct{}
+
+func (noopChannelPublisher) Publish(int64, string, []byte) error { return nil }
+
+func (l *livePublisher) Publish(orgID int64, e Event) error {
+	if l.transport == nil {
+		return nil
+	}
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	channel := fmt.Sprintf("grafana/pulse/%s/%s", e.ResourceKind, e.ResourceUID)
+	return l.transport.Publish(orgID, channel, data)
+}

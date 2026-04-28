@@ -283,6 +283,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
 	pulse.ProvideService,
 	wire.Bind(new(pulse.Service), new(*pulse.PulseService)),
+	pulse.ProvideChannelPublisher,
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),

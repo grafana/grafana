@@ -62,11 +62,12 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	userSvc user.Service,
 	dashSvc dashboards.DashboardService,
+	channelPub ChannelPublisher,
 ) (*PulseService, error) {
 	s := &PulseService{
 		cfg:           PulseConfig{MaxBodyBytes: MaxBodyBytes},
 		store:         newStore(sqlStore),
-		live:          NoopPublisher(),
+		live:          NewLivePublisher(channelPub),
 		notifier:      &LogOnlyNotifier{Log: logger},
 		accessControl: ac,
 		routeRegister: routeRegister,
