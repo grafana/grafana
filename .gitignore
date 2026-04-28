@@ -11,6 +11,7 @@ awsconfig
 /reports
 /e2e/tmp
 /scripts/grafana-server/tmp
+/scripts/uplot-compare/dist
 vendor/
 /docs/menu.yaml
 /requests
