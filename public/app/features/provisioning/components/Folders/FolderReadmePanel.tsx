@@ -183,6 +183,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     overflow: 'hidden',
     scrollMarginTop: theme.spacing(2),
+    // Prevent the parent flex column (Page.Contents) from squeezing the
+    // panel — without this the body gets cropped on folders with a long list.
+    flexShrink: 0,
   }),
   header: css({
     display: 'flex',
