@@ -33,12 +33,28 @@ func (m *storageService) getStorageMode(ctx context.Context, gr schema.GroupReso
 	return mode
 }
 
+// storageModeToLegacyMode maps a StorageMode to a representative DualWriterMode value
+// for metric consistency: Legacy→Mode0, DualWrite→Mode1, Unified→Mode5.
+func storageModeToLegacyMode(mode unifiedmigrations.StorageMode) rest.DualWriterMode {
+	switch mode {
+	case unifiedmigrations.StorageModeUnified:
+		return rest.Mode5
+	case unifiedmigrations.StorageModeDualWrite:
+		return rest.Mode1
+	default:
+		return rest.Mode0
+	}
+}
+
 // NewStorage creates a storage instance based on the 3-mode concept:
 //   - ModeLegacy    → return legacy
 //   - ModeDualWrite → dualWriter that checks mode dynamically on every request
 //   - ModeUnified   → return unified
 func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
-	switch m.getStorageMode(context.Background(), gr) {
+	initialMode := m.getStorageMode(context.Background(), gr)
+	m.metrics.currentMode.WithLabelValues(gr.Resource, gr.Group).Set(float64(storageModeToLegacyMode(initialMode)))
+
+	switch initialMode {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
@@ -48,6 +64,7 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 			unified: unified,
 			getMode: func(ctx context.Context) (bool, bool) {
 				mode := m.getStorageMode(ctx, gr)
+				m.metrics.currentMode.WithLabelValues(gr.Resource, gr.Group).Set(float64(storageModeToLegacyMode(mode)))
 				return mode == unifiedmigrations.StorageModeUnified,
 					mode == unifiedmigrations.StorageModeDualWrite
 			},
