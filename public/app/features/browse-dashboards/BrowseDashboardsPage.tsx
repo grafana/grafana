@@ -187,8 +187,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && folder?.url && (
-          <FolderReadmeHint folderUID={folderUID} folderUrl={folder.url} />
+        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && (
+          <FolderReadmeHint folderUID={folderUID} />
         )}
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}

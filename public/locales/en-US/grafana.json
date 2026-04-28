@@ -4464,12 +4464,13 @@
       "edit-on-bitbucket": "Edit on Bitbucket",
       "edit-on-github": "Edit on GitHub",
       "edit-on-gitlab": "Edit on GitLab",
-      "hint-action": "Open README",
+      "hide-details": "Hide README",
       "hint-body": "The README explains how this folder is organized and where to find the dashboards you need.",
       "hint-title": "New to this folder?",
       "not-found": "No README.md file found in this folder.",
       "not-provisioned": "This folder is not managed by a Git repository.",
-      "parse-error": "Unable to display README content."
+      "parse-error": "Unable to display README content.",
+      "show-details": "Show README"
     },
     "recently-viewed": {
       "clear": "Clear history",

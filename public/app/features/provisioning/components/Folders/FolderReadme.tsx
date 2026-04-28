@@ -1,12 +1,11 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, EmptyState, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, EmptyState, LinkButton, Spinner, Stack } from '@grafana/ui';
 
 import { useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
+
+import { RenderedReadme } from './RenderedReadme';
 
 function buildReadmeTemplate(folderTitle: string): string {
   const heading = folderTitle?.trim() || 'Folder README';
@@ -32,8 +31,6 @@ interface FolderReadmeContentProps {
  * Shown in the README tab when the `provisioningReadmes` feature is enabled.
  */
 export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
-  const styles = useStyles2(getStyles);
-
   const { repository, folder, readmePath, isRepoLoading, isFileLoading, isError, fileData } =
     useFolderReadme(folderUID);
 
@@ -105,20 +102,6 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
     );
   }
 
-  const markdownContent = extractMarkdownContent(fileData.resource?.file);
-
-  if (!markdownContent) {
-    return (
-      <Box paddingY={4}>
-        <Text color="secondary">
-          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
-        </Text>
-      </Box>
-    );
-  }
-
-  const renderedHtml = renderMarkdown(markdownContent);
-
   return (
     <Stack direction="column" gap={2}>
       {editUrl && (
@@ -140,38 +123,9 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
           </LinkButton>
         </Stack>
       )}
-      <div className={styles.container}>
-        <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
-      </div>
+      <RenderedReadme file={fileData.resource?.file} />
     </Stack>
   );
-}
-
-function extractMarkdownContent(file: unknown): string | undefined {
-  if (!file) {
-    return undefined;
-  }
-
-  if (typeof file === 'string') {
-    return file;
-  }
-
-  if (!isStringRecord(file)) {
-    return undefined;
-  }
-
-  for (const key of ['content', 'data', 'spec', 'raw']) {
-    const value = file[key];
-    if (typeof value === 'string') {
-      return value;
-    }
-  }
-
-  return undefined;
-}
-
-function isStringRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function getEditButtonLabel(repoType?: string) {
@@ -199,13 +153,5 @@ function getCreateButtonLabel(repoType?: string) {
       return t('browse-dashboards.readme.create', 'Create README');
   }
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: theme.spacing(2),
-    backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.shape.radius.default,
-  }),
-});
 
 export { FolderReadmeContent as FolderReadme };

@@ -1,16 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { type ReactElement } from 'react';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { useFolderReadme } from '../../hooks/useFolderReadme';
 
 import { FolderReadmeHint } from './FolderReadmeHint';
-
-function renderWithRouter(ui: ReactElement) {
-  return render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>{ui}</MemoryRouter>);
-}
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -47,7 +41,7 @@ function setReadmeResult(overrides: Partial<ReturnType<typeof useFolderReadme>> 
     isRepoLoading: false,
     isFileLoading: false,
     isError: false,
-    fileData: { resource: { file: { content: '# hello' } } } as never,
+    fileData: { resource: { file: { content: '# Folder overview\n\nWelcome.' } } } as never,
     ...overrides,
   });
 }
@@ -58,69 +52,83 @@ describe('FolderReadmeHint', () => {
     config.featureToggles = { provisioningReadmes: true };
   });
 
-  it('renders a link to the README tab when a README exists', () => {
+  it('renders the info banner with a Show README toggle when a README exists', () => {
     setReadmeResult();
 
-    renderWithRouter(<FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />);
+    render(<FolderReadmeHint folderUID="test-folder" />);
 
-    const link = screen.getByRole('link', { name: /Open README/i });
-    expect(link).toHaveAttribute('href', '/dashboards/f/test-folder/readme');
+    expect(screen.getByText(/New to this folder/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show README/i })).toBeInTheDocument();
+    // Markdown is collapsed by default.
+    expect(screen.queryByText('Folder overview')).not.toBeInTheDocument();
   });
 
-  it('reports an interaction when the link is clicked', () => {
+  it('expands the rendered README inline when the toggle is clicked', () => {
     setReadmeResult();
 
-    renderWithRouter(<FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />);
-    fireEvent.click(screen.getByRole('link', { name: /Open README/i }));
+    render(<FolderReadmeHint folderUID="test-folder" />);
 
-    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_hint_clicked', {
+    fireEvent.click(screen.getByRole('button', { name: /Show README/i }));
+
+    expect(screen.getByText('Folder overview')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hide README/i })).toBeInTheDocument();
+  });
+
+  it('reports an interaction when the README is expanded', () => {
+    setReadmeResult();
+
+    render(<FolderReadmeHint folderUID="test-folder" />);
+    fireEvent.click(screen.getByRole('button', { name: /Show README/i }));
+
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_hint_expanded', {
       repositoryType: 'github',
     });
+  });
+
+  it('does not report an interaction when collapsing', () => {
+    setReadmeResult();
+
+    render(<FolderReadmeHint folderUID="test-folder" />);
+    fireEvent.click(screen.getByRole('button', { name: /Show README/i }));
+    mockReportInteraction.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /Hide README/i }));
+
+    expect(mockReportInteraction).not.toHaveBeenCalled();
   });
 
   it('renders nothing when the feature toggle is off', () => {
     config.featureToggles = { provisioningReadmes: false };
     setReadmeResult();
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />
-    );
+    const { container } = render(<FolderReadmeHint folderUID="test-folder" />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing while still loading', () => {
     setReadmeResult({ isFileLoading: true });
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />
-    );
+    const { container } = render(<FolderReadmeHint folderUID="test-folder" />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when the README fetch fails', () => {
     setReadmeResult({ isError: true, fileData: undefined });
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />
-    );
+    const { container } = render(<FolderReadmeHint folderUID="test-folder" />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when no README is found', () => {
     setReadmeResult({ fileData: undefined });
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />
-    );
+    const { container } = render(<FolderReadmeHint folderUID="test-folder" />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when the folder is not provisioned', () => {
     setReadmeResult({ repository: undefined });
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />
-    );
+    const { container } = render(<FolderReadmeHint folderUID="test-folder" />);
     expect(container).toBeEmptyDOMElement();
   });
 });
