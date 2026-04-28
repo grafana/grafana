@@ -1,5 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
+import { config } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -31,7 +32,8 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
   const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const readmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
 
-  const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
+  const shouldFetch =
+    !!config.featureToggles.provisioningReadmes && !!repository && !!folderUID && !isRepoLoading;
 
   const {
     data: fileData,

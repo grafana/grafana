@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
@@ -67,6 +67,11 @@ function emptyQueryResult(overrides: Partial<ReturnType<typeof useGetRepositoryF
 describe('FolderReadmeContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles = { provisioningReadmes: true };
+  });
+
+  afterEach(() => {
+    config.featureToggles = {};
   });
 
   describe('when folder is not provisioned', () => {

@@ -496,7 +496,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "TestStuffPage"*/ 'app/features/sandbox/TestStuffPage')
       ),
     },
-    {
+    config.featureToggles.provisioningReadmes && {
       path: '/dashboards/f/:uid/:slug/readme',
       component: SafeDynamicImport(
         () =>
