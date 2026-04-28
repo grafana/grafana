@@ -21,7 +21,7 @@ weight: 100
 
 # Configure the Google Cloud Monitoring data source
 
-This document provides instructions for configuring Grafana's Google Cloud Monitoring data source.
+This document provides instructions for configuring the Google Cloud Monitoring data source in Grafana.
 
 ## Before you begin
 
