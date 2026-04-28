@@ -89,15 +89,8 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[
 	for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
 		switch f {
 		case "datasource":
-			// Null targets resolve to the org default at runtime in this
-			// codebase's interpretation, and the panel-level aggregation
-			// records that dependency via addDatasource. Don't propagate
-			// the resolved default into q.DatasourceUID though — leaving
-			// it empty signals "no explicit per-query datasource", and
-			// consumers should not assume a single fallback.
-			isNil := iter.WhatIsNext() == jsoniter.NilValue
 			ref := s.addDatasource(iter, jsonPath+".datasource", lc)
-			if !isNil && ref != nil && ref.UID != "" {
+			if ref != nil && ref.UID != "" {
 				q.DatasourceUID = ref.UID
 			}
 
