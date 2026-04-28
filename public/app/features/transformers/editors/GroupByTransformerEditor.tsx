@@ -1,22 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  ReducerID,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { ReducerID, type TransformerUIProps, type GrafanaTheme2 } from '@grafana/data';
 import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/groupBy.svg';
-import lightImage from '../images/light/groupBy.svg';
 import { DataFieldsErrorWrapper } from '../utils';
 
 interface FieldProps {
@@ -85,7 +74,7 @@ export const GroupByTransformerEditorBase = ({ options, onChange, fieldNames }: 
   );
 };
 
-const GroupByTransformerEditor = DataFieldsErrorWrapper(GroupByTransformerEditorBase, {
+export const GroupByTransformerEditor = DataFieldsErrorWrapper(GroupByTransformerEditorBase, {
   withBaseFieldNames: true,
 });
 
@@ -160,22 +149,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> = () => ({
-  id: DataTransformerID.groupBy,
-  editor: GroupByTransformerEditor,
-  transformation: standardTransformers.groupByTransformer,
-  name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
-  description: t(
-    'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
-    'Group data by a field value and create aggregate data.'
-  ),
-  categories: new Set([
-    TransformerCategory.Combine,
-    TransformerCategory.CalculateNewFields,
-    TransformerCategory.Reformat,
-  ]),
-  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

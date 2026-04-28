@@ -5,7 +5,7 @@ import { debounce } from 'lodash';
 import { type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -25,7 +25,7 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent } from '../edit-pane/shared';
+import { DashboardEditActionEvent, EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -103,9 +103,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
     dashboard.state.editPane.clearSelection();
 
-    // this will be deleted when suggestions is fully rolled out.
-    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !config.featureToggles.newVizSuggestions) {
-      panel.changePluginType('timeseries');
+    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      // default to timeseries if newVizSuggestions is off or the options pane is collapsed
+      const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
+      if (!config.featureToggles.newVizSuggestions || isPaneCollapsed) {
+        panel.changePluginType('timeseries');
+      }
     }
 
     this._subs.add(
@@ -421,7 +424,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
-  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue('queryEditorNext', false);
+  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.QueryEditorNext, false);
   const storedPreference = isQueryEditorNextEnabled
     ? getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)
     : null;

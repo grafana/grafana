@@ -144,6 +144,24 @@ describe('<SpanBarRow>', () => {
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
   });
 
+  it('shows adaptive traces restored info icon when span has grafana.adaptivetraces.restored=true', () => {
+    const span = {
+      ...props.span,
+      tags: [{ key: 'grafana.adaptivetraces.restored', value: 'true' }],
+    } as unknown as TraceSpan;
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} span={span} />);
+    expect(screen.getByTestId('SpanBarRow-adaptiveTracesRestored')).toBeInTheDocument();
+  });
+
+  it('does not show adaptive traces restored icon without the tag', () => {
+    const span = {
+      ...props.span,
+      tags: [{ key: 'other.tag', value: 'true' }],
+    } as unknown as TraceSpan;
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} span={span} />);
+    expect(screen.queryByTestId('SpanBarRow-adaptiveTracesRestored')).not.toBeInTheDocument();
+  });
+
   it('render referenced to by multiple span', () => {
     render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const span = Object.assign(

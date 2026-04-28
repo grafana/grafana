@@ -1,29 +1,13 @@
 import { type ReactElement, useEffect, useMemo } from 'react';
 
-import {
-  DataTransformerID,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-  type Field,
-} from '@grafana/data';
+import { type TransformerUIProps, type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Combobox, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/regression.svg';
-import lightImage from '../images/light/regression.svg';
-
 import { FIELD_MATCHERS, LABEL_WIDTH, fieldNamePickerSettings, getModelTypeOptions } from './constants';
-import {
-  DEFAULTS,
-  DEGREES,
-  ModelType,
-  getRegressionTransformer,
-  type RegressionTransformerOptions,
-} from './regression';
+import { DEFAULTS, DEGREES, ModelType, type RegressionTransformerOptions } from './regression';
 import { findFirstFieldByMatcher } from './utils';
 
 export const RegressionTransformerEditor = ({
@@ -139,19 +123,3 @@ const RegressionField = ({
     {children}
   </InlineField>
 );
-
-export const getRegressionTransformerRegistryItem: () => TransformerRegistryItem<RegressionTransformerOptions> = () => {
-  const regressionTransformer = getRegressionTransformer();
-  return {
-    id: DataTransformerID.regression,
-    editor: RegressionTransformerEditor,
-    transformation: regressionTransformer,
-    name: regressionTransformer.name,
-    description: regressionTransformer.description,
-    categories: new Set([TransformerCategory.CalculateNewFields]),
-    help: getTransformationContent(DataTransformerID.regression).helperDocs,
-    imageDark: darkImage,
-    imageLight: lightImage,
-    tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
-  };
-};

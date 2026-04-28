@@ -1,13 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import {
-  DataTransformerID,
-  PluginState,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  type SelectableValue,
-  TransformerCategory,
-} from '@grafana/data';
+import { type TransformerUIProps, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   InlineField,
@@ -20,11 +13,7 @@ import {
 } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/partitionByValues.svg';
-import lightImage from '../images/light/partitionByValues.svg';
-
-import { getPartitionByValuesTransformer, type PartitionByValuesTransformerOptions } from './partitionByValues';
+import { type PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
@@ -180,20 +169,3 @@ export function PartitionByValuesEditor({
     </div>
   );
 }
-
-export const getPartitionByValuesTransformRegistryItem: () => TransformerRegistryItem<PartitionByValuesTransformerOptions> =
-  () => {
-    const partitionByValuesTransformer = getPartitionByValuesTransformer();
-    return {
-      id: DataTransformerID.partitionByValues,
-      editor: PartitionByValuesEditor,
-      transformation: partitionByValuesTransformer,
-      name: partitionByValuesTransformer.name,
-      description: partitionByValuesTransformer.description,
-      state: PluginState.alpha,
-      categories: new Set([TransformerCategory.Reformat]),
-      help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
-      imageDark: darkImage,
-      imageLight: lightImage,
-    };
-  };

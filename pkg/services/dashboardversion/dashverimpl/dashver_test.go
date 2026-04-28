@@ -2,7 +2,6 @@ package dashverimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -27,7 +26,6 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // createMockRequester creates a mock StaticRequester for testing
@@ -197,35 +195,6 @@ func TestDashboardVersionService(t *testing.T) {
 			Version:     10,
 		})
 		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
-	})
-}
-
-func TestDeleteExpiredVersions(t *testing.T) {
-	versionsToKeep := 5
-	cfg := setting.NewCfg()
-	cfg.DashboardVersionsToKeep = versionsToKeep
-
-	dashboardVersionStore := newDashboardVersionStoreFake()
-	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardVersionService := Service{
-		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-
-	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.Nil(t, err)
-	})
-
-	t.Run("Clean up old dashboard versions successfully", func(t *testing.T) {
-		dashboardVersionStore.ExptectedDeletedVersions = 4
-		dashboardVersionStore.ExpectedVersions = []any{1, 2, 3, 4}
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.Nil(t, err)
-	})
-
-	t.Run("Clean up old dashboard versions with error", func(t *testing.T) {
-		dashboardVersionStore.ExpectedError = errors.New("some error")
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.NotNil(t, err)
 	})
 }
 
@@ -1040,32 +1009,4 @@ func TestUnstructuredToDashboardVersionSpec(t *testing.T) {
 			}
 		})
 	}
-}
-
-type FakeDashboardVersionStore struct {
-	ExpectedDashboardVersion *dashver.DashboardVersion
-	ExptectedDeletedVersions int64
-	ExpectedVersions         []any
-	ExpectedListVersions     []*dashver.DashboardVersion
-	ExpectedError            error
-}
-
-func newDashboardVersionStoreFake() *FakeDashboardVersionStore {
-	return &FakeDashboardVersionStore{}
-}
-
-func (f *FakeDashboardVersionStore) Get(_ context.Context, _ *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	return f.ExpectedDashboardVersion, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) GetBatch(_ context.Context, _ *dashver.DeleteExpiredVersionsCommand, _ int, _ int) ([]any, error) {
-	return f.ExpectedVersions, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) DeleteBatch(_ context.Context, _ *dashver.DeleteExpiredVersionsCommand, _ []any) (int64, error) {
-	return f.ExptectedDeletedVersions, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) List(_ context.Context, _ *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
-	return f.ExpectedListVersions, f.ExpectedError
 }

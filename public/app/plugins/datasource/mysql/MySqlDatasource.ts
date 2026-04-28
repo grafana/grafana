@@ -22,7 +22,7 @@ import { type MySQLOptions } from './types';
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
     this.variables = new SQLVariableSupport(this);
   }

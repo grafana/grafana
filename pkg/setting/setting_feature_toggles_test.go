@@ -205,6 +205,120 @@ func TestFeatureToggleEnvOverrides(t *testing.T) {
 	})
 }
 
+func TestFeatureToggleCmdOverrides(t *testing.T) {
+	t.Run("cfg:feature_toggles.name creates a feature toggle", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:feature_toggles.myToggle=true"},
+		})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.Equal(t, "true", section.Key("myToggle").Value())
+	})
+
+	t.Run("cmd override overrides ini-defined toggle", func(t *testing.T) {
+		cfgFile := t.TempDir() + "/test.ini"
+		err := os.WriteFile(cfgFile, []byte("[feature_toggles]\nsomeToggle = true\n"), 0644)
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Config:   cfgFile,
+			Args:     []string{"cfg:feature_toggles.someToggle=false"},
+		})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.Equal(t, "false", section.Key("someToggle").Value())
+	})
+
+	t.Run("cmd override is recorded in appliedCommandLineProperties", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:feature_toggles.coolFeature=true"},
+		})
+		require.NoError(t, err)
+
+		found := false
+		for _, o := range cfg.appliedCommandLineProperties {
+			if strings.Contains(o, "feature_toggles.coolFeature") {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "cmd prop should appear in appliedCommandLineProperties")
+	})
+}
+
+func TestFeatureToggleSourcePrecedence(t *testing.T) {
+	t.Run("env var overrides ini file", func(t *testing.T) {
+		t.Setenv("GF_FEATURE_TOGGLES_myToggle", "false")
+
+		cfgFile := t.TempDir() + "/test.ini"
+		err := os.WriteFile(cfgFile, []byte("[feature_toggles]\nmyToggle = true\n"), 0644)
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../", Config: cfgFile})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.Equal(t, "false", section.Key("myToggle").Value())
+	})
+
+	t.Run("cmd override wins over env var", func(t *testing.T) {
+		t.Setenv("GF_FEATURE_TOGGLES_myToggle", "false")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:feature_toggles.myToggle=true"},
+		})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.Equal(t, "true", section.Key("myToggle").Value(),
+			"command line should take precedence over env var")
+	})
+
+	t.Run("cmd override wins over both env var and ini file", func(t *testing.T) {
+		t.Setenv("GF_FEATURE_TOGGLES_myToggle", "false")
+
+		cfgFile := t.TempDir() + "/test.ini"
+		err := os.WriteFile(cfgFile, []byte("[feature_toggles]\nmyToggle = maybe\n"), 0644)
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Config:   cfgFile,
+			Args:     []string{"cfg:feature_toggles.myToggle=true"},
+		})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.Equal(t, "true", section.Key("myToggle").Value(),
+			"command line should take precedence over env var and ini file")
+	})
+
+	t.Run("subsection cmd property does not create root toggle key", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:feature_toggles.openfeature.provider=ofrep"},
+		})
+		require.NoError(t, err)
+
+		section := cfg.Raw.Section("feature_toggles")
+		require.False(t, section.HasKey("openfeature.provider"),
+			"subsection property should not appear as a root toggle key")
+	})
+}
+
 func TestFlagValueSerialization(t *testing.T) {
 	testCases := []memprovider.InMemoryFlag{
 		NewInMemoryFlag("int", 1),

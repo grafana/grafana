@@ -8,11 +8,15 @@ import {
   isAppPluginInstalled,
   setAppPluginMetas,
 } from './apps';
+import type * as DatasourcesModule from './datasources';
+import { getDatasourcePluginMeta, getDatasourcePluginMetas, setDatasourcePluginMetas } from './datasources';
 import {
   useAppPluginMeta,
   useAppPluginMetas,
   useAppPluginInstalled,
   useAppPluginVersion,
+  useDatasourcePluginMeta,
+  useDatasourcePluginMetas,
   useListedPanelPluginIds,
   useListedPanelPluginMetas,
   usePanelPluginMeta,
@@ -33,10 +37,12 @@ import {
   setPanelPluginMetas,
 } from './panels';
 import { apps } from './test-fixtures/config.apps';
+import { datasourcePluginMetas } from './test-fixtures/config.datasources';
 import { panels } from './test-fixtures/config.panels';
 
 const actualApps = jest.requireActual<typeof AppsModule>('./apps');
 const actualPanels = jest.requireActual<typeof PanelsModule>('./panels');
+const actualDatasources = jest.requireActual<typeof DatasourcesModule>('./datasources');
 jest.mock('./apps', () => ({
   ...jest.requireActual('./apps'),
   getAppPluginMetas: jest.fn(),
@@ -54,6 +60,11 @@ jest.mock('./panels', () => ({
   isPanelPluginInstalled: jest.fn(),
   getPanelPluginVersion: jest.fn(),
 }));
+jest.mock('./datasources', () => ({
+  ...jest.requireActual('./datasources'),
+  getDatasourcePluginMeta: jest.fn(),
+  getDatasourcePluginMetas: jest.fn(),
+}));
 const getAppPluginMetaMock = jest.mocked(getAppPluginMeta);
 const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
 const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
@@ -65,6 +76,8 @@ const isPanelPluginInstalledMock = jest.mocked(isPanelPluginInstalled);
 const getPanelPluginVersionMock = jest.mocked(getPanelPluginVersion);
 const getListedPanelPluginIdsMock = jest.mocked(getListedPanelPluginIds);
 const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
+const getDatasourcePluginMetaMock = jest.mocked(getDatasourcePluginMeta);
+const getDatasourcePluginMetasMock = jest.mocked(getDatasourcePluginMetas);
 
 describe('useAppPluginMeta', () => {
   beforeEach(() => {
@@ -466,6 +479,7 @@ describe('useListedPanelPluginIds', () => {
       'candlestick',
       'canvas',
       'dashlist',
+      'debug',
       'flamegraph',
       'gauge',
       'geomap',
@@ -591,6 +605,96 @@ describe('usePanelPluginVersion', () => {
     getPanelPluginVersionMock.mockRejectedValue(new Error('Some error'));
 
     const { result } = renderHook(() => usePanelPluginVersion('otherorg-otherplugin-panel'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
+describe('useDatasourcePluginMetas', () => {
+  beforeEach(() => {
+    setDatasourcePluginMetas(datasourcePluginMetas);
+    jest.resetAllMocks();
+    getDatasourcePluginMetasMock.mockImplementation(actualDatasources.getDatasourcePluginMetas);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => useDatasourcePluginMetas());
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => useDatasourcePluginMetas());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(Object.values(datasourcePluginMetas));
+  });
+
+  it('should return correct values if useDatasourcePluginMetas throws', async () => {
+    getDatasourcePluginMetasMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => useDatasourcePluginMetas());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
+describe('useDatasourcePluginMeta', () => {
+  beforeEach(() => {
+    setDatasourcePluginMetas(datasourcePluginMetas);
+    jest.resetAllMocks();
+    getDatasourcePluginMetaMock.mockImplementation(actualDatasources.getDatasourcePluginMeta);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => useDatasourcePluginMeta('prometheus'));
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => useDatasourcePluginMeta('prometheus'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(datasourcePluginMetas['prometheus']);
+  });
+
+  it('should return correct values if the pluginId does not exist', async () => {
+    const { result } = renderHook(() => useDatasourcePluginMeta('otherorg-otherplugin-datasource'));
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(null);
+  });
+
+  it('should return correct values if useDatasourcePluginMeta throws', async () => {
+    getDatasourcePluginMetaMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => useDatasourcePluginMeta('otherorg-otherplugin-datasource'));
 
     await waitFor(() => expect(result.current.loading).toEqual(false));
 

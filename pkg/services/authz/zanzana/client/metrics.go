@@ -65,7 +65,7 @@ func newShadowClientMetrics(reg prometheus.Registerer) *shadowClientMetrics {
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 			},
-			[]string{"status"},
+			[]string{"status", "method", "resource", "request_namespace"},
 		),
 	}
 }

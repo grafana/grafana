@@ -14,7 +14,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -79,6 +79,11 @@ const dataSources = {
 
 setupDataSources(...Object.values(dataSources));
 
+// DatasourceSrv.loadDatasource falls back to instanceSettings.meta when the
+// plugin meta lookup misses and logs a warning via logPluginMetaWarning. Register
+// a silent logger so the call doesn't surface through console.warn in CI.
+mockLogger('grafana/runtime.plugins.meta');
+
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
@@ -141,12 +146,12 @@ describe('PanelEditor', () => {
         }),
       });
 
-      dashboard.state.editPane.selectObject(panel, panel.state.key!, { force: true });
-      expect(dashboard.state.editPane.getSelection()).toBe(panel);
+      dashboard.state.editPane.selectObject(panel, { force: true });
+      expect(dashboard.state.editPane.getSelectedObject()).toBe(panel);
 
       deactivate = activateFullSceneTree(dashboard);
 
-      expect(dashboard.state.editPane.getSelection()).toBeUndefined();
+      expect(dashboard.state.editPane.getSelectedObject()).toBeUndefined();
     });
   });
 

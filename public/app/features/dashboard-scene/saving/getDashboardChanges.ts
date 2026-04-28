@@ -220,10 +220,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -233,7 +233,7 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues) {
+        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -340,8 +340,19 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        typed.filters = (original as AdHocVariableModel).filters;
+        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const changedFilters = (typed as AdHocVariableModel).filters ?? [];
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const originalFilters = (original as AdHocVariableModel).filters ?? [];
+          const originFilters = changedFilters.filter((f) => f.origin);
+          const originalRuntimeFilters = originalFilters.filter((f) => !f.origin);
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (typed as AdHocVariableModel).filters = [...originFilters, ...originalRuntimeFilters];
+        } else {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (typed as AdHocVariableModel).filters = (original as AdHocVariableModel).filters;
+        }
       } else if (typed.type === 'textbox') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         typed.query = (original as TextBoxVariableModel).query;

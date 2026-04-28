@@ -1,20 +1,9 @@
 import { useMemo } from 'react';
 
-import {
-  DataTransformerID,
-  type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { LabelsToFieldsMode, type LabelsToFieldsOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/labelsToFields.svg';
-import lightImage from '../images/light/labelsToFields.svg';
 
 export const LabelsAsFieldsTransformerEditor = ({
   input,
@@ -140,18 +129,3 @@ export const LabelsAsFieldsTransformerEditor = ({
     </div>
   );
 };
-
-export const getLabelsToFieldsTransformerRegistryItem: () => TransformerRegistryItem<LabelsToFieldsOptions> = () => ({
-  id: DataTransformerID.labelsToFields,
-  editor: LabelsAsFieldsTransformerEditor,
-  transformation: standardTransformers.labelsToFieldsTransformer,
-  name: t('transformers.labels-to-fields-transformer-editor.name.labels-to-fields', 'Labels to fields'),
-  description: t(
-    'transformers.labels-to-fields-transformer-editor.description.groups-series-time-return-labels-tags-fields',
-    'Group series by time and return labels or tags as fields.'
-  ),
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

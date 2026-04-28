@@ -1,41 +1,26 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
 import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
 
 import { LogsTable } from './LogsTable';
+import { logsTablePanelFieldConfig } from './logsTableFieldConfig';
 import { defaultOptions, type Options } from './panelcfg.gen';
+import { logstableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)
-  .useFieldConfig({
-    standardOptions: {
-      [FieldConfigProperty.Actions]: {
-        hideFromDefaults: false,
-      },
-    },
-    useCustomConfig: (builder) => {
-      addTableCustomConfig(builder, {
-        filters: true,
-        wrapHeaderText: true,
-        hideFields: true,
-      });
-    },
-  })
+  .useFieldConfig(logsTablePanelFieldConfig)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
     const logsTableCategory = [t('logstable.category-table', 'Logs Table')];
     builder
       .addBooleanSwitch({
-        path: 'showInspectLogLine',
-        name: t('logstable.show-inspect-button.name', 'Show inspect button'),
+        path: 'enableLogDetails',
+        name: t('logstable.enable-log-details.name', 'Enable log details'),
         category: logsTableCategory,
-        description: t(
-          'logstable.show-inspect-button.description',
-          'Enables/disables the log line inspect button in the first column of each row'
-        ),
-        defaultValue: defaultOptions.showInspectLogLine,
+        description: t('logstable.enable-log-details.description', 'When enabled, shows log details for each row.'),
+        defaultValue: defaultOptions.enableLogDetails,
       })
       .addBooleanSwitch({
         path: 'showCopyLogLink',
@@ -53,5 +38,16 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         category: logsTableCategory,
         description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: defaultOptions.showControls ?? false,
+      })
+      .addBooleanSwitch({
+        path: 'allowDownload',
+        name: t('logs.name-allow-download', 'Display download control'),
+        category: logsTableCategory,
+        description: t(
+          'logs.description-allow-download',
+          'When controls are enabled, show an option to download the logs on display.'
+        ),
+        showIf: (currentOptions) => Boolean(currentOptions.showControls),
       });
-  });
+  })
+  .setSuggestionsSupplier(logstableSuggestionsSupplier);

@@ -1,22 +1,10 @@
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  type ReducerID,
-  type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type ReducerID, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { ReduceTransformerMode, type ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/reduce.svg';
-import lightImage from '../images/light/reduce.svg';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
@@ -118,18 +106,3 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
     </>
   );
 };
-
-export const getReduceTransformRegistryItem: () => TransformerRegistryItem<ReduceTransformerOptions> = () => ({
-  id: DataTransformerID.reduce,
-  editor: ReduceTransformerEditor,
-  transformation: standardTransformers.reduceTransformer,
-  name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
-  description: t(
-    'transformers.reduce-transformer-editor.description.reduce-to-single-value',
-    'Reduce all rows or data points to a single value (ex. max, mean).'
-  ),
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.reduce).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -62,7 +63,7 @@ func RegisterAppInstaller(
 	}
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -86,6 +87,7 @@ func RegisterAppInstaller(
 
 func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
+	routesPermissions := a.ng.RouteResourcePermissions
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
@@ -98,7 +100,7 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			case receiver.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
-				return routingtree.Authorize(ctx, authz, a)
+				return routingtree.Authorize(ctx, ac.NewRouteAccess[*legacy_storage.ManagedRoute](authz, routesPermissions, false), a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
@@ -129,7 +131,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
-		return routingtree.NewStorage(api.RouteService, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

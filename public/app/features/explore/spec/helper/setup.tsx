@@ -33,7 +33,7 @@ import {
   setPluginLinksHook,
 } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
@@ -51,6 +51,10 @@ import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { mockData } from './mocks';
+
+export const setBooleanFlags = (flags: Record<string, boolean>) => {
+  setTestFlags(flags);
+};
 
 export const QueryLibraryMocks = {
   data: mockData.all,
@@ -85,6 +89,8 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
+  setTestFlags({});
+
   const previousBackendSrv = getBackendSrv();
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),

@@ -35,18 +35,16 @@ describe('useSelectedCard', () => {
 
   describe('query selection', () => {
     it('should select first query by default when nothing is selected', () => {
-      const { result } = renderHook(() =>
-        useSelectedCard(null, null, null, mockQueries, mockTransformations, mockAlerts)
-      );
+      const { result } = renderHook(() => useSelectedCard([], [], null, mockQueries, mockTransformations, mockAlerts));
 
       expect(result.current.selectedQuery).toEqual(mockQueries[0]);
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
     });
 
-    it('should select specific query by refId', () => {
+    it('should select specific query by refId (last in array = primary)', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('B', null, null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['B'], [], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toEqual(mockQueries[1]);
@@ -54,9 +52,18 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedAlert).toBeNull();
     });
 
+    it('should select the last refId in the array as the primary query', () => {
+      const { result } = renderHook(() =>
+        useSelectedCard(['A', 'C'], [], null, mockQueries, mockTransformations, mockAlerts)
+      );
+
+      // Last element (C) is primary
+      expect(result.current.selectedQuery).toEqual(mockQueries[2]);
+    });
+
     it('should not select query when transformation is selected', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], ['transform-1'], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -66,7 +73,7 @@ describe('useSelectedCard', () => {
 
     it('should not select query when alert is selected', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], [], 'alert-1', mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -74,19 +81,19 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
     });
 
-    it('should return null for query when invalid refId is provided', () => {
+    it('should fall back to first query when primary refId does not exist', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('INVALID', null, null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['INVALID'], [], null, mockQueries, mockTransformations, mockAlerts)
       );
 
-      // When refId doesn't exist and no transformation/alert selected, defaults to first query
+      // Primary refId not found and no other exclusion — defaults to first query
       expect(result.current.selectedQuery).toEqual(mockQueries[0]);
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
     });
 
     it('should return null for query when queries array is empty', () => {
-      const { result } = renderHook(() => useSelectedCard(null, null, null, [], mockTransformations, mockAlerts));
+      const { result } = renderHook(() => useSelectedCard([], [], null, [], mockTransformations, mockAlerts));
 
       expect(result.current.selectedQuery).toBeNull();
       expect(result.current.selectedTransformation).toBeNull();
@@ -95,19 +102,27 @@ describe('useSelectedCard', () => {
 
     it('should prioritize explicit query selection over default', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('C', null, null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['C'], [], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toEqual(mockQueries[2]);
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
     });
+
+    it('should use the last refId in the array as the primary query when multiple are selected', () => {
+      const { result } = renderHook(() =>
+        useSelectedCard(['A', 'B', 'C'], [], null, mockQueries, mockTransformations, mockAlerts)
+      );
+      // Primary (shown in editor) is the last element: C
+      expect(result.current.selectedQuery).toEqual(mockQueries[2]);
+    });
   });
 
   describe('transformation selection', () => {
     it('should select specific transformation by id', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, 'transform-2', null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], ['transform-2'], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -115,9 +130,17 @@ describe('useSelectedCard', () => {
       expect(result.current.selectedAlert).toBeNull();
     });
 
+    it('should select the last transformation id in array as primary', () => {
+      const { result } = renderHook(() =>
+        useSelectedCard([], ['transform-1', 'transform-2'], null, mockQueries, mockTransformations, mockAlerts)
+      );
+
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[1]);
+    });
+
     it('should return null for transformation when not selected', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('A', null, null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['A'], [], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toEqual(mockQueries[0]);
@@ -127,7 +150,7 @@ describe('useSelectedCard', () => {
 
     it('should return null for transformation when invalid id is provided', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, 'INVALID', null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], ['INVALID'], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -136,18 +159,26 @@ describe('useSelectedCard', () => {
     });
 
     it('should return null for transformation when transformations array is empty', () => {
-      const { result } = renderHook(() => useSelectedCard(null, 'transform-1', null, mockQueries, [], mockAlerts));
+      const { result } = renderHook(() => useSelectedCard([], ['transform-1'], null, mockQueries, [], mockAlerts));
 
       expect(result.current.selectedQuery).toBeNull();
       expect(result.current.selectedTransformation).toBeNull();
       expect(result.current.selectedAlert).toBeNull();
+    });
+
+    it('should use the last transformId as the primary when multiple transformations are selected', () => {
+      const { result } = renderHook(() =>
+        useSelectedCard([], ['transform-2', 'transform-1'], null, mockQueries, mockTransformations, mockAlerts)
+      );
+      // Primary is last: transform-1, which is mockTransformations[0]
+      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
     });
   });
 
   describe('alert selection', () => {
     it('should select specific alert by id', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, null, 'alert-2', mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], [], 'alert-2', mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -157,7 +188,7 @@ describe('useSelectedCard', () => {
 
     it('should return null for alert when not selected', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('A', null, null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['A'], [], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toEqual(mockQueries[0]);
@@ -167,7 +198,7 @@ describe('useSelectedCard', () => {
 
     it('should return null for alert when invalid id is provided', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, null, 'INVALID', mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], [], 'INVALID', mockQueries, mockTransformations, mockAlerts)
       );
 
       expect(result.current.selectedQuery).toBeNull();
@@ -176,7 +207,7 @@ describe('useSelectedCard', () => {
     });
 
     it('should return null for alert when alerts array is empty', () => {
-      const { result } = renderHook(() => useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, []));
+      const { result } = renderHook(() => useSelectedCard([], [], 'alert-1', mockQueries, mockTransformations, []));
 
       expect(result.current.selectedQuery).toBeNull();
       expect(result.current.selectedTransformation).toBeNull();
@@ -187,7 +218,7 @@ describe('useSelectedCard', () => {
   describe('query selection exclusivity', () => {
     it('should prevent default query selection when transformation is selected without explicit query', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], ['transform-1'], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       // Transformation prevents default query selection
@@ -197,7 +228,7 @@ describe('useSelectedCard', () => {
 
     it('should prevent default query selection when alert is selected without explicit query', () => {
       const { result } = renderHook(() =>
-        useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard([], [], 'alert-1', mockQueries, mockTransformations, mockAlerts)
       );
 
       // Alert prevents default query selection
@@ -207,7 +238,7 @@ describe('useSelectedCard', () => {
 
     it('should allow explicit query selection even when transformation is selected', () => {
       const { result } = renderHook(() =>
-        useSelectedCard('B', 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
+        useSelectedCard(['B'], ['transform-1'], null, mockQueries, mockTransformations, mockAlerts)
       );
 
       // Explicit query refId overrides the exclusivity rule
@@ -216,45 +247,10 @@ describe('useSelectedCard', () => {
     });
   });
 
-  describe('selection behavior with multiple ids', () => {
-    it('should select both query and transformation when both ids are provided', () => {
-      const { result } = renderHook(() =>
-        useSelectedCard('A', 'transform-1', null, mockQueries, mockTransformations, mockAlerts)
-      );
-
-      // Both are selected - explicit query refId allows both to be selected
-      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
-      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
-      expect(result.current.selectedAlert).toBeNull();
-    });
-
-    it('should select both query and alert when both ids are provided', () => {
-      const { result } = renderHook(() =>
-        useSelectedCard('A', null, 'alert-1', mockQueries, mockTransformations, mockAlerts)
-      );
-
-      // Both are selected - explicit query refId allows both to be selected
-      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
-      expect(result.current.selectedTransformation).toBeNull();
-      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
-    });
-
-    it('should select all three when all ids are provided', () => {
-      const { result } = renderHook(() =>
-        useSelectedCard('A', 'transform-1', 'alert-1', mockQueries, mockTransformations, mockAlerts)
-      );
-
-      // All three can be selected simultaneously when explicit query refId is provided
-      expect(result.current.selectedQuery).toEqual(mockQueries[0]);
-      expect(result.current.selectedTransformation).toEqual(mockTransformations[0]);
-      expect(result.current.selectedAlert).toEqual(mockAlerts[0]);
-    });
-  });
-
   describe('updates and reactivity', () => {
     it('should update when queries change', () => {
       const { result, rerender } = renderHook(
-        ({ queries }) => useSelectedCard('B', null, null, queries, mockTransformations, mockAlerts),
+        ({ queries }) => useSelectedCard(['B'], [], null, queries, mockTransformations, mockAlerts),
         {
           initialProps: { queries: mockQueries },
         }
@@ -275,7 +271,7 @@ describe('useSelectedCard', () => {
 
     it('should update when transformations change', () => {
       const { result, rerender } = renderHook(
-        ({ transformations }) => useSelectedCard(null, 'transform-1', null, mockQueries, transformations, mockAlerts),
+        ({ transformations }) => useSelectedCard([], ['transform-1'], null, mockQueries, transformations, mockAlerts),
         {
           initialProps: { transformations: mockTransformations },
         }
@@ -299,7 +295,7 @@ describe('useSelectedCard', () => {
 
     it('should update when alerts change', () => {
       const { result, rerender } = renderHook(
-        ({ alerts }) => useSelectedCard(null, null, 'alert-1', mockQueries, mockTransformations, alerts),
+        ({ alerts }) => useSelectedCard([], [], 'alert-1', mockQueries, mockTransformations, alerts),
         {
           initialProps: { alerts: mockAlerts },
         }
@@ -323,7 +319,7 @@ describe('useSelectedCard', () => {
 
     it('should handle selected item being removed from array', () => {
       const { result, rerender } = renderHook(
-        ({ queries }) => useSelectedCard('B', null, null, queries, mockTransformations, mockAlerts),
+        ({ queries }) => useSelectedCard(['B'], [], null, queries, mockTransformations, mockAlerts),
         {
           initialProps: { queries: mockQueries },
         }

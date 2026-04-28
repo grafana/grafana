@@ -2,21 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/prepareTimeSeries.svg';
-import lightImage from '../images/light/prepareTimeSeries.svg';
-
-import { type PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
+import { type PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;
@@ -169,19 +159,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: '20px',
   }),
 });
-
-export const getPrepareTimeseriesTransformerRegistryItem: () => TransformerRegistryItem<PrepareTimeSeriesOptions> =
-  () => {
-    const prepareTimeSeriesTransformer = getPrepareTimeSeriesTransformer();
-    return {
-      id: prepareTimeSeriesTransformer.id,
-      editor: PrepareTimeSeriesEditor,
-      transformation: prepareTimeSeriesTransformer,
-      name: prepareTimeSeriesTransformer.name,
-      description: prepareTimeSeriesTransformer.description,
-      categories: new Set([TransformerCategory.Reformat]),
-      help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
-      imageDark: darkImage,
-      imageLight: lightImage,
-    };
-  };

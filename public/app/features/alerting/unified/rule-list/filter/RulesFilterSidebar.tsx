@@ -3,23 +3,11 @@ import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
-import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import {
-  Button,
-  Combobox,
-  Icon,
-  Input,
-  Label,
-  MultiCombobox,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -34,12 +22,7 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
 import { type AdvancedFilters } from './types';
-import {
-  advancedFiltersToRulesFilter,
-  searchQueryToDefaultValues,
-  usePluginsFilterStatus,
-  usePortalContainer,
-} from './utils';
+import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFilterStatus } from './utils';
 
 const SIDEBAR_WIDTH = 250;
 
@@ -73,14 +56,10 @@ interface FilterSidebarFormProps {
 
 function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
-  // Create portal container for combobox dropdowns
-  const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
 
   const defaults = searchQueryToDefaultValues(filterState);
 
@@ -158,7 +137,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     applyFormValues({ labels });
                   }}
                   placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -231,7 +209,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                   }}
                   value={field.value}
                   isClearable
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -253,7 +230,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                   }}
                   value={field.value}
                   isClearable
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -343,7 +319,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     applyFormValues({ dataSourceNames });
                   }}
                   placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -390,7 +365,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                           isClearable
                           disabled={isContactPointDisabled}
                           onChange={handleContactPointChange}
-                          portalContainer={portalContainer}
                         />
                       );
 
@@ -448,7 +422,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                           isClearable
                           disabled={isPolicyDisabled}
                           onChange={handlePolicyChange}
-                          portalContainer={portalContainer}
                         />
                       );
 

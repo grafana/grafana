@@ -15,6 +15,7 @@ import {
   type PanelState,
   type QueryEditorActions,
   QueryEditorProvider,
+  type QueryEditorTypeConfigState,
   type QueryEditorUIState,
   type QueryOptionsState,
   type QueryRunnerState,
@@ -95,6 +96,11 @@ export const mockActions: QueryEditorActions = {
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
   reorderTransformations: jest.fn(),
+  bulkDeleteQueries: jest.fn(),
+  bulkToggleQueriesHide: jest.fn(),
+  bulkDeleteTransformations: jest.fn(),
+  bulkToggleTransformationsDisabled: jest.fn(),
+  bulkChangeDataSource: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -130,6 +136,11 @@ export const mockUIStateBase = {
   pendingTransformation: null,
   setPendingTransformation: jest.fn(),
   finalizePendingTransformation: jest.fn(),
+  selectedQueryRefIds: [] satisfies readonly string[],
+  selectedTransformationIds: [] satisfies readonly string[],
+  toggleQuerySelection: jest.fn(),
+  toggleTransformationSelection: jest.fn(),
+  clearSelection: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -137,6 +148,36 @@ export const mockTransformToggles = {
   toggleHelp: jest.fn(),
   showDebug: false,
   toggleDebug: jest.fn(),
+};
+
+/**
+ * Mock typeConfig for tests - uses placeholder colors since tests don't need real theme values
+ */
+export const mockTypeConfig: QueryEditorTypeConfigState = {
+  [QueryEditorType.Query]: {
+    icon: 'database',
+    color: '#ff9800',
+    getLabel: () => 'Query',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Expression]: {
+    icon: 'calculator-alt',
+    color: '#9c27b0',
+    getLabel: () => 'Expression',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Transformation]: {
+    icon: 'process',
+    color: '#4caf50',
+    getLabel: () => 'Transformation',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    color: '#666',
+    getLabel: () => 'Alert',
+    deleteConfirmation: false,
+  },
 };
 
 interface CreateQueryEditorProviderOptions {
@@ -203,8 +244,13 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
+    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    toggleQuerySelection: jest.fn(),
+    toggleTransformationSelection: jest.fn(),
+    clearSelection: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,
@@ -248,6 +294,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
         uiState={defaultUiState}
         actions={defaultActions}
         alertingState={defaultAlertingState}
+        typeConfig={mockTypeConfig}
       >
         {children}
       </QueryEditorProvider>

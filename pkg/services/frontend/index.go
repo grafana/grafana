@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -26,6 +28,7 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
+	bootScript   template.JS
 }
 
 type IndexViewData struct {
@@ -48,6 +51,11 @@ type IndexViewData struct {
 
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
+
+	BootScript template.JS
+
+	// Feature flag for enabling SRI checks on Grafana assets
+	AssetSriChecksEnabled bool
 }
 
 // Templates setup.
@@ -65,6 +73,11 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		return nil, fmt.Errorf("missing index template")
 	}
 
+	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
+	if err != nil {
+		bootScriptRaw = []byte{}
+	}
+
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
 	// subset of frontend settings needed for the login page
@@ -76,6 +89,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
+		//nolint:gosec
+		bootScript: template.JS(bootScriptRaw),
 	}, nil
 }
 
@@ -109,6 +124,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
@@ -120,6 +137,14 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
+		AssetSriChecksEnabled:      grafanaAssetSriChecks,
+	}
+
+	if compiledBootScript {
+		data.BootScript = p.bootScript
+		if p.bootScript == "" {
+			p.log.Error("compiledBootScript feature flag enabled but boot.js not found — falling back to inline boot script.")
+		}
 	}
 
 	// TODO -- reevaluate with mt authnz

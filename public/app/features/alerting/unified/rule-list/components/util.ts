@@ -1,4 +1,6 @@
-import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import { addMilliseconds } from 'date-fns/addMilliseconds';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
+import { isBefore } from 'date-fns/isBefore';
 import { type ComponentProps } from 'react';
 
 import { type StateIcon } from '@grafana/alerting/unstable';
@@ -116,6 +118,13 @@ export function normalizeState(state?: PromAlertingRuleState): NormalizedState {
 }
 
 function isValidState(state: string): state is NonNullable<NormalizedState> {
-  const valid: Array<NonNullable<NormalizedState>> = ['normal', 'firing', 'pending', 'unknown', 'recovering'] as const;
+  const valid: Array<NonNullable<NormalizedState>> = [
+    'normal',
+    'firing',
+    'pending',
+    'unknown',
+    'recovering',
+    'inhibited',
+  ] as const;
   return valid.some((v) => v === state);
 }

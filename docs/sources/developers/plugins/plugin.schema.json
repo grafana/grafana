@@ -249,6 +249,10 @@
       "type": "string",
       "description": "Plugin category used on the Add new connection page. Can be one from the list: \"tsdb\", \"logging\", \"cloud\", \"tracing\", \"profiling\", \"sql\", \"enterprise\", \"iot\", \"other\", empty string or custom string"
     },
+    "docsPath": {
+      "type": "string",
+      "description": "Path to the directory containing plugin documentation."
+    },
     "enterpriseFeatures": {
       "type": "object",
       "description": "Grafana Enterprise specific features",
@@ -330,7 +334,7 @@
     },
     "multiValueFilterOperators": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports multi value operators in adhoc filters."
+      "description": "For data source plugins, if the plugin supports multi value operators in filters."
     },
     "pascalName": {
       "type": "string",

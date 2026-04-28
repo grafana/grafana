@@ -1,21 +1,11 @@
 import { useEffect } from 'react';
 
-import {
-  type PanelOptionsEditorBuilder,
-  PluginState,
-  type StandardEditorContext,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type PanelOptionsEditorBuilder, type StandardEditorContext, type TransformerUIProps } from '@grafana/data';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/heatmap.svg';
-import lightImage from '../images/light/heatmap.svg';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
 
 import { addHeatmapCalculationOptions } from './editor/helper';
-import { type HeatmapTransformerOptions, getHeatmapTransformer } from './heatmap';
+import { type HeatmapTransformerOptions } from './heatmap';
 
 // Nothing defined in state
 const supplier = (
@@ -42,20 +32,4 @@ export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransf
       <div>{pane.items.map((v) => v.renderElement())}</div>
     </div>
   );
-};
-
-export const getHeatmapTransformRegistryItem: () => TransformerRegistryItem<HeatmapTransformerOptions> = () => {
-  const heatmapTransformer = getHeatmapTransformer();
-  return {
-    id: heatmapTransformer.id,
-    editor: HeatmapTransformerEditor,
-    transformation: heatmapTransformer,
-    name: heatmapTransformer.name,
-    description: heatmapTransformer.description,
-    state: PluginState.alpha,
-    categories: new Set([TransformerCategory.CreateNewVisualization]),
-    help: getTransformationContent(heatmapTransformer.id).helperDocs,
-    imageDark: darkImage,
-    imageLight: lightImage,
-  };
 };

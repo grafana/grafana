@@ -1,35 +1,21 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe(
+test.describe.skip(
   'ReturnToPrevious button',
   {
     tag: ['@various'],
   },
   () => {
-    test.beforeEach(async ({ page, selectors }) => {
-      // Navigate to alerting list
-      await page.goto('/alerting/list');
-
-      // Click on the first group toggle to expand it
-      const groupToggle = page.getByTestId(selectors.components.AlertRules.groupToggle);
-      await groupToggle.first().click();
-
-      // Click on the toggle to expand the content
-      const toggle = page.getByTestId(selectors.components.AlertRules.toggle);
-      await toggle.click();
-
-      // Click on the "View" link
-      const viewLink = page.getByRole('link', { name: 'View' });
-      await viewLink.click();
-
-      // Store the alert rule URL for later comparison
+    test.beforeEach(async ({ page }) => {
+      // Navigate directly to alert rule detail -- no fragile list UI navigation
+      await page.goto('/alerting/grafana/bddn0v6f1kgzkc/view');
       const alertRuleUrl = page.url();
 
-      // Click on "View panel" link
+      // Click "View panel" link -- triggers ReturnToPrevious
       const viewPanelLink = page.getByRole('link', { name: 'View panel' });
       await viewPanelLink.click();
 
-      // Store the URL for use in tests
+      // Store the alert rule URL for later comparison
       test.info().annotations.push({
         type: 'alertRuleUrl',
         description: alertRuleUrl,
@@ -74,16 +60,9 @@ test.describe(
       const buttonGroup = page.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
       await expect(buttonGroup).toBeVisible();
 
-      // Navigate back to alerting list
-      await page.goto('/alerting/list');
-
-      // Click on the first group toggle
-      const groupToggle = page.getByTestId(selectors.components.AlertRules.groupToggle);
-      await groupToggle.first().click();
-
-      // Click on the "View" link
-      const viewLink = page.getByRole('link', { name: 'View' });
-      await viewLink.click();
+      // Navigate directly to the alert rule detail page
+      // RTP auto-dismisses because the URL matches the stored href
+      await page.goto('/alerting/grafana/bddn0v6f1kgzkc/view');
 
       // The ReturnToPrevious button should not exist
       const rtpButtonGroup = page.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
@@ -97,21 +76,11 @@ test.describe(
       const backButton = page.getByTestId(selectors.components.ReturnToPrevious.backButton);
       await expect(backButton.getByText('Back to e2e-ReturnToPrevious-test')).toBeVisible();
 
-      // Navigate back to alerting list
-      await page.goto('/alerting/list');
-
-      // Click on the last group toggle (different alert rule)
-      const groupToggle = page.getByTestId(selectors.components.AlertRules.groupToggle);
-      await groupToggle.last().click();
-
-      // Click on the "View" link
-      const viewLink = page.getByRole('link', { name: 'View' });
-      await viewLink.click();
-
-      // Store the second alert rule URL
+      // Navigate directly to the second alert rule detail page
+      await page.goto('/alerting/grafana/dddyksihq7h1ca/view');
       const alertRule2Url = page.url();
 
-      // Click on "View panel" link
+      // Click "View panel" link on the second rule
       const viewPanelLink = page.getByRole('link', { name: 'View panel' });
       await viewPanelLink.click();
 

@@ -76,8 +76,9 @@ export function WorkbenchRenderer() {
     return () => subscription.unsubscribe();
   }, [runner]);
 
-  const isDataLoading = data?.state === 'Loading';
-  const isLoading = isDataLoading || isPending;
+  const isDataLoading = data?.state === 'Loading' || data?.state === 'NotStarted' || data === undefined;
+  const isInitialLoading = (isDataLoading || isPending) && rows.length === 0;
+  const isRefreshing = isDataLoading && rows.length > 0;
 
   return (
     <Workbench
@@ -85,7 +86,8 @@ export function WorkbenchRenderer() {
       domain={domain}
       queryRunner={runner}
       groupBy={groupByKeys}
-      isLoading={isLoading}
+      isInitialLoading={isInitialLoading}
+      isRefreshing={isRefreshing}
       hasActiveFilters={hasFiltersApplied}
     />
   );

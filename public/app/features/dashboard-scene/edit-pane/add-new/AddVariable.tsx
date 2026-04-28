@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddSectionVariablePane, openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { openAddSectionVariablePane, openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 

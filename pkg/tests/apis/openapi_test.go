@@ -30,15 +30,16 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAdvisor,
-			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
+			// featuremgmt.FlagDatasourcesQueryTypes,
+			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
-			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
@@ -90,6 +91,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "dashboard.grafana.app",
 		Version: "v2beta1",
+	}, {
+		Group:   "dashboard.grafana.app",
+		Version: "v2",
 	}, {
 		Group:   "folder.grafana.app",
 		Version: "v1beta1",

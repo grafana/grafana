@@ -24,6 +24,7 @@ export default function SqlQueryEditor({
   onChange,
   onRunQuery,
   range,
+  app,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
@@ -101,6 +102,8 @@ export default function SqlQueryEditor({
         hideFormatSelector={queryHeaderProps?.hideFormatSelector}
         hideRunButton={queryHeaderProps?.hideRunButton}
         dialect={dialect}
+        dataSourceInstanceSettings={datasource.instanceSettings}
+        app={app}
       />
 
       <Space v={0.5} />

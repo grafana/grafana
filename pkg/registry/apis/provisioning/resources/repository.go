@@ -25,12 +25,12 @@ type RepositoryResourcesFactory interface {
 type RepositoryResources interface {
 	// Folders
 	SetTree(tree FolderTree)
-	EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error)
+	EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error)
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
 	RemoveFolderFromTree(folderID string)
 	RemoveFolder(ctx context.Context, folderName string) error
-	RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error)
+	RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error)
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
@@ -39,7 +39,7 @@ type RepositoryResources interface {
 	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
@@ -50,6 +50,7 @@ type repositoryResourcesFactory struct {
 	clients               ClientFactory
 	lister                ResourceLister
 	folderMetadataEnabled bool
+	folderAPIVersion      string
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -116,12 +117,13 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool, folderAPIVersion string) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{
 		parsers:               parsers,
 		clients:               clients,
 		lister:                lister,
 		folderMetadataEnabled: folderMetadataEnabled,
+		folderAPIVersion:      folderAPIVersion,
 	}
 }
 
@@ -131,7 +133,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder(ctx)
+	folderClient, folderGVK, err := clients.Folder(ctx, r.folderAPIVersion)
 	if err != nil {
 		return nil, fmt.Errorf("create folder client: %w", err)
 	}
@@ -146,7 +148,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 	}
 
 	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderManagerOpts...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

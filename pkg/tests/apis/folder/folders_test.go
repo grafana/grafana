@@ -338,10 +338,10 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		)
 		require.NoError(t, err)
 		require.Equal(t, "test", first.GetName())
-		uids := []string{first.GetName()}
+		uids := []string{first.GetName()} //nolint:prealloc
 
 		// Create (with name generation) two folders
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			out, err := client.Resource.Create(context.Background(),
 				helper.LoadYAMLOrJSONFile("testdata/folder-generate.yaml"),
 				metav1.CreateOptions{},
@@ -559,7 +559,7 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 		GVR:  gvr,
 	})
 	foldersCount := 3
-	for i := 0; i < foldersCount; i++ {
+	for i := range foldersCount {
 		payload, err := json.Marshal(map[string]interface{}{
 			"title": fmt.Sprintf("Test-%d", i),
 			"uid":   fmt.Sprintf("uid-%d", i),
@@ -756,6 +756,174 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	}
 }
 
+// TestIntegrationFolderCreatePermissionsK8S verifies that create-permission enforcement holds
+// when folders are created directly through the k8s API (folder.grafana.app/v1).
+// These cases were previously guarded by two explicit RBAC checks in the Folder Service
+// Create method and are now enforced inside the unified storage server (server.newEvent).
+func TestIntegrationFolderCreatePermissionsK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	type testCase struct {
+		description  string
+		parentUID    string // empty → root-level folder
+		permissions  []resourcepermissions.SetResourcePermissionCommand
+		expectedCode int
+	}
+
+	tcs := []testCase{
+		{
+			description:  "root folder creation succeeds with folders:create on wildcard scope",
+			expectedCode: http.StatusCreated,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+		},
+		{
+			description:  "root folder creation fails with no permissions",
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "root folder creation fails when folders:create is scoped only to a specific subfolder",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "some-other-folder",
+				},
+			},
+		},
+		{
+			description:  "subfolder creation succeeds with folders:create scoped to the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusCreated,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parent",
+				},
+			},
+		},
+		{
+			// folders:write has never been sufficient to create a folder via the k8s API.
+			// The authz/rbac service maps VerbCreate → folders:create (with action sets
+			// folders:edit and folders:admin). folders:write is a separate granular action
+			// that is not in any of those sets, so it does not grant create access.
+			description:  "subfolder creation fails with only folders:write scoped to the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:write"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parent",
+				},
+			},
+		},
+		{
+			description:  "subfolder creation fails with no permissions on the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "subfolder creation fails when permission is scoped to a different folder",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "wrong-folder",
+				},
+			},
+		},
+	}
+
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+			})
+
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					username := fmt.Sprintf("k8s-perm-user-%d", i)
+					folderUID := fmt.Sprintf("k8s-perm-folder-%d", i)
+					parentUID := fmt.Sprintf("k8s-perm-parent-%d", i)
+
+					// Remap the "parent" sentinel to a unique UID for this test case.
+					permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
+					for j, p := range tc.permissions {
+						permissions[j] = p
+						if p.ResourceID == "parent" {
+							permissions[j].ResourceID = parentUID
+						}
+					}
+
+					// Create the parent folder as admin when the test case needs one.
+					if tc.parentUID != "" {
+						parentCreate := apis.DoRequest(helper, apis.RequestParams{
+							User:   helper.Org1.Admin,
+							Method: http.MethodPost,
+							Path:   "/api/folders",
+							Body:   []byte(fmt.Sprintf(`{"uid":%q,"title":"Parent folder %d"}`, parentUID, i)),
+						}, &folder.Folder{})
+						require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+					}
+
+					user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
+					userID, _ := user.Identity.GetInternalID()
+					t.Cleanup(helper.CleanupTestResources([]string{folderUID, parentUID}, []int64{userID}))
+
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User: user,
+						GVR:  gvr,
+					})
+
+					obj := &unstructured.Unstructured{
+						Object: map[string]any{
+							"spec": map[string]any{
+								"title": "Test folder",
+							},
+						},
+					}
+					obj.SetName(folderUID)
+					if tc.parentUID != "" {
+						obj.SetAnnotations(map[string]string{
+							utils.AnnoKeyFolder: parentUID,
+						})
+					}
+
+					_, err := client.Resource.Create(context.Background(), obj, metav1.CreateOptions{})
+					if tc.expectedCode == http.StatusCreated {
+						require.NoError(t, err)
+					} else {
+						helper.EnsureStatusError(err, tc.expectedCode, "Access denied")
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestIntegrationFolderGetPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -779,7 +947,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			expectedParentTitles: []string{"testparent"},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
-					Actions:           []string{dashboards.ActionFoldersRead},
+					Actions:           []string{folder.ActionFoldersRead},
 					Resource:          "folders",
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
@@ -794,7 +962,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
-					Actions:           []string{dashboards.ActionFoldersRead},
+					Actions:           []string{folder.ActionFoldersRead},
 					Resource:          "folders",
 					ResourceAttribute: "uid",
 					ResourceID:        "descuid",
@@ -888,8 +1056,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 					if tc.expectedCode == http.StatusOK {
 						require.NotNil(t, getResp.Result)
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+						require.False(t, getResp.Result.AccessControl[folder.ActionFoldersRead])
+						require.False(t, getResp.Result.AccessControl[folder.ActionFoldersWrite])
 
 						parents := getResp.Result.Parents
 						require.Equal(t, len(expectedParentUIDs), len(parents))
@@ -903,13 +1071,13 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 						if tc.checkAccessControl {
 							acPerms := []resourcepermissions.SetResourcePermissionCommand{
 								{
-									Actions:           []string{dashboards.ActionFoldersRead},
+									Actions:           []string{folder.ActionFoldersRead},
 									Resource:          "folders",
 									ResourceAttribute: "uid",
 									ResourceID:        "*",
 								},
 								{
-									Actions:           []string{dashboards.ActionFoldersWrite},
+									Actions:           []string{folder.ActionFoldersWrite},
 									Resource:          "folders",
 									ResourceAttribute: "uid",
 									ResourceID:        parentUID,
@@ -930,8 +1098,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 							require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
 							require.NotNil(t, getWithAC.Result)
 
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+							require.True(t, getWithAC.Result.AccessControl[folder.ActionFoldersRead])
+							require.True(t, getWithAC.Result.AccessControl[folder.ActionFoldersWrite])
 						}
 					}
 				})
@@ -972,7 +1140,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// NOTE: folder creation does not return ErrFolderAccessDenied neither ErrFolderNotFound
+	// NOTE: folder creation does not return ErrAccessDenied neither ErrFolderNotFound
 	tcs := []testCase{
 		{
 			description:  "folder creation succeeds given the correct request for creating a folder",
@@ -991,8 +1159,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
-			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderTitleEmpty,
+			expectedMessage:        folder.ErrTitleEmpty.Error(),
+			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
 		{
@@ -1015,8 +1183,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        dashboards.ErrFolderVersionMismatch.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
+			expectedMessage:        folder.ErrVersionMismatch.Error(),
+			expectedFolderSvcError: folder.ErrVersionMismatch,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},

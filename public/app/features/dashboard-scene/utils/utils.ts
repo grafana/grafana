@@ -292,7 +292,8 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
@@ -532,12 +533,4 @@ export const dashboardLog = createLogger('Dashboard');
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
-}
-
-export function isDashboardSceneEnabled(): boolean {
-  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
-}
-
-export function isPublicDashboardsSceneEnabled(): boolean {
-  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
 }

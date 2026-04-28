@@ -511,7 +511,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with specific hosts", func(t *testing.T) {
 		raw := ini.Empty()
-		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com,foo.example.com")
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com foo.example.com")
 		cfg := &setting.Cfg{
 			Raw:            raw,
 			HTTPPort:       "3000",
@@ -619,6 +619,118 @@ func TestFrontendService_CSP(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 		cspHeader := recorder.Header().Get("Content-Security-Policy")
 		assert.Contains(t, cspHeader, "frame-ancestors tenant.example.com wiki.example.com")
+	})
+
+	t.Run("should expand $FORM_ACTION_ADDITIONAL_HOSTS in CSP template with specific hosts", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("form_action_additional_hosts").SetValue("login.example.com auth.example.com")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' login.example.com auth.example.com")
+	})
+
+	t.Run("should keep just 'self' in form-action when form_action_additional_hosts is empty", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self'")
+	})
+
+	t.Run("should expand $FORM_ACTION_ADDITIONAL_HOSTS in CSP template with wildcard", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("form_action_additional_hosts").SetValue("*")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' *")
+	})
+
+	t.Run("should apply per-tenant form_action_additional_hosts override to CSP header", func(t *testing.T) {
+		enableSettingsOverridesToggle(t)
+
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+		service.settingsService = &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "form_action_additional_hosts", Value: "tenant-login.example.com tenant-auth.example.com"},
+			},
+		}
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-tenant-1")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' tenant-login.example.com tenant-auth.example.com")
 	})
 
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {

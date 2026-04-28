@@ -23,6 +23,7 @@ export class AdHocOriginFiltersController implements AdHocFiltersController {
       readOnly: false,
       allowCustomValue: this._allowCustomValue,
       supportsMultiValueOperators: true,
+      enableGroupBy: false,
       inputPlaceholder: t(
         'dashboard-scene.adhoc-origin-filters-controller.input-placeholder',
         'Add a default filter...'

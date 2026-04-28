@@ -31,7 +31,7 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
       processes[span.spanID] = {
         serviceName: span.serviceName,
         serviceNamespace: span.serviceNamespace,
-        tags: span.serviceTags,
+        tags: Array.isArray(span.serviceTags) ? span.serviceTags : [],
       };
     }
   }

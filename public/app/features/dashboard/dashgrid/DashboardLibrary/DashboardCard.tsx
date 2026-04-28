@@ -78,7 +78,7 @@ function DashboardCardComponent({
     () =>
       createAssistantContextItem('structured', {
         hidden: false,
-        title: buildTemplateContextTitle(dashboard),
+        title: buildTemplateContextTitle(dashboard, kind),
         data: buildTemplateContextData(dashboard, kind),
       }),
     [dashboard, kind]
@@ -89,7 +89,7 @@ function DashboardCardComponent({
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
         mode: 'dashboarding',
-        prompt: buildAssistantPrompt(),
+        prompt: buildAssistantPrompt(kind),
         context: [templateContext],
         autoSend: true,
       });
@@ -167,11 +167,11 @@ function DashboardCardComponent({
               icon="ai-sparkle"
               aria-label={t(
                 'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with assistant: {{title}}',
+                'Customize with Assistant: {{title}}',
                 { title }
               )}
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
         </div>

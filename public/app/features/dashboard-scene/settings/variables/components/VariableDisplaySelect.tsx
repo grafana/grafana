@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useMemo } from 'react';
+import { type PropsWithChildren, useId, useMemo } from 'react';
 
 import { type VariableType, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,6 +20,7 @@ export function VariableDisplaySelect({
   hideControlsMenuOption = false,
   minWidth = 52,
 }: PropsWithChildren<Props>) {
+  const displayId = useId();
   const OPTIONS = useMemo(
     () => [
       {
@@ -65,9 +66,9 @@ export function VariableDisplaySelect({
   }
 
   return (
-    // eslint-disable-next-line no-restricted-syntax
     <Field label={t('dashboard-scene.variable-display-select.label', 'Display')}>
       <Combobox
+        id={displayId}
         data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect}
         options={OPTIONS}
         onChange={(option) => option && onChange(option.value)}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	dashboardkind "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
@@ -458,6 +460,7 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 	return commitHash
 }
 
+//nolint:gocyclo
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	c, span := hs.injectSpan(c, "api.getFSDataSources")
 	defer span.End()
@@ -472,7 +475,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 		if c.IsPublicDashboardView() {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
-			orgDataSources = dataSources
+			// But we can filter to only include datasources actually used by the dashboard
+			filtered, err := hs.publicDashFilterUsedDataSources(c, dataSources)
+			if err != nil {
+				return nil, err
+			}
+			orgDataSources = filtered
 		} else {
 			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
 			if err != nil {
@@ -827,4 +835,39 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
+}
+
+func (hs *HTTPServer) publicDashFilterUsedDataSources(c *contextmodel.ReqContext, allDataSources []*datasources.DataSource) ([]*datasources.DataSource, error) {
+	_, dash, err := hs.publicDashboardsService.FindPublicDashboardAndDashboardByAccessToken(c.Req.Context(), c.PublicDashboardAccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := dash.Data.Encode()
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode dashboard data: %w", err)
+	}
+
+	lookup := dashboardkind.CreateDatasourceLookup([]*dashboardkind.DatasourceQueryResult{
+		// empty values (does not resolve anything)
+	})
+
+	dashSummaryInfo, err := dashboardkind.ReadDashboard(bytes.NewReader(payload), lookup)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dashboard: %w", err)
+	}
+
+	usedUIDs := make(map[string]struct{}, len(dashSummaryInfo.Datasource))
+	for _, ds := range dashSummaryInfo.Datasource {
+		usedUIDs[ds.UID] = struct{}{}
+	}
+
+	filtered := make([]*datasources.DataSource, 0)
+	for _, ds := range allDataSources {
+		if _, ok := usedUIDs[ds.UID]; ok {
+			filtered = append(filtered, ds)
+		}
+	}
+
+	return filtered, nil
 }

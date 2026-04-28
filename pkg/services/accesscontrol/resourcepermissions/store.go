@@ -748,6 +748,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		p.Created = time.Now()
 		p.Updated = time.Now()
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		p.DatasourceType = cmd.DatasourceType
 		permissions = append(permissions, p)
 	}
 

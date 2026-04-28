@@ -1,4 +1,4 @@
-import { generatePath, joinPath, splitPath } from './path';
+import { ensureFolderPathTrailingSlash, generatePath, joinPath, slugifyForFilename, splitPath } from './path';
 
 describe('generatePath', () => {
   const timestamp = '2023-05-15-abcde';
@@ -130,4 +130,65 @@ describe('joinPath', () => {
   it('should handle both empty', () => {
     expect(joinPath('', '')).toBe('');
   });
+});
+
+describe('slugifyForFilename', () => {
+  it('should convert a simple title to a slug', () => {
+    expect(slugifyForFilename('My Cool Dashboard')).toBe('my-cool-dashboard');
+  });
+
+  it('should handle special characters', () => {
+    expect(slugifyForFilename('CPU Usage (%) — Host')).toBe('cpu-usage-host');
+  });
+
+  it('should collapse multiple spaces into a single dash', () => {
+    expect(slugifyForFilename('a    b')).toBe('a-b');
+  });
+
+  it('should strip leading and trailing dashes', () => {
+    expect(slugifyForFilename('  hello  ')).toBe('hello');
+  });
+
+  it('should return empty string for title with only special characters', () => {
+    expect(slugifyForFilename('!!!')).toBe('');
+  });
+
+  it('should return empty string for empty title', () => {
+    expect(slugifyForFilename('')).toBe('');
+  });
+
+  it('should handle underscores (kept as word characters)', () => {
+    expect(slugifyForFilename('my_dashboard')).toBe('my_dashboard');
+  });
+
+  it('should handle numeric titles', () => {
+    expect(slugifyForFilename('123 Test')).toBe('123-test');
+  });
+});
+
+describe('ensureFolderPathTrailingSlash', () => {
+  it('should append slash to path without trailing slash', () => {
+    expect(ensureFolderPathTrailingSlash('folders/test-folder')).toBe('folders/test-folder/');
+  });
+
+  it('should not double-append slash to path already ending with slash', () => {
+    expect(ensureFolderPathTrailingSlash('folders/test-folder/')).toBe('folders/test-folder/');
+  });
+
+  it('should return empty string unchanged', () => {
+    expect(ensureFolderPathTrailingSlash('')).toBe('');
+  });
+
+  it('should handle single segment path', () => {
+    expect(ensureFolderPathTrailingSlash('my-folder')).toBe('my-folder/');
+  });
+
+  it('should handle deeply nested path', () => {
+    expect(ensureFolderPathTrailingSlash('a/b/c/d')).toBe('a/b/c/d/');
+  });
+});
+
+it('should return empty string for undefined input', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect(ensureFolderPathTrailingSlash(undefined as any)).toBe('');
 });

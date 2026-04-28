@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -134,10 +135,13 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter      func(context.Context) (*clientrest.Config, error)
-	registry              prometheus.Registerer
-	quotaGetter           quotas.QuotaGetter
-	folderMetadataEnabled bool
+	restConfigGetter              func(context.Context) (*clientrest.Config, error)
+	registry                      prometheus.Registerer
+	quotaGetter                   quotas.QuotaGetter
+	folderMetadataEnabled         bool
+	maxIncrementalChanges         int
+	folderAPIVersion              string
+	webhookSecretRotationInterval time.Duration
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -183,6 +187,8 @@ func NewAPIBuilder(
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
+	folderAPIVersion string,
+	maxIncrementalChanges int,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -217,7 +223,7 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -233,6 +239,8 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
+		folderAPIVersion:                    folderAPIVersion,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
@@ -306,6 +314,8 @@ func RegisterAPIService(
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -336,10 +346,13 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
 		folderMetadataEnabled,
+		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
 	}
+	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -371,12 +384,15 @@ func RegisterAPIService(
 		false, // useExclusivelyAccessCheckerForAuthz
 		quotaGetter,
 		folderMetadataEnabled,
+		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
 	}
-
+	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(v1beta1Builder)
+
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
@@ -697,7 +713,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.repoStore = repositoryStorage
 	b.repoLister = repository.NewStorageLister(repositoryStorage)
 
 	// Create admission handler and register mutators/validators
@@ -750,13 +765,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
-	b.connectionStore = connectionsStore
 
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
+	// so that List re-stamps each item's apiVersion to match the served version.
+	// See grafanaregistry.VersionedStore for details on why this is necessary.
+	if b.gv.Version != provisioning.VERSION {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+	} else {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		b.repoStore = repositoryStorage
+		b.connectionStore = connectionsStore
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
@@ -766,7 +793,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -873,6 +900,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
+				b.folderAPIVersion,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
@@ -896,6 +924,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 				metrics,
 				exportEnabled,
+				b.folderAPIVersion,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -910,7 +939,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(b.folderAPIVersion))
 			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
@@ -981,6 +1010,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			webhookSecretRotationInterval := b.webhookSecretRotationInterval
+			if webhookSecretRotationInterval <= 0 {
+				// If webhookSecretRotationInterval is not set, use the default value
+				webhookSecretRotationInterval = 30 * 24 * time.Hour
+			}
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -999,6 +1034,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				b.folderMetadataEnabled,
+				b.folderAPIVersion,
+				b.maxIncrementalChanges,
+				webhookSecretRotationInterval,
 			)
 			if err != nil {
 				return err
@@ -1503,6 +1541,11 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	}
 
 	return repo, err
+}
+
+// GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
+func (b *APIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
+	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
 }
 
 func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old runtime.Object) (repository.Repository, error) {

@@ -36,6 +36,7 @@ const icons: Record<State, IconName> = {
   recovering: 'exclamation-circle',
   firing: 'exclamation-circle',
   unknown: 'question-circle',
+  inhibited: 'minus-circle',
 };
 
 const color: Record<State, TextProps['color']> = {
@@ -44,6 +45,7 @@ const color: Record<State, TextProps['color']> = {
   recovering: 'warning',
   firing: 'error',
   unknown: 'secondary',
+  inhibited: 'info',
 };
 
 const stateNames: Record<State, string> = {
@@ -52,6 +54,7 @@ const stateNames: Record<State, string> = {
   firing: 'Firing',
   recovering: 'Recovering',
   unknown: 'Unknown',
+  inhibited: 'Inhibited',
 };
 
 const operationIcons: Record<RuleOperation, IconName> = {

@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
   type Dispatch,
@@ -23,7 +24,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
@@ -72,6 +73,7 @@ export interface LogListContextData
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -143,6 +145,7 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
@@ -190,6 +193,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -253,6 +257,7 @@ export const LogListContextProvider = ({
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -280,18 +285,18 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!otelLogsFormattingEnabled || !setDisplayedFields || showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, otelLogsFormattingEnabled, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+    if (otelLogsFormattingEnabled && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, otelDisplayedFields, otelLogsFormattingEnabled, showLogAttributes]);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {
@@ -592,6 +597,7 @@ export const LogListContextProvider = ({
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,

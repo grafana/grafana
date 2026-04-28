@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.8
+GO_VERSION = 1.26.2
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -44,7 +44,7 @@ GO_BUILD_ARGS = \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
 	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
+	-o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) \
 	./pkg/cmd/grafana
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
@@ -114,6 +114,7 @@ swagger-oss-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -133,6 +134,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	-t enterprise \
 	--exclude-tag=alpha \
@@ -150,12 +152,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -263,12 +261,13 @@ gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
 	@echo "generate feature toggles"
-	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	go test ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
 	else \
-		go test -v ./pkg/services/featuremgmt/...; \
+		go test ./pkg/services/featuremgmt/...; \
 	fi
+
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
@@ -337,7 +336,7 @@ update-workspace: gen-go
 
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
-	@echo "build go binaries ($(OS)/$(ARCH))"
+	@echo "compiling backend ($(OS)/$(ARCH))"
 	$(GO_BUILD_ENV) \
 	$(GO) build $(GO_BUILD_ARGS)
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
@@ -354,7 +353,7 @@ build-air: build-go
 
 .PHONY: build-js
 build-js: ## Build frontend assets.
-	@echo "build frontend"
+	@echo "building frontend"
 	yarn run build
 
 public/build:
@@ -375,8 +374,18 @@ build-plugin-go: ## Build decoupled plugins
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
 
-# Tar.gz packaging variables (artifact / file naming).
+# Packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
+FPM_LICENSE        ?= AGPLv3
+ARCH_LABEL         := $(if $(ARM),$(ARCH)-$(ARM),$(ARCH))
+# armv6 debs use a -rpi suffix to match daggerbuild behavior (grafana-rpi, grafana-enterprise-rpi).
+DEB_PACKAGE_NAME   := $(if $(filter 6,$(ARM)),$(TARGZ_PACKAGE_NAME)-rpi,$(TARGZ_PACKAGE_NAME))
+TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
+DEB_FILE           := dist/$(DEB_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
+RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
+DOCKER_FILE        := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).docker.tar.gz
+DOCKER_UBUNTU_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu.docker.tar.gz
+DOCKER_TAG         ?= $(TARGZ_PACKAGE_NAME):$(BUILD_VERSION)
 
 # Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
 DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
@@ -384,6 +393,7 @@ DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
 $(DATA_PLUGINS_BUNDLED_STAMP): package.json \
 		scripts/download-catalog-plugins.sh \
 		scripts/catalog-plugins-defaults
+	@echo "bundling plugins ($(OS)/$(ARCH))"
 	@rm -rf data/plugins-bundled
 	@mkdir -p data/plugins-bundled
 	@bash scripts/download-catalog-plugins.sh \
@@ -400,14 +410,76 @@ data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
 build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
 
 .PHONY: build-targz
-build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+
+$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build
+	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
+
+.PHONY: build-deb
+build-deb: $(DEB_FILE) ## Build a .deb package from a tar.gz (requires fpm)
+
+$(DEB_FILE): $(TARGZ_FILE)
+	@echo "building deb"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-deb.sh
+
+.PHONY: build-rpm
+build-rpm: $(RPM_FILE) ## Build an .rpm package from a tar.gz (requires fpm)
+
+$(RPM_FILE): $(TARGZ_FILE)
+	@echo "building rpm"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-rpm.sh
+
+.PHONY: build-docker
+build-docker: $(DOCKER_FILE) ## Build a Docker image (alpine) from a tar.gz
+
+$(DOCKER_FILE): $(TARGZ_FILE)
+	@echo "building docker image (alpine)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--target=final-alpine \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
+
+.PHONY: build-docker-ubuntu
+build-docker-ubuntu: $(DOCKER_UBUNTU_FILE) ## Build a Docker image (ubuntu) from a tar.gz
+
+$(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
+	@echo "building docker image (ubuntu)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--target=final-ubuntu \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
@@ -421,10 +493,6 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
-
-.PHONY: run-bra
-run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -457,7 +525,7 @@ test-go-unit-pretty: check-tparse
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -480,28 +548,28 @@ test-go-integration-postgres: devenv-postgres ## Run integration tests for postg
 	$(GO) clean -testcache
 	GRAFANA_TEST_DB=postgres \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	GRAFANA_TEST_DB=mysql \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
 	$(GO) clean -testcache
 	REDIS_URL=localhost:6379 $(GO) test $(GO_TEST_FLAGS) -run IntegrationRedis -covermode=atomic -timeout=2m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"
 	$(GO) clean -testcache
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.
@@ -579,6 +647,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS) \
 	.
@@ -596,8 +665,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:24.04 \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
+	--target=final-ubuntu \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS) \
 	.
@@ -654,7 +723,6 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
-	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate apps/secret --template apps/secret/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
@@ -700,3 +768,19 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
+
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+.PHONY: .policy.yml
+.policy.yml:
+	docker run -u "$(shell id -u):$(shell id -g)" \
+	--quiet \
+	--rm \
+	--volume "$(shell git rev-parse --show-toplevel)":/work \
+	--workdir /work \
+	ghcr.io/grafana/generate-policy-bot-config@${GENERATE_POLICY_BOT_CONFIG_SHA} \
+		--output .policy.yml \
+		--log-level=debug \
+		--merge-with=.policy.yml.tmpl \
+		.
+# We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
+	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak

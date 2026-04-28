@@ -5,9 +5,10 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import {
   __clearRuleViewTabsForTests,
@@ -18,6 +19,7 @@ import {
   getGrafanaRule,
   getVanillaPromRule,
   grantUserPermissions,
+  mockAlertmanagerAlert,
   mockCombinedCloudRuleNamespace,
   mockDataSource,
   mockPluginLinkExtension,
@@ -26,6 +28,7 @@ import {
   mockRulerGrafanaRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { setAlertmanagerAlertsHandler } from '../../mocks/server/configure';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
@@ -35,7 +38,8 @@ import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer, { ActiveTab } from './RuleViewer';
+import RuleViewer from './RuleViewer';
+import { ActiveTab } from './activeTab';
 import { addRulePageEnrichmentSection } from './tabs/extensions/RuleViewerExtension';
 
 jest.mock('@grafana/assistant', () => ({
@@ -371,6 +375,62 @@ describe('RuleViewer', () => {
         expect(screen.getAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
         expect(screen.queryByRole('columnheader', { name: /Notes/i })).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('inhibition status in title', () => {
+    const mockRule = getGrafanaRule(
+      {
+        name: 'Test alert',
+        promRule: mockPromAlertingRule({ state: PromAlertingRuleState.Firing }),
+      },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeEach(() => {
+      grantPermissionsHelper([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingInstanceRead,
+      ]);
+    });
+
+    it('should show "Inhibited" state in the title when the rule has inhibited instances', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      expect(await screen.findByText('Inhibited')).toBeInTheDocument();
+    });
+
+    it('should not show "Inhibited" state in the title when no instances are inhibited', async () => {
+      setAlertmanagerAlertsHandler([]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      // wait for the page to settle
+      await screen.findByText('Test alert');
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+    });
+
+    it('should not show "Inhibited" when inhibited alerts belong to a different rule', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: 'different-rule-uid', alertname: 'Other alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      await screen.findByText('Test alert');
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
     });
   });
 

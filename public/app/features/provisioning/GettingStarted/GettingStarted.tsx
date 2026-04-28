@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { CloudInfoBox } from '../Shared/CloudInfoBox';
 import provisioningSvg from '../img/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
@@ -138,6 +139,7 @@ export default function GettingStarted({ items }: Props) {
   return (
     <>
       <Stack direction="column" gap={6} wrap="wrap">
+        <CloudInfoBox />
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>
             {/* decorative img, use empty str to skip alt*/}

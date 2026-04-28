@@ -390,6 +390,7 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		ngfakes.NewFakeReceiverPermissionsService(),
+		ngfakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),

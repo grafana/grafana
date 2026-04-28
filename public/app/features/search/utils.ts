@@ -11,7 +11,7 @@ export const hasFilters = (query: SearchState) => {
   if (!query) {
     return false;
   }
-  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
+  return Boolean(query.query || query.tag?.length > 0 || query.ownerReference?.length || query.starred || query.sort);
 };
 
 /** Cleans up old local storage values that remembered many open folders */
@@ -27,7 +27,7 @@ export const cleanupOldExpandedFolders = () => {
 };
 
 /**
- * Get storage key for a dashboard folder by its title
+ * Get a storage key for a dashboard folder by its title
  * @param title
  */
 export const getSectionStorageKey = (title = 'General') => {
@@ -37,14 +37,15 @@ export const getSectionStorageKey = (title = 'General') => {
 /**
  * Remove undefined keys from url params object and format non-primitive values
  * @param params
- * @param folder
  */
 export const parseRouteParams = (params: UrlQueryMap) => {
   const cleanedParams = Object.entries(params).reduce<Partial<SearchState>>((obj, [key, val]) => {
     if (!val) {
       return obj;
     } else if (key === 'tag' && !Array.isArray(val)) {
-      return { ...obj, tag: [val] as string[] };
+      return { ...obj, tag: [val.toString()] };
+    } else if (key === 'ownerReference' && !Array.isArray(val)) {
+      return { ...obj, ownerReference: [val.toString()] };
     }
 
     return { ...obj, [key]: val };
@@ -60,3 +61,19 @@ export const parseRouteParams = (params: UrlQueryMap) => {
 
   return { ...cleanedParams };
 };
+
+/**
+ * If we have filter, we can only show the results in the list layout as the tree layout does not work well
+ */
+export function needsListLayout(q: Partial<SearchState>) {
+  return (
+    q.query ||
+    q.sort ||
+    q.starred ||
+    q.tag?.length ||
+    q.createdBy ||
+    q.ownerReference?.length ||
+    q.panel_type ||
+    q.datasource
+  );
+}

@@ -1,14 +1,10 @@
 import { useCallback } from 'react';
 
 import {
-  DataTransformerID,
   type FieldNamePickerConfigSettings,
-  PluginState,
   type StandardEditorsRegistryItem,
-  type TransformerRegistryItem,
   type TransformerUIProps,
   FieldType,
-  TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
@@ -18,11 +14,7 @@ import {
   type GazetteerPathEditorConfigSettings,
 } from 'app/features/geo/editor/GazetteerPathEditor';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/fieldLookup.svg';
-import lightImage from '../images/light/fieldLookup.svg';
-
-import { type FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
+import { type FieldLookupOptions } from './fieldLookup';
 
 const fieldLookupSettings = {
   settings: {},
@@ -91,22 +83,3 @@ export const FieldLookupTransformerEditor = ({ input, options, onChange }: Trans
     </div>
   );
 };
-
-export const getFieldLookupTransformRegistryItem: () => TransformerRegistryItem<FieldLookupOptions> = () => ({
-  id: DataTransformerID.fieldLookup,
-  editor: FieldLookupTransformerEditor,
-  transformation: fieldLookupTransformer,
-  name: t(
-    'transformers.field-lookup-transformer-editor.name.lookup-fields-from-resource',
-    'Lookup fields from resource'
-  ),
-  description: t(
-    'transformers.field-lookup-transformer-editor.description.lookup-additional-fields-external-source',
-    'Use a field value to lookup countries, states, or airports.'
-  ),
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.fieldLookup).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

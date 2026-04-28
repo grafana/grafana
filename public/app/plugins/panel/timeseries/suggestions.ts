@@ -10,20 +10,13 @@ import {
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  GraphDrawStyle,
-  type GraphFieldConfig,
-  GraphGradientMode,
-  LineInterpolation,
-  StackingMode,
-} from '@grafana/schema';
+import { GraphDrawStyle, type GraphFieldConfig, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';
 
 const MAX_BARS = 100;
-const MAX_ROWS_SMOOTH_CHART = 200;
 
 const MAX_PREVIEW_SERIES = 8;
 const MAX_PREVIEW_BAR_ROWS = 30;
@@ -112,20 +105,6 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Opt
       name: t('timeseries.suggestions.line', 'Line chart'),
     },
   ];
-
-  if (dataSummary.rowCountMax < MAX_ROWS_SMOOTH_CHART) {
-    suggestions.push({
-      name: t('timeseries.suggestions.line-smooth', 'Line chart - smooth'),
-      fieldConfig: {
-        defaults: {
-          custom: {
-            lineInterpolation: LineInterpolation.Smooth,
-          },
-        },
-        overrides: [],
-      },
-    });
-  }
 
   // Single-series suggestions
   if (dataSummary.fieldCountByType(FieldType.number) === 1) {

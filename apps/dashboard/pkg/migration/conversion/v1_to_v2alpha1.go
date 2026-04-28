@@ -403,9 +403,16 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alp
 	}
 
 	// Extract other time-related fields
+	// An empty timezone string in V1/V0 is the sentinel meaning "use the user's profile preference".
+	// Explicitly nil out Timezone in V2 so the user-preference fallback still triggers;
+	// an absent timezone key keeps the default ("browser").
 	if timezone, exists := dashboard["timezone"]; exists {
 		if timezoneStr, ok := timezone.(string); ok {
-			timeSettings.Timezone = &timezoneStr
+			if timezoneStr != "" {
+				timeSettings.Timezone = &timezoneStr
+			} else {
+				timeSettings.Timezone = nil
+			}
 		}
 	}
 	if refresh := schemaversion.GetStringValue(dashboard, "refresh"); refresh != "" {
@@ -922,6 +929,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case 2:
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case 3:
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
@@ -935,6 +944,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case "hideVariable":
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case "inControlsMenu":
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
@@ -1686,6 +1697,12 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 			SkipUrlSync:      commonProps.SkipUrlSync,
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
+	}
+
+	if val, exists := varMap["enableGroupBy"]; exists {
+		if b, ok := val.(bool); ok {
+			adhocVar.Spec.EnableGroupBy = &b
+		}
 	}
 
 	// Transform baseFilters if they exist, otherwise default to empty array

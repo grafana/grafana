@@ -1,24 +1,16 @@
 import { type ChangeEvent } from 'react';
 
 import {
-  DataTransformerID,
-  type TransformerRegistryItem,
   type TransformerUIProps,
   type FieldNamePickerConfigSettings,
   type SelectableValue,
   type StandardEditorsRegistryItem,
-  TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, type ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/extractFields.svg';
-import lightImage from '../images/light/extractFields.svg';
-
 import { JSONPathEditor } from './components/JSONPathEditor';
-import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
 import { type ExtractFieldsOptions, FieldExtractorID, type JSONPath } from './types';
 
@@ -182,18 +174,3 @@ export const extractFieldsTransformerEditor = ({
     </div>
   );
 };
-
-export const getExtractFieldsTransformRegistryItem: () => TransformerRegistryItem<ExtractFieldsOptions> = () => ({
-  id: DataTransformerID.extractFields,
-  editor: extractFieldsTransformerEditor,
-  transformation: extractFieldsTransformer,
-  name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
-  description: t(
-    'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
-    'Parse fields from content (JSON, labels, etc).'
-  ),
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

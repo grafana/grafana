@@ -35,6 +35,14 @@ jest.mock('../interactions', () => ({
     compatibilityCheckTriggered: jest.fn(),
     compatibilityCheckCompleted: jest.fn(),
   },
+  SuggestedDashboardInteractions: {
+    loaded: jest.fn(),
+    searchPerformed: jest.fn(),
+    itemClicked: jest.fn(),
+    compatibilityCheckTriggered: jest.fn(),
+    compatibilityCheckCompleted: jest.fn(),
+    createFromScratchClicked: jest.fn(),
+  },
 }));
 
 jest.mock('@grafana/runtime', () => ({

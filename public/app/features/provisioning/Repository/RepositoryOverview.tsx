@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -29,7 +29,7 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
-  const showFolderMetadataCheck = config.featureToggles.provisioningFolderMetadata;
+  const showFolderMetadataCheck = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const status = repo.status;
   const { conditions, quota } = status ?? {};

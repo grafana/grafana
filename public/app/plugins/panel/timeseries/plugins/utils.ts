@@ -36,3 +36,17 @@ export function getAnnoRegionBoxStyle(plotWidth: number, right: number, left: nu
     minWidth: isAnnoTooSmall ? ANNOTATION_REGION_MIN_WIDTH : undefined,
   };
 }
+
+export function shouldRenderAnnotationLine(width: number | undefined, multiLane: boolean | undefined) {
+  if (width !== undefined) {
+    return width > 0;
+  }
+  return !multiLane;
+}
+
+export function shouldRenderAnnotationRegion(opacity: number | undefined, multiLane: boolean | undefined) {
+  if (opacity !== undefined) {
+    return opacity > 0;
+  }
+  return !multiLane;
+}

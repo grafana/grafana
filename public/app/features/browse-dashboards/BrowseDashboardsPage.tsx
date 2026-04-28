@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { useDispatch } from 'app/types/store';
@@ -16,6 +17,7 @@ import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
+import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
@@ -46,6 +48,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     isReadOnlyRepo,
     status: repoViewStatus,
     orphanedRepoName,
+    repository,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -121,7 +124,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
-  const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
+  const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
+  const [showRenameDrawer, setShowRenameDrawer] = useState(false);
+  const showEditTitle = canEditFolders && !!folderUID;
   const permissions = {
     canEditFolders,
     canEditDashboards,
@@ -151,7 +156,16 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const renderTitle = (title: string) => {
     return (
       <Stack alignItems={'center'} gap={2}>
-        <Text element={'h1'}>{title}</Text> <FolderRepo folder={folder} />
+        <Text element={'h1'}>{title}</Text>
+        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
+          <IconButton
+            name="pen"
+            size="lg"
+            tooltip={t('browse-dashboards.action.rename-provisioned-folder', 'Rename provisioned folder')}
+            onClick={() => setShowRenameDrawer(true)}
+          />
+        )}
+        <FolderRepo folder={folder} />
       </Stack>
     );
   };
@@ -160,7 +174,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={showEditTitle ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
@@ -187,7 +201,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) =>
+            {({ width, height }: Size) =>
               isSearching ? (
                 <SearchView
                   permissions={permissions}
@@ -210,6 +224,19 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         </div>
         {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
+      {showRenameDrawer && folderDTO && (
+        <Drawer
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.rename-provisioned-folder', 'Rename provisioned folder')}
+            </Text>
+          }
+          subtitle={folderDTO.title}
+          onClose={() => setShowRenameDrawer(false)}
+        >
+          <RenameProvisionedFolderForm folder={folderDTO} onDismiss={() => setShowRenameDrawer(false)} />
+        </Drawer>
+      )}
     </Page>
   );
 });

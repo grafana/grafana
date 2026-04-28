@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -603,4 +604,166 @@ func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResou
 		return perm.BuiltinRole, nil
 	}
 	return "", fmt.Errorf("no valid permission subject found")
+}
+
+// Teams-specific redirect functions using TeamBinding K8s API
+
+func (a *api) getTeamPermissionsFromTeamBindings(c *contextmodel.ReqContext, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	dynamicClient, err := a.getDynamicClient(c)
+	if err != nil {
+		return nil, err
+	}
+	return a.listTeamBindingPermissions(c, dynamicClient, namespace, resourceID)
+}
+
+func (a *api) listTeamBindingPermissions(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	ctx := c.Req.Context()
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid team resource ID: %w", err)
+	}
+
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team details: %w", err)
+	}
+
+	teamBindingResource := dynamicClient.Resource(iamv0.TeamBindingResourceInfo.GroupVersionResource()).Namespace(namespace)
+	listResult, err := teamBindingResource.List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.teamRef.name=%s", teamDetails.UID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list team bindings from k8s: %w", err)
+	}
+
+	dto := make(getResourcePermissionsResponse, 0, len(listResult.Items))
+	for _, item := range listResult.Items {
+		var binding iamv0.TeamBinding
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &binding); err != nil {
+			a.logger.Warn("Failed to convert team binding", "error", err)
+			continue
+		}
+
+		permission := cases.Title(language.Und).String(string(binding.Spec.Permission))
+		actions, exists := a.service.options.PermissionsToActions[permission]
+		if !exists {
+			a.logger.Warn("Permission not found in PermissionsToActions map", "permission", permission, "resource", a.service.options.Resource)
+			actions = []string{}
+		}
+
+		permDTO := resourcePermissionDTO{
+			Permission: permission,
+			Actions:    actions,
+			IsManaged:  true,
+		}
+
+		userDetails, err := a.service.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: binding.Spec.Subject.Name})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user details for UID %s: %w", binding.Spec.Subject.Name, err)
+		}
+
+		permDTO.UserID = userDetails.ID
+		permDTO.UserUID = userDetails.UID
+		permDTO.UserLogin = userDetails.Login
+		permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
+		permDTO.IsServiceAccount = userDetails.IsServiceAccount
+		permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
+		permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
+
+		dto = append(dto, permDTO)
+	}
+
+	return dto, nil
+}
+
+func (a *api) setUserPermissionViaTeamBinding(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
+	dynamicClient, err := a.getDynamicClient(c)
+	if err != nil {
+		return err
+	}
+	return a.createOrDeleteTeamBinding(c, dynamicClient, namespace, resourceID, userID, permission)
+}
+
+func (a *api) createOrDeleteTeamBinding(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) error {
+	ctx := c.Req.Context()
+
+	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid team resource ID: %w", err)
+	}
+
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: c.GetOrgID(),
+		ID:    teamID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get team details: %w", err)
+	}
+
+	teamBindingResource := dynamicClient.Resource(iamv0.TeamBindingResourceInfo.GroupVersionResource()).Namespace(namespace)
+	bindingName := fmt.Sprintf("u.%s.%s", userDetails.UID, teamDetails.UID)
+
+	if permission == "" {
+		// Remove permission: delete the team binding
+		err := teamBindingResource.Delete(ctx, bindingName, metav1.DeleteOptions{})
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return fmt.Errorf("failed to delete team binding: %w", err)
+		}
+		return nil
+	}
+
+	binding := &iamv0.TeamBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.TeamBindingResourceInfo.GroupVersion().String(),
+			Kind:       iamv0.TeamBindingResourceInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bindingName,
+			Namespace: namespace,
+		},
+		Spec: iamv0.TeamBindingSpec{
+			Subject: iamv0.TeamBindingspecSubject{
+				Kind: "User",
+				Name: userDetails.UID,
+			},
+			TeamRef: iamv0.TeamBindingTeamRef{
+				Name: teamDetails.UID,
+			},
+			Permission: iamv0.TeamBindingTeamPermission(cases.Lower(language.Und).String(permission)),
+			External:   false,
+		},
+	}
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(binding)
+	if err != nil {
+		return fmt.Errorf("failed to convert team binding to unstructured: %w", err)
+	}
+	unstructuredBinding := &unstructured.Unstructured{Object: unstructuredObj}
+
+	// Optimistic create: try Create first, fall back to Get+Update on AlreadyExists.
+	_, err = teamBindingResource.Create(ctx, unstructuredBinding, metav1.CreateOptions{})
+	if err != nil {
+		if !k8serrors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create team binding: %w", err)
+		}
+		existing, err := teamBindingResource.Get(ctx, bindingName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get existing team binding: %w", err)
+		}
+		unstructuredBinding.SetResourceVersion(existing.GetResourceVersion())
+		if _, err := teamBindingResource.Update(ctx, unstructuredBinding, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("failed to update team binding: %w", err)
+		}
+	}
+
+	return nil
 }

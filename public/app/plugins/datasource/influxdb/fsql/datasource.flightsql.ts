@@ -15,7 +15,7 @@ export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

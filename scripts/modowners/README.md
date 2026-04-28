@@ -40,7 +40,6 @@ Example output:
 @grafana/grafana-app-platform-squad 13
 @grafana/observability-metrics 4
 @grafana/observability-traces-and-profiling 6
-@grafana/aws-datasources 2
 @grafana/alerting-squad-backend 22
 @grafana/plugins-platform-backend 7
 @grafana/grafana-operator-experience-squad 3
@@ -48,7 +47,7 @@ Example output:
 @grafana/grafana-backend-group 75
 @grafana/grafana-as-code 11
 @grafana/identity-access-team 6
-@grafana/partner-datasources 4
+@grafana/data-sources-plugins 6
 ```
 
 Example CLI command to get the owner for a specific dependency (you must use `dependency@version`, not `dependency version`):
@@ -81,7 +80,6 @@ github.com/google/go-github/v45@v45.2.0
 github.com/Masterminds/semver/v3@v3.1.1
 gopkg.in/square/go-jose.v2@v2.6.0
 filippo.io/age@v1.1.1
-github.com/docker/docker@v23.0.4+incompatible
 ```
 
 ## Action items

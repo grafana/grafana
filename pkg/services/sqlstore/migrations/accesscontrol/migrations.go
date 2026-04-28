@@ -226,4 +226,10 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("alter permission.kind to length 80", migrator.NewRawSQLMigration("").
 		Postgres("ALTER TABLE permission ALTER COLUMN kind TYPE VARCHAR(80);").
 		Mysql("ALTER TABLE permission MODIFY kind VARCHAR(80);"))
+
+	mg.AddMigration("add datasource_type column to permission table", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "datasource_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true,
+	}))
+
+	AddDatasourceTypeMigration(mg)
 }

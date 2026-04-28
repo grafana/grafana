@@ -19,31 +19,49 @@ export function getNotificationConfigNavId(): string {
 }
 
 /**
- * Check if user has permission to view contact points
+ * Check if user has permission to view contact points.
+ * Accepts both the legacy broad permission and the granular permission,
+ * matching the pattern used in useAbilities.ts toAbility().
  */
 function canViewContactPoints(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead)
+  );
 }
 
 /**
- * Check if user has permission to view notification policies
+ * Check if user has permission to view notification policies.
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewNotificationPolicies(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
+    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead)
+  );
 }
 
 /**
- * Check if user has permission to view templates
+ * Check if user has permission to view templates.
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewTemplates(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTemplatesRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingTemplatesRead)
+  );
 }
 
 /**
- * Check if user has permission to view time intervals (mute timings)
+ * Check if user has permission to view time intervals (mute timings).
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewTimeIntervals(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTimeIntervalsRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingTimeIntervalsRead)
+  );
 }
 
 function isSubPathOf(child: string, parent: string): boolean {

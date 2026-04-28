@@ -38,6 +38,8 @@ import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
+import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
@@ -68,6 +70,7 @@ import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
+import { ActiveTab } from './activeTab';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -75,16 +78,6 @@ import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
-
-export enum ActiveTab {
-  Query = 'query',
-  Instances = 'instances',
-  History = 'history',
-  Notifications = 'notifications',
-  Routing = 'routing',
-  VersionHistory = 'version-history',
-  Enrichment = 'enrichment',
-}
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const alertingListViewV2 = shouldUseAlertingListViewV2();
@@ -112,6 +105,12 @@ const RuleViewer = () => {
   const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
   const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
 
+  // Only check for inhibited instances on Grafana-managed alerting rules
+  const grafanaAlertingRuleUid = rulerRuleType.grafana.alertingRule(rulerRule)
+    ? rulerRule.grafana_alert.uid
+    : undefined;
+  const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
+
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
 
@@ -129,6 +128,7 @@ const RuleViewer = () => {
           isProvisioned={isProvisioned}
           provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
+          isInhibited={hasInhibitedInstances}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -163,7 +163,7 @@ const RuleViewer = () => {
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <div className={styles.layout}>
-        <Stack direction="column" gap={2}>
+        <Stack direction="column" gap={2} minWidth={0}>
           {/* tabs and tab content */}
           <TabContent>
             {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
@@ -307,6 +307,7 @@ interface TitleProps {
   provenance?: string;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
+  isInhibited?: boolean;
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
@@ -319,6 +320,7 @@ export const Title = ({
   isProvisioned,
   provenance,
   state,
+  isInhibited,
   health,
   ruleType,
   ruleOrigin,
@@ -329,7 +331,7 @@ export const Title = ({
   const { returnTo } = useReturnTo(returnToHref);
 
   const textHealth = normalizeHealth(health);
-  const textState = normalizeState(state);
+  const textState = isInhibited ? 'inhibited' : normalizeState(state);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
@@ -442,6 +444,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
+  useEnrichmentUrlParams({ activeTab, setActiveTab });
 
   const { annotations, promRule, rulerRule } = rule;
 

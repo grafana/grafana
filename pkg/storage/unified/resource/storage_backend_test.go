@@ -59,6 +59,11 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = kvBackend.Stop(ctx)
+	})
 	return kvBackend
 }
 
@@ -599,7 +604,7 @@ func TestKvStorageBackend_ReadResource_NotFound(t *testing.T) {
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return error for nonexistent resource")
 	require.Equal(t, int32(404), response.Error.Code)
-	require.Equal(t, "not found", response.Error.Message)
+	require.Equal(t, "NotFound", response.Error.Reason)
 	require.Nil(t, response.Key)
 	require.Equal(t, int64(0), response.ResourceVersion)
 	require.Nil(t, response.Value)
@@ -648,7 +653,7 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return not found for deleted resource")
 	require.Equal(t, int32(404), response.Error.Code)
-	require.Equal(t, "not found", response.Error.Message)
+	require.Equal(t, "NotFound", response.Error.Reason)
 
 	// Try to read the original version (should still work)
 	readReq.ResourceVersion = rv1
@@ -678,14 +683,9 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
-	require.Equal(t, int32(504), response.Error.Code) // http.StatusGatewayTimeout
-	require.Equal(t, "Timeout", response.Error.Reason)
-	require.Equal(t, "ResourceVersion is larger than max", response.Error.Message)
-	require.NotNil(t, response.Error.Details)
-	require.Len(t, response.Error.Details.Causes, 1)
-	require.Equal(t, "ResourceVersionTooLarge", response.Error.Details.Causes[0].Reason)
-	require.Contains(t, response.Error.Details.Causes[0].Message, "requested:")
-	require.Contains(t, response.Error.Details.Causes[0].Message, "current")
+	require.Equal(t, int32(400), response.Error.Code)
+	require.Equal(t, "BadRequest", response.Error.Reason)
+	require.Contains(t, response.Error.Message, "too large resource version")
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
@@ -2378,7 +2378,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 }
 
 func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Start watching for events before creating resources
 	stream, err := backend.WatchWriteEvents(ctx)

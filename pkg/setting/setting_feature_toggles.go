@@ -80,9 +80,47 @@ func (cfg *Cfg) applyFeatureToggleEnvOverrides() {
 	}
 }
 
+// applyFeatureToggleCmdOverrides sets feature toggle values from command-line
+// properties (cfg:feature_toggles.<name>=<value>). The generic
+// applyCommandLineProperties method only overrides keys that already exist in
+// the ini file, so feature toggles that aren't in defaults.ini would be
+// silently ignored without this.
+func (cfg *Cfg) applyFeatureToggleCmdOverrides(file *ini.File) {
+	if len(cfg.commandLineProps) == 0 {
+		return
+	}
+
+	section := file.Section("feature_toggles")
+
+	already := make(map[string]bool, len(cfg.appliedCommandLineProperties))
+	for _, p := range cfg.appliedCommandLineProperties {
+		k, _, _ := strings.Cut(p, "=")
+		already[k] = true
+	}
+
+	for propKey, value := range cfg.commandLineProps {
+		if !strings.HasPrefix(propKey, "feature_toggles.") {
+			continue
+		}
+
+		keyName := strings.TrimPrefix(propKey, "feature_toggles.")
+		if keyName == "" || strings.Contains(keyName, ".") {
+			continue
+		}
+
+		section.Key(keyName).SetValue(value)
+		if !already[propKey] {
+			cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties,
+				fmt.Sprintf("%s=%s", propKey, RedactedValue(propKey, value)))
+		}
+	}
+}
+
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	cfg.applyFeatureToggleEnvOverrides()
+	cfg.applyFeatureToggleCmdOverrides(iniFile)
+
 	section := iniFile.Section("feature_toggles")
 	if section.Key("enable").String() != "" {
 		if os.Getenv(EnvKey("feature_toggles", "enable")) != "" {
@@ -91,6 +129,7 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 			cfg.Logger.Warn("[Deprecated] The feature_toggles.enable configuration setting is deprecated. Use individual feature toggle entries (e.g. featureName = <value>) instead.")
 		}
 	}
+
 	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err

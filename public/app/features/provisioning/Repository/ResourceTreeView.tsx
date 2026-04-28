@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   type CellProps,
   type Column,
@@ -53,6 +53,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
@@ -100,7 +101,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
           const { status, missingFolderMetadata } = original.item;
-          if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
+          if (provisioningFolderMetadataEnabled && missingFolderMetadata) {
             return (
               <Tooltip
                 content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
@@ -191,7 +192,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [repo.spec, styles]
+    [provisioningFolderMetadataEnabled, repo.spec, styles]
   );
 
   if (isLoading) {

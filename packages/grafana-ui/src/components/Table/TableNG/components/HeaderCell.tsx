@@ -10,7 +10,6 @@ import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
-import { isTableCellStylesKeyEqual } from '../styles';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -25,6 +24,8 @@ interface HeaderCellProps {
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
   parentIndex?: number;
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -38,6 +39,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   setFilter,
   showTypeIcons,
   parentIndex,
+  crossFilterRows,
+  crossFilterTailRows,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -113,35 +116,34 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           field={field}
           iconClassName={styles.headerCellIcon}
           parentIndex={parentIndex}
+          crossFilterRows={crossFilterRows}
+          crossFilterTailRows={crossFilterTailRows}
         />
       )}
     </Stack>
   );
 };
 
-const getStyles = memoize(
-  (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
-    headerCellLabel: css({
-      all: 'unset',
-      cursor: 'pointer',
-      fontWeight: theme.typography.fontWeightMedium,
+const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+  headerCellLabel: css({
+    all: 'unset',
+    cursor: 'pointer',
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.secondary,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+    borderRadius: theme.spacing(0.25),
+    lineHeight: '20px',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+    '&::selection': {
+      backgroundColor: 'var(--rdg-background-color)',
       color: theme.colors.text.secondary,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-      borderRadius: theme.spacing(0.25),
-      lineHeight: '20px',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-      '&::selection': {
-        backgroundColor: 'var(--rdg-background-color)',
-        color: theme.colors.text.secondary,
-      },
-    }),
-    headerCellIcon: css({
-      color: theme.colors.text.secondary,
-    }),
+    },
   }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
-);
+  headerCellIcon: css({
+    color: theme.colors.text.secondary,
+  }),
+}));

@@ -28,6 +28,8 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 import { updateNavModel } from '../pages/utils';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -111,6 +113,14 @@ export class GeneralSettingsEditView
 
   public onEditableChange = (value: boolean) => {
     this._dashboard.setState({ editable: value });
+  };
+
+  public onDefaultGridChange = (value: string) => {
+    if (value === AutoGridLayoutManager.descriptor.id) {
+      this._dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    } else if (value === DefaultGridLayoutManager.descriptor.id) {
+      this._dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    }
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
@@ -216,6 +226,19 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     },
   ];
 
+  const DEFAULT_GRID_OPTIONS = [
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
+      value: AutoGridLayoutManager.descriptor.id,
+    },
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
+      value: DefaultGridLayoutManager.descriptor.id,
+    },
+  ];
+
+  const defaultGrid = dashboard.getDefaultLayoutType();
+
   const GRAPH_TOOLTIP_OPTIONS = [
     {
       value: 0,
@@ -315,6 +338,23 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           >
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
           </Field>
+
+          {config.featureToggles.dashboardDefaultLayoutSelector && (
+            <Field
+              noMargin
+              label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+              description={t(
+                'dashboard-settings.general.default-grid-description',
+                'Select layout type to be used for new rows and tabs'
+              )}
+            >
+              <RadioButtonGroup
+                value={defaultGrid}
+                options={DEFAULT_GRID_OPTIONS}
+                onChange={model.onDefaultGridChange}
+              />
+            </Field>
+          )}
         </Box>
 
         <TimePickerSettings

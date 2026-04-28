@@ -11,3 +11,17 @@ reportRenderBinding:
     disabled: false
   defaultRule:
     variation: enabled
+
+compiledBootScript:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+grafana.assetSriChecks:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

@@ -45,7 +45,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   dialect: SQLDialect = 'other';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<SQLOptions>,
+    public instanceSettings: DataSourceInstanceSettings<SQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

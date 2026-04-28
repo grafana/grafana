@@ -1,7 +1,5 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-import WKT from 'ol/format/WKT';
-import Geometry from 'ol/geom/Geometry';
 import { type CSSProperties } from 'react';
 import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -31,6 +29,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
@@ -713,34 +712,72 @@ export function applySort(
     : [...rows].sort(compareRows);
 }
 
+export interface ApplyFilterResult {
+  crossFilterOrder: string[];
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
+  filteredRows: TableRow[];
+}
+
+/**
+ * @internal
+ * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
+ *
+ * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
+ * holds the rows available *before* that filter was applied (i.e. the rows that passed all
+ * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
+ * *all* filters — used for new filters that have not yet been applied.
+ *
+ * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
+ * or wrapped with `processNestedTableRows` to preserve parent-child structure when
+ * `hasNestedFrames` is true.
+ *
+ * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
+ */
 export function applyFilter(
   rows: TableRow[],
   filter: FilterType,
   fields: Field[],
-  hasNestedFrames?: boolean
-): TableRow[] {
-  const filterValues = Object.entries(filter);
+  hasNestedFrames?: boolean,
+  parentIndex?: number
+): ApplyFilterResult {
+  // Scope rows to the relevant nesting level
+  const isNested = parentIndex !== undefined;
+  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
 
-  const filterRows = (row: TableRow): boolean => {
-    for (const [, value] of filterValues) {
-      if (value.parentIndex != null && row.__parentIndex !== value.parentIndex) {
-        continue;
-      }
-      const field = fields.find((field) => getDisplayName(field) === value.displayName);
+  // Collect filter keys that belong to this scope (preserving JS insertion order)
+  const crossFilterOrder = Object.keys(filter).filter((key) => {
+    const entry = filter[key];
+    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
+  });
+
+  const crossFilterRows: Record<string, TableRow[]> = {};
+  let crossFilterTailRows = scopedRows;
+
+  for (const filterKey of crossFilterOrder) {
+    const filterEntry = filter[filterKey];
+    // Store rows available *before* this filter is applied
+    crossFilterRows[filterKey] = crossFilterTailRows;
+    // Advance the chain by applying this filter
+    crossFilterTailRows = crossFilterTailRows.filter((row) => {
+      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
       if (!field || !field.display) {
-        continue;
+        return true;
       }
-      const displayedValue = formattedValueToString(field.display(row[value.displayName]));
-      if (!value.filteredSet.has(displayedValue)) {
-        return false;
-      }
-    }
-    return true;
-  };
+      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
+      return filterEntry.filteredSet.has(displayedValue);
+    });
+  }
 
-  return hasNestedFrames
-    ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
-    : rows.filter(filterRows);
+  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
+  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
+  let filteredRows = crossFilterTailRows;
+  if (hasNestedFrames) {
+    const tailSet = new Set(crossFilterTailRows);
+    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
+  }
+
+  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -1068,17 +1105,18 @@ function isPlainObject(value: unknown): value is object {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+export function buildInspectValue(
+  value: unknown,
+  field: Field,
+  formatGeometry?: OpenLayersContextValue['formatGeometry']
+): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  if (field.type === FieldType.geo && value instanceof Geometry) {
-    inspectValue = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (field.type === FieldType.geo && isGeometry(value)) {
+    inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
     mode = TableCellInspectorMode.code;
   } else if (
     cellOptions.type === TableCellDisplayMode.Sparkline ||

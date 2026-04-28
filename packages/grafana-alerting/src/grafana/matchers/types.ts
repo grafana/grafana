@@ -1,4 +1,4 @@
-import { type RoutingTreeMatcher } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTreeMatcher } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 export type Label = [string, string];
 

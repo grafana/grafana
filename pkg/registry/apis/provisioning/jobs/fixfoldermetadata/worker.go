@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -26,10 +27,12 @@ const keepFileName = ".keep"
 // every directory that does not already have one, using a hash-derived UID.
 // It also removes legacy .keep files from folders that have (or receive)
 // a _folder.json, since the metadata file supersedes the keep marker.
-type Worker struct{}
+type Worker struct {
+	folderGVK schema.GroupVersionKind
+}
 
-func NewWorker() *Worker {
-	return &Worker{}
+func NewWorker(folderGVK schema.GroupVersionKind) *Worker {
+	return &Worker{folderGVK: folderGVK}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -115,7 +118,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				continue
 			}
 
-			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path))
+			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), w.folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
 				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 

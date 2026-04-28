@@ -8,10 +8,12 @@ import {
   type SceneObjectState,
   VizPanel,
   type SceneGridItemLike,
+  useSceneObjectState,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
@@ -22,6 +24,7 @@ import {
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getVizPanelKeyForPanelId,
+  useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -111,6 +114,10 @@ export class AutoGridLayoutManager
     }
 
     return children;
+  }
+
+  public getAllGridTypes(): string[] {
+    return [AutoGridLayoutManager.descriptor.id];
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -437,6 +444,15 @@ export class AutoGridLayoutManager
 }
 
 function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {
+  const dashboard = useDashboard(model);
+  const { children } = useSceneObjectState(model.state.layout, { shouldActivateOrKeepAlive: true });
+
+  if (model.parent === dashboard && children.length === 0) {
+    return (
+      <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+    );
+  }
+
   return <model.state.layout.Component model={model.state.layout} />;
 }
 

@@ -37,7 +37,31 @@ const (
 	// endpoints.
 	// TODO: update when the API moves to beta.
 	replacementAlertRuleByUID = appPlatformBase + "/alertrules/{name}, " + appPlatformBase + "/recordingrules/{name}"
+
+	notificationAppPlatformBase = "/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}"
+
+	replacementReceivers        = notificationAppPlatformBase + "/receivers"
+	replacementReceiverByUID    = notificationAppPlatformBase + "/receivers/{name}"
+	replacementRoutingTree      = notificationAppPlatformBase + "/routingtrees"
+	replacementTemplates        = notificationAppPlatformBase + "/templategroups"
+	replacementTemplateByName   = notificationAppPlatformBase + "/templategroups/{name}"
+	replacementMuteTimings      = notificationAppPlatformBase + "/timeintervals"
+	replacementMuteTimingByName = notificationAppPlatformBase + "/timeintervals/{name}"
 )
+
+// deprecatedNotificationProvisioningResponse sets deprecation notice headers on
+// the response for notification provisioning endpoints superseded by the
+// notifications.alerting.grafana.app/v1beta1 app-platform APIs.
+func deprecatedNotificationProvisioningResponse(resp response.Response, replacement string) response.Response {
+	if nr, ok := resp.(*response.NormalResponse); ok {
+		nr.SetHeader("Warning", `299 - "Deprecated API: use the Grafana App Platform alerting API instead."`)
+		nr.SetHeader("X-API-Deprecation-Date", "2026-04-07")
+		if replacement != "" {
+			nr.SetHeader("X-API-Replacement", replacement)
+		}
+	}
+	return resp
+}
 
 type ProvisioningApiHandler struct {
 	svc *ProvisioningSrv
@@ -50,7 +74,7 @@ func NewProvisioningApi(svc *ProvisioningSrv) *ProvisioningApiHandler {
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteGetPolicyTree(ctx)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetPolicyTree(ctx), replacementRoutingTree)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetPolicyTreeExport(ctx *contextmodel.ReqContext) response.Response {
@@ -58,11 +82,11 @@ func (f *ProvisioningApiHandler) handleRouteGetPolicyTreeExport(ctx *contextmode
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *contextmodel.ReqContext, route apimodels.Route) response.Response {
-	return f.svc.RoutePutPolicyTree(ctx, route)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePutPolicyTree(ctx, route), replacementRoutingTree)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetContactpoints(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteGetContactPoints(ctx)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetContactPoints(ctx), replacementReceivers)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetContactpointsExport(ctx *contextmodel.ReqContext) response.Response {
@@ -70,51 +94,51 @@ func (f *ProvisioningApiHandler) handleRouteGetContactpointsExport(ctx *contextm
 }
 
 func (f *ProvisioningApiHandler) handleRoutePostContactpoints(ctx *contextmodel.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	return f.svc.RoutePostContactPoint(ctx, cp)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePostContactPoint(ctx, cp), replacementReceivers)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutContactpoint(ctx *contextmodel.ReqContext, cp apimodels.EmbeddedContactPoint, UID string) response.Response {
-	return f.svc.RoutePutContactPoint(ctx, cp, UID)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePutContactPoint(ctx, cp, UID), replacementReceiverByUID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteDeleteContactpoints(ctx *contextmodel.ReqContext, UID string) response.Response {
-	return f.svc.RouteDeleteContactPoint(ctx, UID)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteDeleteContactPoint(ctx, UID), replacementReceiverByUID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetTemplates(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteGetTemplates(ctx)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetTemplates(ctx), replacementTemplates)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetTemplate(ctx *contextmodel.ReqContext, name string) response.Response {
-	return f.svc.RouteGetTemplate(ctx, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetTemplate(ctx, name), replacementTemplateByName)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *contextmodel.ReqContext, body apimodels.NotificationTemplateContent, name string) response.Response {
-	return f.svc.RoutePutTemplate(ctx, body, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePutTemplate(ctx, body, name), replacementTemplateByName)
 }
 
 func (f *ProvisioningApiHandler) handleRouteDeleteTemplate(ctx *contextmodel.ReqContext, name string) response.Response {
-	return f.svc.RouteDeleteTemplate(ctx, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteDeleteTemplate(ctx, name), replacementTemplateByName)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetMuteTiming(ctx *contextmodel.ReqContext, name string) response.Response {
-	return f.svc.RouteGetMuteTiming(ctx, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetMuteTiming(ctx, name), replacementMuteTimingByName)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetMuteTimings(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteGetMuteTimings(ctx)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetMuteTimings(ctx), replacementMuteTimings)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePostMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
-	return f.svc.RoutePostMuteTiming(ctx, mt)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePostMuteTiming(ctx, mt), replacementMuteTimings)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *contextmodel.ReqContext, mt apimodels.MuteTimeInterval, name string) response.Response {
-	return f.svc.RoutePutMuteTiming(ctx, mt, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RoutePutMuteTiming(ctx, mt, name), replacementMuteTimingByName)
 }
 
 func (f *ProvisioningApiHandler) handleRouteDeleteMuteTiming(ctx *contextmodel.ReqContext, name string) response.Response {
-	return f.svc.RouteDeleteMuteTiming(ctx, name)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteDeleteMuteTiming(ctx, name), replacementMuteTimingByName)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRules(ctx *contextmodel.ReqContext) response.Response {
@@ -146,7 +170,7 @@ func (f *ProvisioningApiHandler) handleRouteDeleteAlertRule(ctx *contextmodel.Re
 }
 
 func (f *ProvisioningApiHandler) handleRouteResetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteResetPolicyTree(ctx)
+	return deprecatedNotificationProvisioningResponse(f.svc.RouteResetPolicyTree(ctx), replacementRoutingTree)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroup(ctx *contextmodel.ReqContext, folder, group string) response.Response {

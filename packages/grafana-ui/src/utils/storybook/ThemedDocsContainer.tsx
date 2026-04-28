@@ -2,7 +2,7 @@
 import { DocsContainer, type DocsContextProps } from '@storybook/addon-docs';
 import * as React from 'react';
 
-import { getThemeById } from '@grafana/data';
+import { getThemeById, ThemeContext } from '@grafana/data';
 
 import { createStorybookTheme } from '../../../.storybook/storybookTheme';
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
@@ -25,8 +25,10 @@ export const ThemedDocsContainer = ({ children, context }: Props) => {
 
   return (
     <DocsContainer theme={createStorybookTheme(theme)} context={context}>
-      <GlobalStyles />
-      {children}
+      <ThemeContext.Provider value={theme}>
+        <GlobalStyles />
+        {children}
+      </ThemeContext.Provider>
     </DocsContainer>
   );
 };

@@ -7,6 +7,7 @@ import {
   FieldType,
   LoadingState,
   type PanelData,
+  type SelectableValue,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
@@ -18,7 +19,32 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
+import { type AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
+
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './AdHocFiltersVariableEditor';
+
+let capturedOriginController: AdHocOriginFiltersController | undefined;
+let capturedDefaultGroupByProps:
+  | { values: Array<SelectableValue<string>>; options?: Array<SelectableValue<string>>; onChange: Function }
+  | undefined;
+
+jest.mock('../components/AdHocOriginFiltersEditor', () => ({
+  AdHocOriginFiltersEditor: ({ controller }: { controller: AdHocOriginFiltersController }) => {
+    capturedOriginController = controller;
+    return <div data-testid="origin-filters-editor">mock origin editor</div>;
+  },
+}));
+
+jest.mock('../components/DefaultGroupByValueEditor', () => ({
+  DefaultGroupByValueEditor: (props: {
+    values: Array<SelectableValue<string>>;
+    options?: Array<SelectableValue<string>>;
+    onChange: Function;
+  }) => {
+    capturedDefaultGroupByProps = props;
+    return <div data-testid="default-groupby-editor">mock groupby editor</div>;
+  },
+}));
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -71,6 +97,8 @@ describe('AdHocFiltersVariableEditor', () => {
   beforeEach(() => {
     getTagKeysMock = () => [];
     getGroupByKeysMock = undefined;
+    capturedOriginController = undefined;
+    capturedDefaultGroupByProps = undefined;
   });
 
   it('renders AdHocVariableForm with correct props', async () => {
@@ -192,6 +220,94 @@ describe('AdHocFiltersVariableEditor', () => {
     });
   });
 
+  describe('default group-by origin', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      config.featureToggles.adHocFilterDefaultValues = false;
+    });
+
+    it('should show default group by editor when both flags are on and enableGroupBy is true', async () => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup(undefined, { enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(renderer.getByTestId('default-groupby-editor')).toBeInTheDocument();
+      });
+      expect(capturedDefaultGroupByProps).toBeDefined();
+    });
+
+    it('should not show default group by editor when enableGroupBy is off', async () => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup();
+
+      await waitFor(() => {
+        expect(renderer.getByTestId('origin-filters-editor')).toBeInTheDocument();
+      });
+      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
+    });
+
+    it('should not show default group by editor when dashboardUnifiedDrilldownControls is off', async () => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup(undefined, { enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(renderer.getByTestId('origin-filters-editor')).toBeInTheDocument();
+      });
+      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
+    });
+
+    it('should update originFilters when group-by selection changes', async () => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { variable } = await setup(undefined, { enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(capturedDefaultGroupByProps).toBeDefined();
+      });
+
+      act(() => {
+        capturedDefaultGroupByProps!.onChange([
+          { value: 'region', label: 'region' },
+          { value: 'zone', label: 'zone' },
+        ]);
+      });
+
+      expect(variable.state.originFilters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ key: 'region', operator: 'groupBy', origin: 'dashboard' }),
+          expect.objectContaining({ key: 'zone', operator: 'groupBy', origin: 'dashboard' }),
+        ])
+      );
+    });
+
+    it('adhoc controller should not have enableGroupBy property', async () => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup(undefined, { enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(renderer.getByTestId('origin-filters-editor')).toBeInTheDocument();
+      });
+
+      expect(capturedOriginController).toBeDefined();
+      const state = capturedOriginController!.useState();
+      expect(state.enableGroupBy).toBe(false);
+    });
+  });
+
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
@@ -250,10 +366,13 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
     enableGroupBy,
   });
+  const renderer = await act(async () => {
+    const result = render(<AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} {...props} />);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return result;
+  });
   return {
-    renderer: await act(() =>
-      render(<AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} {...props} />)
-    ),
+    renderer,
     variable,
     user: userEvent.setup(),
     mocks: { onRunQuery },

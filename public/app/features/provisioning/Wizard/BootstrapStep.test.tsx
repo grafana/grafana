@@ -382,6 +382,75 @@ describe('BootstrapStep', () => {
   });
 
   describe('quota exceeded', () => {
+    it('should use file count (not resource count) for quota check when file count exceeds limit', () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 10,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 10,
+        resourceCountString: '10 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
+
+    it('should not block when resource count exceeds quota but file count is within limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 10,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '10 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
     it('should not render content when resource count exceeds quota limit', () => {
       mockUseRepositoryStatus.mockReturnValue({
         isReady: true,
