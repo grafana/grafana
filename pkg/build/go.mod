@@ -15,9 +15,9 @@ require (
 	go.opentelemetry.io/otel v1.43.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.52.0 // indirect; @grafana/data-sources-plugins
+	golang.org/x/net v0.53.0 // indirect; @grafana/data-sources-plugins
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
-	golang.org/x/text v0.35.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/text v0.36.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.80.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect; @grafana/plugins-platform-backend
 )
@@ -30,7 +30,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 )
 
@@ -60,9 +60,9 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.27 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.19.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.19.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.39.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.43.0 // indirect
