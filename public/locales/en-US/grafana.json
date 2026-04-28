@@ -5259,7 +5259,7 @@
   },
   "dashboard": {
     "actions": {
-      "open-settings": "Settings"
+      "open-settings": "View all settings"
     },
     "add": {
       "new-panel": {
@@ -6017,7 +6017,7 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
-      "configure-button": "Configure",
+      "configure-button": "Edit visualization",
       "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",

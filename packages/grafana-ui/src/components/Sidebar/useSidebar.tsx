@@ -20,6 +20,7 @@ export interface SidebarContextValue {
   edgeMargin: number;
   contentMargin: number;
   isHidden: boolean;
+  canGoBack?: boolean;
   onToggleDock: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
@@ -51,6 +52,8 @@ export interface UseSideBarOptions {
   contentMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Disables go back button */
+  canGoBack?: boolean;
   /** Open previous pane */
   onGoBack?: () => void;
   /**
@@ -77,6 +80,7 @@ export function useSidebar({
   persistanceKey,
   onClosePane,
   onGoBack,
+  canGoBack,
   defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
@@ -157,6 +161,7 @@ export function useSidebar({
     isHidden,
     onClosePane,
     onGoBack,
+    canGoBack,
     onToggleIsHidden,
   };
 }

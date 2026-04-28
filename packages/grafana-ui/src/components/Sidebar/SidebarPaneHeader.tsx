@@ -27,21 +27,22 @@ export function SidebarPaneHeader({ children, title }: Props) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
-          {title}
-        </Text>
-        <div className={styles.flexGrow} />
         {sidebarContext.onGoBack && (
           <IconButton
             variant="secondary"
             size="lg"
             name="arrow-left"
             onClick={sidebarContext.onGoBack}
+            disabled={!sidebarContext.canGoBack}
             aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
             tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
             data-testid={selectors.components.Sidebar.goBack}
           />
         )}
+        <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
+          {title}
+        </Text>
+        <div className={styles.flexGrow} />
         <IconButton
           name={'web-section-alt'}
           onClick={sidebarContext.onToggleDock}
@@ -88,7 +89,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(0, 1, 1.5, 1.5),
+      padding: theme.spacing(0, 1, 1.5, 1),
+      '&:empty': {
+        display: 'none',
+      },
     }),
     dockedButtonUndocked: css({
       opacity: 0.6,

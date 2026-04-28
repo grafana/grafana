@@ -372,7 +372,7 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
         {isEditing ? (
           <ButtonGroup>
             <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+              <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
             </Button>
             <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
               <Button

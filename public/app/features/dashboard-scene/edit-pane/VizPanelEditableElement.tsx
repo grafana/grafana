@@ -102,7 +102,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public renderActions() {
+  public renderTopButton() {
     return <OpenPanelEditViz panel={this.panel} />;
   }
 
@@ -161,21 +161,19 @@ type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (
-    <Stack alignItems="center" width="100%">
-      <Button
-        onClick={() => {
-          const panelId = getPanelIdForVizPanel(panel);
-          locationService.partial({ editPanel: panelId });
-          DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
-        }}
-        icon="sliders-v-alt"
-        fullWidth
-        size="sm"
-        tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
-        data-testid={selectors.components.Sidebar.configurePanelButton}
-      >
-        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
-      </Button>
-    </Stack>
+    <Button
+      onClick={() => {
+        const panelId = getPanelIdForVizPanel(panel);
+        locationService.partial({ editPanel: panelId });
+        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
+      }}
+      icon="graph-bar"
+      variant="secondary"
+      fullWidth
+      tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+      data-testid={selectors.components.Sidebar.configurePanelButton}
+    >
+      <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
+    </Button>
   );
 };
