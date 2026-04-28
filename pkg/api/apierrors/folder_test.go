@@ -2,6 +2,7 @@ package apierrors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -59,6 +60,11 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
 		},
 		{
+			name:  "folder title empty (apiserver wrapped)",
+			input: folder.ErrAPITitleEmpty,
+			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
+		},
+		{
 			name:  "dashboard type mismatch",
 			input: dashboards.ErrDashboardTypeMismatch,
 			want:  response.Error(http.StatusBadRequest, "Dashboard cannot be changed to a folder", dashboards.ErrDashboardTypeMismatch),
@@ -76,7 +82,28 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "folder cannot be parent of itself",
 			input: folder.ErrFolderCannotBeParentOfItself,
-			want:  response.Error(http.StatusBadRequest, folder.ErrFolderCannotBeParentOfItself.Error(), nil),
+			want:  response.Error(http.StatusBadRequest, "folder cannot be parent of itself", nil),
+		},
+		{
+			name:  "folder cannot be parent of itself (apiserver wrapped)",
+			input: folder.ErrAPIFolderCannotBeParentOfItself,
+			want:  response.Error(http.StatusBadRequest, "folder cannot be parent of itself", nil),
+		},
+		{
+			name:  "invalid uid",
+			input: folder.ErrInvalidUID,
+			want:  response.Error(http.StatusBadRequest, "invalid uid for folder provided", nil),
+		},
+		{
+			name:  "invalid uid (apiserver wrapped)",
+			input: folder.ErrAPIInvalidUID,
+			want:  response.Error(http.StatusBadRequest, "invalid uid for folder provided", nil),
+		},
+		{
+			// Custom-context wrappers (non-errutil) keep their added context.
+			name:  "folder title empty wrapped with custom context",
+			input: fmt.Errorf("save folder: %w", folder.ErrTitleEmpty),
+			want:  response.Error(http.StatusBadRequest, "save folder: folder title cannot be empty", nil),
 		},
 		// --- 403 Forbidden ---
 		{
@@ -204,6 +231,26 @@ func TestToFolderErrorResponse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resp := ToFolderErrorResponse(tt.input)
 			require.Equal(t, tt.want, resp)
+		})
+	}
+}
+
+// TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
+// the Unwrap chain.
+func TestErrorsIs_UnwrapsAPIWrappers(t *testing.T) {
+	cases := []struct {
+		name    string
+		wrapped error
+		legacy  error
+	}{
+		{"title empty", folder.ErrAPITitleEmpty, folder.ErrTitleEmpty},
+		{"invalid uid", folder.ErrAPIInvalidUID, folder.ErrInvalidUID},
+		{"folder cannot be parent of itself", folder.ErrAPIFolderCannotBeParentOfItself, folder.ErrFolderCannotBeParentOfItself},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.True(t, errors.Is(c.wrapped, c.legacy),
+				"errors.Is must walk Unwrap to match the legacy sentinel; got %v", c.wrapped)
 		})
 	}
 }

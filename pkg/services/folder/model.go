@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached")) // Important: keep error msgID stable for other services to consume (provisioning)
 var ErrBadRequest = errutil.BadRequest("folder.bad-request")
 var ErrDatabaseError = errutil.Internal("folder.database-error")
 var ErrConflict = errutil.Conflict("folder.conflict")
@@ -22,7 +22,20 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
+
+// Legacy /api/folders sentinels: kept as errors.New so /api responses match byte-for-byte.
+var ErrTitleEmpty = errors.New("folder title cannot be empty")
+var ErrInvalidUID = errors.New("invalid uid for folder provided")
 var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
+
+// Wraps legacy errors (/api) into an apiserver (/apis) error for them to be handled as 400.
+var ErrAPITitleEmpty = errutil.BadRequest("folder.title-empty", errutil.WithPublicMessage("Folder title cannot be empty")).
+	Errorf("%w", ErrTitleEmpty)
+var ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid", errutil.WithPublicMessage("Invalid uid for folder provided")).
+	Errorf("%w", ErrInvalidUID)
+var ErrAPIFolderCannotBeParentOfItself = errutil.BadRequest("folder.cannot-be-parent-of-itself", errutil.WithPublicMessage("Folder cannot be parent of itself")).
+	Errorf("%w", ErrFolderCannotBeParentOfItself)
 
 const (
 	GeneralFolderUID      = "general"
