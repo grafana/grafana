@@ -1,9 +1,9 @@
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, EmptyState, LinkButton, Spinner, Stack } from '@grafana/ui';
+import { Box, EmptyState, LinkButton, Spinner } from '@grafana/ui';
 
 import { useFolderReadme } from '../../hooks/useFolderReadme';
-import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
+import { getRepoNewFileUrl } from '../../utils/git';
 
 import { RenderedReadme } from './RenderedReadme';
 
@@ -51,16 +51,6 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
     );
   }
 
-  const editUrl = getRepoEditFileUrl({
-    repoType: repository.type,
-    url: repository.url,
-    branch: repository.branch,
-    filePath: readmePath,
-    // readmePath is relative to the repository's configured root, so we prefix
-    // with repository.path to point at the actual file inside the host repo.
-    pathPrefix: repository.path,
-  });
-
   if (isError || !fileData) {
     const folderTitle = folder?.spec?.title ?? '';
     const newFileUrl = getRepoNewFileUrl({
@@ -102,43 +92,7 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
     );
   }
 
-  return (
-    <Stack direction="column" gap={2}>
-      {editUrl && (
-        <Stack direction="row" justifyContent="flex-end">
-          <LinkButton
-            href={editUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            icon="external-link-alt"
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              reportInteraction('grafana_provisioning_readme_edit_clicked', {
-                repositoryType: repository.type,
-              });
-            }}
-          >
-            {getEditButtonLabel(repository.type)}
-          </LinkButton>
-        </Stack>
-      )}
-      <RenderedReadme file={fileData.resource?.file} />
-    </Stack>
-  );
-}
-
-function getEditButtonLabel(repoType?: string) {
-  switch (repoType) {
-    case 'github':
-      return t('browse-dashboards.readme.edit-on-github', 'Edit on GitHub');
-    case 'gitlab':
-      return t('browse-dashboards.readme.edit-on-gitlab', 'Edit on GitLab');
-    case 'bitbucket':
-      return t('browse-dashboards.readme.edit-on-bitbucket', 'Edit on Bitbucket');
-    default:
-      return t('browse-dashboards.readme.edit', 'Edit');
-  }
+  return <RenderedReadme file={fileData.resource?.file} />;
 }
 
 function getCreateButtonLabel(repoType?: string) {

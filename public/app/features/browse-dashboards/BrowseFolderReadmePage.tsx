@@ -12,6 +12,7 @@ import { type GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getReadmeTabID } from '../folders/state/navModel';
 import { FolderReadmeContent } from '../provisioning/components/Folders/FolderReadme';
+import { FolderReadmeEditAction } from '../provisioning/components/Folders/FolderReadmeEditAction';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 
@@ -97,7 +98,12 @@ export function BrowseFolderReadmePage() {
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={
-        folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />
+        folderDTO && (
+          <Stack direction="row" gap={1}>
+            <FolderReadmeEditAction folderUID={folderUID} />
+            <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />
+          </Stack>
+        )
       }
     >
       <Page.Contents>

@@ -216,32 +216,7 @@ describe('FolderReadmeContent', () => {
   });
 
   describe('when README is successfully fetched', () => {
-    it('reports an interaction when the edit-on-host button is clicked', async () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        folder: mockFolder,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-        status: 'ready' as never,
-      });
-      mockUseGetRepositoryFilesWithPathQuery.mockReturnValue(
-        emptyQueryResult({
-          data: {
-            resource: { file: { content: '# hello' } },
-          } as never,
-        })
-      );
-
-      render(<FolderReadmeContent folderUID="test-folder" />);
-      await userEvent.click(screen.getByRole('link', { name: /Edit on GitHub/i }));
-
-      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_edit_clicked', {
-        repositoryType: 'github',
-      });
-    });
-
-    it('renders markdown content and an Edit on GitHub button', () => {
+    it('renders the markdown content', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
         folder: mockFolder,
@@ -264,33 +239,6 @@ describe('FolderReadmeContent', () => {
 
       expect(screen.getByText('Hello World')).toBeInTheDocument();
       expect(screen.getByText('This is a test README.')).toBeInTheDocument();
-
-      const editLink = screen.getByRole('link', { name: /Edit on GitHub/i });
-      expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
-    });
-
-    it('prefixes the edit URL with the repository path when configured', () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: { ...mockRepository, path: 'ops/resources' },
-        folder: mockFolder,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-        status: 'ready' as never,
-      });
-      mockUseGetRepositoryFilesWithPathQuery.mockReturnValue(
-        emptyQueryResult({
-          data: { resource: { file: { content: '# hi' } } } as never,
-        })
-      );
-
-      render(<FolderReadmeContent folderUID="test-folder" />);
-
-      const editLink = screen.getByRole('link', { name: /Edit on GitHub/i });
-      expect(editLink).toHaveAttribute(
-        'href',
-        'https://github.com/owner/repo/edit/main/ops/resources/dashboards/team-a/README.md'
-      );
     });
 
     it('handles a string file body directly', () => {
