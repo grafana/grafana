@@ -1,11 +1,13 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Box, EmptyState, FilterInput, Icon, LinkButton, Stack } from '@grafana/ui';
 import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
+import { STATS_TAB_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 
@@ -53,7 +55,17 @@ export function RepositoryList({ items }: Props) {
     if (filteredItems.length) {
       return (
         <Stack>
-          <Alert title={''} severity="info">
+          <Alert
+            title={''}
+            severity="info"
+            action={
+              config.featureToggles.provisioningExport ? (
+                <LinkButton variant="secondary" fill="outline" size="sm" href={STATS_TAB_URL} icon="chart-line">
+                  <Trans i18nKey="provisioning.folder-repository-list.see-details">See details</Trans>
+                </LinkButton>
+              ) : undefined
+            }
+          >
             <Trans
               i18nKey="provisioning.folder-repository-list.partial-managed"
               values={{ managedCount, resourceCount }}

@@ -13417,6 +13417,7 @@
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
+      "see-details": "See details",
       "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
     },
@@ -13498,6 +13499,8 @@
       "tab-getting-started-title": "Get started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
+      "tab-stats": "Stats",
+      "tab-stats-title": "Provisioning resource statistics",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
     "http-utils": {
@@ -13775,6 +13778,32 @@
       "label-completed-step": "Completed step",
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
+    },
+    "stats": {
+      "dashboards": "Dashboards",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "git-sync-description": "Git Sync only supports folders and dashboards.",
+      "git-sync-empty": "No resources are managed by Git Sync",
+      "git-sync-heading": "Git Sync",
+      "git-sync-totals": "Totals across all repositories",
+      "loading": "Loading stats...",
+      "manager-kind-classic-fp": "File provisioning (classic)",
+      "manager-kind-grafana": "Grafana",
+      "manager-kind-kubectl": "kubectl",
+      "manager-kind-plugin": "Plugin",
+      "manager-kind-repo": "Git Sync",
+      "manager-kind-terraform": "Terraform",
+      "manager-kind-unknown": "Unknown",
+      "other-provider-totals_one": "{{count}} resources across {{managerCount}} manager(s)",
+      "other-provider-totals_other": "{{count}} resources across {{managerCount}} manager(s)",
+      "other-providers-description": "Resources managed by providers other than Git Sync.",
+      "other-providers-heading": "Other providers",
+      "repository-fallback-name": "Repository",
+      "summary-managed": "Managed",
+      "summary-total": "Total resources",
+      "summary-unmanaged": "Unmanaged"
     },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",

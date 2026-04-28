@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
@@ -10,6 +11,7 @@ import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
+import { StatsTabContent } from './Stats/StatsTabContent';
 import { CONNECTIONS_URL } from './constants';
 import { useConnectionList } from './hooks/useConnectionList';
 import { useRepositoryList } from './hooks/useRepositoryList';
@@ -45,8 +47,8 @@ export default function HomePage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  const tabInfo = useMemo(
-    () => [
+  const tabInfo = useMemo(() => {
+    const tabs = [
       {
         value: 'repositories',
         label: t('provisioning.home-page.tab-repositories', 'Repositories'),
@@ -62,9 +64,18 @@ export default function HomePage() {
         label: t('provisioning.home-page.tab-getting-started', 'Get started'),
         title: t('provisioning.home-page.tab-getting-started-title', 'Get started'),
       },
-    ],
-    []
-  );
+    ];
+
+    if (config.featureToggles.provisioningExport) {
+      tabs.push({
+        value: 'stats',
+        label: t('provisioning.home-page.tab-stats', 'Stats'),
+        title: t('provisioning.home-page.tab-stats-title', 'Provisioning resource statistics'),
+      });
+    }
+
+    return tabs;
+  }, []);
 
   const onConfirmDelete = () => {
     deleteAll({});
@@ -77,6 +88,11 @@ export default function HomePage() {
         return <ConnectionsTabContent items={connections ?? []} error={connectionsError} />;
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
+      case 'stats':
+        if (config.featureToggles.provisioningExport) {
+          return <StatsTabContent />;
+        }
+        return <RepositoryList items={items ?? []} />;
       case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;
@@ -92,6 +108,7 @@ export default function HomePage() {
           </LinkButton>
         );
       case 'getting-started':
+      case 'stats':
         return null;
       case 'repositories':
       default:
