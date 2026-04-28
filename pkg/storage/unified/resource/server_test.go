@@ -1566,4 +1566,185 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, rsp.Error)
 	})
+
+	t.Run("delete is denied when user lacks delete permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("delete is allowed when user has delete permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	})
+
+	t.Run("delete passes the resource folder to the access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "delete" {
+				capturedFolder = folder
+			}
+			return allow()
+		}
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, folderA, capturedFolder)
+	})
+}
+
+// TestFolderDeletePermissionChecks verifies that the unified resource server enforces
+// authorization correctly when the resource being deleted is itself a folder
+// (group=folder.grafana.app, resource=folders). The key difference from generic resources
+// is that latest.Folder holds the *parent* folder UID, so the access check must
+// receive the parent — not the folder being deleted.
+func TestFolderDeletePermissionChecks(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		folderGroup     = "folder.grafana.app"
+		folderResource  = "folders"
+		namespace       = "default"
+		folderName      = "child-folder"
+		parentFolderUID = "parent-folder"
+	)
+
+	// makeFolderValue builds a minimal folder JSON stored in the resource backend.
+	// The grafana.app/folder annotation carries the parent folder UID.
+	makeFolderValue := func(parentUID string) []byte {
+		annotations := `"grafana.app/repoName":"test"`
+		if parentUID != "" {
+			annotations += `,"grafana.app/folder":"` + parentUID + `"`
+		}
+		return []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":"` + folderName + `","namespace":"` + namespace + `","annotations":{` + annotations + `}},"spec":{"title":"Child Folder"}}`)
+	}
+
+	folderKey := &resourcepb.ResourceKey{
+		Group:     folderGroup,
+		Resource:  folderResource,
+		Namespace: namespace,
+		Name:      folderName,
+	}
+
+	newServer := func(t *testing.T, ac authlib.AccessClient) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:      store,
+			AccessClient: ac,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+		return srv
+	}
+
+	// createThenSwitch creates the folder using an always-allow client,
+	// then swaps the access client so subsequent calls use ac.
+	createThenSwitch := func(t *testing.T, value []byte, ac *callbackAccessClient) *server {
+		t.Helper()
+		srv := newServer(t, ac)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: folderKey, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("folder delete is denied when user lacks delete permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeFolderValue(parentFolderUID), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("folder delete is allowed when user has delete permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeFolderValue(parentFolderUID), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	})
+
+	t.Run("folder delete access check receives parent folder uid, not the folder being deleted", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeFolderValue(parentFolderUID), ac)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "delete" {
+				capturedReq = req
+				capturedFolder = folder
+			}
+			return allow()
+		}
+
+		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.NoError(t, err)
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+
+		require.Equal(t, "delete", capturedReq.Verb)
+		require.Equal(t, folderGroup, capturedReq.Group)
+		require.Equal(t, folderResource, capturedReq.Resource)
+		require.Equal(t, folderName, capturedReq.Name)
+		// The folder context passed to the access check must be the *parent* folder UID,
+		// not the UID of the folder being deleted.
+		require.Equal(t, parentFolderUID, capturedFolder)
+		require.NotEqual(t, folderName, capturedFolder)
+	})
 }
