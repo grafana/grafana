@@ -95,6 +95,14 @@ export class TrashStateManager extends SearchStateManager {
         label: t('browse-dashboards.trash-state-manager.label.deleted-newest', 'Deleted (newest first)'),
         value: RECENTLY_DELETED_SORT_VALUES[3],
       },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-az', 'Deleted by (A–Z)'),
+        value: 'deletedby-asc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-za', 'Deleted by (Z–A)'),
+        value: 'deletedby-desc',
+      },
     ]);
   };
 }
