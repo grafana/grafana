@@ -61,7 +61,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in Create", "err", err)
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByID", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -184,7 +184,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByLogin", "err", err)
 		return nil, err
 	}
 
@@ -227,7 +227,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByEmail", "err", err)
 		return nil, err
 	}
 
@@ -259,7 +259,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in Update", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -351,11 +351,10 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 
 	existing.Status.LastSeenAt = time.Now().Unix()
 
-	_, err = client.UpdateStatus(ctx,
-		resource.Identifier{Namespace: namespace, Name: existing.Name},
-		existing.Status,
-		resource.UpdateOptions{ResourceVersion: existing.ResourceVersion},
-	)
+	// Use a full Update (not UpdateStatus) to avoid a bug in UserClient.UpdateStatus
+	// which constructs a new User with an empty Spec, causing the status subresource
+	// path to persist an empty spec and corrupt the stored user data.
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
 	if err != nil {
 		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
@@ -380,7 +379,7 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 		var err error
 		orgID, err = s.getOrgID(ctx, ctxLogger)
 		if err != nil {
-			ctxLogger.Error("failed to get orgID from context", "err", err)
+			ctxLogger.Error("failed to get orgID from context in GetSignedInUser", "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err

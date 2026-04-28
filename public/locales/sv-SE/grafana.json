@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Inmatning av uppgifter",
+      "loading": "",
       "output-data": "Datautmatning",
       "title-debug-transformation": "Felsök transformering"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Sök"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Rensa val"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-värde"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Stäng",
       "dock": "Docka",
+      "go-back": "",
       "hide": "Dölj",
       "show": "Visa",
       "undock": "Avdocka"
@@ -11908,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alla",
-      "title-filtered": "Alla (filtrerade)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Rensa alla"
@@ -16008,6 +16019,9 @@
         "grouping-to-matrix": "Gruppera till matris"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Beräkna ett histogram från inmatningsdata."
@@ -16342,6 +16356,9 @@
       "label-time-field": "Tidsfält",
       "tooltip-statistic-should-calculated-series": "Den statistik som ska beräknas för denna tidsserie.",
       "tooltip-time-field": "Det tidsfält som kommer att användas för tidsserien. Om det inte väljs kommer det första som hittas att användas."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Namn för första fältet",

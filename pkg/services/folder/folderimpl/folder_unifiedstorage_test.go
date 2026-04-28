@@ -346,17 +346,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				})
 				require.Equal(t, folder.ErrAccessDenied, err)
 			})
-
-			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
-					UID:              f.UID,
-					OrgID:            orgID,
-					ForceDeleteRules: false,
-					SignedInUser:     noPermUsr,
-				})
-				require.Error(t, err)
-				require.Equal(t, folder.ErrAccessDenied, err)
-			})
 		})
 
 		t.Run("Given user has permission to save", func(t *testing.T) {

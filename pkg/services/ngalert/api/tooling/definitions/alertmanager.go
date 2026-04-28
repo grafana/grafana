@@ -1133,6 +1133,13 @@ func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
 	}
 	// store the map[string]interface{} variant for re-encoding later without redaction
 	c.amSimple = tmp.AlertmanagerConfig
+	// Upstream Mimir/Cortex-compat AMs may return an empty, null, or missing
+	// alertmanager_config when no config has been saved yet. Guarantee amSimple
+	// is non-nil on success so the nil-check in Marshal{JSON,YAML} still catches
+	// undecoded structs without rejecting legitimately empty upstream configs.
+	if c.amSimple == nil {
+		c.amSimple = map[string]interface{}{}
+	}
 
 	return nil
 }
@@ -1180,6 +1187,14 @@ func (c *ExternalAlertmanagerConfig) UnmarshalYAML(value *yaml.Node) error {
 	// store the map[string]interface{} variant for re-encoding later without redaction
 	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
 		return err
+	}
+	// yaml.Unmarshal on empty bytes is a no-op and leaves amSimple nil. Upstream
+	// Mimir/Cortex-compat AMs return alertmanager_config as an empty/null/missing
+	// string when no config has been saved. Guarantee amSimple is non-nil on
+	// success so Marshal{JSON,YAML} still catches undecoded structs without
+	// rejecting legitimately empty upstream configs.
+	if c.amSimple == nil {
+		c.amSimple = map[string]interface{}{}
 	}
 
 	c.TemplateFiles = tmp.TemplateFiles

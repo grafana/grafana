@@ -289,38 +289,6 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	return hits, len(res.Hits), nil
 }
 
-// TODO use a single query to get the height of a folder
-// TODO: unused, remove.
-func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
-	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetHeight")
-	defer span.End()
-
-	height := -1
-	queue := []string{foldrUID}
-	for len(queue) > 0 && height <= ss.maxDepth {
-		length := len(queue)
-		height++
-		for i := 0; i < length; i++ {
-			ele := queue[0]
-			queue = queue[1:]
-			if parentUID != nil && *parentUID == ele {
-				return 0, folder.ErrCircularReference.Errorf("circular reference detected")
-			}
-			folders, err := ss.GetChildren(ctx, folder.GetChildrenQuery{UID: ele, OrgID: orgID})
-			if err != nil {
-				return 0, err
-			}
-			for _, f := range folders {
-				queue = append(queue, f.UID)
-			}
-		}
-	}
-	if height > ss.maxDepth {
-		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", ss.maxDepth)
-	}
-	return height, nil
-}
-
 // GetFolders returns org folders by their UIDs.
 // If UIDs is empty, it returns all folders in the org.
 // If WithFullpath is true it computes also the full path of a folder.

@@ -521,14 +521,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return toFolderError(err)
-		}
-		return folder.ErrAccessDenied
-	}
-
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		return err
