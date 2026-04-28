@@ -22,7 +22,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { isFederatedRuleGroup, isProvisionedRuleGroup } from '../utils/rules';
+import { isFederatedRuleGroup, isProvisionedRuleGroup, isUngroupedRuleGroup } from '../utils/rules';
 import { formatPrometheusDuration } from '../utils/time';
 
 import { Title } from './Title';
@@ -38,6 +38,21 @@ const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = a
 
 function GroupDetailsPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
+
+  if (isUngroupedRuleGroup(groupName)) {
+    return <EntityNotFound entity={t('alerting.group-details.ungrouped-entity-name', 'Group')} />;
+  }
+
+  return <GroupDetailsPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;
+}
+
+interface GroupDetailsPageContentProps {
+  dataSourceUid: string;
+  namespaceId: string;
+  groupName: string;
+}
+
+function GroupDetailsPageContent({ dataSourceUid, namespaceId, groupName }: GroupDetailsPageContentProps) {
   const isGrafanaRuleGroup = dataSourceUid === GRAFANA_RULES_SOURCE_NAME;
 
   const { folder, loading: isFolderLoading } = useFolder(isGrafanaRuleGroup ? namespaceId : '');

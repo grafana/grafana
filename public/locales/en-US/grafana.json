@@ -1551,7 +1551,8 @@
       "new": "New",
       "title": {
         "back": "Back to alerting"
-      }
+      },
+      "ungrouped-entity-name": "Group"
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -1576,7 +1577,8 @@
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
       "page-title": "Edit rule group",
-      "rule-group-error": "Error loading rule group"
+      "rule-group-error": "Error loading rule group",
+      "ungrouped-entity-name": "Group"
     },
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
