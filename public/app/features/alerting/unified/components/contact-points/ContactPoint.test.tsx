@@ -55,6 +55,7 @@ describe('ContactPoint', () => {
 
   it('instance drawer embed: View details when contact point is not editable', async () => {
     const contactPoint: ContactPointWithMetadata = {
+      id: 'provisioned-cp',
       name: 'provisioned-cp',
       policies: [],
       grafana_managed_receiver_configs: [],

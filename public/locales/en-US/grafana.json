@@ -926,7 +926,21 @@
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
-      "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
+      "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI",
+      "integration-heading": "{{name}} · {{type}}",
+      "label-addresses": "Addresses",
+      "label-destination": "Destination",
+      "label-notifier-diagnostics": "Notifier status (diagnostics)",
+      "label-receiver-meta-description": "Description"
+    },
+    "contact-point-instance-drawer": {
+      "aria-usage-policies": "Open notification policies that use this contact point",
+      "aria-usage-rules": "Open alert rules that use this contact point for simplified routing",
+      "label-name": "Name",
+      "section-integration": "Integration",
+      "section-integrations": "Integrations",
+      "show-less-json": "Show less",
+      "show-more-json": "Show more"
     },
     "contact-point-selector": {
       "contact-point-picker-label-contact-point": "Contact point",

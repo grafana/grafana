@@ -77,6 +77,50 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
   }
 }
 
+/** Plain-text routing summary for stacked UI (mirrors {@link getReceiverDescription} without React nodes). */
+export function getReceiverRoutingSummaryString(receiver: ReceiverConfigWithMetadata): string | undefined {
+  if (!receiver.settings) {
+    return receiver[RECEIVER_META_KEY]?.description;
+  }
+  const { settings } = receiver;
+  switch (receiver.type) {
+    case 'email': {
+      const addresses = settings.addresses || settings.to;
+      return addresses ? summarizeEmailAddresses(String(addresses)) : undefined;
+    }
+    case 'slack': {
+      const recipient = settings.recipient || settings.channel;
+      if (!recipient) {
+        return undefined;
+      }
+      const channelName = recipient.replace(/^#/, '');
+      return `#${channelName}`;
+    }
+    case 'kafka': {
+      return settings.kafkaTopic;
+    }
+    case 'webhook': {
+      return settings.url;
+    }
+    case 'jira': {
+      return t(
+        'alerting.contact-points.receiver-summary.jira',
+        `Creates a "{{issueType}}" issue in the "{{project}}" project`,
+        {
+          issueType: settings.issue_type,
+          project: settings.project,
+          url: settings.api_url,
+        }
+      );
+    }
+    case ReceiverTypes.OnCall: {
+      return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
+    }
+    default:
+      return receiver[RECEIVER_META_KEY]?.description;
+  }
+}
+
 // input: foo+1@bar.com, foo+2@bar.com, foo+3@bar.com, foo+4@bar.com
 // output: foo+1@bar.com, foo+2@bar.com, +2 more
 export function summarizeEmailAddresses(addresses: string): string {
@@ -160,6 +204,8 @@ export function enhanceContactPointsWithMetadata({
         ? contactPoint.provenance
         : receivers.find((receiver) => Boolean(receiver.provenance))?.provenance;
 
+    const notifierStatuses = assignNotifierStatusesFromState(receivers, statusForReceiver?.integrations);
+
     return {
       ...contactPoint,
       id,
@@ -173,7 +219,7 @@ export function enhanceContactPointsWithMetadata({
         // but the contact points returned by the read only permissions contact points endpoint (/api/v1/notifications/receivers)
         return {
           ...receiver,
-          [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
+          [RECEIVER_STATUS_KEY]: notifierStatuses[index],
           [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
           // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
           [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
@@ -185,6 +231,39 @@ export function enhanceContactPointsWithMetadata({
   });
 
   return enhanced.sort((a, b) => collator.compare(a.name, b.name));
+}
+
+/**
+ * Maps Grafana notifier status entries to config integrations by matching `NotifierStatus.name`
+ * to `receiver.type`, preserving receiver order (fixes misalignment when API integration order
+ * differs from `grafana_managed_receiver_configs` order). Falls back to index alignment when needed.
+ */
+export function assignNotifierStatusesFromState(
+  receivers: GrafanaManagedReceiverConfig[],
+  integrations: NotifierStatus[] | undefined
+): Array<NotifierStatus | undefined> {
+  if (!integrations?.length) {
+    return receivers.map(() => undefined);
+  }
+
+  const queues = new Map<string, NotifierStatus[]>();
+  for (const item of integrations) {
+    const key = item.name;
+    const bucket = queues.get(key);
+    if (bucket) {
+      bucket.push(item);
+    } else {
+      queues.set(key, [item]);
+    }
+  }
+
+  return receivers.map((receiver, index) => {
+    const bucket = queues.get(receiver.type);
+    if (bucket && bucket.length > 0) {
+      return bucket.shift();
+    }
+    return integrations[index];
+  });
 }
 
 function getContactPointIdentifier(contactPoint: Receiver): string {

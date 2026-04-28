@@ -62,25 +62,7 @@ export const ContactPoint = ({ contactPoint, instanceDrawerEmbed }: ContactPoint
 
         {showFullMetadata ? (
           <div>
-            {receivers.map((receiver, index) => {
-              const diagnostics = receiver[RECEIVER_STATUS_KEY];
-              const metadata = receiver[RECEIVER_META_KEY];
-              const sendingResolved = !Boolean(receiver.disableResolveMessage);
-              const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
-              const key = metadata.name + index;
-
-              return (
-                <ContactPointReceiver
-                  key={key}
-                  name={metadata.name}
-                  type={receiver.type}
-                  description={getReceiverDescription(receiver)}
-                  diagnostics={diagnostics}
-                  pluginMetadata={pluginMetadata}
-                  sendingResolved={sendingResolved}
-                />
-              );
-            })}
+            <ContactPointIntegrationRows contactPoint={contactPoint} />
           </div>
         ) : (
           <div className={styles.integrationWrapper}>
@@ -122,6 +104,35 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
     </div>
   );
 };
+
+/** Full integration rows (icon, routing summary, delivery diagnostics) — shared with instance drawer. */
+export function ContactPointIntegrationRows({ contactPoint }: { contactPoint: ContactPointWithMetadata }) {
+  const { grafana_managed_receiver_configs: receivers } = contactPoint;
+
+  return (
+    <>
+      {receivers.map((receiver, index) => {
+        const diagnostics = receiver[RECEIVER_STATUS_KEY];
+        const metadata = receiver[RECEIVER_META_KEY];
+        const sendingResolved = !Boolean(receiver.disableResolveMessage);
+        const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
+        const key = metadata.name + index;
+
+        return (
+          <ContactPointReceiver
+            key={key}
+            name={metadata.name}
+            type={receiver.type}
+            description={getReceiverDescription(receiver)}
+            diagnostics={diagnostics}
+            pluginMetadata={pluginMetadata}
+            sendingResolved={sendingResolved}
+          />
+        );
+      })}
+    </>
+  );
+}
 
 export interface ContactPointReceiverTitleRowProps {
   name: string;
@@ -222,7 +233,7 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
   );
 };
 
-const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
+export const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
   const styles = useStyles2(getStyles);
 
   const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
