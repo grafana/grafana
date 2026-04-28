@@ -488,7 +488,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.NoError(t, err)
 	})
 
@@ -502,7 +502,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.NoError(t, err)
 	})
 
@@ -512,7 +512,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected response when deleting external snapshot")
 		assert.Contains(t, err.Error(), "404")
@@ -528,7 +528,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "500")
 	})
@@ -539,7 +539,7 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrExternalSnapshotAuthFailed)
 	})
@@ -550,30 +550,48 @@ func TestDeleteExternalDashboardSnapshot(t *testing.T) {
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "bad-token")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrExternalSnapshotAuthFailed)
 	})
 
-	t.Run("should send Authorization header when token is configured", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "Bearer test-sa-token", r.Header.Get("Authorization"))
-			w.WriteHeader(http.StatusOK)
-		}))
-		defer server.Close()
-
-		err := DeleteExternalDashboardSnapshot(server.URL, "test-sa-token")
-		assert.NoError(t, err)
-	})
-
-	t.Run("should not send Authorization header when token is empty", func(t *testing.T) {
+	t.Run("does not send an Authorization header (legacy endpoint is public)", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Empty(t, r.Header.Get("Authorization"))
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
 
-		err := DeleteExternalDashboardSnapshot(server.URL, "")
+		err := DeleteExternalDashboardSnapshot(server.URL + "/api/snapshots-delete/abc123")
 		assert.NoError(t, err)
+	})
+
+	t.Run("rebuilds K8s-format URL to legacy path", func(t *testing.T) {
+		var receivedPath string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedPath = r.URL.EscapedPath()
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		// New K8s-format stored URL — function should extract domain + deleteKey and
+		// rebuild as the legacy GET path.
+		err := DeleteExternalDashboardSnapshot(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc123")
+		assert.NoError(t, err)
+		assert.Equal(t, "/api/snapshots-delete/abc123", receivedPath)
+	})
+
+	t.Run("passes legacy-format URL through untouched", func(t *testing.T) {
+		var receivedPath string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedPath = r.URL.EscapedPath()
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		// Legacy URL with extra path segments — should be passed through as-is.
+		err := DeleteExternalDashboardSnapshot(server.URL + "/some/prefix/api/snapshots-delete/abc123")
+		assert.NoError(t, err)
+		assert.Equal(t, "/some/prefix/api/snapshots-delete/abc123", receivedPath)
 	})
 }

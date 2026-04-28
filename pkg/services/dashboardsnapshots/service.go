@@ -5,7 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
+	"path"
+	"strings"
 	"time"
 
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -90,9 +94,6 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		cmd.Key = resp.Key
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
-		// TODO: stop storing the full ExternalDeleteURL. The delete URL should be constructed
-		// on demand from ExternalSnapshotURL (domain) + deleteKey, since the URL format can
-		// change (e.g. legacy vs K8s API paths).
 		cmd.ExternalDeleteURL = resp.DeleteUrl
 		cmd.Dashboard = &common.Unstructured{}
 		snapshotURL = resp.Url
@@ -165,13 +166,27 @@ var (
 	)
 )
 
-func DeleteExternalDashboardSnapshot(externalUrl string, token string) error {
-	req, err := http.NewRequest(http.MethodGet, externalUrl, nil)
+func DeleteExternalDashboardSnapshot(externalUrl string) error {
+	// If the stored URL is in the new K8s path format (e.g. created when the
+	// kubernetesSnapshots toggle was on and now being deleted with it off), extract
+	// the domain + deleteKey and rebuild as the legacy GET endpoint that this function
+	// targets. Legacy-format URLs are passed through untouched.
+	requestURL := externalUrl
+	if !strings.Contains(externalUrl, "/api/snapshots-delete/") {
+		parsed, err := url.Parse(externalUrl)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			return fmt.Errorf("invalid external delete URL %q: %w", externalUrl, err)
+		}
+		deleteKey := path.Base(strings.TrimRight(parsed.Path, "/"))
+		if deleteKey == "" || deleteKey == "." || deleteKey == "/" {
+			return fmt.Errorf("could not extract delete key from URL %q", externalUrl)
+		}
+		requestURL = parsed.Scheme + "://" + parsed.Host + "/api/snapshots-delete/" + deleteKey
+	}
+
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return err
-	}
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -260,7 +275,7 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 	return &createSnapshotResponse, nil
 }
 
-func DeleteWithKey(ctx context.Context, key string, svc Service, token string) error {
+func DeleteWithKey(ctx context.Context, key string, svc Service) error {
 	query := &GetDashboardSnapshotQuery{DeleteKey: key}
 	queryResult, err := svc.GetDashboardSnapshot(ctx, query)
 	if err != nil {
@@ -268,9 +283,7 @@ func DeleteWithKey(ctx context.Context, key string, svc Service, token string) e
 	}
 
 	if queryResult.External {
-		// TODO: construct the delete URL on demand from config + deleteKey instead of
-		// using the stored ExternalDeleteURL, which may have an outdated format.
-		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL, token)
+		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
 		if err != nil {
 			return err
 		}

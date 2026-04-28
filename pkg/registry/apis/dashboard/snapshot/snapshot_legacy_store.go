@@ -70,24 +70,22 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	}
 
 	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
-	// path format, so we extract just the domain and rebuild the URL using the deleteKey.
-	// If the kubernetesSnapshots toggle is on, the external instance speaks the new K8s
-	// API (DELETE); otherwise it still speaks the legacy API (GET).
+	// path format, so the new-API branch extracts the domain and rebuilds the URL with
+	// the deleteKey. The legacy-API branch passes the stored URL through to
+	// DeleteExternalDashboardSnapshot, which rebuilds internally.
 	if snap.ExternalDeleteURL != "" {
-		parsed, err := url.Parse(snap.ExternalDeleteURL)
-		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-			return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
-		}
-		domain := parsed.Scheme + "://" + parsed.Host
 		if s.Features != nil && s.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+			parsed, err := url.Parse(snap.ExternalDeleteURL)
+			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
+			}
 			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
-			deleteURL := domain + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
+			deleteURL := parsed.Scheme + "://" + parsed.Host + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
 			if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
 				return nil, false, err
 			}
 		} else {
-			deleteURL := domain + "/api/snapshots-delete/" + snap.DeleteKey
-			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
+			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL); err != nil {
 				return nil, false, err
 			}
 		}

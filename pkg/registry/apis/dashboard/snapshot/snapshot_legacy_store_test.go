@@ -77,7 +77,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodGet, receivedReq.Method)
 		assert.Equal(t, "/api/snapshots-delete/"+deleteKey, receivedReq.URL.Path)
-		assert.Equal(t, "Bearer test-token", receivedReq.Header.Get("Authorization"))
+		assert.Empty(t, receivedReq.Header.Get("Authorization"))
 	})
 
 	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
