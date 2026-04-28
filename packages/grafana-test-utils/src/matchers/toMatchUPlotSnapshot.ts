@@ -43,7 +43,7 @@ export function toMatchUPlotSnapshot(
   }
   const result = baseResult as SnapshotMismatch;
 
-  if (!process.env.CI && ((!result.pass && result.expected != null) || process.env.GEN_CANVAS_OUTPUT_ON_FAIL)) {
+  if (!process.env.CI && ((!result.pass && result.expected != null) || process.env.GEN_CANVAS_OUTPUT_ON_PASS)) {
     let expected = result.expected;
     if (!expected) {
       expected = JSON.stringify(received);
