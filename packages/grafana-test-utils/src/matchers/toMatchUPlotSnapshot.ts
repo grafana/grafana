@@ -43,10 +43,14 @@ export function toMatchUPlotSnapshot(
   }
   const result = baseResult as SnapshotMismatch;
 
-  if (!process.env.CI && !result.pass && result.expected != null) {
+  if (!process.env.CI && ((!result.pass && result.expected != null) || process.env.GEN_CANVAS_OUTPUT_ON_FAIL)) {
+    let expected = result.expected;
+    if (!expected) {
+      expected = JSON.stringify(received);
+    }
     let parsedExpected;
     try {
-      parsedExpected = parseSnapshotJson(result.expected) as CanvasRenderingContext2DEvent[];
+      parsedExpected = parseSnapshotJson(expected) as CanvasRenderingContext2DEvent[];
     } catch (e) {
       console.error('toMatchUPlotSnapshot: failed to parse expected snapshot JSON', e);
       return result;
