@@ -7,7 +7,7 @@ import { type ContactPointWithMetadata } from '../../components/contact-points/u
 import { createRelativeUrl } from '../../utils/url';
 
 /**
- * Copy for policy / rule usage lines and link targets for the instance drawer.
+ * Policy/rule usage strings and filter URLs for a contact point (alert instance drawer usage block).
  */
 export function useContactPointUsageSummary(contactPoint: ContactPointWithMetadata) {
   const { selectedAlertmanager } = useAlertmanager();

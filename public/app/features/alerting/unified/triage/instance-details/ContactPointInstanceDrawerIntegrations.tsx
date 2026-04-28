@@ -80,7 +80,7 @@ function InstanceDrawerIntegrationPanel({
   return (
     <div className={cx(!isLast && styles.integrationPanelWithSeparator)}>
       <Stack direction="column" gap={1.5}>
-        {/* Title row: outer div for margin; inner Stack must not take `className` (replaces flex styles in Stack). */}
+        {/* Title row: margin on this wrapper; do not pass `className` to `Stack` (it would replace its flex styles). */}
         <div className={styles.integrationTitleRow}>
           <Stack direction="row" alignItems="center" gap={1.5}>
             {iconName && (

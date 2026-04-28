@@ -30,10 +30,7 @@ import { type ContactPointWithMetadata, showManageContactPointPermissions } from
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
-  /**
-   * Alerts Activity instance drawer: primary action opens notification configuration in a new tab with labels
-   * Open configuration / View details (instead of Edit/View inline).
-   */
+  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
   instanceDrawerEmbed?: boolean;
 }
 
@@ -186,7 +183,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete, instanceDrawerEmbed
     count: numberOfRules,
   });
 
-  // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
+  // TODO: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
   // existing types so its clearer where the ID has come from
   const urlId = id || name;
 

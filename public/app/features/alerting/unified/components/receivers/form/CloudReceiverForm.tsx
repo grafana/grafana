@@ -26,8 +26,6 @@ export interface CloudReceiverFormProps {
   editMode?: boolean;
   /** When set, called instead of navigating to the notifications list after a successful save. */
   onSaveSuccess?: () => void;
-  /** Hides Cancel; use when navigation is via drawer Back (e.g. instance flow). */
-  hideCancelButton?: boolean;
 }
 
 const defaultChannelValues: CloudChannelValues = Object.freeze({
@@ -48,7 +46,6 @@ export const CloudReceiverForm = ({
   readOnly = false,
   editMode,
   onSaveSuccess,
-  hideCancelButton,
 }: CloudReceiverFormProps) => {
   const { isLoading, data: config } = useGetAlertmanagerConfigurationQuery(alertManagerSourceName);
 
@@ -108,7 +105,6 @@ export const CloudReceiverForm = ({
         defaultItem={defaultChannelValues}
         commonSettingsComponent={CloudCommonChannelSettings}
         canEditProtectedFields={true}
-        hideCancelButton={hideCancelButton}
       />
     </>
   );

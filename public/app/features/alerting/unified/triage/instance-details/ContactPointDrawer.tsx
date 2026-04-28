@@ -32,7 +32,10 @@ export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: Cont
   const trimmedSearch = listSearchQuery.trim();
   const fuzzyMatches = useContactPointsSearch(contactPoints, trimmedSearch ? trimmedSearch : null);
 
-  /** One row → instance-drawer layout; many rows → list-style cards (matches notifications page). */
+  /**
+   * When set, `ContactPointsList` receives a single contact point so it can render `ContactPointInstanceDrawerDetails`
+   * instead of paginated cards.
+   */
   const resolvedUniqueContactPoint = useMemo(() => {
     if (receiverResourceId) {
       return contactPoints.find((cp) => cp.id === receiverResourceId);
