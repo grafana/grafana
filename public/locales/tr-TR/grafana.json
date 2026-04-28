@@ -3589,9 +3589,9 @@
         "declare-incident": "Olay bildir",
         "declare-incident-no-permission": "Olaya erişim izniniz yok",
         "instance-details": "Örnek ayrıntıları",
+        "section-silence": "",
         "silence-button": "Sessize alma",
-        "silence-no-permission": "Sessize alma oluşturma izniniz yok",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Sessize alma oluşturma izniniz yok"
       },
       "labels-column-title": "Etiketler",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
+      "loading": "",
       "output-data": "Çıktı verileri",
       "title-debug-transformation": "Dönüşümde hata ayıklama"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Ara"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Seçimi temizle"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA değeri"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Kapat",
       "dock": "Yerleştir",
+      "go-back": "",
       "hide": "Gizle",
       "show": "Göster",
       "undock": "Çıkar"
@@ -11221,6 +11230,7 @@
       "label-numbers": "Sayılar",
       "label-signature": "İmza"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Deneysel. Günlük kayıtlarında görüntülenen alanları yönetmek için bir bileşen gösterin.",
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili kısımlarını vurgulamak için önceden tanımlanmış bir renklendirme şeması kullanın.",
@@ -11518,6 +11528,7 @@
         "common-labels": "Ortak etiketler:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Ortak etiketler",
     "name-deduplication": "Yinelenenleri kaldırma",
     "name-details-mode": "Günlük kaydı ayrıntı paneli modu",
@@ -11906,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tümü",
-      "title-filtered": "Tümü (filtrelenmiş)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tümünü temizle"
@@ -14787,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Ana Pano",
       "home-dashboard-placeholder": "Varsayılan pano",
@@ -16002,6 +16019,9 @@
         "grouping-to-matrix": "Matrise gruplandırma"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Giriş verilerinden bir histogram hesaplayın."
@@ -16336,6 +16356,9 @@
       "label-time-field": "Zaman alanı",
       "tooltip-statistic-should-calculated-series": "Bu zaman serisi için hesaplanacak istatistik.",
       "tooltip-time-field": "Zaman serisi için kullanılacak zaman alanı. Seçilmezse bulunan ilk alan kullanılır."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "İlk alan adı",

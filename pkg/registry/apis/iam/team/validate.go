@@ -28,6 +28,10 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
 		return apierrors.NewBadRequest("externalUID is only allowed for provisioned teams")
 	}
 
+	if err := validateNoDuplicateMembers(obj.Spec.Members); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -53,5 +57,36 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 		return apierrors.NewBadRequest("externalUID is only allowed for provisioned teams")
 	}
 
+	if err := validateNoDuplicateMembers(obj.Spec.Members); err != nil {
+		return err
+	}
+	if err := validateMemberExternalImmutable(old.Spec.Members, obj.Spec.Members); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateNoDuplicateMembers(members []iamv0alpha1.TeamTeamMember) error {
+	seen := make(map[string]struct{}, len(members))
+	for _, m := range members {
+		if _, dup := seen[m.Name]; dup {
+			return apierrors.NewBadRequest("duplicate member " + m.Name + " in spec.members")
+		}
+		seen[m.Name] = struct{}{}
+	}
+	return nil
+}
+
+func validateMemberExternalImmutable(old, new []iamv0alpha1.TeamTeamMember) error {
+	oldByName := make(map[string]bool, len(old))
+	for _, m := range old {
+		oldByName[m.Name] = m.External
+	}
+	for _, m := range new {
+		if was, ok := oldByName[m.Name]; ok && was != m.External {
+			return apierrors.NewBadRequest("external flag is immutable on existing member " + m.Name)
+		}
+	}
 	return nil
 }

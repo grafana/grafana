@@ -79,10 +79,10 @@ type RemoteIndexStore interface {
 //
 // Object storage layout:
 //
-//	/<namespace>/<group>.<resource>/<index-key>/index_meta.json
-//	/<namespace>/<group>.<resource>/<index-key>/store/root.bolt
-//	/<namespace>/<group>.<resource>/<index-key>/store/*.zap
-//	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
+//	/<namespace>/<resource>.<group>/<index-key>/index_meta.json
+//	/<namespace>/<resource>.<group>/<index-key>/store/root.bolt
+//	/<namespace>/<resource>.<group>/<index-key>/store/*.zap
+//	/<namespace>/<resource>.<group>/<index-key>/meta.json  <- uploaded last, signals complete upload
 //
 // meta.json is uploaded last during upload and deleted first during delete,
 // serving as the completion signal.
@@ -109,16 +109,16 @@ func NewBucketRemoteIndexStore(bucket resource.CDKBucket, lockBackend lockBacken
 
 // indexPrefix returns the object storage prefix for a namespaced resource + index key.
 func indexPrefix(ns resource.NamespacedResource, indexKey string) string {
-	return fmt.Sprintf("%s/%s.%s/%s/", ns.Namespace, ns.Group, ns.Resource, indexKey)
+	return fmt.Sprintf("%s/%s/", resourceSubPath(ns), indexKey)
 }
 
 // nsPrefix returns the object storage prefix for a namespaced resource (without index key).
 func nsPrefix(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
+	return fmt.Sprintf("%s/", resourceSubPath(ns))
 }
 
 func buildIndexLockKey(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/%s.%s/locks/build", ns.Namespace, ns.Group, ns.Resource)
+	return fmt.Sprintf("%s/locks/build", resourceSubPath(ns))
 }
 
 func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
