@@ -83,7 +83,8 @@ func NewNoopElector() *NoopElector {
 
 // Run blocks until ctx is cancelled without ever invoking fn.
 func (n *NoopElector) Run(ctx context.Context, _ func(ctx context.Context), _ ...RunOption) error {
-	return nil
+	<-ctx.Done()
+	return ctx.Err()
 }
 
 // KubernetesElector uses coordination.k8s.io/v1 Lease resources.
