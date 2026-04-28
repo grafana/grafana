@@ -2285,7 +2285,7 @@ func createV2DashboardWithSimpleTabs() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        uint16(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Tab %d", i, tabNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2360,7 +2360,7 @@ func createV2DashboardWithRowsCollapsed() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        uint16(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Row %d (collapsed)", i, rowNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2438,7 +2438,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        uint16(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Row %d (expanded)", i, rowNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2881,7 +2881,7 @@ func createV2ComplexNestedDashboard() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        uint16(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d", i),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{

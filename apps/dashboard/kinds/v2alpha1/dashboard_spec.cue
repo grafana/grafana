@@ -56,7 +56,7 @@ LibraryPanelKind: {
 
 LibraryPanelKindSpec: {
 	// Panel ID for the library panel in the dashboard
-	id: uint16
+	id: int32 & >=0
 	// Title for the library panel in the dashboard
 	title: string
 
@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint16]
+	ids: [...int32 & >=0]
 }
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.
@@ -690,7 +690,7 @@ TabsLayoutTabSpec: {
 }
 
 PanelSpec: {
-	id:          uint16
+	id:          int32 & >=0
 	title:       string
 	description: string
 	links: [...DataLink]
