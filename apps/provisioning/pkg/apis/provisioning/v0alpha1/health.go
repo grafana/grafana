@@ -75,6 +75,11 @@ const (
 	// ReasonFolderMetadataConflict indicates a conflict between folder metadata in the
 	// repository and the actual folder state in Grafana (e.g., ID mismatch, deleted folder).
 	ReasonFolderMetadataConflict = "FolderMetadataConflict"
+	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
+	// the maximum folder depth enforced by the folder API. The repository
+	// owner must shorten the offending path; provisioning cannot recover
+	// automatically and will not retry the failed write.
+	ReasonFolderDepthExceeded = "FolderDepthExceeded"
 )
 
 // Condition reasons for the Quota condition
