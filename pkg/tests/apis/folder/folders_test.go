@@ -17,6 +17,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2431,4 +2432,65 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// TestIntegrationFolderMaxDepthReturns400 guards against the regression that
+// fired alert #1782995: the folder admission validator returned a bare Go
+// error for the max-depth check, which the k8s apiserver could not convert
+// to a metav1.Status, so it surfaced as HTTP 500 instead of 400. The test
+// creates the maximum allowed nesting and then attempts one folder beyond
+// it; the response must be HTTP 400 BadRequest, not 500 InternalError.
+func TestIntegrationFolderMaxDepthReturns400(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Default MaxNestedFolderDepth is 4 — five levels of nesting are allowed.
+	parentUID := ""
+	for i := 1; i <= 5; i++ {
+		md := map[string]any{
+			"name": fmt.Sprintf("max-depth-%d", i),
+		}
+		if parentUID != "" {
+			md["annotations"] = map[string]any{utils.AnnoKeyFolder: parentUID}
+		}
+		f := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": md,
+				"spec":     map[string]any{"title": fmt.Sprintf("Max depth %d", i)},
+			},
+		}
+		out, err := client.Resource.Create(context.Background(), f, metav1.CreateOptions{})
+		require.NoErrorf(t, err, "creating folder at depth %d should succeed", i)
+		parentUID = out.GetName()
+	}
+
+	// Sixth level exceeds the limit and must fail with HTTP 400, not 500.
+	overflow := &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "max-depth-6",
+				"annotations": map[string]any{utils.AnnoKeyFolder: parentUID},
+			},
+			"spec": map[string]any{"title": "Max depth 6"},
+		},
+	}
+	_, err := client.Resource.Create(context.Background(), overflow, metav1.CreateOptions{})
+	require.Error(t, err, "creating folder beyond max depth must error")
+	require.Falsef(t, apierrors.IsInternalError(err),
+		"apiserver surfaced max-depth error as HTTP 500 (regression of alert #1782995): %v", err)
+	require.Truef(t, apierrors.IsBadRequest(err),
+		"expected HTTP 400 BadRequest from max-depth violation; got: %v (%T)", err, err)
 }
