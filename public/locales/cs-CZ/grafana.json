@@ -6550,6 +6550,7 @@
     },
     "transformation-editor": {
       "input-data": "Vstupní údaje",
+      "loading": "",
       "output-data": "Výstupní data",
       "title-debug-transformation": "Ladit transformaci"
     },
@@ -8361,6 +8362,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Hledat"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10238,12 @@
     "cascader": {
       "clear-button": "Vymazat výběr"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Hodnota RGBA"
     },
@@ -10581,6 +10589,7 @@
     "sidebar": {
       "close": "Zavřít",
       "dock": "Připojit",
+      "go-back": "",
       "hide": "Skrýt",
       "show": "Zobrazit",
       "undock": "Odpojit"
@@ -12040,8 +12049,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Vše",
-      "title-filtered": "Vše (filtrováno)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Vymazat vše"
@@ -16194,6 +16205,9 @@
         "grouping-to-matrix": "Seskupení do matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Vypočítat histogram ze vstupních dat."
@@ -16528,6 +16542,9 @@
       "label-time-field": "Pole času",
       "tooltip-statistic-should-calculated-series": "Statistika, která by měla být vypočtena pro tuto časovou řadu.",
       "tooltip-time-field": "Časové pole, které se použije pro časovou řadu. Pokud není vybráno, použije se první nalezené pole."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Název prvního pole",

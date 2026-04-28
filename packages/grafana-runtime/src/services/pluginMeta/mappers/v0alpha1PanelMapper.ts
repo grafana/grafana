@@ -3,7 +3,15 @@ import { type PanelPluginMeta, PluginType } from '@grafana/data';
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
-import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
+import {
+  angularMapper,
+  isCorePlugin,
+  loadingStrategyMapper,
+  stateMapper,
+  infoMapper,
+  signatureMapper,
+  prependPublicPathToCorePlugins,
+} from './shared';
 
 const idToSortMap: Record<string, number> = {
   timeseries: 1,
@@ -65,6 +73,11 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   };
 }
 
+export function coreSpecMapper(spec: v0alpha1Spec): PanelPluginMeta {
+  const mapped = specMapper(spec);
+  return prependPublicPathToCorePlugins(mapped, spec);
+}
+
 export const v0alpha1PanelMapper: PanelPluginMetasMapper<PluginMetasResponse> = (response) => {
   const result: PanelPluginMetas = {};
 
@@ -73,7 +86,9 @@ export const v0alpha1PanelMapper: PanelPluginMetasMapper<PluginMetasResponse> = 
       return acc;
     }
 
-    const config = specMapper(curr.spec);
+    const mapper = isCorePlugin(curr.spec) ? coreSpecMapper : specMapper;
+
+    const config = mapper(curr.spec);
     acc[config.id] = config;
     return acc;
   }, result);

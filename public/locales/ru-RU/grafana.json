@@ -6550,6 +6550,7 @@
     },
     "transformation-editor": {
       "input-data": "Ввод данных",
+      "loading": "",
       "output-data": "Данные вывода",
       "title-debug-transformation": "Отладка преобразования"
     },
@@ -8361,6 +8362,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Поиск"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10238,12 @@
     "cascader": {
       "clear-button": "Очистить выбор"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Значение RGBA"
     },
@@ -10581,6 +10589,7 @@
     "sidebar": {
       "close": "Закрыть",
       "dock": "Закрепить",
+      "go-back": "",
       "hide": "Скрыть",
       "show": "Показать",
       "undock": "Открепить"
@@ -12040,8 +12049,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Все",
-      "title-filtered": "Все (после фильтра)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Очистить всё"
@@ -16194,6 +16205,9 @@
         "grouping-to-matrix": "Группировка в матрицу"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Рассчитайте гистограмму по вводным данным."
@@ -16528,6 +16542,9 @@
       "label-time-field": "Поле времени",
       "tooltip-statistic-should-calculated-series": "Статистика, которая должна быть рассчитана для этого временного ряда.",
       "tooltip-time-field": "Поле времени, которое будет использоваться для временного ряда. Если оно не выбрано, будет использоваться первое найденное."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Имя первого поля",
