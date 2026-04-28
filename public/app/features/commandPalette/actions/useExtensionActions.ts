@@ -21,7 +21,7 @@ export default function useExtensionActions(): CommandPaletteAction[] {
     const groupParents = new Map<string, string>();
 
     for (const link of links) {
-      const section = link.category ?? 'Extensions';
+      const section = link.group?.name?.trim() || link.category || 'Extensions';
       const base = {
         id: link.id,
         name: link.title,

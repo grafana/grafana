@@ -93,7 +93,7 @@ describe('useExtensionActions', () => {
       expect.objectContaining({
         id: 'ext-group/my-plugin/My Group',
         name: 'My Group',
-        section: 'Extensions',
+        section: 'My Group',
         priority: EXTENSIONS_PRIORITY,
       })
     );
@@ -103,7 +103,7 @@ describe('useExtensionActions', () => {
       expect.objectContaining({
         id: 'link-a',
         name: 'Action A',
-        section: 'Extensions',
+        section: 'My Group',
         parent: 'ext-group/my-plugin/My Group',
         priority: EXTENSIONS_PRIORITY,
       })
@@ -114,7 +114,7 @@ describe('useExtensionActions', () => {
       expect.objectContaining({
         id: 'link-b',
         name: 'Action B',
-        section: 'Extensions',
+        section: 'My Group',
         parent: 'ext-group/my-plugin/My Group',
         priority: EXTENSIONS_PRIORITY,
       })
@@ -177,15 +177,15 @@ describe('useExtensionActions', () => {
     // First: ungrouped root action
     expect(result.current[0]).toEqual(expect.objectContaining({ id: 'ungrouped-1', section: 'Extensions' }));
 
-    // Second: group parent inherits category from first grouped link
-    expect(result.current[1]).toEqual(expect.objectContaining({ id: 'ext-group/my-plugin/Tools', section: 'Custom' }));
+    // Second: group parent and children use group.name as section
+    expect(result.current[1]).toEqual(expect.objectContaining({ id: 'ext-group/my-plugin/Tools', section: 'Tools' }));
 
     // Third and fourth: children
     expect(result.current[2]).toEqual(
-      expect.objectContaining({ id: 'grouped-1', section: 'Custom', parent: 'ext-group/my-plugin/Tools' })
+      expect.objectContaining({ id: 'grouped-1', section: 'Tools', parent: 'ext-group/my-plugin/Tools' })
     );
     expect(result.current[3]).toEqual(
-      expect.objectContaining({ id: 'grouped-2', section: 'Custom', parent: 'ext-group/my-plugin/Tools' })
+      expect.objectContaining({ id: 'grouped-2', section: 'Tools', parent: 'ext-group/my-plugin/Tools' })
     );
   });
 
@@ -289,7 +289,7 @@ describe('useExtensionActions', () => {
       expect.objectContaining({
         id: 'ext-group/my-plugin/Tools',
         name: 'Tools',
-        section: 'Extensions',
+        section: 'Tools',
       })
     );
 
