@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   type SceneObject,
@@ -51,10 +51,9 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
 }
 
 export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
-  const dashboard = getDashboardSceneFor(model);
-
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
+      const dashboard = getDashboardSceneFor(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
       const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
@@ -74,15 +73,12 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
         DashboardInteractions.sectionVariableTypeSelected({ type });
       }
     },
-    [model, dashboard]
+    [model]
   );
 
   return (
     <>
-      <Sidebar.PaneHeader
-        title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')}
-        onGoBack={dashboard.state.editPane.getOnGoBackCallback()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onAddVariable} />
       </Box>
@@ -113,11 +109,11 @@ export function openChangeVariableTypePane(variable: SceneVariable) {
 
 function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableTypeChangePane>) {
   const variable = model.state.variableRef.resolve();
-  const dashboard = getDashboardSceneFor(variable);
 
   const onChangeVariableType = useCallback(
     (type: EditableVariableType) => {
       const variableSet = variable.parent;
+      const dashboard = getDashboardSceneFor(variable);
 
       if (!(variableSet instanceof SceneVariableSet)) {
         return;
@@ -142,15 +138,12 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
 
       DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
     },
-    [variable, dashboard]
+    [variable]
   );
 
   return (
     <>
-      <Sidebar.PaneHeader
-        title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')}
-        onGoBack={dashboard.state.editPane.getOnGoBackCallback()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onChangeVariableType} />
       </Box>

@@ -44,7 +44,7 @@ export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEdit
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} onGoBack={editPane.getOnGoBackCallback()} />
+      <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
       <ScrollContainer showScrollIndicators={true}>
         <AddNewSection
           title={t('dashboard.add.new-panel.title', 'Panel')}

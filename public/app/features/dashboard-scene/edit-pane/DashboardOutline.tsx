@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
@@ -15,7 +15,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
@@ -27,19 +27,21 @@ export class DashboardOutline extends SceneObjectBase {
 }
 
 export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane)!;
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader
-        title={t('dashboard.outline.pane-header', 'Content outline')}
-        onGoBack={editPane.getOnGoBackCallback()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+          <DashboardOutlineNode
+            sceneObject={dashboard}
+            isEditing={isEditing}
+            editPane={dashboard.state.editPane}
+            depth={0}
+            index={0}
+          />
         </Box>
       </ScrollContainer>
     </Box>
