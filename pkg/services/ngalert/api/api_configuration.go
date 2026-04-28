@@ -145,7 +145,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 			if ds.Type != datasources.DS_ALERTMANAGER {
 				return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
 			}
-			impl := ds.JsonData.Get("implementation").MustString("")
+			impl := strings.ToLower(ds.JsonData.Get("implementation").MustString(""))
 			if !slices.Contains(syncableAMImplementations, impl) {
 				var msg string
 				if impl == "prometheus" {
