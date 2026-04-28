@@ -4453,6 +4453,13 @@
       "resource-detail-dashboards": "You've created {{usage}} of {{limit}} dashboards ({{percentage}}%).",
       "resource-detail-folders": "You've created {{usage}} of {{limit}} folders ({{percentage}}%)."
     },
+    "readme": {
+      "add-readme": "Add README",
+      "edit-tooltip": "Edit README",
+      "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
+      "hint": "Looking for an overview of this folder? <2>See the README</2>",
+      "parse-error": "Unable to display README content."
+    },
     "recently-viewed": {
       "clear": "Clear history",
       "error": "Recently viewed dashboards couldn’t be loaded.",

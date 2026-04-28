@@ -16,6 +16,8 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
+import { FolderReadmeHint } from '../provisioning/components/Folders/FolderReadmeHint';
+import { FolderReadmePanel } from '../provisioning/components/Folders/FolderReadmePanel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
@@ -186,6 +188,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
+        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && (
+          <FolderReadmeHint folderUID={folderUID} />
+        )}
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
@@ -222,6 +227,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             }
           </AutoSizer>
         </div>
+        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && (
+          <FolderReadmePanel folderUID={folderUID} />
+        )}
         {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
       {showRenameDrawer && folderDTO && (
