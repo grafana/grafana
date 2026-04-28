@@ -229,4 +229,63 @@ describe('searchToResource journey wiring', () => {
       })
     );
   });
+
+  it('should propagate keyboard interactionMode from action_selected onto the journey', () => {
+    loadWiring();
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('command_palette_action_selected', {
+      actionId: 'go/dashboard/d/xyz/my-dash',
+      actionName: 'My Dash',
+      interactionMode: 'keyboard',
+    });
+
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({ interactionMode: 'keyboard' })
+    );
+  });
+
+  it('should default interactionMode to "unknown" when missing from the action_selected event', () => {
+    loadWiring();
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('command_palette_action_selected', {
+      actionId: 'go/alerting',
+      actionName: 'Alerting',
+    });
+
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({ interactionMode: 'unknown' })
+    );
+  });
+
+  it('should record a search_query event when command_palette_search_query fires', () => {
+    loadWiring();
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('command_palette_search_query', {
+      hasQuery: 'true',
+      queryLength: '4-10',
+    });
+
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('search_query', {
+      hasQuery: 'true',
+      queryLength: '4-10',
+    });
+  });
+
+  it('should record one search_query event per typing burst', () => {
+    loadWiring();
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('command_palette_search_query', { hasQuery: 'true', queryLength: '1-3' });
+    simulateInteraction('command_palette_search_query', { hasQuery: 'true', queryLength: '4-10' });
+    simulateInteraction('command_palette_search_query', { hasQuery: 'false', queryLength: 'empty' });
+
+    expect(mockHandle.recordEvent).toHaveBeenCalledTimes(3);
+  });
 });
