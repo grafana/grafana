@@ -282,6 +282,13 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				// A managed folder being moved into a path that exceeds the
+				// folder API's max depth is the same user-side problem as a
+				// fresh create: surface it as a typed warning so the sync is
+				// not retried in a loop.
+				if IsFolderDepthExceededAPIError(err) {
+					return NewFolderDepthExceededError(folder.Path, err)
+				}
 				return fmt.Errorf("update folder: %w", err)
 			}
 		}
@@ -359,13 +366,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return nil
 		}
 
-		// HACK: The folder API enforces a global maximum folder depth that
-		// provisioning cannot influence. When a repository contains paths
-		// deeper than this limit the write will fail forever, so we surface
-		// it as a typed warning instead of a retryable error to keep the
-		// job queue from re-running the same sync every five minutes.
-		// Detection relies on a stable substring agreed with the folder API
-		// owners; do not change it without coordinating that contract.
+		// The folder API enforces a global maximum folder depth that
+		// provisioning cannot influence. Repositories containing paths
+		// deeper than this limit will fail forever, so surface it as a
+		// typed warning instead of a retryable error and let the sync
+		// keep going for the rest of the tree.
 		if IsFolderDepthExceededAPIError(err) {
 			return NewFolderDepthExceededError(folder.Path, err)
 		}

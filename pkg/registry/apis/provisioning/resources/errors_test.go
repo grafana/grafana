@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 func TestResourceValidationError(t *testing.T) {
@@ -403,21 +405,66 @@ func TestIsFolderDepthExceededAPIError(t *testing.T) {
 		require.False(t, IsFolderDepthExceededAPIError(nil))
 	})
 
-	t.Run("matches stable folder API substring", func(t *testing.T) {
+	t.Run("matches the create-path substring", func(t *testing.T) {
 		err := errors.New("folder max depth exceeded, max depth is 4")
 		require.True(t, IsFolderDepthExceededAPIError(err))
 	})
 
-	t.Run("matches BadRequest status error from folder API", func(t *testing.T) {
+	t.Run("matches the update/move public message substring", func(t *testing.T) {
+		// This is the PublicMessage on folder.ErrMaximumDepthReached, which
+		// is what surfaces to the dynamic client when validateOnUpdate
+		// rejects a move.
+		err := apierrors.NewBadRequest("Maximum nested folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches the update/move log message substring (case-insensitive)", func(t *testing.T) {
+		err := errors.New("[folder.maximum-depth-reached] maximum folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches BadRequest status error from create path", func(t *testing.T) {
 		err := apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
 		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches the structured errutil error via errors.Is", func(t *testing.T) {
+		// The in-process error returned by validateOnUpdate.
+		err := foldermodel.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches when status details carry the structured message ID", func(t *testing.T) {
+		// Simulates a StatusError that survived a round-trip through the
+		// K8s API: the human-readable message is generic but the structured
+		// message ID is preserved in Status.Details.UID.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "Bad Request",
+				Details: &metav1.StatusDetails{
+					UID: "folder.maximum-depth-reached",
+				},
+			},
+		}
+		require.True(t, IsFolderDepthExceededAPIError(statusErr))
 	})
 
 	t.Run("matches sentinel error via errors.Is", func(t *testing.T) {
 		require.True(t, IsFolderDepthExceededAPIError(ErrFolderDepthExceeded))
 	})
 
+	t.Run("matches sentinel through wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("update folder: %w", ErrFolderDepthExceeded)
+		require.True(t, IsFolderDepthExceededAPIError(wrapped))
+	})
+
 	t.Run("does not match unrelated errors", func(t *testing.T) {
 		require.False(t, IsFolderDepthExceededAPIError(errors.New("something else")))
+	})
+
+	t.Run("does not match unrelated bad-request status errors", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(apierrors.NewBadRequest("title cannot be empty")))
 	})
 }
