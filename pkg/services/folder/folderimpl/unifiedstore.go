@@ -453,8 +453,9 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 // Callers needing fuller folders (Created, Updated, Description, ...) should
 // pass the returned UIDs to GetFolders.
 //
-// The traversal is bounded by ss.maxDepth. If the bound is exceeded a warning
-// is logged and the partial result is returned.
+// The traversal is bounded by ss.maxDepth. If the bound is exceeded with
+// descendants still queued, ErrMaximumDepthReached is returned. Genuine
+// cycles are caught earlier by the in-loop visited check.
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestorUID string) ([]*folder.Folder, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetDescendants")
 	defer span.End()
