@@ -646,6 +646,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "dashboardPulse",
+			Description: "Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and @panel mentions, subscriptions, and notifications)",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,

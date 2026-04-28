@@ -1594,6 +1594,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardPulse",
+        "resourceVersion": "1777408289510",
+        "creationTimestamp": "2026-04-28T20:31:29Z"
+      },
+      "spec": {
+        "description": "Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and @panel mentions, subscriptions, and notifications)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-13T08:51:21Z",
