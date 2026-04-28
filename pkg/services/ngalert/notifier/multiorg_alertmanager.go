@@ -62,8 +62,8 @@ type Alertmanager interface {
 	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
 	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
 
-	// SilenceState returns the current state of silences in the Alertmanager.
-	// This is used to persist the state to the kvstore.
+	// SilenceState returns the current state of silences in the Alertmanager. This is used to persist the state
+	// to the kvstore.
 	SilenceState(context.Context) (alertingNotify.SilenceState, error)
 
 	// Alerts
