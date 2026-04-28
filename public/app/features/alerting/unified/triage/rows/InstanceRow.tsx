@@ -8,8 +8,9 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import { AxisPlacement, BarAlignment, LegendDisplayMode, StackingMode, Text, TooltipDisplayMode } from '@grafana/ui';
+import { Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { AxisPlacement, BarAlignment, LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui/types';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';

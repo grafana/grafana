@@ -25,18 +25,16 @@ import {
   useUrlSync,
 } from '@grafana/scenes';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
+import { Button, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
-  Button,
   GraphGradientMode,
   LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
-  Text,
-  Tooltip,
   TooltipDisplayMode,
-} from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/themes';
+} from '@grafana/ui/types';
 
 import { LogMessages, logInfo } from '../Analytics';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';

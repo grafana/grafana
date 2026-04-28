@@ -29,8 +29,8 @@ import {
 import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataTransformerConfig } from '@grafana/schema';
-import { AxisPlacement, type GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
+import { AxisPlacement, type GraphFieldConfig } from '@grafana/ui/types';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import {
   DEFAULT_PANEL_SPAN,

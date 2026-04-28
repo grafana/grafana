@@ -8,7 +8,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/ui/types';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';

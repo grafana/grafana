@@ -1,6 +1,6 @@
 import { type Field, type FieldConfig, FieldType, LogLevel, MappingType, type ValueMap } from '@grafana/data';
 import { type TableCellOptions, type ValueMappingResult } from '@grafana/schema';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';

@@ -13,7 +13,6 @@ import {
   type PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -24,6 +23,7 @@ import {
   ColorPlacement,
 } from '@grafana/ui/internal';
 import { useTheme2 } from '@grafana/ui/themes';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';

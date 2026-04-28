@@ -1,7 +1,7 @@
 import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui/types';
 
 import { overrideToFixedColor } from '../../home/Insights';
 

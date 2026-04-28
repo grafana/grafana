@@ -24,15 +24,10 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  type AdHocFilterItem,
-  type CustomCellRendererProps,
-  type TableSortByFieldState,
-  Table,
-  TableCellDisplayMode,
-} from '@grafana/ui';
+import { type AdHocFilterItem, type CustomCellRendererProps, type TableSortByFieldState, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { useStyles2 } from '@grafana/ui/themes';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';

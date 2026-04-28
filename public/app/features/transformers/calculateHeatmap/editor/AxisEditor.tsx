@@ -4,7 +4,8 @@ import { type SelectableValue, type StandardEditorProps, VariableOrigin } from '
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
+import { RadioButtonGroup, Stack } from '@grafana/ui';
+import { ScaleDistribution } from '@grafana/ui/types';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';

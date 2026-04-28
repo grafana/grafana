@@ -1,6 +1,6 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { LineInterpolation } from '@grafana/ui';
+import { LineInterpolation } from '@grafana/ui/types';
 
 import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 

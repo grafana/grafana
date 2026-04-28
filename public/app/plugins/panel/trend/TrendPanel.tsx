@@ -10,8 +10,9 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext } from '@grafana/ui';
+import { KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { type XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';

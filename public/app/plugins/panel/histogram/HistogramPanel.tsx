@@ -10,9 +10,10 @@ import {
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TooltipDisplayMode, TooltipPlugin2 } from '@grafana/ui';
+import { TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 import { useTheme2 } from '@grafana/ui/themes';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';

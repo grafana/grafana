@@ -1,5 +1,5 @@
 import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
-import { type GraphFieldConfig } from '@grafana/ui';
+import type { GraphFieldConfig } from '@grafana/ui/types';
 import { getGeometryField, getDefaultLocationMatchers } from 'app/features/geo/utils/location';
 
 import { type Options } from './panelcfg.gen';

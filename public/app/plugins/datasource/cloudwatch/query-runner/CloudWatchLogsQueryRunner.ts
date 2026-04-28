@@ -36,7 +36,7 @@ import {
 import { type TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 
 import {
   type CloudWatchLogsQuery,

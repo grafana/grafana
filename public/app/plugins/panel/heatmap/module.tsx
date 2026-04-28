@@ -15,8 +15,8 @@ import {
   type ScaleDistributionConfig,
   HeatmapCellLayout,
 } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';

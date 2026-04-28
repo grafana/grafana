@@ -1,7 +1,7 @@
 import { FieldType, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { LegendDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/ui/types';
 
 import { type Options, type FieldConfig, SeriesMapping } from './panelcfg.gen';
 import { prepConfig } from './scatter';

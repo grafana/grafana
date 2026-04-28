@@ -14,7 +14,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, TooltipDisplayMode, type UPlotConfigBuilder, type VizLegendOptions } from '@grafana/ui';
+import type { UPlotConfigBuilder } from '@grafana/ui';
+import { LegendDisplayMode, TooltipDisplayMode, type VizLegendOptions } from '@grafana/ui/types';
 
 import { getBucketSize, Histogram, type HistogramProps } from './Histogram';
 import { type Options } from './panelcfg.gen';

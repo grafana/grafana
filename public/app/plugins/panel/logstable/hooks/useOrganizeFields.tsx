@@ -4,7 +4,8 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataFrame, type FieldConfigSource, transformDataFrame } from '@grafana/data';
-import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
+import type { CustomCellRendererProps } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/fieldSelector/logFields';

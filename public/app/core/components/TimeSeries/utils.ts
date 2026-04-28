@@ -88,7 +88,6 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
-import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
   type UPlotConfigPrepFn,
@@ -98,6 +97,7 @@ import {
   preparePlotData2,
   type AxisProps,
 } from '@grafana/ui/internal';
+import { DrawStyle } from '@grafana/ui/types';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
 

@@ -2,7 +2,6 @@ import { type ReactNode } from 'react';
 
 import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -11,6 +10,7 @@ import {
   getContentItems,
   type VizTooltipItem,
 } from '@grafana/ui/internal';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';

@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
-import { LegendDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/ui/types';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { BARGAUGE_CARD_OPTIONS } from './suggestions';

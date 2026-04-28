@@ -1,5 +1,5 @@
 import { ByNamesMatcherMode, createDataFrame, FieldMatcherID, FieldType, type PanelModel } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 
 import {
   migrateFooterV2,

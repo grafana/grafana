@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { type TableCellOptions } from '@grafana/schema';
-import { Combobox, type ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, Stack } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';

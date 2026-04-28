@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeSizing } from '@grafana/schema';
-import { type GraphFieldConfig } from '@grafana/ui';
+import type { GraphFieldConfig } from '@grafana/ui/types';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
 

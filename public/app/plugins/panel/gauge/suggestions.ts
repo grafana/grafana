@@ -8,7 +8,7 @@ import {
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type GraphFieldConfig } from '@grafana/ui';
+import type { GraphFieldConfig } from '@grafana/ui/types';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';

@@ -15,12 +15,12 @@ import {
 import {
   IconButton,
   Table,
-  TableCellDisplayMode,
   type TableCustomCellOptions,
   type TableFieldOptions,
   type TableSortByFieldState,
 } from '@grafana/ui';
 import { useStyles2, useTheme2 } from '@grafana/ui/themes';
+import { TableCellDisplayMode } from '@grafana/ui/types';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';

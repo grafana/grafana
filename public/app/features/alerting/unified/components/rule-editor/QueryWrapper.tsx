@@ -19,8 +19,9 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip } from '@grafana/ui';
+import { Icon, InlineField, Input, Stack, Tooltip } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import type { GraphThresholdsStyleMode } from '@grafana/ui/types';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';

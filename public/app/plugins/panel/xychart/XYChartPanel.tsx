@@ -4,17 +4,10 @@ import { useMemo } from 'react';
 import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import {
-  TooltipDisplayMode,
-  TooltipPlugin2,
-  UPlotChart,
-  VizLayout,
-  VizLegend,
-  type VizLegendItem,
-  usePanelContext,
-} from '@grafana/ui';
+import { TooltipPlugin2, UPlotChart, VizLayout, VizLegend, type VizLegendItem, usePanelContext } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui/themes';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 
 import { getDataLinks } from '../status-history/utils';
 

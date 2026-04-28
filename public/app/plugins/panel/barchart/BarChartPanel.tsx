@@ -4,7 +4,6 @@ import { type PanelProps, VizOrientation } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   type AdHocFilterItem,
-  TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
@@ -13,6 +12,7 @@ import {
 } from '@grafana/ui';
 import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 import { useTheme2 } from '@grafana/ui/themes';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { measureText } from '@grafana/ui/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';

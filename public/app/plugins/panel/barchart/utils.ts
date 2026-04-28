@@ -26,8 +26,9 @@ import {
   TooltipDisplayMode,
   VizOrientation,
 } from '@grafana/schema';
-import { FIXED_UNIT, ScaleDirection, ScaleOrientation, StackingMode, UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
 import { type AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
+import { ScaleDirection, ScaleOrientation, StackingMode } from '@grafana/ui/types';
 import { measureText } from '@grafana/ui/utils';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';

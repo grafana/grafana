@@ -6,7 +6,6 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { type ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
-  TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
   usePanelContext,
@@ -15,6 +14,7 @@ import {
 } from '@grafana/ui';
 import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui/themes';
+import { TooltipDisplayMode } from '@grafana/ui/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
