@@ -332,7 +332,7 @@ The default value is the width (or number of pixels) of the graph, because you c
 
 Because the default depends on the panel's pixel width, the same dashboard can show different query results depending on the panel's size on screen.
 When you click **View** in the panel menu, the panel expands to fill the window.
-This doesn't change the dashboard's grid layout, but it gives the panel more pixels with which to render.
+This changes the dashboard's grid layout, and gives the panel more pixels with which to render.
 With more pixels, Grafana can request more data points, which increases the resolution and reduces the step size between points.
 As a result, the same query can return a more detailed series in view mode than inline in the dashboard.
 
