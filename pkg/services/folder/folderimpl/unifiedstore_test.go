@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"slices"
 	"testing"
@@ -690,7 +691,9 @@ func TestGetFolders(t *testing.T) {
 // mirrors the existing TestGetChildren mock shape).
 func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents []string, byParent map[string][]string) {
 	matcher := func(req *resourcepb.ResourceSearchRequest) bool {
-		if req == nil || req.Options == nil || len(req.Options.Fields) == 0 {
+		// Internal searchChildren applies no visibility filters, so the
+		// request should carry exactly one Fields entry: the folder In.
+		if req == nil || req.Options == nil || len(req.Options.Fields) != 1 {
 			return false
 		}
 		f := req.Options.Fields[0]
@@ -831,6 +834,36 @@ func TestGetDescendants(t *testing.T) {
 		require.ErrorIs(t, err, folder.ErrCircularReference)
 	})
 
+	t.Run("level with more parents than descendantsBatchSize fires chunked Search calls", func(t *testing.T) {
+		// 150 root children at level 1 — exceeds descendantsBatchSize=100,
+		// so the level-2 walk must split into one Search per chunk-of-100
+		// parents (slices.Chunk).
+		mockCli := new(client.MockK8sHandler)
+		expectGetFolder(mockCli, "root", orgID)
+
+		n := descendantsBatchSize + descendantsBatchSize/2 // 150
+		level1 := make([]string, n)
+		for i := range n {
+			level1[i] = fmt.Sprintf("c%03d", i)
+		}
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": level1})
+		// Two chunked Search calls at level 2; both return no children.
+		expectSearchChildren(mockCli, orgID, level1[:descendantsBatchSize], nil)
+		expectSearchChildren(mockCli, orgID, level1[descendantsBatchSize:], nil)
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+			log:         log.New("test"),
+			maxDepth:    8,
+		}
+		got, err := ss.GetDescendants(ctx, orgID, "root")
+		require.NoError(t, err)
+		require.Len(t, got, n)
+		mockCli.AssertExpectations(t)
+	})
+
 	t.Run("depth cap with descendants still queued returns ErrMaximumDepthReached", func(t *testing.T) {
 		// Tree of height 3 (root -> l1 -> l2 -> l3) with maxDepth=1. The loop
 		// processes levels 0, 1 and 2 (root, l1, l2), then exits with l3
@@ -880,6 +913,58 @@ func TestSearchChildren(t *testing.T) {
 		require.Len(t, got, 2)
 		mockCli.AssertExpectations(t)
 		mockCli.AssertNotCalled(t, "Get", mock.Anything, "some-parent", orgID, mock.Anything, mock.Anything)
+	})
+
+	t.Run("paginates when a page returns searchPageSize hits", func(t *testing.T) {
+		mockCli := new(client.MockK8sHandler)
+
+		// Build searchPageSize+1 children so the first Search returns a full
+		// page (triggering the inner page loop) and the second returns the
+		// remaining hit.
+		n := searchPageSize + 1
+		children := make([]string, n)
+		for i := range n {
+			children[i] = fmt.Sprintf("c%05d", i)
+		}
+
+		buildResp := func(uids []string) *resourcepb.ResourceSearchResponse {
+			rows := make([]*resourcepb.ResourceTableRow, len(uids))
+			for i, uid := range uids {
+				rows[i] = &resourcepb.ResourceTableRow{
+					Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
+					Cells: [][]byte{[]byte("root")},
+				}
+			}
+			return &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+					},
+					Rows: rows,
+				},
+				TotalHits: int64(len(rows)),
+			}
+		}
+		pageMatcher := func(offset int64) any {
+			return mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req != nil && req.Limit == int64(searchPageSize) && req.Offset == offset
+			})
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, pageMatcher(0)).
+			Return(buildResp(children[:searchPageSize]), nil).Once()
+		mockCli.On("Search", mock.Anything, orgID, pageMatcher(int64(searchPageSize))).
+			Return(buildResp(children[searchPageSize:]), nil).Once()
+
+		ss := &FolderUnifiedStoreImpl{
+			k8sclient:   mockCli,
+			userService: usertest.NewUserServiceFake(),
+			tracer:      noop.NewTracerProvider().Tracer("test"),
+		}
+		got, err := ss.searchChildren(ctx, orgID, []string{"root"})
+		require.NoError(t, err)
+		require.Len(t, got, n)
+		mockCli.AssertExpectations(t)
 	})
 }
 
