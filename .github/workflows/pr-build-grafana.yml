@@ -141,7 +141,7 @@ jobs:
       id-token: write
     steps:
       - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@v1
+        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
           api-token: ${{ secrets.METICULOUS_API_TOKEN }}
           image-tag: ${{ needs.push-docker-image.outputs.IMAGE }}
