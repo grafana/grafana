@@ -128,7 +128,7 @@ jobs:
            -f 'output[title]=Docker image' \
            -f "output[summary]=${IMAGE}" \
            -f "output[text]=${IMAGE}"
-  meticulous:
+  run-meticulous-tests:
     needs: push-docker-image
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
