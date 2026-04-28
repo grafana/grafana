@@ -891,7 +891,6 @@ func TestSearchChildren(t *testing.T) {
 	})
 }
 
-
 func TestBuildFolderFullPaths(t *testing.T) {
 	type args struct {
 		f         *folder.Folder
