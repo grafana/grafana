@@ -3,7 +3,7 @@ import React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -118,7 +118,7 @@ export class RowItem
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (
       isEditing &&
-      getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardSectionVariables, false) &&
       this.state.$variables
     ) {
       return [

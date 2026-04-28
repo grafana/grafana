@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	authlib "github.com/grafana/authlib/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -12,7 +14,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // OptonalFormatInt formats num as a string. If num is less or equal than 0
@@ -40,6 +41,18 @@ func MapUserTeamPermission(p team.PermissionType) legacyiamv0.TeamPermission {
 	}
 }
 
+// WithSubresourceNamespace propagates the requesting user's namespace into
+// the context. Subresource Connect handlers receive a ctx without
+// `request.WithNamespace` set, so downstream stores that look up
+// NamespaceInfoFrom would fail; pulling it from AuthInfo restores parity
+// with normal request flow.
+func WithSubresourceNamespace(ctx context.Context) context.Context {
+	if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
+		return apirequest.WithNamespace(ctx, authInfo.GetNamespace())
+	}
+	return ctx
+}
+
 type ListResponse[T metav1.Object] struct {
 	Items    []T
 	RV       int64
@@ -49,7 +62,7 @@ type ListResponse[T metav1.Object] struct {
 type ListFunc[T metav1.Object] func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[T], error)
 
 // List is a helper function that will perform access check on resources if
-// prvovided with a authlib.AccessClient.
+// provided with a authlib.AccessClient.
 func List[T metav1.Object](
 	ctx context.Context,
 	resource utils.ResourceInfo,

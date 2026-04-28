@@ -50,6 +50,7 @@ updates:
       - "/pkg/util/xorm"
       - "/scripts/go-workspace"
       - "/scripts/modowners"
+      - "/.citools/src/govulncheck"
     schedule:
       interval: "daily"
       time: "02:00"
