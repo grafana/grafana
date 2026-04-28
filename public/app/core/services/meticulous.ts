@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
 
 const AUTH_PATH_PREFIXES = ['/login', '/signup', '/invite/', '/verify', '/user/password/'];
 
@@ -7,7 +7,7 @@ function isAuthPath(pathname: string): boolean {
 }
 
 export async function updateMeticulousRecording(pathname: string): Promise<void> {
-  if (!config.featureToggles.meticulousAIRecorder) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMeticulousAIRecorder, false)) {
     return;
   }
 
@@ -16,6 +16,6 @@ export async function updateMeticulousRecording(pathname: string): Promise<void>
     await stopIntercepting();
   } else {
     const { tryLoadAndStartRecorder } = await import('@alwaysmeticulous/recorder-loader');
-    await tryLoadAndStartRecorder({ isProduction: true });
+    await tryLoadAndStartRecorder({ isProduction: true, recordingToken: window.__METICULOUS_AI_RECORDING_TOKEN__  });
   }
 }

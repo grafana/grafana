@@ -1,15 +1,11 @@
 import { type ChangeEvent, useCallback } from 'react';
 
 import {
-  DataTransformerID,
   type FieldNamePickerConfigSettings,
   FieldType,
   type SelectableValue,
   type StandardEditorsRegistryItem,
-  standardTransformers,
-  type TransformerRegistryItem,
   type TransformerUIProps,
-  TransformerCategory,
   getTimeZones,
 } from '@grafana/data';
 import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
@@ -18,8 +14,6 @@ import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui'
 import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
-import darkImage from '../images/dark/convertFieldType.svg';
-import lightImage from '../images/light/convertFieldType.svg';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -267,19 +261,3 @@ export const ConvertFieldTypeTransformerEditor = ({
     </>
   );
 };
-
-export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistryItem<ConvertFieldTypeTransformerOptions> =
-  () => ({
-    id: DataTransformerID.convertFieldType,
-    editor: ConvertFieldTypeTransformerEditor,
-    transformation: standardTransformers.convertFieldTypeTransformer,
-    name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
-    description: t(
-      'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
-      'Convert a field to a specified field type.'
-    ),
-    categories: new Set([TransformerCategory.Reformat]),
-    tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

@@ -12,6 +12,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -22,7 +23,7 @@ func TestValidateCreate(t *testing.T) {
 		name        string
 		folder      *folders.Folder
 		mockFolders map[string]*folders.Folder
-		expectedErr string
+		expectedErr error
 		maxDepth    int // defaults to 5 unless set
 	}{
 		{
@@ -63,7 +64,7 @@ func TestValidateCreate(t *testing.T) {
 					Name: folder.GeneralFolderUID,
 				},
 			},
-			expectedErr: "invalid uid for folder provided",
+			expectedErr: folder.ErrInvalidUID,
 		},
 		{
 			name: "reserved name - sharedwithme",
@@ -72,7 +73,7 @@ func TestValidateCreate(t *testing.T) {
 					Name: folder.SharedWithMeFolderUID,
 				},
 			},
-			expectedErr: "invalid uid for folder provided",
+			expectedErr: folder.ErrInvalidUID,
 		},
 		{
 			name: "too long",
@@ -81,7 +82,7 @@ func TestValidateCreate(t *testing.T) {
 					Name: "a0123456789012345678901234567890123456789", // longer than 40
 				},
 			},
-			expectedErr: "uid too long, max 40 characters",
+			expectedErr: dashboards.ErrDashboardUidTooLong,
 		},
 		{
 			name: "bad name",
@@ -90,7 +91,7 @@ func TestValidateCreate(t *testing.T) {
 					Name: "hello world", // not a-z|0-9,
 				},
 			},
-			expectedErr: "uid contains illegal characters",
+			expectedErr: dashboards.ErrDashboardInvalidUid,
 		},
 		{
 			name: "can not be a parent of yourself",
@@ -103,7 +104,7 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			expectedErr: "folder cannot be parent of itself",
+			expectedErr: folder.ErrFolderCannotBeParentOfItself,
 		},
 		{
 			name: "can not create a tree that is too deep",
@@ -154,7 +155,7 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			maxDepth:    2,
-			expectedErr: "folder max depth exceeded",
+			expectedErr: folder.ErrMaximumDepthReached,
 		},
 		{
 			name: "can create a folder in max depth",
@@ -216,7 +217,7 @@ func TestValidateCreate(t *testing.T) {
 					Title: "General",
 				},
 			},
-			expectedErr: "folder.name-exists",
+			expectedErr: folder.ErrNameExists,
 		},
 		{
 			name: "title is reserved name General case insensitive",
@@ -228,7 +229,7 @@ func TestValidateCreate(t *testing.T) {
 					Title: "GENERAL",
 				},
 			},
-			expectedErr: "folder.name-exists",
+			expectedErr: folder.ErrNameExists,
 		},
 		{
 			name: "title is reserved name General with surrounding whitespace",
@@ -240,7 +241,7 @@ func TestValidateCreate(t *testing.T) {
 					Title: "  General  ",
 				},
 			},
-			expectedErr: "folder.name-exists",
+			expectedErr: folder.ErrNameExists,
 		},
 		{
 			name: "cannot create a circular reference",
@@ -253,7 +254,7 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			expectedErr: "cyclic folder references found",
+			expectedErr: folder.ErrCyclicReference,
 			mockFolders: map[string]*folders.Folder{
 				"2": {
 					ObjectMeta: metav1.ObjectMeta{
@@ -311,11 +312,11 @@ func TestValidateCreate(t *testing.T) {
 
 			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
 
-			if tt.expectedErr == "" {
+			if tt.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedErr)
+				require.ErrorIs(t, err, tt.expectedErr)
+				require.Contains(t, err.Error(), tt.expectedErr.Error())
 			}
 		})
 	}

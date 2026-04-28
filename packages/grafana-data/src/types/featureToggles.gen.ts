@@ -39,11 +39,6 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
-  * Configurable storage for dashboards, datasources, and resources
-  * @default false
-  */
-  storage?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -1000,11 +995,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Enables SRI checks for Grafana JavaScript assets
-  * @default false
-  */
-  assetSriChecks?: boolean;
-  /**
   * Enables the alert rule restore feature
   * @default true
   */
@@ -1707,11 +1697,6 @@ export interface FeatureToggles {
   */
   clearPreviousFieldValues?: boolean;
   /**
-  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
-  * @default false
-  */
-  enableDatasourceMetaApiPluginLoading?: boolean;
-  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */
@@ -1737,8 +1722,8 @@ export interface FeatureToggles {
   */
   clickHouseConfigValidation?: boolean;
   /**
-  * Enable Meticulous AI session recorder for automated UI test generation
+  * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
   * @default false
   */
-  meticulousAIRecorder?: boolean;
+  ['alerting.rulesAPIV2']?: boolean;
 }
