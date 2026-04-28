@@ -5,11 +5,11 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
+import { reportFiltersOverviewInteraction } from './interactions';
 import { useFiltersOverviewState } from './useFiltersOverviewState';
 import { MULTI_OPERATOR_VALUES } from './utils';
 
@@ -147,16 +147,16 @@ export const DashboardFiltersOverview = ({
 
       <Footer
         onApply={() => {
-          actions.applyChanges();
-          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'apply' });
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply', ...counts });
         }}
         onApplyAndClose={() => {
-          actions.applyChanges();
-          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'apply_and_close' });
+          const counts = actions.applyChanges();
+          reportFiltersOverviewInteraction('applied', { action: 'apply_and_close', ...counts });
           onClose();
         }}
         onClose={() => {
-          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'close' });
+          reportFiltersOverviewInteraction('closed');
           onClose();
         }}
       />

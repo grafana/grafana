@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { fuzzySearch, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   type AdHocFilterWithLabels,
   type AdHocFiltersVariable,
@@ -13,6 +13,11 @@ import {
 import { type ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState, buildUnifiedGroupByFilters } from './utils';
+
+export interface ApplyChangesResult {
+  filtersCount: number;
+  groupByCount: number;
+}
 
 export type ListItem =
   | { type: 'group'; group: string }
@@ -37,7 +42,7 @@ export interface FiltersOverviewActions {
   toggleGroupBy: (key: string, nextValue: boolean) => void;
   restoreDefault: (key: string) => void;
   getValueOptionsForKey: (key: string, operator: string, inputValue: string) => Promise<Array<ComboboxOption<string>>>;
-  applyChanges: () => void;
+  applyChanges: () => ApplyChangesResult;
 }
 
 interface UseFiltersOverviewStateOptions {
@@ -342,17 +347,14 @@ export function useFiltersOverviewState({
     },
 
     setSingleValue: (key, value) => {
-      reportInteraction('grafana_unified_drilldown_filters_overview_value_changed', { type: 'single' });
       setState((prev) => ({ ...prev, singleValuesByKey: { ...prev.singleValuesByKey, [key]: value } }));
     },
 
     setMultiValues: (key, values) => {
-      reportInteraction('grafana_unified_drilldown_filters_overview_value_changed', { type: 'multi' });
       setState((prev) => ({ ...prev, multiValuesByKey: { ...prev.multiValuesByKey, [key]: values } }));
     },
 
     toggleGroupBy: (key, nextValue) => {
-      reportInteraction('grafana_unified_drilldown_filters_overview_groupby_toggled', { checked: nextValue });
       setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
     },
 
@@ -409,6 +411,9 @@ export function useFiltersOverviewState({
     },
 
     applyChanges: () => {
+      let filtersCount = 0;
+      let groupByCount = 0;
+
       if (useUnifiedGroupBy && adhocFilters) {
         const existingFilters = adhocFilters.state.filters ?? [];
         const existingOriginFilters = adhocFilters.state.originFilters ?? [];
@@ -430,6 +435,9 @@ export function useFiltersOverviewState({
           filters: [...nextFilters, ...nonApplicableFilters, ...groupByFilters],
           originFilters: adhocFilters.validateOriginFilters([...nextOriginFilters, ...nonApplicableOriginFilters]),
         });
+
+        filtersCount = nextFilters.length + nextOriginFilters.length;
+        groupByCount = groupByFilters.length;
       } else {
         if (groupByVariable) {
           const { nextValues, nextText } = buildGroupByUpdate(state.keys, state.isGrouped);
@@ -441,6 +449,8 @@ export function useFiltersOverviewState({
               groupByVariable.setState({ restorable: isRestorable });
             }
           }
+
+          groupByCount = nextValues.length;
         }
 
         if (adhocFilters) {
@@ -459,8 +469,12 @@ export function useFiltersOverviewState({
             filters: [...nextFilters, ...nonApplicableFilters],
             originFilters: adhocFilters.validateOriginFilters([...nextOriginFilters, ...nonApplicableOriginFilters]),
           });
+
+          filtersCount = nextFilters.length + nextOriginFilters.length;
         }
       }
+
+      return { filtersCount, groupByCount };
     },
   };
 

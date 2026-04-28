@@ -208,7 +208,6 @@ export const TimeSeriesPanel = ({
                                 onAddAdHocFilters(groupingFilters);
                                 reportInteraction('grafana_unified_drilldown_tooltip_filter_for', {
                                   filtersCount: groupingFilters.length,
-                                  keys: groupingFilters.map((f) => f.key),
                                 });
                               },
                               onFilterOutGroupedLabels: () => {
@@ -217,7 +216,6 @@ export const TimeSeriesPanel = ({
                                 );
                                 reportInteraction('grafana_unified_drilldown_tooltip_filter_out', {
                                   filtersCount: groupingFilters.length,
-                                  keys: groupingFilters.map((f) => f.key),
                                 });
                               },
                             }

@@ -1,11 +1,11 @@
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 
 import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverviewDrawer } from './DashboardFiltersOverviewDrawer';
+import { reportFiltersOverviewInteraction } from './interactions';
 
 interface Props {
   dashboard: DashboardScene;
@@ -16,7 +16,7 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
   const tooltip = t('dashboards.filters-overview.open', 'Filters overview');
 
   const onClick = () => {
-    reportInteraction('grafana_unified_drilldown_filters_overview_opened');
+    reportFiltersOverviewInteraction('opened');
     dashboard.showModal(new DashboardFiltersOverviewDrawer({}));
   };
 
