@@ -204,7 +204,7 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AuthProxy.HeaderProperty = "username"
 		cfg.AuthProxy.AutoSignUp = true
-		cfg.AuthProxy.CacheTeamSync = true
+		cfg.AuthProxy.CookieCacheLastTeamSync = true
 		return cfg
 	}
 
@@ -319,9 +319,9 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 		assert.Empty(t, rec.Result().Cookies())
 	})
 
-	t.Run("SyncTeams is true and no cookie is written when cache_team_sync is disabled", func(t *testing.T) {
+	t.Run("SyncTeams is true and no cookie is written when cookie_cache_last_team_sync is disabled", func(t *testing.T) {
 		cfg := newCfg()
-		cfg.AuthProxy.CacheTeamSync = false
+		cfg.AuthProxy.CookieCacheLastTeamSync = false
 		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
 
 		// Present a matching cookie that would otherwise cause team sync to be skipped.

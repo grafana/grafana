@@ -97,7 +97,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 	if v, ok := additional[proxyFieldGroups]; ok {
 		identity.Groups = util.SplitString(v)
 
-		if c.cfg.AuthProxy.CacheTeamSync {
+		if c.cfg.AuthProxy.CookieCacheLastTeamSync {
 			// Hash the list of groups and compare it to the hash stored in the client's
 			// cookie. If the hashes match, skip team sync because the teams haven't changed.
 			groupsHash := hashGroups(c.cfg.SecretKey, identity.Groups)

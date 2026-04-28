@@ -8,16 +8,16 @@ import (
 
 type AuthProxySettings struct {
 	// Auth Proxy
-	Enabled          bool
-	HeaderName       string
-	HeaderProperty   string
-	AutoSignUp       bool
-	EnableLoginToken bool
-	Whitelist        string
-	Headers          map[string]string
-	HeadersEncoded   bool
-	SyncTTL          int
-	CacheTeamSync    bool
+	Enabled                 bool
+	HeaderName              string
+	HeaderProperty          string
+	AutoSignUp              bool
+	EnableLoginToken        bool
+	Whitelist               string
+	Headers                 map[string]string
+	HeadersEncoded          bool
+	SyncTTL                 int
+	CookieCacheLastTeamSync bool
 }
 
 func (cfg *Cfg) readAuthProxySettings() {
@@ -41,7 +41,7 @@ func (cfg *Cfg) readAuthProxySettings() {
 	}
 
 	authProxySettings.HeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
-	authProxySettings.CacheTeamSync = authProxy.Key("cache_team_sync").MustBool(false)
+	authProxySettings.CookieCacheLastTeamSync = authProxy.Key("cookie_cache_last_team_sync").MustBool(false)
 
 	cfg.AuthProxy = authProxySettings
 }
