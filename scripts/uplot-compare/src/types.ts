@@ -20,7 +20,7 @@ export type ResolvedPayload = {
 export type AcceptBaselineState =
   | { kind: 'idle' }
   | { kind: 'running'; updateSnapshot: boolean }
-  | { kind: 'success'; updateSnapshot: boolean; stdout: string; stderr: string; command: string; message?: null }
+  | { kind: 'success'; updateSnapshot: boolean; stdout: string; stderr: string; command: string }
   | { kind: 'error'; updateSnapshot?: boolean; message: string; stdout: string; stderr: string; command?: string };
 
 export interface ComparePlotsProps {

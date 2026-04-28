@@ -63,6 +63,30 @@ export function ComparePlots({
 
   const showActualOnly = payload.snapshotAssertionPassed === true;
 
+  const jestKind: 'idle' | 'running' | 'success' | 'error' =
+    acceptBaselineState.kind === 'idle'
+      ? 'idle'
+      : acceptBaselineState.kind === 'running'
+        ? 'running'
+        : acceptBaselineState.kind === 'success'
+          ? 'success'
+          : 'error';
+
+  const jestUpdateSnapshot = acceptBaselineState.kind === 'idle' ? undefined : acceptBaselineState.updateSnapshot;
+
+  const jestMessage = acceptBaselineState.kind === 'error' ? acceptBaselineState.message : undefined;
+
+  const jestCommand =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error'
+      ? acceptBaselineState.command
+      : undefined;
+
+  const jestStdout =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error' ? acceptBaselineState.stdout : '';
+
+  const jestStderr =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error' ? acceptBaselineState.stderr : '';
+
   return (
     <>
       <div className="compare-title-row">
@@ -127,19 +151,17 @@ export function ComparePlots({
               expected={payload.expected}
               actual={payload.actual}
             />
-            {(acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error') && (
-              <JestActions
-                testPath={payload.testPath}
-                kind={acceptBaselineState.kind}
-                onRerunTest={onRerunTest}
-                updateSnapshot={acceptBaselineState.updateSnapshot}
-                onAcceptBaseline={onAcceptBaseline}
-                message={acceptBaselineState.message}
-                command={acceptBaselineState.command}
-                stdout={acceptBaselineState.stdout}
-                stderr={acceptBaselineState.stderr}
-              />
-            )}
+            <JestActions
+              testPath={payload.testPath}
+              kind={jestKind}
+              onRerunTest={onRerunTest}
+              updateSnapshot={jestUpdateSnapshot}
+              onAcceptBaseline={onAcceptBaseline}
+              message={jestMessage}
+              command={jestCommand}
+              stdout={jestStdout}
+              stderr={jestStderr}
+            />
           </div>
         ) : null}
       </div>

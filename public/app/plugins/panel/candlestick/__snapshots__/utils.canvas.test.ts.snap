@@ -660,7 +660,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
         {
           "props": {
             "height": 38,
-            "width": 3,
+            "width": 2,
             "x": 572,
             "y": 191,
           },
