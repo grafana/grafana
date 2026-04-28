@@ -15,11 +15,9 @@ const DEFAULT_PAGE_SIZE = 10;
 
 export interface ContactPointDrawerProps {
   listSearchQuery: string;
-  /** Optional K8s `metadata.name` hint; used to prefer an exact row from the fetched list when available. */
-  receiverResourceId?: string;
 }
 
-export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: ContactPointDrawerProps) {
+export function ContactPointDrawer({ listSearchQuery }: ContactPointDrawerProps) {
   const fetchPolicies = useMemo(() => !shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME), []);
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
@@ -37,9 +35,6 @@ export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: Cont
    * instead of paginated cards.
    */
   const resolvedUniqueContactPoint = useMemo(() => {
-    if (receiverResourceId) {
-      return contactPoints.find((cp) => cp.id === receiverResourceId);
-    }
     if (!trimmedSearch) {
       return undefined;
     }
@@ -51,7 +46,7 @@ export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: Cont
       return fuzzyMatches[0];
     }
     return undefined;
-  }, [contactPoints, receiverResourceId, trimmedSearch, fuzzyMatches]);
+  }, [contactPoints, trimmedSearch, fuzzyMatches]);
 
   const listContactPoints = resolvedUniqueContactPoint ? [resolvedUniqueContactPoint] : contactPoints;
   const searchForList = resolvedUniqueContactPoint ? undefined : trimmedSearch || undefined;
