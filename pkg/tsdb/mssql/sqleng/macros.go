@@ -13,17 +13,97 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-var (
-	reBlockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
-	reLineComment  = regexp.MustCompile(`--[^\n]*`)
-)
-
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
-// from the query string.
+// from the query string. It is quote-aware: comment sequences inside single-quoted
+// string literals, double-quoted identifiers, and T-SQL bracket-quoted identifiers
+// are preserved verbatim.
 func stripSQLComments(sql string) string {
-	sql = reBlockComment.ReplaceAllString(sql, "")
-	sql = reLineComment.ReplaceAllString(sql, "")
-	return sql
+	var out strings.Builder
+	out.Grow(len(sql))
+	i := 0
+	n := len(sql)
+	for i < n {
+		switch {
+		case sql[i] == '\'':
+			// Single-quoted string literal. Pass verbatim; '' is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '\'' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '\'' {
+						// Doubled-quote escape: '' inside a string literal.
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case sql[i] == '"':
+			// Double-quoted identifier. Pass verbatim; "" is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '"' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '"' {
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case sql[i] == '[':
+			// T-SQL bracket-quoted identifier. Pass verbatim; ]] is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == ']' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == ']' {
+						// Doubled-bracket escape: ]] inside a bracket identifier.
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
+			// Block comment: skip to closing */.
+			i += 2
+			for i+1 < n {
+				if sql[i] == '*' && sql[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
+		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
+			// Line comment: skip to end of line (newline is preserved).
+			for i < n && sql[i] != '\n' {
+				i++
+			}
+		default:
+			out.WriteByte(sql[i])
+			i++
+		}
+	}
+	return out.String()
 }
 
 type msSQLMacroEngine struct {

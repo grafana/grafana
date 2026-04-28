@@ -100,9 +100,9 @@ function getDefaultOTelDisplayFormat() {
 }
 
 const OTEL_RESOURCE_ATTRS_REGEX =
-  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_|cluster$|namespace$|pod$)/;
+  /^(aws_|aws\.|cloud_|cloud\.|cloudfoundry_|cloudfoundry\.|container_|container\.|deployment_|deployment\.|faas_|faas\.|gcp_|gcp\.|host_|host\.|k8s_|k8s\.|os_|os\.|process_|process\.|service_|service\.|telemetry_|telemetry\.|cluster$|cluster\.|namespace$|namespace\.|pod$|pod\.)/;
 const OTEL_LOG_FIELDS_REGEX =
-  /^(flags|observed_timestamp|severity_number|severity_text|span_id|trace_id|detected_level)$/;
+  /^(flags|observed_timestamp|observed\.timestamp|severity_number|severity\.number|severity_text|severity\.text|span_id|span\.id|trace_id|trace\.id|detected_level)$/;
 
 export function getOtelAttributesField(log: LogListModel, wrapLogMessage: boolean) {
   const additionalFields = Object.keys(log.labels).filter(

@@ -140,7 +140,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone, user)
+	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, user)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +201,11 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, err
 	}
-	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone, version, user)
+	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, version, user)
 	if err != nil {
 		return nil, false, err
 	}
@@ -245,7 +253,15 @@ func (s *legacyStorage) Delete(
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, alerting_models.ProvenanceNone, version, user) // TODO add support for dry-run option
+	oldTree, ok := old.(*model.RoutingTree)
+	if !ok {
+		return nil, false, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), old.GetObjectKind().GroupVersionKind())
+	}
+	prov, err := alerting_models.ProvenanceFromString(oldTree.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, prov, version, user) // TODO add support for dry-run option
 	return old, false, err
 }
 

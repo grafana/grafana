@@ -331,7 +331,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			existingRepos: func() []provisioning.Repository {
 				repos := make([]provisioning.Repository, 10)
-				for i := 0; i < 10; i++ {
+				for i := range 10 {
 					repos[i] = provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
 					}
@@ -350,7 +350,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			existingRepos: func() []provisioning.Repository {
 				repos := make([]provisioning.Repository, 10)
-				for i := 0; i < 10; i++ {
+				for i := range 10 {
 					repos[i] = provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
 					}
@@ -372,7 +372,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			existingRepos: func() []provisioning.Repository {
 				// 15 repos exist but the limit is 5 — quota was lowered after creation
 				repos := make([]provisioning.Repository, 15)
-				for i := 0; i < 15; i++ {
+				for i := range 15 {
 					repos[i] = provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
 					}
@@ -394,7 +394,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			existingRepos: func() []provisioning.Repository {
 				repos := make([]provisioning.Repository, 20)
-				for i := 0; i < 20; i++ {
+				for i := range 20 {
 					repos[i] = provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
 					}
@@ -412,7 +412,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			existingRepos: func() []provisioning.Repository {
 				repos := make([]provisioning.Repository, 5)
-				for i := 0; i < 5; i++ {
+				for i := range 5 {
 					repos[i] = provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
 					}

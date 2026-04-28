@@ -174,7 +174,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Route = &route
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -382,7 +382,7 @@ func TestResetPolicyTree(t *testing.T) {
 		}
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
@@ -570,7 +570,7 @@ func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_s
 		settings: setting.UnifiedAlertingSettings{
 			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 		},
-		validator: func(from, to models.Provenance) error {
+		validator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
 	}, configStore, prov

@@ -92,6 +92,18 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../clients/rtkq/preferences/org/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/org/baseAPI.ts',
+      filterEndpoints: ['getOrgPreferences', 'updateOrgPreferences', 'patchOrgPreferences'],
+    },
+    '../clients/rtkq/preferences/team/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
+      filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
+    },
     '../clients/rtkq/user/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: defaultHooksOptions,
@@ -103,6 +115,7 @@ const config: ConfigFile = {
     ...createAPIConfig('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
+    ...createAPIConfig('dashboard', 'v2'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),

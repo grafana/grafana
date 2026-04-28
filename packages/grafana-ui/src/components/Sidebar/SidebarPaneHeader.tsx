@@ -14,11 +14,10 @@ import { useSidebarContext } from './useSidebar';
 export interface Props {
   children?: ReactNode;
   title: string;
-  /** Renders immediately after the title, before the flex-grow spacer (stays left-aligned). */
-  titleSuffix?: ReactNode;
+  onGoBack?: () => void;
 }
 
-export function SidebarPaneHeader({ children, title, titleSuffix }: Props) {
+export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
 
@@ -28,7 +27,18 @@ export function SidebarPaneHeader({ children, title, titleSuffix }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      {sidebarContext.onClosePane && (
+      {onGoBack && (
+        <IconButton
+          variant="secondary"
+          size="lg"
+          name="arrow-left"
+          onClick={onGoBack}
+          aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
+          tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
+          data-testid={selectors.components.Sidebar.goBack}
+        />
+      )}
+      {!onGoBack && sidebarContext.onClosePane && (
         <IconButton
           variant="secondary"
           size="lg"
@@ -39,11 +49,9 @@ export function SidebarPaneHeader({ children, title, titleSuffix }: Props) {
           data-testid={selectors.components.Sidebar.closePane}
         />
       )}
-      <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
+      <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
         {title}
       </Text>
-      {titleSuffix}
-      <div className={styles.flexGrow} />
       {children}
     </div>
   );

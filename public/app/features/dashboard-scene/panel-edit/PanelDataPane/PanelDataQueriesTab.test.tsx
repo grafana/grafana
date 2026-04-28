@@ -407,7 +407,7 @@ describe('PanelDataQueriesTab', () => {
       const modelMock = await createModelMock();
       render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
 
-      expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
     });
 
     it('allow to add a new query when user clicks on add new', async () => {

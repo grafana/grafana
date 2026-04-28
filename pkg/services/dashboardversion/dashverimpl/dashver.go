@@ -33,14 +33,8 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl")
 
-const (
-	maxVersionsToDeletePerBatch = 100
-	maxVersionDeletionBatches   = 50
-)
-
 type Service struct {
 	cfg       *setting.Cfg
-	store     store
 	dashSvc   dashboards.DashboardService
 	k8sclient dashboardclient.K8sHandlerWithFallback
 	features  featuremgmt.FeatureToggles
@@ -55,11 +49,7 @@ func ProvideService(
 	clientWithFallback dashboardclient.K8sHandlerWithFallback,
 ) dashver.Service {
 	return &Service{
-		cfg: cfg,
-		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-		},
+		cfg:       cfg,
 		features:  features,
 		k8sclient: clientWithFallback,
 		dashSvc:   dashboardService,
@@ -82,37 +72,6 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 	}
 
 	return s.transformUnstructuredToLegacyDTO(ctx, versionObj)
-}
-
-func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	versionsToKeep := s.cfg.DashboardVersionsToKeep
-	if versionsToKeep < 1 {
-		versionsToKeep = 1
-	}
-
-	for batch := 0; batch < maxVersionDeletionBatches; batch++ {
-		versionIdsToDelete, batchErr := s.store.GetBatch(ctx, cmd, maxVersionsToDeletePerBatch, versionsToKeep)
-		if batchErr != nil {
-			return batchErr
-		}
-
-		if len(versionIdsToDelete) < 1 {
-			return nil
-		}
-
-		deleted, err := s.store.DeleteBatch(ctx, cmd, versionIdsToDelete)
-		if err != nil {
-			return err
-		}
-
-		cmd.DeletedRows += deleted
-
-		if deleted < int64(maxVersionsToDeletePerBatch) {
-			break
-		}
-	}
-
-	return nil
 }
 
 // List all dashboard versions for the given dashboard ID.

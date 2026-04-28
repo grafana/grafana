@@ -350,7 +350,7 @@ const TeamList = () => {
                 <InteractiveTable
                   columns={columns}
                   data={isLoading ? skeletonData : teams}
-                  getRowId={(team) => String(team.id)}
+                  getRowId={(team) => String(team.uid)}
                   fetchData={({ sortBy }) => {
                     const sortingRule = sortBy.at(0);
                     if (sortingRule) {

@@ -192,14 +192,13 @@
   {
     "action": "alert.notifications.routes:read",
     "roles": [
-      "fixed:alerting.legacy.config:reader",
-      "fixed:alerting.legacy.config:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
     "action": "alert.notifications.routes:write",
     "roles": [
-      "fixed:alerting.legacy.config:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
@@ -276,22 +275,13 @@
   {
     "action": "alert.notifications:read",
     "roles": [
-      "fixed:alerting.legacy:reader",
-      "fixed:alerting.legacy:writer",
-      "fixed:alerting.notifications:reader",
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:reader",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
     "action": "alert.notifications:write",
     "roles": [
-      "fixed:alerting.legacy:writer",
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {

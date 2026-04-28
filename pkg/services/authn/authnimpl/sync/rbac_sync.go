@@ -188,7 +188,7 @@ func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string)
 		case len(groupResource) == 2:
 			// Case group/resource:verb
 			resource := groupResource[1]
-			resourceMappings, ok := s.mapper.Get(group, resource)
+			resourceMappings, ok := s.mapper.Get(group, resource, "")
 			if !ok {
 				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
 				continue

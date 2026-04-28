@@ -50,6 +50,7 @@ func TestIntegration_DeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that is connected, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
 				{
 					UID: "dash-1",
@@ -62,23 +63,9 @@ func TestIntegration_DeleteLibraryElement(t *testing.T) {
 			require.Equal(t, 403, resp.Status())
 		})
 
-	scenarioWithPanel(t, "When an admin tries to delete a library panel with a stale connection table entry, it should succeed",
-		func(t *testing.T, sc scenarioContext) {
-			// Write a stale row to library_element_connection (simulates pre-unified-storage state)
-			// nolint:staticcheck
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 9999999)
-			require.NoError(t, err)
-
-			// The search service says there are no real connections — deletion should succeed
-			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{}, nil)
-
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			resp := sc.service.deleteHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-		})
-
 	scenarioWithPanel(t, "When a non-admin user cannot see a connected dashboard, deletion should still be blocked",
 		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
 			// Downgrade user to Editor, so they can delete library panels but cannot see all folders/dashboards
 			sc.reqContext.OrgRole = org.RoleEditor
 

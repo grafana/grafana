@@ -85,6 +85,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"bulk import large counter CRUD", runTestBulkImportLargeCounterCRUD},
 		{"last import time cross backend", runTestLastImportTimeCrossBackend},
 		{"cluster scoped resources compatibility", runTestClusterScopedResources},
+		{"cross backend rv list compatibility", runTestCrossBackendRVListCompatibility},
 	}
 
 	for _, tc := range cases {
@@ -119,15 +120,15 @@ func newIntegrationTestContext(t *testing.T) context.Context {
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Test SQL backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
 	})
 
 	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
 	})
 }
@@ -289,18 +290,18 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 // runTestSQLBackendFieldsCompatibility tests that KV backend with RvManager populates all SQL backend legacy fields
 func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Create unique namespace for isolation
 	namespace := nsPrefix + "-fields-test"
 
 	// Test SQL backend with 3 resources through complete lifecycle
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, sqlBackend, namespace+"-sql", db, ctx)
 	})
 
 	// Test KV backend with 3 resources through complete lifecycle
 	t.Run("KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, kvBackend, namespace+"-kv", db, ctx)
 	})
 }
@@ -2670,5 +2671,85 @@ func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestCon
 		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
 			alphaName(1), betaName(1),
 		})
+	})
+}
+
+// runTestCrossBackendRVListCompatibility verifies that a ResourceVersion obtained
+// from one backend can be used to list a point-in-time snapshot from the other
+// backend. This exercises cross-format RV handling (microsecond ↔ snowflake).
+func runTestCrossBackendRVListCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, _ sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	// testCrossBackendList creates resources via backend A, captures a
+	// point-in-time RV, creates more resources, then lists from backend B
+	// using A's RV. Backend B must return only the resources that existed at
+	// A's RV — not the ones created afterward. This catches missing RV
+	// format conversions: without conversion, a snowflake RV (very large)
+	// passed to the SQL backend would match all rows via `<= RV`, and a
+	// microsecond RV (very small) passed to the KV backend would match none.
+	testCrossBackendList := func(t *testing.T, serverA, serverB resource.ResourceServer, expectSnowflakeRV bool, ns string) {
+		listOpts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: ns,
+		}}
+
+		// Create 2 resources via backend A.
+		for i := 1; i <= 2; i++ {
+			createPlaylistResource(t, serverA, ctx, PlaylistResourceOptions{
+				Name:       fmt.Sprintf("res-%d", i),
+				Namespace:  ns,
+				UID:        fmt.Sprintf("uid-%d", i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Playlist %d", i),
+			})
+		}
+
+		// List from backend A to capture a point-in-time RV.
+		listA, err := serverA.List(ctx, &resourcepb.ListRequest{Options: listOpts})
+		require.NoError(t, err)
+		require.Nil(t, listA.Error)
+		require.Len(t, listA.Items, 2)
+		rvFromA := listA.ResourceVersion
+		require.Greater(t, rvFromA, int64(0))
+		require.Equal(t, expectSnowflakeRV, resource.IsSnowflake(rvFromA), "RV format should match the producing backend")
+
+		// Create 2 more resources after the captured RV.
+		for i := 3; i <= 4; i++ {
+			createPlaylistResource(t, serverA, ctx, PlaylistResourceOptions{
+				Name:       fmt.Sprintf("res-%d", i),
+				Namespace:  ns,
+				UID:        fmt.Sprintf("uid-%d", i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Playlist %d", i),
+			})
+		}
+
+		// Sanity: listing latest from A should return all 4 items.
+		listAll, err := serverA.List(ctx, &resourcepb.ListRequest{Options: listOpts})
+		require.NoError(t, err)
+		require.Nil(t, listAll.Error)
+		require.Len(t, listAll.Items, 4)
+
+		// List from backend B at A's RV — must return exactly the 2
+		// resources that existed at that point, not all 4.
+		listB, err := serverB.List(ctx, &resourcepb.ListRequest{
+			ResourceVersion: rvFromA,
+			Options:         listOpts,
+		})
+		require.NoError(t, err)
+		require.Nil(t, listB.Error)
+		require.Len(t, listB.Items, 2, "listing with cross-backend RV should return only the resources that existed at that RV")
+	}
+
+	t.Run("SQL to KV", func(t *testing.T) {
+		testCrossBackendList(t, sqlServer, kvServer, false, nsPrefix+"-rv-sql2kv")
+	})
+
+	t.Run("KV to SQL", func(t *testing.T) {
+		testCrossBackendList(t, kvServer, sqlServer, true, nsPrefix+"-rv-kv2sql")
 	})
 }

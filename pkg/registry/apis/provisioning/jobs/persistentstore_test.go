@@ -112,7 +112,7 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 
 	// Do 3 consecutive lease renewals. After each, the in-memory RV should
 	// stay in sync with K8s.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		err = store.RenewLease(ctx, jobInMemory)
 		require.NoError(t, err, "RenewLease iteration %d", i)
 

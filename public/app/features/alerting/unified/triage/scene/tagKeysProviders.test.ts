@@ -83,7 +83,7 @@ describe('tagKeysProviders', () => {
   });
 
   describe('getAdHocTagKeysProvider', () => {
-    it('should show promoted labels first and remaining sorted under All', async () => {
+    it('should return all labels sorted under All', async () => {
       mockGetDataSourceSrv({
         getTagKeys: jest.fn().mockResolvedValue([
           { text: 'alertstate', value: 'alertstate' },
@@ -107,13 +107,20 @@ describe('tagKeysProviders', () => {
       expect(result.replace).toBe(true);
       expect(result.values).toEqual(
         expect.arrayContaining([
-          { value: 'alertstate', text: 'State', group: 'Common' },
-          { value: 'alertname', text: 'Rule name', group: 'Common' },
-          { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+          { text: 'alertstate', value: 'alertstate', group: 'All' },
+          { text: 'alertname', value: 'alertname', group: 'All' },
+          { text: 'grafana_folder', value: 'grafana_folder', group: 'All' },
+          { text: 'environment', value: 'environment', group: 'All' },
+          { text: 'severity', value: 'severity', group: 'All' },
+          { text: 'team', value: 'team', group: 'All' },
+        ])
+      );
+      expect(result.values).not.toEqual(expect.arrayContaining([expect.objectContaining({ group: 'Common' })]));
+      expect(result.values).not.toEqual(
+        expect.arrayContaining([
           { value: 'service', text: 'Service', group: 'Common' },
           { text: 'Team', value: 'team', group: 'Common' },
           { text: 'Namespace', value: 'namespace', group: 'Common' },
-          { text: 'environment', value: 'environment', group: 'All' },
         ])
       );
       expect(result.values).not.toEqual(expect.arrayContaining([{ text: 'service', value: 'service', group: 'All' }]));
@@ -260,6 +267,38 @@ describe('tagKeysProviders', () => {
         { text: 'identity', value: 'identity' },
         { text: 'observability', value: 'observability' },
         { text: 'payments', value: 'payments' },
+      ]);
+    });
+
+    it('merges and deduplicates values for combined severity key', async () => {
+      const getTagValues = jest.fn().mockImplementation(({ key }: { key: string }) => {
+        if (key === 'severity') {
+          return [{ text: 'critical', value: 'critical' }];
+        }
+        if (key === 'priority') {
+          return [{ text: 'P1', value: 'P1' }];
+        }
+        if (key === 'loglevel') {
+          return [{ text: 'critical', value: 'critical' }];
+        }
+        return [];
+      });
+
+      mockGetDataSourceSrv({ getTagValues });
+
+      const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
+      activateWithScene(variable);
+
+      const result = await getAdHocTagValuesProvider(variable, {
+        key: 'severity',
+        operator: '=',
+        value: '',
+      });
+
+      expect(result.replace).toBe(true);
+      expect(result.values).toEqual([
+        { text: 'critical', value: 'critical' },
+        { text: 'P1', value: 'P1' },
       ]);
     });
   });

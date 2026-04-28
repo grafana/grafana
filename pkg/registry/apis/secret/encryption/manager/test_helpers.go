@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,18 +60,19 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 type NoopDataKeyCache struct {
 }
 
-func (c *NoopDataKeyCache) GetById(namespace, id string) (encryption.DataKeyCacheEntry, bool) {
-	return encryption.DataKeyCacheEntry{}, false
+func (c *NoopDataKeyCache) GetById(_ context.Context, namespace, id string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, nil
 }
 
-func (c *NoopDataKeyCache) GetByLabel(namespace, label string) (encryption.DataKeyCacheEntry, bool) {
-	return encryption.DataKeyCacheEntry{}, false
+func (c *NoopDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, nil
 }
 
-func (c *NoopDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *NoopDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
+	return nil
 }
 
-func (c *NoopDataKeyCache) RemoveExpired() {
+func (c *NoopDataKeyCache) RemoveExpired(_ context.Context) {
 }
 
-func (c *NoopDataKeyCache) Flush(namespace string) {}
+func (c *NoopDataKeyCache) Flush(_ context.Context, namespace string) {}

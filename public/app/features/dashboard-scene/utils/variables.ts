@@ -8,6 +8,8 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
+  sceneGraph,
+  type SceneObject,
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
@@ -24,6 +26,20 @@ import { createSceneVariableFromVariableModel as createSceneVariableFromVariable
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
+
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Excludes internal system variables (e.g. ScopesVariable)
+ */
+export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+}
+
+export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const { variables } = sceneGraph.getVariables(model).useState();
+  return variables.filter(keepOnlyUserDefinedVariables);
+}
 
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
   const variables = migrateGroupByVariablesV1(oldModel.templating.list);
@@ -80,7 +96,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            layout: 'combobox',
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
@@ -179,9 +195,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
-      layout: 'combobox',
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
@@ -312,11 +328,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
     });

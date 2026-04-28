@@ -349,8 +349,9 @@ describe('Logs', () => {
 
   it('should flip the order', async () => {
     setup();
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    // Sort toggle is an IconButton; aria-label comes from the tooltip (newest-first → click for oldest-first).
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
     expect(logRows.length).toBe(3);
@@ -362,8 +363,8 @@ describe('Logs', () => {
   it('should sync the query direction when changing the order of loki queries', async () => {
     const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).toHaveBeenCalledWith({
       exploreId: 'left',
       queries: [{ ...query, direction: LokiQueryDirection.Forward }],
@@ -375,8 +376,8 @@ describe('Logs', () => {
     fakeChangeQueries.mockClear();
     const query = { refId: 'B' };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 

@@ -1049,7 +1049,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {

@@ -117,7 +117,7 @@ describe('SharedPreferences', () => {
       await screen.findByRole('combobox', { name: /home dashboard/i }),
       new RegExp(dashboardToSelect.title)
     );
-    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
+    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /language/i }), 'Français');
 
@@ -135,6 +135,10 @@ describe('SharedPreferences', () => {
         homeTab: '',
       },
       language: 'fr-FR',
+      regionalFormat: '',
+      navbar: {
+        bookmarkUrls: [],
+      },
     });
   });
 
@@ -166,6 +170,10 @@ describe('SharedPreferences', () => {
         homeTab: '',
       },
       language: '',
+      regionalFormat: '',
+      navbar: {
+        bookmarkUrls: [],
+      },
     });
   });
 

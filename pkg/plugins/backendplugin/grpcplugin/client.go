@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -41,7 +40,6 @@ var pluginSet = map[int]goplugin.PluginSet{
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
 		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
-		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	},
 }
 
@@ -126,9 +124,6 @@ func containerClientConfig(executablePath, containerImage, containerTag string, 
 	}
 }
 
-// StartRendererFunc callback function called when a renderer plugin is started.
-type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
-
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
@@ -139,7 +134,6 @@ type PluginDescriptor struct {
 	containerMode    containerModeOpts
 	runnerFunc       func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	versionedPlugins map[int]goplugin.PluginSet
-	startRendererFn  StartRendererFunc
 }
 
 type containerModeOpts struct {
@@ -167,16 +161,5 @@ func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnv
 		skipHostEnvVars:  skipHostEnvVars,
 		managed:          managed,
 		versionedPlugins: pluginSet,
-	})
-}
-
-// NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
-func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFunc) backendplugin.PluginFactoryFunc {
-	return newPlugin(PluginDescriptor{
-		pluginID:         pluginID,
-		executablePath:   executablePath,
-		managed:          false,
-		versionedPlugins: pluginSet,
-		startRendererFn:  startFn,
 	})
 }

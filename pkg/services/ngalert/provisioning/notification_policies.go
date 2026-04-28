@@ -31,14 +31,14 @@ type NotificationPolicyService struct {
 }
 
 func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
-	xact TransactionManager, routeService managedRoutesService, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
+	xact TransactionManager, routeService managedRoutesService, settings setting.UnifiedAlertingSettings, log log.Logger, validator validation.ProvenanceStatusTransitionValidator) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		configStore:     am,
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
 		settings:        settings,
-		validator:       validation.ValidateProvenanceRelaxed,
+		validator:       validator,
 		routeService:    routeService,
 	}
 }
@@ -84,7 +84,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.validator(ctx, storedProvenance, p); err != nil {
 		return definitions.Route{}, "", err
 	}
 
@@ -120,7 +120,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	if err := nps.validator(storedProvenance, provenance); err != nil {
+	if err := nps.validator(ctx, storedProvenance, provenance); err != nil {
 		return definitions.Route{}, err
 	}
 

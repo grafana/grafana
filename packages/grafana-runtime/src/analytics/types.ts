@@ -10,7 +10,6 @@ import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
  */
 export interface DashboardInfo {
   /** @deprecated -- use UID not internal ID */
-  dashboardId: number;
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;

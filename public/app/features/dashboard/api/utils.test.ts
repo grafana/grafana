@@ -141,33 +141,32 @@ describe('getDashboardsApiVersion', () => {
   });
 
   it.each([
-    [{ dashboardScene: false, kubernetesDashboards: true }, undefined, 'v1'],
-    [{ dashboardScene: false, kubernetesDashboards: false }, undefined, 'legacy'],
-    [{ dashboardScene: true, kubernetesDashboards: true }, undefined, 'unified'],
-    [{ dashboardScene: true, kubernetesDashboards: false }, undefined, 'legacy'],
-    [{ dashboardScene: true, kubernetesDashboards: true }, 'v1', 'v1'],
-    [{ dashboardScene: true, kubernetesDashboards: true, dashboardNewLayouts: true }, undefined, 'v2'],
+    [{ kubernetesDashboards: true }, undefined, 'unified'],
+    [{ kubernetesDashboards: false }, undefined, 'legacy'],
+    [{ kubernetesDashboards: true }, 'v1', 'v1'],
+    [{ kubernetesDashboards: true, dashboardNewLayouts: true }, undefined, 'v2'],
   ])('with toggles %j and responseFormat %s returns %s', (toggles, responseFormat, expected) => {
     config.featureToggles = toggles;
     expect(getDashboardsApiVersion(responseFormat as 'v1' | 'v2' | undefined)).toBe(expected);
   });
 
   it('throws when requesting v2 without kubernetes dashboards', () => {
-    config.featureToggles = { dashboardScene: true, kubernetesDashboards: false };
+    config.featureToggles = { kubernetesDashboards: false };
     expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported');
   });
 
   it('throws when requesting v2 with legacy architecture', () => {
-    config.featureToggles = { dashboardScene: false, kubernetesDashboards: true };
+    locationService.push('/test?scenes=false');
+    config.featureToggles = { kubernetesDashboards: true };
     expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported for legacy');
   });
 
   describe('URL override scenes=false', () => {
-    beforeAll(() => locationService.push('/test?scenes=false'));
+    beforeEach(() => locationService.push('/test?scenes=false'));
 
     it.each([
-      [{ dashboardScene: false, kubernetesDashboards: false }, 'legacy'],
-      [{ dashboardScene: false, kubernetesDashboards: true }, 'v1'],
+      [{ kubernetesDashboards: false }, 'legacy'],
+      [{ kubernetesDashboards: true }, 'v1'],
     ])('with toggles %j returns %s', (toggles, expected) => {
       config.featureToggles = toggles;
       expect(getDashboardsApiVersion()).toBe(expected);

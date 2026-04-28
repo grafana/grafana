@@ -25,6 +25,12 @@ if [ -n "${GOARM:-}" ]; then
   ARCH_LABEL="${ARCH}-${GOARM}"
 fi
 
+# Match daggerbuild RPI flag: armv6 packages use a -rpi suffix (grafana-rpi, grafana-enterprise-rpi).
+DEB_PACKAGE_NAME="${TARGZ_PACKAGE_NAME}"
+if [ "${GOARM:-}" = "6" ]; then
+  DEB_PACKAGE_NAME="${TARGZ_PACKAGE_NAME}-rpi"
+fi
+
 # Match pkg/build/daggerbuild/backend.PackageArch: arm -> armhf.
 PKG_ARCH="${ARCH}"
 if [ "${ARCH}" = "arm" ]; then
@@ -51,7 +57,7 @@ PKG="${STAGING}/pkg"
 
 mkdir -p "${SRC}"
 
-echo "build deb: ${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
+echo "build deb: ${DEB_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
 
 tar --exclude=storybook --strip-components=1 -xf "${TARGZ}" -C "${SRC}"
 
@@ -70,6 +76,11 @@ cp \
   "${SRC}/packaging/wrappers/grafana-server" \
   "${SRC}/packaging/wrappers/grafana-cli" \
   "${PKG}/usr/sbin/"
+# System files in /usr/sbin must have 0755 or less permissive.
+chmod 0755 \
+  "${PKG}/usr/sbin/grafana" \
+  "${PKG}/usr/sbin/grafana-server" \
+  "${PKG}/usr/sbin/grafana-cli"
 
 # Copy full grafana tree under /usr/share/grafana.
 cp -r "${SRC}" "${PKG}/usr/share/grafana"
@@ -78,8 +89,11 @@ cp -r "${SRC}" "${PKG}/usr/share/grafana"
 cp "${SRC}/packaging/deb/default/grafana-server"              "${PKG}/etc/default/grafana-server"
 cp "${SRC}/packaging/deb/init.d/grafana-server"               "${PKG}/etc/init.d/grafana-server"
 cp "${SRC}/packaging/deb/systemd/grafana-server.service"      "${PKG}/usr/lib/systemd/system/grafana-server.service"
+# Config files must have 0644 or less permissive; init.d scripts must have 0755 or less permissive.
+chmod 0755 "${PKG}/etc/init.d/grafana-server"
+chmod 0644 "${PKG}/etc/default/grafana-server"
 
-FILENAME="${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
+FILENAME="${DEB_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
 
 mkdir -p dist
 
@@ -101,9 +115,9 @@ fpm \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
   --license="${FPM_LICENSE:-AGPLv3}" \
-  --name="${TARGZ_PACKAGE_NAME}" \
+  --name="${DEB_PACKAGE_NAME}" \
   --deb-no-default-config-files \
-  --deb-compression zst \
+  --deb-compression xz \
   .
 
 echo "created dist/${FILENAME}"

@@ -98,6 +98,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  /** Original child index of the dragged item before it was detached from its source layout */
+  private _sourceOriginalIndex: number | null = null;
   private _tabDragState: TabDragState | undefined;
   /** Stored pointerup handler for new-panel drag so we can remove it */
   private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
@@ -145,6 +147,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._sourceDropTarget = dropTarget;
     this._lastDropTarget = dropTarget;
+    this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
 
     // Capture the offset from cursor to item's top-left corner
     this._captureDragOffset(evt.clientX, evt.clientY, gridItem);
@@ -171,27 +174,49 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const sourceDropTarget = this._sourceDropTarget;
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
+    const sourceOriginalIndex = this._sourceOriginalIndex;
 
-    // Check if there's a valid drop target under the mouse
-    // (tab headers and other non-drop areas return null)
+    // Fresh target under the pointer at drop time takes priority over
+    // lastDropTarget which may be stale if pointermove events were coalesced.
     const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
+    const effectiveDropTarget = validDropTargetUnderMouse ?? lastDropTarget;
 
-    // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
-    // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
-    const noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
-    const canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
+    // When effectiveDropTarget differs from lastDropTarget (e.g. due to coalesced
+    // pointermove), clear stale visual drop state on the previous target so it
+    // doesn't keep showing a placeholder/highlight after the drop.
+    if (effectiveDropTarget !== lastDropTarget && lastDropTarget) {
+      lastDropTarget.setDropPosition?.(null);
+      lastDropTarget.setIsDropTarget?.(false);
+      this._currentDropPosition = null;
+      this._lastHoveredAutoGridItemKey = null;
+    }
 
-    if (canDropIntoCurrentTab) {
-      // Drop into the current tab's layout
+    // TabsLayoutManager is not a valid panel drop target — it represents the
+    // tab bar area between tab headers. Cancel the drop so the panel either
+    // stays in place or returns to its source layout.
+    if (effectiveDropTarget instanceof TabsLayoutManager) {
+      this._clearDropPosition();
+      this._lastDropTarget?.setIsDropTarget?.(false);
+
+      if (wasDetached && gridItem) {
+        setTimeout(() => {
+          sourceDropTarget?.draggedGridItemInside?.(gridItem, sourceOriginalIndex ?? undefined);
+          if (sourceDropTarget instanceof AutoGridLayoutManager) {
+            sourceDropTarget.state.layout.endExternalDrag();
+          }
+        });
+      }
+    } else if (wasDetached && !validDropTargetUnderMouse && gridItem && effectiveDropTarget instanceof TabItem) {
+      // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
+      // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
       setTimeout(() => {
-        lastDropTarget.draggedGridItemInside?.(gridItem);
-        // Clean up source grid state
+        effectiveDropTarget.draggedGridItemInside?.(gridItem);
         if (sourceDropTarget instanceof AutoGridLayoutManager) {
           sourceDropTarget.state.layout.endExternalDrag();
         }
       });
     } else {
-      const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
+      const isCrossLayoutDrop = sourceDropTarget !== effectiveDropTarget || wasDetached;
 
       // Handle cross-layout or cross-tab drop
       if (isCrossLayoutDrop) {
@@ -205,7 +230,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             }
             // Pass drop position for precise placement (AutoGrid uses this)
             // Note: draggedGridItemInside also clears isDropTarget and dropPosition
-            lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
+            effectiveDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
 
             // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
             // This is done here (after movement) to prevent flickering where the item
@@ -239,6 +264,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
+    this._sourceOriginalIndex = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
 
@@ -276,9 +302,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
 
     const draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
-    if (this._sourceDropTarget instanceof TabsLayoutManager) {
-      this._sourceDropTarget.forceSelectTab(draggedTabId);
-    }
 
     // Calculate dimensions of the dragged tab header and cache for cross-manager placeholder sizing
     const draggedHeaderEl = draggedTab?.containerRef?.current ?? undefined;
@@ -792,6 +815,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         }
       }
     }
+  }
+
+  private _getGridItemIndex(gridItem: SceneGridItemLike): number | null {
+    if (this._sourceDropTarget instanceof AutoGridLayoutManager) {
+      const children = this._sourceDropTarget.state.layout.state.children;
+      const idx = children.findIndex((child) => child === gridItem);
+      return idx >= 0 ? idx : null;
+    }
+    return null;
   }
 
   private _getItemLabel(gridItem: SceneGridItemLike): string {
