@@ -1,0 +1,66 @@
+{
+  "name": "Bright pink",
+  "id": "brightpink",
+  "colors": {
+    "mode": "light",
+    "border": {
+      "weak": "rgba(255, 20, 147, 0.15)",
+      "medium": "rgba(255, 20, 147, 0.30)",
+      "strong": "rgba(255, 20, 147, 0.45)"
+    },
+    "text": {
+      "primary": "#2D0A1E",
+      "secondary": "rgba(45, 10, 30, 0.75)",
+      "disabled": "rgba(45, 10, 30, 0.5)",
+      "link": "#D6006F",
+      "maxContrast": "#000000"
+    },
+    "primary": {
+      "main": "#FF1493"
+    },
+    "secondary": {
+      "main": "#FFE4EC",
+      "text": "rgba(45, 10, 30, 0.75)",
+      "border": "rgba(255, 20, 147, 0.20)"
+    },
+    "info": {
+      "main": "#D6006F",
+      "text": "#A30055"
+    },
+    "error": {
+      "main": "#CC0044",
+      "text": "#990033"
+    },
+    "success": {
+      "main": "#008060",
+      "text": "#006650"
+    },
+    "warning": {
+      "main": "#CC5500",
+      "text": "#994400"
+    },
+    "background": {
+      "canvas": "#FFF0F5",
+      "primary": "#FFFFFF",
+      "secondary": "#FFE4EC",
+      "elevated": "#FFFFFF"
+    },
+    "action": {
+      "hover": "rgba(255, 20, 147, 0.12)",
+      "selected": "rgba(255, 20, 147, 0.18)",
+      "selectedBorder": "#FF1493",
+      "focus": "rgba(255, 20, 147, 0.16)",
+      "hoverOpacity": 0.08,
+      "disabledText": "rgba(45, 10, 30, 0.38)",
+      "disabledBackground": "rgba(255, 20, 147, 0.08)",
+      "disabledOpacity": 0.38
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, #FF1493 0%, #FF69B4 100%)",
+      "brandVertical": "linear-gradient(0.01deg, #FF1493 0.01%, #FF69B4 99.99%)"
+    },
+    "contrastThreshold": 3,
+    "hoverFactor": 0.03,
+    "tonalOffset": 0.15
+  }
+}

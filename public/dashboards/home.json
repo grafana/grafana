@@ -53,6 +53,23 @@
       },
       "title": "Latest from the blog",
       "type": "news"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "id": 5,
+      "links": [],
+      "options": {
+        "content": "### Grafana on GitHub\n\n[Open the Grafana repository](https://github.com/grafana/grafana)",
+        "mode": "markdown"
+      },
+      "title": "Navigation",
+      "type": "text"
     }
   ],
   "schemaVersion": 22,
