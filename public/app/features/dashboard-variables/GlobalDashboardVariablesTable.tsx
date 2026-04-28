@@ -48,12 +48,17 @@ export function GlobalDashboardVariablesTable({ groups, onEdit, onDelete }: Prop
   }
 
   return (
-    <table className={cx('filter-table filter-table--hover')} role="grid">
+    <table className={cx('filter-table filter-table--hover', styles.table)} role="grid">
+      <colgroup>
+        <col />
+        <col className={styles.kindCol} />
+        <col className={styles.actionsCol} />
+      </colgroup>
       <thead>
         <tr>
           <th>{t('global-variables.table.name', 'Name')}</th>
-          <th>{t('global-variables.table.kind', 'Kind')}</th>
-          <th style={{ width: '1%' }} />
+          <th className={styles.kindColumn}>{t('global-variables.table.kind', 'Kind')}</th>
+          <th />
         </tr>
       </thead>
       <tbody>
@@ -90,7 +95,7 @@ export function GlobalDashboardVariablesTable({ groups, onEdit, onDelete }: Prop
                     </Text>
                   </button>
                 </td>
-                <td />
+                <td className={styles.kindColumn} />
                 <td />
               </tr>
               {isOpen &&
@@ -101,16 +106,11 @@ export function GlobalDashboardVariablesTable({ groups, onEdit, onDelete }: Prop
                       <td className={styles.clickableCell} onClick={() => onEdit(row)}>
                         <div className={styles.childNameLabel}>{spec.spec.name ?? row.metadata.name}</div>
                       </td>
-                      <td className={styles.clickableCell} onClick={() => onEdit(row)}>
+                      <td className={cx(styles.clickableCell, styles.kindColumn)} onClick={() => onEdit(row)}>
                         {spec.kind ?? '—'}
                       </td>
                       <td onClick={(event) => event.stopPropagation()}>
                         <Stack direction="row" gap={0}>
-                          <IconButton
-                            name="pen"
-                            tooltip={t('global-variables.table.edit', 'Edit')}
-                            onClick={() => onEdit(row)}
-                          />
                           <IconButton
                             name="trash-alt"
                             tooltip={t('global-variables.table.delete', 'Delete')}
@@ -130,6 +130,9 @@ export function GlobalDashboardVariablesTable({ groups, onEdit, onDelete }: Prop
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  table: css({
+    tableLayout: 'fixed',
+  }),
   singleBackgroundRows: css({
     backgroundColor: theme.colors.background.primary,
     'tbody tr, tbody tr:nth-of-type(odd), tbody tr:nth-of-type(even)': {
@@ -162,5 +165,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   clickableCell: css({
     cursor: 'pointer',
+  }),
+  kindColumn: css({
+    textAlign: 'left',
+  }),
+  kindCol: css({
+    width: '30%',
+  }),
+  actionsCol: css({
+    width: '1%',
   }),
 });
