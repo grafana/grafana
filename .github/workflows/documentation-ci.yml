@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: grafana/writers-toolkit/vale-action@vale-action/v1 # zizmor: ignore[unpinned-uses]
+      - uses: grafana/writers-toolkit/vale-action@vale-action/v2 # zizmor: ignore[unpinned-uses]
         continue-on-error: ${{ github.event_name == 'pull_request' || inputs.non-blocking == true }}
         with:
           filter: '.Name in ["Grafana.GrafanaCom", "Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
