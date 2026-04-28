@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -397,7 +398,7 @@ func getFromBothAPIs(t *testing.T,
 	helper *apis.K8sTestHelper,
 	client *apis.K8sResourceClient,
 	uid string,
-	// Optionally match some expect some values
+// Optionally match some expect some values
 	expect *folder.Folder,
 ) *unstructured.Unstructured {
 	t.Helper()
@@ -2434,12 +2435,7 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 	}
 }
 
-// TestIntegrationFolderMaxDepthReturns400 guards against the regression that
-// fired alert #1782995: the folder admission validator returned a bare Go
-// error for the max-depth check, which the k8s apiserver could not convert
-// to a metav1.Status, so it surfaced as HTTP 500 instead of 400. The test
-// creates the maximum allowed nesting and then attempts one folder beyond
-// it; the response must be HTTP 400 BadRequest, not 500 InternalError.
+// TestIntegrationFolderMaxDepthReturns400 asserts k8s apiserver can convert error to a metav1.Status
 func TestIntegrationFolderMaxDepthReturns400(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	if !db.IsTestDbSQLite() {
@@ -2493,4 +2489,12 @@ func TestIntegrationFolderMaxDepthReturns400(t *testing.T) {
 		"apiserver surfaced max-depth error as HTTP 500 (regression of alert #1782995): %v", err)
 	require.Truef(t, apierrors.IsBadRequest(err),
 		"expected HTTP 400 BadRequest from max-depth violation; got: %v (%T)", err, err)
+
+	// Provisioning parses this message — keep format stable.
+	const expectedMsg = "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4"
+	var statusErr *apierrors.StatusError
+	require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+	require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+	require.Equal(t, expectedMsg, statusErr.ErrStatus.Message)
+	require.Equal(t, expectedMsg, err.Error())
 }
