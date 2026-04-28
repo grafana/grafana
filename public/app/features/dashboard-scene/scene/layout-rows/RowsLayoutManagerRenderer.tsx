@@ -91,6 +91,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                   size="sm"
                   onClick={() => model.addNewRow()}
                   onPointerUp={(evt) => evt.stopPropagation()}
+                  onPointerDown={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.addRow}
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
@@ -102,6 +103,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                     size="sm"
                     onClick={() => model.pasteRow()}
                     onPointerUp={(evt) => evt.stopPropagation()}
+                    onPointerDown={(evt) => evt.stopPropagation()}
                     data-testid={selectors.components.CanvasGridAddActions.pasteRow}
                   >
                     <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
@@ -112,6 +114,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                   variant="secondary"
                   size="sm"
                   onClick={() => model.ungroupRows()}
+                  onPointerUp={(evt) => evt.stopPropagation()}
+                  onPointerDown={(evt) => evt.stopPropagation()}
                   data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
                 >
                   <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>

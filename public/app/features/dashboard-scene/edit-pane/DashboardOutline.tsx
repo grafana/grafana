@@ -33,7 +33,10 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
+      <Sidebar.PaneHeader
+        title={t('dashboard.outline.pane-header', 'Content outline')}
+        onGoBack={editPane.getOnGetBackCallback()}
+      />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
           <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />

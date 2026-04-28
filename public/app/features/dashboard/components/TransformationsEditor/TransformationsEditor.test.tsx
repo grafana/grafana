@@ -27,14 +27,14 @@ describe('TransformationsEditor', () => {
   });
 
   describe('when transformations configured', () => {
-    it('renders transformation editors', () => {
+    it('renders transformation editors', async () => {
       setup([
         {
           id: 'reduce',
           options: {},
         },
       ]);
-      const editors = screen.getAllByTestId(/Transformation editor/);
+      const editors = await screen.findAllByTestId(/Transformation editor/);
       expect(editors).toHaveLength(1);
     });
   });

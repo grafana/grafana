@@ -3570,9 +3570,9 @@
         "declare-incident": "インシデントを宣言",
         "declare-incident-no-permission": "インシデントにアクセスする権限がありません",
         "instance-details": "インスタンスの詳細",
+        "section-silence": "",
         "silence-button": "サイレンス",
-        "silence-no-permission": "サイレンスを作成する権限がありません",
-        "silence-title-with-name": ""
+        "silence-no-permission": "サイレンスを作成する権限がありません"
       },
       "labels-column-title": "ラベル",
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "入力データ",
+      "loading": "",
       "output-data": "出力データ",
       "title-debug-transformation": "変換をデバッグ"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "検索"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "選択をクリア"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA値"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "閉じる",
       "dock": "ドック",
+      "go-back": "",
       "hide": "非表示",
       "show": "表示",
       "undock": "ドック解除"
@@ -11158,6 +11167,7 @@
       "label-numbers": "数値",
       "label-signature": "署名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "実験的機能。ログから表示フィールドを管理するためのコンポーネントを表示します。",
     "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
     "description-enable-logs-highlighting": "事前定義された配色スキームを使い、ログ行の関連部分をハイライト表示します。",
@@ -11452,6 +11462,7 @@
         "common-labels": "共通ラベル:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "共通ラベル",
     "name-deduplication": "重複排除",
     "name-details-mode": "ログ詳細パネルの表示モード",
@@ -11840,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "すべて",
-      "title-filtered": "すべて（フィルタリング済み）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "すべてをクリア"
@@ -14695,6 +14708,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "ホームのダッシュボード",
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
@@ -15909,6 +15926,9 @@
         "grouping-to-matrix": "マトリックス形式でグループ化"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "入力データからヒストグラムを計算します。"
@@ -16243,6 +16263,9 @@
       "label-time-field": "時間フィールド",
       "tooltip-statistic-should-calculated-series": "この時系列において計算すべき統計。",
       "tooltip-time-field": "時系列に使用される時間フィールド。選択されていない場合は、最初に見つかったものが使用されます。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "最初のフィールド名",
