@@ -4,29 +4,43 @@
 
 The analytics framework is a typed, self-documenting system for defining and tracking product analytics events in Grafana. It is built around `defineFeatureEvents`, a factory exported from `@grafana/runtime/internal`, which produces strongly-typed event reporters. Events defined with this factory are automatically discoverable by the report script in this folder.
 
-The framework has two parts:
+The framework is split into two parts with distinct responsibilities:
 
-- **Runtime** (`packages/grafana-runtime/src/internal/analyticsFramework/main.ts`): the `defineFeatureEvents` factory and the `EventProperty` type that all event property interfaces must extend.
-- **Script** (`scripts/cli/analytics/`): a static analysis tool that reads the TypeScript source, finds every event defined with the factory, and generates a human-readable report.
-
----
-
-## Purpose
+- **Framework library** (`packages/grafana-runtime/src/internal/analyticsFramework/`): production code that ships with Grafana. It exports the `defineFeatureEvents` factory and the `EventProperty` base type.
+- **Report generator** (`scripts/cli/analytics/`): a developer tool that runs offline and is never bundled with the application. It reads the TypeScript AST to find every event declared with the factory and writes a human-readable catalogue.
 
 The framework ensures that:
 
 - Every event has a **consistent naming convention** (`{repo}_{feature}_{eventName}`, e.g. `grafana_dashboard_library_loaded`).
 - Every event has a **description** (enforced by the ESLint rule `define-feature-events`).
 - Every event property has a **JSDoc comment** describing what it captures (also enforced by the ESLint rule).
+- Every event has a **code owner** assigned automatically, derived from `.github/CODEOWNERS` based on the file's location.
 - The full catalogue of events and their schemas can be **generated automatically** without manual maintenance.
 
 ---
 
 ## How to define events
 
-### 1. Create the factory
+### 1. Define the property interfaces
 
-Call `defineFeatureEvents` with two required string literal arguments — the repo name and the feature name. A third argument with default properties (merged into every event in the namespace) is optional:
+Create a `types.ts` file next to your feature file (we encourage to create an 'analytics' folder within the feature one). Each interface must extend `EventProperty` from `@grafana/runtime/internal`, and every property must have a JSDoc comment:
+
+```ts
+import { type EventProperty } from '@grafana/runtime/internal';
+
+export interface ThemeChanged extends EventProperty {
+  /** Whether the preference being changed belongs to an org, team, or individual user. */
+  preferenceType: 'org' | 'team' | 'user';
+  /** The theme the user switched to. */
+  toTheme: string;
+}
+```
+
+### 2. Create the factory
+
+Create the tracking event file next to `types.ts`.
+
+Call `defineFeatureEvents` with two required string literal arguments — the repo name and the feature name. There is an optional third argument to set default properties (merged into every event in the namespace):
 
 ```ts
 // Without default properties
@@ -41,30 +55,13 @@ const createLibraryEvent = defineFeatureEvents('grafana', 'dashboard_library', {
 
 This produces event names of the form `grafana_{feature}_{eventName}`.
 
-### 2. Define the property interfaces
+### 3. Declare the events
 
-Create a `types.ts` file next to your events file. Each interface must extend `EventProperty` from `@grafana/runtime/internal`, and every property must have a JSDoc comment:
+Events can be declared in two ways. Both are fully supported by the report script.
 
-```ts
-import { type EventProperty } from '@grafana/runtime/internal';
-
-export interface ThemeChanged extends EventProperty {
-  /** Whether the preference being changed belongs to an org, team, or individual user. */
-  preferenceType: 'org' | 'team' | 'user';
-  /** The theme the user switched to. */
-  toTheme: string;
-}
-```
-
-### 3. Export the events
-
-Events can be exported in two ways. Both are fully supported by the report script.
-
-#### Flat individual exports
+#### 3.1. Flat individual exports
 
 Each event is exported as its own `const`. This works well for small, cohesive sets of events. The JSDoc comment above each export becomes its description in the report.
-
-Real example — `public/app/core/components/SharedPreferences/analytics/main.ts`:
 
 ```ts
 import { defineFeatureEvents } from '@grafana/runtime/internal';
@@ -79,11 +76,9 @@ export const themeChanged = createSharedPreferencesEvents<ThemeChanged>('theme_c
 export const languageChanged = createSharedPreferencesEvents<LanguageChanged>('language_changed');
 ```
 
-#### Grouped object export
+#### 3.2. Grouped object export
 
 All events are collected into a single exported `const` object. This is useful for larger feature areas where events are used together. Each property of the object must have a JSDoc comment. The object can also spread another events object to inherit and override entries:
-
-Real example — `public/app/features/dashboard/dashgrid/DashboardLibrary/analytics/main.ts`:
 
 ```ts
 import { defineFeatureEvents } from '@grafana/runtime/internal';
@@ -118,9 +113,9 @@ Direct property assignments override spread entries with the same event name, mi
 
 ---
 
-## Where to put the event files
+## Event file placement
 
-Event files must live **inside the feature's own folder**, not in a shared or generic location. The report script resolves the owner of each event from `.github/CODEOWNERS` using the path of the file that declares the events. Placing the files inside the feature folder ensures ownership is assigned correctly without needing a manual `@owner` tag.
+Event files must live **inside the feature's own folder**, not in a shared or generic location. Ownership is resolved automatically from `.github/CODEOWNERS` using the file path, so placing events inside the feature folder is all that is needed — no manual owner tag required.
 
 The recommended structure is:
 
@@ -135,7 +130,7 @@ public/app/features/my-feature/
 
 ---
 
-## How to call events
+## How to fire events
 
 Import the events and call them when the action occurs:
 
@@ -165,17 +160,6 @@ This runs `scripts/cli/analytics/main.mts` using `ts-morph` to statically analys
 
 The script does not execute application code — it reads the TypeScript AST directly, so no build step is required.
 
----
-
-## What the report looks like
-
-The output is a Markdown file (`analytics-report.md`) grouped by feature. Each event section contains:
-
-- **Full event name** — the complete string sent to the analytics backend (e.g. `grafana_dashboard_library_loaded`).
-- **Description** — taken from the JSDoc comment on the event entry.
-- **Owner** — resolved automatically from `.github/CODEOWNERS` based on the path of the file that declares the events.
-- **Properties table** — every property with its TypeScript type (resolved to primitive/union form) and its JSDoc description. Default properties (e.g. `schema_version`) are listed first.
-
 Example:
 
 ```markdown
@@ -187,7 +171,7 @@ Example:
 
 **Description**: Fired when the library panel finishes rendering and its items are visible.
 
-**Owner:** @grafana/dashboards
+**Owner:** @grafana/sharing
 
 **Properties**:
 
@@ -197,3 +181,10 @@ Example:
 | numberOfItems   | `number`   | Total number of items visible in the library at load time. |
 | datasourceTypes | `string[]` | Plugin IDs of data sources referenced by the loaded items. |
 ```
+
+The output is a Markdown file grouped by feature. Each event section contains:
+
+- **Full event name** — the complete string sent to the analytics backend (e.g. `grafana_dashboard_library_loaded`).
+- **Description** — taken from the JSDoc comment on the event entry.
+- **Owner** — resolved automatically from `.github/CODEOWNERS` based on the path of the file that declares the events.
+- **Properties table** — every property with its TypeScript type (resolved to primitive/union form) and its JSDoc description. Default properties (e.g. `schema_version`) are listed first.
