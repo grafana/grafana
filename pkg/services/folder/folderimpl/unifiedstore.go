@@ -224,22 +224,6 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 	}
 
-	return ss.searchChildren(ctx, []string{q.UID}, q)
-}
-
-// searchChildren returns the direct children of any of the given parent UIDs
-// via k8sclient.Search (multi-value `In` filter on the folder field). It does
-// not validate that the parents exist; the caller is responsible.
-//
-// Honours q.Limit as the total cap on returned hits and q.Page as the
-// starting offset (offset = q.Limit * (q.Page - 1)). Internally the fetch is
-// split into pages of at most searchPageSize hits to stay under the default
-// 4 MiB gRPC max receive size. Pagination uses Offset only; folders only hit
-// the unified bleve backend, which honours Offset and ignores Page.
-func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, parents []string, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := ss.tracer.Start(ctx, tracePrefix+"searchChildren")
-	defer span.End()
-
 	if q.Limit == 0 {
 		q.Limit = folderSearchLimit
 	}
@@ -250,9 +234,8 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, parents []
 	fields := []*resourcepb.Requirement{{
 		Key:      resource.SEARCH_FIELD_FOLDER,
 		Operator: string(selection.In),
-		Values:   parents,
+		Values:   []string{q.UID},
 	}}
-
 	// only filter the folder UIDs if they are provided in the query
 	if len(q.FolderUIDs) > 0 {
 		fields = append(fields, &resourcepb.Requirement{
@@ -261,9 +244,8 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, parents []
 			Values:   q.FolderUIDs,
 		})
 	}
-
-	// Exclude k6 folder at the query level. The unified/bleve search backend
-	// honours NotIn, so this is sufficient.
+	// Exclude k6 folder for non-service-account callers. Bleve honours NotIn
+	// at the query level.
 	allowK6Folder := q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount)
 	if !allowK6Folder {
 		fields = append(fields, &resourcepb.Requirement{
@@ -273,44 +255,38 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, parents []
 		})
 	}
 
-	startOffset := q.Limit * (q.Page - 1)
-	var hits []*folder.FolderReference
-	for fetched := int64(0); fetched < q.Limit; {
-		pageSize := min(q.Limit-fetched, int64(searchPageSize))
-		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Fields: fields},
-			Limit:   pageSize,
-			Offset:  startOffset + fetched,
-		}
-
-		out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := dashboardsearch.ParseResults(out, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, item := range res.Hits {
-			hits = append(hits, &folder.FolderReference{
-				ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-				UID:       item.Name,
-				Title:     item.Title,
-				ParentUID: item.Folder,
-				ManagedBy: item.ManagedBy.Kind,
-			})
-		}
-
-		raw := int64(len(res.Hits))
-		fetched += raw
-		if raw < pageSize {
-			break
-		}
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Fields: fields},
+		Limit:   q.Limit,
+		Offset:  q.Limit * (q.Page - 1),
 	}
+	hits, _, err := ss.doSearchPage(ctx, q.OrgID, req)
+	return hits, err
+}
 
-	return hits, nil
+// doSearchPage performs one Search round-trip against the unified resource
+// index and returns the parsed hits along with the raw response hit count
+// (so paginating callers can detect a short final page).
+func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
+	out, err := ss.k8sclient.Search(ctx, orgID, req)
+	if err != nil {
+		return nil, 0, err
+	}
+	res, err := dashboardsearch.ParseResults(out, 0)
+	if err != nil {
+		return nil, 0, err
+	}
+	hits := make([]*folder.FolderReference, 0, len(res.Hits))
+	for _, item := range res.Hits {
+		hits = append(hits, &folder.FolderReference{
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:       item.Name,
+			Title:     item.Title,
+			ParentUID: item.Folder,
+			ManagedBy: item.ManagedBy.Kind,
+		})
+	}
+	return hits, len(res.Hits), nil
 }
 
 // TODO use a single query to get the height of a folder
@@ -426,6 +402,47 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	return hits, nil
 }
 
+// searchChildren returns ALL direct children of any of the given parent UIDs
+// via k8sclient.Search (multi-value `In` filter on the folder field),
+// paginating to exhaustion. Used internally by GetDescendants.
+//
+// Returns every direct child without filtering. End-user visibility filters
+// (e.g. hiding the k6 folder from non-service-account callers) belong to the
+// user-facing GetChildren path, not internal traversal. Does not validate
+// that the parents exist; the caller is responsible.
+//
+// Each round-trip is bounded by searchPageSize hits to keep individual
+// responses under the default 4 MiB gRPC max receive size. Folders only hit
+// the unified bleve backend, which honours Offset and ignores Page.
+func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int64, parents []string) ([]*folder.FolderReference, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"searchChildren")
+	defer span.End()
+
+	fields := []*resourcepb.Requirement{{
+		Key:      resource.SEARCH_FIELD_FOLDER,
+		Operator: string(selection.In),
+		Values:   parents,
+	}}
+
+	var all []*folder.FolderReference
+	for offset := int64(0); ; {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Fields: fields},
+			Limit:   searchPageSize,
+			Offset:  offset,
+		}
+		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, hits...)
+		if raw < searchPageSize {
+			return all, nil
+		}
+		offset += int64(raw)
+	}
+}
+
 // GetDescendants returns all descendants of ancestorUID by walking the tree
 // level by level via k8sclient.Search, batching up to descendantsBatchSize
 // parents into each Search call via a multi-value `In` filter. Cost scales
@@ -461,7 +478,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 		level := queue
 		queue = nil // next level fills here
 		for chunk := range slices.Chunk(level, descendantsBatchSize) {
-			children, err := ss.searchChildren(ctx, chunk, folder.GetChildrenQuery{OrgID: orgID})
+			children, err := ss.searchChildren(ctx, orgID, chunk)
 			if err != nil {
 				return nil, err
 			}
@@ -482,9 +499,13 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 			}
 		}
 	}
-	if depth > ss.maxDepth {
-		ss.log.Warn("folder depth exceeds the maximum allowed depth, you might have a circular reference",
-			"uid", ancestorUID, "orgId", orgID, "maxDepth", ss.maxDepth)
+	if depth > ss.maxDepth && len(queue) > 0 {
+		// Hit the depth cap with descendants still queued. The traversal is
+		// incomplete; rather than silently truncate (which would let
+		// Service.Delete leave orphaned subtrees behind) we surface an error.
+		// Genuine cycles are caught earlier by the visited check, so this
+		// path indicates a tree deeper than maxDepth.
+		return nil, folder.ErrMaximumDepthReached.Errorf("folder depth exceeds the maximum allowed depth %d", ss.maxDepth)
 	}
 	return out, nil
 }

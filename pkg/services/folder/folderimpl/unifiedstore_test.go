@@ -223,8 +223,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  searchPageSize, // pagination is in pages of searchPageSize
-			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -286,8 +286,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  searchPageSize, // pagination is in pages of searchPageSize
-			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -336,8 +336,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  10, // user-supplied; under searchPageSize so a single page is fetched
-			Offset: 20, // user-supplied q.Limit * (q.Page - 1) = 10 * (3 - 1)
+			Limit:  10,
+			Offset: 20, // q.Limit * (q.Page - 1) = 10 * (3 - 1)
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -464,8 +464,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  searchPageSize, // pagination is in pages of searchPageSize
-			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
+			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
+			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -831,13 +831,11 @@ func TestGetDescendants(t *testing.T) {
 		require.ErrorIs(t, err, folder.ErrCircularReference)
 	})
 
-	t.Run("depth cap returns partial result without error", func(t *testing.T) {
-		// Tree of height 3 (root -> l1 -> l2 -> l3) with maxDepth=1.
-		// The loop (mirroring GetHeight) processes searches at depths 0, 1
-		// and 2 (root, l1, l2) and then exits because depth=2 > maxDepth=1.
-		// l3 is discovered as a child reference of l2 and added to the
-		// output, but its own search is never issued so any l4 descendants
-		// would be truncated. The warning fires because depth > maxDepth.
+	t.Run("depth cap with descendants still queued returns ErrMaximumDepthReached", func(t *testing.T) {
+		// Tree of height 3 (root -> l1 -> l2 -> l3) with maxDepth=1. The loop
+		// processes levels 0, 1 and 2 (root, l1, l2), then exits with l3
+		// still queued. Returning the partial subtree would let Service.Delete
+		// leave the rest behind, so we surface ErrMaximumDepthReached instead.
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
 		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"l1"}})
@@ -851,14 +849,8 @@ func TestGetDescendants(t *testing.T) {
 			log:         log.New("test"),
 			maxDepth:    1,
 		}
-		got, err := ss.GetDescendants(ctx, orgID, "root")
-		require.NoError(t, err)
-
-		gotUIDs := make([]string, 0, len(got))
-		for _, f := range got {
-			gotUIDs = append(gotUIDs, f.UID)
-		}
-		require.ElementsMatch(t, []string{"l1", "l2", "l3"}, gotUIDs)
+		_, err := ss.GetDescendants(ctx, orgID, "root")
+		require.ErrorIs(t, err, folder.ErrMaximumDepthReached)
 		mockCli.AssertExpectations(t)
 		mockCli.AssertNotCalled(t, "Search", mock.Anything, orgID, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return req != nil && req.Options != nil && len(req.Options.Fields) > 0 &&
@@ -873,7 +865,7 @@ func TestSearchChildren(t *testing.T) {
 	orgID := int64(1)
 	ctx := context.Background()
 
-	t.Run("does not validate parent existence", func(t *testing.T) {
+	t.Run("does not validate parent existence and applies no visibility filters", func(t *testing.T) {
 		mockCli := new(client.MockK8sHandler)
 		// Only Search is expected; Get is NOT called for the parent.
 		expectSearchChildren(mockCli, orgID, []string{"some-parent"}, map[string][]string{"some-parent": {"a", "b"}})
@@ -883,7 +875,7 @@ func TestSearchChildren(t *testing.T) {
 			userService: usertest.NewUserServiceFake(),
 			tracer:      noop.NewTracerProvider().Tracer("test"),
 		}
-		got, err := ss.searchChildren(ctx, []string{"some-parent"}, folder.GetChildrenQuery{OrgID: orgID})
+		got, err := ss.searchChildren(ctx, orgID, []string{"some-parent"})
 		require.NoError(t, err)
 		require.Len(t, got, 2)
 		mockCli.AssertExpectations(t)
