@@ -188,8 +188,6 @@ handle.end('success', { dashboardUid })
 
 ## Phase 1 Journeys
 
-> > > > > > > 4eae6ba5f0d (Dashboards: Critical User Journey instrumentation framework)
-
 ### search_to_resource
 
 **File:** `public/app/core/journeys/searchToResource.ts`
