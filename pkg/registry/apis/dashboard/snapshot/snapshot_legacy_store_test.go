@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,10 +18,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+func setKubernetesSnapshotsToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	variant := "disabled"
+	if enabled {
+		variant = "enabled"
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesSnapshots: {
+			Key:            featuremgmt.FlagKubernetesSnapshots,
+			DefaultVariant: variant,
+			Variants: map[string]any{
+				"enabled":  true,
+				"disabled": false,
+			},
+		},
+	})))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+	})
+}
+
 func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	const deleteKey = "abc123"
 
-	makeStore := func(t *testing.T, externalDeleteURL string, features featuremgmt.FeatureToggles) *SnapshotLegacyStore {
+	makeStore := func(t *testing.T, externalDeleteURL string) *SnapshotLegacyStore {
 		mockService := dashboardsnapshots.NewMockService(t)
 		mockService.On("GetDashboardSnapshot", mock.Anything, mock.Anything).
 			Return(&dashboardsnapshots.DashboardSnapshot{
@@ -36,11 +59,12 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 			ResourceInfo:          dashV0.SnapshotResourceInfo,
 			Service:               mockService,
 			ExternalSnapshotToken: "test-token",
-			Features:              features,
 		}
 	}
 
 	t.Run("with kubernetesSnapshots ON sends DELETE to new k8s endpoint", func(t *testing.T) {
+		setKubernetesSnapshotsToggle(t, true)
+
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			receivedReq = r
@@ -50,8 +74,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 
 		// Stored ExternalDeleteURL has the new k8s path; the legacy store should rebuild
 		// the URL from the domain + deleteKey rather than using it as-is.
-		store := makeStore(t, server.URL+"/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey,
-			featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots))
+		store := makeStore(t, server.URL+"/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey)
 
 		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -62,6 +85,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("with kubernetesSnapshots OFF sends GET to legacy endpoint", func(t *testing.T) {
+		setKubernetesSnapshotsToggle(t, false)
+
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			receivedReq = r
@@ -69,8 +94,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// Stored ExternalDeleteURL has the legacy path; rebuild from domain + deleteKey.
-		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey, featuremgmt.WithFeatures())
+		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
 
 		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -81,6 +105,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
+		setKubernetesSnapshotsToggle(t, true)
+
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			receivedReq = r
@@ -90,8 +116,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 
 		// Stored URL has a stale/wrong legacy path; with the toggle ON the store should
 		// extract just the domain and rebuild the new k8s path.
-		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey,
-			featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots))
+		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
 
 		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -101,7 +126,9 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {
-		store := makeStore(t, "not-a-url", featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots))
+		setKubernetesSnapshotsToggle(t, true)
+
+		store := makeStore(t, "not-a-url")
 
 		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
 		require.Error(t, err)

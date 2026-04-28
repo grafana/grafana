@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +36,6 @@ type SnapshotLegacyStore struct {
 	Service               dashboardsnapshots.Service
 	Namespacer            request.NamespaceMapper
 	ExternalSnapshotToken string
-	Features              featuremgmt.FeatureToggles
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -74,7 +74,7 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	// the deleteKey. The legacy-API branch passes the stored URL through to
 	// DeleteExternalDashboardSnapshot, which rebuilds internally.
 	if snap.ExternalDeleteURL != "" {
-		if s.Features != nil && s.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
 			parsed, err := url.Parse(snap.ExternalDeleteURL)
 			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
 				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
