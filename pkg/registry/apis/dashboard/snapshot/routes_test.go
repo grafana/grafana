@@ -572,6 +572,16 @@ func TestDeleteExternalSnapshot(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "500")
 	})
+
+	t.Run("treats 404 as success (idempotent)", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshot(server.URL+"/delete/mykey", "token")
+		require.NoError(t, err)
+	})
 }
 
 func TestStripSensitiveFields(t *testing.T) {

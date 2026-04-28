@@ -149,7 +149,9 @@ func deleteExternalSnapshot(externalDeleteURL string, token string) error {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusOK {
+	// Treat 404 as success: the snapshot may have already been removed (e.g. by the
+	// legacy-store delete path in dualwriter mode 1, which runs before this wrapper).
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
 		return nil
 	}
 

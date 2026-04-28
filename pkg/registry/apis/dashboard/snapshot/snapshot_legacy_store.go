@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -33,6 +35,7 @@ type SnapshotLegacyStore struct {
 	Service               dashboardsnapshots.Service
 	Namespacer            request.NamespaceMapper
 	ExternalSnapshotToken string
+	Features              featuremgmt.FeatureToggles
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -66,11 +69,27 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, err
 	}
 
-	// Delete the external one first
+	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
+	// path format, so we extract just the domain and rebuild the URL using the deleteKey.
+	// If the kubernetesSnapshots toggle is on, the external instance speaks the new K8s
+	// API (DELETE); otherwise it still speaks the legacy API (GET).
 	if snap.ExternalDeleteURL != "" {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL, s.ExternalSnapshotToken)
-		if err != nil {
-			return nil, false, err
+		parsed, err := url.Parse(snap.ExternalDeleteURL)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
+		}
+		domain := parsed.Scheme + "://" + parsed.Host
+		if s.Features != nil && s.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
+			deleteURL := domain + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
+			if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
+				return nil, false, err
+			}
+		} else {
+			deleteURL := domain + "/api/snapshots-delete/" + snap.DeleteKey
+			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 

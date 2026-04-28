@@ -847,6 +847,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			Service:               b.snapshotService,
 			Namespacer:            b.namespacer,
 			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
+			Features:              b.features,
 		}
 
 		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
