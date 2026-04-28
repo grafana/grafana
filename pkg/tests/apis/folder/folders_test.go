@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2429,6 +2431,99 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 			// Clean up
 			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
 			require.NoError(t, err)
+		})
+	}
+}
+
+// TestIntegrationFolderValidationReturns400 asserts the folder admission
+// validator surfaces structured 4xx responses (and stable messages consumed
+// by provisioning) rather than "Unhandled Error" 500s.
+func TestIntegrationFolderValidationReturns400(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	makeFolder := func(name, title, parentUID string) *unstructured.Unstructured {
+		md := map[string]any{"name": name}
+		if parentUID != "" {
+			md["annotations"] = map[string]any{utils.AnnoKeyFolder: parentUID}
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"metadata": md,
+			"spec":     map[string]any{"title": title},
+		}}
+	}
+
+	cases := []struct {
+		name        string
+		setup       func(t *testing.T) string
+		folder      func(parentUID string) *unstructured.Unstructured
+		expectedMsg string
+	}{
+		{
+			name:        "title empty",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
+			expectedMsg: "folder title cannot be empty",
+		},
+		{
+			name:        "reserved uid",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
+			expectedMsg: "invalid uid for folder provided",
+		},
+		{
+			name:        "parent of itself",
+			folder:      func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
+			expectedMsg: "folder cannot be parent of itself",
+		},
+		{
+			name: "max depth exceeded",
+			setup: func(t *testing.T) string {
+				parentUID := ""
+				for i := 1; i <= 5; i++ {
+					out, err := client.Resource.Create(context.Background(),
+						makeFolder(fmt.Sprintf("max-depth-%d", i), fmt.Sprintf("Max depth %d", i), parentUID),
+						metav1.CreateOptions{})
+					require.NoErrorf(t, err, "creating folder at depth %d should succeed", i)
+					parentUID = out.GetName()
+				}
+				return parentUID
+			},
+			folder: func(parentUID string) *unstructured.Unstructured {
+				return makeFolder("max-depth-6", "Max depth 6", parentUID)
+			},
+			expectedMsg: "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var parentUID string
+			if tc.setup != nil {
+				parentUID = tc.setup(t)
+			}
+			_, err := client.Resource.Create(context.Background(), tc.folder(parentUID), metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Falsef(t, apierrors.IsInternalError(err),
+				"apiserver surfaced as HTTP 500 (regression of alert #1782995): %v", err)
+			require.Truef(t, apierrors.IsBadRequest(err),
+				"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+			require.Equal(t, tc.expectedMsg, statusErr.ErrStatus.Message)
+			require.Equal(t, tc.expectedMsg, err.Error())
 		})
 	}
 }
