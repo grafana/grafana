@@ -202,29 +202,29 @@ function renderHeatmapPanel(
   return render(<HeatmapPanel {...props} />);
 }
 
+/** Dense HeatmapCells frame with ordinal y labels */
+function createDenseHeatmapFrameWithOrdinalY() {
+  const xVals = [1, 1, 2, 2, 3, 3, 5, 5, 6, 6];
+  const yVals = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
+  const countVals = [8, 12, 6, 13, 7, 9, 9, 7, 5, 9];
+  return createDataFrame({
+    meta: {
+      type: DataFrameType.HeatmapCells,
+      custom: { yOrdinalDisplay: ['y1', 'y2'] },
+    },
+    fields: [
+      { name: 'x', type: FieldType.number, values: xVals },
+      { name: 'y', type: FieldType.number, values: yVals },
+      { name: 'count', type: FieldType.number, values: countVals },
+    ],
+  });
+}
+
 describe('HeatmapPanel (canvas)', () => {
   let prepConfigSpy: jest.SpyInstance;
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
   let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
-
-  const xVals = [1, 1, 2, 2, 3, 3, 5, 5, 6, 6];
-  const yVals = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
-  const countVals = [8, 12, 6, 13, 7, 9, 9, 7, 5, 9];
-  /** Dense HeatmapCells frame with ordinal y labels */
-  function createDenseHeatmapFrameWithOrdinalY() {
-    return createDataFrame({
-      meta: {
-        type: DataFrameType.HeatmapCells,
-        custom: { yOrdinalDisplay: ['y1', 'y2'] },
-      },
-      fields: [
-        { name: 'x', type: FieldType.number, values: xVals },
-        { name: 'y', type: FieldType.number, values: yVals },
-        { name: 'count', type: FieldType.number, values: countVals },
-      ],
-    });
-  }
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
@@ -254,243 +254,249 @@ describe('HeatmapPanel (canvas)', () => {
     prepConfigSpy.mockRestore();
   });
 
-  describe('Options', () => {
-    it('defaults', async () => {
-      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] });
-      await assertCanvasOutput();
-    });
-
-    it('cellGap', async () => {
-      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { cellGap: 20 });
-      await assertCanvasOutput();
-    });
-
-    describe('filterValues', () => {
-      it('filterValues: ge', async () => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { ge: 10 } });
+  describe('Dense', () => {
+    describe('Options', () => {
+      it('defaults', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] });
         await assertCanvasOutput();
       });
 
-      it('filterValues: le', async () => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { le: 10 } });
+      it('cellGap', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { cellGap: 20 });
         await assertCanvasOutput();
       });
 
-      it('filterValues: le & ge', async () => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { le: 10, ge: 13 } });
-        await assertCanvasOutput();
-      });
-    });
+      describe('filterValues', () => {
+        it('filterValues: ge', async () => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { ge: 10 } });
+          await assertCanvasOutput();
+        });
 
-    describe('Y Axis', () => {
-      it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          { yAxis: { axisPlacement, axisLabel: 'y-axis-label' } }
-        );
-        await assertCanvasOutput();
-      });
+        it('filterValues: le', async () => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { le: 10 } });
+          await assertCanvasOutput();
+        });
 
-      it('reverse', async () => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { reverse: true } });
-        await assertCanvasOutput();
+        it('filterValues: le & ge', async () => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { le: 10, ge: 13 } });
+          await assertCanvasOutput();
+        });
       });
 
-      it('width', async () => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
-        await assertCanvasOutput();
+      describe('Y Axis', () => {
+        it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            { yAxis: { axisPlacement, axisLabel: 'y-axis-label' } }
+          );
+          await assertCanvasOutput();
+        });
+
+        it('reverse', async () => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { reverse: true } });
+          await assertCanvasOutput();
+        });
+
+        it('width', async () => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
+          await assertCanvasOutput();
+        });
+
+        it('decimals, min, max, unit', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              yAxis: {
+                ...fullDefaultOptions.yAxis,
+                decimals: 3,
+                min: 0,
+                max: 1,
+                unit: 'percentunit',
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
       });
 
-      it('decimals, min, max, unit', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            yAxis: {
-              ...fullDefaultOptions.yAxis,
-              decimals: 3,
-              min: 0,
-              max: 1,
-              unit: 'percentunit',
+      describe('rowsFrame', () => {
+        /** Fixed range + timestamps so x-scale mapping does not drift with `dateTime()` (now). */
+        const stableRowsT0 = 1_704_067_200_000;
+        const stableRowsTimeRange = {
+          from: dateTime(stableRowsT0),
+          to: dateTime(stableRowsT0 + 3_600_000),
+          raw: { from: String(stableRowsT0), to: String(stableRowsT0 + 3_600_000) },
+        };
+        const stableRowsTimeValues = [stableRowsT0 + 600_000, stableRowsT0 + 1_200_000, stableRowsT0 + 1_800_000];
+
+        it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge] as const)('layout: %s', async (layout) => {
+          renderHeatmapPanel(
+            {
+              series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
+              timeRange: stableRowsTimeRange,
             },
-          }
-        );
-        await assertCanvasOutput();
-      });
-    });
-
-    describe('rowsFrame', () => {
-      /** Fixed range + timestamps so x-scale mapping does not drift with `dateTime()` (now). */
-      const stableRowsT0 = 1_704_067_200_000;
-      const stableRowsTimeRange = {
-        from: dateTime(stableRowsT0),
-        to: dateTime(stableRowsT0 + 3_600_000),
-        raw: { from: String(stableRowsT0), to: String(stableRowsT0 + 3_600_000) },
-      };
-      const stableRowsTimeValues = [stableRowsT0 + 600_000, stableRowsT0 + 1_200_000, stableRowsT0 + 1_800_000];
-
-      it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge] as const)('layout: %s', async (layout) => {
-        renderHeatmapPanel(
-          {
-            series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
-            timeRange: stableRowsTimeRange,
-          },
-          { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
-          { timeRange: stableRowsTimeRange }
-        );
-        await assertCanvasOutput();
-      });
-    });
-
-    describe('selectionMode', () => {
-      it.each([HeatmapSelectionMode.Y, HeatmapSelectionMode.Xy] as const)('%s', async (selectionMode) => {
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { selectionMode });
-        await assertCanvasOutput();
-      });
-    });
-
-    describe('color', () => {
-      it('opacity', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            color: {
-              scheme: 'UNUSED-FOR-OPACITY',
-              steps: 20,
-              exponent: 2,
-              fill: 'red',
-              reverse: false,
-              mode: HeatmapColorMode.Opacity,
-            },
-          }
-        );
-        await assertCanvasOutput();
+            { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
+            { timeRange: stableRowsTimeRange }
+          );
+          await assertCanvasOutput();
+        });
       });
 
-      it('scheme', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            color: {
-              steps: 20,
-              exponent: 2,
-              fill: 'UNUSED-FOR-SCHEME',
-              reverse: false,
-              scheme: 'BuGn',
-              mode: HeatmapColorMode.Scheme,
-            },
-          }
-        );
-        await assertCanvasOutput();
+      describe('selectionMode', () => {
+        it.each([HeatmapSelectionMode.Y, HeatmapSelectionMode.Xy] as const)('%s', async (selectionMode) => {
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { selectionMode });
+          await assertCanvasOutput();
+        });
       });
 
-      it('min and max', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            color: {
-              min: 7,
-              max: 11,
-              scheme: 'Oranges',
-              steps: 32,
-              exponent: Infinity, // unused
-              fill: 'dark-orange',
-              reverse: false,
-              mode: HeatmapColorMode.Scheme,
-            },
-          }
-        );
-        await assertCanvasOutput();
+      describe('color', () => {
+        it('opacity', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                scheme: 'UNUSED-FOR-OPACITY',
+                steps: 20,
+                exponent: 2,
+                fill: 'red',
+                reverse: false,
+                mode: HeatmapColorMode.Opacity,
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
+
+        it('scheme', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                steps: 20,
+                exponent: 2,
+                fill: 'UNUSED-FOR-SCHEME',
+                reverse: false,
+                scheme: 'BuGn',
+                mode: HeatmapColorMode.Scheme,
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
+
+        it('min and max', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                min: 7,
+                max: 11,
+                scheme: 'Oranges',
+                steps: 32,
+                exponent: Infinity, // unused
+                fill: 'dark-orange',
+                reverse: false,
+                mode: HeatmapColorMode.Scheme,
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
+
+        it('scheme reverse', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                steps: 20,
+                exponent: 2,
+                fill: 'UNUSED-FOR-SCHEME',
+                reverse: true,
+                scheme: 'BuGn',
+                mode: HeatmapColorMode.Scheme,
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
+
+        it('opacity scale linear', async () => {
+          renderHeatmapPanel(
+            { series: [createDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                scheme: 'UNUSED-FOR-OPACITY',
+                steps: 20,
+                exponent: 2,
+                fill: 'red',
+                reverse: false,
+                mode: HeatmapColorMode.Opacity,
+                scale: HeatmapColorScale.Linear,
+              },
+            }
+          );
+          await assertCanvasOutput();
+        });
       });
 
-      it('scheme reverse', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            color: {
-              steps: 20,
-              exponent: 2,
-              fill: 'UNUSED-FOR-SCHEME',
-              reverse: true,
-              scheme: 'BuGn',
-              mode: HeatmapColorMode.Scheme,
-            },
-          }
-        );
-        await assertCanvasOutput();
-      });
+      describe('calculate', () => {
+        it('renders when disabled', async () => {
+          renderHeatmapPanel(
+            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+            { calculate: false },
+            { timeRange: LinearBucketTimeRange }
+          );
+          await assertCanvasOutput();
+        });
 
-      it('opacity scale linear', async () => {
-        renderHeatmapPanel(
-          { series: [createDenseHeatmapFrameWithOrdinalY()] },
-          {
-            color: {
-              scheme: 'UNUSED-FOR-OPACITY',
-              steps: 20,
-              exponent: 2,
-              fill: 'red',
-              reverse: false,
-              mode: HeatmapColorMode.Opacity,
-              scale: HeatmapColorScale.Linear,
-            },
-          }
-        );
-        await assertCanvasOutput();
-      });
-    });
+        it('throws with invalid frame', () => {
+          const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { calculate: true });
+          expect(consoleError).toHaveBeenCalledWith('no heatmap fields found');
+          consoleError.mockRestore();
+        });
 
-    describe('calculate', () => {
-      it('renders when disabled', async () => {
-        renderHeatmapPanel(
-          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
-          { calculate: false },
-          { timeRange: LinearBucketTimeRange }
-        );
-        await assertCanvasOutput();
-      });
+        it('throws with invalid frame (x-axis linear only)', () => {
+          const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+          renderHeatmapPanel(
+            { series: [LinearBucketData] },
+            { calculate: true, calculation: { xBuckets: { scale: { type: ScaleDistribution.Log } } } }
+          );
+          expect(consoleError).toHaveBeenCalledWith('X axis only supports linear buckets');
+          consoleError.mockRestore();
+        });
 
-      it('throws with invalid frame', () => {
-        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { calculate: true });
-        expect(consoleError).toHaveBeenCalledWith('no heatmap fields found');
-        consoleError.mockRestore();
-      });
+        it('no options', async () => {
+          renderHeatmapPanel(
+            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+            { calculate: true },
+            { timeRange: LinearBucketTimeRange }
+          );
+          await assertCanvasOutput();
+        });
 
-      it('throws with invalid frame (x-axis linear only)', () => {
-        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-        renderHeatmapPanel(
-          { series: [LinearBucketData] },
-          { calculate: true, calculation: { xBuckets: { scale: { type: ScaleDistribution.Log } } } }
-        );
-        expect(consoleError).toHaveBeenCalledWith('X axis only supports linear buckets');
-        consoleError.mockRestore();
-      });
-
-      it('no options', async () => {
-        renderHeatmapPanel(
-          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
-          { calculate: true },
-          { timeRange: LinearBucketTimeRange }
-        );
-        await assertCanvasOutput();
-      });
-
-      it('y-axis logscale', async () => {
-        renderHeatmapPanel(
-          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
-          {
-            calculate: true,
-            calculation: {
-              yBuckets: {
-                scale: { type: ScaleDistribution.Log, log: 2 },
+        it('y-axis logscale', async () => {
+          renderHeatmapPanel(
+            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+            {
+              calculate: true,
+              calculation: {
+                yBuckets: {
+                  scale: { type: ScaleDistribution.Log, log: 2 },
+                },
               },
             },
-          },
-          { timeRange: LinearBucketTimeRange }
-        );
-        await assertCanvasOutput();
+            { timeRange: LinearBucketTimeRange }
+          );
+          await assertCanvasOutput();
+        });
       });
     });
   });
+  describe('Sparse', () => {
+    // @todo
+  });
+
   describe('Exemplars', () => {
     it('renders', async () => {
       const exemplarFrame = createExemplarFrame({
