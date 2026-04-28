@@ -2432,3 +2432,47 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationFolderMoveGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create two folders at root
+	parent := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": map[string]interface{}{"title": "gd-move-parent"},
+	}}
+	parent.SetGenerateName("gd-parent-")
+	createdParent, err := client.Resource.Create(ctx, parent, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	child := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": map[string]interface{}{"title": "gd-move-child"},
+	}}
+	child.SetGenerateName("gd-child-")
+	createdChild, err := client.Resource.Create(ctx, child, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Move child under parent — should succeed even with search down
+	childMeta, err := utils.MetaAccessor(createdChild)
+	require.NoError(t, err)
+	childMeta.SetFolder(createdParent.GetName())
+	updated, err := client.Resource.Update(ctx, createdChild, metav1.UpdateOptions{})
+	require.NoError(t, err, "folder move should succeed when search is down")
+
+	// Verify parent was set
+	updatedMeta, err := utils.MetaAccessor(updated)
+	require.NoError(t, err)
+	require.Equal(t, createdParent.GetName(), updatedMeta.GetFolder(), "child should be under parent after move")
+}

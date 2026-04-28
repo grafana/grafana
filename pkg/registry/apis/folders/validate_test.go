@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -329,6 +330,7 @@ func TestValidateUpdate(t *testing.T) {
 		parents      *folders.FolderInfoList
 		parentsError error
 		allFolders   []folders.Folder
+		searchErr    error
 		expectedErr  string
 		maxDepth     int // defaults to 5 unless set
 	}{
@@ -629,6 +631,75 @@ func TestValidateUpdate(t *testing.T) {
 			},
 			maxDepth: 4,
 		},
+		{
+			name: "can move folder when search is unavailable (fallback to storage list)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "level1",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "level1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
+			},
+			searchErr: fmt.Errorf("injected search failure"),
+			maxDepth:  4,
+		},
+		{
+			name: "error when moving folder with children exceeds max depth even when search is unavailable",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "level2",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "level2", Parent: "level1"},
+					{Name: "level1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}}},
+			},
+			searchErr:   fmt.Errorf("injected search failure"),
+			maxDepth:    4,
+			expectedErr: "[folder.maximum-depth-reached]",
+		},
 	}
 
 	for _, tt := range tests {
@@ -653,12 +724,14 @@ func TestValidateUpdate(t *testing.T) {
 				f := tt.allFolders[i]
 				m.On("Get", context.Background(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
 			}
+			m.On("List", mock.Anything, mock.Anything).Return(&folders.FolderList{Items: tt.allFolders}, nil).Maybe()
 
 			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
 				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 					return tt.parents, tt.parentsError
 				},
-				&mockSearchClient{folders: tt.allFolders},
+				&mockSearchClient{folders: tt.allFolders, searchErr: tt.searchErr},
+				m,
 				maxDepth)
 
 			if tt.expectedErr == "" {
@@ -874,7 +947,8 @@ type mockSearchClient struct {
 	stats    *resourcepb.ResourceStatsResponse
 	statsErr error
 
-	folders []folders.Folder
+	searchErr error
+	folders   []folders.Folder
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -884,6 +958,10 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.searchErr != nil {
+		return nil, m.searchErr
+	}
+
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
 	if req.Options != nil && req.Options.Fields != nil {

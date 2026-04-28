@@ -8,12 +8,15 @@ import (
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -124,6 +127,7 @@ func validateOnUpdate(ctx context.Context,
 	getter rest.Getter,
 	parents parentsGetter,
 	searcher resourcepb.ResourceIndexClient,
+	lister rest.Lister,
 	maxDepth int,
 ) error {
 	folderObj, err := utils.MetaAccessor(obj)
@@ -207,7 +211,7 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
-	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
+	return checkSubtreeDepth(ctx, searcher, lister, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
 // canSkipChildrenCheck determines if we can skip the expensive children depth check.
@@ -243,17 +247,17 @@ func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccess
 // 2. batches all those children into one request to get their children
 // 3. continues depth-first (batching still) until max depth or violation
 // 4. only fetches more siblings after fully exploring current batch
-func checkSubtreeDepth(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, folderUID string, remainingDepth int, maxDepth int) error {
+func checkSubtreeDepth(ctx context.Context, searcher resourcepb.ResourceIndexClient, lister rest.Lister, namespace string, folderUID string, remainingDepth int, maxDepth int) error {
 	if remainingDepth <= 0 {
 		return nil
 	}
 
 	// Start with the folder being moved
-	return checkSubtreeDepthBatched(ctx, searcher, namespace, []string{folderUID}, remainingDepth, maxDepth)
+	return checkSubtreeDepthBatched(ctx, searcher, lister, namespace, []string{folderUID}, remainingDepth, maxDepth)
 }
 
 // checkSubtreeDepthBatched checks depth for a batch of folders at the same level
-func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, remainingDepth int, maxDepth int) error {
+func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceIndexClient, lister rest.Lister, namespace string, parentUIDs []string, remainingDepth int, maxDepth int) error {
 	if remainingDepth <= 0 || len(parentUIDs) == 0 {
 		return nil
 	}
@@ -269,7 +273,7 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 
 		var err error
 		var children []string
-		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
+		children, hasMore, err = getChildrenBatch(ctx, searcher, lister, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
 			return fmt.Errorf("failed to get children: %w", err)
 		}
@@ -283,7 +287,7 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 			return folder.ErrMaximumDepthReached.Errorf("maximum folder depth %d would be exceeded after move", maxDepth)
 		}
 
-		if err := checkSubtreeDepthBatched(ctx, searcher, namespace, children, remainingDepth-1, maxDepth); err != nil {
+		if err := checkSubtreeDepthBatched(ctx, searcher, lister, namespace, children, remainingDepth-1, maxDepth); err != nil {
 			return err
 		}
 
@@ -297,8 +301,9 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 	return nil
 }
 
-// getChildrenBatch fetches children for multiple parents
-func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace string, parentUIDs []string, limit int64, offset int64) ([]string, bool, error) {
+// getChildrenBatch fetches children for multiple parents. It tries search first,
+// and falls back to listing all folders from storage when search is unavailable.
+func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClient, lister rest.Lister, namespace string, parentUIDs []string, limit int64, offset int64) ([]string, bool, error) {
 	if len(parentUIDs) == 0 {
 		return nil, false, nil
 	}
@@ -319,27 +324,76 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Limit:  limit,
 		Offset: offset,
 	})
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to search folders: %w", err)
-	}
-
-	if resp.Error != nil {
-		return nil, false, fmt.Errorf("search error: %s", resp.Error.Message)
-	}
-
-	if resp.Results == nil || len(resp.Results.Rows) == 0 {
-		return nil, false, nil
-	}
-
-	children := make([]string, 0, len(resp.Results.Rows))
-	for _, row := range resp.Results.Rows {
-		if row.Key != nil {
-			children = append(children, row.Key.Name)
+	if err == nil && resp.Error == nil {
+		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+			return nil, false, nil
 		}
+
+		children := make([]string, 0, len(resp.Results.Rows))
+		for _, row := range resp.Results.Rows {
+			if row.Key != nil {
+				children = append(children, row.Key.Name)
+			}
+		}
+
+		hasMore := resp.Results.NextPageToken != ""
+		return children, hasMore, nil
 	}
 
-	hasMore := resp.Results.NextPageToken != ""
-	return children, hasMore, nil
+	// Search is unavailable. Fall back to listing folders from storage.
+	// Use a service identity context to ensure unfiltered access to all folders,
+	// since the dualwriter's List may be user-scoped in legacy mode.
+	nsInfo, nsErr := authlib.ParseNamespace(namespace)
+	if nsErr != nil {
+		return nil, false, fmt.Errorf("failed to parse namespace for service identity: %w", nsErr)
+	}
+	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+	return getChildrenFromStorage(svcCtx, lister, parentUIDs)
+}
+
+// getChildrenFromStorage lists all folders from storage (without field selectors,
+// so the request goes directly to storage, not through search) and filters children
+// by parent UIDs in-memory. It paginates using continue tokens to handle backends
+// that cap page size.
+func getChildrenFromStorage(ctx context.Context, lister rest.Lister, parentUIDs []string) ([]string, bool, error) {
+	parentSet := make(map[string]bool, len(parentUIDs))
+	for _, uid := range parentUIDs {
+		parentSet[uid] = true
+	}
+
+	var children []string
+	listOpts := &internalversion.ListOptions{
+		Limit: 1000,
+	}
+
+	for {
+		obj, err := lister.List(ctx, listOpts)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to list folders from storage: %w", err)
+		}
+		folderList, ok := obj.(*folders.FolderList)
+		if !ok {
+			return nil, false, fmt.Errorf("expected FolderList, got %T", obj)
+		}
+
+		for i := range folderList.Items {
+			meta, err := utils.MetaAccessor(&folderList.Items[i])
+			if err != nil {
+				continue
+			}
+			if parentSet[meta.GetFolder()] {
+				children = append(children, folderList.Items[i].Name)
+			}
+		}
+
+		if folderList.Continue == "" {
+			break
+		}
+		listOpts.Continue = folderList.Continue
+	}
+
+	// hasMore=false because we listed all folders and filtered in-memory
+	return children, false, nil
 }
 
 func validateOnDelete(ctx context.Context,
