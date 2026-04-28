@@ -3589,9 +3589,9 @@
         "declare-incident": "Incident melden",
         "declare-incident-no-permission": "Je hebt geen toestemming om het incident te openen",
         "instance-details": "Instantiedetails",
+        "section-silence": "",
         "silence-button": "Stilte",
-        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Je hebt geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
@@ -5636,6 +5636,7 @@
         "panels": "Panelen",
         "row": "Rij",
         "rows": "Rijen",
+        "section-filters-set": "",
         "tab": "Tabblad",
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
@@ -6487,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Data invoer",
+      "loading": "",
       "output-data": "Uitvoergegevens",
       "title-debug-transformation": "Debugtransformatie"
     },
@@ -8268,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Zoeken"
     },
     "resource-dimension-editor": {
@@ -10119,6 +10122,12 @@
     "cascader": {
       "clear-button": "Selectie wissen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-waarde"
     },
@@ -10464,6 +10473,7 @@
     "sidebar": {
       "close": "Sluiten",
       "dock": "Vastzetten",
+      "go-back": "",
       "hide": "Verbergen",
       "show": "Tonen",
       "undock": "Losmaken"
@@ -11220,6 +11230,7 @@
       "label-numbers": "Nummers",
       "label-signature": "Handtekening"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimenteel. Toon een onderdeel om de weergegeven velden uit de logs te beheren.",
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren.",
@@ -11517,6 +11528,7 @@
         "common-labels": "Gemeenschappelijke labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Gemeenschappelijke labels",
     "name-deduplication": "Dedupliceren",
     "name-details-mode": "Paneelmodus logdetails",
@@ -11905,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefilterd)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles wissen"
@@ -13149,6 +13163,7 @@
       "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het API-token",
       "token-user-required": "Gebruikersnaam is vereist",
       "url-description": "De Bitbucket-repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL is vereist"
     },
     "bootstrap-step": {
@@ -14102,7 +14117,6 @@
       "hide": "{{type}} verbergen",
       "hide-help": "Hulp bij gegevensbron verbergen",
       "hide-transformation-help": "Help bij transformatie verbergen",
-      "inspector": "Querycontrole",
       "more-actions": "Meer acties voor {{type}}",
       "remove": "{{type}} verwijderen",
       "remove-transformation-filter": "Filter verwijderen",
@@ -14114,6 +14128,27 @@
     "alerts": {
       "no-alerts": "Geen waarschuwingsregels voor dit paneel",
       "no-alerts-description": "Maak een waarschuwingsregel om een melding te krijgen wanneer je gegevens aan bepaalde voorwaarden voldoen."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Weet je zeker dat je deze query wilt verwijderen?",
@@ -14151,6 +14186,7 @@
     },
     "footer": {
       "edit-option": "{{label}} bewerken",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Maximale datapunten",
@@ -14161,6 +14197,7 @@
       "placeholder": {
         "no-limit": "Geen limiet"
       },
+      "query-inspector": "",
       "query-options": "Query-opties"
     },
     "header": {
@@ -14763,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Startpagina dashboard",
       "home-dashboard-placeholder": "Standaard dashboard",
@@ -15978,6 +16019,9 @@
         "grouping-to-matrix": "Groeperen naar matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Bereken een histogram op basis van invoergegevens."
@@ -16312,6 +16356,9 @@
       "label-time-field": "Tijdveld",
       "tooltip-statistic-should-calculated-series": "De statistiek die voor deze tijdreeks moet worden berekend.",
       "tooltip-time-field": "Het tijdveld dat zal worden gebruikt voor de tijdreeks. Indien niet geselecteerd, zal de eerst gevonden worden gebruikt."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Naam eerste veld",

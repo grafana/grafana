@@ -683,6 +683,34 @@ describe('Combobox', () => {
     });
   });
 
+  describe('onBlur', () => {
+    it('calls onBlur when the input loses focus', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onBlur when tabbing away with the menu open', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      // Menu should be open
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('with RTL selectors', () => {
     it('can be selected by label with HTML <label>', () => {
       render(

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // fakeRemoteIndexStore is an in-memory RemoteIndexStore for unit tests.
@@ -37,6 +38,18 @@ type fakeRemoteIndexStore struct {
 	downloadErr   error
 	listCalls     atomic.Int32
 	downloadCalls atomic.Int32
+}
+
+type noopIndexStoreLock struct {
+	lost chan struct{}
+}
+
+func (l *noopIndexStoreLock) Release() error {
+	return nil
+}
+
+func (l *noopIndexStoreLock) Lost() <-chan struct{} {
+	return l.lost
 }
 
 func (f *fakeRemoteIndexStore) put(key ulid.ULID, meta *IndexMeta) {
@@ -68,6 +81,10 @@ func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.Names
 		return nil, fmt.Errorf("not found")
 	}
 	return meta, writeFakeSnapshot(destDir, meta)
+}
+
+func (f *fakeRemoteIndexStore) LockBuildIndex(context.Context, resource.NamespacedResource) (IndexStoreLock, error) {
+	return &noopIndexStoreLock{lost: make(chan struct{})}, nil
 }
 
 func (f *fakeRemoteIndexStore) UploadIndex(context.Context, resource.NamespacedResource, string, IndexMeta) (ulid.ULID, error) {
@@ -145,9 +162,6 @@ func TestSnapshotTier(t *testing.T) {
 
 	t.Run("no min: below running is tier 0", func(t *testing.T) {
 		assert.Equal(t, 0, snapshotTier(semver.MustParse("9.0.0"), nil, running))
-	})
-	t.Run("no running: anything is tier 0 or 1", func(t *testing.T) {
-		assert.Equal(t, 0, snapshotTier(semver.MustParse("99.0.0"), minV, nil))
 	})
 }
 
@@ -401,12 +415,134 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 // snapshot via store.UploadIndex, then verifies BuildIndex downloads it
 // instead of calling the builder. The round-trip of a real built index
 // through the store is covered separately in TestRemoteIndexStore_*.
+func TestShouldUpload(t *testing.T) {
+	key := newTestNsResource()
+
+	t.Run("uploads when no prior upload is tracked", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000})
+		idx := newUploadTestIndex(t, be, key, 42)
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips below min doc count", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 2, UploadInterval: time.Hour, MinDocChanges: 1000})
+		idx := newUploadTestIndex(t, be, key, 42)
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
+		idx := newUploadTestIndex(t, be, key, 42)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
+		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when interval elapsed and mutation count is large enough", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 25})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
+		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+}
+
+func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
+	be, _ := newTestBleveBackend(t, SnapshotOptions{})
+	key := newTestNsResource()
+	idx := newUploadTestIndex(t, be, key, 42)
+
+	count, err := readSnapshotMutationCount(idx.index)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Name:  "dash-2",
+				Title: "dash-2",
+				Key: &resourcepb.ResourceKey{
+					Name:      "dash-2",
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+			},
+		},
+		{
+			Action: resource.ActionDelete,
+			Key: &resourcepb.ResourceKey{
+				Name:      "dash-1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+		},
+	}})
+	require.NoError(t, err)
+
+	count, err = readSnapshotMutationCount(idx.index)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+}
+
+func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
+	be, _ := newTestBleveBackend(t, SnapshotOptions{})
+	key := newTestNsResource()
+	resourceDir := be.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	require.NoError(t, err)
+	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
+	require.NoError(t, setRV(index, 42))
+
+	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	idx.resourceVersion.Store(42)
+	idx.expiration = time.Now().Add(-time.Minute)
+
+	be.cacheMx.Lock()
+	be.cache[key] = idx
+	be.cacheMx.Unlock()
+	be.setUploadTracking(key, time.Now())
+
+	be.runEvictExpiredOrUnownedIndexes(time.Now())
+
+	assert.Nil(t, be.getCachedIndex(key, time.Now()))
+	_, ok := be.getUploadTracking(key)
+	assert.False(t, ok)
+}
+
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	bucket := memblob.OpenBucket(nil)
 	t.Cleanup(func() { _ = bucket.Close() })
 
-	store := NewBucketRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket, newFakeBackend(newConditionalBucket()), "test-owner", 5*time.Second, 500*time.Millisecond)
 	key := newTestNsResource()
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.5.0",
@@ -449,4 +585,12 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	bi, ok := idx.(*bleveIndex)
 	require.True(t, ok)
 	assert.Equal(t, meta.LatestResourceVersion, bi.resourceVersion.Load())
+
+	trackedAt, tracked := be.getUploadTracking(key)
+	require.True(t, tracked)
+	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+
+	mutationCount, err := readSnapshotMutationCount(bi.index)
+	require.NoError(t, err)
+	assert.Zero(t, mutationCount)
 }

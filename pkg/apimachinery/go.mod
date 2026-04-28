@@ -1,11 +1,11 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.25.9
+go 1.26.2
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.4
-	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
 	k8s.io/apimachinery v0.35.3

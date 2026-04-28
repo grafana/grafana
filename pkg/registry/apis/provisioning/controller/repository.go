@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -38,12 +39,6 @@ const loggerName = "provisioning-repository-controller"
 const (
 	maxAttempts = 3
 )
-
-type queueItem struct {
-	key      string
-	obj      interface{}
-	attempts int
-}
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
@@ -69,11 +64,11 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(item *queueItem) error
+	processFn         func(key string) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue           workqueue.TypedRateLimitingInterface[*queueItem]
+	queue           workqueue.TypedRateLimitingInterface[string]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
@@ -121,8 +116,8 @@ func NewRepositoryController(
 		repoLister: repoInformer.Lister(),
 		repoSynced: repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "provisioningRepositoryController",
 			},
 		),
@@ -200,7 +195,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 
 	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
-		go wait.UntilWithContext(ctx, rc.runWorker, time.Second)
+		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
+		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
 	}
 
 	logger.Info("Started workers")
@@ -236,50 +232,49 @@ func (rc *RepositoryController) enqueue(obj interface{}) {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-
-	item := queueItem{key: key, obj: obj}
-	rc.queue.Add(&item)
+	rc.queue.Add(key)
 }
 
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	item, quit := rc.queue.Get()
+	key, quit := rc.queue.Get()
 	if quit {
 		return false
 	}
-	defer rc.queue.Done(item)
+	defer rc.queue.Done(key)
 
-	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
-	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "repository", name)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
-	err := rc.processFn(item)
+	err := rc.processFn(key)
 	if err == nil {
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	}
 
-	item.attempts++
-	logger = logger.With("error", err, "attempts", item.attempts)
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := rc.queue.NumRequeues(key) + 1
+	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
-	if item.attempts >= maxAttempts {
+	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(item)
+		rc.queue.Forget(key)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
 	}
 
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
-	rc.queue.AddRateLimited(item)
+	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	rc.queue.AddRateLimited(key)
 
 	return true
 }
@@ -303,13 +298,19 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			return fmt.Errorf("process finalizers: %w", err)
 		}
 
-		// remove the finalizers
-		_, err = rc.client.Repositories(obj.GetNamespace()).
-			Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
+		// remove the finalizers. Retry on optimistic-concurrency conflicts:
+		// the apiserver translates this JSON Patch into a read-modify-write
+		// with PreviousRV set, so concurrent writes on the repository race
+		// with this call and legitimately succeed on retry.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			_, err := rc.client.Repositories(obj.GetNamespace()).
+				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
 					{ "op": "remove", "path": "/metadata/finalizers" }
 				]`), v1.PatchOptions{
-				FieldManager: "provisioning-controller",
-			})
+					FieldManager: "provisioning-controller",
+				})
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
@@ -569,11 +570,11 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 }
 
 //nolint:gocyclo
-func (rc *RepositoryController) process(item *queueItem) error {
-	logger := rc.logger.With("key", item.key)
+func (rc *RepositoryController) process(key string) error {
+	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
-	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}

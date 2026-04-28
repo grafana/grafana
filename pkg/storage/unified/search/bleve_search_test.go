@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -793,4 +794,127 @@ func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *res
 		},
 		Limit: 100000,
 	}
+}
+
+// testAccessClient is a simple access client for testing that allows access
+// only to resources in the specified folders. An empty allowedFolders set
+// means access is denied to everything.
+type testAccessClient struct {
+	allowedFolders map[string]bool
+}
+
+func (c *testAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: c.allowedFolders[folder], Zookie: authlib.NoopZookie{}}, nil
+}
+
+func (c *testAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(name, folder string) bool { return c.allowedFolders[folder] }, authlib.NoopZookie{}, nil
+}
+
+func (c *testAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allowedFolders[item.Folder]}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func checkSearchQueryWithAccess(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+	t.Helper()
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    1,
+		Namespace: query.Options.Key.Namespace,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+	res, err := index.Search(ctx, ac, query, nil, nil)
+	require.NoError(t, err)
+	names := make([]string, 0, len(res.Results.GetRows()))
+	for _, row := range res.Results.GetRows() {
+		names = append(names, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, names)
+}
+
+func TestSearchPermissionFiltering(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	indexDocumentsWithFolders := func(t *testing.T, index resource.ResourceIndex, docs map[string]string) {
+		t.Helper()
+		items := make([]*resource.BulkIndexItem, 0, len(docs))
+		for name, folder := range docs {
+			items = append(items, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  name,
+					Title: name,
+					Key: &resourcepb.ResourceKey{
+						Name:      name,
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+					Folder: folder,
+				},
+			})
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	}
+
+	query := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+		},
+		Limit: 100000,
+	}
+
+	t.Run("returns all documents when access client is nil", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithFolders(t, index, map[string]string{
+			"doc-a": "folder-a",
+			"doc-b": "folder-b",
+		})
+		checkSearchQueryWithAccess(t, index, nil, query, []string{"doc-a", "doc-b"})
+	})
+
+	t.Run("returns only documents in allowed folders", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithFolders(t, index, map[string]string{
+			"doc-a": "folder-a",
+			"doc-b": "folder-b",
+			"doc-c": "folder-a",
+		})
+		ac := &testAccessClient{allowedFolders: map[string]bool{"folder-a": true}}
+		checkSearchQueryWithAccess(t, index, ac, query, []string{"doc-a", "doc-c"})
+	})
+
+	t.Run("returns no documents when user has no folder access", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithFolders(t, index, map[string]string{
+			"doc-a": "folder-a",
+			"doc-b": "folder-b",
+		})
+		ac := &testAccessClient{allowedFolders: map[string]bool{}}
+		checkSearchQueryWithAccess(t, index, ac, query, []string{})
+	})
+
+	t.Run("returns documents from multiple allowed folders", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithFolders(t, index, map[string]string{
+			"doc-a": "folder-a",
+			"doc-b": "folder-b",
+			"doc-c": "folder-c",
+		})
+		ac := &testAccessClient{allowedFolders: map[string]bool{"folder-a": true, "folder-b": true}}
+		checkSearchQueryWithAccess(t, index, ac, query, []string{"doc-a", "doc-b"})
+	})
 }

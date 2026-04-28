@@ -30,7 +30,7 @@ const (
 type snapshotCandidate struct {
 	key     ulid.ULID
 	meta    *IndexMeta
-	version *semver.Version // always non-nil; unparseable entries are dropped earlier
+	version *semver.Version // always non-nil; pickBestSnapshot drops unparseable entries
 	tier    int             // 0 = best, 2 = last resort
 }
 
@@ -82,7 +82,8 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	}
 
 	start := time.Now()
-	if _, err := store.DownloadIndex(ctx, key, candidate.key, destDir); err != nil {
+	downloadedMeta, err := store.DownloadIndex(ctx, key, candidate.key, destDir)
+	if err != nil {
 		_ = os.RemoveAll(destDir)
 		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
 		return nil, "", 0, fmt.Errorf("downloading snapshot: %w", err)
@@ -109,6 +110,19 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(elapsed.Seconds())
 	}
 
+	uploadedAt := candidate.meta.UploadTimestamp
+	if downloadedMeta != nil && !downloadedMeta.UploadTimestamp.IsZero() {
+		uploadedAt = downloadedMeta.UploadTimestamp
+	}
+	// A downloaded snapshot becomes the new upload baseline for this index.
+	if err := writeSnapshotMutationCount(idx, 0); err != nil {
+		_ = idx.Close()
+		_ = os.RemoveAll(destDir)
+		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		return nil, "", 0, fmt.Errorf("resetting snapshot mutation count: %w", err)
+	}
+	b.setUploadTracking(key, uploadedAt)
+
 	logger.Info("Downloaded remote index snapshot", "elapsed", elapsed, "rv", rv, "directory", destDir)
 	return idx, name, rv, nil
 }
@@ -129,15 +143,14 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	var droppedAge, droppedUnparseable int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
-		if m == nil {
-			continue
-		}
 		// Hard filter: age.
 		if maxAge > 0 && now.Sub(m.UploadTimestamp) > maxAge {
 			droppedAge++
 			continue
 		}
-		// Hard filter: unparseable version (we can't tier it).
+		// Hard filter: unparseable version (we can't tier it). Metadata validation
+		// lives here rather than in the store so we don't have to duplicate it
+		// across store implementations.
 		v, err := semver.NewVersion(m.GrafanaBuildVersion)
 		if err != nil {
 			droppedUnparseable++
@@ -189,8 +202,10 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 
 // snapshotTier returns the preference tier of v relative to the configured
 // lower bound (minVersion) and the running Grafana version. Lower = better.
+// running must be non-nil; the caller (NewBleveBackend) enforces this when the
+// snapshot feature is enabled.
 func snapshotTier(v, minVersion, running *semver.Version) int {
-	if running != nil && v.Compare(running) > 0 {
+	if v.Compare(running) > 0 {
 		return 2 // newer than running Grafana: last resort
 	}
 	if minVersion != nil && v.Compare(minVersion) < 0 {

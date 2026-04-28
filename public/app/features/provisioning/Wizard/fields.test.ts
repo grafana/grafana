@@ -79,19 +79,30 @@ describe('URL validation patterns', () => {
     });
 
     it.each([
+      // Bitbucket Cloud
       ['https://bitbucket.org/workspace/repo', true],
       ['https://bitbucket.org/workspace/repo/', true],
       ['https://bitbucket.example.com/workspace/repo', true],
+      // Bitbucket Server / Data Center (3-segment /scm/ paths)
+      ['https://bitbucket.example.com/scm/project/repo', true],
+      ['https://bitbucket.example.com/scm/project/repo/', true],
+      // Multi-segment paths
+      ['https://bitbucket.org/workspace/repo/extra', true],
     ])('%s → %s', (url, expected) => {
       expect(pattern.test(url)).toBe(expected);
     });
 
     it.each([
-      ['https://bitbucket.org/workspace/repo/extra', false],
+      // Must have at least 2 path segments
       ['https://bitbucket.org/workspace', false],
+      // No http
       ['http://bitbucket.org/workspace/repo', false],
+      // No path
       ['https://bitbucket.org/', false],
+      // Empty segments
       ['https://bitbucket.org/workspace//repo', false],
+      // Bare hostname
+      ['https://bitbucket.org', false],
     ])('rejects %s', (url, expected) => {
       expect(pattern.test(url)).toBe(expected);
     });

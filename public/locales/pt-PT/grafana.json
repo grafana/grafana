@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "Não tem permissão para aceder ao incidente",
         "instance-details": "Detalhes da instância",
+        "section-silence": "",
         "silence-button": "Silêncio",
-        "silence-no-permission": "Não tem permissão para criar silêncios",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Não tem permissão para criar silêncios"
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "Não tem instâncias de alerta num estado de disparo ou pendente para o intervalo de tempo selecionado.",
@@ -5636,6 +5636,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-filters-set": "",
         "tab": "Separador",
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
@@ -6487,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Dados de entrada",
+      "loading": "",
       "output-data": "Dados de saída",
       "title-debug-transformation": "Depurar transformação"
     },
@@ -8268,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Pesquisar"
     },
     "resource-dimension-editor": {
@@ -10119,6 +10122,12 @@
     "cascader": {
       "clear-button": "Limpar a seleção"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valor RGBA"
     },
@@ -10464,6 +10473,7 @@
     "sidebar": {
       "close": "Fechar",
       "dock": "Ancorar",
+      "go-back": "",
       "hide": "Ocultar",
       "show": "Mostrar",
       "undock": "Desancorar"
@@ -11220,6 +11230,7 @@
       "label-numbers": "Números",
       "label-signature": "Assinatura"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Mostrar um componente para gerir os campos exibidos dos registos.",
     "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
     "description-enable-logs-highlighting": "Utilizar um esquema de cores predefinido para destacar as partes relevantes das linhas de registo.",
@@ -11517,6 +11528,7 @@
         "common-labels": "Etiquetas comuns:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comuns",
     "name-deduplication": "Desduplicação",
     "name-details-mode": "Modo de painel de detalhes de registo",
@@ -11905,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Todos",
-      "title-filtered": "Todos (filtrados)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Limpar tudo"
@@ -13149,6 +13163,7 @@
       "token-user-description": "O nome de utilizador que será utilizado para aceder ao repositório com o token de API",
       "token-user-required": "O utilizador é obrigatório",
       "url-description": "O URL do repositório Bitbucket",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "bootstrap-step": {
@@ -14102,7 +14117,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ajuda da origem de dados",
       "hide-transformation-help": "Ocultar ajuda para a transformação",
-      "inspector": "Inspetor de consultas",
       "more-actions": "Mais ações de {{type}}",
       "remove": "Remover {{type}}",
       "remove-transformation-filter": "Remover filtro",
@@ -14114,6 +14128,27 @@
     "alerts": {
       "no-alerts": "Nenhuma regra de alertas para este painel",
       "no-alerts-description": "Criar uma regra de alertas para receber notificações quando os seus dados cumprirem determinadas condições."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
@@ -14151,6 +14186,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Pontos de dados máximos",
@@ -14161,6 +14197,7 @@
       "placeholder": {
         "no-limit": "Sem limite"
       },
+      "query-inspector": "",
       "query-options": "Opções de consulta"
     },
     "header": {
@@ -14763,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Painel de controlo inicial",
       "home-dashboard-placeholder": "Painel de controlo predefinido",
@@ -15978,6 +16019,9 @@
         "grouping-to-matrix": "Agrupar em matriz"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcular um histograma a partir de dados de entrada."
@@ -16312,6 +16356,9 @@
       "label-time-field": "Campo de hora",
       "tooltip-statistic-should-calculated-series": "A estatística que deve ser calculada para esta série temporal.",
       "tooltip-time-field": "O campo de hora que será utilizado para a série temporal. Se não for selecionado, será utilizado o primeiro resultado encontrado."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome do primeiro campo",

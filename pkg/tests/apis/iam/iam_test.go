@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,12 +26,6 @@ var gvrUsers = schema.GroupVersionResource{
 	Group:    "iam.grafana.app",
 	Version:  "v0alpha1",
 	Resource: "users",
-}
-
-var gvrTeamBindings = schema.GroupVersionResource{
-	Group:    "iam.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "teambindings",
 }
 
 func TestMain(m *testing.M) {
@@ -63,6 +58,10 @@ func TestIntegrationIdentity(t *testing.T) {
 		})
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
+		// Members have randomly-generated UIDs; drop them from comparison.
+		for i := range rsp.Items {
+			unstructured.RemoveNestedField(rsp.Items[i].Object, "spec", "members")
+		}
 		found := teamClient.SanitizeJSONList(rsp, "name", "labels")
 		require.JSONEq(t, `{
       "items": [

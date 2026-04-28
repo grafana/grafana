@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.25.9
+go 1.26.2
 
 replace (
 	// TODO: remove these - the build system should not depend on Grafana code.

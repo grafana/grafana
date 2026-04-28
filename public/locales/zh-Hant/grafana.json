@@ -3570,9 +3570,9 @@
         "declare-incident": "宣告事件",
         "declare-incident-no-permission": "您沒有存取事件的權限",
         "instance-details": "執行個體詳細資料",
+        "section-silence": "",
         "silence-button": "靜默通知",
-        "silence-no-permission": "您沒有權限建立靜默通知",
-        "silence-title-with-name": ""
+        "silence-no-permission": "您沒有權限建立靜默通知"
       },
       "labels-column-title": "標籤",
       "no-firing-or-pending-instances": "您在所選時間範圍內，沒有處於觸發或待處理狀態的警示執行個體。",
@@ -5606,6 +5606,7 @@
         "panels": "面板",
         "row": "列",
         "rows": "列",
+        "section-filters-set": "",
         "tab": "分頁",
         "tabs": "分頁",
         "variable": "{{type}}變數",
@@ -6456,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "輸入資料",
+      "loading": "",
       "output-data": "輸出資料",
       "title-debug-transformation": "偵錯轉換"
     },
@@ -8222,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜尋"
     },
     "resource-dimension-editor": {
@@ -10061,6 +10064,12 @@
     "cascader": {
       "clear-button": "清空選項"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10406,6 +10415,7 @@
     "sidebar": {
       "close": "關閉",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隱藏",
       "show": "顯示",
       "undock": "取消停靠"
@@ -11157,6 +11167,7 @@
       "label-numbers": "數字",
       "label-signature": "簽名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "實驗性。顯示一個元件，用於管理記錄中顯示的欄位。",
     "description-enable-infinite-scrolling": "實驗性。捲動至記錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "使用預先定義的著色方案，來突顯記錄行中的相關部分。",
@@ -11451,6 +11462,7 @@
         "common-labels": "通用標籤："
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "通用標籤",
     "name-deduplication": "重複",
     "name-details-mode": "詳細資訊面板模式",
@@ -11839,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已篩選）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13080,6 +13094,7 @@
       "token-user-description": "將用於存取具有 API 權杖的儲存庫的使用者名稱",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Bitbucket 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "bootstrap-step": {
@@ -14018,7 +14033,6 @@
       "hide": "隱藏 {{type}}",
       "hide-help": "隱藏資料來源說明",
       "hide-transformation-help": "隱藏轉換說明",
-      "inspector": "查詢檢查器",
       "more-actions": "更多 {{type}} 動作",
       "remove": "移除 {{type}}",
       "remove-transformation-filter": "移除篩選條件",
@@ -14030,6 +14044,25 @@
     "alerts": {
       "no-alerts": "此面板沒有警示規則",
       "no-alerts-description": "建立警示規則，以便在您的資料符合特定條件時收到通知。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "確定要刪除此查詢嗎？",
@@ -14067,6 +14100,7 @@
     },
     "footer": {
       "edit-option": "編輯 {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大資料點",
@@ -14077,6 +14111,7 @@
       "placeholder": {
         "no-limit": "無限制"
       },
+      "query-inspector": "",
       "query-options": "查詢選項"
     },
     "header": {
@@ -14673,6 +14708,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "首頁儀表板",
       "home-dashboard-placeholder": "預設儀表板",
@@ -15887,6 +15926,9 @@
         "grouping-to-matrix": "分組到矩陣"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "從輸入資料計算直方圖。"
@@ -16221,6 +16263,9 @@
       "label-time-field": "時間欄位",
       "tooltip-statistic-should-calculated-series": "應該為此時間系列計算的統計資料。",
       "tooltip-time-field": "將用於時間系列的時間欄位。如果未選擇，將使用第一個找到的欄位。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一個欄位名稱",
