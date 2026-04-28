@@ -147,7 +147,7 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 }
 
 func TestPartialHNSWName(t *testing.T) {
-	require.Equal(t, "embeddings_dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
-	require.Equal(t, "embeddings_dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
-	require.Equal(t, "embeddings_dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
+	require.Equal(t, "dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
+	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
+	require.Equal(t, "dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
 }

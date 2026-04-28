@@ -63,7 +63,7 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	t.Helper()
 	ctx := context.Background()
 
-	indexPrefix := fmt.Sprintf("%s_integration_test", testSubtree)
+	indexPrefix := fmt.Sprintf("%s_integration_test", testResource)
 	rows, err := engine.DB().QueryContext(ctx, `
 		SELECT c.relname FROM pg_class c
 		JOIN pg_index i ON i.indexrelid = c.oid

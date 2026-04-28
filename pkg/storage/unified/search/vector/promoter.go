@@ -28,11 +28,12 @@ func subtreeName(resource string) string {
 	return fmt.Sprintf("%s_%s", unifiedParent, resource)
 }
 
-// partialHNSWName builds the per-tenant partial HNSW index name. Postgres caps
-// identifiers at 63 chars; long namespaces need a hash-suffix fallback (not
-// yet implemented).
+// partialHNSWName builds the per-tenant partial HNSW index name. Format is
+// `<resource>_<sanitized_namespace>_hnsw`. Postgres caps identifiers at 63
+// chars: with `stacks_<int64>` namespaces (max 26 chars), resource names up
+// to ~31 chars are safe.
 func partialHNSWName(resource, namespace string) string {
-	return fmt.Sprintf("%s_%s_%s_hnsw", unifiedParent, resource, sanitizeIdentifier(namespace))
+	return fmt.Sprintf("%s_%s_hnsw", resource, sanitizeIdentifier(namespace))
 }
 
 // Promoter creates per-tenant partial HNSW indexes on each resource sub-tree
