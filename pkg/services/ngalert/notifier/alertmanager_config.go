@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/utils/hash"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -505,6 +507,25 @@ func (moa *MultiOrgAlertmanager) SaveExtraConfiguration(ctx context.Context, org
 		}
 		currentCfg = &models.AlertConfiguration{
 			AlertmanagerConfiguration: moa.settings.UnifiedAlerting.DefaultConfiguration,
+		}
+	}
+
+	// Skip the save when the resulting ExtraConfig is identical to what's already
+	// stored — avoids polluting alert_configuration_history with a fresh row on
+	// every no-op tick. The fingerprint is computed on the unencrypted source
+	// because encryption uses a fresh IV per call, so post-encrypt bytes never
+	// match even for identical input. Mirrors the apply-loop fingerprint pattern
+	// in alertmanager.go (CalculateConfigFingerprint).
+	extraConfigFingerprint := func(ec definitions.ExtraConfiguration) uint64 {
+		h := fnv.New64a()
+		hash.DeepHashObject(h, &ec)
+		return h.Sum64()
+	}
+	if existing, err := Load([]byte(currentCfg.AlertmanagerConfiguration)); err == nil && len(existing.ExtraConfigs) == 1 {
+		if err := moa.Crypto.DecryptExtraConfigs(ctx, existing); err == nil {
+			if extraConfigFingerprint(existing.ExtraConfigs[0]) == extraConfigFingerprint(ec) {
+				return nil
+			}
 		}
 	}
 

@@ -326,6 +326,35 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "success")))
 }
 
+func TestSyncExternalAMs_NoOpDoesNotPolluteHistory(t *testing.T) {
+	const amConfig = "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
+
+	mimirSrv := startMimirServer(t, amConfig)
+
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
+		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
+	}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
+
+	// First tick: stores the config and writes one history row.
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 1)
+
+	// Second tick on an identical Mimir config: the saved bytes hash to the
+	// same value as the stored config, so SaveExtraConfiguration short-circuits
+	// and no new history row is written.
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 1, "no-op sync should not write a new history row")
+
+	// Both ticks should still be counted as successful syncs.
+	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1", "success")))
+}
+
 func TestBuildMimirConfigURL(t *testing.T) {
 	moa := &MultiOrgAlertmanager{}
 
