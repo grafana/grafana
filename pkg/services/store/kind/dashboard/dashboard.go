@@ -622,11 +622,17 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath st
 			switch iter.WhatIsNext() {
 			case jsoniter.ArrayValue:
 				for ix := 0; iter.ReadArray(); ix++ {
-					targets.addTarget(iter, fmt.Sprintf("%s.targets[%d]", jsonPath, ix), lc)
+					q := targets.addTarget(iter, fmt.Sprintf("%s.targets[%d]", jsonPath, ix), lc)
+					if q.Expression != "" {
+						panel.Queries = append(panel.Queries, q)
+					}
 				}
 			case jsoniter.ObjectValue:
 				for fn := iter.ReadObject(); fn != ""; fn = iter.ReadObject() {
-					targets.addTarget(iter, jsonPath+".targets."+fn, lc)
+					q := targets.addTarget(iter, jsonPath+".targets."+fn, lc)
+					if q.Expression != "" {
+						panel.Queries = append(panel.Queries, q)
+					}
 				}
 			default:
 				iter.Skip()
@@ -738,6 +744,17 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 			continue
 		}
 		switch field {
+		case "id":
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue, jsoniter.StringValue) {
+				continue
+			}
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				if id, err := strconv.ParseInt(iter.ReadString(), 10, 64); err == nil {
+					panel.ID = id
+				}
+			} else {
+				panel.ID = iter.ReadInt64()
+			}
 		case "title":
 			if checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
 				panel.Title = iter.ReadString()
@@ -769,14 +786,37 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 					}
 					if queries, _ := spec["queries"].([]any); queries != nil {
 						for _, q := range queries {
-							if m, ok := q.(map[string]any); ok {
-								if ds, ok := m["datasource"].(map[string]any); ok {
-									uid, _ := ds["uid"].(string)
-									typ, _ := ds["type"].(string)
-									if uid != "" {
-										panel.Datasource = append(panel.Datasource, DataSourceRef{UID: uid, Type: typ})
+							m, ok := q.(map[string]any)
+							if !ok {
+								continue
+							}
+							// Datasource may live at the queries[] item level
+							// (`m.datasource`) or nested under `m.spec.datasource`.
+							// The schema-correct form is `m.spec.query.datasource`.
+							ds, _ := m["datasource"].(map[string]any)
+							if ds == nil {
+								if specMap, _ := m["spec"].(map[string]any); specMap != nil {
+									ds, _ = specMap["datasource"].(map[string]any)
+									if ds == nil {
+										if query, _ := specMap["query"].(map[string]any); query != nil {
+											ds, _ = query["datasource"].(map[string]any)
+										}
 									}
 								}
+							}
+							if ds != nil {
+								uid, _ := ds["uid"].(string)
+								typ, _ := ds["type"].(string)
+								if uid != "" {
+									panel.Datasource = append(panel.Datasource, DataSourceRef{UID: uid, Type: typ})
+								}
+							}
+
+							// Capture the query expression. Try the same depths
+							// in priority order: schema-correct `m.spec.query.spec.<expr>`,
+							// then `m.spec.<expr>`, then flat `m.<expr>`.
+							if qe := readV2QueryExpression(m); qe.Expression != "" {
+								panel.Queries = append(panel.Queries, qe)
 							}
 						}
 					}
@@ -790,6 +830,50 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 	}
 	panel.Datasource = filterSpecialDatasourcesFromRefs(panel.Datasource)
 	return panel
+}
+
+// readV2QueryExpression pulls the query expression and refId out of one v2
+// queries[] entry. V2 schema variants put the expression at different
+// depths; we try each in priority order.
+func readV2QueryExpression(m map[string]any) PanelQueryInfo {
+	// Schema-correct: m.spec.query.spec.<expr> with m.spec.refId
+	if specMap, _ := m["spec"].(map[string]any); specMap != nil {
+		var q PanelQueryInfo
+		if rid, _ := specMap["refId"].(string); rid != "" {
+			q.RefID = rid
+		}
+		if query, _ := specMap["query"].(map[string]any); query != nil {
+			if qspec, _ := query["spec"].(map[string]any); qspec != nil {
+				if expr := pickExpression(qspec); expr != "" {
+					q.Expression = expr
+					return q
+				}
+			}
+		}
+		// Fallback: m.spec.<expr> directly
+		if expr := pickExpression(specMap); expr != "" {
+			q.Expression = expr
+			return q
+		}
+	}
+	// Flat fallback: m.<expr> (matches some legacy fixtures)
+	return PanelQueryInfo{Expression: pickExpression(m)}
+}
+
+func pickExpression(m map[string]any) string {
+	if s, _ := m["expr"].(string); s != "" {
+		return s
+	}
+	if s, _ := m["rawSql"].(string); s != "" {
+		return s
+	}
+	if s, _ := m["rawQuery"].(string); s != "" {
+		return s
+	}
+	if s, _ := m["query"].(string); s != "" {
+		return s
+	}
+	return ""
 }
 
 func readV2LibraryPanelSpec(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) PanelSummaryInfo {

@@ -11,8 +11,18 @@ type PanelSummaryInfo struct {
 	LibraryPanel  string          `json:"libraryPanel,omitempty"` // UID of referenced library panel
 	Datasource    []DataSourceRef `json:"datasource,omitempty"`   // UIDs
 	Transformer   []string        `json:"transformer,omitempty"`  // ids of the transformation steps
+	Queries       []PanelQueryInfo `json:"queries,omitempty"`     // per-target query expressions
 	// Rows define panels as sub objects
 	Collapsed []PanelSummaryInfo `json:"collapsed,omitempty"`
+}
+
+// PanelQueryInfo is the captured form of one query target on a panel.
+// Language inference is left to consumers since it depends on the panel's
+// datasource type (PanelSummaryInfo.Datasource).
+type PanelQueryInfo struct {
+	RefID         string `json:"refId,omitempty"`
+	DatasourceUID string `json:"datasourceUid,omitempty"`
+	Expression    string `json:"expression,omitempty"`
 }
 
 type DashboardSummaryInfo struct {

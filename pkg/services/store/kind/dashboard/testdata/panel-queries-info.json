@@ -1,0 +1,98 @@
+{
+  "title": "Panel queries fixture",
+  "tags": [
+    "queries"
+  ],
+  "datasource": [
+    {
+      "uid": "tempo-1",
+      "type": "tempo"
+    },
+    {
+      "uid": "prom-1",
+      "type": "prometheus"
+    },
+    {
+      "uid": "pg-1",
+      "type": "postgres"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "PromQL panel",
+      "datasource": [
+        {
+          "uid": "prom-1",
+          "type": "prometheus"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "datasourceUid": "prom-1",
+          "expression": "rate(http_requests_total[5m])"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "SQL panel",
+      "datasource": [
+        {
+          "uid": "pg-1",
+          "type": "postgres"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "datasourceUid": "pg-1",
+          "expression": "SELECT 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Tempo panel",
+      "datasource": [
+        {
+          "uid": "tempo-1",
+          "type": "tempo"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "datasourceUid": "tempo-1",
+          "expression": "{ duration \u003e 1s }"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Multi-target panel",
+      "datasource": [
+        {
+          "uid": "prom-1",
+          "type": "prometheus"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "expression": "up"
+        },
+        {
+          "refId": "B",
+          "expression": "rate(errors_total[1m])"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

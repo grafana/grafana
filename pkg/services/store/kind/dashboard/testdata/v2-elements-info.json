@@ -1,6 +1,9 @@
 {
   "title": "V2 dashboard with elements",
-  "tags": ["v2", "elements"],
+  "tags": [
+    "v2",
+    "elements"
+  ],
   "datasource": [
     {
       "uid": "default.uid",
@@ -9,7 +12,7 @@
   ],
   "panels": [
     {
-      "id": 0,
+      "id": 1,
       "title": "Timeseries panel",
       "description": "A v2 panel",
       "type": "TimeseriesPanel",
@@ -19,7 +22,10 @@
           "type": "default.type"
         }
       ],
-      "transformer": ["merge", "groupBy"]
+      "transformer": [
+        "merge",
+        "groupBy"
+      ]
     },
     {
       "id": 0,

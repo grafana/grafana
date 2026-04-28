@@ -26,10 +26,12 @@ func (s *targetInfo) GetDatasourceInfo() []DataSourceRef {
 	return keys
 }
 
-// the node will either be string (name|uid) OR ref
-func (s *targetInfo) addDatasource(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) {
+// addDatasource accumulates the datasource reference into targetInfo and
+// returns the resolved ref (may be nil). The node may be a string (uid),
+// nil (default), or an object ref.
+func (s *targetInfo) addDatasource(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) *DataSourceRef {
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.StringValue, jsoniter.NilValue, jsoniter.ObjectValue) {
-		return
+		return nil
 	}
 
 	switch iter.WhatIsNext() {
@@ -40,26 +42,32 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator, jsonPath string, lc 
 		if !isVariableRef(dsRef.UID) && !isSpecialDatasource(dsRef.UID) {
 			ds := s.lookup.ByRef(dsRef)
 			s.addRef(ds)
-		} else {
-			s.addRef(dsRef)
+			return ds
 		}
+		s.addRef(dsRef)
+		return dsRef
 
 	case jsoniter.NilValue:
-		s.addRef(s.lookup.ByRef(nil))
+		ds := s.lookup.ByRef(nil)
+		s.addRef(ds)
 		iter.Skip()
+		return ds
 
 	case jsoniter.ObjectValue:
 		ref := &DataSourceRef{}
 		iter.ReadVal(ref)
 
 		if !isVariableRef(ref.UID) && !isSpecialDatasource(ref.UID) {
-			s.addRef(s.lookup.ByRef(ref))
-		} else {
-			s.addRef(ref)
+			resolved := s.lookup.ByRef(ref)
+			s.addRef(resolved)
+			return resolved
 		}
+		s.addRef(ref)
+		return ref
 
 	default:
 		iter.Skip()
+		return nil
 	}
 }
 
@@ -69,23 +77,57 @@ func (s *targetInfo) addRef(ref *DataSourceRef) {
 	}
 }
 
-func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) {
+// addTarget walks one target object, accumulates its datasource into
+// targetInfo, and returns the captured query info. Empty Expression means
+// the target had no expression we recognise.
+func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) PanelQueryInfo {
+	var q PanelQueryInfo
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
-		return
+		return q
 	}
 
 	for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
 		switch f {
 		case "datasource":
-			s.addDatasource(iter, jsonPath+".datasource", lc)
+			if ref := s.addDatasource(iter, jsonPath+".datasource", lc); ref != nil && ref.UID != "" {
+				q.DatasourceUID = ref.UID
+			}
 
 		case "refId":
-			iter.Skip()
+			if iter.WhatIsNext() == jsoniter.StringValue {
+				q.RefID = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
+
+		case "expr":
+			if iter.WhatIsNext() == jsoniter.StringValue && q.Expression == "" {
+				q.Expression = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
+
+		case "rawSql", "rawQuery":
+			if iter.WhatIsNext() == jsoniter.StringValue && q.Expression == "" {
+				q.Expression = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
+
+		case "query":
+			// TraceQL: only treat the string form as an expression. The
+			// object form appears in templating-variable contexts.
+			if iter.WhatIsNext() == jsoniter.StringValue && q.Expression == "" {
+				q.Expression = iter.ReadString()
+			} else {
+				iter.Skip()
+			}
 
 		default:
 			iter.Skip()
 		}
 	}
+	return q
 }
 
 func (s *targetInfo) addPanel(panel PanelSummaryInfo) {
