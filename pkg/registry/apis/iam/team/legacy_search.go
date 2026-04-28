@@ -24,7 +24,7 @@ import (
 
 const (
 	TeamResource      = "teams"
-	TeamResourceGroup = "iam.grafana.com"
+	TeamResourceGroup = "iam.grafana.app"
 )
 
 // TeamSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.

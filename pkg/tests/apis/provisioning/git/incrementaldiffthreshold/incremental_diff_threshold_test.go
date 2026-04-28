@@ -221,6 +221,12 @@ func snapshotPullJobNames(t *testing.T, h *common.GitTestHelper, repoName string
 // in the given seen-set. The controller's interval reconcile is what creates
 // it. Historic jobs have a `-<hash>` suffix appended to the original name, so
 // we strip that suffix before comparing to `seen`.
+//
+// The controller only re-processes a repo when its informer re-emits the
+// object — either on status mutation or on the SharedInformerFactory's 60s
+// resync tick. That 60s tick sits right at our polling timeout, so we nudge
+// the controller by touching the repo's status once enough sync-age has
+// elapsed for shouldResync() to return true.
 func waitForNewPullJob(
 	t *testing.T,
 	h *common.GitTestHelper,
@@ -230,6 +236,7 @@ func waitForNewPullJob(
 	t.Helper()
 
 	var newJob *v0alpha1.Job
+	var lastNudge time.Time
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		// Check active jobs first — the fresh controller-queued job starts here.
 		active, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
@@ -279,12 +286,45 @@ func waitForNewPullJob(
 			return
 		}
 
+		// No new job yet. Nudge the controller periodically so it re-enqueues
+		// the repo even without waiting for the 60s informer resync. We only
+		// nudge once enough sync-age has elapsed for shouldResync() to return
+		// true; earlier nudges would be processed but skipped.
+		if time.Since(lastNudge) > 2*time.Second {
+			if shouldNudgeRepo(t, h, repoName) {
+				h.TriggerRepositoryReconciliation(t, repoName)
+				lastNudge = time.Now()
+			}
+		}
+
 		c.Errorf("no new pull job yet for repo %s (seen %d)", repoName, len(seen))
 	}, common.WaitTimeoutDefault, 500*time.Millisecond,
 		"controller should schedule an interval sync after the new commit")
 
 	require.NotNil(t, newJob, "new pull job must be populated")
 	return newJob
+}
+
+// shouldNudgeRepo reports whether enough time has elapsed since the last sync
+// finished for shouldResync() on the controller side to return true. We avoid
+// nudging before that because the controller would just observe syncAge <
+// syncInterval and return without queueing a job.
+func shouldNudgeRepo(t *testing.T, h *common.GitTestHelper, repoName string) bool {
+	t.Helper()
+	repoObj, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	repo := common.MustFromUnstructured[v0alpha1.Repository](t, repoObj)
+	if repo.Status.Sync.Finished == 0 {
+		return false
+	}
+	syncInterval := time.Duration(repo.Spec.Sync.IntervalSeconds) * time.Second
+	// shouldResync() uses a 1s tolerance on the controller side; match it here
+	// so we don't race the controller with a nudge that's a few ms too early.
+	tolerance := time.Second
+	syncAge := time.Since(time.UnixMilli(repo.Status.Sync.Finished))
+	return syncAge >= (syncInterval - tolerance)
 }
 
 // trimHistoricSuffix removes the `-<hash>` suffix that historic jobs receive

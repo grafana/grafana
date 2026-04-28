@@ -72,37 +72,37 @@ func TestSplitString(t *testing.T) {
 
 func BenchmarkSplitString(b *testing.B) {
 	b.Run("empty input", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("")
 		}
 	})
 	b.Run("single string", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test")
 		}
 	})
 	b.Run("space-separated", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 test2 test3")
 		}
 	})
 	b.Run("comma-separated", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1,test2,test3")
 		}
 	})
 	b.Run("comma-separated with spaces", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3")
 		}
 	})
 	b.Run("mixed commas and spaces", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3,test4")
 		}
 	})
 	b.Run("very long mixed", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			SplitString("test1 , test2 test3,test4, test5 test6 test7,test8 test9 test10" +
 				" test11 test12 test13,test14 test15 test16,test17 test18 test19,test20 test21 test22" +
 				" test23,test24 test25 test26,test27 test28 test29,test30 test31 test32" +
@@ -545,7 +545,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 			Description: "Description\ufeff",
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			StripBOMFromStruct(s)
 		}
 	})
@@ -561,7 +561,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 			},
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			StripBOMFromStruct(s)
 		}
 	})
@@ -590,7 +590,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 			},
 		}
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			StripBOMFromStruct(s)
 		}
 	})

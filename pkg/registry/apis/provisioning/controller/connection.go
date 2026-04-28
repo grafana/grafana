@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -21,6 +20,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -127,8 +127,9 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down ConnectionController")
 
 	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
-		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
+	for i := range workerCount {
+		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
+		go wait.UntilWithContext(workerCtx, cc.runWorker, time.Second)
 	}
 
 	logger.Info("Started workers")

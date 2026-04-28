@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -77,7 +78,10 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 		},
 	}}
 
-	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""))()
+	// Pin to a non-email type so the default integration doesn't randomly land on EmailType,
+	// which would route through emailValidator and fail with 'email address is not allowed'
+	// because the generator's random Name won't match validEmailIntegration.
+	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig(schema.SlackType))()
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
 	validEmailIntegration := models.IntegrationGen(
 		models.IntegrationMuts.WithUID(""),
@@ -94,7 +98,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	expectedAlert, err := convertToAlertParam(alert)
 	require.NoError(t, err)
 
-	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, requester identity.Requester, integration models.Integration) error {
+	emailValidator.ValidateIntegrationFunc = func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
 		if integration.Name == validEmailIntegration.Name {
 			return nil
 		}
@@ -120,8 +124,9 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			expectedErr: ac.ErrAuthorizationBase,
 		},
 		{
-			name: "integration is tested successfully (receiverUID empty)",
-			user: userAuthorizedToCreate,
+			name:        "integration is tested successfully (receiverUID empty)",
+			integration: &slackIntegration,
+			user:        userAuthorizedToCreate,
 		},
 		{
 			name:                "integration type in allowlist is permitted",
