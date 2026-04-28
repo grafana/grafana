@@ -14,12 +14,13 @@ export type ResolvedPayload = {
   uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
   width?: number;
   height?: number;
+  snapshotAssertionPassed?: boolean;
 };
 
 export type AcceptBaselineState =
   | { kind: 'idle' }
   | { kind: 'running'; updateSnapshot: boolean }
-  | { kind: 'success'; updateSnapshot: boolean; stdout: string; stderr: string; command: string; message: null }
+  | { kind: 'success'; updateSnapshot: boolean; stdout: string; stderr: string; command: string; message?: null }
   | { kind: 'error'; updateSnapshot?: boolean; message: string; stdout: string; stderr: string; command?: string };
 
 export interface ComparePlotsProps {
