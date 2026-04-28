@@ -27,6 +27,7 @@ type CommandLine interface {
 	PluginRepoURL() string
 	PluginURL() string
 	GcomToken() string
+	PluginInstallToken() string
 }
 
 type ApiClient interface {
@@ -104,7 +105,20 @@ func (c *ContextCommandLine) GcomToken() string {
 		logger.Debug("Could not parse config file", err)
 		return ""
 	}
-	return cfg.PluginInstallToken
+	return cfg.GrafanaComSSOAPIToken
+}
+
+func (c *ContextCommandLine) PluginInstallToken() string {
+	cfg, err := c.Config()
+
+	if err != nil {
+		logger.Debug("Could not parse config file", err)
+		return ""
+	}
+	if cfg.PluginInstallToken != "" {
+		return cfg.PluginInstallToken
+	}
+	return cfg.GrafanaComSSOAPIToken
 }
 
 func (c *ContextCommandLine) PluginURL() string {

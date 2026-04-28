@@ -12,6 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -381,23 +384,61 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
 
-	t.Run("PluginInstallToken falls back to sso_api_token when install_token is not set", func(t *testing.T) {
-		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+	testProvider := oftesting.NewTestProvider()
+	err := openfeature.SetProviderAndWait(testProvider)
+	require.NoError(t, err)
 
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
-		require.NoError(t, err)
-		require.Equal(t, "sso-token", cfg.PluginInstallToken)
-	})
+	flagEnabled := map[string]memprovider.InMemoryFlag{
+		"pluginsDedicatedInstallToken": {
+			State:          memprovider.Enabled,
+			DefaultVariant: "enabled",
+			Variants:       map[string]any{"enabled": true},
+		},
+	}
+	flagDisabled := map[string]memprovider.InMemoryFlag{
+		"pluginsDedicatedInstallToken": {
+			State:          memprovider.Enabled,
+			DefaultVariant: "disabled",
+			Variants:       map[string]any{"disabled": false},
+		},
+	}
 
-	t.Run("PluginInstallToken uses install_token when explicitly configured", func(t *testing.T) {
+	t.Run("PluginInstallToken falls back to sso_api_token when flag is off", func(t *testing.T) {
+		defer testProvider.Cleanup()
+		testProvider.UsingFlags(t, flagDisabled)
 		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
 		t.Setenv("GF_PLUGINS_INSTALL_TOKEN", "dedicated-token")
 
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.NoError(t, err)
+		cfg.ResolvePluginInstallToken()
+		require.Equal(t, "sso-token", cfg.PluginInstallToken)
+	})
+
+	t.Run("PluginInstallToken uses dedicated token when flag is on and install_token is set", func(t *testing.T) {
+		defer testProvider.Cleanup()
+		testProvider.UsingFlags(t, flagEnabled)
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+		t.Setenv("GF_PLUGINS_INSTALL_TOKEN", "dedicated-token")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		cfg.ResolvePluginInstallToken()
 		require.Equal(t, "dedicated-token", cfg.PluginInstallToken)
+	})
+
+	t.Run("PluginInstallToken falls back to sso_api_token when flag is on but install_token is not set", func(t *testing.T) {
+		defer testProvider.Cleanup()
+		testProvider.UsingFlags(t, flagEnabled)
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		cfg.ResolvePluginInstallToken()
+		require.Equal(t, "sso-token", cfg.PluginInstallToken)
 	})
 }
 

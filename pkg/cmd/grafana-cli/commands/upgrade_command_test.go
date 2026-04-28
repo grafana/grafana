@@ -131,6 +131,7 @@ func (b baseCommandLine) Generic(_ string) any          { return nil }
 func (b baseCommandLine) Bool(_ string) bool            { return false }
 func (b baseCommandLine) PluginURL() string             { return "" }
 func (b baseCommandLine) GcomToken() string             { return "" }
+func (b baseCommandLine) PluginInstallToken() string    { return "" }
 
 // Test implementation - only implements what we actually need
 type testCommandLine struct {
