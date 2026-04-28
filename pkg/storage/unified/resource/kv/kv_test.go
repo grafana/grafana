@@ -2,8 +2,10 @@ package kv
 
 import (
 	"context"
+	"errors"
 	"io"
 	"strings"
+	"sync"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -459,6 +461,45 @@ func TestBadgerKV_Batch(t *testing.T) {
 		require.NoError(t, err)
 		b, _ := io.ReadAll(val)
 		require.Equal(t, "v2", string(b))
+	})
+
+	t.Run("concurrent create reports key exists instead of badger conflict", func(t *testing.T) {
+		const rounds = 5
+		const goroutines = 10
+
+		for round := range rounds {
+			key := "create-race-" + string(rune('a'+round))
+
+			var wg sync.WaitGroup
+			start := make(chan struct{})
+			errs := make(chan error, goroutines)
+
+			for range goroutines {
+				wg.Go(func() {
+					<-start
+					errs <- kv.Batch(ctx, section, []BatchOp{
+						{Mode: BatchOpCreate, Key: key, Value: []byte("created")},
+					})
+				})
+			}
+
+			close(start)
+			wg.Wait()
+			close(errs)
+
+			var successes int
+			for err := range errs {
+				switch {
+				case err == nil:
+					successes++
+				case errors.Is(err, ErrKeyAlreadyExists):
+					// expected
+				default:
+					require.NoError(t, err, "unexpected error from concurrent Batch")
+				}
+			}
+			require.Equal(t, 1, successes, "only one writer should succeed")
+		}
 	})
 }
 
