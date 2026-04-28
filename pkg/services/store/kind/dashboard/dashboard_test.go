@@ -78,6 +78,7 @@ func TestReadDashboard(t *testing.T) {
 		"k8s-wrapper-with-parsing-errors",
 		"v2-elements",
 		"panel-queries",
+		"v2-panel-queries",
 		"scenarios/all-colapsed-rows-public",
 	}
 

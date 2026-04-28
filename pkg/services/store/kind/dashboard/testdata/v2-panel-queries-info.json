@@ -1,0 +1,54 @@
+{
+  "title": "V2 dashboard with query expressions",
+  "tags": [
+    "v2",
+    "queries"
+  ],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request rate",
+      "type": "TimeseriesPanel",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "expression": "rate(http_requests_total[5m])"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Recent errors",
+      "type": "LogsPanel",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "expression": "{app=\"api\"} |= \"error\""
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

@@ -790,18 +790,15 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 							if !ok {
 								continue
 							}
-							// Datasource may live at the queries[] item level
-							// (`m.datasource`) or nested under `m.spec.datasource`.
-							// The schema-correct form is `m.spec.query.datasource`.
+							// Datasource lives at queries[].spec.datasource in
+							// the v2 fixtures we've seen. (Older flat form
+							// queries[].datasource is preserved for backward
+							// compat with whatever the existing parser was
+							// targeting.)
 							ds, _ := m["datasource"].(map[string]any)
 							if ds == nil {
 								if specMap, _ := m["spec"].(map[string]any); specMap != nil {
 									ds, _ = specMap["datasource"].(map[string]any)
-									if ds == nil {
-										if query, _ := specMap["query"].(map[string]any); query != nil {
-											ds, _ = query["datasource"].(map[string]any)
-										}
-									}
 								}
 							}
 							if ds != nil {
@@ -812,9 +809,6 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 								}
 							}
 
-							// Capture the query expression. Try the same depths
-							// in priority order: schema-correct `m.spec.query.spec.<expr>`,
-							// then `m.spec.<expr>`, then flat `m.<expr>`.
 							if qe := readV2QueryExpression(m); qe.Expression != "" {
 								panel.Queries = append(panel.Queries, qe)
 							}
@@ -833,15 +827,16 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 }
 
 // readV2QueryExpression pulls the query expression and refId out of one v2
-// queries[] entry. V2 schema variants put the expression at different
-// depths; we try each in priority order.
+// queries[] entry. The v2 schema (matching what grafana-assistant-app's
+// extractor reads) puts the expression at m.spec.query.spec.<expr> with
+// refId on m.spec. Falls back to m.spec.<expr> and m.<expr> for variants.
 func readV2QueryExpression(m map[string]any) PanelQueryInfo {
-	// Schema-correct: m.spec.query.spec.<expr> with m.spec.refId
 	if specMap, _ := m["spec"].(map[string]any); specMap != nil {
 		var q PanelQueryInfo
 		if rid, _ := specMap["refId"].(string); rid != "" {
 			q.RefID = rid
 		}
+		// Schema path: m.spec.query.spec.<expr>
 		if query, _ := specMap["query"].(map[string]any); query != nil {
 			if qspec, _ := query["spec"].(map[string]any); qspec != nil {
 				if expr := pickExpression(qspec); expr != "" {
@@ -850,13 +845,13 @@ func readV2QueryExpression(m map[string]any) PanelQueryInfo {
 				}
 			}
 		}
-		// Fallback: m.spec.<expr> directly
+		// Variant: m.spec.<expr>
 		if expr := pickExpression(specMap); expr != "" {
 			q.Expression = expr
 			return q
 		}
 	}
-	// Flat fallback: m.<expr> (matches some legacy fixtures)
+	// Flat fallback: m.<expr>
 	return PanelQueryInfo{Expression: pickExpression(m)}
 }
 

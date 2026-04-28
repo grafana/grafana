@@ -1,0 +1,66 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "Dashboard",
+  "metadata": { "name": "v2-panel-queries-uid" },
+  "spec": {
+    "title": "V2 dashboard with query expressions",
+    "tags": ["v2", "queries"],
+    "elements": {
+      "panel-a": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Request rate",
+          "vizConfig": { "kind": "TimeseriesPanel", "spec": {} },
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus.grafana.app",
+                      "datasource": { "name": "my-prom" },
+                      "spec": { "expr": "rate(http_requests_total[5m])" }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "panel-b": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Recent errors",
+          "vizConfig": { "kind": "LogsPanel", "spec": {} },
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki.grafana.app",
+                      "datasource": { "name": "my-loki" },
+                      "spec": { "expr": "{app=\"api\"} |= \"error\"" }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "layout": { "kind": "GridLayout", "spec": {} }
+  }
+}
