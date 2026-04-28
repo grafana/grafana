@@ -682,19 +682,29 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	OverridesFilePath                          string
-	OverridesReloadInterval                    time.Duration
-	EnforcedQuotaResources                     []string
-	QuotasErrorMessageSupportInfo              string
-	EnableSQLKVBackend                         bool
-	EnableSQLKVCompatibilityMode               bool
-	EnableGarbageCollection                    bool
-	GarbageCollectionDryRun                    bool
-	GarbageCollectionInterval                  time.Duration
-	GarbageCollectionBatchSize                 int
-	GarbageCollectionBatchWait                 time.Duration
-	GarbageCollectionMaxAge                    time.Duration
-	DashboardsGarbageCollectionMaxAge          time.Duration
+	// Vector storage (separate pgvector database)
+	EnableVectorBackend               bool
+	VectorDBHost                      string
+	VectorDBPort                      string
+	VectorDBName                      string
+	VectorDBUser                      string
+	VectorDBPassword                  string
+	VectorDBSSLMode                   string
+	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
+	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
+	OverridesFilePath                 string
+	OverridesReloadInterval           time.Duration
+	EnforcedQuotaResources            []string
+	QuotasErrorMessageSupportInfo     string
+	EnableSQLKVBackend                bool
+	EnableSQLKVCompatibilityMode      bool
+	EnableGarbageCollection           bool
+	GarbageCollectionDryRun           bool
+	GarbageCollectionInterval         time.Duration
+	GarbageCollectionBatchSize        int
+	GarbageCollectionBatchWait        time.Duration
+	GarbageCollectionMaxAge           time.Duration
+	DashboardsGarbageCollectionMaxAge time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
 	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
