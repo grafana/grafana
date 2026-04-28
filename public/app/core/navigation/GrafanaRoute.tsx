@@ -3,7 +3,6 @@ import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
-import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 
 import { useGrafana } from '../context/GrafanaContext';
@@ -41,7 +40,6 @@ export function GrafanaRoute(props: Props) {
     cleanupDOM();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', props);
-    updateMeticulousRecording(props.location.pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.location.pathname, props.location.search, props.location.hash]);
 
