@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -30,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -192,33 +193,78 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 	return users, nil
 }
 
-// listAllTeams walks the namespace because membership lookup keyed by user
-// can't be a field selector: spec.members is a list and Kubernetes selectors
-// only do scalar equality.
-func (s *TeamK8sService) listAllTeams(ctx context.Context, namespace string) ([]iamv0alpha1.Team, error) {
+func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID string) ([]iamv0alpha1.GetUserTeamsUserTeam, error) {
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.GetUserTeams(ctx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return resp.Items, nil
+}
+
+func (s *TeamK8sService) getUserClient(ctx context.Context) (*iamv0alpha1.UserClient, error) {
+	if s.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
+	}
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, errors.New("no request context")
+	}
+	restConfig := s.configProvider.GetDirectRestConfig(reqCtx)
+	if restConfig == nil {
+		return nil, errors.New("rest config not available")
+	}
+	restConfig.APIPath = "apis"
+	registry := sdkk8s.NewClientRegistry(*restConfig, sdkk8s.DefaultClientConfig())
+	return iamv0alpha1.NewUserClientFromGenerator(registry)
+}
+
+func (s *TeamK8sService) listTeamsByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*iamv0alpha1.Team, error) {
+	if len(uids) == 0 {
+		return nil, nil
+	}
+
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	var teams []iamv0alpha1.Team
-	listOpts := metav1.ListOptions{Limit: common.DefaultListLimit}
-	for {
-		result, err := client.List(ctx, listOpts)
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range result.Items {
-			var t iamv0alpha1.Team
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &t); err != nil {
-				return nil, err
+	results := make([]*iamv0alpha1.Team, len(uids))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(usersGetParallelism)
+	for i, uid := range uids {
+		g.Go(func() error {
+			obj, err := client.Get(gctx, uid, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return fmt.Errorf("failed to get team %s: %w", uid, err)
 			}
-			teams = append(teams, t)
+			var t iamv0alpha1.Team
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &t); err != nil {
+				return fmt.Errorf("failed to decode team %s: %w", uid, err)
+			}
+			results[i] = &t
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	teams := make(map[string]*iamv0alpha1.Team, len(uids))
+	for _, t := range results {
+		if t != nil {
+			teams[t.GetName()] = t
 		}
-		if result.GetContinue() == "" {
-			break
-		}
-		listOpts.Continue = result.GetContinue()
 	}
 	return teams, nil
 }
@@ -264,13 +310,16 @@ func resolveTeamByLegacyID(ctx context.Context, client dynamic.ResourceInterface
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	ctx, span := s.tracer.Start(ctx, "team.createTeam", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
 		attribute.String("name", cmd.Name),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		ctxLogger.Error("failed to get requester from context in CreateTeam", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
@@ -281,6 +330,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
@@ -306,6 +356,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&k8sTeam)
 	if err != nil {
+		ctxLogger.Error("failed to encode team to unstructured", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
@@ -313,6 +364,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
+		ctxLogger.Error("k8s team create failed", "namespace", namespace, "orgID", orgID, "name", cmd.Name, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
@@ -320,6 +372,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	var created iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &created); err != nil {
+		ctxLogger.Error("failed to decode created team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
@@ -339,13 +392,16 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	ctx, span := s.tracer.Start(ctx, "team.updateTeam", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.UpdateTeam", trace.WithAttributes(
 		attribute.Int64("teamID", cmd.ID),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		ctxLogger.Error("failed to get requester from context in UpdateTeam", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -356,6 +412,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -370,6 +427,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 				return team.ErrTeamNotFound
 			}
+			ctxLogger.Error("failed to fetch team by UID for update", "namespace", namespace, "teamUID", uid, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return err
@@ -377,6 +435,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	} else {
 		result, err = resolveTeamByLegacyID(ctx, client, cmd.ID)
 		if err != nil {
+			ctxLogger.Error("failed to resolve team by legacy ID for update", "namespace", namespace, "teamID", cmd.ID, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return err
@@ -385,16 +444,19 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 
 	updated := result.DeepCopy()
 	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+		ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
+		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+		ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -402,6 +464,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 	if err != nil {
+		ctxLogger.Error("k8s team update failed", "namespace", namespace, "orgID", orgID, "teamID", cmd.ID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
@@ -409,13 +472,16 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	ctx, span := s.tracer.Start(ctx, "team.deleteTeam", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.DeleteTeam", trace.WithAttributes(
 		attribute.Int64("teamID", cmd.ID),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		ctxLogger.Error("failed to get requester from context in DeleteTeam", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -426,6 +492,7 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -435,6 +502,7 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	if !ok {
 		resolved, resolveErr := resolveTeamByLegacyID(ctx, client, cmd.ID)
 		if resolveErr != nil {
+			ctxLogger.Error("failed to resolve team by legacy ID for delete", "namespace", namespace, "teamID", cmd.ID, "err", resolveErr)
 			span.RecordError(resolveErr)
 			span.SetStatus(codes.Error, resolveErr.Error())
 			return resolveErr
@@ -449,6 +517,7 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 			span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 			return team.ErrTeamNotFound
 		}
+		ctxLogger.Error("k8s team delete failed", "namespace", namespace, "orgID", orgID, "teamUID", uid, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -473,17 +542,20 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	ctx, span := s.tracer.Start(ctx, "team.searchTeams", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.SearchTeams", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.String("query", query.Query),
 	))
 	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
 
 	sortParams := legacysort.ConvertToSortParams(query.SortOpts, iamteam.TeamSortFieldMapping())
 
 	namespace := s.namespaceMapper(query.OrgID)
 	restClient, err := s.getRESTClient(ctx)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s rest client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
@@ -520,6 +592,7 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 
 	result := req.Do(ctx)
 	if err := result.Error(); err != nil {
+		ctxLogger.Error("k8s team search request failed", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
@@ -527,6 +600,7 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 
 	body, err := result.Raw()
 	if err != nil {
+		ctxLogger.Error("failed to read k8s team search response body", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
@@ -534,6 +608,7 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 
 	var searchResp iamv0alpha1.GetSearchTeamsResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
+		ctxLogger.Error("failed to decode k8s team search response", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
@@ -567,11 +642,13 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 }
 
 func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.getTeamByID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.GetTeamByID", trace.WithAttributes(
 		attribute.Int64("teamID", query.ID),
 		attribute.String("teamUID", query.UID),
 	))
 	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
 
 	if query.ID == 0 && query.UID == "" {
 		span.RecordError(team.ErrTeamNotFound)
@@ -581,6 +658,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		ctxLogger.Error("failed to get requester from context in GetTeamByID", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -591,6 +669,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -610,6 +689,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 				return nil, team.ErrTeamNotFound
 			}
+			ctxLogger.Error("failed to fetch team by UID", "namespace", namespace, "teamUID", uid, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
@@ -617,6 +697,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	} else {
 		result, err = resolveTeamByLegacyID(ctx, client, query.ID)
 		if err != nil {
+			ctxLogger.Error("failed to resolve team by legacy ID", "namespace", namespace, "teamID", query.ID, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
@@ -625,6 +706,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 
 	var fetched iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+		ctxLogger.Error("failed to decode team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -642,11 +724,13 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 }
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.getTeamsByUser", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.GetTeamsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
 	))
 	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
 
 	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
@@ -656,22 +740,39 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 		if errors.Is(err, user.ErrUserNotFound) {
 			return []*team.TeamDTO{}, nil
 		}
+		ctxLogger.Error("failed to resolve user UID", "namespace", namespace, "userID", query.UserID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	teams, err := s.listAllTeams(ctx, namespace)
+	rows, err := s.listUserTeams(ctx, namespace, userUID)
 	if err != nil {
+		ctxLogger.Error("failed to list user teams", "namespace", namespace, "userUID", userUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return []*team.TeamDTO{}, nil
+	}
+
+	uids := make([]string, len(rows))
+	for i, r := range rows {
+		uids[i] = r.Team
+	}
+	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, uids)
+	if err != nil {
+		ctxLogger.Error("failed to fetch teams by UID", "namespace", namespace, "userUID", userUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	out := make([]*team.TeamDTO, 0)
-	for i := range teams {
-		t := &teams[i]
-		if _, ok := findMemberInTeam(t, userUID); !ok {
+	out := make([]*team.TeamDTO, 0, len(rows))
+	for _, r := range rows {
+		t, ok := teamsMap[r.Team]
+		if !ok {
 			continue
 		}
 		out = append(out, &team.TeamDTO{
@@ -689,11 +790,13 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 }
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
-	ctx, span := s.tracer.Start(ctx, "team.getTeamIDsByUser", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.GetTeamIDsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
 	))
 	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
 
 	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
@@ -703,13 +806,30 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		if errors.Is(err, user.ErrUserNotFound) {
 			return []int64{}, []string{}, nil
 		}
+		ctxLogger.Error("failed to resolve user UID", "namespace", namespace, "userID", query.UserID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, nil, err
 	}
 
-	teams, err := s.listAllTeams(ctx, namespace)
+	rows, err := s.listUserTeams(ctx, namespace, userUID)
 	if err != nil {
+		ctxLogger.Error("failed to list user teams", "namespace", namespace, "userUID", userUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, nil, err
+	}
+	if len(rows) == 0 {
+		return []int64{}, []string{}, nil
+	}
+
+	uids := make([]string, len(rows))
+	for i, r := range rows {
+		uids[i] = r.Team
+	}
+	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, uids)
+	if err != nil {
+		ctxLogger.Error("failed to fetch teams by UID", "namespace", namespace, "userUID", userUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, nil, err
@@ -719,17 +839,17 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		teamID  int64
 		teamUID string
 	}
-	refs := make([]teamRef, 0)
-	for i := range teams {
-		t := &teams[i]
-		if _, ok := findMemberInTeam(t, userUID); !ok {
+	refs := make([]teamRef, 0, len(rows))
+	for _, r := range rows {
+		t, ok := teamsMap[r.Team]
+		if !ok {
 			continue
 		}
 		teamID := deprecatedInternalID(t)
 		if teamID == 0 {
 			// Legacy permission middleware keys off the int64 ID and can't
 			// address k8s-native teams, so we drop them from both slices.
-			s.logger.FromContext(ctx).Debug("skipping team with no deprecated internal ID", "teamUID", t.Name, "userUID", userUID)
+			ctxLogger.Debug("skipping team with no deprecated internal ID", "teamUID", t.Name, "userUID", userUID)
 			continue
 		}
 		refs = append(refs, teamRef{teamID: teamID, teamUID: t.Name})
@@ -738,27 +858,30 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 	// Match legacy ORDER BY tm.team_id asc.
 	sort.Slice(refs, func(i, j int) bool { return refs[i].teamID < refs[j].teamID })
 
-	ids := make([]int64, 0, len(refs))
-	uids := make([]string, 0, len(refs))
+	idsOut := make([]int64, 0, len(refs))
+	uidsOut := make([]string, 0, len(refs))
 	for _, ref := range refs {
-		ids = append(ids, ref.teamID)
-		uids = append(uids, ref.teamUID)
+		idsOut = append(idsOut, ref.teamID)
+		uidsOut = append(uidsOut, ref.teamUID)
 	}
-	return ids, uids, nil
+	return idsOut, uidsOut, nil
 }
 
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	ctx, span := s.tracer.Start(ctx, "team.isTeamMember", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
 		attribute.Int64("userID", userId),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	namespace := s.namespaceMapper(orgId)
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -768,6 +891,7 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return false, nil
 		}
+		ctxLogger.Error("failed to resolve team by legacy ID", "namespace", namespace, "teamID", teamId, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -778,6 +902,7 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 		if errors.Is(err, user.ErrUserNotFound) {
 			return false, nil
 		}
+		ctxLogger.Error("failed to resolve user UID", "namespace", namespace, "userID", userId, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -785,6 +910,7 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 
 	var t iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(resolved.Object, &t); err != nil {
+		ctxLogger.Error("failed to decode team", "namespace", namespace, "teamID", teamId, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -799,11 +925,13 @@ func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int6
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.getUserTeamMemberships", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMemberships", trace.WithAttributes(
 		attribute.Int64("orgID", orgID),
 		attribute.Int64("userID", userID),
 	))
 	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
 
 	cacheKey := userTeamMembershipsCacheKey(orgID, userID, external)
 	if !bypassCache {
@@ -823,55 +951,71 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 			s.cache.Set(cacheKey, []*team.TeamMemberDTO{}, defaultCacheDuration)
 			return []*team.TeamMemberDTO{}, nil
 		}
+		ctxLogger.Error("failed to resolve user UID", "namespace", namespace, "userID", userID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	teams, err := s.listAllTeams(ctx, namespace)
+	rows, err := s.listUserTeams(ctx, namespace, userUID)
 	if err != nil {
+		ctxLogger.Error("failed to list user teams", "namespace", namespace, "userUID", userUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	type membership struct {
-		team   *iamv0alpha1.Team
-		member iamv0alpha1.TeamTeamMember
+	filtered := rows
+	if external {
+		filtered = filtered[:0:0]
+		for _, r := range rows {
+			if r.External {
+				filtered = append(filtered, r)
+			}
+		}
 	}
-	memberships := make([]membership, 0)
-	for i := range teams {
-		t := &teams[i]
-		member, ok := findMemberInTeam(t, userUID)
+
+	if len(filtered) == 0 {
+		if !bypassCache {
+			s.cache.Set(cacheKey, []*team.TeamMemberDTO{}, defaultCacheDuration)
+		}
+		return []*team.TeamMemberDTO{}, nil
+	}
+
+	uids := make([]string, len(filtered))
+	for i, r := range filtered {
+		uids[i] = r.Team
+	}
+	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, uids)
+	if err != nil {
+		ctxLogger.Error("failed to fetch teams by UID", "namespace", namespace, "userUID", userUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	k8sUser, err := s.getUserByUID(ctx, namespace, userUID)
+	if err != nil {
+		ctxLogger.Error("failed to fetch user by UID", "namespace", namespace, "userUID", userUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	members := make([]*team.TeamMemberDTO, 0, len(filtered))
+	for _, r := range filtered {
+		t, ok := teamsMap[r.Team]
 		if !ok {
 			continue
 		}
-		if external && !member.External {
-			continue
-		}
-		memberships = append(memberships, membership{team: t, member: member})
-	}
-
-	var k8sUser *iamv0alpha1.User
-	if len(memberships) > 0 {
-		k8sUser, err = s.getUserByUID(ctx, namespace, userUID)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			return nil, err
-		}
-	}
-
-	members := make([]*team.TeamMemberDTO, 0, len(memberships))
-	for _, ms := range memberships {
 		dto := &team.TeamMemberDTO{
 			OrgID:      orgID,
-			TeamID:     deprecatedInternalID(ms.team),
-			TeamUID:    ms.team.Name,
+			TeamID:     deprecatedInternalID(t),
+			TeamUID:    t.Name,
 			UserID:     userID,
 			UserUID:    userUID,
-			External:   ms.member.External,
-			Permission: permissionFromMember(ms.member.Permission),
+			External:   r.External,
+			Permission: permissionFromMember(iamv0alpha1.TeamTeamPermission(r.Permission)),
 		}
 		if k8sUser != nil {
 			dto.Email = k8sUser.Spec.Email
@@ -908,18 +1052,21 @@ func userTeamMembershipsCacheKey(orgID, userID int64, external bool) string {
 }
 
 func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "team.getTeamMembers", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.GetTeamMembers", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("teamID", query.TeamID),
 		attribute.String("teamUID", query.TeamUID),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -934,6 +1081,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 				return nil, team.ErrTeamNotFound
 			}
+			ctxLogger.Error("failed to fetch team by UID", "namespace", namespace, "teamUID", query.TeamUID, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
@@ -941,6 +1089,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 	} else {
 		teamObj, err = resolveTeamByLegacyID(ctx, client, query.TeamID)
 		if err != nil {
+			ctxLogger.Error("failed to resolve team by legacy ID", "namespace", namespace, "teamID", query.TeamID, "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
@@ -949,6 +1098,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	var t iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(teamObj.Object, &t); err != nil {
+		ctxLogger.Error("failed to decode team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -973,6 +1123,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	usersMap, err := s.listUsersByUIDs(ctx, namespace, userUIDs)
 	if err != nil {
+		ctxLogger.Error("failed to list users by UID", "namespace", namespace, "teamUID", teamUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err

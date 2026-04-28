@@ -1238,6 +1238,13 @@ func mustToUnstructured(t *testing.T, obj any) map[string]any {
 	return result
 }
 
+func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetUserTeamsResponse {
+	return iamv0alpha1.GetUserTeamsResponse{
+		TypeMeta:         metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "GetUserTeamsResponse"},
+		GetUserTeamsBody: iamv0alpha1.GetUserTeamsBody{Items: rows},
+	}
+}
+
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -1667,20 +1674,19 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 				teamInternal := iamv0alpha1.Team{
 					TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
 					ObjectMeta: metav1.ObjectMeta{Name: "team-internal", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "10"}},
-					Spec: iamv0alpha1.TeamSpec{
-						Title:   "Internal",
-						Members: []iamv0alpha1.TeamTeamMember{{Kind: "User", Name: "user-uid-42", External: false, Permission: iamv0alpha1.TeamTeamPermissionMember}},
-					},
+					Spec:       iamv0alpha1.TeamSpec{Title: "Internal"},
 				}
 				teamExternal := iamv0alpha1.Team{
 					TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
 					ObjectMeta: metav1.ObjectMeta{Name: "team-external", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "20"}},
-					Spec: iamv0alpha1.TeamSpec{
-						Title:   "External",
-						Members: []iamv0alpha1.TeamTeamMember{{Kind: "User", Name: "user-uid-42", External: true, Permission: iamv0alpha1.TeamTeamPermissionAdmin}},
-					},
+					Spec:       iamv0alpha1.TeamSpec{Title: "External"},
 				}
 				switch {
+				case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42/teams"):
+					_ = json.NewEncoder(w).Encode(userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{
+						{User: "user-uid-42", Team: "team-internal", Permission: string(iamv0alpha1.TeamTeamPermissionMember), External: false},
+						{User: "user-uid-42", Team: "team-external", Permission: string(iamv0alpha1.TeamTeamPermissionAdmin), External: true},
+					}))
 				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 					_ = json.NewEncoder(w).Encode(map[string]any{
 						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -1690,13 +1696,10 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 					})
 				case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
 					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &userObj))
-				case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/"):
-					_ = json.NewEncoder(w).Encode(map[string]any{
-						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-						"kind":       "TeamList",
-						"metadata":   map[string]any{"resourceVersion": "1"},
-						"items":      []any{mustToUnstructured(t, &teamInternal), mustToUnstructured(t, &teamExternal)},
-					})
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-internal"):
+					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &teamInternal))
+				case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-external"):
+					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &teamExternal))
 				default:
 					w.WriteHeader(http.StatusNotFound)
 				}
@@ -1708,32 +1711,11 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			},
 		},
 		{
-			name:   "returns error when team list fails",
-			orgID:  1,
-			userID: 42,
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				path := r.URL.Path
-				userObj := iamv0alpha1.User{
-					TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
-					ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
-				}
-				switch {
-				case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
-					_ = json.NewEncoder(w).Encode(map[string]any{
-						"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-						"kind":       "UserList",
-						"metadata":   map[string]any{"resourceVersion": "1"},
-						"items":      []any{mustToUnstructured(t, &userObj)},
-					})
-				case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/"):
-					w.WriteHeader(http.StatusInternalServerError)
-					_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 500})
-				default:
-					w.WriteHeader(http.StatusNotFound)
-				}
-			},
-			expectErr: true,
+			name:           "returns error when team list fails",
+			orgID:          1,
+			userID:         42,
+			serverResponse: teamListErrorHandler(t),
+			expectErr:      true,
 		},
 		{
 			name:        "returns error when config provider not initialized",
@@ -1840,80 +1822,6 @@ func TestTeamK8sService_GetUserTeamMemberships_Cache(t *testing.T) {
 
 		assert.Greater(t, calls, firstCalls, "different external flag should miss cache")
 	})
-}
-
-func TestTeamK8sService_listAllTeams_Pagination(t *testing.T) {
-	user42 := iamv0alpha1.User{
-		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
-		ObjectMeta: metav1.ObjectMeta{Name: "user-uid-42", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
-	}
-	teamA := iamv0alpha1.Team{
-		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
-		ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "10"}},
-		Spec: iamv0alpha1.TeamSpec{
-			Title:   "A",
-			Members: []iamv0alpha1.TeamTeamMember{{Kind: "User", Name: "user-uid-42", Permission: iamv0alpha1.TeamTeamPermissionMember}},
-		},
-	}
-	teamB := iamv0alpha1.Team{
-		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
-		ObjectMeta: metav1.ObjectMeta{Name: "team-b", Namespace: "org-1", Labels: map[string]string{"grafana.app/deprecatedInternalID": "20"}},
-		Spec: iamv0alpha1.TeamSpec{
-			Title:   "B",
-			Members: []iamv0alpha1.TeamTeamMember{{Kind: "User", Name: "user-uid-42", Permission: iamv0alpha1.TeamTeamPermissionMember}},
-		},
-	}
-
-	var teamListCalls int
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		path := r.URL.Path
-		switch {
-		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-				"kind":       "UserList",
-				"metadata":   map[string]any{"resourceVersion": "1"},
-				"items":      []any{mustToUnstructured(t, &user42)},
-			})
-		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/"):
-			teamListCalls++
-			cont := r.URL.Query().Get("continue")
-			if cont == "" {
-				_ = json.NewEncoder(w).Encode(map[string]any{
-					"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-					"kind":       "TeamList",
-					"metadata":   map[string]any{"resourceVersion": "1", "continue": "page-2"},
-					"items":      []any{mustToUnstructured(t, &teamA)},
-				})
-			} else {
-				assert.Equal(t, "page-2", cont, "second page request must echo the continue token")
-				_ = json.NewEncoder(w).Encode(map[string]any{
-					"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-					"kind":       "TeamList",
-					"metadata":   map[string]any{"resourceVersion": "1"},
-					"items":      []any{mustToUnstructured(t, &teamB)},
-				})
-			}
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}
-
-	ts := httptest.NewServer(http.HandlerFunc(handler))
-	defer ts.Close()
-	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-	svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
-
-	ctx := contextWithReqContext()
-	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
-
-	teams, err := svc.GetTeamsByUser(ctx, &team.GetTeamsByUserQuery{OrgID: 1, UserID: 42})
-	require.NoError(t, err)
-	assert.Equal(t, 2, teamListCalls, "listAllTeams must walk both pages")
-	require.Len(t, teams, 2)
-	uids := []string{teams[0].UID, teams[1].UID}
-	assert.ElementsMatch(t, []string{"team-a", "team-b"}, uids)
 }
 
 func TestTeamK8sService_GetTeamMembers(t *testing.T) {
@@ -2249,6 +2157,10 @@ func membershipServerHandlerWithPermission(t *testing.T, perm iamv0alpha1.TeamTe
 		path := r.URL.Path
 
 		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/") && strings.HasSuffix(path, "/teams"):
+			_ = json.NewEncoder(w).Encode(userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{
+				{User: "user-uid-42", Team: "team-uid-1", Permission: string(perm), External: false},
+			}))
 		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -2302,6 +2214,8 @@ func membershipServerHandlerWithEmptyBindings(t *testing.T) func(w http.Response
 		path := r.URL.Path
 
 		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/") && strings.HasSuffix(path, "/teams"):
+			_ = json.NewEncoder(w).Encode(userTeamsResponse(nil))
 		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -2383,6 +2297,15 @@ func multiMembershipServerHandler(t *testing.T) func(w http.ResponseWriter, r *h
 		path := r.URL.Path
 
 		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42/teams"):
+			_ = json.NewEncoder(w).Encode(userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{
+				{User: "user-uid-42", Team: "team-uid-1", Permission: string(iamv0alpha1.TeamTeamPermissionAdmin)},
+				{User: "user-uid-42", Team: "team-uid-2", Permission: string(iamv0alpha1.TeamTeamPermissionMember)},
+			}))
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-99/teams"):
+			_ = json.NewEncoder(w).Encode(userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{
+				{User: "user-uid-99", Team: "team-uid-1", Permission: string(iamv0alpha1.TeamTeamPermissionMember)},
+			}))
 		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -2497,6 +2420,11 @@ func reversedMultiMembershipServerHandler(t *testing.T) func(w http.ResponseWrit
 		w.Header().Set("Content-Type", "application/json")
 		path := r.URL.Path
 		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42/teams"):
+			_ = json.NewEncoder(w).Encode(userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{
+				{User: "user-uid-42", Team: "team-uid-2", Permission: string(iamv0alpha1.TeamTeamPermissionMember)},
+				{User: "user-uid-42", Team: "team-uid-1", Permission: string(iamv0alpha1.TeamTeamPermissionAdmin)},
+			}))
 		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -2504,13 +2432,10 @@ func reversedMultiMembershipServerHandler(t *testing.T) func(w http.ResponseWrit
 				"metadata":   map[string]any{"resourceVersion": "1"},
 				"items":      []any{mustToUnstructured(t, &user42)},
 			})
-		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/"):
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
-				"kind":       "TeamList",
-				"metadata":   map[string]any{"resourceVersion": "1"},
-				"items":      []any{mustToUnstructured(t, &team2), mustToUnstructured(t, &team1)},
-			})
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-uid-1"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &team1))
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-uid-2"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &team2))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -2527,6 +2452,9 @@ func teamListErrorHandler(t *testing.T) func(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Content-Type", "application/json")
 		path := r.URL.Path
 		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/") && strings.HasSuffix(path, "/teams"):
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 500})
 		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
@@ -2534,9 +2462,6 @@ func teamListErrorHandler(t *testing.T) func(w http.ResponseWriter, r *http.Requ
 				"metadata":   map[string]any{"resourceVersion": "1"},
 				"items":      []any{mustToUnstructured(t, &userObj)},
 			})
-		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/"):
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 500})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
