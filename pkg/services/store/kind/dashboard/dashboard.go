@@ -827,8 +827,7 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 }
 
 // readV2QueryExpression pulls the query expression, refId, and datasource
-// reference out of one v2 queries[] entry. The v2 schema (matching what
-// grafana-assistant-app's extractor reads) puts the expression at
+// reference out of one v2 queries[] entry. The v2 schema puts the expression at
 // m.spec.query.spec.<expr> with refId on m.spec and datasource at
 // m.spec.query.datasource. The datasource ref carries `name` (v2 references
 // datasources by name); we put whatever identifier is present into
