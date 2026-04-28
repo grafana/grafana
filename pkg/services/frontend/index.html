@@ -10,15 +10,15 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    [[if .MeticulousAI]]
+    [[if .MeticulousAIEnabled]]
     <script
       data-is-production-environment="true"
-      data-project-id="[[.MeticulousAI.ProjectID]]"
-      data-recording-token="[[.MeticulousAI.Token]]"
+      data-recording-token="[[.MeticulousAIRecordingToken]]"
+      nonce="[[.Nonce]]"
       src="https://snippet.meticulous.ai/v1/meticulous.js"
     ></script>
     <script>
-      window.__METICULOUS_AI_RECORDING_TOKEN__ = '[[.MeticulousAI.Token]]';
+      window.__METICULOUS_AI_RECORDING_TOKEN__ = '[[.MeticulousAIRecordingToken]]';
     </script>
     [[end]]
 

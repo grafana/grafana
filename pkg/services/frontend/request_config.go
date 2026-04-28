@@ -66,13 +66,6 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		BuildInfo:                            getBuildInfo(license, cfg),
 	}
 
-	if cfg.MeticulousAIProjectID != "" {
-		frontendSettings.MeticulousAI = &MeticulousAIConfig{
-			ProjectID: cfg.MeticulousAIProjectID,
-			Token:     cfg.MeticulousAIRecordingToken,
-		}
-	}
-
 	securitySection := cfg.SectionWithEnvOverrides("security")
 	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(" ")
 	formActionHosts := securitySection.Key("form_action_additional_hosts").Strings(" ")

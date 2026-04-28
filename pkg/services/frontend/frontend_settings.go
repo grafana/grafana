@@ -36,8 +36,6 @@ type FSFrontendSettings struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl,omitempty"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl,omitempty"`
 
-	MeticulousAI *MeticulousAIConfig `json:"meticulous,omitempty"`
-
 	AnalyticsConsoleReporting bool                           `json:"analyticsConsoleReporting,omitempty"`
 	GrafanaJavascriptAgent    setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
 

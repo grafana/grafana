@@ -31,11 +31,6 @@ type IndexProvider struct {
 	bootScript   template.JS
 }
 
-type MeticulousAIConfig struct {
-	ProjectID string
-	Token     string
-}
-
 type IndexViewData struct {
 	IsDevelopmentEnv bool
 
@@ -57,9 +52,8 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
-	// non-nil when the meticulous.ai session recorder is enabled; contains the credentials
-	// needed to embed the snippet and start recording.
-	MeticulousAI *MeticulousAIConfig
+	MeticulousAIEnabled        bool
+	MeticulousAIRecordingToken string
 
 	BootScript template.JS
 
@@ -148,10 +142,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
 		AssetSriChecksEnabled:      grafanaAssetSriChecks,
-	}
-
-	if meticulousAIRecorderEnabled {
-		data.MeticulousAI = fsSettings.MeticulousAI
+		MeticulousAIEnabled:        meticulousAIRecorderEnabled,
+		MeticulousAIRecordingToken: p.config.MeticulousAIRecordingToken,
 	}
 
 	if compiledBootScript {

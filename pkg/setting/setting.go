@@ -444,7 +444,6 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 	FrontendAnalyticsConsoleReporting   bool
-	MeticulousAIProjectID               string
 	MeticulousAIRecordingToken          string
 
 	// LDAP
@@ -1510,7 +1509,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
-	cfg.MeticulousAIProjectID = analytics.Key("meticulous_ai_project_id").String()
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
