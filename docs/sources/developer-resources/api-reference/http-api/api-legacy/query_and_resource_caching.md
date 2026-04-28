@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../../http_api/query_caching/ # /docs/grafana/next/http_api/query_caching/
-  - ../../../http_api/resource_caching/ # /docs/grafana/next/http_api/resource_caching/
-  - ../../../http_api/caching/ # /docs/grafana/next/http_api/caching/
-  - ../../../developers/http_api/query_and_resource_caching/ # /docs/grafana/next/developers/http_api/query_and_resource_caching/
+  - ../../../../http_api/query_caching/ # /docs/grafana/<GRAFANA_VERSION>/http_api/query_caching/
+  - ../../../../http_api/resource_caching/ # /docs/grafana/<GRAFANA_VERSION>/http_api/resource_caching/
+  - ../../../../http_api/caching/ # /docs/grafana/<GRAFANA_VERSION>/http_api/caching/
+  - ../../../../developers/http_api/query_and_resource_caching/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/query_and_resource_caching/
   - ../../../../developer-resources/api-reference/http-api/query_and_resource_caching/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/query_and_resource_caching/
 description: Grafana Enterprise Query and Resource Caching HTTP API

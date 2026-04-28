@@ -17,7 +17,7 @@ title: Authentication options for the HTTP API
 menuTitle: Authentication
 weight: 110
 aliases:
-  - ../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
+  - ../../../../developers/http_api/authentication/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/authentication/
   - ../../../../developer-resources/api-reference/http-api/api-legacy/authentication/ #legacy folder
 ---
 

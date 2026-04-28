@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/correlations/ # /docs/grafana/next/http_api/correlations/
-  - ../../../developers/http_api/correlations/ # /docs/grafana/next/developers/http_api/correlations/
+  - ../../../../http_api/correlations/ # /docs/grafana/<GRAFANA_VERSION>/http_api/correlations/
+  - ../../../../developers/http_api/correlations/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/correlations/
   - ../../../../developer-resources/api-reference/http-api/correlations/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/correlations/
 description: Grafana Correlations HTTP API

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/licensing/ # /docs/grafana/next/http_api/licensing/
-  - ../../../developers/http_api/licensing/ # /docs/grafana/next/developers/http_api/licensing/
+  - ../../../../http_api/licensing/ # /docs/grafana/<GRAFANA_VERSION>/http_api/licensing/
+  - ../../../../developers/http_api/licensing/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/licensing/
   - ../../../../developer-resources/api-reference/http-api/licensing/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/licensing/
 description: Enterprise Licensing HTTP API

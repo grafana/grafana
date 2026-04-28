@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/team/ # /docs/grafana/next/http_api/team/
-  - ../../../developers/http_api/team/ # /docs/grafana/next/developers/http_api/team/
+  - ../../../../http_api/team/ # /docs/grafana/<GRAFANA_VERSION>/http_api/team/
+  - ../../../../developers/http_api/team/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/team/
   - ../../../../developer-resources/api-reference/http-api/team/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/team/
 description: Grafana Team HTTP API

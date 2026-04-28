@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/dashboard_permissions/ # /docs/grafana/next/http_api/dashboard_permissions/
-  - ../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
-  - ../../../developers/http_api/dashboard_permissions/ # /docs/grafana/next/developers/http_api/dashboard_permissions/
+  - ../../../../http_api/dashboard_permissions/ # /docs/grafana/<GRAFANA_VERSION>/http_api/dashboard_permissions/
+  - ../../../../http_api/dashboardpermissions/ # /docs/grafana/<GRAFANA_VERSION>/http_api/dashboardpermissions/
+  - ../../../../developers/http_api/dashboard_permissions/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard_permissions/
   - ../../../../developer-resources/api-reference/http-api/dashboard_permissions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/dashboard_permissions/
 description: Grafana Dashboard Permissions HTTP API
