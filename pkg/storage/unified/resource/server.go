@@ -1708,7 +1708,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				lastEmittedRV = event.ResourceVersion
 
-				if s.storageMetrics != nil {
+				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
 					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
 					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()

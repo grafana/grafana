@@ -46,9 +46,6 @@ func TestIntegrationUserTeams(t *testing.T) {
 					"teams.iam.grafana.app": {
 						DualWriterMode: mode,
 					},
-					"teambindings.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
@@ -81,12 +78,6 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		GVR:       gvrTeams,
 	})
 
-	tbClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: orgNS,
-		GVR:       gvrTeamBindings,
-	})
-
 	// Create u1 - will be bound to all 5 teams
 	u1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -102,8 +93,11 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NoError(t, err)
 	require.NotNil(t, u2)
 
-	// Create 5 teams
+	// Create 5 teams and add u1 as a member via spec.members. Alternate
+	// admin/member so the response permission strings are exercised across
+	// both legacy (Mode 0/1) and unified (Mode 5) paths.
 	teams := make([]*unstructured.Unstructured, 0, 5)
+	teamPermissions := []string{"admin", "member", "admin", "member", "admin"}
 	for i := 1; i <= 5; i++ {
 		teamObj := createTeamObject(helper,
 			fmt.Sprintf("team-%d", i),
@@ -113,14 +107,18 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		team, err := teamClient.Resource.Create(ctx, teamObj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, team)
-		teams = append(teams, team)
-	}
 
-	// Create team bindings: u1 -> all 5 teams
-	for _, team := range teams {
-		tbObj := createTeamBindingObject(helper, u1.GetName(), team.GetName())
-		_, err := tbClient.Resource.Create(ctx, tbObj, metav1.CreateOptions{})
+		require.NoError(t, unstructured.SetNestedSlice(team.Object, []interface{}{
+			map[string]interface{}{
+				"kind":       "User",
+				"name":       u1.GetName(),
+				"permission": teamPermissions[i-1],
+				"external":   false,
+			},
+		}, "spec", "members"))
+		team, err = teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
 		require.NoError(t, err)
+		teams = append(teams, team)
 	}
 
 	t.Run("returns the bound team for the user", func(t *testing.T) {
@@ -141,6 +139,29 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, teams[0].GetName(), item.Team)
 		require.Equal(t, "admin", item.Permission)
 		require.False(t, item.External)
+	})
+
+	t.Run("permission strings round-trip across both paths", func(t *testing.T) {
+		// Guards against legacy/unified divergence: the legacy adapter maps
+		// team.PermissionType via common.MapTeamPermission, while the unified
+		// path emits string(spec.members[i].Permission). Both must produce
+		// the same lowercase enum values for every dual-writer mode.
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
+
+		var res userTeamsResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &res)
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+
+		for i, expected := range teamPermissions {
+			teamName := teams[i].GetName()
+			item := findTeam(res, teamName)
+			require.Equal(t, teamName, item.Team, "expected team %q in response, got %#v", teamName, res.Items)
+			require.Equal(t, expected, item.Permission, "team %q: expected permission %q, got %q", teamName, expected, item.Permission)
+		}
 	})
 
 	t.Run("does not return the bound team for a different user", func(t *testing.T) {
@@ -266,13 +287,6 @@ func getUserTeamsWithPaging(t *testing.T, helper *apis.K8sTestHelper, userName s
 
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
 	return res
-}
-
-func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
-	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
-	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
-	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
-	return obj
 }
 
 func getUserTeamsWithOffset(t *testing.T, helper *apis.K8sTestHelper, userName string, offset, limit int) userTeamsResponse {

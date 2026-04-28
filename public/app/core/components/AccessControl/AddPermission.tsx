@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Select, Stack } from '@grafana/ui';
+import { Box, Button, Select, Stack, Text } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
@@ -72,7 +72,11 @@ export const AddPermission = ({
       aria-label={t('access-control.add-permission.permissions-aria-label', 'Permissions slider')}
     >
       <CloseButton onClick={onCancel} />
-      <h5>{title}</h5>
+      <Box marginBottom={1}>
+        <Text element="h2" variant="h5">
+          {title}
+        </Text>
+      </Box>
 
       <form
         name="addPermission"
