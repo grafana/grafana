@@ -499,10 +499,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     config.featureToggles.provisioningReadmes && {
       path: '/dashboards/f/:uid/:slug/readme',
       component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "FolderReadmePage"*/ 'app/features/browse-dashboards/BrowseFolderReadmePage'
-          )
+        () => import(/* webpackChunkName: "FolderReadmePage"*/ 'app/features/browse-dashboards/BrowseFolderReadmePage')
       ),
     },
     {

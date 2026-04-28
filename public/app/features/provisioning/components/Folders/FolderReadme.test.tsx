@@ -171,9 +171,7 @@ describe('FolderReadmeContent', () => {
 
       const createLink = screen.getByRole('link', { name: /Create README on GitHub/i });
       const href = createLink.getAttribute('href') ?? '';
-      expect(href).toMatch(
-        /^https:\/\/github\.com\/owner\/repo\/new\/main\?filename=dashboards%2Fteam-a%2FREADME\.md/
-      );
+      expect(href).toMatch(/^https:\/\/github\.com\/owner\/repo\/new\/main\?filename=dashboards%2Fteam-a%2FREADME\.md/);
       expect(href).toContain('value=');
       const value = decodeURIComponent(new URL(href).searchParams.get('value') ?? '');
       expect(value).toContain('# Test Folder');
@@ -250,10 +248,7 @@ describe('FolderReadmeContent', () => {
       expect(screen.getByText('This is a test README.')).toBeInTheDocument();
 
       const editLink = screen.getByRole('link', { name: /Edit on GitHub/i });
-      expect(editLink).toHaveAttribute(
-        'href',
-        'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md'
-      );
+      expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
     });
 
     it('handles a string file body directly', () => {

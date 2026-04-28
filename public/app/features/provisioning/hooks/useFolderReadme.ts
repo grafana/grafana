@@ -23,17 +23,12 @@ interface UseFolderReadmeResult {
  * "see the README" hint shown on the Dashboards tab.
  */
 export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
-  const {
-    repository,
-    folder,
-    isLoading: isRepoLoading,
-  } = useGetResourceRepositoryView({ folderName: folderUID });
+  const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
 
   const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const readmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
 
-  const shouldFetch =
-    !!config.featureToggles.provisioningReadmes && !!repository && !!folderUID && !isRepoLoading;
+  const shouldFetch = !!config.featureToggles.provisioningReadmes && !!repository && !!folderUID && !isRepoLoading;
 
   const {
     data: fileData,

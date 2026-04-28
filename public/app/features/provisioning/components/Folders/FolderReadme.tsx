@@ -49,10 +49,7 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
     return (
       <EmptyState
         variant="not-found"
-        message={t(
-          'browse-dashboards.readme.not-provisioned',
-          'This folder is not managed by a Git repository.'
-        )}
+        message={t('browse-dashboards.readme.not-provisioned', 'This folder is not managed by a Git repository.')}
       />
     );
   }

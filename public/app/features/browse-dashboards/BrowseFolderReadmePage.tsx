@@ -69,7 +69,9 @@ export function BrowseFolderReadmePage() {
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={onEditTitle}
-      actions={folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
+      actions={
+        folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />
+      }
     >
       <Page.Contents>
         <FolderReadmeContent folderUID={folderUID} />
