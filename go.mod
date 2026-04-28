@@ -715,9 +715,6 @@ replace (
 	// lock for mysql tsdb compat
 	github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
-	// Pin gomemcache to avoid breaking changes in newer versions (see exclude section)
-	github.com/grafana/gomemcache => github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d
-
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86
 	github.com/oasdiff/yaml => github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037
@@ -739,9 +736,6 @@ exclude (
 	// only used to run tests and not required for building the Grafana binary.
 	// Since the test data doesn't contain a license file we exclude it.
 	github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76
-
-	// gomemcache 20250828162811 contains breaking changes, so it needs to be excluded unless loki package is updated
-	github.com/grafana/gomemcache v0.0.0-20250828162811-a96f6acee2fe
 
 	// v1.* versions were retracted, we need to stick with v0.*. This should work
 	// without the exclude, but this otherwise gets pulled in as a transitive
