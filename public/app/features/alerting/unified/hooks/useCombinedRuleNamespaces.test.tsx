@@ -7,8 +7,15 @@ import { type CombinedRuleGroup, type CombinedRuleNamespace } from 'app/types/un
 import { grantUserPermissions, mockUnifiedAlertingStore } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { NO_GROUP_PREFIX } from '../utils/rules';
 
-import { flattenGrafanaManagedRules, sortRulesByName, useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
+import {
+  UNGROUPED_VIRTUAL_GROUP_NAME,
+  flattenGrafanaManagedRules,
+  mergeUngroupedGrafanaRules,
+  sortRulesByName,
+  useCombinedRuleNamespaces,
+} from './useCombinedRuleNamespaces';
 
 describe('useCombinedRuleNamespaces', () => {
   beforeEach(() => {
@@ -123,5 +130,113 @@ describe('flattenGrafanaManagedRules', () => {
         totals: {},
       },
     ]);
+  });
+});
+
+describe('mergeUngroupedGrafanaRules', () => {
+  const realGroup = {
+    name: 'real-group',
+    interval: '1m',
+    rules: [{ name: 'rule-a' }, { name: 'rule-b' }],
+    totals: { alerting: 1 },
+  } as CombinedRuleGroup;
+
+  const ungroupedFoo = {
+    name: `${NO_GROUP_PREFIX}foo`,
+    interval: '30s',
+    rules: [{ name: 'Foo' }],
+    totals: { alerting: 1 },
+  } as CombinedRuleGroup;
+
+  const ungroupedBar = {
+    name: `${NO_GROUP_PREFIX}bar`,
+    interval: '30s',
+    rules: [{ name: 'Bar' }],
+    totals: { inactive: 1 },
+  } as CombinedRuleGroup;
+
+  const ungroupedBaz = {
+    name: `${NO_GROUP_PREFIX}baz`,
+    interval: '5m',
+    rules: [{ name: 'Baz' }],
+    totals: { pending: 2 },
+  } as CombinedRuleGroup;
+
+  it('merges ungrouped Grafana groups into one virtual group while leaving real groups untouched', () => {
+    const namespace = {
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      name: 'folder',
+      groups: [ungroupedFoo, realGroup, ungroupedBar],
+    } as CombinedRuleNamespace;
+
+    const [merged] = mergeUngroupedGrafanaRules([namespace]);
+
+    expect(merged.groups).toHaveLength(2);
+    expect(merged.groups[0]).toEqual(realGroup);
+    expect(merged.groups[1]).toEqual({
+      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      interval: '30s',
+      rules: sortRulesByName([...ungroupedFoo.rules, ...ungroupedBar.rules]),
+      totals: { alerting: 1, inactive: 1 },
+    });
+  });
+
+  it('produces a single virtual group when the folder only contains ungrouped rules', () => {
+    const namespace = {
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      name: 'folder',
+      groups: [ungroupedFoo, ungroupedBar],
+    } as CombinedRuleNamespace;
+
+    const [merged] = mergeUngroupedGrafanaRules([namespace]);
+
+    expect(merged.groups).toHaveLength(1);
+    expect(merged.groups[0].name).toBe(UNGROUPED_VIRTUAL_GROUP_NAME);
+    expect(merged.groups[0].rules).toEqual(sortRulesByName([...ungroupedFoo.rules, ...ungroupedBar.rules]));
+  });
+
+  it('leaves namespaces without ungrouped rules untouched', () => {
+    const namespace = {
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      name: 'folder',
+      groups: [realGroup],
+    } as CombinedRuleNamespace;
+
+    const [merged] = mergeUngroupedGrafanaRules([namespace]);
+
+    expect(merged.groups).toEqual([realGroup]);
+  });
+
+  it('passes through non-Grafana namespaces without modification', () => {
+    const namespace = {
+      rulesSource: { name: 'mimir' },
+      name: 'folder',
+      groups: [
+        {
+          name: `${NO_GROUP_PREFIX}foo`,
+          rules: [{ name: 'Foo' }],
+          totals: {},
+        },
+      ],
+    } as unknown as CombinedRuleNamespace;
+
+    const [merged] = mergeUngroupedGrafanaRules([namespace]);
+
+    expect(merged).toBe(namespace);
+  });
+
+  it('drops the virtual group interval when the merged groups disagree', () => {
+    const namespace = {
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      name: 'folder',
+      groups: [ungroupedFoo, ungroupedBaz],
+    } as CombinedRuleNamespace;
+
+    const [merged] = mergeUngroupedGrafanaRules([namespace]);
+
+    expect(merged.groups[0]).toMatchObject({
+      name: UNGROUPED_VIRTUAL_GROUP_NAME,
+      interval: undefined,
+    });
   });
 });
