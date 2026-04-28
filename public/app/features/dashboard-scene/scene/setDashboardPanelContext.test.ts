@@ -2,6 +2,7 @@ import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type V
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { resetAnnotationServerForTests } from 'app/features/annotations/api';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
@@ -11,12 +12,21 @@ import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashbo
 const postFn = jest.fn();
 const putFn = jest.fn();
 const deleteFn = jest.fn();
+const getFn = jest.fn();
 
 setBackendSrv({
   post: postFn,
   put: putFn,
   delete: deleteFn,
+  get: getFn,
 } as unknown as BackendSrv);
+
+beforeEach(() => {
+  postFn.mockReset();
+  putFn.mockReset();
+  deleteFn.mockReset();
+  getFn.mockReset();
+});
 
 describe('setDashboardPanelContext', () => {
   describe('canAddAnnotations', () => {
@@ -81,6 +91,10 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationCreate', () => {
+    beforeEach(() => {
+      resetAnnotationServerForTests();
+    });
+
     it('should create annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
@@ -96,9 +110,44 @@ describe('setDashboardPanelContext', () => {
         timeEnd: 200,
       });
     });
+
+    it('should POST to the k8s endpoint when kubernetesAnnotations is enabled', async () => {
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+      postFn.mockResolvedValue({});
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+        await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: ['t'] });
+
+        expect(postFn).toHaveBeenCalledWith(
+          '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations',
+          expect.objectContaining({
+            kind: 'Annotation',
+            spec: expect.objectContaining({
+              dashboardUID: 'dash-1',
+              panelID: 4,
+              text: 'save it',
+              time: 100,
+              timeEnd: 200,
+              tags: ['t'],
+            }),
+          }),
+          expect.anything()
+        );
+      } finally {
+        config.featureToggles.kubernetesAnnotations = false;
+        resetAnnotationServerForTests();
+      }
+    });
   });
 
   describe('onAnnotationUpdate', () => {
+    beforeEach(() => {
+      resetAnnotationServerForTests();
+    });
+
     it('should update annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
@@ -115,15 +164,70 @@ describe('setDashboardPanelContext', () => {
         timeEnd: 200,
       });
     });
+
+    it('should PUT to the k8s endpoint when kubernetesAnnotations is enabled', async () => {
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+      getFn.mockResolvedValue({
+        apiVersion: 'annotation.grafana.app/v0alpha1',
+        kind: 'Annotation',
+        metadata: { name: 'event-id-123', resourceVersion: 'rv-1', creationTimestamp: '' },
+        spec: { text: 'old', time: 1 },
+      });
+      putFn.mockResolvedValue({});
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+        await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+
+        expect(putFn).toHaveBeenCalledWith(
+          '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
+          expect.objectContaining({
+            metadata: expect.objectContaining({ name: 'event-id-123', resourceVersion: 'rv-1' }),
+            spec: expect.objectContaining({ text: 'updated', time: 100, timeEnd: 200 }),
+          }),
+          expect.anything()
+        );
+      } finally {
+        config.featureToggles.kubernetesAnnotations = false;
+        resetAnnotationServerForTests();
+      }
+    });
   });
 
   describe('onAnnotationDelete', () => {
+    beforeEach(() => {
+      resetAnnotationServerForTests();
+    });
+
     it('should update annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       context.onAnnotationDelete!('I-do-not-want-you');
 
       expect(deleteFn).toHaveBeenCalledWith('/api/annotations/I-do-not-want-you');
+    });
+
+    it('should DELETE the k8s resource when kubernetesAnnotations is enabled', async () => {
+      config.featureToggles.kubernetesAnnotations = true;
+      config.namespace = 'stack-1';
+      deleteFn.mockResolvedValue({});
+
+      try {
+        const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+
+        await context.onAnnotationDelete!('event-id-123');
+
+        expect(deleteFn).toHaveBeenCalledWith(
+          '/apis/annotation.grafana.app/v0alpha1/namespaces/stack-1/annotations/event-id-123',
+          undefined,
+          { showSuccessAlert: false }
+        );
+      } finally {
+        config.featureToggles.kubernetesAnnotations = false;
+        resetAnnotationServerForTests();
+      }
     });
   });
 

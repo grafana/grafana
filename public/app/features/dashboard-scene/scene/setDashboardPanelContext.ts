@@ -70,7 +70,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await annotationServer().save(anno);
+    await annotationServer().save(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -92,7 +92,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await annotationServer().update(anno);
+    await annotationServer().update(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -196,6 +196,15 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
+}
+
+/**
+ * Reads the current scope names from the scene graph so they can be persisted alongside
+ * a manually created/updated annotation, mirroring how `SceneQueryRunner` propagates
+ * `request.scopes` to panel queries.
+ */
+function getCurrentScopeNames(sceneObject: VizPanel): string[] {
+  return sceneGraph.getScopes(sceneObject)?.map((scope) => scope.metadata.name) ?? [];
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {

@@ -371,6 +371,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "kubernetesAnnotations",
+			Description:     "Routes manual annotation create/update/delete and tag autocomplete from /api/annotations to the /apis/annotation.grafana.app endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
