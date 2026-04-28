@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -42,7 +43,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasResult = !!prom.result || !!ruler.result;
 
   const wantsListView = queryParams.view === 'list';
-  const ungroupedMerged = mergeUngroupedGrafanaRules(namespaces);
+  const ungroupedMerged = useMemo(() => mergeUngroupedGrafanaRules(namespaces), [namespaces]);
   const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(ungroupedMerged) : ungroupedMerged;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);

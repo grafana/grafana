@@ -27,13 +27,6 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
   createAssistantContextItem: jest.fn((type, data) => ({ type, ...data })),
 }));
-jest.mocked(useAssistant).mockReturnValue({
-  isLoading: false,
-  isAvailable: false,
-  openAssistant: jest.fn(),
-  closeAssistant: jest.fn(),
-  toggleAssistant: jest.fn(),
-});
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -42,6 +35,7 @@ jest.spyOn(analytics, 'logInfo');
 
 const mocks = {
   useHasRuler: jest.mocked(useHasRuler),
+  useAssistant: jest.mocked(useAssistant),
 };
 
 function mockUseHasRuler(hasRuler: boolean, rulerConfig: RulerDataSourceConfig) {
@@ -53,6 +47,13 @@ function mockUseHasRuler(hasRuler: boolean, rulerConfig: RulerDataSourceConfig) 
 
 beforeEach(() => {
   mocks.useHasRuler.mockReset();
+  mocks.useAssistant.mockReturnValue({
+    isLoading: false,
+    isAvailable: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  });
   // FIXME: scope down
   grantUserPermissions(Object.values(AccessControlAction));
 });

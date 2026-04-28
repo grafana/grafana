@@ -20,13 +20,7 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
   createAssistantContextItem: jest.fn((type, data) => ({ type, ...data })),
 }));
-jest.mocked(useAssistant).mockReturnValue({
-  isLoading: false,
-  isAvailable: false,
-  openAssistant: jest.fn(),
-  closeAssistant: jest.fn(),
-  toggleAssistant: jest.fn(),
-});
+const mockUseAssistant = jest.mocked(useAssistant);
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -41,6 +35,13 @@ const ui = {
 
 describe('GrafanaRuleGroupListItem', () => {
   beforeEach(() => {
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
     grantUserPermissions([AccessControlAction.AlertingRuleRead]);
     mockFolderApi(server).folder('folder-123', mockFolder({ uid: 'folder-123', title: 'TestFolder' }));
   });

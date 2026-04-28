@@ -196,6 +196,7 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
   );
 
   if (isUngroupedRuleGroup(group.name)) {
+    // Each `no_group_for_rule_<uid>` group carries exactly one rule by construction on the backend.
     const rule = group.rules[0];
     if (!rule) {
       return null;

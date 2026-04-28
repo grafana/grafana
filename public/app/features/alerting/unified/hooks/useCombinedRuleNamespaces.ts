@@ -245,8 +245,8 @@ export function mergeUngroupedGrafanaRules(namespaces: CombinedRuleNamespace[]):
     // Surface a representative interval when all merged groups agree, so RulesTable's
     // showNextEvaluationColumn={Boolean(group.interval)} guard keeps the next-evaluation
     // column visible. Provisioned ungrouped rules typically share the same per-rule interval.
-    const intervals = new Set(ungrouped.map((group) => group.interval).filter((interval) => Boolean(interval)));
-    const interval = intervals.size === 1 ? [...intervals][0] : undefined;
+    const firstInterval = ungrouped[0].interval;
+    const interval = firstInterval && ungrouped.every((g) => g.interval === firstInterval) ? firstInterval : undefined;
 
     const virtualGroup: CombinedRuleGroup = {
       name: UNGROUPED_VIRTUAL_GROUP_NAME,
