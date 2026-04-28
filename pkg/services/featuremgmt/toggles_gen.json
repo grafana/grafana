@@ -1024,7 +1024,7 @@
         "creationTimestamp": "2024-10-14T10:47:18Z"
       },
       "spec": {
-        "description": "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
+        "description": "Enables the gRPC client to authenticate with the App Platform by using ID \u0026 access tokens",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2543,6 +2543,20 @@
     },
     {
       "metadata": {
+        "name": "globalDashboardVariables",
+        "resourceVersion": "1774390852180",
+        "creationTimestamp": "2026-03-24T22:20:52Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1777026827859",
         "creationTimestamp": "2026-04-24T10:33:47Z"
@@ -2564,20 +2578,6 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "globalDashboardVariables",
-        "resourceVersion": "1774390852180",
-        "creationTimestamp": "2026-03-24T22:20:52Z"
-      },
-      "spec": {
-        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },

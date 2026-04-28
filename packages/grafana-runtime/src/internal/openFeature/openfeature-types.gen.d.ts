@@ -25,6 +25,7 @@ declare module "@openfeature/core" {
     | "newLogContext"
     | "useMTPlugins"
     | "dashboardSectionVariables"
+    | "globalDashboardVariables"
     | "queryEditorNext"
     | "managedPluginsV2"
     | "analyticsFramework"

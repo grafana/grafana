@@ -193,25 +193,23 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
-* Enables global and folder-scoped dashboard variables via dashboard.grafana.app
-*
-* **Details:**
-* - flag key: `globalDashboardVariables`
-* - default value: `false`
-*/
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `globalDashboardVariables`
+ * - default value: `false`
+ */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
 };
 
-
 /**
-* Whether to use the new SharedPreferences functional component
-*
-* **Details:**
-* - flag key: `grafana.newPreferencesPage`
-* - default value: `false`
-*/
-
+ * Whether to use the new SharedPreferences functional component
+ *
+ * **Details:**
+ * - flag key: `grafana.newPreferencesPage`
+ * - default value: `false`
+ */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
 };
