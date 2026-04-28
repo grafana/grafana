@@ -21,7 +21,7 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import RulesFilter from './filter/RulesFilter';
+import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
@@ -29,16 +29,14 @@ function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
-  const filterV2Enabled = config.featureToggles.alertingFilterV2;
-
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
-          {filterV2Enabled && <RulesFilterSidebar />}
-          <Box flex={1} minWidth={0} paddingLeft={filterV2Enabled ? 2 : undefined}>
+          <RulesFilterSidebar />
+          <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />
             ) : (

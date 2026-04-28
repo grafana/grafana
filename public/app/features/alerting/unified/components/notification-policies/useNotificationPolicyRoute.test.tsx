@@ -1,4 +1,4 @@
-import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';

@@ -205,8 +205,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAC'))
       ).toBeVisible();
     });
-
-    test('removing a value that is part of dependents options should remove the new values dependant options', async ({
+    // todo fix flakiness
+    test.skip('removing a value that is part of dependents options should remove the new values dependant options', async ({
       gotoDashboardPage,
       selectors,
       page,

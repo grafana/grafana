@@ -60,7 +60,7 @@ func createServiceSut(
 		settings: setting.UnifiedAlertingSettings{
 			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 		},
-		validator: func(from, to models.Provenance) error {
+		provenanceStatusTransitionValidator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
 		FeatureToggles: features,

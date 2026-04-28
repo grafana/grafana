@@ -142,7 +142,7 @@ All shared test infrastructure lives in `common/testing.go`:
 | `SharedGitEnv` | Lazily starts one Grafana + gittest server per package for git tests |
 | `RunGrafana(t, opts...)` | Starts a standalone Grafana server for a single test |
 | `RunGrafanaWithGitServer(t, opts...)` | Starts a standalone Grafana + git server for a single test |
-| `GrafanaOption` | Functional option type (`WithProvisioningFolderMetadata`, `WithRepositoryTypes`, etc.) |
+| `GrafanaOption` | Functional option type (`WithoutProvisioningFolderMetadata`, `WithRepositoryTypes`, etc.) |
 
 ## Package Layout
 
@@ -150,11 +150,11 @@ All shared test infrastructure lives in `common/testing.go`:
 
 | Package | Env Options |
 | ------- | ----------- |
-| `provisioning/` (root) | `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
+| `provisioning/` (root) | `WithoutProvisioningFolderMetadata`, `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
 | `connection/` | none |
-| `repository/` | `WithProvisioningFolderMetadata` |
-| `quota/` | none |
-| `jobs/` | none (GitHub mock in helper) |
+| `repository/` | none |
+| `quota/` | `WithoutProvisioningFolderMetadata` |
+| `jobs/` | `WithoutProvisioningFolderMetadata` (GitHub mock in helper) |
 | `jobs/conflict/` | `DisableControllers` — controllers race with manual job updates |
 | `jobs/instanceauth/` | none — requires isolated server for instance-scoped RBAC checks |
 | `enterprise/` | enterprise repo types (skipped in OSS) |
@@ -163,19 +163,21 @@ All shared test infrastructure lives in `common/testing.go`:
 
 | Package | Env Options |
 | ------- | ----------- |
-| `git/` | none |
-| `git/sourcepath_guard/` | none |
-| `foldermetadata/` | `WithProvisioningFolderMetadata`, `WithRepositoryTypes(["git","local"])` — mixed-env (see below) |
-| `foldermetadata/incremental/` | `WithProvisioningFolderMetadata` |
-| `foldermetadata/full/` | none |
+| `git/` | `WithoutProvisioningFolderMetadata` |
+| `git/sourcepath_guard/` | `WithoutProvisioningFolderMetadata` |
+| `foldermetadata/` | `WithRepositoryTypes(["git","local"])` — mixed-env (see below) |
+| `foldermetadata/incremental/` | none |
+| `foldermetadata/full/` | `WithoutProvisioningFolderMetadata` |
 
 ### Mixed-env package
 
-`foldermetadata/` uses `SharedGitEnv` with `WithProvisioningFolderMetadata` and
-`WithRepositoryTypes(["git","local"])` to support both local-filesystem tests and
-git-backed tests in a single package. The non-git tests use `sharedHelper(t)`
-(returns `*ProvisioningTestHelper`), while git-backed tests use `sharedGitHelper(t)`
-(returns `*GitTestHelper`).
+`foldermetadata/` uses `SharedGitEnv` with `WithRepositoryTypes(["git","local"])`
+to support both local-filesystem tests and git-backed tests in a single package.
+The `provisioningFolderMetadata` flag is GA and enabled by default, so no explicit
+opt-in is needed. The non-git tests use `sharedHelper(t)` (returns
+`*ProvisioningTestHelper`), while git-backed tests use `sharedGitHelper(t)`
+(returns `*GitTestHelper`). Packages that still rely on the pre-flag behavior use
+`WithoutProvisioningFolderMetadata` to explicitly disable it.
 
 ## Migration Checklist for Other Packages
 

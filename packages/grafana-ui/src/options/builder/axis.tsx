@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import {
   type FieldConfigEditorBuilder,
@@ -87,6 +87,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       path: 'scaleDistribution',
       name: t('grafana-ui.builder.axis.name-scale', 'Scale'),
       category,
+      useFieldset: true,
       editor: ScaleDistributionEditor,
       override: ScaleDistributionEditor,
       defaultValue: { type: ScaleDistribution.Linear },
@@ -150,6 +151,8 @@ export const ScaleDistributionEditor = ({
 }: Pick<StandardEditorProps<ScaleDistributionConfig>, 'value' | 'onChange'>) => {
   const type = value?.type ?? ScaleDistribution.Linear;
   const log = value?.log ?? 2;
+  const logBaseId = useId();
+  const linearThresholdId = useId();
 
   const [localLinearThreshold, setLocalLinearThreshold] = useState<string>(
     value?.linearThreshold != null ? String(value.linearThreshold) : ''
@@ -187,6 +190,7 @@ export const ScaleDistributionEditor = ({
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
         <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')} noMargin>
           <Select
+            inputId={logBaseId}
             options={LOG_DISTRIBUTION_OPTIONS}
             value={log}
             onChange={(v) => {
@@ -208,6 +212,7 @@ export const ScaleDistributionEditor = ({
           noMargin
         >
           <Input
+            id={linearThresholdId}
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
             value={localLinearThreshold}

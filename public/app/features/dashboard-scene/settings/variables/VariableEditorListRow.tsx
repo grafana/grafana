@@ -136,7 +136,15 @@ export function VariableEditorListRow({
               />
 
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
-                <Icon name="draggabledots" size="lg" />
+                <Icon
+                  name="draggabledots"
+                  size="lg"
+                  title={t(
+                    'dashboard-scene.variable-editor-list-row.drag-handle-label',
+                    'Reorder variable {{variableName}}',
+                    { variableName: variableState.name }
+                  )}
+                />
               </div>
             </div>
           </td>

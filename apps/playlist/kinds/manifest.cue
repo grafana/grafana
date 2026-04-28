@@ -20,7 +20,7 @@ manifest: {
 				go: {enabled: false} // v0alpha1 is now a thin wrapper around v1
 			}
 			kinds: [
-				playlistv0alpha1,
+				playlistv1, // NOTE same content... will be removed soon
 			]
 		}
 	}

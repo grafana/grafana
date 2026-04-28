@@ -14,7 +14,7 @@ interface TestRequestBody {
 
 const testReceiverK8sHandler = () =>
   http.post<{ namespace: string; name: string }, TestRequestBody>(
-    '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
+    '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
     async ({ request }) => {
       const body = await request.json();
 
@@ -29,7 +29,7 @@ const testReceiverK8sHandler = () =>
 
       // Simulate successful test
       return HttpResponse.json({
-        apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+        apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
         kind: 'CreateReceiverIntegrationTest',
         status: 'success',
         duration: '150ms',

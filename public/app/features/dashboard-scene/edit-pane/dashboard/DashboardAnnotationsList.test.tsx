@@ -188,10 +188,7 @@ describe('User interactions', () => {
 
       await user.click(getByText(visibleEnabled.state.name));
 
-      expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(
-        visibleEnabled,
-        visibleEnabled.state.key
-      );
+      expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleEnabled);
     });
   });
 

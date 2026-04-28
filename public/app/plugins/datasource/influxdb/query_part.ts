@@ -1,6 +1,6 @@
 import { clone, map } from 'lodash';
 
-import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from 'app/features/alerting/state/query_part';
+import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from './query_part_core';
 
 const index: QueryPartDef[] = [];
 const categories = {

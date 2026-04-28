@@ -19,8 +19,12 @@ WHERE p.org_id = {{ .Arg .OrgID }}
    {{ if .HasTeams }} 
    OR t.uid IN ({{ .ArgList .UserTeams }})
    {{ end }}
-   OR p.user_id = 0
+   OR (p.user_id = 0 AND p.team_id = 0)
   {{ end }}
   )
+{{ else if .Namespace }} 
+  AND p.user_id = 0 AND p.team_id = 0
+{{ else if not .All }}
+  invalid query -- specify All to list all permissions in query
 {{ end }}
 ORDER BY p.user_id asc, p.team_id asc, p.org_id asc

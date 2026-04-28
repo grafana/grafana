@@ -73,7 +73,6 @@ type Alertmanager interface {
 
 	// Receivers
 	GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error)
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 	TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 

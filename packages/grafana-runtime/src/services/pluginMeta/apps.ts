@@ -2,9 +2,10 @@ import { type AppPluginConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logWarning } from './logging';
+import { logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
@@ -23,9 +24,9 @@ function setMetas(metas: PluginMetasResponse) {
   if (!metas.items.length) {
     // something failed while trying to fetch plugin meta
     // fallback to config.panels from bootdata
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
-    logWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.app);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.app);
     return;
   }
 
@@ -34,8 +35,8 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+    // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     return;
   }

@@ -610,24 +610,6 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]alertingModels.Rece
 	return am.mimirClient.GetReceivers(ctx)
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := decryptedGrafanaReceivers(c.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
-	}
-
-	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
-	var alert *alertingModels.TestReceiversConfigAlertParams
-	if c.Alert != nil {
-		alert = &alertingModels.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
-	}
-
-	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
-		Alert:     alert,
-		Receivers: apiReceivers,
-	})
-}
-
 func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
 	decrypted := integrationConfig.Clone()
 	err := decrypted.Decrypt(notifier.DecryptIntegrationSettings(ctx, am.crypto))
@@ -668,7 +650,7 @@ func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string
 	status := alertingModels.IntegrationStatus{
 		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
 		LastNotifyAttemptDuration: model.Duration(duration).String(),
-		Name:                      cfg.Type,
+		Name:                      string(cfg.Type),
 		SendResolved:              false,
 	}
 	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {

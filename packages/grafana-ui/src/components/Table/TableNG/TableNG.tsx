@@ -7,6 +7,7 @@ import {
   type JSX,
   type Key,
   type ReactNode,
+  Suspense,
   useCallback,
   useEffect,
   useId,
@@ -45,6 +46,7 @@ import { Pagination } from '../../Pagination/Pagination';
 import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { TableCellDisplayMode } from '../types';
 import { type DataLinksActionsTooltipState } from '../utils';
 
@@ -174,6 +176,7 @@ export function TableNG(props: TableNGProps) {
   const resizeHandler = useColumnResize(onColumnResize);
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
   const nestedFramesFieldName = useMemo(() => {
     if (!hasNestedFrames) {
       return;
@@ -1052,7 +1055,15 @@ export function TableNG(props: TableNGProps) {
     rendered = <div className={styles.safariWrapper}>{rendered}</div>;
   }
 
-  return rendered;
+  if (!tableHasGeoCell) {
+    return rendered;
+  }
+
+  return (
+    <Suspense fallback={rendered}>
+      <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
+    </Suspense>
+  );
 }
 
 /**

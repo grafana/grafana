@@ -9,7 +9,8 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
-import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
+import DetailView, { useActiveTab } from './components/rule-viewer/RuleViewer';
+import { ActiveTab } from './components/rule-viewer/activeTab';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';

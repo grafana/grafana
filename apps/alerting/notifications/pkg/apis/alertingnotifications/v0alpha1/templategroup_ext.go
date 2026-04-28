@@ -9,21 +9,21 @@ const DefaultTemplateTitle = "Built-in Templates"
 
 func (o *TemplateGroup) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
-		return ""
+		return ProvenanceStatusNone
 	}
 	s, ok := o.Annotations[ProvenanceStatusAnnotationKey]
-	if !ok || s == "" {
+	if !ok {
 		return ProvenanceStatusNone
 	}
 	return s
 }
 
 func (o *TemplateGroup) SetProvenanceStatus(status string) {
+	if status == ProvenanceStatusNone {
+		return
+	}
 	if o.Annotations == nil {
 		o.Annotations = make(map[string]string, 1)
-	}
-	if status == "" {
-		status = ProvenanceStatusNone
 	}
 	o.Annotations[ProvenanceStatusAnnotationKey] = status
 }

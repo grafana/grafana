@@ -15,10 +15,51 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 const MaxNumberOfFolders = 10000
+
+// EnsurePathOption configures the behaviour of EnsureFolderPathExist.
+type EnsurePathOption func(*ensurePathConfig)
+
+type ensurePathConfig struct {
+	relocatingUIDs map[string]struct{}
+	forceWalk      bool
+}
+
+func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
+	cfg := ensurePathConfig{relocatingUIDs: make(map[string]struct{})}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+func (c *ensurePathConfig) isRelocating(uid string) bool {
+	_, ok := c.relocatingUIDs[uid]
+	return ok
+}
+
+// WithRelocatingUIDs marks UIDs as legitimately relocating to a new path so
+// that the ID conflict check is bypassed for them during folder path resolution.
+// This avoids mutating the tree before the operation is confirmed to succeed.
+func WithRelocatingUIDs(uids ...string) EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		for _, uid := range uids {
+			cfg.relocatingUIDs[uid] = struct{}{}
+		}
+	}
+}
+
+// WithForceWalk skips the early-return optimisation so that the full ancestor
+// walk always runs. Use this when the caller knows that the tree entry may be
+// stale (e.g. parent-only changes during full sync).
+func WithForceWalk() EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		cfg.forceWalk = true
+	}
+}
 
 // PathCreationError represents an error that occurred while creating a folder path.
 // It contains the path that failed and the underlying error.
@@ -95,7 +136,8 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 }
 
 // EnsureFolderPathExist creates the folder structure in the cluster.
-func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error) {
+func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
+	epCfg := newEnsurePathConfig(opts)
 	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
@@ -112,10 +154,23 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	if err != nil {
 		return "", err
 	}
-	if fm.tree.In(f.ID) {
-		// ParentID is only resolved during the walk below, so we skip it here
-		// to avoid a false mismatch against the already-resolved tree entry.
+
+	// ParentID is only resolved during the walk below, so we skip it here
+	// to avoid a false mismatch against the already-resolved tree entry.
+	// Force walk is used to skip the early-return optimisation so that the full ancestor
+	// walk always runs. Use this when the caller knows that the tree entry may be
+	// stale (e.g. a folder was moved to a new path).
+	if !epCfg.forceWalk {
 		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
+			// When a folder is being relocated, its UID temporarily exists at both the old
+			// and new paths in the tree. Allow the duplicate UID only in that case.
+			if !epCfg.isRelocating(f.ID) &&
+				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+				return "", NewResourceValidationError(fmt.Errorf(
+					"folder UID %q defined in %q is already used by folder at path %q",
+					f.ID, f.Path, existing.Path,
+				))
+			}
 			return f.ID, nil
 		}
 	}
@@ -126,11 +181,19 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			return err
 		}
 		f.ParentID = parent
-		if fm.tree.In(f.ID) {
-			if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing) {
-				parent = f.ID
-				return nil
-			}
+
+		existing, existsInTree := fm.tree.Get(f.ID)
+		if existsInTree && f.Equal(existing) {
+			parent = f.ID
+			return nil
+		}
+
+		if !epCfg.isRelocating(f.ID) && existsInTree &&
+			safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+			return NewResourceValidationError(fmt.Errorf(
+				"folder UID %q defined in %q is already used by folder at path %q",
+				f.ID, f.Path, existing.Path,
+			))
 		}
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
@@ -182,7 +245,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 		if !ok {
-			return fmt.Errorf("target folder is not managed by a repository")
+			return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: cfg.Name,
+			})
 		}
 		if current != cfg.Name {
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
@@ -271,7 +337,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// there is a potential race here where two syncs can be triggered
 		// if we try to create and there is an error, check if it is from another sync
 		// job for this repo that created it
-		if apierrors.IsAlreadyExists(err) || err.Error() == dashboards.ErrFolderVersionMismatch.Error() {
+		if apierrors.IsAlreadyExists(err) || err.Error() == foldermodel.ErrVersionMismatch.Error() {
 			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 			if err2 != nil {
 				return fmt.Errorf("failed to get folder: %w", err2)
@@ -281,7 +347,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 			if !ok {
-				return fmt.Errorf("target folder is not managed by a repository")
+				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.Name,
+				})
 			}
 			if current != cfg.Name {
 				return fmt.Errorf("target folder is managed by a different repository (%s)", current)
@@ -347,7 +416,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // there is no tree entry), and for the new path we fall back to the
 // path-derived UID. That gives delete+recreate semantics instead of preserving
 // a metadata-backed identity we can no longer trust.
-func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
+func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
 	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
 	if err != nil {
 		var invalidErr *InvalidFolderMetadata
@@ -365,7 +434,11 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		}
 	}
 
-	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef); err != nil {
+	// Pass the old UID as relocating so the ID conflict check does not reject
+	// the same stable UID appearing at a new path. The tree is only mutated
+	// after EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
+	ensureOpts := append([]EnsurePathOption{WithRelocatingUIDs(oldFolder.ID)}, opts...)
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, ensureOpts...); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 
@@ -383,6 +456,8 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 	}
 
 	if oldFolder.ID == newFolder.ID {
+		// Same UID — metadata-preserving move. EnsureFolderPathExist already
+		// updated the tree entry to the new path; nothing to clean up.
 		return "", nil
 	}
 

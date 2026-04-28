@@ -26,16 +26,6 @@ const GROUPBY_PROMOTED: MetricFindValue[] = [
   { value: 'namespace', text: 'Namespace', group: COMMON_GROUP },
 ];
 
-/** Labels promoted to the top of the Filter dropdown */
-const FILTER_PROMOTED: MetricFindValue[] = [
-  { value: 'alertstate', text: 'State', group: COMMON_GROUP },
-  { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
-  { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
-  { value: 'service', text: 'Service', group: COMMON_GROUP },
-  { value: 'team', text: 'Team', group: COMMON_GROUP },
-  { value: 'namespace', text: 'Namespace', group: COMMON_GROUP },
-];
-
 /** Labels that should never appear in dropdowns */
 const EXCLUDED = new Set<string>([
   '__name__',
@@ -79,12 +69,12 @@ async function fetchTagValues(timeRange: TimeRange, key: string): Promise<Metric
 }
 
 /**
- * Fetch tag keys from the datasource, exclude promoted and hidden labels,
+ * Fetch tag keys from the datasource, exclude hidden labels and any promoted labels,
  * and return promoted labels first followed by the rest alphabetically.
  */
 async function buildTagKeysResult(
   timeRange: TimeRange,
-  promoted: MetricFindValue[]
+  promoted: MetricFindValue[] = []
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
   const dsKeys = await fetchTagKeys(timeRange);
   const promotedValues = new Set(promoted.map((p) => String(p.value)));
@@ -111,11 +101,11 @@ export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey
 
 /**
  * Provider for the AdHoc Filters variable.
- * Shows promoted labels in "Common" group, remaining labels under "Labels".
+ * Returns datasource labels under the "All" group.
  */
 export function getAdHocTagKeysProvider(variable: AdHocFiltersVariable, _currentKey: string | null) {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;
-  return buildTagKeysResult(timeRange, FILTER_PROMOTED);
+  return buildTagKeysResult(timeRange);
 }
 
 /**

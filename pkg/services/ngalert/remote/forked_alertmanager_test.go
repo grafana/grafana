@@ -392,14 +392,14 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
-		_, _, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		internal.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, nil).Once()
+		_, err := forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the internal Alertmanager, it should be returned.
 		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
-		_, _, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		internal.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, expErr).Once()
+		_, err = forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
@@ -735,17 +735,17 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		require.ErrorIs(tt, expErr, err)
 	})
 
-	t.Run("TestReceivers", func(tt *testing.T) {
+	t.Run("TestIntegration", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
 		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
-		_, _, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		remote.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, nil).Once()
+		_, err := forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
-		_, _, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		remote.EXPECT().TestIntegration(mock.Anything, "", mock.Anything, mock.Anything).Return(alertingModels.IntegrationStatus{}, expErr).Once()
+		_, err = forked.TestIntegration(ctx, "", models.IntegrationGen()(), alertingModels.TestReceiversConfigAlertParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 

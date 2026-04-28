@@ -1698,26 +1698,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeGetContactpoints: build.query<RouteGetContactpointsApiResponse, RouteGetContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          params: {
-            name: queryArg.name,
-          },
-        }),
-        providesTags: ['provisioning'],
-      }),
-      routePostContactpoints: build.mutation<RoutePostContactpointsApiResponse, RoutePostContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          method: 'POST',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetContactpointsExport: build.query<
         RouteGetContactpointsExportApiResponse,
         RouteGetContactpointsExportApiArg
@@ -1733,21 +1713,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeDeleteContactpoints: build.mutation<RouteDeleteContactpointsApiResponse, RouteDeleteContactpointsApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/contact-points/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routePutContactpoint: build.mutation<RoutePutContactpointApiResponse, RoutePutContactpointApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRuleGroupExport: build.query<
         RouteGetAlertRuleGroupExportApiResponse,
         RouteGetAlertRuleGroupExportApiArg
@@ -1761,21 +1726,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeGetMuteTimings: build.query<RouteGetMuteTimingsApiResponse, RouteGetMuteTimingsApiArg>({
-        query: () => ({ url: `/v1/provisioning/mute-timings` }),
-        providesTags: ['provisioning'],
-      }),
-      routePostMuteTiming: build.mutation<RoutePostMuteTimingApiResponse, RoutePostMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings`,
-          method: 'POST',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeExportMuteTimings: build.query<RouteExportMuteTimingsApiResponse, RouteExportMuteTimingsApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/mute-timings/export`,
@@ -1785,34 +1735,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['provisioning'],
-      }),
-      routeDeleteMuteTiming: build.mutation<RouteDeleteMuteTimingApiResponse, RouteDeleteMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'DELETE',
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetMuteTiming: build.query<RouteGetMuteTimingApiResponse, RouteGetMuteTimingApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/mute-timings/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutMuteTiming: build.mutation<RoutePutMuteTimingApiResponse, RoutePutMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       routeExportMuteTiming: build.query<RouteExportMuteTimingApiResponse, RouteExportMuteTimingApiArg>({
         query: (queryArg) => ({
@@ -1824,57 +1746,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeResetPolicyTree: build.mutation<RouteResetPolicyTreeApiResponse, RouteResetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetPolicyTree: build.query<RouteGetPolicyTreeApiResponse, RouteGetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutPolicyTree: build.mutation<RoutePutPolicyTreeApiResponse, RoutePutPolicyTreeApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/policies`,
-          method: 'PUT',
-          body: queryArg.route,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetPolicyTreeExport: build.query<RouteGetPolicyTreeExportApiResponse, RouteGetPolicyTreeExportApiArg>({
         query: () => ({ url: `/v1/provisioning/policies/export` }),
         providesTags: ['provisioning'],
-      }),
-      routeGetTemplates: build.query<RouteGetTemplatesApiResponse, RouteGetTemplatesApiArg>({
-        query: () => ({ url: `/v1/provisioning/templates` }),
-        providesTags: ['provisioning'],
-      }),
-      routeDeleteTemplate: build.mutation<RouteDeleteTemplateApiResponse, RouteDeleteTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'DELETE',
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetTemplate: build.query<RouteGetTemplateApiResponse, RouteGetTemplateApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/templates/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutTemplate: build.mutation<RoutePutTemplateApiResponse, RoutePutTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.notificationTemplateContent,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       listAllProvidersSettings: build.query<ListAllProvidersSettingsApiResponse, ListAllProvidersSettingsApiArg>({
         query: () => ({ url: `/v1/sso-settings` }),
@@ -3288,16 +3162,6 @@ export type RouteGetAlertRuleExportApiArg = {
   /** Alert rule UID */
   uid: string;
 };
-export type RouteGetContactpointsApiResponse = /** status 200 ContactPoints */ ContactPointsRead;
-export type RouteGetContactpointsApiArg = {
-  /** Filter by name */
-  name?: string;
-};
-export type RoutePostContactpointsApiResponse = /** status 202 EmbeddedContactPoint */ EmbeddedContactPointRead;
-export type RoutePostContactpointsApiArg = {
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
-};
 export type RouteGetContactpointsExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetContactpointsExportApiArg = {
@@ -3310,18 +3174,6 @@ export type RouteGetContactpointsExportApiArg = {
   /** Filter by name */
   name?: string;
 };
-export type RouteDeleteContactpointsApiResponse = unknown;
-export type RouteDeleteContactpointsApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-};
-export type RoutePutContactpointApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutContactpointApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
-};
 export type RouteGetAlertRuleGroupExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRuleGroupExportApiArg = {
@@ -3332,14 +3184,6 @@ export type RouteGetAlertRuleGroupExportApiArg = {
   folderUid: string;
   group: string;
 };
-export type RouteGetMuteTimingsApiResponse = /** status 200 MuteTimings */ MuteTimings;
-export type RouteGetMuteTimingsApiArg = void;
-export type RoutePostMuteTimingApiResponse =
-  /** status 201 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePostMuteTimingApiArg = {
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-};
 export type RouteExportMuteTimingsApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteExportMuteTimingsApiArg = {
@@ -3347,28 +3191,6 @@ export type RouteExportMuteTimingsApiArg = {
   download?: boolean;
   /** Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. */
   format?: 'yaml' | 'json' | 'hcl';
-};
-export type RouteDeleteMuteTimingApiResponse = unknown;
-export type RouteDeleteMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  /** Version of mute timing to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-  'X-Disable-Provenance'?: string;
-};
-export type RouteGetMuteTimingApiResponse =
-  /** status 200 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RouteGetMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-};
-export type RoutePutMuteTimingApiResponse =
-  /** status 202 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePutMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
 };
 export type RouteExportMuteTimingApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -3380,40 +3202,9 @@ export type RouteExportMuteTimingApiArg = {
   /** Mute timing name */
   name: string;
 };
-export type RouteResetPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RouteResetPolicyTreeApiArg = void;
-export type RouteGetPolicyTreeApiResponse = /** status 200 Route */ Route;
-export type RouteGetPolicyTreeApiArg = void;
-export type RoutePutPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutPolicyTreeApiArg = {
-  'X-Disable-Provenance'?: string;
-  /** The new notification routing tree to use */
-  route: Route;
-};
 export type RouteGetPolicyTreeExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetPolicyTreeExportApiArg = void;
-export type RouteGetTemplatesApiResponse = /** status 200 NotificationTemplates */ NotificationTemplates;
-export type RouteGetTemplatesApiArg = void;
-export type RouteDeleteTemplateApiResponse = unknown;
-export type RouteDeleteTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  /** Version of template to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-};
-export type RouteGetTemplateApiResponse = /** status 200 NotificationTemplate */ NotificationTemplate;
-export type RouteGetTemplateApiArg = {
-  /** Template group name */
-  name: string;
-};
-export type RoutePutTemplateApiResponse = /** status 202 NotificationTemplate */ NotificationTemplate;
-export type RoutePutTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  notificationTemplateContent: NotificationTemplateContent;
-};
 export type ListAllProvidersSettingsApiResponse = /** status 200 (empty) */ {
   id?: string;
   provider?: string;
@@ -4836,7 +4627,6 @@ export type DashboardMeta = {
   hasAcl?: boolean;
   isFolder?: boolean;
   isSnapshot?: boolean;
-  isStarred?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;
@@ -5049,9 +4839,19 @@ export type ReportBrandingOptions = {
   emailLogoUrl?: string;
   reportLogoUrl?: string;
 };
+export type FooterItem = {
+  color?: string;
+  fontSize?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  type?: string;
+  value?: string;
+};
 export type ReportSettings = {
   branding?: ReportBrandingOptions;
   embeddedImageTheme?: string;
+  footerFontFamily?: string;
+  footerItems?: FooterItem[];
   id?: number;
   orgId?: number;
   pdfDashboardTitleEnabled?: boolean;
@@ -5681,109 +5481,8 @@ export type AlertingFileExportIsTheFullProvisionedFileExport = {
   muteTimes?: MuteTimeIntervalExport[];
   policies?: NotificationPolicyExportIsTheProvisionedFileExportOfAlertingNotificiationPolicyV1[];
 };
-export type EmbeddedContactPoint = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type EmbeddedContactPointRead = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  provenance?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type ContactPoints = EmbeddedContactPoint[];
-export type ContactPointsRead = EmbeddedContactPointRead[];
-export type ValidationError = {
-  message?: string;
-};
 export type PermissionDenied = object;
-export type Ack = object;
-export type MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted = {
-  name?: string;
-  time_intervals?: TimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-};
-export type MuteTimings = MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-export type Provenance = string;
-export type Route = {
-  active_time_intervals?: string[];
-  continue?: boolean;
-  group_by?: string[];
-  group_interval?: string;
-  group_wait?: string;
-  /** Deprecated. Remove before v1.0 release. */
-  match?: {
-    [key: string]: string;
-  };
-  match_re?: MatchRegexpsRepresentsAMapOfRegexp;
-  matchers?: Matchers;
-  mute_time_intervals?: string[];
-  object_matchers?: ObjectMatchersIsAListOfMatchersThatCanBeUsedToFilterAlerts;
-  provenance?: Provenance;
-  receiver?: string;
-  repeat_interval?: string;
-  routes?: Route[];
-};
 export type NotFound = object;
-export type NotificationTemplate = {
-  name?: string;
-  provenance?: Provenance;
-  template?: string;
-  version?: string;
-};
-export type NotificationTemplates = NotificationTemplate[];
-export type NotificationTemplateContent = {
-  template?: string;
-  version?: string;
-};
 export const {
   useListRolesQuery,
   useLazyListRolesQuery,
@@ -6153,38 +5852,16 @@ export const {
   useLazyRouteGetAlertRulesExportQuery,
   useRouteGetAlertRuleExportQuery,
   useLazyRouteGetAlertRuleExportQuery,
-  useRouteGetContactpointsQuery,
-  useLazyRouteGetContactpointsQuery,
-  useRoutePostContactpointsMutation,
   useRouteGetContactpointsExportQuery,
   useLazyRouteGetContactpointsExportQuery,
-  useRouteDeleteContactpointsMutation,
-  useRoutePutContactpointMutation,
   useRouteGetAlertRuleGroupExportQuery,
   useLazyRouteGetAlertRuleGroupExportQuery,
-  useRouteGetMuteTimingsQuery,
-  useLazyRouteGetMuteTimingsQuery,
-  useRoutePostMuteTimingMutation,
   useRouteExportMuteTimingsQuery,
   useLazyRouteExportMuteTimingsQuery,
-  useRouteDeleteMuteTimingMutation,
-  useRouteGetMuteTimingQuery,
-  useLazyRouteGetMuteTimingQuery,
-  useRoutePutMuteTimingMutation,
   useRouteExportMuteTimingQuery,
   useLazyRouteExportMuteTimingQuery,
-  useRouteResetPolicyTreeMutation,
-  useRouteGetPolicyTreeQuery,
-  useLazyRouteGetPolicyTreeQuery,
-  useRoutePutPolicyTreeMutation,
   useRouteGetPolicyTreeExportQuery,
   useLazyRouteGetPolicyTreeExportQuery,
-  useRouteGetTemplatesQuery,
-  useLazyRouteGetTemplatesQuery,
-  useRouteDeleteTemplateMutation,
-  useRouteGetTemplateQuery,
-  useLazyRouteGetTemplateQuery,
-  useRoutePutTemplateMutation,
   useListAllProvidersSettingsQuery,
   useLazyListAllProvidersSettingsQuery,
   useRemoveProviderSettingsMutation,

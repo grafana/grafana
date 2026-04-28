@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
@@ -11,6 +12,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
+import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
@@ -43,6 +45,7 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
+        {config.featureToggles.restoreDashboards && <DeletedDashboardsLimitBanner resultToken={searchState.result} />}
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
@@ -71,7 +74,7 @@ const RecentlyDeletedPage = memo(() => {
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) => (
+            {({ width, height }: Size) => (
               <SearchView
                 permissions={permissions}
                 width={width}

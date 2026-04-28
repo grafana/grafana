@@ -30,7 +30,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
@@ -75,7 +75,10 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import {
+  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  transformSaveModelSchemaV2ToScene,
+} from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
@@ -92,6 +95,7 @@ import {
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultVizPanel,
+  getLayoutForObject,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
@@ -153,9 +157,6 @@ export interface DashboardScenePreferences {
 }
 
 export interface DashboardSceneState extends SceneObjectState {
-  /** @deprecated */
-  id?: number | undefined;
-
   /** Dashboard-specific preferences **/
   preferences?: DashboardScenePreferences;
 
@@ -209,6 +210,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -330,6 +335,37 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  public setDefaultVariables(defaultVariables: VariableKind[]) {
+    const variableSet = sceneGraph.getVariables(this);
+    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    const defaultVarObjects = defaultVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v));
+
+    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+  }
+
+  public setDefaultLinks(defaultLinks: DashboardLink[]) {
+    const userLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: [...defaultLinks, ...userLinks] });
+  }
+
+  public clearDefaultControls() {
+    const variableSet = sceneGraph.getVariables(this);
+    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    variableSet.setState({ variables: nonDefaultVars });
+
+    const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: nonDefaultLinks });
+  }
+
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
@@ -384,6 +420,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
+      const canSave = Boolean(this.state.meta.canSave);
+
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
@@ -391,17 +429,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
             'Do you want to save your changes?'
           ),
-          altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
+          altActionText: canSave ? t('dashboard-scene.dashboard-scene.modal.save', 'Save') : undefined,
           noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
           yesButtonVariant: 'destructive',
-          onAltAction: () => {
-            this.openSaveDrawer({
-              onSaveSuccess: () => {
-                this.exitEditModeConfirmed(false);
-              },
-            });
-          },
+          onAltAction: canSave
+            ? () => {
+                this.openSaveDrawer({
+                  onSaveSuccess: () => {
+                    this.exitEditModeConfirmed(false);
+                  },
+                });
+              }
+            : undefined,
           onConfirm: () => {
             this.exitEditModeConfirmed();
           },
@@ -693,6 +733,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      const layout = getLayoutForObject(this);
+      if (layout) {
+        layout.pastePanel();
+        return;
+      }
+    }
+
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);

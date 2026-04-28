@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
@@ -153,16 +151,13 @@ import (
 // swagger:route POST /alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
 // Test Grafana managed receivers without saving them.
+// This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.
+//
+// Deprecated: true
 //
 //     Responses:
 //
-//       200: Ack
-//       207: MultiStatus
-//       400: ValidationError
-//       403: PermissionDenied
-//       404: NotFound
-//       408: Failure
-//       409: AlertManagerNotReady
+//       410: Gone
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
 //
@@ -326,43 +321,6 @@ type RouteGetGrafanaAlertingConfigHistoryParams struct {
 	// Limit response to n historic configurations.
 	// in:query
 	Limit int `json:"limit"`
-}
-
-// swagger:parameters RoutePostTestGrafanaReceivers
-type TestReceiversConfigParams struct {
-	// in:body
-	Body TestReceiversConfigBodyParams
-}
-
-type TestReceiversConfigBodyParams struct {
-	Alert     *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Receivers []*PostableApiReceiver          `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-type TestReceiversConfigAlertParams struct {
-	Annotations model.LabelSet `yaml:"annotations,omitempty" json:"annotations,omitempty"`
-	Labels      model.LabelSet `yaml:"labels,omitempty" json:"labels,omitempty"`
-}
-
-// swagger:model
-type TestReceiversResult struct {
-	Alert      TestReceiversConfigAlertParams `json:"alert"`
-	Receivers  []TestReceiverResult           `json:"receivers"`
-	NotifiedAt time.Time                      `json:"notified_at"`
-}
-
-// swagger:model
-type TestReceiverResult struct {
-	Name    string                     `json:"name"`
-	Configs []TestReceiverConfigResult `json:"grafana_managed_receiver_configs"`
-}
-
-// swagger:model
-type TestReceiverConfigResult struct {
-	Name   string `json:"name"`
-	UID    string `json:"uid"`
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
 }
 
 // swagger:parameters RoutePostTestGrafanaTemplates
@@ -1102,6 +1060,7 @@ type GettableGrafanaReceiver struct {
 	UID                   string          `json:"uid"`
 	Name                  string          `json:"name"`
 	Type                  string          `json:"type"`
+	Version               string          `json:"version,omitempty"`
 	DisableResolveMessage bool            `json:"disableResolveMessage"`
 	Settings              RawMessage      `json:"settings,omitempty"`
 	SecureFields          map[string]bool `json:"secureFields"`
@@ -1174,6 +1133,13 @@ func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
 	}
 	// store the map[string]interface{} variant for re-encoding later without redaction
 	c.amSimple = tmp.AlertmanagerConfig
+	// Upstream Mimir/Cortex-compat AMs may return an empty, null, or missing
+	// alertmanager_config when no config has been saved yet. Guarantee amSimple
+	// is non-nil on success so the nil-check in Marshal{JSON,YAML} still catches
+	// undecoded structs without rejecting legitimately empty upstream configs.
+	if c.amSimple == nil {
+		c.amSimple = map[string]interface{}{}
+	}
 
 	return nil
 }
@@ -1221,6 +1187,14 @@ func (c *ExternalAlertmanagerConfig) UnmarshalYAML(value *yaml.Node) error {
 	// store the map[string]interface{} variant for re-encoding later without redaction
 	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
 		return err
+	}
+	// yaml.Unmarshal on empty bytes is a no-op and leaves amSimple nil. Upstream
+	// Mimir/Cortex-compat AMs return alertmanager_config as an empty/null/missing
+	// string when no config has been saved. Guarantee amSimple is non-nil on
+	// success so Marshal{JSON,YAML} still catches undecoded structs without
+	// rejecting legitimately empty upstream configs.
+	if c.amSimple == nil {
+		c.amSimple = map[string]interface{}{}
 	}
 
 	c.TemplateFiles = tmp.TemplateFiles

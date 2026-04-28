@@ -168,7 +168,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps. If you need futher guidance, visit the{' '}
+          available settings and authentication methods in the next steps. If you need further guidance, visit the{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/datasources/influxdb/"
             icon="external-link-alt"

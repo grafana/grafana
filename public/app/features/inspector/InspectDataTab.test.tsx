@@ -4,6 +4,7 @@ import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
 import { type DataFrame, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
 import { InspectDataTab } from './InspectDataTab';
@@ -54,7 +55,7 @@ describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
     it('should render InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
-      expect(screen.getByLabelText(/Panel inspector Data content/i)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
     });
     it('should render Data Option row', () => {
       render(<InspectDataTab {...createProps()} />);

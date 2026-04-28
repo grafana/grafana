@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/aws/smithy-go"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -14,11 +12,13 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	"github.com/aws/smithy-go"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/stretchr/testify/mock"
 )
 
 type fakeCWLogsClient struct {
@@ -271,6 +271,6 @@ func (f fakeSmithyError) ErrorFault() smithy.ErrorFault {
 
 func contextWithFeaturesEnabled(enabled ...string) context.Context {
 	featureString := strings.Join(enabled, ",")
-	cfg := backend.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
-	return backend.WithGrafanaConfig(context.Background(), cfg)
+	cfg := config.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
+	return config.WithGrafanaConfig(context.Background(), cfg)
 }

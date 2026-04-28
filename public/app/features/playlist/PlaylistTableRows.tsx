@@ -92,13 +92,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       {items.map((item, index) => (
         <Draggable key={`${index}/${item.value}`} draggableId={`${index}`} index={index}>
           {(provided) => (
-            <div
-              className={styles.row}
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              role="row"
-            >
+            <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
               <div
                 className={styles.actions}
                 role="cell"
@@ -118,11 +112,13 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   data-testid={selectors.pages.PlaylistForm.itemDelete}
                   tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                 />
-                <Icon
-                  title={t('playlist-edit.form.table-drag', 'Drag and drop to reorder')}
-                  name="draggabledots"
-                  size="md"
-                />
+                <div {...provided.dragHandleProps}>
+                  <Icon
+                    title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
+                    name="draggabledots"
+                    size="md"
+                  />
+                </div>
               </div>
             </div>
           )}

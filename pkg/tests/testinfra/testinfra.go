@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -20,7 +21,6 @@ import (
 
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -43,6 +43,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+// findTestLicense returns the absolute path to the enterprise test license
+// fixture bundled in the enterprise tree, or "" if it is not present (OSS build).
+// Used when wiring MT-mode Zanzana tests that need FeatureAccessControl enabled.
+func findTestLicense() string {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "extensions", "apiserver", "testdata", "valid", "license.jwt")
+	if exists, err := fs.Exists(candidate); err != nil || !exists {
+		return ""
+	}
+	return candidate
+}
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
@@ -151,15 +166,14 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
-		tracingService := tracing.NewNoopTracerService()
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, false)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
@@ -255,7 +269,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// Search upwards in directory tree for project root
 	var rootDir string
 	found := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		rootDir = filepath.Join(rootDir, "..")
 
 		dir, err := filepath.Abs(rootDir)
@@ -490,7 +504,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		return section, err
 	}
 
-	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -584,6 +597,18 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 		require.NoError(t, err)
 	}
+	if len(opts.UnifiedAlertingAllowedIntegrations) > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("allowed_integrations", strings.Join(opts.UnifiedAlertingAllowedIntegrations, ","))
+		require.NoError(t, err)
+	}
+	if opts.UnifiedAlertingEmailsToOrgOnly {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
 	if !opts.EnableLog {
 		logSection, err := getOrCreateSection("log")
 		require.NoError(t, err)
@@ -615,9 +640,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = logSection.NewKey("address", opts.GRPCServerAddress)
 		require.NoError(t, err)
 	}
-	// retry queries 3 times by default
+
+	// retry queries 10 times by default
+	queryRetries := 10
 	if opts.QueryRetries != 0 {
-		queryRetries = int(opts.QueryRetries)
+		queryRetries = opts.QueryRetries
+	}
+	transactionRetries := 10
+	if opts.TransactionRetries != 0 {
+		transactionRetries = opts.TransactionRetries
 	}
 
 	if opts.NGAlertSchedulerBaseInterval > 0 {
@@ -702,6 +733,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("resource_version_batch_transaction_timeout", opts.UnifiedStorageResourceVersionBatchTransactionTimeout.String())
+		require.NoError(t, err)
+	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -750,6 +787,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
 		require.NoError(t, err)
 	}
+	// nil means "use the ini default" (100). Non-nil writes the value, including
+	// 0 which disables the size check.
+	if opts.ProvisioningMaxIncrementalChanges != nil {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_incremental_changes", fmt.Sprintf("%d", *opts.ProvisioningMaxIncrementalChanges))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -773,11 +818,42 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
-	if opts.ZanzanaReconciliationInterval != 0 {
+	if opts.ZanzanaReconciliationInterval != 0 || opts.ZanzanaReconcilerMode != "" {
 		reconcilerSect, err := getOrCreateSection("zanzana.reconciler")
 		require.NoError(t, err)
-		_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
+		if opts.ZanzanaReconciliationInterval != 0 {
+			_, err = reconcilerSect.NewKey("interval", opts.ZanzanaReconciliationInterval.String())
+			require.NoError(t, err)
+		}
+		if opts.ZanzanaReconcilerMode != "" {
+			_, err = reconcilerSect.NewKey("mode", string(opts.ZanzanaReconcilerMode))
+			require.NoError(t, err)
+		}
+	}
+
+	// The MT reconciler's background loop calls server.Read without an auth
+	// identity on the context; Zanzana's authorizer rejects that unless
+	// allow_insecure is set. Enable it for the embedded test server so the
+	// reconciler can make progress.
+	if opts.ZanzanaReconcilerMode == setting.ZanzanaReconcilerModeMT {
+		zanzanaServerSect, err := getOrCreateSection("zanzana.server")
 		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("allow_insecure", "true")
+		require.NoError(t, err)
+
+		// Enterprise RBAC storage backends (Role, RoleBinding, GlobalRole) short-circuit
+		// to a noop "unavailable functionality" error unless the license token enables
+		// FeatureAccessControl. The enterprise MT reconciler includes Roles+RoleBindings
+		// in its CRD list, so without a license the reconciler can never complete a
+		// namespace. Wire a test license if one is present in the merged enterprise tree.
+		if extensions.IsEnterprise && opts.LicensePath == "" {
+			if licensePath := findTestLicense(); licensePath != "" {
+				enterpriseSect, err := cfg.NewSection("enterprise")
+				require.NoError(t, err)
+				_, err = enterpriseSect.NewKey("license_path", licensePath)
+				require.NoError(t, err)
+			}
+		}
 	}
 
 	if opts.DisableZanzanaCache {
@@ -801,6 +877,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("transaction_retries", fmt.Sprintf("%d", transactionRetries))
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
@@ -856,36 +934,46 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	UnifiedAlertingAllowedIntegrations    []string
+	UnifiedAlertingEmailsToOrgOnly        bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
-	QueryRetries                          int64
+	QueryRetries                          int
+	TransactionRetries                    int
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	UnifiedStorageDisableSearch           bool
 	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
-	PermittedProvisioningPaths            string
-	ProvisioningAllowedTargets            []string
-	ProvisioningRepositoryTypes           []string
-	ProvisioningMaxResourcesPerRepository int64
-	ProvisioningMaxRepositories           int64
-	ProvisioningFolderAPIVersion          string
-	GrafanaComSSOAPIToken                 string
-	LicensePath                           string
-	EnableRecordingRules                  bool
-	EnableSCIM                            bool
-	RBACSingleOrganization                bool
-	APIServerRuntimeConfig                string
-	DisableControllers                    bool
-	DisableDBCleanup                      bool
-	MigrationParquetBuffer                bool
-	EnableSQLKVBackend                    bool
-	SecretsManagerEnableDBMigrations      bool
-	OpenFeatureAPIEnabled                 bool
-	DisableAuthZClientCache               bool
-	ZanzanaReconciliationInterval         time.Duration
-	DisableZanzanaCache                   bool
-	DisableZanzanaServerCheckQueryCache   bool
+	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, sets
+	// [unified_storage] resource_version_batch_transaction_timeout in the test
+	// server's ini. Bounds one batched RV WithTx; used by provisioning
+	// integration tests on slow CI.
+	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
+	PermittedProvisioningPaths                           string
+	ProvisioningAllowedTargets                           []string
+	ProvisioningRepositoryTypes                          []string
+	ProvisioningMaxResourcesPerRepository                int64
+	ProvisioningMaxRepositories                          int64
+	ProvisioningFolderAPIVersion                         string
+	ProvisioningMaxIncrementalChanges                    *int
+	GrafanaComSSOAPIToken                                string
+	LicensePath                                          string
+	EnableRecordingRules                                 bool
+	EnableSCIM                                           bool
+	RBACSingleOrganization                               bool
+	APIServerRuntimeConfig                               string
+	DisableControllers                                   bool
+	DisableDBCleanup                                     bool
+	MigrationParquetBuffer                               bool
+	EnableSQLKVBackend                                   bool
+	SecretsManagerEnableDBMigrations                     bool
+	OpenFeatureAPIEnabled                                bool
+	DisableAuthZClientCache                              bool
+	ZanzanaReconciliationInterval                        time.Duration
+	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                                  bool
+	DisableZanzanaServerCheckQueryCache                  bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
