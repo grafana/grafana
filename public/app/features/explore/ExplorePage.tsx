@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ExploreQueryParams } from 'app/types/explore';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type ExploreQueryParams } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
@@ -70,7 +70,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       })}
     >
       <h1 className="sr-only">
-        <Trans i18nKey="nav.explore.title" />
+        <Trans i18nKey="nav.explore.title">Explore</Trans>
       </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}

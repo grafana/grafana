@@ -4,27 +4,32 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { colorManipulator, DataFrame, InterpolateFunction } from '@grafana/data';
-import { TimeZone, VizAnnotations } from '@grafana/schema';
+import { colorManipulator, type DataFrame, type InterpolateFunction } from '@grafana/data';
+import { type TimeZone, type VizAnnotations } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
-import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
+import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE } from './utils';
+import {
+  ANNOTATION_LANE_SIZE,
+  getAnnoRegionBoxStyle,
+  shouldRenderAnnotationLine,
+  shouldRenderAnnotationRegion,
+} from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
   options: VizAnnotations | undefined;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
@@ -53,7 +58,6 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
 
   return vals;
 }
-
 /**
  * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
  * @param annotations
@@ -76,7 +80,11 @@ export const AnnotationsPlugin2Cluster = ({
   canvasRegionRendering = true,
   options,
 }: AnnotationsPlugin2ClusterProps) => {
-  const [plot, setPlot] = useState<uPlot>();
+  const plotRef = useRef<uPlot | null>(null);
+  const plotRangeRef = useRef<TimeRange2>({
+    from: plotRef.current?.scales?.x?.min ?? -1,
+    to: plotRef.current?.scales?.x?.max ?? -1,
+  });
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -90,13 +98,14 @@ export const AnnotationsPlugin2Cluster = ({
 
   const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
-  const clusteredAnnos = useAnnotationClustering({
+  const { annotations: clusteredAnnos } = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
-    plotWidth: plot?.bbox.width,
+    plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
-    timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
+    timeRange: plotRangeRef.current,
   });
+
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
@@ -115,7 +124,24 @@ export const AnnotationsPlugin2Cluster = ({
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
-      setPlot(u);
+      plotRef.current = u;
+      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
+      if (annotations?.length) {
+        forceUpdate();
+      }
+    });
+
+    config.addHook('drawAxes', (u) => {
+      const newFrom = u.scales?.x?.min ?? -1;
+      const newTo = u?.scales?.x?.max ?? -1;
+
+      // If time range changed after the annotations were already rendered (since the panel query updates plot time range unlike annotation queries), we need to force react update to render updated marker locations
+      if (plotRangeRef.current?.from !== newFrom || plotRangeRef.current?.to !== newTo) {
+        plotRangeRef.current = { from: newFrom, to: newTo };
+        if (annotations?.length) {
+          forceUpdate();
+        }
+      }
     });
 
     config.addHook('draw', (u) => {
@@ -129,9 +155,10 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !options?.multiLane;
-      const shouldRenderLine = !options?.multiLane;
+      const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
+      const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
+      const regionOpacity = options?.regions?.opacity;
+      const lineWidth = options?.lines?.width;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -142,7 +169,7 @@ export const AnnotationsPlugin2Cluster = ({
           const y0 = u.bbox.top;
           const y1 = y0 + u.bbox.height;
 
-          ctx.lineWidth = 2;
+          ctx.lineWidth = lineWidth ?? 2;
           ctx.setLineDash([5, 5]);
 
           // Render region
@@ -166,7 +193,7 @@ export const AnnotationsPlugin2Cluster = ({
                 renderLine(ctx, y0, y1, x1, color);
 
                 if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+                  ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
                   ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
                 }
               }
@@ -210,23 +237,26 @@ export const AnnotationsPlugin2Cluster = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, options?.multiLane, options?.clustering]);
+  }, [
+    config,
+    canvasRegionRendering,
+    getColorByName,
+    options?.multiLane,
+    options?.clustering,
+    options?.lines?.width,
+    options?.regions?.opacity,
+    annotations?.length,
+  ]);
 
-  // ensure xAnnos are re-drawn whenever they change
+  // ensure clusteredAnnos are re-drawn whenever they change
   useEffect(() => {
-    if (plot) {
-      plot.redraw();
-
-      // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
-      // and ensures the anno marker positions in the dom are re-rendered in correct places
-      // (this is temp fix until uPlot integration is refactored)
-      setTimeout(() => {
-        forceUpdate();
-      }, 0);
+    if (plotRef.current) {
+      plotRef.current.redraw(false, true);
     }
-  }, [xAnnos, plot]);
+  }, [clusteredAnnos]);
 
-  if (plot && xAxisRef.current) {
+  if (plotRef.current && xAxisRef.current) {
+    const plot = plotRef.current;
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
@@ -250,20 +280,18 @@ export const AnnotationsPlugin2Cluster = ({
 
         let style: React.CSSProperties | null = null;
         let isVisible = true;
+        const plotWidth = plot.rect.width;
 
         if (isRegion && timeEnd != null) {
-          const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
-
-          isVisible = left < plot.rect.width && right > 0;
+          const valPos = plot.valToPos(timeEnd, 'x');
+          const right = Math.round(valPos ?? 0) || 0; // handles -0
+          isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
-            const clampedLeft = Math.max(0, left);
-            const clampedRight = Math.min(plot.rect.width, right);
-
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+            style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
           }
         } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plotWidth;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };
@@ -323,11 +351,8 @@ export const AnnotationsPlugin2Cluster = ({
  */
 const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
   return (
-    // We don't currently cluster region annotations
-    !vals.isRegion?.[i] &&
     // We use the clusterIdx to define when an annotation is a cluster
-    vals.clusterIdx?.[i] != null &&
-    vals.clusterIdx?.[i] >= 0
+    !vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0
   );
 };
 

@@ -1,13 +1,13 @@
 import {
-  DecimalCount,
+  type DecimalCount,
   deprecationWarning,
   formattedValueToString,
   getValueFormat,
   getValueFormats,
   getValueFormatterIndex,
   stringToJsRegex,
-  TimeRange,
-  ValueFormatterIndex,
+  type TimeRange,
+  type ValueFormatterIndex,
   rangeUtil,
   escapeRegex,
 } from '@grafana/data';

@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 
 import { AlertState } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
-import { AlertingRule, CombinedRule } from 'app/types/unified-alerting';
+import { type AlertingRule, type CombinedRule } from 'app/types/unified-alerting';
 
 import { promAlertStateToAlertState } from '../../../../scene/AlertStatesDataLayer';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../../../utils/utils';
-import { PanelDataPaneNext } from '../../PanelDataPaneNext';
-import { AlertingState } from '../QueryEditorContext';
-import { AlertRule } from '../types';
+import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
+import { type AlertingState } from '../QueryEditorContext';
+import { type AlertRule } from '../types';
 
 /**
  * Type guard to check if a rule is an alerting rule with state

@@ -4,12 +4,12 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
-import { TimeZone } from '@grafana/schema';
+import { arrayToDataFrame, colorManipulator, type DataFrame, DataTopic, type InterpolateFunction } from '@grafana/data';
+import { type TimeZone } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
@@ -25,7 +25,7 @@ interface TimeRange2 {
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
@@ -86,7 +86,7 @@ export const AnnotationsPlugin2 = ({
   canvasRegionRendering = true,
   multiLane = false,
 }: AnnotationsPluginProps) => {
-  const [plot, setPlot] = useState<uPlot>();
+  const plotRef = useRef<uPlot | null>(null);
 
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
@@ -148,7 +148,11 @@ export const AnnotationsPlugin2 = ({
     config.addHook('ready', (u) => {
       let xAxisEl = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       xAxisRef.current = xAxisEl;
-      setPlot(u);
+      plotRef.current = u;
+      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
+      if (annotations?.length) {
+        forceUpdate();
+      }
     });
 
     config.addHook('draw', (u) => {
@@ -229,12 +233,12 @@ export const AnnotationsPlugin2 = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, multiLane]);
+  }, [config, canvasRegionRendering, getColorByName, multiLane, annotations?.length]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
-    if (plot) {
-      plot.redraw();
+    if (plotRef.current) {
+      plotRef.current.redraw();
 
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
@@ -243,9 +247,10 @@ export const AnnotationsPlugin2 = ({
         forceUpdate();
       }, 0);
     }
-  }, [xAnnos, plot]);
+  }, [xAnnos]);
 
-  if (plot) {
+  if (plotRef.current) {
+    const plot = plotRef.current;
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time[0] > 0;

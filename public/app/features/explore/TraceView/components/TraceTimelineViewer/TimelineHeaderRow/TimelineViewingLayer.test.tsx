@@ -14,9 +14,9 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { ViewRangeTime } from '../types';
+import { type ViewRangeTime } from '../types';
 
-import TimelineViewingLayer, { TimelineViewingLayerProps } from './TimelineViewingLayer';
+import TimelineViewingLayer, { type TimelineViewingLayerProps } from './TimelineViewingLayer';
 
 describe('<TimelineViewingLayer>', () => {
   const viewStart = 0.25;

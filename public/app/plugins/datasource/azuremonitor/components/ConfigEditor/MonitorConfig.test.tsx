@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 
 import { createMockDatasourceSettings } from '../../mocks/datasourceSettings';
 
-import { MonitorConfig, Props } from './MonitorConfig';
+import { MonitorConfig, type Props } from './MonitorConfig';
 
 const defaultProps: Props = {
   options: createMockDatasourceSettings(),

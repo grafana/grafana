@@ -4,32 +4,34 @@ import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtk
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
-  ManagedBy,
+  type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { arrayToDataFrame, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import {
+  arrayToDataFrame,
+  type DataFrame,
+  DataFrameView,
+  getDisplayProcessor,
+  type SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
+import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
-  DashboardQueryResult,
-  GrafanaSearcher,
-  LocationInfo,
-  QueryResponse,
-  SearchQuery,
-  SearchResultMeta,
+  type DashboardQueryResult,
+  type GrafanaSearcher,
+  type LocationInfo,
+  type QueryResponse,
+  type SearchQuery,
+  type SearchResultMeta,
 } from './types';
 import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
-
-// The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
-// and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
-const loadingFrameName = 'Loading';
 
 const searchURI = `${v0alphaBaseURL}/search`;
 
@@ -66,7 +68,7 @@ const folderViewSort = 'name_sort';
 export class UnifiedSearcher implements GrafanaSearcher {
   locationInfo: Promise<Record<string, LocationInfo>>;
 
-  constructor(private fallbackSearcher: GrafanaSearcher) {
+  constructor() {
     this.locationInfo = loadLocationInfo();
   }
 
@@ -155,9 +157,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const first = toDashboardResults(rsp, query.sort ?? '');
-    if (first.name === loadingFrameName) {
-      return this.fallbackSearcher.search(query);
-    }
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -230,11 +229,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       // This will be mutated when loadMoreItems is called.
       view,
 
-      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
-      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
-      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
-      //  anything.
-      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
           pending = getNextPage();
@@ -326,6 +321,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&createdBy=' + encodeURIComponent(query.createdBy);
     }
 
+    if (query.ownerReference?.length) {
+      uri += '&' + query.ownerReference.map((ref) => `ownerReference=${encodeURIComponent(ref)}`).join('&');
+    }
+
     if (query.panelTitleSearch) {
       uri += '&panelTitleSearch=true';
     }
@@ -380,7 +379,7 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
     totalRows: 0,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+    loadMoreItems: async (stopIndex: number): Promise<void> => {
       return;
     },
     isItemLoaded: (index: number): boolean => {
@@ -460,7 +459,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         general: {
           kind: 'folder',
           name: 'Dashboards',
-          url: '/dashboards',
+          url: `${config.appSubUrl}/dashboards`,
         }, // share location info with everyone
         sharedwithme: {
           kind: 'sharedwithme',
@@ -482,8 +481,8 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 
 function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
-    return `/dashboards/f/${name}`;
+    return `${config.appSubUrl}/dashboards/f/${name}`;
   }
   const slug = kbn.slugifyForUrl(title);
-  return `/d/${name}/${slug}`;
+  return `${config.appSubUrl}/d/${name}/${slug}`;
 }

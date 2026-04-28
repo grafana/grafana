@@ -1,9 +1,9 @@
 import {
-  CloudRuleIdentifier,
-  CombinedRule,
-  PrometheusRuleIdentifier,
-  RuleGroupIdentifier,
-  RuleGroupIdentifierV2,
+  type CloudRuleIdentifier,
+  type CombinedRule,
+  type PrometheusRuleIdentifier,
+  type RuleGroupIdentifier,
+  type RuleGroupIdentifierV2,
 } from 'app/types/unified-alerting';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';

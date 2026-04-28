@@ -1,0 +1,177 @@
+# This workflow builds the Go binaries for the different architectures and operating systems to ensure that
+# incoming pull requests are able to be compiled for all supported architectures and operating systems.
+name: Build Go (matrix)
+
+on:
+  pull_request:
+    paths:
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/go.work'
+      - '**/go.work.sum'
+      - '**.go'
+      - 'pkg/**'
+      - 'apps/**'
+      - Makefile
+      - packaging/**
+      - scripts/build-rpm.sh
+      - scripts/build-deb.sh
+      - scripts/build-targz.sh
+      - scripts/verify-pkg-stig.sh
+      - .github/actions/setup-go/**
+      - .github/actions/setup-fpm/**
+      - .github/actions/setup-enterprise/**
+      - .github/workflows/build-go-matrix.yml
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  build-go:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux/amd64
+            goos: linux
+            goarch: amd64
+          - name: linux/arm64
+            goos: linux
+            goarch: arm64
+          - name: linux/s390x
+            goos: linux
+            goarch: s390x
+          - name: linux/armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+          - name: linux/armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+          - name: darwin/arm64
+            goos: darwin
+            goarch: arm64
+          - name: darwin/amd64
+            goos: darwin
+            goarch: amd64
+          - name: windows/arm64
+            goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Build Go (${{ matrix.name }})
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: make build-go
+
+  build-go-enterprise:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    name: ${{ matrix.name }} (enterprise)
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux/amd64
+            goos: linux
+            goarch: amd64
+          - name: linux/arm64
+            goos: linux
+            goarch: arm64
+          - name: linux/s390x
+            goos: linux
+            goarch: s390x
+          - name: linux/armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+          - name: linux/armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+          - name: darwin/arm64
+            goos: darwin
+            goarch: arm64
+          - name: darwin/amd64
+            goos: darwin
+            goarch: amd64
+          - name: windows/arm64
+            goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Build Go (${{ matrix.name }})
+        env:
+          CGO_ENABLED: "0"
+          GO_BUILD_OS: ${{ matrix.goos }}
+          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: make build-go
+
+  # TODO: Build rpm in another workflow
+  verify-rpm-stig:
+    name: verify rpm stig (linux/amd64)
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/setup-fpm
+      - name: Create stub artifacts
+        run: |
+          mkdir -p bin/linux/amd64 public/build data/plugins-bundled
+          printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
+          chmod 0755 bin/linux/amd64/grafana
+          touch data/plugins-bundled/.platform-linux-amd64.stamp
+      - name: Build tar.gz
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Build RPM
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Verify RPM permissions (DISA-STIG)
+        run: bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm

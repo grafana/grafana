@@ -2,16 +2,15 @@ import { useCallback, useMemo } from 'react';
 
 import {
   AdHocFiltersVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   sceneGraph,
 } from '@grafana/scenes';
 import { useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
-import { SavedSearch, validateSearchName } from '../../components/saved-searches/savedSearchesSchema';
-import { shouldUseTriageSavedSearches } from '../../featureToggles';
+import { type SavedSearch, validateSearchName } from '../../components/saved-searches/savedSearchesSchema';
 import { VARIABLES } from '../constants';
 import { useTriagePredefinedOverrides } from '../hooks/useTriagePredefinedOverrides';
 import { trackTriageSavedSearchApplied, useTriageSavedSearches } from '../hooks/useTriageSavedSearches';
@@ -45,7 +44,6 @@ interface TriageSavedSearchesControlState extends SceneObjectState {}
  * - Uses the useTriageSavedSearches hook for persistence
  * - Serializes current URL state when saving
  * - Applies saved searches by updating Scene variables
- * - Is gated behind the alertingTriageSavedSearches feature toggle
  */
 export class TriageSavedSearchesControl extends SceneObjectBase<TriageSavedSearchesControlState> {
   public static Component = TriageSavedSearchesControlRenderer;
@@ -58,8 +56,6 @@ export class TriageSavedSearchesControl extends SceneObjectBase<TriageSavedSearc
  * between the Scene framework and the saved searches feature.
  */
 function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<TriageSavedSearchesControl>) {
-  const isEnabled = shouldUseTriageSavedSearches();
-
   const { savedSearches, isLoading, saveSearch, renameSearch, deleteSearch, setDefaultSearch } =
     useTriageSavedSearches();
   const {
@@ -187,11 +183,6 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
     },
     [setDefaultSearchId, setDefaultSearch]
   );
-
-  // Don't render if feature is not enabled
-  if (!isEnabled) {
-    return null;
-  }
 
   return (
     <SavedSearches

@@ -6,30 +6,25 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlAdapter struct {
-	repo     annotations.Repository
-	cleaner  annotations.Cleaner
-	nsMapper request.NamespaceMapper
-	cfg      *setting.Cfg
+	repo            annotations.Repository
+	cleaner         annotations.Cleaner
+	cleanupSettings annotations.CleanupSettings
 }
 
-func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, nsMapper request.NamespaceMapper, cfg *setting.Cfg) *sqlAdapter {
+func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cleanupSettings annotations.CleanupSettings) *sqlAdapter {
 	return &sqlAdapter{
-		repo:     repo,
-		cleaner:  cleaner,
-		nsMapper: nsMapper,
-		cfg:      cfg,
+		repo:            repo,
+		cleaner:         cleaner,
+		cleanupSettings: cleanupSettings,
 	}
 }
 
@@ -52,8 +47,8 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 	query := &annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        orgID,
-		Limit:        1000,
-		AlertID:      -1,
+		AnnotationID: id,
+		Type:         "annotation",
 	}
 
 	items, err := a.repo.Find(ctx, query)
@@ -61,13 +56,11 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		return nil, err
 	}
 
-	for _, item := range items {
-		if item.ID == id {
-			return a.toK8sResource(item, namespace), nil
-		}
+	if len(items) == 0 {
+		return nil, ErrNotFound
 	}
 
-	return nil, apierrors.NewNotFound(annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name)
+	return a.toK8sResource(items[0], namespace), nil
 }
 
 func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOptions) (*AnnotationList, error) {
@@ -103,7 +96,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		To:           opts.To,
 		Limit:        queryLimit,
 		Offset:       offset,
-		AlertID:      -1,
+		Type:         "annotation",
 		// CreatedBy holds the uid of the user to filter by. The SQL layer resolves
 		// this to a numeric user_id via subquery.
 		UserUID:  opts.CreatedBy,
@@ -194,7 +187,7 @@ func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
 	}
-	deleted, _, err := a.cleaner.Run(ctx, a.cfg)
+	deleted, _, err := a.cleaner.Run(ctx, a.cleanupSettings)
 	return deleted, err
 }
 

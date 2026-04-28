@@ -104,6 +104,31 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 	return publicDashboard, nil
 }
 
+// FindByOrgAndUid Returns public dashboard by org and uid or nil if not found
+func (d *PublicDashboardStoreImpl) FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*PublicDashboard, error) {
+	if uid == "" {
+		return nil, nil
+	}
+
+	var found bool
+	publicDashboard := &PublicDashboard{}
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		found, err = sess.Where("uid = ? AND org_id = ?", uid, orgId).Get(publicDashboard)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, nil
+	}
+
+	return publicDashboard, nil
+}
+
 // FindByAccessToken Returns public dashboard by access token or nil if not found
 func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	if accessToken == "" {
@@ -158,12 +183,12 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 }
 
 // ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
-func (d *PublicDashboardStoreImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
+func (d *PublicDashboardStoreImpl) ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE org_id=? AND dashboard_uid=? AND is_enabled=true"
 
-		result, err := dbSession.SQL(sql, dashboardUid).Count()
+		result, err := dbSession.SQL(sql, orgId, dashboardUid).Count()
 		if err != nil {
 			return err
 		}
@@ -235,7 +260,7 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			return err
 		}
 
-		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, share = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, share = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ? AND org_id = ?",
 			cmd.PublicDashboard.IsEnabled,
 			cmd.PublicDashboard.AnnotationsEnabled,
 			cmd.PublicDashboard.TimeSelectionEnabled,
@@ -243,7 +268,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC(),
-			cmd.PublicDashboard.Uid)
+			cmd.PublicDashboard.Uid,
+			cmd.PublicDashboard.OrgId)
 
 		if err != nil {
 			return err
@@ -258,12 +284,15 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 }
 
 // Delete deletes a public dashboard
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int64, error) {
-	dashboard := &PublicDashboard{Uid: uid}
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
 	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		affectedRows, err = sess.Delete(dashboard)
+		sqlResult, err := sess.Exec("DELETE FROM dashboard_public WHERE uid = ? AND org_id = ?", uid, orgId)
+		if err != nil {
+			return err
+		}
+
+		affectedRows, err = sqlResult.RowsAffected()
 
 		return err
 	})

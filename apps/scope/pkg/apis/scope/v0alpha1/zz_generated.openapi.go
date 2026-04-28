@@ -26,6 +26,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ScopeList{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		ScopeNavigation{}.OpenAPIModelName():                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
 		ScopeNavigationList{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
+		ScopeNavigationOptions{}.OpenAPIModelName():            schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref),
 		ScopeNavigationSpec{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
 		ScopeNavigationStatus{}.OpenAPIModelName():             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
 		ScopeNode{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
@@ -612,6 +613,33 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			ScopeNavigation{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ScopeNavigationOptions documents the optional query parameters accepted by the /find/scope_dashboard_bindings and /find/scope_navigations connect endpoints. This type is not a runtime.Object — it defines the API contract for backends (including external implementations) to support as query params. The Grafana connect handlers do not currently consume these via NewConnectOptions; they parse query params from the request URL directly.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"depth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Depth represents the current nesting level in the rendered navigation tree. 0 or omitted means the request is for a top-level (non-nested) navigation. 1 means the first level of sub-scope expansion, 2 means a sub-scope within a sub-scope, and so on.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"rootScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RootScope identifies the top-level navigation scope the user started from. When navigating into sub-scopes, this stays constant and tells the backend which scope initiated the navigation session. This allows the backend to tailor its response based on the navigation origin. Omitted for top-level navigation requests.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

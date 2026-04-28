@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "secret",
+	AppDisplayName:   "secret",
 	Group:            "secret.grafana.app",
 	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{

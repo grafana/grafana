@@ -5,7 +5,7 @@ import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { ScopesService } from '../ScopesService';
+import { type ScopesService } from '../ScopesService';
 
 import {
   applyScopes,

@@ -1871,14 +1871,15 @@ func (DashboardVariableOption) OpenAPIModelName() string {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardVariableHide.
@@ -2344,6 +2345,8 @@ type DashboardAdhocVariableSpec struct {
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool `json:"enableGroupBy,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
@@ -2356,6 +2359,7 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 	}
 }
 

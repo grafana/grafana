@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Text, useStyles2 } from '@grafana/ui';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
@@ -12,16 +12,14 @@ interface DraggableListProps<T extends { state: { key?: string; name: string } }
   items: T[];
   droppableId: string;
   title: string;
-  dataTestId: string;
   onClickItem: (item: T) => void;
-  renderItemLabel: (item: T) => ReactNode;
+  renderItemLabel: (item: T) => NonNullable<ReactNode>;
 }
 
 export function DraggableList<T extends { state: { key?: string; name: string } }>({
   items,
   droppableId,
   title,
-  dataTestId,
   onClickItem,
   renderItemLabel,
 }: DraggableListProps<T>) {
@@ -48,7 +46,7 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
                 }
               }}
             >
-              <div data-testid={dataTestId}>{renderItemLabel(item)}</div>
+              <Text truncate>{renderItemLabel(item)}</Text>
               <Button variant="primary" size="sm" fill="outline">
                 <Trans i18nKey="dashboard-scene.draggable-items-list.select">Select</Trans>
               </Button>

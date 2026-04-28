@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import classNames from 'classnames';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
-import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
+import { type UsagesToNetwork, type VariableUsageTree } from '../../variables/utils';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 import { isVariableEditable } from './utils';

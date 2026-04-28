@@ -808,7 +808,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
@@ -890,7 +890,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 
 		// Add state to verify it's not cleared
 		states := []*state.State{
@@ -936,7 +936,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			sch2, ruleStore2, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 			ruleStore2.PutRule(context.Background(), rule)
-			sch2.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+			sch2.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 			sch2.stateManager.Put(states)
 
 			factory := ruleFactoryFromScheduler(sch2)
@@ -974,7 +974,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 
 		states := []*state.State{
 			{
@@ -1063,13 +1063,19 @@ func TestRuleRoutine(t *testing.T) {
 			rule:        rule,
 		})
 
-		// Because we are using a mock clock, first we need to wait until the rule evaluation
-		// reaches the point where it sleeps for the duration of the retry interval.
-		time.Sleep(200 * time.Millisecond)
-		// Then advance the mock clock to trigger the retry.
-		clk.Add(2 * time.Second)
-
-		waitForTimeChannel(t, evalAppliedChan)
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalAppliedChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("it should increase failure counter by 1 and attempt failure counter by 3", func(t *testing.T) {
 			// duration metric has 0 values because of mocked clock that do not advance

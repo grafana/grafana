@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { FeatureState, GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
+import { QuotaLimitMessage } from '../Shared/QuotaLimitMessage';
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
-import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
@@ -27,8 +27,7 @@ export const FeaturesList = ({
       <Text variant="h2">
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
           Get started with Git Sync
-        </Trans>{' '}
-        {!isOnPrem() && <FeatureBadge featureState={FeatureState.preview} />}
+        </Trans>
       </Text>
       <ul className={styles.featuresList}>
         <li>
@@ -43,9 +42,7 @@ export const FeaturesList = ({
         </li>
         {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories
-            </Trans>
+            <QuotaLimitMessage maxRepositories={maxRepositories} showActionLink={false} />
           </li>
         )}
       </ul>

@@ -11,13 +11,13 @@ ResourcePermission: {
 	}
 	#Permission: {
 		// kind of the identity getting the permission
-		kind: "User" | "ServiceAccount" | "Team" | "BasicRole" 
+		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
 		// uid of the identity getting the permission
 		name: string
 		// action set granted to the user (e.g. "admin" or "edit", "view")
 		verb: string
 	}
-	
+
 	resource: #Resource
 	permissions: [...#Permission]
 }

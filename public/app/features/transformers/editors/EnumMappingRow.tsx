@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
+import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
 
@@ -89,7 +89,11 @@ const EnumMappingRow = ({
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row')}
+              />
             </div>
           </td>
           {isEditing ? (

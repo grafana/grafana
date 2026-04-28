@@ -7,7 +7,7 @@ import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageSt
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { SoloPanelPage, SoloPanelRenderer, Props } from './SoloPanelPage';
+import { SoloPanelPage, SoloPanelRenderer, type Props } from './SoloPanelPage';
 
 // Mock dependencies
 jest.mock('react-router-dom-v5-compat', () => ({

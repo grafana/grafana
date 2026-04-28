@@ -5,19 +5,20 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryMatcher,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
   sceneGraph,
 } from '@grafana/scenes';
@@ -36,6 +37,7 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
@@ -43,6 +45,7 @@ import { StateTag } from '../components/StateTag';
 import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
+import { INTEGRATION_ICONS } from '../types/contact-points';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
@@ -211,7 +214,9 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
-      <div className={styles.viewCol}>{/* View link column */}</div>
+      {config.featureToggles.alertingNotificationHistoryDetail && (
+        <div className={styles.viewCol}>{/* View link column */}</div>
+      )}
     </div>
   );
 }
@@ -266,20 +271,37 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
           )}
         </div>
         <div className={styles.receiverCol}>
-          <Text>{record.receiver || '-'}</Text>
-        </div>
-        <div className={styles.viewCol}>
-          <LinkButton
-            href={createRelativeUrl(
-              `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
-            )}
-            size="sm"
-            variant="secondary"
-            icon="eye"
+          <Tooltip
+            content={t('alerting.notifications-list.integration-tooltip', '{{integration}} #{{index}}', {
+              integration: receiverTypeNames[record.integration] ?? record.integration,
+              index: record.integrationIndex + 1,
+            })}
           >
-            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
-          </LinkButton>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Icon name={INTEGRATION_ICONS[record.integration] || 'bell'} size="sm" />
+              <Text>{record.receiver || '-'}</Text>
+              {record.integrationIndex > 0 && (
+                <Text variant="bodySmall" color="secondary">
+                  (#{record.integrationIndex + 1})
+                </Text>
+              )}
+            </Stack>
+          </Tooltip>
         </div>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <div className={styles.viewCol}>
+            <LinkButton
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
+              )}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+            >
+              <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+            </LinkButton>
+          </div>
+        )}
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
@@ -517,6 +539,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     receiverCol: css({
       width: '200px',
+      flexShrink: 0,
     }),
     viewCol: css({
       width: '80px',

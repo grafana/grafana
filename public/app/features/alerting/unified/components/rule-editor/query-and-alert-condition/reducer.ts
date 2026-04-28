@@ -2,22 +2,22 @@ import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
   ReducerID,
-  RelativeTimeRange,
+  type RelativeTimeRange,
   getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import {
   defaultCondition,
   isReducerExpression,
   isThresholdExpression,
 } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';

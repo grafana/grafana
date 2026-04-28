@@ -126,12 +126,12 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildBase
 
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: levitate
 

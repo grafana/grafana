@@ -1,17 +1,17 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
-import { StandardEditorContext, StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { GrafanaTheme2 } from '../themes/types';
+import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { type StandardEditorContext, type StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { type GrafanaTheme2 } from '../themes/types';
 
-import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
-import { ScopedVars } from './ScopedVars';
-import { DataFrame, Field, FieldConfig, ValueLinkConfig } from './dataFrame';
-import { DataLink, LinkModel } from './dataLink';
-import { OptionEditorConfig } from './options';
-import { InterpolateFunction } from './panel';
-import { TimeZone } from './time';
-import { MatcherConfig } from './transformations';
+import { type OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { type ScopedVars } from './ScopedVars';
+import { type DataFrame, type Field, type FieldConfig, type ValueLinkConfig } from './dataFrame';
+import { type DataLink, type LinkModel } from './dataLink';
+import { type OptionEditorConfig } from './options';
+import { type InterpolateFunction } from './panel';
+import { type TimeZone } from './time';
+import { type MatcherConfig } from './transformations';
 
 export interface DynamicConfigValue {
   id: string;

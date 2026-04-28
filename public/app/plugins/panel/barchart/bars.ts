@@ -1,21 +1,28 @@
-import uPlot, { Axis, AlignedData, Scale } from 'uplot';
+import uPlot, { type Axis, type AlignedData, type Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  colorManipulator,
+  type DataFrame,
+  dateTimeFormat,
+  type GrafanaTheme2,
+  systemDateFormats,
+  type TimeZone,
+} from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
-  ScaleDirection,
+  type ScaleDirection,
   ScaleOrientation,
-  VizTextDisplayOptions,
-  VizLegendOptions,
+  type VizTextDisplayOptions,
+  type VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
+import { timeUnitSize, type StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRects, intersects, pointWithin, Quadtree, type Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;

@@ -3,15 +3,23 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  type MultiValueVariable,
+  NewSceneObjectAddedEvent,
+  SceneVariableSet,
+  sceneGraph,
+  type VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
+import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabItem } from './TabItem';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export interface Props {
   tab: TabItem;
@@ -98,6 +106,8 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
   const clonedTabs = createTabRepeats({ values, texts, variable, tab });
 
   tab.setState({ repeatedTabs: clonedTabs });
+  // Rehydrate from a stable parent subtree to keep duplicate var-* key mapping consistent.
+  tab.publishEvent(new NewSceneObjectAddedEvent(tab.parent ?? tab), true);
   tab.parent?.forceRender();
 }
 
@@ -112,12 +122,9 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   }
 
   function collectVariableValue(tab: TabItem) {
-    const variable = sceneGraph.lookupVariable(varName, tab);
-    if (variable) {
-      const value = variable.getValue();
-      if (value != null && !Array.isArray(value)) {
-        values.push(value);
-      }
+    const value = getRepeatLocalVariableValue(tab, varName);
+    if (value != null && !Array.isArray(value)) {
+      values.push(value);
     }
   }
 
@@ -144,6 +151,7 @@ export function createTabRepeats({
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const repeats: TabItem[] = [];
+  const baseSectionVariables = getSectionBaseVariables(tab);
 
   // Loop through variable values and create repeats
   for (let tabIndex = 0; tabIndex < variableValues.length; tabIndex++) {
@@ -160,9 +168,29 @@ export function createTabRepeats({
         });
 
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);
+    const sourceVariables = tab.state.$variables;
+    const localSet = getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]);
+    const localVariables = localSet.state.variables.map((v) => v.clone());
+    let repeatedVariableSet: SceneVariableSet;
+    if (isSourceTab && sourceVariables instanceof SceneVariableSet) {
+      sourceVariables.setState({
+        variables: [
+          ...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables),
+          ...localVariables,
+        ],
+      });
+      repeatedVariableSet = sourceVariables;
+    } else {
+      repeatedVariableSet = getRepeatVariableValueSet(
+        variable,
+        variableValues[tabIndex],
+        variableTexts[tabIndex],
+        baseSectionVariables
+      );
+    }
 
     tabClone.setState({
-      $variables: getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]),
+      $variables: repeatedVariableSet,
       layout,
     });
 

@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationExternal } from '@grafana/runtime';
+import { type CorrelationExternal } from '@grafana/runtime';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CorrelationType } from '../types';
+import { type CorrelationType } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { assertIsQueryTypeError, FormDTO } from './types';
+import { assertIsQueryTypeError, type FormDTO } from './types';
 
 type CorrelationTypeOptions = {
   value: CorrelationType;

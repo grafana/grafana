@@ -1,6 +1,6 @@
-import { IconName, RegistryItem } from '@grafana/data';
+import { type IconName, type RegistryItem } from '@grafana/data';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { type DashboardLayoutManager } from './DashboardLayoutManager';
 
 /**
  * The layout descriptor used when selecting / switching layouts

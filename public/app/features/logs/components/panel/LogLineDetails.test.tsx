@@ -1,33 +1,33 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import {
   createDataFrame,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
   dateTime,
-  Field,
+  type Field,
   FieldType,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsSortOrder,
   PluginExtensionPoints,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
-import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
-import { LogLineDetails, Props } from './LogLineDetails';
-import { LogListContext, LogListContextData } from './LogListContext';
+import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
+import { LogLineDetails, type Props } from './LogLineDetails';
+import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
 jest.mock('@openfeature/react-sdk', () => ({
@@ -732,11 +732,12 @@ describe('LogLineDetails', () => {
       expect(screen.queryAllByRole('tab')).toHaveLength(0);
     });
 
+    const logs = [
+      createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+      createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+    ];
+
     test('Renders multiple log details', async () => {
-      const logs = [
-        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
-        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
-      ];
       await setup({ logs }, undefined, undefined, { showDetails: logs, currentLog: logs[1] }, 'No fields to display.');
 
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
@@ -745,6 +746,40 @@ describe('LogLineDetails', () => {
 
       expect(screen.getAllByText('First log')).toHaveLength(1);
       expect(screen.getAllByText('Second log')).toHaveLength(2);
+    });
+
+    test('Can be keyboard navigated down', async () => {
+      const replaceDetails = jest.fn();
+      const focusLogLine = jest.fn();
+
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[0],
+        replaceDetails,
+      });
+
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+
+      expect(replaceDetails).toHaveBeenCalledTimes(1);
+      expect(replaceDetails).toHaveBeenCalledWith(logs[1]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[1], 'auto');
+    });
+
+    test('Can be keyboard navigated up', async () => {
+      const replaceDetails = jest.fn();
+      const focusLogLine = jest.fn();
+
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[1],
+        replaceDetails,
+      });
+
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+
+      expect(replaceDetails).toHaveBeenCalledTimes(1);
+      expect(replaceDetails).toHaveBeenCalledWith(logs[0]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[0], 'auto');
     });
   });
 

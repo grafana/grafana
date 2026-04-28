@@ -1,17 +1,17 @@
-import { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
 import {
-  MapLayerRegistryItem,
-  PanelData,
-  GrafanaTheme2,
-  EventBus,
+  type MapLayerRegistryItem,
+  type PanelData,
+  type GrafanaTheme2,
+  type EventBus,
   FieldType,
-  Field,
-  MapLayerOptions,
+  type Field,
+  type MapLayerOptions,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';

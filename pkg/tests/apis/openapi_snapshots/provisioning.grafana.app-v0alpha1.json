@@ -4471,6 +4471,18 @@
           "path": {
             "description": "FIXME: we should validate this in admission hooks Prefix in target file system",
             "type": "string"
+          },
+          "resources": {
+            "description": "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
           }
         }
       },
@@ -4688,7 +4700,7 @@
             "type": "string"
           },
           "url": {
-            "description": "The repository URL (e.g. `https://github.com/example/test.git`).",
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
           }
         }
@@ -5038,17 +5050,19 @@
         ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.",
             "type": "string",
             "default": "",
             "enum": [
               "delete",
+              "deleteResources",
               "fixFolderMetadata",
               "migrate",
               "move",
               "pr",
               "pull",
-              "push"
+              "push",
+              "releaseResources"
             ]
           },
           "delete": {
@@ -6452,6 +6466,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "lastRotated": {
+            "type": "integer",
+            "format": "int64"
+          },
           "subscribedEvents": {
             "type": "array",
             "items": {
@@ -6489,6 +6507,10 @@
             "type": "string",
             "maxLength": 24576,
             "minLength": 1
+          },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
           },
           "name": {
             "description": "Name in the secret service (reference)",

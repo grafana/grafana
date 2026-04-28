@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction } from '../../hooks/useAbilities';

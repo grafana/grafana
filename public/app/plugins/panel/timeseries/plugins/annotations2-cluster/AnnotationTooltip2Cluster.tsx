@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
 
-import { AnnotationTooltipProps } from './AnnotationTooltip2';
+import { type AnnotationTooltipProps } from './AnnotationTooltip2';
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
 import { getAnnotationTooltip } from './getAnnotationTooltip';

@@ -1,14 +1,14 @@
 import debounce from 'debounce-promise';
-import { MouseEvent, useCallback, useEffect, useMemo, useState, type JSX } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 
-import { SelectableValue, urlUtil } from '@grafana/data';
+import { type SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal } from '@grafana/ui';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 
 export interface OpenLibraryPanelModalProps {
   onDismiss: () => void;

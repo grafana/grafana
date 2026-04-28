@@ -1,21 +1,21 @@
 import { lastValueFrom, of } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataSourceInstanceSettings,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  PluginMetaInfo,
+  type PluginMetaInfo,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
-import { BackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
+import { type BackendSrv, DataSourceWithBackend, type TemplateSrv } from '@grafana/runtime';
 
-import { JaegerDatasource, JaegerJsonData } from './datasource';
+import { JaegerDatasource, type JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockSearchResponse from './mockSearchResponse.json';
 import mockTraceResponse from './mockTraceResponse.json';
-import { JaegerQuery } from './types';
+import { type JaegerQuery } from './types';
 
 export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 

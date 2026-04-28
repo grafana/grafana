@@ -1,16 +1,15 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
-import { ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
+import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
@@ -20,24 +19,8 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-const searchData: DataFrame = {
-  fields: [
-    { name: 'kind', type: FieldType.string, config: {}, values: [] },
-    { name: 'name', type: FieldType.string, config: {}, values: [] },
-    { name: 'uid', type: FieldType.string, config: {}, values: [] },
-    { name: 'url', type: FieldType.string, config: {}, values: [] },
-    { name: 'tags', type: FieldType.other, config: {}, values: [] },
-    { name: 'location', type: FieldType.string, config: {}, values: [] },
-  ],
-  length: 0,
-};
-
-const mockSearchResult: QueryResponse = {
-  isItemLoaded: jest.fn(),
-  loadMoreItems: jest.fn(),
-  totalRows: searchData.length,
-  view: new DataFrameView<DashboardQueryResult>(searchData),
-};
+setBackendSrv(backendSrv);
+setupMockServer();
 
 const setup = (children: ReactNode) => {
   config.bootData.navTree = [
@@ -61,24 +44,23 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
+  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
 
   const renderResult = render(
     <KBarProvider>
-      <TestProvider grafanaContext={context}>
-        <AppChrome>
-          <div data-testid="page-children">{children}</div>
-        </AppChrome>
-      </TestProvider>
-    </KBarProvider>
+      <AppChrome>
+        <div data-testid="page-children">{children}</div>
+      </AppChrome>
+    </KBarProvider>,
+    { wrapper }
   );
 
   return { renderResult, context };
 };
 
 describe('AppChrome', () => {
-  beforeAll(() => {
-    // need to mock out the search service since kbar calls it to fetch recent dashboards
-    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
+  beforeEach(() => {
+    server.use(getCustomSearchHandler([]));
   });
 
   afterEach(() => {
@@ -97,6 +79,22 @@ describe('AppChrome', () => {
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
     expect(await screen.findByRole('button', { name: 'Main menu' })).toHaveFocus();
+  });
+
+  it('should move focus to main content on every skip link activation', async () => {
+    setup(<Page navId="child1">Children</Page>);
+    const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
+    const mainContent = document.getElementById('pageContent')!;
+
+    await userEvent.click(skipLink);
+    expect(mainContent).toHaveFocus();
+
+    // Tab away, then activate the skip link a second time
+    await userEvent.tab();
+    expect(mainContent).not.toHaveFocus();
+
+    await userEvent.click(skipLink);
+    expect(mainContent).toHaveFocus();
   });
 
   it('should not render a skip link if the page is chromeless', async () => {

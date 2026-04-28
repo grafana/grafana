@@ -107,7 +107,7 @@ Next, configure the contact point in Grafana Alerting to send alert notification
 
 In **Grafana OSS** and **Grafana Enterprise**, you need to create a **Webhook** contact point using the HTTP endpoint URL you copied in the previous step.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Webhook**.
@@ -141,7 +141,7 @@ To set up heartbeat monitoring, you must enable the heartbeat in IRM and create 
 
 Follow the same steps as before to create a webhook contact point in Grafana Alerting:
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Webhook**.

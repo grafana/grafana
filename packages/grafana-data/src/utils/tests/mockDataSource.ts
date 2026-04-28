@@ -1,16 +1,16 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  TestDataSourceResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type TestDataSourceResponse,
 } from '../../types/datasource';
-import { PluginMetaInfo, PluginType } from '../../types/plugin';
-import { DataQuery } from '../../types/query';
+import { type PluginMetaInfo, PluginType } from '../../types/plugin';
+import { type DataQuery } from '../../types/query';
 
 export interface TestQuery extends DataQuery {
   query: string;

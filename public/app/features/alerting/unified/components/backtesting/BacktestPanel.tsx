@@ -3,7 +3,7 @@ import { fromPairs, isEmpty, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { DataFrameJSON, GrafanaTheme2, TimeRange, rangeUtil } from '@grafana/data';
+import { type DataFrameJSON, type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -18,7 +18,7 @@ import {
 } from '@grafana/ui';
 
 import { useRunBacktestMutation } from '../../api/backtestApi';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { combineMatcherStrings } from '../../utils/alertmanager';
 import { messageFromError } from '../../utils/redux';
 import { formValuesToRulerGrafanaRuleDTO } from '../../utils/rule-form';

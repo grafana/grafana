@@ -1,6 +1,8 @@
-import { FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import type { Grammar } from 'prismjs';
 
-import { LogListModel, preProcessLogs, PreProcessOptions } from '../panel/processing';
+import { FieldType, LogLevel, type LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+
+import { type LogListModel, preProcessLogs, type PreProcessOptions } from '../panel/processing';
 
 export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
   const uid = overrides?.uid || '1';
@@ -47,8 +49,9 @@ export const createLogLine = (
     timeZone: 'browser',
     virtualization: undefined,
     wrapLogMessage: true,
-  }
+  },
+  grammar?: Grammar
 ): LogListModel => {
-  const logs = preProcessLogs([createLogRow({ datasourceUid: 'abc-123', ...overrides })], processOptions);
+  const logs = preProcessLogs([createLogRow({ datasourceUid: 'abc-123', ...overrides })], processOptions, grammar);
   return logs[0];
 };

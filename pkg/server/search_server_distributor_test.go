@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -366,7 +367,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -394,12 +395,11 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
-	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
-	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
@@ -407,7 +407,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:       backend,
 		Cfg:           cfg,
-		Tracer:        tracer,
+		Tracer:        noop.NewTracerProvider().Tracer("test-tracer"),
 		Reg:           nil,
 		AccessClient:  nil,
 		SearchOptions: searchOpts,

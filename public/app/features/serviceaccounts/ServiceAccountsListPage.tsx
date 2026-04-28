@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, type JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   ConfirmModal,
@@ -20,11 +20,11 @@ import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
-import { StoreState } from 'app/types/store';
+import { ServiceAccountStateFilter, type ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type StoreState } from 'app/types/store';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
-import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
+import { CreateTokenModal, type ServiceAccountToken } from './components/CreateTokenModal';
 import {
   changeQuery,
   changePage,

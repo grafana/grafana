@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { SVGProps } from 'react';
+import { type SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -16,6 +16,7 @@ export interface Props {
 export const GrotCTA = ({ width = 'auto', height }: Props) => {
   const styles = useStyles2(getStyles);
 
+  // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
   return <SVG src={grotCTASvg} className={styles.svg} height={height} width={width} />;
 };
 

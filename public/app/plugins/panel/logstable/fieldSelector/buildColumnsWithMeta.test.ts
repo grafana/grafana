@@ -2,7 +2,7 @@ import { DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 

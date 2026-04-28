@@ -1,15 +1,15 @@
-import { dateTime, TimeRange, VariableRefresh } from '@grafana/data';
-import { config, DataSourceSrv } from '@grafana/runtime';
+import { dateTime, type TimeRange, VariableRefresh } from '@grafana/data';
+import { config, type DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
-import { DashboardState } from 'app/types/dashboard';
+import { type DashboardState } from 'app/types/dashboard';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { appEvents } from '../../../core/app_events';
 import { notifyApp } from '../../../core/reducers/appNotification';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
+import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
-import { TemplateSrv } from '../../templating/template_srv';
+import { type TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
@@ -19,9 +19,9 @@ import { createQueryVariableAdapter } from '../query/adapter';
 import { constantBuilder, intervalBuilder, queryBuilder, datasourceBuilder } from '../shared/testing/builders';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';
+import { onTimeRangeUpdated, type OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';
 import * as actions from './actions';
-import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import {
   setCurrentVariableValue,

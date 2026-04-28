@@ -1,5 +1,5 @@
-import { Config } from 'app/plugins/panel/nodeGraph/layout';
-import { EdgeDatum, NodeDatum } from 'app/plugins/panel/nodeGraph/types';
+import { type Config } from 'app/plugins/panel/nodeGraph/layout';
+import { type EdgeDatum, type NodeDatum } from 'app/plugins/panel/nodeGraph/types';
 
 const { layout } = jest.requireActual('../../app/plugins/panel/nodeGraph/forceLayout.js');
 

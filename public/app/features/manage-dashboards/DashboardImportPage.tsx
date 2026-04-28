@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DashboardImportK8s } from './import/components/DashboardImportK8s';
 import { DashboardImportLegacy } from './import/legacy/DashboardImportLegacy';

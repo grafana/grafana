@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 

@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQueryType } from 'app/features/expressions/types';
+import { type ExpressionQueryType } from 'app/features/expressions/types';
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 
-import { PendingExpression } from '../QueryEditorContext';
+import { type PendingExpression } from '../QueryEditorContext';
 
 interface UsePendingExpressionOptions {
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;

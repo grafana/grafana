@@ -16,8 +16,8 @@ var (
 	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
-
-	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
+	ErrTeamMemberAlreadyAdded               = errors.New("user is already added to this team")
+	ErrMultipleTeamsFound                   = errors.New("multiple teams found with same deprecated internal ID")
 )
 
 // Team model
@@ -83,16 +83,17 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
-	Query        string
-	Name         string
-	Limit        int
-	Page         int
-	OrgID        int64 `xorm:"org_id"`
-	SortOpts     []model.SortOption
-	TeamIds      []int64
-	UIDs         []string
-	SignedInUser identity.Requester
-	HiddenUsers  map[string]struct{}
+	Query             string
+	Name              string
+	Limit             int
+	Page              int
+	OrgID             int64 `xorm:"org_id"`
+	SortOpts          []model.SortOption
+	TeamIds           []int64
+	UIDs              []string
+	SignedInUser      identity.Requester
+	HiddenUsers       map[string]struct{}
+	WithAccessControl bool
 }
 
 type TeamDTO struct {

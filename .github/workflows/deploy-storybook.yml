@@ -4,8 +4,18 @@ on:
   push:
     branches:
       - main
-  release:
-    types: [released]
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        description: The version being released (with a v prefix)
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: The version being released (with a v prefix)
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,8 +25,8 @@ permissions: {}
 
 jobs:
   detect-changes:
-    # Only run in grafana/grafana
-    if: github.repository == 'grafana/grafana'
+    # Only run on push to main (not needed for workflow_call releases)
+    if: github.repository == 'grafana/grafana' && github.event_name == 'push'
     name: Detect whether code changed
     runs-on: ubuntu-latest
     permissions:
@@ -38,19 +48,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     # Only run in grafana/grafana
-    if: github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || github.event_name == 'release')
+    if: always() && github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || inputs.version != '')
     permissions:
       contents: read
       id-token: write
 
     env:
       BUCKET_NAME: grafana-storybook
+      VERSION: ${{ inputs.version }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+          ref: ${{ inputs.version }}
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
@@ -66,20 +78,12 @@ jobs:
       # "canary" on pushes to main
       - name: Create deploy name
         id: create-deploy-name
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            LATEST_RELEASE_TAG=$(curl -s "https://api.github.com/repos/grafana/grafana/releases/latest" | jq -r '.tag_name')
-            if [[ "$RELEASE_TAG" == "$LATEST_RELEASE_TAG" ]]; then
-              echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "This is a release but not the latest release; skipping storybook deploy"
-            exit 1
+          if [[ -n "$VERSION" ]]; then
+            echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
           fi
-
-          echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GCS
         id: login-to-gcs

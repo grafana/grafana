@@ -21,6 +21,12 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	release, err := s.acquireSlot("List", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
@@ -100,7 +106,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
-			Relation:             subresourceRelation,
+			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -149,7 +155,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
-			Relation:             folderRelation,
+			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -206,11 +212,10 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	}, nil
 }
 
+// listObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
+// aggregating all streamed objects. That avoids unary ListObjects max-result truncation for large sets.
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	fn := s.openFGAClient.ListObjects
-	if s.cfg.UseStreamedListObjects {
-		fn = s.streamedListObjects
-	}
+	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
@@ -253,6 +258,9 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
 
+	ctx, cancel := s.withListObjectsClientDeadline(ctx)
+	defer cancel()
+
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
 		AuthorizationModelId: req.GetAuthorizationModelId(),
@@ -280,9 +288,37 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 		objects = append(objects, res.GetObject())
 	}
 
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("streamed list objects interrupted: %w", ctx.Err())
+	}
+
 	return &openfgav1.ListObjectsResponse{
 		Objects: objects,
 	}, nil
+}
+
+// withListObjectsClientDeadline returns a context that expires slightly before cfg.ListObjectsDeadline
+// (the OpenFGA server-side stream deadline). That lets the client cancel first and avoids racing the
+// server/stream deadline. For server deadlines under 1s, uses a small margin instead of deadline-1s.
+func (s *Server) withListObjectsClientDeadline(ctx context.Context) (context.Context, context.CancelFunc) {
+	deadline := s.cfg.ListObjectsDeadline
+	if deadline <= 0 {
+		deadline = 3 * time.Second
+	}
+	client := deadline - time.Second
+	if client > 0 {
+		return context.WithTimeout(ctx, client)
+	}
+	// deadline <= 1s: leave a margin under the server deadline without extending the budget.
+	if deadline > time.Millisecond {
+		client = deadline - time.Millisecond
+	} else {
+		client = deadline / 2
+	}
+	if client <= 0 {
+		client = deadline
+	}
+	return context.WithTimeout(ctx, client)
 }
 
 func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { ScopesService } from '../../ScopesService';
+import { type ScopesService } from '../../ScopesService';
 
 const selectors = {
   tree: {

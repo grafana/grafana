@@ -1,17 +1,23 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode, SyntheticEvent, useMemo, useState } from 'react';
+import { memo, type ReactNode, type SyntheticEvent, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { CoreApp, findHighlightChunksInText, GrafanaTheme2, LogRowContextOptions, LogRowModel } from '@grafana/data';
+import {
+  type CoreApp,
+  findHighlightChunksInText,
+  type GrafanaTheme2,
+  type LogRowContextOptions,
+  type LogRowModel,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { type PopoverContent, useTheme2 } from '@grafana/ui';
 
 import { escapeUnescapedString } from '../utils';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
-import { LogRowStyles } from './getLogRowStyles';
+import { type LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 

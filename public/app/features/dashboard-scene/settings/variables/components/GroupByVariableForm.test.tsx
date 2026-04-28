@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { GroupByVariableForm, GroupByVariableFormProps } from './GroupByVariableForm';
+import { GroupByVariableForm, type GroupByVariableFormProps } from './GroupByVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',

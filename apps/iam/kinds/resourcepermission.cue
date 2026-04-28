@@ -8,13 +8,13 @@ resourcepermissionKind: {
 	kind:       "ResourcePermission"
 	pluralName: "ResourcePermissions"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
 resourcepermissionv0alpha1: resourcepermissionKind & {
 	schema: {
-		spec:   v0alpha1.ResourcePermission
+		spec: v0alpha1.ResourcePermission
 	}
 }

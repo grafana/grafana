@@ -69,6 +69,10 @@ type service struct {
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
 	authenticator    interceptors.AuthenticatorFunc
+
+	// uninitializedSearchServer holds the server created during module init, whose Init() is
+	// deferred to starting() so the ring is Running when search indexes are built.
+	uninitializedSearchServer resource.SearchServer
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -327,7 +331,16 @@ func (s *service) starting(ctx context.Context) error {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		s.log.Info("resource server is JOINING in the ring")
+	}
 
+	// Initialize the server (builds search indexes) while in JOINING state.
+	// The ring is Running so OwnsIndex checks work, but this instance won't
+	// receive ring-routed queries until it switches to ACTIVE below.
+	if err := s.uninitializedSearchServer.Init(ctx); err != nil {
+		return fmt.Errorf("failed to initialize server: %w", err)
+	}
+
+	if s.cfg.EnableSharding {
 		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
@@ -468,18 +481,20 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 
 func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts ServerOptions) error {
 	if s.searchStandalone {
-		server, err := NewSearchServer(opts)
+		server, err := NewUninitializedSearchServer(opts)
 		if err != nil {
 			return err
 		}
 		s.serverStopper = server
+		s.uninitializedSearchServer = server
 		return s.registerSearchServer(provider, server)
 	}
-	server, err := NewResourceServer(opts)
+	server, err := NewUninitializedResourceServer(opts)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
+	s.uninitializedSearchServer = server
 	s.registerUnifiedResourceServer(provider, server)
 	return nil
 }

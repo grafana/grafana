@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
 

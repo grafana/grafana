@@ -3,8 +3,8 @@ import { act } from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { GrafanaDatasource } from '../datasource';
-import { GrafanaQuery, GrafanaQueryType } from '../types';
+import { type GrafanaDatasource } from '../datasource';
+import { type GrafanaQuery, GrafanaQueryType } from '../types';
 
 import { QueryEditor } from './QueryEditor';
 

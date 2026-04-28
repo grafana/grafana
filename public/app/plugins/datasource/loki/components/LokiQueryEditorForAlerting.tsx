@@ -1,5 +1,5 @@
 import { LokiQueryField } from './LokiQueryField';
-import { LokiQueryEditorProps } from './types';
+import { type LokiQueryEditorProps } from './types';
 
 export function LokiQueryEditorForAlerting(props: LokiQueryEditorProps) {
   const { query, data, datasource, onChange, onRunQuery, history } = props;

@@ -1,13 +1,13 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { AppPluginConfig, IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
-import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/internal';
+import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfig } from '@grafana/data';
+import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
 
-import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
 
 const logPrefix = 'Could not register link extension. Reason:';
 

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Collapse, Icon, IconName, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, type IconName, Stack, Text, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { DetailText } from '../components/common/DetailText';

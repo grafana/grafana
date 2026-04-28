@@ -1,5 +1,5 @@
-import { SyntaxNode } from '@lezer/common';
-import { LRParser } from '@lezer/lr';
+import { type SyntaxNode } from '@lezer/common';
+import { type LRParser } from '@lezer/lr';
 
 import { ErrorId } from '../../../querybuilder/parsingUtils';
 

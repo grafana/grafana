@@ -3,15 +3,19 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
-import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  type DataSourceRuleGroupIdentifier,
+  type DataSourceRulesSourceIdentifier,
+  type RuleGroup,
+} from 'app/types/unified-alerting';
+import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
-import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
+import { DataSourceSection, type DataSourceSectionProps } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -20,7 +24,7 @@ import { NoRulesFound } from './components/NoRulesFound';
 import { getDatasourceFilter } from './hooks/datasourceFilter';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
-import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
+import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 

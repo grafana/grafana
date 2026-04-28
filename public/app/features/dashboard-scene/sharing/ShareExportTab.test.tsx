@@ -1,13 +1,13 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
-import { ExportFormat, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import * as exporters from '../scene/export/exporters';

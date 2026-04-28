@@ -1,8 +1,8 @@
-import { SceneDataState, sceneGraph, SceneVariable } from '@grafana/scenes';
-import { DashboardLink, VariableHide } from '@grafana/schema';
+import { type SceneDataState, sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink, VariableHide } from '@grafana/schema';
 
 import { isDashboardDataLayerSetState } from '../DashboardDataLayerSet';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 export function getDashboardControlsLinks(links: DashboardLink[]) {
   return links.filter((link) => link.placement === 'inControlsMenu');

@@ -1,42 +1,55 @@
-import * as H from 'history';
+import type * as H from 'history';
 
-import { CoreApp, DataQueryRequest, FieldConfig, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type FieldConfig,
+  type FieldConfigSource,
+  filterFieldConfigOverrides,
+  isStandardFieldProp,
+  locationUtil,
+  type NavIndex,
+  type NavModelItem,
+  store,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  SceneDataTransformer,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
+  SceneQueryRunner,
   SceneTimeRange,
   sceneUtils,
-  SceneVariable,
-  SceneVariableDependencyConfigLike,
-  VizPanel,
+  type SceneVariable,
+  type SceneVariableDependencyConfigLike,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
-import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
+import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel, type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
-import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -45,47 +58,53 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
-  ResourceForCreate,
+  type ResourceForCreate,
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
-import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
-import { PanelEditor } from '../panel-edit/PanelEditor';
+import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { DashboardChangeInfo } from '../saving/shared';
+import { type DashboardChangeInfo } from '../saving/shared';
 import {
-  DashboardSceneSerializerLike,
+  type DashboardSceneSerializerLike,
   getDashboardSceneSerializer,
   V2DashboardSerializer,
 } from '../serialization/DashboardSceneSerializer';
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import {
+  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  transformSaveModelSchemaV2ToScene,
+} from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
-import { DashboardEditView } from '../settings/utils';
+import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultVizPanel,
+  getLayoutForObject,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
-import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { DashboardControls } from './DashboardControls';
+import { type DashboardControls } from './DashboardControls';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
+import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -95,8 +114,8 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
-import { DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { LayoutParent } from './types/LayoutParent';
+import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { type LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -104,6 +123,7 @@ export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
+  options?: Record<string, unknown>;
 };
 
 type CopiedPanelStyles = {
@@ -111,9 +131,34 @@ type CopiedPanelStyles = {
   styles: PanelStyles;
 };
 
+function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
+  source: FieldConfig,
+  target: Partial<FieldConfig>,
+  key: K
+): void {
+  const value = source[key];
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}
+
+function extractOptionProps(source: Record<string, unknown>, props: readonly string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (props.includes(key) && value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+export interface DashboardScenePreferences {
+  defaultLayoutTemplate?: DashboardLayoutManager;
+}
+
 export interface DashboardSceneState extends SceneObjectState {
-  /** @deprecated */
-  id?: number | undefined;
+  /** Dashboard-specific preferences **/
+  preferences?: DashboardScenePreferences;
 
   /** The title */
   title: string;
@@ -165,6 +210,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -213,11 +262,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
+      body:
+        state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
+      preferences: state.preferences ?? {},
     });
 
     this.serializer =
@@ -259,18 +310,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
+    const destroyMutationClient = createMutationClient(this);
 
-    // Deactivation logic
     return () => {
-      setDashboardMutationClient(null);
-      mutationClient = undefined;
+      destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -290,6 +333,37 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const perRow = Number.parseInt(panelsPerRow, 10);
       this.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
     }
+  }
+
+  public setDefaultVariables(defaultVariables: VariableKind[]) {
+    const variableSet = sceneGraph.getVariables(this);
+    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    const defaultVarObjects = defaultVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v));
+
+    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+  }
+
+  public setDefaultLinks(defaultLinks: DashboardLink[]) {
+    const userLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: [...defaultLinks, ...userLinks] });
+  }
+
+  public clearDefaultControls() {
+    const variableSet = sceneGraph.getVariables(this);
+    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    variableSet.setState({ variables: nonDefaultVars });
+
+    const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: nonDefaultLinks });
   }
 
   public onEnterEditMode = () => {
@@ -346,6 +420,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
+      const canSave = Boolean(this.state.meta.canSave);
+
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
@@ -353,18 +429,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
             'Do you want to save your changes?'
           ),
-          icon: 'trash-alt',
-          altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
+          altActionText: canSave ? t('dashboard-scene.dashboard-scene.modal.save', 'Save') : undefined,
           noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
           yesButtonVariant: 'destructive',
-          onAltAction: () => {
-            this.openSaveDrawer({
-              onSaveSuccess: () => {
-                this.exitEditModeConfirmed(false);
-              },
-            });
-          },
+          onAltAction: canSave
+            ? () => {
+                this.openSaveDrawer({
+                  onSaveSuccess: () => {
+                    this.exitEditModeConfirmed(false);
+                  },
+                });
+              }
+            : undefined,
           onConfirm: () => {
             this.exitEditModeConfirmed();
           },
@@ -377,7 +454,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard',
             'Discard changes to dashboard?'
           ),
-          icon: 'trash-alt',
           text: t(
             'dashboard-scene.dashboard-scene.title.unsaved-changes-question',
             'You have unsaved changes to this dashboard. Are you sure you want to discard them?'
@@ -473,7 +549,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const api = getDashboardAPI();
+    const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
@@ -485,7 +561,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
-      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
       const dashboardDTO: DashboardDTO = {
@@ -517,14 +594,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveAsCopy,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
-  }
-
-  public openV2SchemaEditor() {
-    this.setState({
-      overlay: new SchemaV2EditorDrawer({
-        dashboardRef: this.getRef(),
       }),
     });
   }
@@ -664,6 +733,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      const layout = getLayoutForObject(this);
+      if (layout) {
+        layout.pastePanel();
+        return;
+      }
+    }
+
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
@@ -675,11 +752,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.delete(LS_PANEL_COPY_KEY);
   }
 
-  /**
-   * Hardcoded to Timeseries for this PoC
-   * @internal
-   */
-  private static extractPanelStyles(panel: VizPanel): PanelStyles {
+  /** @internal */
+  private static extractPanelStyles(panel: VizPanel, styleConfig: PanelStyleConfig): PanelStyles {
     const styles: PanelStyles = {};
 
     if (!panel.state.fieldConfig?.defaults) {
@@ -692,21 +766,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const panelDefaults = panel.state.fieldConfig.defaults;
 
     // default props (color)
-    if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaultsProps) {
-        const value = panelDefaults[key];
-        if (value !== undefined) {
-          defaults[key] = value;
-        }
-      }
+    for (const key of styleConfig.fieldConfig.defaultsProps) {
+      copyFieldConfigPropIfDefined(panelDefaults, defaults, key);
     }
 
     // custom props (lineWidth, fillOpacity, etc.)
-    if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
+    if (panel.state.fieldConfig.defaults.custom) {
       const customDefaults: Record<string, unknown> = {};
       const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
+      for (const key of styleConfig.fieldConfig.customProps) {
         const value = panelCustom[key];
         if (value !== undefined) {
           customDefaults[key] = value;
@@ -714,6 +783,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
 
       defaults.custom = customDefaults;
+    }
+
+    // panel-level options (colorMode, graphMode, textMode, etc.)
+    if (styleConfig.options?.props && panel.state.options) {
+      const extracted = extractOptionProps(panel.state.options, styleConfig.options.props);
+      if (Object.keys(extracted).length > 0) {
+        styles.options = extracted;
+      }
     }
 
     return styles;
@@ -726,14 +803,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const panelType = vizPanel.state.pluginId;
+    const styleConfig = getPanelStyleConfig(panelType);
 
-    if (panelType !== 'timeseries') {
+    if (!styleConfig) {
       return;
     }
 
     const stylesToCopy: CopiedPanelStyles = {
       panelType,
-      styles: DashboardScene.extractPanelStyles(vizPanel),
+      styles: DashboardScene.extractPanelStyles(vizPanel, styleConfig),
     };
 
     store.set(LS_STYLES_COPY_KEY, JSON.stringify(stylesToCopy));
@@ -779,27 +857,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
 
-      if (!stylesCopy.styles.fieldConfig?.defaults) {
-        return;
-      }
-
-      const newDefaults = {
-        ...vizPanel.state.fieldConfig?.defaults,
-        ...stylesCopy.styles.fieldConfig.defaults,
-      };
-
-      if (stylesCopy.styles.fieldConfig.defaults.custom) {
-        newDefaults.custom = {
-          ...vizPanel.state.fieldConfig?.defaults?.custom,
-          ...stylesCopy.styles.fieldConfig.defaults.custom,
+      if (stylesCopy.styles.fieldConfig?.defaults) {
+        const newDefaults = {
+          ...vizPanel.state.fieldConfig?.defaults,
+          ...stylesCopy.styles.fieldConfig.defaults,
         };
+
+        if (stylesCopy.styles.fieldConfig.defaults.custom) {
+          newDefaults.custom = {
+            ...vizPanel.state.fieldConfig?.defaults?.custom,
+            ...stylesCopy.styles.fieldConfig.defaults.custom,
+          };
+        }
+
+        vizPanel.onFieldConfigChange({
+          ...vizPanel.state.fieldConfig,
+          defaults: newDefaults,
+        });
       }
 
-      const newFieldConfig = {
-        ...vizPanel.state.fieldConfig,
-        defaults: newDefaults,
-      };
-      vizPanel.onFieldConfigChange(newFieldConfig);
+      if (stylesCopy.styles.options) {
+        vizPanel.onOptionsChange({
+          ...vizPanel.state.options,
+          ...stylesCopy.styles.options,
+        });
+      }
 
       appEvents.emit('alert-success', ['Panel styles applied.']);
     } catch (e) {
@@ -816,6 +898,57 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public removePanel(panel: VizPanel) {
     getLayoutManagerFor(panel).removePanel?.(panel);
+  }
+
+  public updatePanelTitle(panel: VizPanel, title: string) {
+    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  }
+
+  public async changePanelPlugin(
+    panel: VizPanel,
+    newPluginId: string,
+    newOptions?: Record<string, unknown>,
+    newFieldConfig?: FieldConfigSource
+  ) {
+    const { fieldConfig: prevFieldConfig } = panel.state;
+
+    let cleanFieldConfig: FieldConfigSource = {
+      defaults: { ...prevFieldConfig.defaults, custom: {} },
+      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
+    };
+
+    if (newFieldConfig) {
+      cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
+    }
+
+    await panel.changePluginType(newPluginId, newOptions, cleanFieldConfig);
+
+    if (newOptions) {
+      panel.onOptionsChange(newOptions, true);
+    }
+
+    if (newFieldConfig) {
+      panel.onFieldConfigChange({ ...newFieldConfig, overrides: cleanFieldConfig.overrides }, true);
+    }
+
+    const pluginMeta = await getPanelPluginMeta(newPluginId);
+    const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
+
+    if (skipDataQuery && panel.state.$data) {
+      panel.setState({ $data: undefined });
+    }
+
+    if (!skipDataQuery && !panel.state.$data) {
+      panel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: { uid: config.defaultDatasource },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
+    }
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
@@ -845,26 +978,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public closeModal() {
     this.setState({ overlay: undefined });
-  }
-
-  public async onStarDashboard(isStarred?: boolean) {
-    const { meta, uid } = this.state;
-    isStarred = isStarred ?? Boolean(meta.isStarred);
-    if (!uid) {
-      return;
-    }
-    try {
-      const result = await getDashboardSrv().starDashboard(uid, isStarred);
-
-      this.setState({
-        meta: {
-          ...meta,
-          isStarred: result,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to star dashboard', err);
-    }
   }
 
   public onOpenSettings = () => {
@@ -1035,11 +1148,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         const transformations = dataSpec.transformations;
         if (Array.isArray(transformations)) {
           for (const transformation of transformations) {
-            // V2 transformations have a 'kind' field which is the transformation id
-            const transformId = transformation?.kind || transformation?.spec?.id;
-            if (typeof transformId === 'string' && transformId) {
-              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
-            }
+            const normalized = normalizeTransformation(transformation);
+            transformationCounts.set(normalized.group, (transformationCounts.get(normalized.group) || 0) + 1);
           }
         }
       }
@@ -1145,7 +1255,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   // Helper method to build K8s resource structure
   private buildResourceForCreate(spec: Dashboard | DashboardV2Spec, isNew: boolean): ResourceForCreate<unknown> {
     const { meta } = this.state;
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1';
+    const apiVersion =
+      this.serializer instanceof V2DashboardSerializer
+        ? dashboardAPIVersionResolver.getV2()
+        : dashboardAPIVersionResolver.getV1();
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
@@ -1224,6 +1337,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private hasVariableErrors(): boolean {
     return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
+  }
+
+  /**
+   * Default layout used for new Tab and Row containers
+   * Undefined if default layout is not set in preferences
+   */
+  getDefaultLayout() {
+    if (this.state.preferences?.defaultLayoutTemplate) {
+      return this.state.preferences.defaultLayoutTemplate.clone();
+    }
+    return undefined;
+  }
+
+  getDefaultLayoutType() {
+    return this.state.preferences?.defaultLayoutTemplate?.descriptor?.id;
+  }
+
+  updateDefaultLayoutTemplate(template: DashboardLayoutManager) {
+    this.setState({
+      preferences: {
+        ...this.state.preferences,
+        defaultLayoutTemplate: template.clone(),
+      },
+    });
   }
 }
 

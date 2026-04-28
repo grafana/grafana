@@ -1,6 +1,11 @@
+import { type VariableType } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
+import {
+  type DashboardTrackingInfo,
+  type DynamicDashboardsTrackingInformation,
+} from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 
@@ -77,8 +82,12 @@ export const DashboardInteractions = {
 
   // grafana_dashboards_outline_item_clicked
   // when a user clicks on an element of the outline
-  outlineItemClicked: (properties: { index: number; depth: number }) => {
-    reportDashboardInteraction('outline_item_clicked', properties);
+  outlineItemClicked: (props: { index: number; depth: number; isEditing?: boolean }) => {
+    reportDashboardInteraction('outline_item_clicked', {
+      index: props.index,
+      depth: props.depth,
+      mode: props.isEditing ? 'edit' : 'view',
+    });
   },
 
   // dashboards_add_variable_button_clicked
@@ -91,16 +100,34 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
+  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_filter_button_clicked', properties);
+  },
+
+  addSectionFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_section_filter_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
-  newVariableTypeSelected: (properties: { type: string }) => {
+  variableTypeSelected: (properties: { type: string }) => {
     reportDashboardInteraction('new_variable_type_selected', properties);
   },
 
-  // dashboards_delete_variable_button_clicked
-  // when a user deletes a variable
-  deleteVariableButtonClicked: (properties: { type: string }) => {
-    reportDashboardInteraction('delete_variable_button_clicked', properties);
+  variableTypeChanged: (properties: { old: VariableType; new: VariableType }) => {
+    reportDashboardInteraction('variable_type_changed', properties);
+  },
+
+  // dashboards_new_section_variable_type_selected
+  // when a user selects a variable type when creating a new section (row/tab) variable
+  sectionVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_section_variable_type_selected', properties);
+  },
+
+  // duplicate_variable_button_clicked & delete_variable_button_clicked
+  // when a user performs an action on a variable
+  variableActionButtonClicked: (action: 'duplicate' | 'delete', properties: { type: string }) => {
+    reportDashboardInteraction(`${action}_variable_button_clicked`, properties);
   },
 
   // dashboards_variables_reordered
@@ -172,6 +199,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
 
+  //Conditional rendering
+  // track when user clicks on Add and Remove rules button in conditional rendering
+  clickAddConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
+    reportDashboardInteraction('click_add_conditional_rule_button', properties);
+  },
+  clickRemoveConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
+    reportDashboardInteraction('click_remove_conditional_rule_button', properties);
+  },
+
   // Dashboard interactions from toolbar
   toolbarFavoritesClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'favorites' });
@@ -182,14 +218,17 @@ export const DashboardInteractions = {
   toolbarShareClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
   },
-  toolbarShareDropdownClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
-  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },
-
   // Sharing interactions:
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
+  // clicking on a specific share option in the toolbar share button dropdown
+  toolbarShareDropdownOptionClick: (option: string) => {
+    reportDashboardInteraction('toolbar_share_option_clicked', { item: 'share_dropdown_option', option });
+  },
   sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_category_clicked', properties);
   },

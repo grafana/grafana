@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, FieldConfig } from '@grafana/data';
-import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
+import { type FieldDisplay, type GrafanaTheme2, type FieldConfig } from '@grafana/data';
+import { type GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { RadialShape, RadialTextMode, RadialGaugeDimensions } from './types';
+import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
 
 interface RadialSparklineProps {
   color?: string;

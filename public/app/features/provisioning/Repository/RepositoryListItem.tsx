@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';

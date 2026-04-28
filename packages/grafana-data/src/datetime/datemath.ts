@@ -1,14 +1,14 @@
 import { isDate } from 'lodash';
 
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 
 import {
-  DateTime,
+  type DateTime,
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
-  DateTimeInput,
-  DurationUnit,
+  type DateTimeInput,
+  type DurationUnit,
   isDateTime,
   ISO_8601,
 } from './moment_wrapper';

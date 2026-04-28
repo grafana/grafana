@@ -1,6 +1,6 @@
-import { FieldDTO } from '@grafana/data';
+import { type FieldDTO } from '@grafana/data';
 
-import { ZipkinSpan } from '../types';
+import { type ZipkinSpan } from '../types';
 
 export const testResponse: ZipkinSpan[] = [
   {

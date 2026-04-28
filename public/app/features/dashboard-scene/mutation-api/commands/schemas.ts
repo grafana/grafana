@@ -22,6 +22,8 @@
 
 import { z } from 'zod';
 
+import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 export const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
@@ -360,11 +362,7 @@ export const adhocVariableKindSchema = z
     spec: z.object({
       ...commonVariableSpecFields,
       baseFilters: z.array(adHocFilterSchema).optional().default([]).describe('Base filters always applied to queries'),
-      filters: z
-        .array(adHocFilterSchema)
-        .optional()
-        .default([])
-        .describe('User-configured ad-hoc filters applied to queries'),
+      filters: z.array(adHocFilterSchema).optional().default([]).describe('User-configured filters applied to queries'),
       defaultKeys: z
         .array(metricFindValueSchema)
         .optional()
@@ -378,7 +376,7 @@ export const adhocVariableKindSchema = z
     }),
   })
   .describe(
-    'AdhocVariable: Ad-hoc filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
+    'AdhocVariable: Filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
   );
 
 export const switchVariableKindSchema = z
@@ -455,12 +453,62 @@ export const tabRepeatOptionsSchema = z
   })
   .describe('Repeat options matching v2beta1 TabRepeatOptions');
 
+export const repeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+    direction: z.enum(['h', 'v']).optional().describe('Repeat direction: horizontal or vertical'),
+    maxPerRow: z.number().optional().describe('Maximum panels per row when direction is "h"'),
+  })
+  .describe('Repeat options matching v2beta1 RepeatOptions');
+
+const conditionalRenderingVariableKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingVariable'),
+  spec: z.object({
+    variable: z.string().describe('Name of the dashboard template variable'),
+    operator: z.enum(['equals', 'notEquals', 'matches', 'notMatches']),
+    value: z.string().describe('Value to compare against. For matches/notMatches this is a regex.'),
+  }),
+});
+
+const conditionalRenderingDataKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingData'),
+  spec: z.object({
+    value: z.boolean().describe('true = "has data", false = "no data"'),
+  }),
+});
+
+const conditionalRenderingTimeRangeSizeKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingTimeRangeSize'),
+  spec: z.object({
+    value: z.string().describe('Duration threshold (e.g. "5m", "1h", "7d", "6M", "1y")'),
+  }),
+});
+
+export const conditionalRenderingGroupKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
+  spec: z.object({
+    visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
+    condition: z.enum(['and', 'or']).describe('"and" = match all rules; "or" = match any rule'),
+    items: z
+      .array(
+        z.discriminatedUnion('kind', [
+          conditionalRenderingVariableKindSchema,
+          conditionalRenderingDataKindSchema,
+          conditionalRenderingTimeRangeSizeKindSchema,
+        ])
+      )
+      .describe('List of conditions. Pass an empty array to remove all rules.'),
+  }),
+});
+
 export const rowsLayoutRowSpecSchema = z.object({
   title: z.string().optional().describe('Row heading title'),
   collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
   hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
 });
 
 export const partialRowSpecSchema = z
@@ -472,12 +520,16 @@ export const partialRowSpecSchema = z
     repeat: rowRepeatOptionsSchema
       .optional()
       .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this row. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
 export const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
 });
 
 export const partialTabSpecSchema = z
@@ -486,6 +538,9 @@ export const partialTabSpecSchema = z
     repeat: tabRepeatOptionsSchema
       .optional()
       .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
@@ -597,6 +652,248 @@ export const autoGridOptionsSchema = z
   })
   .describe('Options for AutoGridLayout only. Rejected for other layout types.');
 
+// Panel building-block schemas (v2beta1)
+
+export const dataLinkSchema = z.object({
+  title: z.string().describe('Link title'),
+  url: z.string().describe('Link URL'),
+  targetBlank: z.boolean().optional().describe('Open link in new tab'),
+});
+
+export const panelQueryKindSchema = z
+  .object({
+    kind: z.literal('PanelQuery').optional().default('PanelQuery'),
+    spec: z.object({
+      query: dataQueryKindSchema.describe('The data query (DataQueryKind)'),
+      refId: z.string().describe('Unique query reference ID (e.g., "A", "B")'),
+      hidden: z.boolean().optional().default(false).describe('Whether this query is hidden from the panel'),
+    }),
+  })
+  .describe('A single panel query wrapping a DataQueryKind with refId and hidden flag');
+
+export type PanelQueryKind = z.infer<typeof panelQueryKindSchema>;
+
+export const transformationKindSchema = z
+  .object({
+    kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
+    group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
+    spec: z.object({
+      disabled: z.boolean().optional().describe('Disabled transformations are skipped'),
+      filter: z
+        .object({
+          id: z.string().describe('Matcher ID'),
+          options: z.unknown().optional().describe('Matcher options'),
+        })
+        .optional()
+        .describe('Optional frame matcher to scope the transformation'),
+      topic: z
+        .enum(['series', 'annotations', 'alertStates'])
+        .optional()
+        .describe('Data topic to pull frames from as input'),
+      options: z.record(z.string(), z.unknown()).optional().default({}).describe('Transformation-specific options'),
+    }),
+  })
+  .describe('A data transformation applied to query results');
+
+export type TransformationKind = z.infer<typeof transformationKindSchema>;
+
+export const queryOptionsSpecSchema = z
+  .object({
+    timeFrom: z.string().optional().describe('Relative time override (e.g., "1h", "6h")'),
+    maxDataPoints: z.number().optional().describe('Maximum data points to return'),
+    timeShift: z.string().optional().describe('Time shift (e.g., "1h", "1d")'),
+    queryCachingTTL: z.number().optional().describe('Query caching TTL in milliseconds'),
+    interval: z.string().optional().describe('Min interval (e.g., "10s", "1m")'),
+    cacheTimeout: z.string().optional().describe('Cache timeout'),
+    hideTimeOverride: z.boolean().optional().describe('Hide time override info in panel header'),
+    timeCompare: z.string().optional().describe('Time comparison offset (e.g., "1d", "7d")'),
+  })
+  .describe('Query options for time range overrides and data point limits');
+
+export const fieldConfigSchema = z
+  .object({
+    defaults: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .default({})
+      .describe('Default field config applied to all fields'),
+    overrides: z
+      .array(
+        z.object({
+          matcher: z.object({
+            id: z.string().describe('Matcher ID'),
+            options: z.unknown().optional().describe('Matcher options'),
+          }),
+          properties: z.array(
+            z.object({
+              id: z.string().describe('Property ID'),
+              value: z.unknown().optional().describe('Property value'),
+            })
+          ),
+        })
+      )
+      .optional()
+      .default([])
+      .describe('Field config overrides for specific fields'),
+  })
+  .describe('Field configuration (defaults and overrides)');
+
+export const vizConfigKindSchema = z
+  .object({
+    kind: z.literal('VizConfig').optional().default('VizConfig'),
+    group: z
+      .string()
+      .min(1)
+      .describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
+    version: z.string().optional().default(''),
+    spec: z
+      .object({
+        options: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .default({})
+          .describe('Panel-specific visualization options'),
+        fieldConfig: fieldConfigSchema
+          .optional()
+          .default({ defaults: {}, overrides: [] })
+          .describe('Field configuration'),
+      })
+      .optional()
+      .default({ options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
+  })
+  .describe('Visualization configuration (plugin + options + field config)');
+
+export const queryGroupKindSchema = z
+  .object({
+    kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+    spec: z.object({
+      queries: z.array(panelQueryKindSchema).describe('Array of panel queries'),
+      transformations: z
+        .array(transformationKindSchema)
+        .optional()
+        .default([])
+        .describe('Data transformations to apply after queries'),
+      queryOptions: queryOptionsSpecSchema
+        .optional()
+        .default({})
+        .describe('Query options (time overrides, max data points)'),
+    }),
+  })
+  .describe('Query group containing queries, transformations, and query options');
+
+export const panelKindSchema = z
+  .object({
+    kind: z.literal('Panel').optional().default('Panel'),
+    spec: z.object({
+      title: z.string().describe('Panel title'),
+      description: z.string().optional().default('').describe('Panel description'),
+      links: z.array(dataLinkSchema).optional().default([]).describe('Panel header links'),
+      data: queryGroupKindSchema.describe('Query group (queries, transformations, query options)'),
+      vizConfig: vizConfigKindSchema.describe('Visualization configuration (plugin type, options, field config)'),
+      transparent: z.boolean().optional().default(false).describe('Whether the panel background is transparent'),
+    }),
+  })
+  .describe('A dashboard panel element (v2beta1 PanelKind)');
+
+export const partialPanelKindSchema = z
+  .object({
+    kind: z.literal('Panel').optional().default('Panel'),
+    spec: z.object({
+      title: z.string().optional().describe('Panel title'),
+      description: z.string().optional().describe('Panel description'),
+      links: z.array(dataLinkSchema).optional().describe('Panel header links (replaces existing)'),
+      data: z
+        .object({
+          kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+          spec: z.object({
+            queries: z.array(panelQueryKindSchema).optional().describe('Replace all queries'),
+            transformations: z.array(transformationKindSchema).optional().describe('Replace all transformations'),
+            queryOptions: queryOptionsSpecSchema.optional().describe('Query options'),
+          }),
+        })
+        .optional()
+        .describe('Query group (partial). When provided, spec is required.'),
+      vizConfig: z
+        .object({
+          kind: z.literal('VizConfig').optional().default('VizConfig'),
+          group: z.string().optional().describe('Change plugin ID (e.g., "timeseries" to "stat")'),
+          version: z.string().optional(),
+          spec: z
+            .object({
+              options: z
+                .record(z.string(), z.unknown())
+                .optional()
+                .describe('Panel options (deep-merged into existing)'),
+              fieldConfig: fieldConfigSchema.optional().describe('Field config (deep-merged into existing)'),
+            })
+            .optional(),
+        })
+        .optional()
+        .describe('Visualization configuration (partial)'),
+      transparent: z.boolean().optional().describe('Whether the panel background is transparent'),
+    }),
+  })
+  .describe('Partial panel update (all fields optional, only provided fields are applied)');
+
+// Layout item schemas (v2beta1)
+// Canonical schemas match the generated v2beta1 types exactly (validated via `satisfies`).
+// The input schema (`layoutItemInputSchema`) is derived with relaxed constraints for callers.
+
+export const gridLayoutItemKindSchema = z.object({
+  kind: z.literal('GridLayoutItem').optional().default('GridLayoutItem'),
+  spec: z.object({
+    x: z.number().describe('Column position (0-23 in a 24-column grid)'),
+    y: z.number().describe('Row position'),
+    width: z.number().describe('Width in grid columns (1-24)'),
+    height: z.number().describe('Height in grid units'),
+    element: elementReferenceSchema,
+    repeat: repeatOptionsSchema.optional().describe('Repeat for each value of a variable'),
+  }),
+}) satisfies z.ZodType<GridLayoutItemKind>;
+
+export const autoGridLayoutItemKindSchema = z.object({
+  kind: z.literal('AutoGridLayoutItem').optional().default('AutoGridLayoutItem'),
+  spec: z.object({
+    element: elementReferenceSchema,
+    repeat: z
+      .object({
+        mode: z.literal('variable'),
+        value: z.string().describe('Variable name to repeat by'),
+      })
+      .optional()
+      .describe('Repeat for each value of a variable'),
+  }),
+}) satisfies z.ZodType<AutoGridLayoutItemKind>;
+
+export const layoutItemInputSchema = z
+  .object({
+    kind: z
+      .enum(['GridLayoutItem', 'AutoGridLayoutItem'])
+      .optional()
+      .describe(
+        'Layout item type hint. If omitted, automatically determined from the target layout. ' +
+          'A warning is emitted if the provided kind does not match the target layout.'
+      ),
+    spec: gridLayoutItemKindSchema.shape.spec
+      .omit({ element: true })
+      .extend({
+        conditionalRendering: conditionalRenderingGroupKindSchema
+          .optional()
+          .describe(
+            'Show/hide rules (Auto grid layout only). ' +
+              'On ADD_PANEL, ignored with a warning if the target is not Auto grid. ' +
+              'On UPDATE_PANEL, returns an error.'
+          ),
+      })
+      .partial()
+      .optional()
+      .default({}),
+  })
+  .describe(
+    'Layout item with optional sizing hints. The kind is optional and auto-detected from the target layout. ' +
+      'For GridLayout targets, provide x/y/width/height in spec. For AutoGridLayout targets, position is auto-arranged.'
+  );
+
 export const updateLayoutPayloadSchema = z.object({
   path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
   layoutType: layoutTypeSchema
@@ -608,17 +905,100 @@ export const updateLayoutPayloadSchema = z.object({
   options: autoGridOptionsSchema.optional().describe('AutoGridLayout properties. Rejected for other layout types.'),
 });
 
+// Panel payload schemas
+
+export const addPanelPayloadSchema = z.object({
+  panel: panelKindSchema.describe('Panel to add (v2beta1 PanelKind). The id field is ignored and auto-assigned.'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0", "/tabs/1" to add inside a group.'),
+  layoutItem: layoutItemInputSchema
+    .optional()
+    .describe(
+      'Layout item with sizing hints. The kind is adapted to match the target layout (warning emitted if converted). ' +
+        'If omitted, defaults are used.'
+    ),
+});
+
+export const updatePanelPayloadSchema = z
+  .object({
+    element: elementReferenceSchema.describe('Panel to update, identified by element name'),
+    panel: partialPanelKindSchema
+      .optional()
+      .describe(
+        'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged. ' +
+          'Can be omitted when only setting conditionalRendering.'
+      ),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this panel (Auto grid layout only). Omit to leave unchanged.'),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.panel && data.conditionalRendering === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'At least one of panel or conditionalRendering must be provided.',
+      });
+    }
+  });
+
+export const removePanelPayloadSchema = z.object({
+  elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
+});
+
+export const listPanelsPayloadSchema = z.object({
+  elements: z
+    .array(z.string())
+    .optional()
+    .describe('Element names to return (e.g. ["panel-1", "panel-5"]). Omit to return all.'),
+  evaluateVariables: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, include evaluatedQueries with template variables resolved to current values'),
+  includeStatus: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include runtime status (isLoading, hasError, hasNoData, errors) and data frame schema per panel'
+    ),
+});
+
 export const movePanelPayloadSchema = z.object({
   element: elementReferenceSchema.describe('Element to move, identified by name'),
   toParent: layoutPathSchema
     .optional()
     .describe('Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'),
-  position: gridPositionSchema
+  layoutItem: layoutItemInputSchema
     .optional()
     .describe(
-      'New grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields. ' +
-        'Ignored for AutoGridLayout targets.'
+      'Layout item with sizing hints. The kind is adapted to match the target layout (warning emitted if converted). ' +
+        'If omitted, preserves current dimensions.'
     ),
+  /** @deprecated Use layoutItem instead */
+  position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
+});
+
+export const updateDashboardSettingsPayloadSchema = z.object({
+  title: z.string().optional().describe('Dashboard title'),
+  description: z.string().optional().describe('Dashboard description'),
+  tags: z.array(z.string()).optional().describe('Dashboard tags'),
+  refresh: z
+    .string()
+    .optional()
+    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+  timeRange: z
+    .object({
+      from: z.string().describe('Start of time range (e.g. "now-6h")'),
+      to: z.string().describe('End of time range (e.g. "now")'),
+    })
+    .optional()
+    .describe('Dashboard time range'),
+  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  editable: z.boolean().optional().describe('Whether the dashboard is editable'),
 });
 
 /**
@@ -642,6 +1022,18 @@ export const payloads = {
   removeTab: removeTabPayloadSchema.describe('Remove a tab from the dashboard layout'),
   updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
   moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
-  movePanel: movePanelPayloadSchema.describe('Move a panel to a different group or position'),
   updateLayout: updateLayoutPayloadSchema.describe('Update the layout type and/or properties at a given path'),
+  addPanel: addPanelPayloadSchema.describe('Add a new panel to the dashboard'),
+  updatePanel: updatePanelPayloadSchema.describe(
+    'Update an existing panel (partial update, deep-merge for options/fieldConfig)'
+  ),
+  removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
+  listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
+  movePanel: movePanelPayloadSchema.describe(
+    'Move a panel to a different group or reposition within the current group'
+  ),
+  getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
+    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+  ),
 };

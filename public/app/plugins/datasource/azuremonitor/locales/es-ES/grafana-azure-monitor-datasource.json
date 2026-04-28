@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Certificado de cliente",
       "aria-label-client-id": "ID de cliente",
       "aria-label-client-secret": "Secreto de cliente",
+      "aria-label-private-key": "Clave privada",
+      "aria-label-private-key-password": "Contraseña del certificado",
       "aria-label-symbol-client-secret": "Secreto de cliente",
       "aria-label-tenant-id": "ID de inquilino",
+      "description-certificate-format": "Selecciona el formato del certificado (los certificados PEM deben estar en formato PEM de texto sin formato; los certificados PFX deben estar en formato PFX codificado en Base64).",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formato",
+      "label-client-certificate": "Certificado de cliente",
       "label-client-id": "ID de la aplicación (cliente)",
       "label-client-secret": "Secreto de cliente",
+      "label-private-key": "Clave privada",
       "label-symbol-client-secret": "Secreto de cliente",
+      "label-symbol-private-key-password": "Contraseña del certificado",
       "label-tenant-id": "ID del directorio (inquilino)",
       "placeholder-symbol-client-secret": "configurado",
       "reset-symbol-client-secret": "Restablecer"
@@ -58,12 +66,12 @@
       "text-loading": "Cargando..."
     },
     "azure-cheat-sheet-modal": {
-      "aria-label-kick-start": "Inicie su modal de consulta",
-      "title-kick-start": "Inicie su consulta"
+      "aria-label-kick-start": "Inicia tu modal de consulta",
+      "title-kick-start": "Inicia tu consulta"
     },
     "azure-credentials-form": {
-      "description-authentication": "Elija el tipo de autenticación para los servicios de Azure",
-      "label-authentication": "Autenticación",
+      "description-authentication": "Elige el tipo de autenticación para los servicios de Azure",
+      "label-authentication": "Tipo de autenticación",
       "title-authentication": "Autenticación"
     },
     "basic-logs-toggle": {
@@ -76,9 +84,9 @@
       "title-additional-settings": "Configuraciones adicionales"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "Las credenciales de reserva se han desactivado. Puesto que la autenticación basada en el usuario solo puede admitir solicitudes con un usuario en alcance, las funciones como las alertas, las consultas registradas o los informes no funcionarán como se espera. Revise la <2>documentación</2> para obtener más información.",
-      "body-service-credentials": "La autenticación basada en el usuario no puede admitir las funciones de Grafana que realizan solicitudes a la fuente de datos sin que los detalles de los usuarios estén disponibles para la solicitud. Un ejemplo de tales funciones son las alertas. Si desea asegurarse de que las funciones que no tienen un usuario en el contexto de la solicitud sigan funcionando, proporcione las credenciales de respaldo a continuación.",
-      "description-authentication": "Elija el tipo de autenticación para los servicios de Azure",
+      "alert-fallback-credentials-disabled": "Las credenciales de reserva se han desactivado. Puesto que la autenticación basada en el usuario solo puede admitir solicitudes con un usuario en alcance, las funciones como las alertas, las consultas registradas o los informes no funcionarán como se espera. Revisa la <2>documentación</2> para obtener más información.",
+      "body-service-credentials": "La autenticación basada en el usuario no puede admitir las funciones de Grafana que realizan solicitudes a la fuente de datos sin que los detalles de los usuarios estén disponibles para la solicitud. Un ejemplo de tales funciones son las alertas. Si quieres asegurarte de que las funciones que no tienen un usuario en el contexto de la solicitud sigan funcionando, proporciona las credenciales de respaldo a continuación.",
+      "description-authentication": "Elige el tipo de autenticación para los servicios de Azure",
       "description-service-credentials": "Elija si las credenciales de servicio de respaldo están habilitadas o deshabilitadas para esta fuente de datos",
       "label-authentication": "Autenticación",
       "label-service-credentials": "Credenciales de servicio",
@@ -101,7 +109,7 @@
       "placeholder-select-values": "Seleccionar valor(es)"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "{{type}} está obsoleto en Grafana 9. Consulte el <3>aviso de obsolescencia</3> para obtener más información sobre cómo migrar sus consultas. Esta es la definición de consulta actual:",
+      "body-unknown-query-type": "{{type}} está obsoleto en Grafana 9. Consulta el <3>aviso de obsolescencia</3> para obtener más información sobre cómo migrar sus consultas. Esta es la definición de consulta actual:",
       "title-unknown-query-type": "Tipo de consulta desconocido"
     },
     "filter": {
@@ -202,9 +210,9 @@
       "alert-error-occurred": "Se ha producido un error al solicitar metadatos de Azure Monitor"
     },
     "query-header": {
-      "aria-label-kick-start": "Los logs de Azure inician su botón de consulta",
+      "aria-label-kick-start": "Los logs de Azure inician tu botón de consulta",
       "body-switching-to-builder": "Cambiar al modo Constructor descartará tu consulta KQL actual y se borrará el editor KQL. ¿Quieres continuar?",
-      "button-kick-start-your-query": "Inicie su consulta",
+      "button-kick-start-your-query": "Inicia tu consulta",
       "button-run-query": "Ejecutar consulta",
       "confirmText-switch-to": "Cambiar a {{newMode}}",
       "editor-modes": {
@@ -287,11 +295,11 @@
       "label-operation-id": "ID de operación"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "El uso de esta fuente de datos requiere que se autentique a través de Azure Entra (anteriormente Azure Active Directory). Revise la <2>documentación</2> para obtener más información.",
+      "body-unsupported-auth": "El uso de esta fuente de datos requiere que se autentique a través de Azure Entra (anteriormente Azure Active Directory). Revisa la <2>documentación</2> para obtener más información.",
       "title-unsupported-auth": "Proveedor de autenticación no compatible"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "Las funciones de «backend» de la fuente de datos (como las alertas) requieren credenciales de servicio para funcionar. Esta fuente de datos está configurada sin credenciales de servicio de reserva o la funcionalidad de reserva está deshabilitada. Revise la <2>documentación</2> para obtener más información.",
+      "body-no-fallback-credentials": "Las funciones de backend de la fuente de datos (como las alertas) requieren credenciales de servicio para funcionar. Esta fuente de datos está configurada sin credenciales de servicio de reserva o la funcionalidad de reserva está deshabilitada. Revisa la <2>documentación</2> para obtener más información.",
       "title-no-fallback-credentials": "No hay credenciales de reserva disponibles"
     },
     "variable-editor": {

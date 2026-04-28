@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
-import { Transformation } from '../../types';
+import { type Transformation } from '../../types';
 
 import { QueryCard } from './QueryCard';
 import { SidebarCard } from './SidebarCard';
@@ -21,7 +21,7 @@ jest.mock('@grafana/runtime', () => ({
 interface RenderSidebarCardProps {
   id?: string;
   isSelected?: boolean;
-  onClick?: jest.Mock;
+  onSelect?: jest.Mock;
   addQuery?: jest.Mock;
   setSelectedQuery?: jest.Mock;
   setPendingExpression?: jest.Mock;
@@ -36,7 +36,7 @@ interface RenderSidebarCardProps {
 function renderSidebarCard({
   id = 'A',
   isSelected = false,
-  onClick = jest.fn(),
+  onSelect = jest.fn(),
   addQuery = jest.fn().mockReturnValue('B'),
   setSelectedQuery = jest.fn(),
   setPendingExpression = jest.fn(),
@@ -58,7 +58,7 @@ function renderSidebarCard({
     <SidebarCard
       isSelected={isSelected}
       id={id}
-      onClick={onClick}
+      onSelect={onSelect}
       onDelete={actionsOverrides.onDelete}
       onToggleHide={actionsOverrides.onToggleHide}
       onDuplicate={actionsOverrides.onDuplicate}
@@ -74,7 +74,7 @@ function renderSidebarCard({
     }
   );
 
-  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onClick };
+  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onSelect };
 }
 
 describe('SidebarCard', () => {
@@ -82,7 +82,7 @@ describe('SidebarCard', () => {
     jest.clearAllMocks();
   });
 
-  it('should select query card and deselect transformation when clicking query card', async () => {
+  it('should call toggleQuerySelection when clicking a query card (single-select)', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
     const transformation: Transformation = {
       transformId: 'organize',
@@ -90,8 +90,7 @@ describe('SidebarCard', () => {
       transformConfig: { id: 'organize', options: {} },
     };
 
-    const setSelectedQuery = jest.fn();
-    const setSelectedTransformation = jest.fn();
+    const toggleQuerySelection = jest.fn();
 
     const user = userEvent.setup();
 
@@ -99,17 +98,17 @@ describe('SidebarCard', () => {
       queries: [query],
       transformations: [transformation],
       selectedTransformation: transformation,
-      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+      uiStateOverrides: { toggleQuerySelection },
     });
 
     const queryCard = screen.getByRole('button', { name: /select card A/i });
     await user.click(queryCard);
 
-    expect(setSelectedQuery).toHaveBeenCalledWith(query);
-    expect(setSelectedTransformation).not.toHaveBeenCalled();
+    // Called with the query and no modifier (plain click)
+    expect(toggleQuerySelection).toHaveBeenCalledWith(query, { multi: false, range: false });
   });
 
-  it('should select transformation card and deselect query when clicking transformation card', async () => {
+  it('should call toggleTransformationSelection when clicking a transformation card (single-select)', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
     const transformation: Transformation = {
       transformId: 'organize',
@@ -117,8 +116,7 @@ describe('SidebarCard', () => {
       transformConfig: { id: 'organize', options: {} },
     };
 
-    const setSelectedQuery = jest.fn();
-    const setSelectedTransformation = jest.fn();
+    const toggleTransformationSelection = jest.fn();
 
     const user = userEvent.setup();
 
@@ -126,14 +124,13 @@ describe('SidebarCard', () => {
       queries: [query],
       transformations: [transformation],
       selectedQuery: query,
-      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+      uiStateOverrides: { toggleTransformationSelection },
     });
 
     const transformCard = screen.getByRole('button', { name: /select card organize/i });
     await user.click(transformCard);
 
-    expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
-    expect(setSelectedQuery).not.toHaveBeenCalled();
+    expect(toggleTransformationSelection).toHaveBeenCalledWith(transformation, { multi: false, range: false });
   });
 
   describe('add button and menu', () => {
@@ -185,6 +182,96 @@ describe('SidebarCard', () => {
       await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
 
       expect(setPendingExpression).toHaveBeenCalledWith({ insertAfter: 'A' });
+    });
+  });
+
+  describe('multi-select modifiers', () => {
+    it('calls onSelect with { multi: true } when Ctrl+Click', async () => {
+      const onSelect = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.keyboard('[ControlLeft>]');
+      await user.click(card);
+      await user.keyboard('[/ControlLeft]');
+
+      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
+    });
+
+    it('calls onSelect with { range: true } when Shift+Click', async () => {
+      const onSelect = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.keyboard('[ShiftLeft>]');
+      await user.click(card);
+      await user.keyboard('[/ShiftLeft]');
+
+      expect(onSelect).toHaveBeenCalledWith({ multi: false, range: true });
+    });
+
+    it('sets aria-pressed to true when isSelected is true', () => {
+      renderSidebarCard({ id: 'A', isSelected: true });
+      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('sets aria-pressed to true when isPartOfSelection is true and isSelected is false', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item = { name: 'A', type: QueryEditorType.Query, isHidden: false };
+
+      renderWithQueryEditorProvider(
+        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
+          <span>Card content</span>
+        </SidebarCard>,
+        { queries }
+      );
+
+      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('calls onSelect with {} when Enter is pressed on the card', async () => {
+      const onSelect = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.click(card); // focus the card via userEvent so state updates are wrapped in act
+      onSelect.mockClear(); // clear the click call, we only want to assert on the Enter call
+
+      await user.keyboard('[Enter]');
+
+      expect(onSelect).toHaveBeenCalledWith({});
+    });
+
+    it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
+      // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
+      // browser's native focus transfer never fires a blur on the previously focused element.
+      // Without the force-blur in handleMouseDown, Monaco-like editors never see a DOM blur and
+      // their pending value is never flushed through onChange before the editor unmounts.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalled();
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
     });
   });
 

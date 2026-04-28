@@ -1,9 +1,9 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { NavModel } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { type NavModel } from '@grafana/data';
+import { type IconName } from '@grafana/ui';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 export interface SettingsPage {
   id: string;

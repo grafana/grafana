@@ -883,9 +883,41 @@
           {
             "name": "query",
             "in": "query",
-            "description": "team name query string",
+            "description": "team name query string (fuzzy/partial match). Mutually exclusive with title.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name. Mutually exclusive with query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "filter by team UIDs. Mutually exclusive with teamId.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "description": "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
             }
           },
           {
@@ -916,11 +948,48 @@
             }
           },
           {
+            "name": "membercount",
+            "in": "query",
+            "description": "when true, includes member count for each team in the response",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "accesscontrol",
             "in": "query",
             "description": "when true, includes access control metadata in the response",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sortable field",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "default sorting"
+              },
+              "-email": {
+                "summary": "email descending",
+                "value": "-email"
+              },
+              "-title": {
+                "summary": "title descending",
+                "value": "-title"
+              },
+              "email": {
+                "summary": "email ascending",
+                "value": "email"
+              },
+              "title": {
+                "summary": "title ascending",
+                "value": "title"
+              }
             }
           }
         ],
@@ -1770,13 +1839,32 @@
         "tags": ["ServiceAccount"],
         "description": "connect GET requests to tokens of ServiceAccount",
         "operationId": "getServiceAccountTokens",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of tokens to return in a single page",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token returned by a previous list response to fetch the next page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountTokenList"
+                  "$ref": "#/components/schemas/ListServiceAccountTokensBody"
                 }
               }
             }
@@ -1786,475 +1874,106 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ServiceAccountTokenList"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the ServiceAccountTokenList",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/ssosettings": {
-      "get": {
-        "tags": ["SSOSetting"],
-        "description": "list objects of kind SSOSetting",
-        "operationId": "listSSOSetting",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSettingList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSettingList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSettingList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "SSOSetting"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/ssosettings/{name}": {
-      "get": {
-        "tags": ["SSOSetting"],
-        "description": "read the specified SSOSetting",
-        "operationId": "getSSOSetting",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "get",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "SSOSetting"
-        }
-      },
-      "put": {
-        "tags": ["SSOSetting"],
-        "description": "replace the specified SSOSetting",
-        "operationId": "replaceSSOSetting",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
+      "post": {
+        "tags": ["ServiceAccount"],
+        "description": "connect POST requests to tokens of ServiceAccount",
+        "operationId": "createServiceAccountTokens",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
+                "$ref": "#/components/schemas/CreateServiceAccountTokenRequestBody"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              }
-            }
-          },
           "201": {
-            "description": "Created",
+            "description": "Token created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
+                  "$ref": "#/components/schemas/CreateServiceAccountTokenBody"
                 }
               }
             }
           }
         },
-        "x-kubernetes-action": "put",
+        "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "SSOSetting"
-        }
-      },
-      "delete": {
-        "tags": ["SSOSetting"],
-        "description": "delete a SSOSetting",
-        "operationId": "deleteSSOSetting",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "delete",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "SSOSetting"
-        }
-      },
-      "patch": {
-        "tags": ["SSOSetting"],
-        "description": "partially update the specified SSOSetting",
-        "operationId": "updateSSOSetting",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "force",
-            "in": "query",
-            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/apply-patch+yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/Patch"
-              }
-            },
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Patch"
-              }
-            },
-            "application/strategic-merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Patch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "patch",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "SSOSetting"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the SSOSetting",
+          "description": "name of the ServiceAccount",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/serviceaccounts/{name}/tokens/{tokenName}": {
+      "get": {
+        "tags": ["ServiceAccount"],
+        "description": "connect GET requests to tokens of ServiceAccount",
+        "operationId": "getServiceAccountTokensWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetServiceAccountTokenBody"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ListServiceAccountTokensResponse"
+        }
+      },
+      "delete": {
+        "tags": ["ServiceAccount"],
+        "description": "connect DELETE requests to tokens of ServiceAccount",
+        "operationId": "deleteServiceAccountTokensWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteServiceAccountTokenBody"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ListServiceAccountTokensResponse"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",
@@ -2262,9 +1981,10 @@
           }
         },
         {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "name": "tokenName",
+          "in": "path",
+          "description": "name of the token to operate on",
+          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -4573,6 +4293,250 @@
         }
       ]
     },
+    "/users/{name}/status": {
+      "get": {
+        "tags": ["User"],
+        "description": "read status of the specified User",
+        "operationId": "getUserStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "User"
+        }
+      },
+      "put": {
+        "tags": ["User"],
+        "description": "replace status of the specified User",
+        "operationId": "replaceUserStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "User"
+        }
+      },
+      "patch": {
+        "tags": ["User"],
+        "description": "partially update status of the specified User",
+        "operationId": "updateUserStatus",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "User"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the User",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/users/{name}/teams": {
       "get": {
         "tags": ["User"],
@@ -4645,6 +4609,107 @@
   },
   "components": {
     "schemas": {
+      "CreateServiceAccountTokenBody": {
+        "type": "object",
+        "required": ["token", "serviceAccountTokenName", "expires"],
+        "properties": {
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "CreateServiceAccountTokenRequestBody": {
+        "type": "object",
+        "required": ["tokenName"],
+        "properties": {
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tokenName": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateServiceAccountTokenResponse": {
+        "type": "object",
+        "required": ["token", "serviceAccountTokenName", "expires"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "CreateServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "DeleteServiceAccountTokenBody": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "DeleteServiceAccountTokenResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "DeleteServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "ExternalGroupMapping": {
         "type": "object",
         "required": ["metadata", "spec"],
@@ -4843,6 +4908,10 @@
             "type": "string",
             "default": ""
           },
+          "memberCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "name": {
             "type": "string",
             "default": ""
@@ -4937,6 +5006,66 @@
           "title": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "GetServiceAccountTokenBody": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "default": {}
+          }
+        }
+      },
+      "GetServiceAccountTokenResponse": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "body": {
+            "default": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "GetServiceAccountTokenToken": {
+        "type": "object",
+        "required": ["title", "revoked", "expires", "created", "updated", "lastUsed"],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5280,6 +5409,92 @@
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "ListServiceAccountTokensBody": {
+        "type": "object",
+        "required": ["items", "continue"],
+        "properties": {
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "ListServiceAccountTokensResponse": {
+        "type": "object",
+        "required": ["items", "continue"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ListServiceAccountTokensToken"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ListServiceAccountTokensResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "ListServiceAccountTokensToken": {
+        "type": "object",
+        "required": ["title", "revoked", "expires", "created", "updated", "lastUsed"],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -5978,7 +6193,7 @@
       },
       "TeamSpec": {
         "type": "object",
-        "required": ["title", "email", "provisioned", "externalUID"],
+        "required": ["title", "email", "provisioned", "externalUID", "members"],
         "properties": {
           "email": {
             "type": "string",
@@ -5988,11 +6203,48 @@
             "type": "string",
             "default": ""
           },
+          "members": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/TeamTeamMember"
+                }
+              ]
+            }
+          },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TeamTeamMember": {
+        "type": "object",
+        "required": ["kind", "name", "permission", "external"],
+        "properties": {
+          "external": {
+            "description": "whether the member was added externally (e.g. team sync)",
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "permission": {
+            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }
@@ -6130,13 +6382,26 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "teamSync": {
+            "$ref": "#/components/schemas/UserTeamSyncStatus"
           }
         }
       },
-      "Unstructured": {
+      "UserTeamSyncStatus": {
         "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
+        "required": ["state", "lastSyncAt"],
+        "properties": {
+          "lastSyncAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "state": {
+            "type": "string",
+            "default": ""
+          }
+        }
       },
       "Display": {
         "type": "object",
@@ -6289,44 +6554,6 @@
           }
         }
       },
-      "ServiceAccountToken": {
-        "type": "object",
-        "required": ["created"],
-        "properties": {
-          "created": {},
-          "expires": {},
-          "lastUsed": {},
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ServiceAccountTokenList": {
-        "type": "object",
-        "required": ["items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "TeamMember": {
         "type": "object",
         "required": ["identity", "displayName"],
@@ -6445,6 +6672,42 @@
           }
         }
       },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionSpec": {
+        "description": "DirectPermissionSpec is a single permission (action + scope) in a PermissionsSearchResult.",
+        "type": "object",
+        "required": ["action", "scope"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult": {
+        "description": "PermissionsSearchResult is the response body for the resourcepermissions search endpoint (GET /apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search?userUID=...).",
+        "type": "object",
+        "required": ["permissions"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
       "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef": {
         "type": "object",
         "required": ["type", "name"],
@@ -6458,139 +6721,6 @@
             "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ObjectMeta"
-              }
-            ]
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSettingSpec"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList": {
-        "type": "object",
-        "required": ["items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.SSOSetting"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMeta"
-              }
-            ]
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec": {
-        "description": "SSOSettingSpec defines model for SSOSettingSpec.",
-        "type": "object",
-        "required": ["source", "settings"],
-        "properties": {
-          "settings": {
-            "$ref": "#/components/schemas/Unstructured"
-          },
-          "source": {
-            "description": "Possible enum values:\n - `\"db\"`\n - `\"system\"` system is from config file, env or argument",
-            "type": "string",
-            "default": "",
-            "enum": ["db", "system"]
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken": {
-        "type": "object",
-        "required": ["created"],
-        "properties": {
-          "created": {
-            "$ref": "#/components/schemas/Time"
-          },
-          "expires": {
-            "$ref": "#/components/schemas/Time"
-          },
-          "lastUsed": {
-            "$ref": "#/components/schemas/Time"
-          },
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountTokenList": {
-        "type": "object",
-        "required": ["items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountToken"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMeta"
-              }
-            ]
           }
         }
       },

@@ -1,13 +1,13 @@
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
-import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
-import { CommandPaletteAction } from '../types';
+import { type ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
+import { type NodesMap, type SelectedScope, type TreeNode } from '../../scopes/selector/types';
+import { type CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
 const defaultState: ScopesSelectorServiceState = {

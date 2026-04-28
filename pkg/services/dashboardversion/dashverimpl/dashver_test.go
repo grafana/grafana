@@ -2,7 +2,6 @@ package dashverimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -27,7 +26,6 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // createMockRequester creates a mock StaticRequester for testing
@@ -197,35 +195,6 @@ func TestDashboardVersionService(t *testing.T) {
 			Version:     10,
 		})
 		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
-	})
-}
-
-func TestDeleteExpiredVersions(t *testing.T) {
-	versionsToKeep := 5
-	cfg := setting.NewCfg()
-	cfg.DashboardVersionsToKeep = versionsToKeep
-
-	dashboardVersionStore := newDashboardVersionStoreFake()
-	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardVersionService := Service{
-		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-
-	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.Nil(t, err)
-	})
-
-	t.Run("Clean up old dashboard versions successfully", func(t *testing.T) {
-		dashboardVersionStore.ExptectedDeletedVersions = 4
-		dashboardVersionStore.ExpectedVersions = []any{1, 2, 3, 4}
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.Nil(t, err)
-	})
-
-	t.Run("Clean up old dashboard versions with error", func(t *testing.T) {
-		dashboardVersionStore.ExpectedError = errors.New("some error")
-		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
-		require.NotNil(t, err)
 	})
 }
 
@@ -612,13 +581,11 @@ func TestListDashboardVersions(t *testing.T) {
 }
 
 func TestRestoreVersion(t *testing.T) {
-	t.Run("should use k8s restoration when feature toggles are enabled", func(t *testing.T) {
+	t.Run("should always use k8s restoration", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
-			dashSvc:  dashboardService,
-			features: features,
-			log:      log.New("dashboard-version"),
+			dashSvc: dashboardService,
+			log:     log.New("dashboard-version"),
 		}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
@@ -682,71 +649,9 @@ func TestRestoreVersion(t *testing.T) {
 		mockCli.AssertExpectations(t)
 	})
 
-	t.Run("should use legacy restoration when k8s feature toggles are disabled", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures() // No k8s features enabled
-		dashboardVersionService := Service{
-			dashSvc:  dashboardService,
-			features: features,
-			log:      log.New("dashboard-version"),
-		}
-
-		// Mock dashboard service calls
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
-			ID:      1,
-			UID:     "test-uid",
-			Version: 5,
-			Data:    simplejson.NewFromAny(map[string]any{"title": "Current Dashboard"}),
-		}, nil)
-
-		// Mock version data
-		versionObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v2alpha1",
-				"metadata": map[string]any{
-					"name":       "test-uid",
-					"generation": int64(3),
-				},
-				"spec": map[string]any{
-					"title": "Version 3 Dashboard",
-					"data":  map[string]any{"panels": []any{}},
-				},
-			},
-		}
-
-		// Mock k8s client calls
-		mockCli := new(client.MockK8sHandler)
-		dashboardVersionService.k8sclient = mockCli
-		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{*versionObj},
-		}, nil)
-		mockCli.On("GetUsersFromMeta", mock.Anything, mock.AnythingOfType("[]string")).Return(map[string]*user.User{}, nil)
-
-		// Mock legacy restoration - this would call the existing postDashboard logic
-		dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Return(&dashboards.Dashboard{
-			ID:      1,
-			UID:     "test-uid",
-			Version: 6,
-			Data:    simplejson.NewFromAny(map[string]any{"title": "Legacy Restored Dashboard"}),
-		}, nil)
-
-		cmd := &dashver.RestoreVersionCommand{
-			Requester:    createMockRequester(1, 1),
-			DashboardUID: "test-uid",
-			Version:      3,
-		}
-
-		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
-		require.NoError(t, err)
-		require.NotNil(t, result)
-		require.Equal(t, "test-uid", result.UID)
-
-		dashboardService.AssertExpectations(t)
-	})
-
 	t.Run("should return error when dashboard not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -777,7 +682,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should return error when version not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -822,7 +727,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should skip restoration when dashboard data is identical", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -1104,32 +1009,4 @@ func TestUnstructuredToDashboardVersionSpec(t *testing.T) {
 			}
 		})
 	}
-}
-
-type FakeDashboardVersionStore struct {
-	ExpectedDashboardVersion *dashver.DashboardVersion
-	ExptectedDeletedVersions int64
-	ExpectedVersions         []any
-	ExpectedListVersions     []*dashver.DashboardVersion
-	ExpectedError            error
-}
-
-func newDashboardVersionStoreFake() *FakeDashboardVersionStore {
-	return &FakeDashboardVersionStore{}
-}
-
-func (f *FakeDashboardVersionStore) Get(_ context.Context, _ *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	return f.ExpectedDashboardVersion, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) GetBatch(_ context.Context, _ *dashver.DeleteExpiredVersionsCommand, _ int, _ int) ([]any, error) {
-	return f.ExpectedVersions, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) DeleteBatch(_ context.Context, _ *dashver.DeleteExpiredVersionsCommand, _ []any) (int64, error) {
-	return f.ExptectedDeletedVersions, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) List(_ context.Context, _ *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
-	return f.ExpectedListVersions, f.ExpectedError
 }

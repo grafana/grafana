@@ -45,7 +45,7 @@ export {
 export { EmptySearchResult } from './components/EmptySearchResult/EmptySearchResult';
 export { EmptyState } from './components/EmptyState/EmptyState';
 export { UnitPicker } from './components/UnitPicker/UnitPicker';
-export { StatsPicker } from './components/StatsPicker/StatsPicker';
+export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
@@ -138,7 +138,6 @@ export {
 } from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
-export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
@@ -249,7 +248,12 @@ export { ButtonGroup } from './components/Button/ButtonGroup';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
-export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { fieldMatchersUI, useFieldMatchersOptions } from './components/MatchersUI/fieldMatchersUI';
+export {
+  MatcherScopeSelector,
+  getUniqueMatcherScopes,
+  buildScopeOptions,
+} from './components/MatchersUI/MatcherScopeSelector';
 export { Link } from './components/Link/Link';
 export { TextLink } from './components/Link/TextLink';
 export { Text } from './components/Text/Text';
@@ -261,6 +265,7 @@ export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
 
 export { Label } from './components/Forms/Label';
 export { Field, type FieldProps } from './components/Forms/Field';
+export { FieldContext, useFieldContext, type FieldContextType } from './components/Forms/FieldContext';
 export { Legend } from './components/Forms/Legend';
 export { FieldSet } from './components/Forms/FieldSet';
 export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';
@@ -367,12 +372,6 @@ export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 // These will be removed in the future
 // -----------------------------------------------------
 
-export { Graph } from './graveyard/Graph/Graph';
-export { GraphWithLegend } from './graveyard/Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './graveyard/Graph/GraphContextMenu';
-export { graphTimeFormat, graphTickFormatter } from './graveyard/Graph/utils';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
-
 export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
 export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from './graveyard/GraphNG/hooks';
@@ -466,7 +465,13 @@ export { RunnerPlugin } from './slate-plugins/runner';
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { Sidebar, useSidebar, type SidebarPosition, type SidebarContextValue } from './components/Sidebar/Sidebar';
+export {
+  Sidebar,
+  useSidebar,
+  type SidebarPosition,
+  type SidebarContextValue,
+  useSidebarContext,
+} from './components/Sidebar/Sidebar';
 
 // @deprecated import from @grafana/schema
 export {

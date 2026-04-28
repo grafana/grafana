@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 
 import { VizLegendListItem } from './VizLegendListItem';
-import { VizLegendBaseProps, VizLegendItem } from './types';
+import { type VizLegendBaseProps, type VizLegendItem } from './types';
 
 export interface Props<T> extends VizLegendBaseProps<T> {}
 
@@ -29,6 +29,8 @@ export const VizLegendList = <T extends unknown>({
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
+  const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);
+
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
@@ -38,6 +40,7 @@ export const VizLegendList = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
+        allItemsSelected={allItemsSelected}
       />
     );
   }

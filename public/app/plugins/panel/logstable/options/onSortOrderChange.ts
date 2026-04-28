@@ -1,6 +1,6 @@
 import { LogsSortOrder } from '@grafana/data';
 
-import { Options } from './types';
+import { type Options } from './types';
 
 export const onSortOrderChange = (
   pendingOptions: Options,

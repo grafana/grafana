@@ -1,7 +1,7 @@
-import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting';
+import { type InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting';
 
-import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
-import { Labels } from '../../../types/unified-alerting-dto';
+import { type AlertmanagerGroup, type RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import { type Labels } from '../../../types/unified-alerting-dto';
 
 import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
 import { routeAdapter } from './utils/routeAdapter';

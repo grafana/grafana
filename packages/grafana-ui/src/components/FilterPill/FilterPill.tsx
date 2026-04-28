@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
@@ -24,7 +24,12 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterP
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (
-    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
+    <button
+      aria-pressed={selected}
+      type="button"
+      className={cx(clearButton, styles.wrapper, selected && styles.selected)}
+      onClick={onClick}
+    >
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} data-testid="filter-pill-icon" />}
     </button>

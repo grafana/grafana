@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,6 +35,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 	reg prometheus.Registerer,
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
+	folderMetadataEnabled := resources.IsFolderMetadataEnabled(cfg)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
@@ -44,6 +46,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
+			folderMetadataEnabled,
 		),
 	}
 }

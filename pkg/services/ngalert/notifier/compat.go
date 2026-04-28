@@ -46,7 +46,8 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	return alertingModels.IntegrationConfig{
 		UID:                   i.UID,
 		Name:                  i.Name,
-		Type:                  string(i.Config.Type()),
+		Type:                  i.Config.Type(),
+		Version:               i.Config.Version,
 		DisableResolveMessage: i.DisableResolveMessage,
 		Settings:              raw,
 		SecureSettings:        i.SecureSettings,
@@ -105,7 +106,8 @@ func IntegrationConfigToPostableGrafanaReceiver(r *alertingModels.IntegrationCon
 	return &definition.PostableGrafanaReceiver{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Type,
+		Type:                  string(r.Type),
+		Version:               string(r.Version),
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              definition.RawMessage(r.Settings),
 		SecureSettings:        r.SecureSettings,

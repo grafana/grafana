@@ -1,12 +1,12 @@
 import { HttpResponse, delay, http } from 'msw';
 
 import {
-  PromRulesResponse,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type PromRulesResponse,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
-import { HandlerOptions } from '../configure';
+import { type HandlerOptions } from '../configure';
 
 export const getRulerRulesHandler = () => {
   return http.get(`/api/ruler/:dataSourceUID/api/v1/rules`, async () => {

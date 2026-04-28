@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,12 +28,13 @@ type StorageMetrics struct {
 	KeeperMetadataListDuration            *prometheus.HistogramVec
 	KeeperMetadataGetKeeperConfigDuration *prometheus.HistogramVec
 
-	SecureValueMetadataCreateDuration *prometheus.HistogramVec
-	SecureValueMetadataGetDuration    *prometheus.HistogramVec
-	SecureValueMetadataListDuration   *prometheus.HistogramVec
-	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
-	SecureValueSetStatusDuration      *prometheus.HistogramVec
-	SecureValueDeleteDuration         *prometheus.HistogramVec
+	SecureValueMetadataCreateDuration          *prometheus.HistogramVec
+	SecureValueMetadataGetDuration             *prometheus.HistogramVec
+	SecureValueMetadataListDuration            *prometheus.HistogramVec
+	SecureValueSetExternalIDDuration           *prometheus.HistogramVec
+	SecureValueSetStatusDuration               *prometheus.HistogramVec
+	SecureValueDeleteDuration                  *prometheus.HistogramVec
+	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -41,99 +43,148 @@ func newStorageMetrics() *StorageMetrics {
 	return &StorageMetrics{
 		// Keeper metrics
 		KeeperMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_create_duration_seconds",
-			Help:      "Duration of keeper metadata create operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_create_duration_seconds",
+			Help:                            "Duration of keeper metadata create operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KeeperMetadataUpdateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_update_duration_seconds",
-			Help:      "Duration of keeper metadata update operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_update_duration_seconds",
+			Help:                            "Duration of keeper metadata update operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KeeperMetadataDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_delete_duration_seconds",
-			Help:      "Duration of keeper metadata delete operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_delete_duration_seconds",
+			Help:                            "Duration of keeper metadata delete operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KeeperMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_get_duration_seconds",
-			Help:      "Duration of keeper metadata get operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_get_duration_seconds",
+			Help:                            "Duration of keeper metadata get operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KeeperMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_list_duration_seconds",
-			Help:      "Duration of keeper metadata list operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_list_duration_seconds",
+			Help:                            "Duration of keeper metadata list operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		KeeperMetadataGetKeeperConfigDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "keeper_metadata_get_keeper_config_duration_seconds",
-			Help:      "Duration of keeper metadata get keeper config operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "keeper_metadata_get_keeper_config_duration_seconds",
+			Help:                            "Duration of keeper metadata get keeper config operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 
 		// Secure value metrics
 		SecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_create_duration_seconds",
-			Help:      "Duration of secure value metadata create operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_metadata_create_duration_seconds",
+			Help:                            "Duration of secure value metadata create operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		SecureValueMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_get_duration_seconds",
-			Help:      "Duration of secure value metadata get operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_metadata_get_duration_seconds",
+			Help:                            "Duration of secure value metadata get operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		SecureValueMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_metadata_list_duration_seconds",
-			Help:      "Duration of secure value metadata list operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_metadata_list_duration_seconds",
+			Help:                            "Duration of secure value metadata list operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		SecureValueSetExternalIDDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_set_external_id_duration_seconds",
-			Help:      "Duration of secure value set external id operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_set_external_id_duration_seconds",
+			Help:                            "Duration of secure value set external id operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		SecureValueSetStatusDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_set_status_duration_seconds",
-			Help:      "Duration of secure value set status operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_set_status_duration_seconds",
+			Help:                            "Duration of secure value set status operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 		SecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_delete_duration_seconds",
-			Help:      "Duration of secure value delete operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_delete_duration_seconds",
+			Help:                            "Duration of secure value delete operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		SecureValueSetInactiveAllFromGroupDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_set_inactive_all_from_group_duration_seconds",
+			Help:                            "Duration of secure value set inactive all from group operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "decrypt_duration_seconds",
-			Help:      "Duration of decrypt operations",
-			Buckets:   prometheus.DefBuckets,
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "decrypt_duration_seconds",
+			Help:                            "Duration of decrypt operations",
+			Buckets:                         prometheus.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{resultLabel, decrypterLabel}),
 	}
 }
@@ -162,6 +213,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.SecureValueDeleteDuration,
+				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.DecryptDuration,
 			)
 		}

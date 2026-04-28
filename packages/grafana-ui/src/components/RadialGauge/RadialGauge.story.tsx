@@ -1,20 +1,20 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import {
   applyFieldOverrides,
-  Field,
+  type Field,
   FieldType,
   getFieldDisplayValues,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   toDataFrame,
 } from '@grafana/data';
-import { FieldColorModeId, FieldConfig, ThresholdsMode } from '@grafana/schema';
+import { FieldColorModeId, type FieldConfig, ThresholdsMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { RadialGauge, RadialGaugeProps } from './RadialGauge';
-import { RadialShape, RadialTextMode } from './types';
+import { RadialGauge, type RadialGaugeProps } from './RadialGauge';
+import { type RadialShape, type RadialTextMode } from './types';
 
 interface StoryProps extends RadialGaugeProps {
   value: number;

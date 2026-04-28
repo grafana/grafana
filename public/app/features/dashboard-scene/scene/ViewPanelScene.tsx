@@ -1,4 +1,10 @@
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 
 import { activateSceneObjectAndParentTree } from '../utils/utils';
 

@@ -1,8 +1,8 @@
-import { SelectableValue, store } from '@grafana/data';
+import { type SelectableValue, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
-import { SearchState } from 'app/features/search/types';
+import { type SearchState } from 'app/features/search/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
@@ -87,6 +87,14 @@ export class TrashStateManager extends SearchStateManager {
       {
         label: t('browse-dashboards.trash-state-manager.label.deleted-newest', 'Deleted (newest first)'),
         value: 'deleted-desc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-az', 'Deleted by (A–Z)'),
+        value: 'deletedby-asc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.deleted-by-za', 'Deleted by (Z–A)'),
+        value: 'deletedby-desc',
       },
     ]);
   };

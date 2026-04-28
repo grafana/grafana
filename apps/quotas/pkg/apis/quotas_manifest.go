@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "quotas",
+	AppDisplayName:   "quotas",
 	Group:            "quotas.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{

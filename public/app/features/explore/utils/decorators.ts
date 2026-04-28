@@ -1,23 +1,24 @@
 import { groupBy, mapValues } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  DataTransformerID,
   FieldType,
   getDisplayProcessor,
-  PanelData,
-  standardTransformers,
+  type PanelData,
+  standardTransformersRegistry,
   preProcessPanelData,
   DataLinkConfigOrigin,
   getRawDisplayProcessor,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
-import { config, CorrelationData } from '@grafana/runtime';
-import { getPanelPluginMetas, PanelPluginMetas } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types/explore';
+import { config, type CorrelationData } from '@grafana/runtime';
+import { getPanelPluginMetas, type PanelPluginMetas } from '@grafana/runtime/internal';
+import { type DataQuery } from '@grafana/schema';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
@@ -185,27 +186,30 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
-  const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+  const registryItem = hasOnlyTimeseries
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
-  return transformer.pipe(
-    map((frames) => {
-      for (const frame of frames) {
-        // set display processor
-        for (const field of frame.fields) {
-          field.display =
-            field.display ??
-            getDisplayProcessor({
-              field,
-              theme: config.theme2,
-              timeZone: data.request?.timezone ?? 'browser',
-            });
-        }
-      }
-
-      return { ...data, tableResult: frames };
-    })
+  return from(registryItem.transformation()).pipe(
+    mergeMap((t) =>
+      of(data.tableFrames).pipe(
+        t.operator({}, transformContext),
+        map((frames) => {
+          for (const frame of frames) {
+            for (const field of frame.fields) {
+              field.display =
+                field.display ??
+                getDisplayProcessor({
+                  field,
+                  theme: config.theme2,
+                  timeZone: data.request?.timezone ?? 'browser',
+                });
+            }
+          }
+          return { ...data, tableResult: frames };
+        })
+      )
+    )
   );
 };
 
@@ -238,27 +242,31 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
-  const transformer = hasOnlyTimeseries
-    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+  const registryItem = hasOnlyTimeseries
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
-  return transformer.pipe(
-    map((frames) => {
-      const frame = frames[0];
+  return from(registryItem.transformation()).pipe(
+    mergeMap((t) =>
+      of(tableFrames).pipe(
+        t.operator({}, transformContext),
+        map((frames) => {
+          const frame = frames[0];
 
-      // set display processor
-      for (const field of frame.fields) {
-        field.display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: config.theme2,
-            timeZone: data.request?.timezone ?? 'browser',
-          });
-      }
+          for (const field of frame.fields) {
+            field.display =
+              field.display ??
+              getDisplayProcessor({
+                field,
+                theme: config.theme2,
+                timeZone: data.request?.timezone ?? 'browser',
+              });
+          }
 
-      return { ...data, rawPrometheusResult: frame };
-    })
+          return { ...data, rawPrometheusResult: frame };
+        })
+      )
+    )
   );
 };
 
