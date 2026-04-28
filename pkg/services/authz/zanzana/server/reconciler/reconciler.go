@@ -144,7 +144,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 }
 
 // runLoop contains the main reconciliation loop, started when this instance
-// acquires leadership (or immediately for NoopElector).
+// acquires leadership (or immediately for DefaultElector).
 func (r *Reconciler) runLoop(ctx context.Context) {
 	r.metrics.isLeader.Set(1)
 	defer r.metrics.isLeader.Set(0)
