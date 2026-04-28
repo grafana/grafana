@@ -31,6 +31,13 @@ func newZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service) *
 	}
 }
 
+// resolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
+func (r *zanzanaPermissionResolver) resolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
+	subject := usr.GetUID()
+	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
+	return r.listAllWithPrefix(ctx, namespace, subject, "", "")
+}
+
 // searchUsersPermissions searches for users' permissions using Zanzana
 func (r *zanzanaPermissionResolver) searchUsersPermissions(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	// If we have a specific user ID, search for that user

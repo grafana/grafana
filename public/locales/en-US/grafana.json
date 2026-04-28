@@ -3589,9 +3589,9 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "section-silence": "Silence",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences",
-        "silence-title-with-name": "Silence {{name}}"
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4323,15 +4323,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4400,12 +4400,13 @@
       "button-label": "Select folder",
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
-      "error-title": "Error loading folders",
+      "error-title": "Error loading some folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
       "team-folders": "Team folders",
+      "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -5622,6 +5623,8 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filter": "Filter",
+        "filters-set": "Filters",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -5633,7 +5636,7 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
-        "section-variable": "Section Variables",
+        "section-filters-set": "Filters",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -5651,8 +5654,10 @@
           "title": "Row header"
         }
       },
+      "section-filters": {
+        "title": "Filters"
+      },
       "section-variables": {
-        "add-tooltip": "Add variable",
         "title": "Variables"
       },
       "variable": {
@@ -5698,6 +5703,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "change-type": "Change variable type",
         "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
@@ -6203,6 +6209,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-filters": {
+          "title": "Filters"
+        },
         "section-variables": {
           "title": "Variables"
         },
@@ -6302,6 +6311,8 @@
       "export": {
         "title": "Export"
       },
+      "filters": "Filters",
+      "open": "Filters overview",
       "outline": {
         "title": "Outline",
         "tooltip": "Content outline"
@@ -6359,6 +6370,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-filters": {
+          "title": "Filters"
         },
         "section-variables": {
           "title": "Variables"
@@ -6440,7 +6454,6 @@
         "save-library-panel": "Save library panel",
         "share": {
           "arrow": "Share",
-          "title": "Share",
           "tooltip": "Copy link"
         },
         "unlink-library-panel": "Unlink library panel"
@@ -6475,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Input data",
+      "loading": "Loading editor...",
       "output-data": "Output data",
       "title-debug-transformation": "Debug transformation"
     },
@@ -7072,6 +7086,16 @@
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
+    "filters-list": {
+      "add-filter": "Add filter",
+      "reorder-description": "Reorder filters list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7520,6 +7544,7 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
+      "advanced-options": "Advanced options",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
@@ -7527,6 +7552,11 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
+      "format": {
+        "classic": "Classic",
+        "model-label": "Model",
+        "v2-resource": "V2 Resource"
+      },
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -7544,6 +7574,9 @@
       "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "section-filters-list": {
+      "add-filter": "Add filter"
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
@@ -7640,6 +7673,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
         }
       }
     },
@@ -7904,8 +7944,7 @@
   "dashboards": {
     "filters-overview": {
       "all-filters": "All filters",
-      "filters": "Filters",
-      "open": "Open filters overview pane"
+      "open": "Filters overview"
     },
     "panel-queries": {
       "add-from-saved-queries": "Add from saved queries"
@@ -7968,6 +8007,15 @@
     },
     "empty-state": {
       "message": "No data sources found"
+    },
+    "list": {
+      "label": "Data sources"
+    },
+    "run-advisor-checks-button": {
+      "label": "Enable Advisor checks",
+      "running": "Running checks",
+      "success": "Advisor checks created successfully. Go to Administration > Advisor for more details.",
+      "tooltip": "Advisor checks helps you find issues with your data sources and plugins"
     }
   },
   "datasources": {
@@ -8188,6 +8236,9 @@
       "label-state-name": "State name"
     }
   },
+  "diff-viewer": {
+    "loading": "Loading diff..."
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
@@ -8219,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "Folder",
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
@@ -8605,6 +8657,7 @@
         "copy-link": "Copy link to log line",
         "copy-to-clipboard": "Copy to Clipboard",
         "inspect-value": "Inspect value",
+        "show-details": "Show details",
         "view-log-line": "View log line"
       }
     },
@@ -9770,6 +9823,7 @@
         },
         "length": {
           "formats": {
+            "name-centimeter": "centimeter (cm)",
             "name-feet": "feet (ft)",
             "name-inch": "inch (in)",
             "name-kilometer": "kilometer (km)",
@@ -10067,6 +10121,12 @@
     },
     "cascader": {
       "clear-button": "Clear selection"
+    },
+    "code-mirror": {
+      "error-label": "CodeMirror editor failed to load",
+      "language-load-failed": "Syntax highlighting failed to load",
+      "language-load-failed-description": "The editor will continue without language-specific features.",
+      "loading-placeholder": "Loading editor"
     },
     "color-picker": {
       "input-label": "RGBA value"
@@ -10413,6 +10473,7 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "go-back": "Go back",
       "hide": "Hide",
       "show": "Show",
       "undock": "Undock"
@@ -10717,6 +10778,7 @@
       "description": "Description",
       "keys": "Keys"
     },
+    "shortcuts-aria-label": "List of keyboard shortcuts",
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -11072,6 +11134,12 @@
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
     }
   },
   "link": {
@@ -11162,6 +11230,7 @@
       "label-numbers": "Numbers",
       "label-signature": "Signature"
     },
+    "description-allow-download": "When controls are enabled, show an option to download the logs on display.",
     "description-enable-field-selector": "Experimental. Show a component to manage the displayed fields from the logs.",
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines.",
@@ -11271,6 +11340,8 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
+      "inline-no-scrolls": "Switch to expanded view",
+      "inline-with-scrolls": "Switch to condensed view",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -11457,6 +11528,7 @@
         "common-labels": "Common labels:"
       }
     },
+    "name-allow-download": "Display download control",
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
@@ -11519,13 +11591,13 @@
   "logstable": {
     "category-table": "Logs Table",
     "description-show-controls": "Display table controls",
+    "enable-log-details": {
+      "description": "When enabled, shows log details for each row.",
+      "name": "Enable log details"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
-    },
-    "show-inspect-button": {
-      "description": "Enables/disables the log line inspect button in the first column of each row",
-      "name": "Show inspect button"
     }
   },
   "manage-dashbaords": {
@@ -11845,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All",
-      "title-filtered": "All (filtered)"
+      "title-deselect": "Deselect all",
+      "title-deselect-filtered": "Deselect all (filtered)",
+      "title-select": "Select all",
+      "title-select-filtered": "Select all (filtered)"
     },
     "clear": {
       "title": "Clear all"
@@ -12244,7 +12318,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "From template"
+      "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -12447,7 +12521,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Edit title"
+      "cancel-tooltip": "Cancel",
+      "edit-tooltip": "Edit title",
+      "error": "An unknown error occurred",
+      "label": "Name",
+      "placeholder": "Name",
+      "required": "Please enter a title",
+      "save-tooltip": "Save"
     }
   },
   "panel": {
@@ -12935,9 +13015,7 @@
       "update-available": "Update available!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
       "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
-      "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
     "plugins-errors-info": {
@@ -13085,6 +13163,7 @@
       "token-user-description": "The username that will be used to access the repository with the API token",
       "token-user-required": "Username is required",
       "url-description": "The Bitbucket repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)",
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
@@ -14038,7 +14117,6 @@
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
-      "inspector": "Query inspector",
       "more-actions": "More {{type}} actions",
       "remove": "Remove {{type}}",
       "remove-transformation-filter": "Remove filter",
@@ -14050,6 +14128,27 @@
     "alerts": {
       "no-alerts": "No alert rules for this panel",
       "no-alerts-description": "Create an alert rule to get notified when your data meets certain conditions."
+    },
+    "bulk-actions": {
+      "change-datasource": "Change data source for selected queries",
+      "clear-selection": "Clear selection",
+      "datasource": "Data source",
+      "delete": "Delete",
+      "delete-confirm-body": "This action cannot be undone.",
+      "delete-confirm-title_one": "Delete {{count}} item?",
+      "delete-confirm-title_other": "Delete {{count}} items?",
+      "delete-tooltip": "Delete selected",
+      "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
+      "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
+      "disable-all": "Disable all",
+      "disable-all-tooltip": "Disable all selected",
+      "enable-all": "Enable all",
+      "enable-all-tooltip": "Enable all selected",
+      "hide": "Hide",
+      "hide-all-tooltip": "Hide all selected",
+      "show": "Show",
+      "show-all-tooltip": "Show all selected",
+      "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
       "body-query": "Are you sure you want to delete this query?",
@@ -14087,6 +14186,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
       "label": {
         "interval": "Interval",
         "max-data-points": "Max data points",
@@ -14097,6 +14197,7 @@
       "placeholder": {
         "no-limit": "No limit"
       },
+      "query-inspector": "Query inspector",
       "query-options": "Query Options"
     },
     "header": {
@@ -14699,6 +14800,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "Error loading preferences",
+      "update-preferences": "Error updating preferences"
+    },
     "fields": {
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
@@ -15409,6 +15514,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
+        "label-accessible": "Accessible",
         "label-dash": "Dash",
         "label-dots": "Dots",
         "label-solid": "Solid"
@@ -15867,6 +15973,7 @@
           "group-by": "Group by"
         }
       },
+      "placeholder-calculations": "Select calculation(s)",
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
@@ -15878,6 +15985,16 @@
         "group-by": "Group by"
       },
       "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "Select matcher type",
+      "aria-label-operation": "Select operation",
+      "aria-label-remove-rule": "Remove rule",
+      "button-add-rule": "Add rule",
+      "label-calculations": "Calculation(s)",
+      "label-keep-nested-field": "Keep nested field(s)",
+      "placeholder": "Select operation",
+      "tooltip-keep-nested-field": "When enabled, the raw field values are also retained in the nested sub-table alongside the aggregated column."
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15901,6 +16018,9 @@
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found."
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16236,6 +16356,9 @@
       "label-time-field": "Time field",
       "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series.",
       "tooltip-time-field": "The time field that will be used for the time series. If not selected the first found will be used."
+    },
+    "transformation-editor": {
+      "loading": "Loading editor..."
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "First field name",

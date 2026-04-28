@@ -19,8 +19,8 @@ func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
 
 	rc := &RepositoryController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-drain",
 			},
 		),
@@ -29,14 +29,14 @@ func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(item *queueItem) error {
+	rc.processFn = func(key string) error {
 		close(processingStarted)
 		<-processCh
 		processed.Store(true)
 		return nil
 	}
 
-	rc.queue.Add(&queueItem{key: "test/repo"})
+	rc.queue.Add("test/repo")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
@@ -76,8 +76,8 @@ func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 
 	rc := &RepositoryController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-drain-timeout",
 			},
 		),
@@ -87,12 +87,12 @@ func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 	}
 
 	// processFn blocks forever to simulate a stuck reconciliation
-	rc.processFn = func(item *queueItem) error {
+	rc.processFn = func(key string) error {
 		close(processingStarted)
 		select {}
 	}
 
-	rc.queue.Add(&queueItem{key: "test/stuck"})
+	rc.queue.Add("test/stuck")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
@@ -123,8 +123,8 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 
 	rc := &RepositoryController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-shutdown-ordering",
 			},
 		),
@@ -133,13 +133,13 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(item *queueItem) error {
+	rc.processFn = func(key string) error {
 		close(processingStarted)
 		<-processCh
 		return nil
 	}
 
-	rc.queue.Add(&queueItem{key: "test/ordering"})
+	rc.queue.Add("test/ordering")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})

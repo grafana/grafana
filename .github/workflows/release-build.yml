@@ -282,7 +282,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -379,7 +379,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -411,6 +411,28 @@ jobs:
           name: artifacts-deb-rpm-${{ matrix.name }}
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
           retention-days: 1
+
+  verify-rpm-stig:
+    name: verify rpm stig (linux-amd64)
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-deb-rpm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-deb-rpm-linux-amd64
+          path: dist
+      - name: Verify RPM permissions (DISA-STIG)
+        run: |
+          for PKG in dist/*.rpm; do break; done
+          bash scripts/verify-pkg-stig.sh "$PKG"
 
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
@@ -478,7 +500,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
@@ -577,7 +599,7 @@ jobs:
           set -euo pipefail
           for f in dist/*.ubuntu.docker.tar.gz; do
             [ -e "$f" ] || continue
-            sha256sum "$f" > "${f}.sha256"
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
           done
       - name: Write artifact list
         run: |

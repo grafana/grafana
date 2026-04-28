@@ -134,6 +134,8 @@ var (
 	ErrLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 	// ErrLibraryElementProvisionedFolder indicates that a library element cannot be created on a provisioned folder.
 	ErrLibraryElementProvisionedFolder = errors.New("resource type not supported in repository-managed folders")
+	// ErrLibraryElementInsufficientPermissions is returned when the caller lacks permission to perform a library element operation in a folder.
+	ErrLibraryElementInsufficientPermissions = errors.New("insufficient permissions for library element operation")
 )
 
 // Commands
@@ -205,6 +207,10 @@ type SearchLibraryElementsQuery struct {
 	// Deprecated: use FolderFilterUIDs instead
 	FolderFilter     string
 	FolderFilterUIDs string
+	// SkipFolderTreeForAdmin skips fetching the folder tree when the caller is admin.
+	// Admin can see all folders, so we avoid listing them.
+	// When set, Meta.FolderName will be empty in the results.
+	SkipFolderTreeForAdmin bool
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.

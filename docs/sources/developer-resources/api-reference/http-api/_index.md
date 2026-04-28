@@ -31,8 +31,6 @@ If you need to manage or access other resources from your [Grafana Cloud Stack](
 
 Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning. To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
-Note that legacy `/api` endpoints are not being disabled or removed, they remain fully accessible and will continue to work. However, `/api` routes will no longer be updated and **will be removed in a future major release.** For a list of the legacy APIs refer to [Legacy Grafana HTTP API ](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/).
-
 These are the available new generation APIs:
 
 - [Dashboards API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/)

@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Inactividad máxima automática",
-        "content-auto-max-idle": "",
+        "content-auto-max-idle": "Si este ajuste está habilitado, establece automáticamente el número de <i>Conexiones inactivas máximas</i> en el mismo valor que <i>Conexiones abiertas máximas</i>. Si no se establece el número de conexiones abiertas máximas, se establecerá en el valor predeterminado ({{defaultMaxIdle}}).",
         "content-max-idle": "El número máximo de conexiones en el grupo de conexiones inactivas. Si <i>Conexiones abiertas máximas</i> es mayor que «0» pero menor que <i>Conexiones inactivas máximas</i>, entonces el valor de <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en «0», no se conservarán las conexiones inactivas.",
         "content-max-lifetime": "La cantidad máxima de tiempo en segundos que se puede reutilizar una conexión. Si se establece en 0, las conexiones se reutilizan para siempre.",
-        "content-max-open": "",
+        "content-max-open": "El número máximo de conexiones abiertas a la base de datos. Si <i>Conexiones inactivas máximas</i> es mayor que 0 y <i>Conexiones abiertas máximas</i> es menor que <i>Conexiones inactivas máximas</i>, entonces el valor de <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en «0», no habrá límite en el número de conexiones abiertas.",
         "max-idle": "Máx. inactivas",
         "max-lifetime": "Vida útil máxima",
         "max-open": "Máx. abiertas",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Tu consulta no es válida. A continuación podrás obtener más información. <br/>En todo caso, puedes ejecutar esta consulta.",
         "editor-modes": {
           "label-builder": "Constructor",
           "label-code": "Código"

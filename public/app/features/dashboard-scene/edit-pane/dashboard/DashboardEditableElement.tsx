@@ -1,7 +1,8 @@
 import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -14,10 +15,12 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
+import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
+import { AddFilterButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
@@ -50,16 +53,25 @@ function useEditPaneOptions(
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
+  const filtersCategory = useFiltersCategory(dashboard);
   const variablesCategory = useVariablesCategory(dashboard);
   const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
   const linksCategory = useLinksCategory(dashboard);
 
-  return [dashboardOptions, ...layoutCategory, ...variablesCategory, ...annotationsCategory, ...linksCategory];
+  return [
+    dashboardOptions,
+    ...layoutCategory,
+    ...filtersCategory,
+    ...variablesCategory,
+    ...annotationsCategory,
+    ...linksCategory,
+  ];
 }
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   private _linksSet?: DashboardLinksSet;
+  private _filtersSet?: DashboardFiltersSet;
 
   public constructor(private dashboard: DashboardScene) {}
 
@@ -78,12 +90,20 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return this._linksSet;
   }
 
+  private getFiltersSet(): DashboardFiltersSet {
+    if (!this._filtersSet) {
+      this._filtersSet = new DashboardFiltersSet({ dashboardRef: this.dashboard.getRef() });
+    }
+    return this._filtersSet;
+  }
+
   public getOutlineChildren(isEditing: boolean): SceneObject[] {
     const { $variables, body } = this.dashboard.state;
     if (!isEditing || !$variables) {
       return body.getOutlineChildren();
     }
     return [
+      ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
       $variables,
       dashboardSceneGraph.getDataLayers(this.dashboard),
       this.getLinksSet(),
@@ -109,6 +129,48 @@ export class DashboardEditableElement implements EditableDashboardElement {
   }
 }
 
+function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+  const { $variables } = dashboard.useState();
+  const filterListId = useId();
+  const addFilterButtonId = useId();
+
+  return useMemo(() => {
+    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
+      return [];
+    }
+
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.use-filters-category.category.title.filters', 'Filters'),
+      id: 'dashboard-filters',
+    });
+
+    const hasFilters =
+      $variables instanceof SceneVariableSet && $variables.state.variables.some(sceneUtils.isAdHocVariable);
+
+    if (hasFilters) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: filterListId,
+          skipField: true,
+          render: () => <DashboardFiltersList variableSet={$variables} />,
+        })
+      );
+    }
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: addFilterButtonId,
+        skipField: true,
+        render: () => <AddFilterButton dashboard={dashboard} />,
+      })
+    );
+
+    return [category];
+  }, [$variables, addFilterButtonId, filterListId, dashboard]);
+}
+
 function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { $variables } = dashboard.useState();
   const variableListId = useId();
@@ -121,14 +183,20 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
     });
 
     if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: variableListId,
-          skipField: true,
-          render: () => <DashboardVariablesList variableSet={$variables} />,
-        })
-      );
+      const hasVariables = config.featureToggles.dashboardUnifiedDrilldownControls
+        ? $variables.state.variables.some((v) => !sceneUtils.isAdHocVariable(v))
+        : true;
+
+      if (hasVariables) {
+        category.addItem(
+          new OptionsPaneItemDescriptor({
+            title: '',
+            id: variableListId,
+            skipField: true,
+            render: () => <DashboardVariablesList variableSet={$variables} />,
+          })
+        );
+      }
     }
 
     category.addItem(

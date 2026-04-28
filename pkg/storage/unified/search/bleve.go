@@ -50,8 +50,9 @@ const (
 
 // Keys used to store internal data in index.
 const (
-	internalRVKey        = "rv"         // Encoded as big-endian int64
-	internalBuildInfoKey = "build_info" // Encoded as JSON of buildInfo struct
+	internalRVKey                    = "rv"                      // Encoded as big-endian int64
+	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
+	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
@@ -85,6 +86,39 @@ type BleveOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
+
+	// Snapshot configures remote index snapshot download at build time.
+	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
+	Snapshot SnapshotOptions
+}
+
+// SnapshotOptions configures remote index snapshot handling in BuildIndex and
+// background upload scheduling.
+type SnapshotOptions struct {
+	// Store is the remote index store. When nil, the snapshot feature is disabled
+	// and no remote download/upload is attempted.
+	Store RemoteIndexStore
+
+	// MinDocCount is the minimum document count at which a remote snapshot download/upload is attempted.
+	// Must be >= FileThreshold to be meaningful; smaller resources are built in-process.
+	MinDocCount int64
+
+	// MaxIndexAge is the maximum age of a remote snapshot that can be downloaded.
+	// Older snapshots are skipped (hard filter).
+	MaxIndexAge time.Duration
+
+	// MinBuildVersion, if non-nil, is the preferred lower bound on the Grafana
+	// build version of a remote snapshot. Snapshots with a lower version are
+	// considered only if no snapshot at or above this version is available.
+	MinBuildVersion *semver.Version
+
+	// UploadInterval is the minimum time between consecutive successful uploads
+	// for the same resource.
+	UploadInterval time.Duration
+
+	// MinDocChanges is the minimum resource version delta required before a new
+	// upload is attempted after a previous successful upload.
+	MinDocChanges int
 }
 
 type bleveBackend struct {
@@ -101,8 +135,15 @@ type bleveBackend struct {
 
 	selectableFields map[string][]string
 
+	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
+	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
+	runningBuildVersion *semver.Version
+
 	bgTasksCancel func()
 	bgTasksWg     sync.WaitGroup
+
+	uploadTrackingMu sync.Mutex
+	lastUploadTime   map[resource.NamespacedResource]time.Time
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -123,12 +164,21 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
+	var runningBuildVersion *semver.Version
 	if opts.BuildVersion != "" {
 		// Don't allow storing invalid versions to the index.
-		_, err := semver.NewVersion(opts.BuildVersion)
+		v, err := semver.NewVersion(opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse build version %s: %w", opts.BuildVersion, err)
 		}
+		runningBuildVersion = v
+	}
+
+	// Snapshot selection compares against runningBuildVersion, so we require it
+	// to be set when the feature is enabled. This keeps the snapshot code free
+	// of nil checks.
+	if opts.Snapshot.Store != nil && runningBuildVersion == nil {
+		return nil, fmt.Errorf("bleve backend requires non-empty BuildVersion when snapshot store is configured")
 	}
 
 	l := opts.Logger
@@ -143,12 +193,14 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be := &bleveBackend{
-		log:              l,
-		cache:            map[resource.NamespacedResource]*bleveIndex{},
-		opts:             opts,
-		ownsIndexFn:      ownFn,
-		indexMetrics:     indexMetrics,
-		selectableFields: opts.SelectableFieldsForKinds,
+		log:                 l,
+		cache:               map[resource.NamespacedResource]*bleveIndex{},
+		opts:                opts,
+		ownsIndexFn:         ownFn,
+		indexMetrics:        indexMetrics,
+		selectableFields:    opts.SelectableFieldsForKinds,
+		runningBuildVersion: runningBuildVersion,
+		lastUploadTime:      map[resource.NamespacedResource]time.Time{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -262,14 +314,65 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	}
 
 	for key, idx := range unowned {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "unowned", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
 
 	for key, idx := range expired {
+		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
+}
+
+func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveIndex, now time.Time) (bool, error) {
+	docCount, err := idx.index.DocCount()
+	if err != nil {
+		return false, fmt.Errorf("reading document count for %v: %w", key, err)
+	}
+	if int64(docCount) < b.opts.Snapshot.MinDocCount {
+		return false, nil
+	}
+
+	lastUploadTime, ok := b.getUploadTracking(key)
+	if !ok {
+		return true, nil
+	}
+	if b.opts.Snapshot.UploadInterval > 0 && now.Sub(lastUploadTime) < b.opts.Snapshot.UploadInterval {
+		return false, nil
+	}
+
+	mutationCount, err := getSnapshotMutationCount(idx.index)
+	if err != nil {
+		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
+	}
+	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	b.lastUploadTime[key] = uploadedAt
+}
+
+func (b *bleveBackend) getUploadTracking(key resource.NamespacedResource) (time.Time, bool) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	t, ok := b.lastUploadTime[key]
+	if !ok {
+		return time.Time{}, false
+	}
+	return t, true
+}
+
+func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
+	b.uploadTrackingMu.Lock()
+	defer b.uploadTrackingMu.Unlock()
+	delete(b.lastUploadTime, key)
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -454,6 +557,17 @@ func (b *bleveBackend) BuildIndex(
 					}
 				}
 			}
+
+			// No valid local index — if a remote snapshot store is configured and the
+			// index is large enough to justify a round-trip, try downloading one.
+			if index == nil && b.opts.Snapshot.Store != nil && size >= b.opts.Snapshot.MinDocCount {
+				dlIdx, dlName, dlRV, dlErr := b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logWithDetails)
+				if dlErr != nil {
+					logWithDetails.Warn("Failed to download remote snapshot, will build from scratch", "err", dlErr)
+				} else if dlIdx != nil {
+					index, fileIndexName, indexRV = dlIdx, dlName, dlRV
+				}
+			}
 		}
 
 		if index != nil {
@@ -581,7 +695,13 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
-	return filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
+	return filepath.Join(b.opts.Root, resourceSubPath(key))
+}
+
+// resourceSubPath returns the namespaced on-disk/object-store path for a resource,
+// for example: default/dashboards.dashboard.grafana.app
+func resourceSubPath(key resource.NamespacedResource) string {
+	return filepath.Join(cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 }
 
 func cleanFileSegment(input string) string {
@@ -711,6 +831,7 @@ func (b *bleveBackend) closeAllIndexes() {
 	defer b.cacheMx.Unlock()
 
 	for key, idx := range b.cache {
+		b.clearUploadTracking(key)
 		if err := idx.stopUpdaterAndCloseIndex(); err != nil {
 			b.log.Error("Failed to close index", "err", err)
 		}
@@ -772,6 +893,10 @@ type bleveIndex struct {
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
+
+	// Guards read-modify-write updates of the persisted snapshot mutation count
+	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
+	snapshotMutationMu sync.Mutex
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -828,7 +953,10 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		}
 	}
 
-	return b.index.Batch(batch)
+	if err := b.index.Batch(batch); err != nil {
+		return err
+	}
+	return b.addSnapshotMutationCount(int64(len(req.Items)))
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -850,6 +978,34 @@ func setRV(index bleve.Index, rv int64) error {
 	binary.BigEndian.PutUint64(buf, uint64(rv))
 
 	return index.SetInternal([]byte(internalRVKey), buf)
+}
+
+func setSnapshotMutationCount(index bleve.Index, count int64) error {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(count))
+	return index.SetInternal([]byte(internalSnapshotMutationCountKey), buf)
+}
+
+func getSnapshotMutationCount(index bleve.Index) (int64, error) {
+	raw, err := index.GetInternal([]byte(internalSnapshotMutationCountKey))
+	if err != nil {
+		return 0, err
+	}
+	if len(raw) < 8 {
+		return 0, nil
+	}
+	return int64(binary.BigEndian.Uint64(raw)), nil
+}
+
+func (b *bleveIndex) addSnapshotMutationCount(delta int64) error {
+	b.snapshotMutationMu.Lock()
+	defer b.snapshotMutationMu.Unlock()
+
+	current, err := getSnapshotMutationCount(b.index)
+	if err != nil {
+		return err
+	}
+	return setSnapshotMutationCount(b.index, current+delta)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
@@ -1091,22 +1247,15 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected
+	// Show all fields when nothing is selected.
+	// Individual field names tell bleve which stored values to load.
+	// The sentinel triggers hitsToTable to use the curated allFields column list.
 	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
 		if err != nil {
 			return nil, err
 		}
-		if len(f) > 0 {
-			searchrequest.Fields = f
-		} else {
-			searchrequest.Fields = []string{
-				resource.SEARCH_FIELD_TITLE,
-				resource.SEARCH_FIELD_FOLDER,
-				resource.SEARCH_FIELD_SOURCE_PATH,
-				resource.SEARCH_FIELD_MANAGED_BY,
-			}
-		}
+		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
@@ -1284,9 +1433,29 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	if len(req.Query) > 1 {
 		if strings.Contains(req.Query, "*") {
-			// wildcard query is expensive - should be used with caution
-			wildcard := bleve.NewWildcardQuery(req.Query)
-			queries = append(queries, wildcard)
+			// Wildcard query is expensive, should be used with caution.
+			// When QueryFields is set, search across each named field (only Name is
+			// used; Type and Boost are ignored because bleve wildcards don't support
+			// analyzers or meaningful relevance scoring).
+			// When QueryFields is empty, default to title + IAM identity fields
+			// (email, login) for backward compatibility with older clients that
+			// don't set QueryFields.
+			disjoin := bleve.NewDisjunctionQuery()
+			if len(req.QueryFields) > 0 {
+				for _, field := range req.QueryFields {
+					addWildcardQueries(disjoin, req.Query, field.Name)
+				}
+			} else {
+				// Default: search title and IAM identity fields (email, login).
+				// IAM user search wraps queries as "*<query>*" — older clients
+				// may not set QueryFields, so we include email/login here for
+				// backward compatibility during the deployment gap.
+				// TODO: remove email and login fields once IAM only sends requests with QueryFields.
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
+			}
+			queries = append(queries, disjoin)
 		} else {
 			// When using a
 			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
@@ -1736,6 +1905,22 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	)
 }
 
+// addWildcardQueries adds wildcard queries for the given field to the disjunction.
+// When the field is "title", it adds queries for both "title" (standard-analyzed,
+// matches word-level wildcards like "hell*") and "title_phrase" (keyword-analyzed,
+// matches full-phrase wildcards like "*grafana dev overview*").
+func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field string) {
+	wq := bleve.NewWildcardQuery(pattern)
+	wq.SetField(field)
+	disjoin.AddQuery(wq)
+
+	if field == resource.SEARCH_FIELD_TITLE {
+		wPhrase := bleve.NewWildcardQuery(pattern)
+		wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+		disjoin.AddQuery(wPhrase)
+	}
+}
+
 // newQuery will create a query that will match the value or the tokens of the value
 func newQuery(key string, value string, prefix string) query.Query {
 	if value == "*" {
@@ -1743,7 +1928,9 @@ func newQuery(key string, value string, prefix string) query.Query {
 	}
 	if strings.Contains(value, "*") {
 		// wildcard query is expensive - should be used with caution
-		return bleve.NewWildcardQuery(value)
+		q := bleve.NewWildcardQuery(value)
+		q.SetField(prefix + key)
+		return q
 	}
 	delimiter, ok := hasTerms(value)
 	if slices.Contains(termFields, key) && ok {
@@ -1805,7 +1992,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 
 	fields := []*resourcepb.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
-		if name == "_all" {
+		if name == resource.SEARCH_FIELD_ALL_FIELDS {
 			fields = b.allFields
 			break
 		}
