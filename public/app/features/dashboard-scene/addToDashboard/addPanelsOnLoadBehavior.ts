@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
@@ -16,6 +17,8 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
       const gridItem = buildGridItemForPanel(panel);
       scene.addPanel(gridItem.state.body);
     }
+
+    reportInteraction('explore_to_dashboard_panel_applied', { panelCount: model.panels.length }, { silent: true });
 
     if (dto.dashboard.time) {
       const newTimeRange = new SceneTimeRange({ from: dto.dashboard.time.from, to: dto.dashboard.time.to });

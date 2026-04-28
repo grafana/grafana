@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { onInteraction, reportInteraction } from '@grafana/runtime';
 import { Modal, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
@@ -15,9 +16,28 @@ interface Props {
 
 export const AddToDashboard = ({ exploreId }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
+  const didSubmitRef = useRef(false);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const explorePaneHasQueries = !!useSelector(selectExploreItem)?.queries?.length;
-  const onClose = useCallback(() => setIsOpen(false), []);
+
+  // Track whether the form was submitted so we can distinguish
+  // close-after-submit from close-without-submit (discard).
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    didSubmitRef.current = false;
+    return onInteraction('e_2_d_submit', () => {
+      didSubmitRef.current = true;
+    });
+  }, [isOpen]);
+
+  const onClose = useCallback(() => {
+    if (!didSubmitRef.current) {
+      reportInteraction('e_2_d_discarded', {}, { silent: true });
+    }
+    setIsOpen(false);
+  }, []);
 
   const addToDashboardLabel = t('explore.add-to-dashboard', 'Add to dashboard');
 

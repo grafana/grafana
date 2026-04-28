@@ -488,6 +488,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
       appEvents.publish(new DashboardDiscardedEvent());
+      DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
       this.setState({ isEditing: false });
