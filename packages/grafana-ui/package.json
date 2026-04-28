@@ -50,6 +50,9 @@
     },
     "./utils": {
       "@grafana-app/source": "./src/utils/index.ts"
+    },
+    "./components/forms/legacy": {
+      "@grafana-app/source": "./src/components/Forms/Legacy/index.ts"
     }
   },
   "publishConfig": {

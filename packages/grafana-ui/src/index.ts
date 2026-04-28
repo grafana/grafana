@@ -4,14 +4,6 @@
  * @packageDocumentation
  */
 
-import { FormField } from './components/FormField/FormField';
-import { Input, LegacyInputStatus } from './components/Forms/Legacy/Input/Input';
-import { IndicatorsContainer } from './components/Forms/Legacy/Select/IndicatorsContainer';
-import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMessage';
-import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
-import { Switch } from './components/Forms/Legacy/Switch/Switch';
-import { SecretFormField } from './components/SecretFormField/SecretFormField';
-
 export { Icon } from './components/Icon/Icon';
 export { IconButton, type IconButtonVariant } from './components/IconButton/IconButton';
 export { ConfirmButton } from './components/ConfirmButton/ConfirmButton';
@@ -328,19 +320,6 @@ export { Divider } from './components/Divider/Divider';
 export { getDragStyles, type DragHandlePosition } from './components/DragHandle/DragHandle';
 export { useSplitter } from './components/Splitter/useSplitter';
 
-/** @deprecated Please use non-legacy versions of these components */
-const LegacyForms = {
-  SecretFormField,
-  FormField,
-  Select,
-  AsyncSelect,
-  IndicatorsContainer,
-  NoOptionsMessage,
-  Input,
-  Switch,
-};
-export { LegacyForms, LegacyInputStatus };
-
 // WIP, need renames and exports cleanup
 export { graphFieldOptions, getGraphFieldOptions } from './components/uPlot/config';
 export { UPlotConfigBuilder } from './components/uPlot/config/UPlotConfigBuilder';
@@ -367,6 +346,8 @@ export * from './options';
 export * from './slate-plugins';
 export * from './themes';
 export * from './types';
+export * from './utils';
+export * from './components/Forms/Legacy';
 
 export {
   ElementSelectionContext,
