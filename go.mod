@@ -10,7 +10,7 @@ require (
 	cloud.google.com/go/storage v1.56.0 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.19.1 // @grafana/data-sources-plugins
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
-	filippo.io/age v1.2.1 // @grafana/identity-access-team
+	filippo.io/age v1.3.1 // @grafana/identity-access-team
 	github.com/1NCE-GmbH/grpc-go-pool v0.0.0-20231117122434-2a5bb974daa2 // @grafana/grafana-search-and-storage
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0 // @grafana/identity-access-team
@@ -697,6 +697,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // @grafana/identity-access-team
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
+
+require filippo.io/hpke v0.4.0 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
