@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
@@ -32,8 +32,13 @@ import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { useHasSelection } from './state/hooks';
+import { useFlatTreeState, useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
+
+// Match the constants in DashboardsTree so the list takes its natural height.
+const DASHBOARDS_TREE_ROW_HEIGHT = 36;
+const DASHBOARDS_TREE_HEADER_HEIGHT = 36;
+const DASHBOARDS_TREE_FALLBACK_HEIGHT = 480;
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
@@ -118,6 +123,20 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [folderDTO]);
 
   const hasSelection = useHasSelection();
+  const flatTree = useFlatTreeState(folderUID);
+
+  // Match GitHub's per-directory README pattern: let the dashboards list take
+  // its natural height so the README panel below sits right after the last
+  // row instead of below a stretch of empty AutoSizer space. We still cap at
+  // ~70% of the viewport so very long folders stay scrollable.
+  const naturalListHeight =
+    !isSearching && flatTree.length > 0
+      ? DASHBOARDS_TREE_HEADER_HEIGHT + flatTree.length * DASHBOARDS_TREE_ROW_HEIGHT
+      : DASHBOARDS_TREE_FALLBACK_HEIGHT;
+  const subViewStyle: CSSProperties = {
+    height: `min(${naturalListHeight}px, 70vh)`,
+    minHeight: 'unset',
+  };
 
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
@@ -200,7 +219,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
-        <div className={styles.subView}>
+        <div className={styles.subView} style={subViewStyle}>
           <AutoSizer>
             {({ width, height }: Size) =>
               isSearching ? (
