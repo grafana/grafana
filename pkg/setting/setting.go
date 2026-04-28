@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
@@ -535,7 +537,7 @@ type Cfg struct {
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
 
-	// PluginInstallToken is the auth token for requests to the Grafana.com /plugins API.
+	// PluginInstallToken is the dedicated auth token for plugin-related requests to Grafana.com.
 	PluginInstallToken string
 
 	// Geomap base layer config
@@ -752,6 +754,16 @@ type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
 	URL     string `json:"url,omitempty"`
+}
+
+// ResolvePluginInstallToken must be called after OpenFeature is initialized.
+// It sets PluginInstallToken to the dedicated token when the pluginsDedicatedInstallToken
+// flag is enabled and install_token is configured; otherwise falls back to sso_api_token.
+func (cfg *Cfg) ResolvePluginInstallToken() {
+	if openfeature.NewDefaultClient().Boolean(context.Background(), "pluginsDedicatedInstallToken", false, openfeature.EvaluationContext{}) && cfg.PluginInstallToken != "" {
+		return
+	}
+	cfg.PluginInstallToken = cfg.GrafanaComSSOAPIToken
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1661,10 +1673,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
-	// Fall back to sso_api_token when install_token is not explicitly configured.
-	if cfg.PluginInstallToken == "" {
-		cfg.PluginInstallToken = cfg.GrafanaComSSOAPIToken
-	}
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 

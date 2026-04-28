@@ -4499,6 +4499,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsDedicatedInstallToken",
+        "resourceVersion": "1777390418301",
+        "creationTimestamp": "2026-04-28T15:33:38Z"
+      },
+      "spec": {
+        "description": "Use a dedicated auth token for Grafana.com plugin API requests and plugin installs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-04T12:55:09Z"
