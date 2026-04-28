@@ -155,6 +155,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					"access": "proxy",
 					"database": "testdb",
 					"isDefault": true,
+					"ordinal": 1,
 					"jsonData": {
 						"hello": "world"
 					},
