@@ -18,6 +18,7 @@ import { groups } from '../utils/navigation';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -194,17 +195,27 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     [group.name, group.folderUid]
   );
 
-  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+  if (isUngroupedRuleGroup(group.name)) {
+    const rule = group.rules[0];
+    if (!rule) {
+      return null;
+    }
+    return (
+      <GrafanaRuleListItem
+        rule={rule}
+        groupIdentifier={groupIdentifier}
+        namespaceName={namespaceName}
+        showLocation={false}
+      />
+    );
+  }
 
-  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
-  const groupDisplayName = isUngroupedRuleGroup(group.name)
-    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
-    : group.name;
+  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
   return (
     <ListGroup
       key={group.name}
-      name={groupDisplayName}
+      name={group.name}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
       actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
       href={detailsLink}
