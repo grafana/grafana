@@ -12,9 +12,6 @@ import {
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
-import { cmd } from '../mutation-api/cmd';
-import { createVariableKindFromSceneVariable } from '../mutation-api/commands/variableUtils';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -83,6 +80,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
   public onDelete = async (identifier: string) => {
     if (config.featureToggles.dashboardMutationApiVariablePilot) {
+      const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
+      const { cmd } = await import('../mutation-api/cmd');
       const client = new DashboardMutationClient(this.getDashboard());
       await client.execute(cmd.removeVariable({ name: identifier }));
       this.setState({ editIndex: undefined });
@@ -199,6 +198,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
         },
       };
 
+      const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
+      const { cmd } = await import('../mutation-api/cmd');
       const client = new DashboardMutationClient(this.getDashboard());
       const result = await client.execute(cmd.addVariable({ variable: defaultVariableKind }));
 
@@ -242,6 +243,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
         const variable = variables[editIndex];
         if (variable) {
           try {
+            const { createVariableKindFromSceneVariable } = await import('../mutation-api/commands/variableUtils');
+            const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
+            const { cmd } = await import('../mutation-api/cmd');
             const variableKind = createVariableKindFromSceneVariable(variable, this.getDashboard());
             const client = new DashboardMutationClient(this.getDashboard());
             await client.execute(cmd.updateVariable({ name: variable.state.name, variable: variableKind }));

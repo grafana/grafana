@@ -235,10 +235,6 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
-	// FlagDashboardMutationApiVariablePilot
-	// Routes variable editor add/update/delete through the Dashboard Mutation API instead of direct Scenes mutations
-	FlagDashboardMutationApiVariablePilot = "dashboardMutationApiVariablePilot"
-
 	// FlagSceneCsvExport
 	// Enables CSV export using scenes dashboard architecture
 	FlagSceneCsvExport = "sceneCsvExport"

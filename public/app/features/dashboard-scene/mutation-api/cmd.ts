@@ -19,7 +19,7 @@ import type { MutationRequest } from './types';
 
 // Build the type for the cmd object: one function per payload key.
 type CmdBuilders = {
-  [K in keyof typeof payloads]: (payload: z.infer<(typeof payloads)[K]>) => MutationRequest;
+  [K in keyof typeof payloads]: (payload: z.input<(typeof payloads)[K]>) => MutationRequest;
 };
 
 /**

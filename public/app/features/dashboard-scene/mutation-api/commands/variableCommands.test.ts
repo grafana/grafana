@@ -464,6 +464,9 @@ describe('Variable mutation commands', () => {
           includeAll: false,
           skipUrlSync: false,
           hide: 'dontHide',
+          current: { text: '', value: '' },
+          options: [],
+          allowCustomValue: true,
         },
       };
       const sceneVar = createSceneVariableFromVariableModel(original);
@@ -488,6 +491,9 @@ describe('Variable mutation commands', () => {
           includeAll: false,
           skipUrlSync: false,
           hide: 'dontHide',
+          current: { text: '', value: '' },
+          options: [],
+          allowCustomValue: true,
         },
       };
       const sceneVar = createSceneVariableFromVariableModel(original);

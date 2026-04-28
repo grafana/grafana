@@ -75,6 +75,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-19,dashboardDefaultLayoutSelector,GA,@grafana/dashboards-squad,false,false,true
 2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
+2026-04-28,dashboardMutationApiVariablePilot,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 2026-02-11,sceneCsvExport,GA,@grafana/dashboards-squad,false,false,false
 2025-12-17,drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
