@@ -86,9 +86,9 @@ func TestSanitizeLabelSet(t *testing.T) {
 				"test+alert": "44",
 			},
 			expectedResult: labels.New([]labels.Label{
-				labels.Label{Name: "test_alert", Value: "44"},
-				labels.Label{Name: "test_alert_ed6237", Value: "42"},
-				labels.Label{Name: "test_alert_a67b5e", Value: "43"},
+				{Name: "test_alert", Value: "44"},
+				{Name: "test_alert_ed6237", Value: "42"},
+				{Name: "test_alert_a67b5e", Value: "43"},
 			}...),
 		},
 		{
@@ -99,8 +99,8 @@ func TestSanitizeLabelSet(t *testing.T) {
 				"test+alert":       "44",
 			},
 			expectedResult: labels.New([]labels.Label{
-				labels.Label{Name: "test_alert", Value: "44"},
-				labels.Label{Name: "test_alert_ed6237", Value: "42"},
+				{Name: "test_alert", Value: "44"},
+				{Name: "test_alert_ed6237", Value: "42"},
 			}...),
 		},
 	}
