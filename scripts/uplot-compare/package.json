@@ -20,6 +20,7 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "json-diff-kit": "1.0.35",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

@@ -124,6 +124,8 @@ export function ComparePlots({
               onToggleOverlay={() => setShowOverlay((prev) => !prev)}
               renderDiffSetupEvents={renderDiffSetupEvents}
               onToggleDiffSetupEvents={() => setRenderDiffSetupEvents((prev) => !prev)}
+              expected={payload.expected}
+              actual={payload.actual}
             />
             {(acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error') && (
               <JestActions
