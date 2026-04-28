@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoLinkUrl } from './git';
+import { getRepoLinkUrl, getRepoRawFileUrl } from './git';
 
 interface RewriteOptions {
   repository: RepositoryView;
@@ -11,13 +11,17 @@ interface RewriteOptions {
 const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
 
 /**
- * Walk the rendered Markdown HTML and rewrite relative `<a href>` to absolute
- * URLs that point back to the host repository. Same-page anchors (`#…`) and
- * already-absolute URLs are left untouched.
+ * Walk the rendered Markdown HTML and rewrite relative URLs (`<a href>` and
+ * `<img src>`) to absolute URLs that point back to the host repository.
+ * Same-page anchors (`#…`) and already-absolute URLs are left untouched.
  *
- * Best-effort: if the host doesn't have a known link URL pattern (e.g. local
- * repos), the link is dropped to plain text so it doesn't render as a broken
- * relative link inside the Grafana app.
+ * Links go to the host's web view (blob/tree). Images go to the host's raw
+ * file URL so they actually render inline.
+ *
+ * Best-effort: if the host doesn't have a known URL pattern (e.g. local
+ * repos), the broken relative attribute is removed so it doesn't render as
+ * a clickable but non-functional link or a broken image with the relative
+ * path leaking into the page.
  */
 export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptions): string {
   if (typeof DOMParser === 'undefined') {
@@ -52,6 +56,33 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       // No host link pattern (e.g. local repo) — strip the broken relative
       // href so it doesn't render as a clickable but non-functional link.
       anchor.removeAttribute('href');
+    }
+  });
+
+  doc.querySelectorAll('img[src]').forEach((img) => {
+    const src = img.getAttribute('src');
+    if (!src || isAbsoluteUrl(src)) {
+      return;
+    }
+
+    const targetPath = resolveRepoRelativePath(options.baseDirInRepo, src);
+    if (!targetPath) {
+      return;
+    }
+
+    const absolute = getRepoRawFileUrl({
+      repoType: options.repository.type,
+      url: options.repository.url,
+      branch: options.repository.branch,
+      filePath: targetPath,
+    });
+
+    if (absolute) {
+      img.setAttribute('src', absolute);
+    } else {
+      // Strip a broken relative src so the alt text takes over instead of a
+      // broken-image icon pointing at the Grafana app's own URL space.
+      img.removeAttribute('src');
     }
   });
 

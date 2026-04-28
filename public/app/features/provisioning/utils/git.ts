@@ -220,6 +220,61 @@ export function getRepoLinkUrl({
   }
 }
 
+/**
+ * Build a host URL that returns the raw bytes of a file (no chrome). Used to
+ * load images embedded in a rendered README from the host repo.
+ *
+ * Per provider:
+ *   GitHub:    {url}/raw/{branch}/{path}      — redirects to raw.githubusercontent.com
+ *   GitLab:    {url}/-/raw/{branch}/{path}
+ *   Bitbucket: {url}/raw/{branch}/{path}
+ */
+export function getRepoRawFileUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+}: {
+  repoType: RepoType;
+  url: string | undefined;
+  branch?: string | undefined;
+  /** Repo-relative path to the file. */
+  filePath: string | undefined;
+}): string | undefined {
+  if (!url || !filePath) {
+    return undefined;
+  }
+
+  const effectiveBranch = branch || 'main';
+  const cleanPath = stripSlashes(filePath);
+
+  switch (repoType) {
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['raw'],
+        path: cleanPath,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['-', 'raw'],
+        path: cleanPath,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['raw'],
+        path: cleanPath,
+      });
+    default:
+      return undefined;
+  }
+}
+
 type GetRepoNewFileUrlParams = GetRepoFileUrlParams & {
   /** Optional content to prefill in the host's new-file editor. */
   template?: string;

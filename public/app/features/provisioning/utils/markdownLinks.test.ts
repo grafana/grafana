@@ -117,4 +117,63 @@ describe('rewriteRelativeMarkdownLinks', () => {
 
     expect(out).toContain('href="https://bitbucket.org/workspace/repo/src/main/docs/README.md"');
   });
+
+  describe('images', () => {
+    it('rewrites a relative image src to the host raw URL', () => {
+      const html = `<p><img src="./diagram.png" alt="diagram"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(
+        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/RnD/diagram.png"'
+      );
+    });
+
+    it('rewrites parent-relative image paths', () => {
+      const html = `<p><img src="../assets/logo.svg"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(
+        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/assets/logo.svg"'
+      );
+    });
+
+    it('uses the GitLab /-/raw/ segment for images', () => {
+      const html = `<p><img src="./screenshot.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: { ...githubRepo, type: 'gitlab', url: 'https://gitlab.com/group/repo' },
+        baseDirInRepo: 'docs',
+      });
+
+      expect(out).toContain('src="https://gitlab.com/group/repo/-/raw/main/docs/screenshot.png"');
+    });
+
+    it('uses the Bitbucket /raw/ segment for images', () => {
+      const html = `<p><img src="./screenshot.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: { ...githubRepo, type: 'bitbucket', url: 'https://bitbucket.org/workspace/repo' },
+        baseDirInRepo: 'docs',
+      });
+
+      expect(out).toContain('src="https://bitbucket.org/workspace/repo/raw/main/docs/screenshot.png"');
+    });
+
+    it('leaves absolute image URLs alone', () => {
+      const html = `<p><img src="https://example.com/cdn.png"> <img src="//cdn.example/logo.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain('src="https://example.com/cdn.png"');
+      expect(out).toContain('src="//cdn.example/logo.png"');
+    });
+
+    it('strips a broken relative src for repos without a raw URL pattern', () => {
+      const html = `<p><img src="./img.png" alt="fallback"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: { ...githubRepo, type: 'local', url: '/data/repo' },
+        baseDirInRepo: 'team-a',
+      });
+
+      expect(out).not.toMatch(/src="\.\/img\.png"/);
+      expect(out).toContain('alt="fallback"');
+    });
+  });
 });
