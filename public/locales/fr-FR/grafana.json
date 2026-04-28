@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Données d’entrée",
+      "loading": "",
       "output-data": "Données sortantes",
       "title-debug-transformation": "Déboguer la transformation"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Rechercher"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valeur RVBA"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Fermer",
       "dock": "Ancrer",
+      "go-back": "",
       "hide": "Masquer",
       "show": "Afficher",
       "undock": "Désancrer"
@@ -11908,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tout",
-      "title-filtered": "Tout (filtré)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tout effacer"
@@ -16008,6 +16019,9 @@
         "grouping-to-matrix": "Regrouper en matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calculez un histogramme à partir des données en entrée."
@@ -16342,6 +16356,9 @@
       "label-time-field": "Champ horaire",
       "tooltip-statistic-should-calculated-series": "La statistique qui doit être calculée pour cette série chronologique.",
       "tooltip-time-field": "Le champ temporel qui sera utilisé pour la série chronologique. S’il n’est pas sélectionné, le premier trouvé sera utilisé."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nom du premier champ",
