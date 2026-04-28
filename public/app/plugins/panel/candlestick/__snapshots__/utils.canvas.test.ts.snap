@@ -1045,7 +1045,7 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "path": [
         {
           "props": {
-            "height": 84,
+            "height": 83,
             "width": 37,
             "x": 82,
             "y": 72,

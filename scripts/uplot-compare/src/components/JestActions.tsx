@@ -36,7 +36,7 @@ export function JestActions(props: {
           }
           onClick={props.onAcceptBaseline}
         >
-          {props.kind === 'running' && props.updateSnapshot ? 'Running jest -u…' : 'Accept baseline (jest -u)'}
+          {props.kind === 'running' && props.updateSnapshot ? 'Running jest -u…' : 'Accept actual (jest -u)'}
         </button>
       </div>
       {props.kind === 'success' && props.updateSnapshot ? (

@@ -121,7 +121,11 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
 
         const child = spawn(yarnBin, args, {
           cwd: repoRoot,
-          env: process.env,
+          env: {
+            ...process.env,
+            // Lets `toMatchUPlotSnapshot` rewrite compare payload JSON even when the assertion passes.
+            GEN_CANVAS_OUTPUT_ON_PASS: '1',
+          },
           stdio: ['ignore', 'pipe', 'pipe'],
         });
 

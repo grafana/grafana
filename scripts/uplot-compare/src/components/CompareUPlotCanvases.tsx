@@ -112,30 +112,35 @@ export const CompareUPlotCanvases = ({
     }
   }, []);
 
-  const applyPayload = React.useCallback((raw: ResolvedPayload, sourceLabel: string) => {
-    if (!isUPlotComparePayload(raw)) {
+  const applyPayload = React.useCallback(
+    (raw: ResolvedPayload | UPlotComparePayload, sourceLabel: string, options?: { resetJestActions?: boolean }) => {
+      if (!isUPlotComparePayload(raw)) {
+        setView({
+          kind: 'blocked',
+          error: `${sourceLabel}: not a valid uplot snapshot payload`,
+          hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
+        });
+        return;
+      }
+      if (options?.resetJestActions !== false) {
+        setAcceptBaselineState({ kind: 'idle' });
+      }
       setView({
-        kind: 'blocked',
-        error: `${sourceLabel}: not a valid uplot snapshot payload`,
-        hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
-      });
-      return;
-    }
-    setAcceptBaselineState({ kind: 'idle' });
-    setView({
-      kind: 'ready',
+        kind: 'ready',
 
-      payload: {
-        testName: raw.testName,
-        testPath: typeof raw.testPath === 'string' ? raw.testPath : undefined,
-        expected: raw.expected,
-        actual: raw.actual,
-        uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
-        ...readPayloadDimensions(raw),
-        snapshotAssertionPassed: raw.snapshotAssertionPassed,
-      },
-    });
-  }, []);
+        payload: {
+          testName: raw.testName,
+          testPath: typeof raw.testPath === 'string' ? raw.testPath : undefined,
+          expected: raw.expected,
+          actual: raw.actual,
+          uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+          ...readPayloadDimensions(raw),
+          snapshotAssertionPassed: raw.snapshotAssertionPassed,
+        },
+      });
+    },
+    []
+  );
 
   const loadPayloadFromPublicFile = React.useCallback(
     async (basename: string, historyMode?: 'push' | 'replace') => {
@@ -174,64 +179,95 @@ export const CompareUPlotCanvases = ({
     [applyPayload, navigate]
   );
 
-  const runJestForPayload = React.useCallback(async (payload: ResolvedPayload, updateSnapshot: boolean) => {
-    if (!payload.testPath) {
+  const reloadPayloadAfterJest = React.useCallback(async () => {
+    const basename = selectedFile ?? new URLSearchParams(window.location.search).get('file');
+    if (!basename || !isSafePayloadBasename(basename)) {
       return;
     }
-    setAcceptBaselineState({ kind: 'running', updateSnapshot });
     try {
-      const res = await fetch('/__uplot-compare/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          testPath: payload.testPath,
-          testName: payload.testName,
-          updateSnapshot,
-        }),
+      const res = await fetch(`${payloadFetchUrl(basename)}?_=${encodeURIComponent(String(Date.now()))}`, {
+        cache: 'no-store',
       });
-      const data = parseAcceptBaselineResponse(await res.json());
-
       if (!res.ok) {
+        return;
+      }
+      const rawUnknown: unknown = await res.json();
+      if (!isUPlotComparePayload(rawUnknown)) {
+        return;
+      }
+      const assertionPassed = readSnapshotAssertionPassed(rawUnknown);
+      if (typeof assertionPassed === 'boolean') {
+        setFileSnapshotAssertionPassed((prev) => ({ ...prev, [basename]: assertionPassed }));
+      }
+      applyPayload(rawUnknown, basename, { resetJestActions: false });
+    } catch {
+      // Ignore reload failures (missing file or invalid JSON).
+    }
+  }, [applyPayload, selectedFile]);
+
+  const runJestForPayload = React.useCallback(
+    async (payload: ResolvedPayload, updateSnapshot: boolean) => {
+      if (!payload.testPath) {
+        return;
+      }
+      setAcceptBaselineState({ kind: 'running', updateSnapshot });
+      try {
+        const res = await fetch('/__uplot-compare/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            testPath: payload.testPath,
+            testName: payload.testName,
+            updateSnapshot,
+          }),
+        });
+        const data = parseAcceptBaselineResponse(await res.json());
+
+        if (!res.ok) {
+          setAcceptBaselineState({
+            kind: 'error',
+            updateSnapshot,
+            message: data.error ?? `Request failed (${res.status})`,
+            stdout: data.stdout ?? '',
+            stderr: data.stderr ?? '',
+            command: data.command,
+          });
+          return;
+        }
+
+        if (data.ok && data.exitCode === 0) {
+          setAcceptBaselineState({
+            kind: 'success',
+            updateSnapshot,
+            stdout: data.stdout ?? '',
+            stderr: data.stderr ?? '',
+            command: data.command ?? '',
+          });
+          return;
+        }
+
         setAcceptBaselineState({
           kind: 'error',
           updateSnapshot,
-          message: data.error ?? `Request failed (${res.status})`,
+          message: data.error ?? `jest exited with code ${String(data.exitCode)}`,
           stdout: data.stdout ?? '',
           stderr: data.stderr ?? '',
           command: data.command,
         });
-        return;
-      }
-
-      if (data.ok && data.exitCode === 0) {
+      } catch (e) {
         setAcceptBaselineState({
-          kind: 'success',
+          kind: 'error',
           updateSnapshot,
-          stdout: data.stdout ?? '',
-          stderr: data.stderr ?? '',
-          command: data.command ?? '',
+          message: e instanceof Error ? e.message : String(e),
+          stdout: '',
+          stderr: '',
         });
-        return;
+      } finally {
+        await reloadPayloadAfterJest();
       }
-
-      setAcceptBaselineState({
-        kind: 'error',
-        updateSnapshot,
-        message: data.error ?? `jest exited with code ${String(data.exitCode)}`,
-        stdout: data.stdout ?? '',
-        stderr: data.stderr ?? '',
-        command: data.command,
-      });
-    } catch (e) {
-      setAcceptBaselineState({
-        kind: 'error',
-        updateSnapshot,
-        message: e instanceof Error ? e.message : String(e),
-        stdout: '',
-        stderr: '',
-      });
-    }
-  }, []);
+    },
+    [reloadPayloadAfterJest]
+  );
 
   const loadFromLocation = React.useCallback(() => {
     const run = async () => {
