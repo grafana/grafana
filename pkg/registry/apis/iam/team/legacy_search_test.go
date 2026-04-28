@@ -54,7 +54,7 @@ func TestLegacyTeamSearchClient_Search(t *testing.T) {
 		require.Len(t, resp.Results.Rows, 1)
 		require.Len(t, resp.Results.Columns, 5)
 		require.Equal(t, "default", resp.Results.Rows[0].Key.Namespace)
-		require.Equal(t, "iam.grafana.com", resp.Results.Rows[0].Key.Group)
+		require.Equal(t, "iam.grafana.app", resp.Results.Rows[0].Key.Group)
 		require.Equal(t, "teams", resp.Results.Rows[0].Key.Resource)
 		require.Equal(t, "testTeamUID", resp.Results.Rows[0].Key.Name)
 		require.Equal(t, "testTeamUID", string(resp.Results.Rows[0].Cells[0]))

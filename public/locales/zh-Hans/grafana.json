@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "输入数据",
+      "loading": "",
       "output-data": "输出数据",
       "title-debug-transformation": "调试转换"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜索"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "清除选择"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "关闭",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隐藏",
       "show": "显示",
       "undock": "取消停靠"
@@ -11842,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已筛选）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -15915,6 +15926,9 @@
         "grouping-to-matrix": "分组到矩阵"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "从输入数据计算直方图。"
@@ -16249,6 +16263,9 @@
       "label-time-field": "时间字段",
       "tooltip-statistic-should-calculated-series": "应该为此时间序列计算的统计信息。",
       "tooltip-time-field": "将用于时间序列的时间字段。如果未选择，将使用第一个找到的字段。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一个字段名称",
