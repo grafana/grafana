@@ -45,7 +45,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
-import { isPluginProvidedGroup, isProvisionedRuleGroup } from '../utils/rules';
+import { getRulerGroupReadOnlyStatus } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 import { evaluateEveryValidationOptions } from './validation';
@@ -153,7 +153,29 @@ function GroupEditPage() {
           </Alert>
         )}
       </>
-      {rulerGroup && isPluginProvidedGroup(rulerGroup) && (
+      {rulerGroup && <GroupEditBody rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
+      {!rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
+    </AlertingPageWrapper>
+  );
+}
+
+export default withErrorBoundary(GroupEditPage, { style: 'page' });
+
+interface GroupEditBodyProps {
+  rulerGroup: RulerRuleGroupDTO;
+  groupIdentifier: RuleGroupIdentifierV2;
+}
+
+function GroupEditBody({ rulerGroup, groupIdentifier }: GroupEditBodyProps) {
+  const status = getRulerGroupReadOnlyStatus(rulerGroup);
+
+  if (!status.readOnly) {
+    return <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />;
+  }
+
+  switch (status.reason) {
+    case 'plugin':
+      return (
         <Alert
           title={t('alerting.group-edit.group-plugin-provided', 'This rule group is managed by a plugin')}
           severity="info"
@@ -163,23 +185,25 @@ function GroupEditPage() {
             them.
           </Trans>
         </Alert>
-      )}
-      {rulerGroup && !isPluginProvidedGroup(rulerGroup) && isProvisionedRuleGroup(rulerGroup) && (
+      );
+    case 'provisioned':
+      return (
         <Alert title={t('alerting.group-edit.group-provisioned', 'This rule group is provisioned')} severity="info">
           <Trans i18nKey="alerting.group-edit.group-provisioned-description">
             Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.
           </Trans>
         </Alert>
-      )}
-      {rulerGroup && !isPluginProvidedGroup(rulerGroup) && !isProvisionedRuleGroup(rulerGroup) && (
-        <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />
-      )}
-      {!rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
-    </AlertingPageWrapper>
-  );
+      );
+    case 'federated':
+      return (
+        <Alert title={t('alerting.group-edit.group-federated', 'This rule group is federated')} severity="info">
+          <Trans i18nKey="alerting.group-edit.group-federated-description">
+            Federated rule groups cannot be edited from Grafana.
+          </Trans>
+        </Alert>
+      );
+  }
 }
-
-export default withErrorBoundary(GroupEditPage, { style: 'page' });
 
 interface GroupEditFormProps {
   rulerGroup: RulerRuleGroupDTO;

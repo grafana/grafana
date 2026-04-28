@@ -34,6 +34,7 @@ import {
   type PostableRuleDTO,
   PromAlertingRuleState,
   type PromRuleDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
   type RulerAlertingRuleDTO,
   type RulerCloudRuleDTO,
@@ -185,18 +186,8 @@ export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
   return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
-type AnyRuleGroup = { rules: Array<Rule | PromRuleDTO | RulerRuleDTO> };
-
-export function isProvisionedRuleGroup(group: AnyRuleGroup): boolean {
-  return group.rules.some((rule) => {
-    if ('grafana_alert' in rule) {
-      return Boolean(rule.grafana_alert.provenance);
-    }
-    if ('provenance' in rule) {
-      return Boolean(rule.provenance);
-    }
-    return false;
-  });
+export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some(isProvisionedRule);
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -293,8 +284,42 @@ export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): 
   return Boolean(getRulePluginOrigin(rule));
 }
 
-export function isPluginProvidedGroup(group: AnyRuleGroup): boolean {
-  return group.rules.some((rule) => isPluginProvidedRule(rule));
+export type GroupReadOnlyReason = 'plugin' | 'provisioned' | 'federated';
+
+export type GroupReadOnlyStatus = { readOnly: true; reason: GroupReadOnlyReason } | { readOnly: false };
+
+/**
+ * Reports whether a Ruler-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned > federated.
+ */
+export function getRulerGroupReadOnlyStatus(
+  group: Pick<RulerRuleGroupDTO, 'rules' | 'source_tenants'>
+): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  if (Array.isArray(group.source_tenants)) {
+    return { readOnly: true, reason: 'federated' };
+  }
+  return { readOnly: false };
+}
+
+/**
+ * Reports whether a Prom-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned. The Prom API doesn't carry `source_tenants`,
+ * so federated detection lives only on the Ruler-API counterpart.
+ */
+export function getPromGroupReadOnlyStatus(group: Pick<PromRuleGroupDTO, 'rules'>): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedPromRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  return { readOnly: false };
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {

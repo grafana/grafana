@@ -1573,6 +1573,8 @@
         "update-error": "Failed to update rule group",
         "update-success": "Successfully updated the rule group"
       },
+      "group-federated": "This rule group is federated",
+      "group-federated-description": "Federated rule groups cannot be edited from Grafana.",
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
       "group-plugin-provided": "This rule group is managed by a plugin",

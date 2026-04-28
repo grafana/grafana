@@ -15,7 +15,7 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
-import { isPluginProvidedGroup, isProvisionedRuleGroup, isUngroupedRuleGroup } from '../utils/rules';
+import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
@@ -210,8 +210,7 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
         <GrafanaGroupActions
           folderUid={group.folderUid}
           groupName={group.name}
-          isPluginProvided={isPluginProvidedGroup(group)}
-          isProvisioned={isProvisionedRuleGroup(group)}
+          readOnly={getPromGroupReadOnlyStatus(group).readOnly}
         />
       }
       href={detailsLink}
@@ -225,17 +224,16 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 interface GrafanaGroupActionsProps {
   folderUid: string;
   groupName: string;
-  isPluginProvided: boolean;
-  isProvisioned: boolean;
+  readOnly: boolean;
 }
 
-function GrafanaGroupActions({ folderUid, groupName, isPluginProvided, isProvisioned }: GrafanaGroupActionsProps) {
+function GrafanaGroupActions({ folderUid, groupName, readOnly }: GrafanaGroupActionsProps) {
   const [showExportDrawer, setShowExportDrawer] = useState(false);
 
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
-  const canEdit = editRuleSupported && editRuleAllowed && !isPluginProvided && !isProvisioned;
+  const canEdit = editRuleSupported && editRuleAllowed && !readOnly;
   const canExport = exportRulesSupported && exportRulesAllowed;
 
   if (!canEdit && !canExport) {
