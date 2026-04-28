@@ -79,6 +79,11 @@
       "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
       "label-enable-basic-logs": "Enable Basic Logs"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "Batch API",
+      "description-batch-api": "Queries multiple resources in a single request, improving performance for large dashboards. Requires <2>Monitoring Reader</2> at the subscription scope on <6>metrics.monitor.azure.com</6>. After 1,000,000 free API calls per month, additional calls cost $0.01 per 1,000.",
+      "label-enable-batch-api": "Enable Batch API"
+    },
     "config-editor": {
       "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.",
       "title-additional-settings": "Additional settings"
