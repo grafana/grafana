@@ -23,13 +23,13 @@ import (
 // Column names emitted by LegacyUserTeamsSearchClient. The user-teams REST
 // handler reads these cells inline so it doesn't need a follow-up Team Get.
 const (
-	teamMembersColPermission = "permission"
-	teamMembersColExternal   = "external"
+	TeamMembersColPermission = "permission"
+	TeamMembersColExternal   = "external"
 )
 
 var teamMembersResultColumns = []*resourcepb.ResourceTableColumnDefinition{
-	{Name: teamMembersColPermission, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-	{Name: teamMembersColExternal, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN},
+	{Name: TeamMembersColPermission, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+	{Name: TeamMembersColExternal, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN},
 }
 
 // LegacyUserTeamsSearchClient answers Team-index search requests that filter

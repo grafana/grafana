@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	teamapi "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -153,6 +154,10 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
+		if result != nil && result.Error != nil {
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)))
+			return
+		}
 		if result == nil || result.Results == nil || len(result.Results.Rows) == 0 {
 			responder.Object(http.StatusOK, &iamv0alpha1.GetUserTeamsResponse{})
 			return
@@ -255,9 +260,9 @@ func cellIndexes(cols []*resourcepb.ResourceTableColumnDefinition) (permission, 
 			continue
 		}
 		switch c.Name {
-		case "permission":
+		case teamapi.TeamMembersColPermission:
 			permission = i
-		case "external":
+		case teamapi.TeamMembersColExternal:
 			external = i
 		}
 	}
