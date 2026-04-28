@@ -3570,9 +3570,9 @@
         "declare-incident": "Nyatakan insiden",
         "declare-incident-no-permission": "Anda tidak memiliki izin untuk mengakses Insiden",
         "instance-details": "Detail instance",
+        "section-silence": "",
         "silence-button": "Mode Senyap",
-        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap"
       },
       "labels-column-title": "Label",
       "no-firing-or-pending-instances": "Anda tidak memiliki instance peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "Data input",
+      "loading": "",
       "output-data": "Data output",
       "title-debug-transformation": "Debug transformasi"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cari"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Nilai RGBA"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "Tutup",
       "dock": "Gandeng",
+      "go-back": "",
       "hide": "Sembunyikan",
       "show": "Tampilkan",
       "undock": "Lepas gandengan"
@@ -11158,6 +11167,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
@@ -11452,6 +11462,7 @@
         "common-labels": "Label umum:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
     "name-details-mode": "Mode panel detail log",
@@ -11840,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Semua",
-      "title-filtered": "Semua (difilter)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Hapus semua"
@@ -14695,6 +14708,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",
@@ -15909,6 +15926,9 @@
         "grouping-to-matrix": "Pengelompokan ke matriks"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Hitung histogram dari data input."
@@ -16243,6 +16263,9 @@
       "label-time-field": "Bidang waktu",
       "tooltip-statistic-should-calculated-series": "Statistik yang harus dihitung untuk deret waktu ini.",
       "tooltip-time-field": "Bidang waktu yang akan digunakan untuk deret waktu. Jika tidak dipilih, yang pertama ditemukan akan digunakan."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nama bidang pertama",
