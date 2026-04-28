@@ -5,6 +5,7 @@ import { Alert, EmptyState, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ContactPointsList } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { useContactPointsSearch } from 'app/features/alerting/unified/components/contact-points/useContactPointsSearch';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -28,13 +29,29 @@ export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: Cont
     fetchStatuses,
   });
 
-  const forResourceId = useMemo(
-    () => (receiverResourceId ? contactPoints.find((cp) => cp.id === receiverResourceId) : undefined),
-    [contactPoints, receiverResourceId]
-  );
+  const trimmedSearch = listSearchQuery.trim();
+  const fuzzyMatches = useContactPointsSearch(contactPoints, trimmedSearch ? trimmedSearch : null);
 
-  const listContactPoints = forResourceId ? [forResourceId] : contactPoints;
-  const searchForList = forResourceId ? undefined : listSearchQuery;
+  /** One row → instance-drawer layout; many rows → list-style cards (matches notifications page). */
+  const resolvedUniqueContactPoint = useMemo(() => {
+    if (receiverResourceId) {
+      return contactPoints.find((cp) => cp.id === receiverResourceId);
+    }
+    if (!trimmedSearch) {
+      return undefined;
+    }
+    const exactByName = contactPoints.find((cp) => cp.name === trimmedSearch);
+    if (exactByName) {
+      return exactByName;
+    }
+    if (fuzzyMatches.length === 1) {
+      return fuzzyMatches[0];
+    }
+    return undefined;
+  }, [contactPoints, receiverResourceId, trimmedSearch, fuzzyMatches]);
+
+  const listContactPoints = resolvedUniqueContactPoint ? [resolvedUniqueContactPoint] : contactPoints;
+  const searchForList = resolvedUniqueContactPoint ? undefined : trimmedSearch || undefined;
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.contact-points-tab.text-loading', 'Loading...')} />;
@@ -66,7 +83,7 @@ export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: Cont
         search={searchForList}
         pageSize={DEFAULT_PAGE_SIZE}
         instanceDrawerEmbed
-        fallbackWhenSearchUnmatched={!forResourceId}
+        fallbackWhenSearchUnmatched={!resolvedUniqueContactPoint}
       />
     </Stack>
   );

@@ -16,6 +16,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ContactPointInstanceDrawerDetails } from 'app/features/alerting/unified/triage/instance-details/ContactPointInstanceDrawerDetails';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -312,6 +313,10 @@ export const ContactPointsList = ({
       )}
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
+        const singleInstanceDrawer = Boolean(instanceDrawerEmbed && pageItems.length === 1);
+        if (singleInstanceDrawer) {
+          return <ContactPointInstanceDrawerDetails key={key} contactPoint={contactPoint} />;
+        }
         return <ContactPoint key={key} contactPoint={contactPoint} instanceDrawerEmbed={instanceDrawerEmbed} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
