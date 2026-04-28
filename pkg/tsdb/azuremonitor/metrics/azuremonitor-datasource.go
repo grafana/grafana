@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -50,7 +51,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
-	if dsInfo.Settings.BatchAPIEnabled && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI") {
+	if dsInfo.Settings.BatchAPIEnabled && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI") {
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client)
 	}
 
