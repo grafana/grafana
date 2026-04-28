@@ -15513,6 +15513,1260 @@ exports[`HeatmapPanel (canvas) Dense Options calculate y-axis logscale 1`] = `
 ]
 `;
 
+exports[`HeatmapPanel (canvas) Dense Options calculate y-axis symlog scale 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 221,
+      "x": 31,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 221,
+            "x": 31,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#7f2704",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 120,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 63.200498677185095,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 46.10214504026183,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 29.003791403338568,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 23.49935099129347,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 19.00189570166927,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 15.199351435487046,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 11.905437766415318,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 46.10214504026183,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 23.49935099129347,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 11.905437766415318,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 8.999999999999972,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 46.10214504026183,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 36.10024933859255,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 29.003791403338568,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 15.199351435487046,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 11.905437766415318,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 64.15,
+            "y": 120,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 64.15,
+            "y": 15.199351435487046,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 64.15,
+            "y": 11.905437766415318,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#842904",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#892b04",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#8e2d04",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#932f03",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#983103",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#9e3303",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#a33503",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#a93703",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#af3903",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#b43b02",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ba3d02",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#c04002",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#c64203",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#cc4503",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#d14804",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#d64b05",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 31,
+            "y": 8.999999999999972,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 36.10024933859255,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 19.00189570166927,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 42.05,
+            "y": 15.199351435487046,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 23.49935099129347,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 64.15,
+            "y": 23.49935099129347,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#da4f06",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#de5207",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e25609",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e55a0c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e85e0e",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#eb6211",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ee6715",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f06b18",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2701c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f47421",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f67825",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f77d2a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f8812f",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fa8635",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fb8a3a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fb8f40",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 53.1,
+            "y": 8.999999999999972,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fc9345",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fc974b",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fd9c51",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda057",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda45d",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda864",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdad6a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb170",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb577",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb97e",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdbd84",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc28b",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc692",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc998",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdcd9f",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd1a5",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd4ab",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd7b1",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fedab6",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feddbc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee0c1",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee2c6",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee5cb",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee7cf",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee9d4",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feebd8",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feeddc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ffefe0",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff1e4",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff3e7",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff5eb",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 55.799501322814905,
+            "width": 10.04998779296875,
+            "x": 64.15,
+            "y": 63.200498677185095,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 221,
+      "x": 31,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 221,
+            "x": 31,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 111,
+                  "width": 221,
+                  "x": 31,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 221,
+            "x": 31,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 255, 0.7)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 221,
+      "x": 31,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 221,
+            "x": 31,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`HeatmapPanel (canvas) Dense Options cellGap 1`] = `
 [
   {
@@ -17807,6 +19061,834 @@ exports[`HeatmapPanel (canvas) Dense Options color opacity 1`] = `
 ]
 `;
 
+exports[`HeatmapPanel (canvas) Dense Options color opacity exponential exponent 0.5 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.26)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.36)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.45)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.52)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.58)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.63)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.68)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.73)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.78)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.82)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.85)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.89)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.93)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.96)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f24a5c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 111,
+                  "width": 228,
+                  "x": 24,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 255, 0.7)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`HeatmapPanel (canvas) Dense Options color opacity exponential exponent 0.25 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.51)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.6)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.67)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.72)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.76)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.8)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.83)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.85)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.88)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.9)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.93)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.95)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.96)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "rgba(242, 74, 92, 0.98)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f24a5c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 111,
+                  "width": 228,
+                  "x": 24,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 255, 0.7)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
 exports[`HeatmapPanel (canvas) Dense Options color opacity scale linear 1`] = `
 [
   {
@@ -19360,6 +21442,290 @@ exports[`HeatmapPanel (canvas) Dense Options color scheme reverse 1`] = `
           "props": {
             "height": 349,
             "width": 616,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`HeatmapPanel (canvas) Dense Options color scheme steps - coarse quantization 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#00441b",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#157f3c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 64,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#49b17f",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#8fd3c1",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#d5efed",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 24.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f7fcfd",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 54.5,
+            "width": 113,
+            "x": 138.5,
+            "y": 8.5,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 111,
+                  "width": 228,
+                  "x": 24,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 255, 0.7)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
             "x": 24,
             "y": 8,
           },
@@ -25856,6 +28222,1044 @@ exports[`HeatmapPanel (canvas) Exemplars renders 1`] = `
           "props": {
             "height": 349,
             "width": 616,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`HeatmapPanel (canvas) Sparse cellGap 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#7f2704",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 41,
+            "width": 214,
+            "x": -197,
+            "y": 71,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#842904",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#892b04",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#8e2d04",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#932f03",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#983103",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#9e3303",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#a33503",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#a93703",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#af3903",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#b43b02",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ba3d02",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#c04002",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#c64203",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#cc4503",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#d14804",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#d64b05",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#da4f06",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#de5207",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e25609",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e55a0c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#e85e0e",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 42,
+            "width": 214,
+            "x": -197,
+            "y": 15,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#eb6211",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ee6715",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f06b18",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2701c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f47421",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f67825",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f77d2a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f8812f",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fa8635",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fb8a3a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fb8f40",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fc9345",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fc974b",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fd9c51",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda057",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda45d",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fda864",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdad6a",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb170",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb577",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdb97e",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 41,
+            "width": 214,
+            "x": 31,
+            "y": 71,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdbd84",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc28b",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc692",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdc998",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdcd9f",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd1a5",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd4ab",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fdd7b1",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fedab6",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feddbc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee0c1",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee2c6",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee5cb",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee7cf",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fee9d4",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feebd8",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#feeddc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ffefe0",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff1e4",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff3e7",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#fff5eb",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 42,
+            "width": 214,
+            "x": 31,
+            "y": 15,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 111,
+                  "width": 228,
+                  "x": 24,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
+            "x": 24,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "rgba(255, 0, 255, 0.7)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "height": 111,
+      "width": 228,
+      "x": 24,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 111,
+            "width": 228,
             "x": 24,
             "y": 8,
           },

@@ -9,10 +9,10 @@ import {
   dateTime,
   type Field,
   FieldType,
-  getDefaultTimeRange,
   LoadingState,
   type PanelData,
   type PanelProps,
+  type TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,6 +29,9 @@ import * as heatmapUtils from './utils';
 
 const width = 648;
 const height = 378;
+
+/** Minimal viewport for snapshots that only need a few cells drawn (smaller canvas event payloads). */
+const compactCanvas = { width: 260, height: 140 } as const;
 
 /**
  * Without mocking measureText, the text width is always measured incorrectly, resulting in test behavior which does not match expected behavior in the browser.
@@ -188,10 +191,13 @@ function renderHeatmapPanel(
     data: {
       state: LoadingState.Done,
       series: [createHeatmapRowsFrame()],
-      timeRange: getDefaultTimeRange(),
+      // unused!
+      timeRange: {} as TimeRange,
       ...dataOverrides,
     },
-    ...{ ...panelPropsOverrides, width, height },
+    ...panelPropsOverrides,
+    width: panelPropsOverrides?.width ?? width,
+    height: panelPropsOverrides?.height ?? height,
   });
   return render(<HeatmapPanel {...props} />);
 }
@@ -210,6 +216,21 @@ function createDenseHeatmapFrameWithOrdinalY() {
       { name: 'x', type: FieldType.number, values: xVals },
       { name: 'y', type: FieldType.number, values: yVals },
       { name: 'count', type: FieldType.number, values: countVals },
+    ],
+  });
+}
+
+/** 2×2 dense cells — smallest grid that still satisfies dense HeatmapCells layout heuristics (fewer canvas ops). */
+function createTinyDenseHeatmapFrameWithOrdinalY() {
+  return createDataFrame({
+    meta: {
+      type: DataFrameType.HeatmapCells,
+      custom: { yOrdinalDisplay: ['y1', 'y2'] },
+    },
+    fields: [
+      { name: 'x', type: FieldType.number, values: [1, 1, 2, 2] },
+      { name: 'y', type: FieldType.number, values: [0, 1, 0, 1] },
+      { name: 'count', type: FieldType.number, values: [4, 12, 7, 15] },
     ],
   });
 }
@@ -379,12 +400,49 @@ describe('HeatmapPanel (canvas)', () => {
           );
           await assertCanvasOutput();
         });
+
+        it('scheme steps - coarse quantization', async () => {
+          renderHeatmapPanel(
+            { series: [createTinyDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                steps: 6,
+                exponent: 2,
+                fill: 'UNUSED-FOR-SCHEME',
+                reverse: false,
+                scheme: 'BuGn',
+                mode: HeatmapColorMode.Scheme,
+              },
+            },
+            { width: compactCanvas.width, height: compactCanvas.height }
+          );
+          await assertCanvasOutput(compactCanvas);
+        });
+
+        it.each([0.25, 0.5])('opacity exponential exponent %s', async (exponent) => {
+          renderHeatmapPanel(
+            { series: [createTinyDenseHeatmapFrameWithOrdinalY()] },
+            {
+              color: {
+                scheme: 'UNUSED-FOR-OPACITY',
+                steps: 16,
+                exponent,
+                fill: 'red',
+                reverse: false,
+                mode: HeatmapColorMode.Opacity,
+                scale: HeatmapColorScale.Exponential,
+              },
+            },
+            { width: compactCanvas.width, height: compactCanvas.height }
+          );
+          await assertCanvasOutput(compactCanvas);
+        });
       });
 
       describe('calculate', () => {
         it('renders when disabled', async () => {
           renderHeatmapPanel(
-            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+            { series: [LinearBucketData] },
             { calculate: false },
             { timeRange: LinearBucketTimeRange }
           );
@@ -409,17 +467,13 @@ describe('HeatmapPanel (canvas)', () => {
         });
 
         it('no options', async () => {
-          renderHeatmapPanel(
-            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
-            { calculate: true },
-            { timeRange: LinearBucketTimeRange }
-          );
+          renderHeatmapPanel({ series: [LinearBucketData] }, { calculate: true }, { timeRange: LinearBucketTimeRange });
           await assertCanvasOutput();
         });
 
         it('y-axis logscale', async () => {
           renderHeatmapPanel(
-            { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+            { series: [LinearBucketData] },
             {
               calculate: true,
               calculation: {
@@ -431,6 +485,26 @@ describe('HeatmapPanel (canvas)', () => {
             { timeRange: LinearBucketTimeRange }
           );
           await assertCanvasOutput();
+        });
+
+        it('y-axis symlog scale', async () => {
+          renderHeatmapPanel(
+            { series: [LinearBucketData] },
+            {
+              calculate: true,
+              calculation: {
+                yBuckets: {
+                  scale: { type: ScaleDistribution.Symlog, log: 10 },
+                },
+              },
+            },
+            {
+              timeRange: LinearBucketTimeRange,
+              width: compactCanvas.width,
+              height: compactCanvas.height,
+            }
+          );
+          await assertCanvasOutput(compactCanvas);
         });
       });
     });
@@ -452,14 +526,24 @@ describe('HeatmapPanel (canvas)', () => {
       });
     }
 
+    const timeRange = {
+      from: dateTime(1000),
+      to: dateTime(2000),
+      raw: { from: 'now-2s', to: 'now' },
+    };
+
     it('renders', async () => {
-      const timeRange = {
-        from: dateTime(1000),
-        to: dateTime(2000),
-        raw: { from: 'now-2s', to: 'now' },
-      };
-      renderHeatmapPanel({ series: [createSparseHeatmapCellsFrame()], timeRange }, undefined, { timeRange });
+      renderHeatmapPanel({ series: [createSparseHeatmapCellsFrame()] }, undefined, { timeRange });
       await assertCanvasOutput();
+    });
+
+    it('cellGap', async () => {
+      renderHeatmapPanel(
+        { series: [createSparseHeatmapCellsFrame()] },
+        { cellGap: 14 },
+        { timeRange, width: compactCanvas.width, height: compactCanvas.height }
+      );
+      await assertCanvasOutput(compactCanvas);
     });
   });
   describe('Exemplars', () => {
@@ -525,7 +609,6 @@ describe('HeatmapPanel (canvas)', () => {
           renderHeatmapPanel(
             {
               series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
-              timeRange: stableRowsTimeRange,
             },
             { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
             { timeRange: stableRowsTimeRange, fieldConfig: { overrides: [], defaults: { custom: {} } } }
