@@ -3,7 +3,13 @@ import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SEARCH_SELECTED_SORT, SEARCH_SELECTED_SORT_DELETED } from 'app/features/search/constants';
+import {
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_LAYOUT_DELETED,
+  SEARCH_SELECTED_SORT,
+  SEARCH_SELECTED_SORT_DELETED,
+} from 'app/features/search/constants';
+import { SearchLayout } from 'app/features/search/types';
 
 import { initialState } from '../../search/state/SearchStateManager';
 
@@ -49,6 +55,18 @@ describe('TrashStateManager', () => {
 
       expect(store.get(SEARCH_SELECTED_SORT_DELETED)).toBe('deleted-desc');
       expect(store.get(SEARCH_SELECTED_SORT)).toBeUndefined();
+      expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT_DELETED)).toBe(SearchLayout.List);
+      expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT)).toBeNull();
+    });
+
+    it('does not overwrite the main dashboard layout key', () => {
+      localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.Folders);
+      const stm = createTrashStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+      stm.onSortChange('alpha-asc');
+
+      expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT)).toBe(SearchLayout.Folders);
+      expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT_DELETED)).toBe(SearchLayout.List);
     });
 
     it('removes the recently-deleted key when sort is cleared', () => {

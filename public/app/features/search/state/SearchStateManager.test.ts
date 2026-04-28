@@ -6,8 +6,9 @@ import { locationService, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { TrashStateManager } from 'app/features/browse-dashboards/api/useRecentlyDeletedStateManager';
 
-import { SEARCH_SELECTED_SORT } from '../constants';
+import { SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_LAYOUT_DELETED, SEARCH_SELECTED_SORT } from '../constants';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
@@ -146,6 +147,22 @@ describe('SearchStateManager', () => {
 
         expect(stm.state.prevSort).toBe('-name_sort');
         expect(store.get(SEARCH_SELECTED_SORT)).toBe('-name_sort');
+      });
+    });
+
+    describe('main layout not affected by TrashStateManager sort', () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it('leaves main layout key unchanged when trash page picks a sort', () => {
+        localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.Folders);
+        const stm = new TrashStateManager({ ...initialState, includePanels: false, deleted: true });
+        jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+        stm.onSortChange('deleted-desc');
+
+        expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT)).toBe(SearchLayout.Folders);
+        expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT_DELETED)).toBe(SearchLayout.List);
       });
     });
 

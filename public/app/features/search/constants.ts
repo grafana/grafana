@@ -12,6 +12,7 @@ export const GENERAL_FOLDER_UID = 'general';
 export const GENERAL_FOLDER_TITLE = 'Dashboards';
 export const SEARCH_PANELS_LOCAL_STORAGE_KEY = 'grafana.search.include.panels';
 export const SEARCH_SELECTED_LAYOUT = 'grafana.search.layout';
+export const SEARCH_SELECTED_LAYOUT_DELETED = 'grafana.search.layout.recently-deleted';
 export const SEARCH_SELECTED_SORT = 'grafana.search.sort';
 export const SEARCH_SELECTED_SORT_DELETED = 'grafana.search.sort.recently-deleted';
 

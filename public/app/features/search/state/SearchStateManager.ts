@@ -46,13 +46,12 @@ export const defaultQueryParams: SearchQueryParams = {
   createdBy: null,
 };
 
-const getLocalStorageLayout = () => {
-  const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT);
+const getMainLayoutFromStore = () => {
+  const selectedLayout = store.get(SEARCH_SELECTED_LAYOUT);
   if (selectedLayout === SearchLayout.List) {
     return SearchLayout.List;
-  } else {
-    return SearchLayout.Folders;
   }
+  return SearchLayout.Folders;
 };
 
 type SearchReportInfo = Parameters<typeof reportSearchQueryInteraction>[1];
@@ -76,6 +75,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   lastSearchTimestamp = 0;
 
   protected sortStorageKey: string = SEARCH_SELECTED_SORT;
+  protected layoutStorageKey: string = SEARCH_SELECTED_LAYOUT;
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
@@ -85,7 +85,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       stateFromUrl.layout = SearchLayout.List;
     }
 
-    const layout = getLocalStorageLayout();
+    const layout = getMainLayoutFromStore();
     let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
 
     // Guard against stale recently-deleted sort values persisted to the main sort key
@@ -220,7 +220,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     if (sort) {
       store.set(this.sortStorageKey, sort);
       // Switch to list view if sort is set to preserve sort order when navigating back
-      localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+      store.set(this.layoutStorageKey, SearchLayout.List);
     } else {
       store.delete(this.sortStorageKey);
     }
@@ -233,7 +233,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   onLayoutChange = (layout: SearchLayout) => {
-    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
+    store.set(this.layoutStorageKey, layout);
 
     if (this.state.sort && layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
@@ -360,8 +360,7 @@ let stateManager: SearchStateManager;
 
 export function getSearchStateManager() {
   if (!stateManager) {
-    const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
-    const layout = selectedLayout ?? initialState.layout;
+    const layout = getMainLayoutFromStore();
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
