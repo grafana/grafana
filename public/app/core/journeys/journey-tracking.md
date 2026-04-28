@@ -9,7 +9,7 @@ This documentation describes the Critical User Journey tracking framework in Gra
 - [Architecture](#architecture)
   - [Components](#components)
   - [Data Flow](#data-flow)
-- [Phase 1 Journeys](#phase-1-journeys)
+- [Journeys](#journeys)
   - [search_to_resource](#search_to_resource)
   - [browse_to_resource](#browse_to_resource)
   - [dashboard_edit](#dashboard_edit)
@@ -172,7 +172,7 @@ handle.end('success', { dashboardUid })
   └── Handle removed from activeJourneys map
 ```
 
-## Phase 1 Journeys
+## Journeys
 
 ### search_to_resource
 
