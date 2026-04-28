@@ -3570,9 +3570,9 @@
         "declare-incident": "인시던트 선언",
         "declare-incident-no-permission": "Incident에 접근할 권한이 없습니다.",
         "instance-details": "인스턴스 세부 정보",
+        "section-silence": "",
         "silence-button": "알림 끄기",
-        "silence-no-permission": "알림 끄기를 만들 수 있는 권한이 없습니다.",
-        "silence-title-with-name": ""
+        "silence-no-permission": "알림 끄기를 만들 수 있는 권한이 없습니다."
       },
       "labels-column-title": "라벨",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
@@ -5606,6 +5606,7 @@
         "panels": "패널",
         "row": "행",
         "rows": "행",
+        "section-filters-set": "",
         "tab": "탭",
         "tabs": "탭",
         "variable": "{{type}} 변수",
@@ -6456,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "입력 데이터",
+      "loading": "",
       "output-data": "출력 데이터",
       "title-debug-transformation": "변환 디버그"
     },
@@ -8222,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "검색"
     },
     "resource-dimension-editor": {
@@ -10061,6 +10064,12 @@
     "cascader": {
       "clear-button": "선택 초기화"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 값"
     },
@@ -10406,6 +10415,7 @@
     "sidebar": {
       "close": "닫기",
       "dock": "도킹",
+      "go-back": "",
       "hide": "숨기기",
       "show": "표시",
       "undock": "도킹 해제"
@@ -11157,6 +11167,7 @@
       "label-numbers": "숫자",
       "label-signature": "서명"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "실험적 기능. 로그에 표시되는 필드를 관리하는 컴포넌트를 표시합니다.",
     "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
     "description-enable-logs-highlighting": "사전 정의된 색상 구성을 사용하여 로그 라인의 관련 부분을 강조 표시합니다.",
@@ -11451,6 +11462,7 @@
         "common-labels": "일반 라벨:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "일반 라벨",
     "name-deduplication": "중복 제거",
     "name-details-mode": "로그 세부 정보 패널 모드",
@@ -11839,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "전체",
-      "title-filtered": "전체(필터링됨)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "전체 초기화"
@@ -13080,6 +13094,7 @@
       "token-user-description": "API 토큰을 사용하여 리포지토리에 액세스하는 데 사용할 사용자 이름",
       "token-user-required": "사용자 이름은 필수 항목입니다",
       "url-description": "Bitbucket 리포지토리 URL",
+      "url-pattern": "",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "bootstrap-step": {
@@ -14018,7 +14033,6 @@
       "hide": "{{type}} 숨기기",
       "hide-help": "데이터 소스 도움말 숨기기",
       "hide-transformation-help": "변환 도움말 숨기기",
-      "inspector": "쿼리 검사기",
       "more-actions": "추가 {{type}} 동작",
       "remove": "{{type}} 제거",
       "remove-transformation-filter": "필터 제거",
@@ -14030,6 +14044,25 @@
     "alerts": {
       "no-alerts": "이 패널에 대한 경고 규칙이 없습니다.",
       "no-alerts-description": "데이터가 특정 조건을 충족할 때 알림을 받으려면 경고 규칙을 생성하세요."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "정말 이 쿼리를 삭제하시겠어요?",
@@ -14067,6 +14100,7 @@
     },
     "footer": {
       "edit-option": "{{label}} 편집",
+      "inspect-queries": "",
       "label": {
         "interval": "간격",
         "max-data-points": "최대 데이터 포인트",
@@ -14077,6 +14111,7 @@
       "placeholder": {
         "no-limit": "한도 없음"
       },
+      "query-inspector": "",
       "query-options": "쿼리 옵션"
     },
     "header": {
@@ -14673,6 +14708,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "홈 대시보드",
       "home-dashboard-placeholder": "기본 대시보드",
@@ -15887,6 +15926,9 @@
         "grouping-to-matrix": "행렬로 그룹화"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "입력 데이터를 토대로 히스토그램을 계산합니다."
@@ -16221,6 +16263,9 @@
       "label-time-field": "시간 필드",
       "tooltip-statistic-should-calculated-series": "이 시계열에 대해 계산해야 하는 통계입니다.",
       "tooltip-time-field": "시계열에 사용할 시간 필드입니다. 선택하지 않으면 처음 찾은 항목을 사용합니다."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "첫 번째 필드 이름",

@@ -3627,9 +3627,9 @@
         "declare-incident": "Zadeklaruj incydent",
         "declare-incident-no-permission": "Nie masz uprawnień dostępu do narzędzia Incident",
         "instance-details": "Szczegóły instancji",
+        "section-silence": "",
         "silence-button": "Okres wyciszenia",
-        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nie masz uprawnień do tworzenia okresów wyciszenia"
       },
       "labels-column-title": "Etykiety",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -5696,6 +5696,7 @@
         "panels": "Panele",
         "row": "Wiersz",
         "rows": "Wiersze",
+        "section-filters-set": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
@@ -6549,6 +6550,7 @@
     },
     "transformation-editor": {
       "input-data": "Dane wejściowe",
+      "loading": "",
       "output-data": "Dane wyjściowe",
       "title-debug-transformation": "Debugowanie transformacji"
     },
@@ -8360,6 +8362,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Szukaj"
     },
     "resource-dimension-editor": {
@@ -10235,6 +10238,12 @@
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Wartość RGBA"
     },
@@ -10580,6 +10589,7 @@
     "sidebar": {
       "close": "Zamknij",
       "dock": "Zadokuj",
+      "go-back": "",
       "hide": "Ukryj",
       "show": "Pokaż",
       "undock": "Odepnij"
@@ -11346,6 +11356,7 @@
       "label-numbers": "Liczby",
       "label-signature": "Podpis"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Funkcja eksperymentalna. Pokazuje komponent do zarządzania wyświetlanymi polami z logów.",
     "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
     "description-enable-logs-highlighting": "Użyj wstępnie zdefiniowanego schematu kolorowania, aby wyróżnić odpowiednie części wierszy logów.",
@@ -11649,6 +11660,7 @@
         "common-labels": "Typowe etykiety:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Częste etykiety",
     "name-deduplication": "Deduplikacja",
     "name-details-mode": "Tryb panelu szczegółów logów",
@@ -12037,8 +12049,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Wszystkie",
-      "title-filtered": "Wszystkie (przefiltrowane)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Wyczyść wszystko"
@@ -13287,6 +13301,7 @@
       "token-user-description": "Nazwa użytkownika, która będzie używana do uzyskiwania dostępu do repozytorium za pomocą tokena API",
       "token-user-required": "Nazwa użytkownika jest wymagana",
       "url-description": "Adres URL repozytorium Bitbucket",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "bootstrap-step": {
@@ -14270,7 +14285,6 @@
       "hide": "Ukryj: {{type}}",
       "hide-help": "Ukryj pomoc dotyczącą źródła danych",
       "hide-transformation-help": "Ukryj pomoc dotyczącą transformacji",
-      "inspector": "Inspektor zapytań",
       "more-actions": "Więcej działań: {{type}}",
       "remove": "Usuń: {{type}}",
       "remove-transformation-filter": "Usuń filtr",
@@ -14282,6 +14296,31 @@
     "alerts": {
       "no-alerts": "Brak reguł alertów dla tego panelu",
       "no-alerts-description": "Utwórz regułę alertów, aby otrzymywać powiadomienia, gdy dane spełniają określone warunki."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Czy na pewno chcesz usunąć to zapytanie?",
@@ -14319,6 +14358,7 @@
     },
     "footer": {
       "edit-option": "Edytuj: {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Odstęp czasu",
         "max-data-points": "Maks. liczba punktów danych",
@@ -14329,6 +14369,7 @@
       "placeholder": {
         "no-limit": "Bez limitu"
       },
+      "query-inspector": "",
       "query-options": "Opcje zapytania"
     },
     "header": {
@@ -14943,6 +14984,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Strona główna pulpitu",
       "home-dashboard-placeholder": "Domyślny pulpit",
@@ -16160,6 +16205,9 @@
         "grouping-to-matrix": "Grupowanie do macierzy"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Oblicz histogram na podstawie danych wejściowych."
@@ -16494,6 +16542,9 @@
       "label-time-field": "Pole czasu",
       "tooltip-statistic-should-calculated-series": "Statystyka, która powinna zostać obliczona dla tego szeregu czasowego.",
       "tooltip-time-field": "Pole czasu, które będzie używane dla szeregu czasowego. Jeśli nie zostanie wybrane, zostanie użyta pierwsza znaleziona wartość."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nazwa pierwszego pola",

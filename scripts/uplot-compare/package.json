@@ -1,0 +1,36 @@
+{
+  "name": "@grafana/uplot-compare",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "types": "./src/exportedTypes.ts",
+  "exports": {
+    ".": {
+      "types": "./src/exportedTypes.ts",
+      "import": "./src/exportedTypes.ts",
+      "default": "./src/exportedTypes.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@grafana/eslint-plugin": "workspace:packages/grafana-eslint-rules",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "9.32.0",
+    "jest-canvas-mock": "^2.5.2",
+    "typescript": "6.0.2",
+    "vite": "^6.3.4"
+  }
+}

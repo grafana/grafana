@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
@@ -1083,8 +1084,14 @@ func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
 
-func TestPeriodicBookmarks(t *testing.T) {
-	testUser := &identity.StaticRequester{
+const (
+	watchTestGroup     = "playlist.grafana.app"
+	watchTestResource  = "playlists"
+	watchTestNamespace = "default"
+)
+
+func newWatchTestUser() *identity.StaticRequester {
+	return &identity.StaticRequester{
 		Type:           authlib.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
@@ -1092,81 +1099,88 @@ func TestPeriodicBookmarks(t *testing.T) {
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
+}
 
-	group := "playlist.grafana.app"
-	resource := "playlists"
-	namespace := "default"
+type watchTestServerOpts struct {
+	BookmarkFrequency time.Duration
+	StorageMetrics    *StorageMetrics
+}
 
-	var counter int
-	createPlaylist := func(testCtx context.Context, srv *server) error {
-		counter += 1
-		name := fmt.Sprintf("bookmark-test-%d", counter)
+func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
+	t.Helper()
+	db, err := badger.Open(badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
-		value := []byte(`{
+	store, err := NewKVStorageBackend(KVBackendOptions{
+		KvStore:      NewBadgerKV(db),
+		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+	})
+	require.NoError(t, err)
+
+	srv, err := NewResourceServer(ResourceServerOptions{
+		Backend:           store,
+		BookmarkFrequency: opts.BookmarkFrequency,
+		StorageMetrics:    opts.StorageMetrics,
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+	return srv
+}
+
+var playlistCounter int
+
+// createTestPlaylist creates a playlist resource with a unique auto-generated
+// name. ctx must already carry auth info.
+func createTestPlaylist(ctx context.Context, srv *server) error {
+	playlistCounter++
+	name := fmt.Sprintf("playlist-%d", playlistCounter)
+	value := []byte(`{
 		"apiVersion": "playlist.grafana.app/v0alpha1",
 		"kind": "Playlist",
 		"metadata": {
 			"name": "` + name + `",
-			"namespace": "` + namespace + `",
-			"uid": "` + fmt.Sprintf("bm-test-uid-%d", counter) + `",
-			"annotations": {
-				"grafana.app/repoName": "test",
-				"grafana.app/repoPath": "path/to/item",
-				"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
-			}
+			"namespace": "` + watchTestNamespace + `",
+			"uid": "uid-` + name + `"
 		},
 		"spec": {
-			"title": "` + fmt.Sprintf("playlist %d", counter) + `",
+			"title": "` + name + `",
 			"interval": "5m",
 			"items": [{"type": "dashboard_by_uid", "value": "abc"}]
 		}
 	}`)
+	key := &resourcepb.ResourceKey{
+		Group:     watchTestGroup,
+		Resource:  watchTestResource,
+		Namespace: watchTestNamespace,
+		Name:      name,
+	}
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+	if err != nil {
+		return err
+	}
+	if created.Error != nil {
+		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
+	}
+	return nil
+}
 
-		key := &resourcepb.ResourceKey{
-			Group:     group,
-			Resource:  resource,
-			Namespace: namespace,
-			Name:      name,
-		}
+func TestPeriodicBookmarks(t *testing.T) {
+	testUser := newWatchTestUser()
 
-		ctx := authlib.WithAuthInfo(testCtx, testUser)
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		if err != nil {
-			return err
-		}
-		if created.Error != nil {
-			return fmt.Errorf("creating playlist: %v", created.Error)
-		}
-
-		return nil
+	createPlaylist := func(testCtx context.Context, srv *server) error {
+		return createTestPlaylist(authlib.WithAuthInfo(testCtx, testUser), srv)
 	}
 
 	setup := func(t *testing.T) *server {
 		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").
-			WithInMemory(true).
-			WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { require.NoError(t, db.Close()) })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{
-			KvStore:      kv,
-			WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
-		})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			BookmarkFrequency: 50 * time.Millisecond,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
+		srv := newWatchTestServer(t, watchTestServerOpts{BookmarkFrequency: 50 * time.Millisecond})
 		// Create a resource so initial events backfill produces a non-zero RV.
 		require.NoError(t, createPlaylist(t.Context(), srv))
 		return srv
@@ -1201,8 +1215,8 @@ func TestPeriodicBookmarks(t *testing.T) {
 			return srv.Watch(&resourcepb.WatchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
-						Group:    group,
-						Resource: resource,
+						Group:    watchTestGroup,
+						Resource: watchTestResource,
 					},
 				},
 				SendInitialEvents:   true,
@@ -1250,8 +1264,8 @@ func TestPeriodicBookmarks(t *testing.T) {
 			return srv.Watch(&resourcepb.WatchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
-						Group:    group,
-						Resource: resource,
+						Group:    watchTestGroup,
+						Resource: watchTestResource,
 					},
 				},
 				SendInitialEvents:   true,
@@ -1280,8 +1294,8 @@ func TestPeriodicBookmarks(t *testing.T) {
 			return srv.Watch(&resourcepb.WatchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
-						Group:    group,
-						Resource: resource,
+						Group:    watchTestGroup,
+						Resource: watchTestResource,
 					},
 				},
 				SendInitialEvents:   true,
@@ -1296,6 +1310,77 @@ func TestPeriodicBookmarks(t *testing.T) {
 
 		require.Empty(t, bookmarks)
 	})
+}
+
+// TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
+// cached events for clients that start watching from old RVs. The metric should only be reporting
+// data for events emitted after the Watch is setup.
+func TestWatchEventMetricsWithSinceRV(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+
+	// Create two resources before the watch starts. The broadcaster will absorb
+	// these events into its replay cache and hand them to any future subscriber.
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	require.NoError(t, createTestPlaylist(ctx, srv))
+
+	// Wait until the broadcaster has received both events, so the cache is
+	// populated by the time we subscribe.
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal, 2)
+
+	// Start a watch with a tiny Since RV.
+	mock := newMockWatchServer(ctx)
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			Since: 42,
+		}, mock)
+	})
+
+	// Wait for the subscription to register before producing the third event.
+	requireMetricEventually(t, metrics.Broadcaster.Subscribers, 1)
+
+	// Create a third resource after the watch has subscribed. This is the only
+	// event for which WatchEventLatency should record an observation.
+	require.NoError(t, createTestPlaylist(ctx, srv))
+
+	// Wait until the mock has received all three events (two replayed from the
+	// cache + one live).
+	received := 0
+	timeout := time.After(5 * time.Second)
+	for received < 3 {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				received++
+			}
+		case <-timeout:
+			t.Fatalf("timed out waiting for events: got %d, want %d", received, 3)
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+
+	// Replayed cache entries are catch-up traffic, not "late" deliveries —
+	// observing them inflates the histogram with the time elapsed since they
+	// were originally written, not the actual reaction time of this watcher.
+	// Only the post-subscription event should be counted.
+	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestResource)
+	require.NoError(t, err)
+	m := &dto.Metric{}
+	require.NoError(t, obs.(prometheus.Metric).Write(m))
+	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
+		"WatchEventLatency should only observe events that arrived after the subscription started")
 }
 
 // callbackAccessClient is a test helper whose Check behavior can be swapped between calls.
@@ -1510,5 +1595,60 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
+	})
+
+	t.Run("read is denied when user lacks get permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+	})
+
+	t.Run("read is allowed when user has get permission", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp.Value)
+	})
+
+	t.Run("read passes the resource folder to the access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(folderA), ac)
+
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == "get" {
+				capturedFolder = folder
+			}
+			return allow()
+		}
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, folderA, capturedFolder)
+	})
+
+	t.Run("read returns error when access check fails", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := createThenSwitch(t, makeValue(""), ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{}, errors.New("authz service unavailable")
+		}
+
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
 	})
 }

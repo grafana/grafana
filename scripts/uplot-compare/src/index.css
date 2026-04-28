@@ -1,0 +1,201 @@
+.overlay {
+  position: absolute;
+  opacity: 0.5;
+  left: 0;
+  top: 0;
+  #expected,
+  #actual {
+    position: absolute;
+    mix-blend-mode: difference;
+    pointer-events: none;
+    filter: invert(100%);
+  }
+}
+.wrap {
+  --compare-gap: 12px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--compare-gap);
+  row-gap: var(--compare-gap);
+}
+
+.compare-blocked {
+  max-width: 56rem;
+  padding: 1rem;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+.compare-error {
+  color: #c62828;
+  font-weight: 600;
+}
+.compare-paste-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+.compare-paste {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  background: #fff;
+}
+.compare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+.compare-file-label input[type="file"] {
+  margin-left: 0.35rem;
+}
+
+.compare-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.compare-file-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+}
+
+.compare-file-modified {
+  font-size: 11px;
+  color: #5f6b7d;
+}
+
+.compare-file-item.is-selected {
+  border-color: #4c8bf5;
+  background: #eef4ff;
+}
+
+.compare-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.plot-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.plot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.plot-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.plot-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #44546a;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.canvas {
+  border-radius: 4px;
+  background: #fff;
+}
+
+.canvas-stack {
+  position: relative;
+  width: min-content;
+}
+
+.overlay-blend-select {
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid rgba(200, 209, 223, 0.95);
+  border-radius: 6px;
+  background: rgba(248, 249, 252, 0.95);
+  color: #334155;
+  cursor: pointer;
+}
+
+.diff-overlay-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diff-overlay-canvas.is-visible {
+  opacity: 0.55;
+}
+
+.overlay-toggle-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #f8f9fc;
+  color: #334155;
+  cursor: pointer;
+}
+
+.plot-action-wrap{
+  display: flex;
+  gap: 8px
+}
+
+.plot-action-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #f8f9fc;
+  color: #334155;
+  cursor: pointer;
+}
+
+.overlay-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.compare-empty-diff {
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+  color: #5f6b7d;
+  font-size: 13px;
+}

@@ -16,6 +16,16 @@ import (
 var ErrNotFound = errors.New("key not found")
 var ErrEmptyValue = errors.New("key must have a value")
 var ErrKeyAlreadyExists = errors.New("key already exists")
+var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
+
+// ErrRetryable marks a transient error that a caller iterating a KV stream
+// (Keys, Get, BatchGet) may retry by re-opening the call from a known
+// resume point.
+//
+// KV implementations may opt-in to wrap backend-specific
+// transient errors (gRPC status codes, SQL driver errors, retryable
+// filesystem errors) with this sentinel.
+var ErrRetryable = errors.New("retryable error")
 
 // KeyValue represents a key-value pair returned by BatchGet
 type KeyValue struct {
@@ -109,13 +119,16 @@ type KV interface {
 	// Batch executes all operations atomically within a single transaction.
 	// If any operation fails, all operations are rolled back.
 	// Operations are executed in order; the batch stops on first failure.
-	// Put/Create/Update without a value will return an error
+	// Put/Create/Update without a value will return an error.
 	//
 	// Operation semantics:
 	//   - BatchOpPut: Upsert (create or update), never fails on key state
 	//   - BatchOpCreate: Fail with ErrKeyAlreadyExists if key exists
 	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
 	//   - BatchOpDelete: Idempotent, never fails on key state
+	//
+	// Implementations MAY refuse specific sections (e.g. SqlKV rejects
+	// DataSection with ErrBatchNotSupportedOnDataSection).
 	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
