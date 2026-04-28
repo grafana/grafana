@@ -59,6 +59,13 @@ func TestToFolderErrorResponse(t *testing.T) {
 			want:  response.Error(http.StatusBadRequest, "folder title cannot be empty", nil),
 		},
 		{
+			// Apiserver-wrapped form. errors.Is matches via Unwrap so it
+			// routes to the same 400 branch; message has the errutil prefix.
+			name:  "folder title empty (apiserver wrapped)",
+			input: folder.ErrAPITitleEmpty,
+			want:  response.Error(http.StatusBadRequest, folder.ErrAPITitleEmpty.Error(), nil),
+		},
+		{
 			name:  "dashboard type mismatch",
 			input: dashboards.ErrDashboardTypeMismatch,
 			want:  response.Error(http.StatusBadRequest, "Dashboard cannot be changed to a folder", dashboards.ErrDashboardTypeMismatch),
@@ -75,8 +82,8 @@ func TestToFolderErrorResponse(t *testing.T) {
 		},
 		{
 			name:  "folder cannot be parent of itself",
-			input: folder.ErrFolderCannotBeParentOfItself,
-			want:  response.Error(http.StatusBadRequest, folder.ErrFolderCannotBeParentOfItself.Error(), nil),
+			input: folder.ErrFolderCannotBeParentOfItself.Errorf("folder cannot be parent of itself"),
+			want:  response.Error(http.StatusBadRequest, "[folder.cannot-be-parent-of-itself] folder cannot be parent of itself", nil),
 		},
 		// --- 403 Forbidden ---
 		{
@@ -204,6 +211,24 @@ func TestToFolderErrorResponse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resp := ToFolderErrorResponse(tt.input)
 			require.Equal(t, tt.want, resp)
+		})
+	}
+}
+
+// TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
+// the Unwrap chain.
+func TestErrorsIs_UnwrapsAPIWrappers(t *testing.T) {
+	cases := []struct {
+		name    string
+		wrapped error
+		legacy  error
+	}{
+		{"title empty", folder.ErrAPITitleEmpty, folder.ErrTitleEmpty},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.True(t, errors.Is(c.wrapped, c.legacy),
+				"errors.Is must walk Unwrap to match the legacy sentinel; got %v", c.wrapped)
 		})
 	}
 }
