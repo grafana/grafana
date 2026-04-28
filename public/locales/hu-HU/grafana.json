@@ -6488,6 +6488,7 @@
     },
     "transformation-editor": {
       "input-data": "Bemeneti adatok",
+      "loading": "",
       "output-data": "Kimeneti adatok",
       "title-debug-transformation": "Transzformáció hibakeresése"
     },
@@ -8269,6 +8270,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Keresés"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10122,12 @@
     "cascader": {
       "clear-button": "Kijelölés törlése"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-érték"
     },
@@ -10465,6 +10473,7 @@
     "sidebar": {
       "close": "Bezárás",
       "dock": "Dokkolás",
+      "go-back": "",
       "hide": "Elrejtés",
       "show": "Megjelenítés",
       "undock": "Dokkolás feloldása"
@@ -11908,8 +11917,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Összes",
-      "title-filtered": "Összes (szűrt)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Összes törlése"
@@ -16008,6 +16019,9 @@
         "grouping-to-matrix": "Csoportosítás mátrixba"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Számítson ki egy hisztogramot a bemeneti adatokból."
@@ -16342,6 +16356,9 @@
       "label-time-field": "Időmező",
       "tooltip-statistic-should-calculated-series": "Az ehhez az idősorhoz kiszámítandó statisztika.",
       "tooltip-time-field": "Az idősorhoz használt időmező. Ha nincs kiválasztva, az elsőként talált lesz felhasználva."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Első mezőnév",

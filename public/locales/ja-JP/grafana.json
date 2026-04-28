@@ -6457,6 +6457,7 @@
     },
     "transformation-editor": {
       "input-data": "入力データ",
+      "loading": "",
       "output-data": "出力データ",
       "title-debug-transformation": "変換をデバッグ"
     },
@@ -8223,6 +8224,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "検索"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10064,12 @@
     "cascader": {
       "clear-button": "選択をクリア"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA値"
     },
@@ -10407,6 +10415,7 @@
     "sidebar": {
       "close": "閉じる",
       "dock": "ドック",
+      "go-back": "",
       "hide": "非表示",
       "show": "表示",
       "undock": "ドック解除"
@@ -11842,8 +11851,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "すべて",
-      "title-filtered": "すべて（フィルタリング済み）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "すべてをクリア"
@@ -15915,6 +15926,9 @@
         "grouping-to-matrix": "マトリックス形式でグループ化"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "入力データからヒストグラムを計算します。"
@@ -16249,6 +16263,9 @@
       "label-time-field": "時間フィールド",
       "tooltip-statistic-should-calculated-series": "この時系列において計算すべき統計。",
       "tooltip-time-field": "時系列に使用される時間フィールド。選択されていない場合は、最初に見つかったものが使用されます。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "最初のフィールド名",

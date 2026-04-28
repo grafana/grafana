@@ -1552,8 +1552,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17 h1:FsYvN4HT7tUCH9C2UCUuq1Sha8R8RUbaBMvg4rxYbLU=
-github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 h1:8b2oKd3p+lGwxJOYn5liHtlkBiRKnjLmuL4BpVMk0lc=
+github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 h1:NiXmxeUG3e153QSNkVKhAaylEcRQzXnRaafs8XQ8E3M=
 github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66 h1:KhXDah7ayblgCrmPr25zWVZRuK+tLpyTMP3puOVeWF4=
@@ -1616,8 +1616,8 @@ github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrR
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56 h1:SDGrP81Vcd102L3UJEryRd1eestRw73wt+b8vnVEFe0=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
-github.com/grafana/schemads v0.0.9 h1:9lM7O5bHW1qSWyl3wE2IeouIXHkkjHI4r/CgFq5p7vg=
-github.com/grafana/schemads v0.0.9/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZLSPxeM3LA=
+github.com/grafana/schemads v0.0.11 h1:cxMEs+3GqkvyVGxkg/Fo5jj1dZaQNay5dOFOUR/XhuU=
+github.com/grafana/schemads v0.0.11/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZLSPxeM3LA=
 github.com/grafana/sqlds/v5 v5.1.1 h1:QEZayyzZZZjDnfMX/f5k7oLehOBH7X1MMnpgn+yDkkI=
 github.com/grafana/sqlds/v5 v5.1.1/go.mod h1:fUt31TRrHrBZ6lyaHZyDqSfeouuSXV6PeBgrNFuZVmo=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec h1:wnzJov9RhSHGaTYGzTygL4qq986fLen8xSqnQgaMd28=
