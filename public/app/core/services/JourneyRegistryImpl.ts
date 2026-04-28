@@ -86,7 +86,7 @@ export class JourneyRegistryImpl implements JourneyRegistry {
     if (buffered) {
       for (const handle of buffered) {
         if (handle.isActive) {
-          this.attachEndHandler(journeyType, handle, instanceFn);
+          this.attachEndHandler(handle, instanceFn);
         }
       }
       this.bufferedHandles.delete(journeyType);
@@ -170,7 +170,7 @@ export class JourneyRegistryImpl implements JourneyRegistry {
         // Try to attach end handler
         const instanceFn = this.instanceFns.get(journeyType);
         if (instanceFn) {
-          this.attachEndHandler(journeyType, handle, instanceFn);
+          this.attachEndHandler(handle, instanceFn);
         } else {
           // Buffer the handle for late registration. Use the effective timeout
           // (caller override or registry default) so we don't outlive the journey itself.
@@ -184,7 +184,7 @@ export class JourneyRegistryImpl implements JourneyRegistry {
     };
   }
 
-  private attachEndHandler(_journeyType: string, handle: JourneyHandle, instanceFn: JourneyInstanceFn): void {
+  private attachEndHandler(handle: JourneyHandle, instanceFn: JourneyInstanceFn): void {
     const cleanup = instanceFn(handle);
     const journeyId = handle.journeyId;
 
