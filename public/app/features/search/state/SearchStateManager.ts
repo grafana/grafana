@@ -77,6 +77,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   protected sortStorageKey: string = SEARCH_SELECTED_SORT;
   protected layoutStorageKey: string = SEARCH_SELECTED_LAYOUT;
 
+  protected getPersistedLayout(): SearchLayout {
+    const selectedLayout = store.get(this.layoutStorageKey);
+    if (selectedLayout === SearchLayout.List) {
+      return SearchLayout.List;
+    }
+    return SearchLayout.Folders;
+  }
+
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
@@ -85,7 +93,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       stateFromUrl.layout = SearchLayout.List;
     }
 
-    const layout = getMainLayoutFromStore();
+    const layout = this.getPersistedLayout();
     let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
 
     // Guard against stale recently-deleted sort values persisted to the main sort key

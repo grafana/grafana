@@ -96,6 +96,16 @@ describe('SearchStateManager', () => {
       expect(stm.state.folderUid).toBe('abc');
     });
 
+    it('reads persisted layout from the main SEARCH_SELECTED_LAYOUT key', () => {
+      store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+      store.set(SEARCH_SELECTED_SORT, 'name_sort');
+      const stm = createSearchStateManager();
+      stm.initStateFromUrl(undefined, false);
+      expect(stm.state.layout).toBe(SearchLayout.List);
+      expect(stm.state.sort).toBe('name_sort');
+      expect(stm.state.prevSort).toBe('name_sort');
+    });
+
     describe('stale recently-deleted sort guard', () => {
       beforeEach(() => {
         localStorage.clear();

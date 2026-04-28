@@ -99,5 +99,18 @@ describe('TrashStateManager', () => {
 
       expect(stm.state.prevSort).toBeUndefined();
     });
+
+    it('reads the recently-deleted layout key so sort is not discarded when main page is folders', () => {
+      store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.Folders);
+      store.set(SEARCH_SELECTED_LAYOUT_DELETED, SearchLayout.List);
+      store.set(SEARCH_SELECTED_SORT_DELETED, 'deleted-asc');
+
+      const stm = createTrashStateManager();
+      stm.initStateFromUrl(undefined, false);
+
+      expect(stm.state.layout).toBe(SearchLayout.List);
+      expect(stm.state.sort).toBe('deleted-asc');
+      expect(stm.state.prevSort).toBe('deleted-asc');
+    });
   });
 });
