@@ -29,20 +29,19 @@ import { resolveOwner } from './codeowners.mts';
  *   };
  */
 export const parseEvents = (file: SourceFile, eventNamespaces: Map<string, EventNamespace>): EventData[] => {
-  const events: EventData[] = [];
-  // Tracks which object literals have already been processed; one object can contain many factory calls, each of which would be a separate hit in the loop below.
-  const processedObjectLiterals = new Set<ObjectLiteralExpression>();
+  const flatEvents: EventData[] = [];
+  // Keyed by ObjectLiteralExpression, then by property name (e.g. 'itemClicked').
+  // Built in the CallExpression scan; consumed by resolveGroupedEvents for spread resolution.
+  const directEventsByObject = new Map<ObjectLiteralExpression, Map<string, EventData>>();
   // CODEOWNERS matching requires a path relative to the repo root, not an absolute one.
   const relativeFilePath = path.relative(process.cwd(), file.getFilePath());
 
-  // Start from the factory calls themselves and walk up, rather than iterating all variable declarations and checking their initializers.
   for (const callExpr of file.getDescendantsOfKind(SyntaxKind.CallExpression)) {
     const fnName = callExpr.getExpression().getText();
     if (!eventNamespaces.has(fnName)) {
       continue;
     }
 
-    // The parent tells us which pattern we're dealing with.
     const parent = callExpr.getParent();
 
     if (Node.isVariableDeclaration(parent)) {
@@ -56,27 +55,37 @@ export const parseEvents = (file: SourceFile, eventNamespaces: Map<string, Event
         return getMetadataFromJSDocs(stmt.getJsDocs());
       });
       if (event) {
-        events.push(event);
+        flatEvents.push(event);
       }
     } else if (Node.isPropertyAssignment(parent)) {
-      // Object grouping pattern: const Interactions = { trackClick: createNavEvent('click') }
+      // Grouped object pattern: const Interactions = { trackClick: createNavEvent('click') }
       const objectLiteral = parent.getParent();
-      if (!Node.isObjectLiteralExpression(objectLiteral) || processedObjectLiterals.has(objectLiteral)) {
+      if (!Node.isObjectLiteralExpression(objectLiteral)) {
         continue;
       }
-      processedObjectLiterals.add(objectLiteral);
-      events.push(...parseEventsFromObjectLiteral(objectLiteral, eventNamespaces));
+
+      const event = parseEventFromCall(callExpr.getType(), callExpr, eventNamespaces, () =>
+        getMetadataFromPropertyComments(parent)
+      );
+
+      if (event) {
+        if (!directEventsByObject.has(objectLiteral)) {
+          directEventsByObject.set(objectLiteral, new Map());
+        }
+        directEventsByObject.get(objectLiteral)!.set(parent.getName(), event);
+      }
     }
   }
 
-  // Resolve owner from CODEOWNERS based on the file that declares the events
-  for (const event of events) {
+  const allEvents = [...flatEvents, ...resolveGroupedEvents(directEventsByObject)];
+
+  for (const event of allEvents) {
     if (!event.owner) {
       event.owner = resolveOwner(relativeFilePath);
     }
   }
 
-  return events;
+  return allEvents;
 };
 
 /**
@@ -132,65 +141,54 @@ const parseEventFromCall = (
 };
 
 /**
- * Parses events from an object literal grouping, e.g.:
- *   export const NavInteractions = {
- *     /** Fired when user clicks a nav link. *\/
- *     trackClick: createNavEvent<ClickProperties>('click'),
- *   };
+ * Merges directly-declared events with any spread sources, respecting source order so that
+ * later property assignments override earlier ones — mirroring JS spread semantics.
  *
- * Supports spreads from other event groups:
- *   export const TemplateInteractions = {
- *     ...NavInteractions,
- *     trackClick: createNavEvent<ClickProperties>('click'), // overrides the spread
- *   };
- *
+ * Note: only one level of spread is resolved
  */
-const parseEventsFromObjectLiteral = (
-  objectLiteral: ObjectLiteralExpression,
-  eventNamespaces: Map<string, EventNamespace>
+const resolveGroupedEvents = (
+  directEventsByObject: Map<ObjectLiteralExpression, Map<string, EventData>>
 ): EventData[] => {
-  // Using a Map keyed by fullEventName means direct property assignments silently overwrite spread entries with the same name, mirroring JS spread semantics ({ ...a, foo: 1 } — foo from a is overwritten).
-  const eventMap = new Map<string, EventData>();
+  const result: EventData[] = [];
 
-  for (const property of objectLiteral.getProperties()) {
-    if (Node.isSpreadAssignment(property)) {
-      // ...NavInteractions: resolve the identifier to its declaration, find the object literal, and recurse.
-      const spreadExpr = property.getExpression();
-      if (Node.isIdentifier(spreadExpr)) {
-        const decl = spreadExpr.getSymbol()?.getDeclarations()?.[0];
-        if (decl && Node.isVariableDeclaration(decl)) {
-          const spreadInit = decl.getInitializer();
-          if (spreadInit && Node.isObjectLiteralExpression(spreadInit)) {
-            const spreadEvents = parseEventsFromObjectLiteral(spreadInit, eventNamespaces);
-            for (const event of spreadEvents) {
-              eventMap.set(event.fullEventName, event);
+  for (const [objectLiteral, directEvents] of directEventsByObject) {
+    if (!objectLiteral.getProperties().some(Node.isSpreadAssignment)) {
+      result.push(...directEvents.values());
+      continue;
+    }
+
+    // Walk properties in source order so that later entries override earlier ones.
+    const merged = new Map<string, EventData>();
+
+    for (const property of objectLiteral.getProperties()) {
+      if (Node.isSpreadAssignment(property)) {
+        const spreadExpr = property.getExpression();
+        if (Node.isIdentifier(spreadExpr)) {
+          const decl = spreadExpr.getSymbol()?.getDeclarations()?.[0];
+          if (decl && Node.isVariableDeclaration(decl)) {
+            const spreadInit = decl.getInitializer();
+            if (spreadInit && Node.isObjectLiteralExpression(spreadInit)) {
+              const spreadEvents = directEventsByObject.get(spreadInit);
+              if (spreadEvents) {
+                for (const [key, event] of spreadEvents) {
+                  merged.set(key, event);
+                }
+              }
             }
           }
         }
+      } else if (Node.isPropertyAssignment(property)) {
+        const event = directEvents.get(property.getName());
+        if (event) {
+          merged.set(property.getName(), event);
+        }
       }
-      continue;
     }
 
-    if (!Node.isPropertyAssignment(property)) {
-      continue;
-    }
-
-    const value = property.getInitializer();
-    if (!value || !Node.isCallExpression(value)) {
-      continue;
-    }
-
-    const event = parseEventFromCall(value.getType(), value, eventNamespaces, () => {
-      return getMetadataFromPropertyComments(property);
-    });
-
-    if (event) {
-      // Direct assignment — overrides any previously spread event with the same name
-      eventMap.set(event.fullEventName, event);
-    }
+    result.push(...merged.values());
   }
 
-  return [...eventMap.values()];
+  return result;
 };
 
 /**
