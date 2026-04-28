@@ -217,25 +217,24 @@ const useGetGrafanaContactPoint = (
   { name }: { name: string },
   queryOptions?: Parameters<typeof useGetReceiverQuery>[1]
 ) => {
-  const skip = queryOptions?.skip;
+  return useGetReceiverQuery(
+    { name },
+    {
+      ...queryOptions,
+      skip: queryOptions?.skip || !name,
+      selectFromResult: (result) => {
+        const data = result.data ? parseK8sReceiver(result.data) : undefined;
 
-  const query = useGetReceiverQuery({ name }, { ...queryOptions, skip: skip || !name });
-
-  return useMemo(() => {
-    const raw = query.data;
-    const data = raw ? parseK8sReceiver(raw) : undefined;
-
-    return {
-      data,
-      currentData: data,
-      isLoading: query.isLoading || query.isFetching,
-      isFetching: query.isFetching,
-      isSuccess: query.isSuccess && Boolean(data),
-      isError: query.isError,
-      error: query.error,
-      refetch: query.refetch,
-    };
-  }, [query]);
+        return {
+          ...result,
+          data,
+          currentData: data,
+          isLoading: result.isLoading || result.isFetching,
+          isSuccess: result.isSuccess && Boolean(data),
+        };
+      },
+    }
+  );
 };
 
 export interface UseGetContactPointArgs {
