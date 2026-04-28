@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { IconName, GrafanaTheme2 } from '@grafana/data';
+import { type IconName, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Button } from '@grafana/ui';
 
 type AddButtonProps = {

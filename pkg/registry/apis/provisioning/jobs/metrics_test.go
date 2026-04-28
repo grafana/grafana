@@ -13,25 +13,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Shared registry for all tests to work with sync.Once singleton pattern
+var testRegistry = prometheus.NewRegistry()
+var testMetrics = RegisterJobMetrics(testRegistry)
+
 func TestRegisterJobMetrics(t *testing.T) {
 	t.Run("does not panic on pedantic registry", func(t *testing.T) {
 		require.NotPanics(t, func() {
+			// This will use the singleton, won't actually register with the new registry
 			RegisterJobMetrics(prometheus.NewPedanticRegistry())
 		})
 	})
 
-	t.Run("double registration panics", func(t *testing.T) {
-		reg := prometheus.NewPedanticRegistry()
-		RegisterJobMetrics(reg)
-		require.Panics(t, func() {
-			RegisterJobMetrics(reg)
+	t.Run("double registration is safe with sync.Once", func(t *testing.T) {
+		// Use the shared registry
+		RegisterJobMetrics(testRegistry)
+		// Should not panic - sync.Once prevents double registration
+		require.NotPanics(t, func() {
+			RegisterJobMetrics(testRegistry)
 		})
 	})
 }
 
 func TestRecordResourceOperation(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	m := RegisterJobMetrics(reg)
+	// Use the shared registry and metrics
+	reg := testRegistry
+	m := testMetrics
 
 	successCreated := NewResourceResult().
 		WithGroup("dashboard.grafana.app").WithKind("Dashboard").

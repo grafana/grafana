@@ -1,6 +1,6 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
@@ -25,7 +25,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerGrafanaRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../notification-policies/notificationPolicyAnalytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
@@ -460,6 +460,188 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 
       // Dropdown should NOT be visible
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings'] });
+
+  beforeEach(() => {
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+    contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
+    setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
+    grantAllPermissions();
+  });
+
+  describe('new rule', () => {
+    it('sets notification_settings.policy when a custom policy is selected (no __grafana_managed_route__ label)', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+
+      // Wait for collapsed state
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
+
+      // Wait for dropdown to appear
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // Open the policy dropdown
+      await user.click(policyTreeUi.policySelector.get());
+
+      // Wait for options to load
+      await waitFor(() => {
+        const options = screen.getAllByRole('option');
+        expect(options.length).toBeGreaterThan(1);
+      });
+
+      // Select a non-default policy
+      const customPolicyName = 'Managed Policy - Empty Provisioned';
+      const customPolicyOption = screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') });
+      await user.click(customPolicyOption);
+
+      // Save
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const ruleBody = bodies[0];
+      const newRule = ruleBody.rules[ruleBody.rules.length - 1];
+
+      // Should use notification_settings.policy, not __grafana_managed_route__ label
+      expect(newRule.grafana_alert.notification_settings?.policy).toBe(customPolicyName);
+      expect(newRule.grafana_alert.notification_settings?.receiver).toBeUndefined();
+      expect(newRule.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
+    });
+
+    it('does not set notification_settings.policy when saving with default policy', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+
+      // Wait for collapsed state (default policy)
+      await waitFor(() => {
+        expect(policyTreeUi.defaultBadge.get()).toBeInTheDocument();
+      });
+
+      // Save without changing policy
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const ruleBody = bodies[0];
+      const newRule = ruleBody.rules[ruleBody.rules.length - 1];
+
+      expect(newRule.grafana_alert.notification_settings).toBeUndefined();
+      expect(newRule.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
+    });
+  });
+
+  describe('edit existing rule with notification_settings.policy', () => {
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+      const ruleWithPolicy: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: {},
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: { policy: CUSTOM_POLICY_NAME },
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithPolicy],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('shows expanded dropdown with notification_settings.policy pre-selected', async () => {
+      const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('edit existing rule with legacy __grafana_managed_route__ label', () => {
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      // Rule has no notification_settings.policy — uses legacy label routing
+      const ruleWithLabel: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: { [NAMED_ROOT_LABEL_NAME]: CUSTOM_POLICY_NAME },
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: undefined,
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithLabel],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('shows expanded dropdown with legacy label policy pre-selected', async () => {
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      // The selector should show the migrated policy, not "Default policy"
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
   });
 });

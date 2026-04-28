@@ -4,7 +4,7 @@ import {
   setRoutingTree,
 } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 

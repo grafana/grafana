@@ -7,7 +7,7 @@
  * if converted). Supports panels in both DashboardGridItem and AutoGridItem.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 
@@ -178,9 +178,14 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       const previousLayoutItem = serializeResultLayoutItem(vizPanel);
 
       const sourceGridItem = vizPanel.parent;
-      const originalSize =
+      const originalPosition =
         sourceGridItem instanceof DashboardGridItem
-          ? { width: sourceGridItem.state.width, height: sourceGridItem.state.height }
+          ? {
+              x: sourceGridItem.state.x,
+              y: sourceGridItem.state.y,
+              width: sourceGridItem.state.width,
+              height: sourceGridItem.state.height,
+            }
           : undefined;
 
       const panelClone = vizPanel.clone();
@@ -199,8 +204,8 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         } else {
           applyGridPosition(panelClone, effectivePosition);
         }
-      } else if (originalSize && !isTargetAutoGrid) {
-        applyGridPosition(panelClone, originalSize);
+      } else if (originalPosition && !isTargetAutoGrid) {
+        applyGridPosition(panelClone, originalPosition);
       }
 
       const resultLayoutItem = serializeResultLayoutItem(panelClone);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { KeyValue } from '@grafana/data';
+import { type KeyValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { FormField } from '../FormField/FormField';
@@ -10,7 +10,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { CertificationKey } from './CertificationKey';
-import { HttpSettingsBaseProps } from './types';
+import { type HttpSettingsBaseProps } from './types';
 
 export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBaseProps) => {
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;

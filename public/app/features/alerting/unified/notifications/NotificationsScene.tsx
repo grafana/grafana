@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -145,7 +145,6 @@ export const NotificationsScene = ({
       name: LABELS_FILTER,
       label: t('alerting.notifications-scene.labels-filter-variable.label.group-labels', 'Group Labels'),
       allowCustomValue: true,
-      layout: 'combobox',
       applyMode: 'manual',
       supportsMultiValueOperators: true,
       expressionBuilder: prometheusExpressionBuilder,

@@ -3,13 +3,13 @@ import { isEqual } from 'lodash';
 import {
   MultiValueVariable,
   sceneGraph,
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
@@ -39,6 +39,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
+    let isFirstRender = true;
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter(
@@ -57,6 +58,11 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
 
         this.performRepeat(true);
+      }
+
+      if (isFirstRender) {
+        isFirstRender = false;
+        originalRow.state.children.forEach((child) => child.forceRender());
       }
     });
 

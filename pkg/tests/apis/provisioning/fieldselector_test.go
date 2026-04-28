@@ -10,16 +10,13 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_RepositoryFieldSelector tests that fieldSelector
 // works correctly for Repository resources. This prevents regression where
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Create multiple repositories for testing
@@ -27,32 +24,22 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	repo2Name := "repo-selector-test-2"
 	repo3Name := "repo-selector-test-3"
 
-	// Create first repository
-	repo1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo1Name,
-		"SyncEnabled": false, // Disable sync to speed up test
+	// Create repositories with sync disabled.
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo1Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, repo1, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create first repository")
-	helper.WaitForHealthyRepository(t, repo1Name)
-
-	// Create second repository
-	repo2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo2Name,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo2Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err = helper.Repositories.Resource.Create(ctx, repo2, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create second repository")
-	helper.WaitForHealthyRepository(t, repo2Name)
-
-	// Create third repository
-	repo3 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo3Name,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo3Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err = helper.Repositories.Resource.Create(ctx, repo3, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create third repository")
-	helper.WaitForHealthyRepository(t, repo3Name)
 
 	// Verify all repositories were created
 	allRepos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
@@ -105,20 +92,16 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 // works correctly for Job resources. This prevents regression where
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Create a repository to trigger jobs
 	repoName := "job-selector-test-repo"
-	repo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repoName,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repoName,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create repository")
-	helper.WaitForHealthyRepository(t, repoName)
 
 	// Copy some test files to trigger jobs
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "job-test-dashboard-1.json")

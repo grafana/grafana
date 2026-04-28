@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -1012,6 +1012,44 @@ describe('Layout mutation commands', () => {
       const innerLayout = body.state.tabs[0].getLayout();
       expect(innerLayout).toBeInstanceOf(RowsLayoutManager);
       expect((innerLayout as RowsLayoutManager).state.rows).toHaveLength(2);
+    });
+
+    it('preserves section variable values when converting rows to tabs', async () => {
+      const sectionVariable = new CustomVariable({
+        name: 'section',
+        query: 'default',
+        value: 'fromUrl',
+        text: 'fromUrl',
+      });
+      const row = new RowItem({
+        title: 'Row 1',
+        repeatByVariable: 'server',
+        $variables: new SceneVariableSet({ variables: [sectionVariable] }),
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const rowsBody = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Main' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const innerRows = body.state.tabs[0].getLayout() as RowsLayoutManager;
+      const convertedRow = innerRows.state.rows[0];
+      const convertedSectionVariable = convertedRow.state.$variables?.state.variables.find(
+        (variable) => variable instanceof CustomVariable
+      ) as CustomVariable;
+
+      expect(convertedRow.state.repeatByVariable).toBe('server');
+      expect(convertedSectionVariable.getValue()).toBe('fromUrl');
     });
 
     it('converts tabs to rows by nesting tabs inside the requested row', async () => {

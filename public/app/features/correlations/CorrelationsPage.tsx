@@ -2,10 +2,16 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, CorrelationsData, FetchError, isFetchError, reportInteraction } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationsData,
+  type FetchError,
+  isFetchError,
+  reportInteraction,
+} from '@grafana/runtime';
 import {
   Badge,
   Button,

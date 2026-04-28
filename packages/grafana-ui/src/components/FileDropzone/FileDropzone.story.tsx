@@ -1,5 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
-import { useId } from 'react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { Field } from '../Forms/Field';
 
@@ -17,10 +16,9 @@ const meta: Meta<typeof FileDropzone> = {
 };
 
 const Template: StoryFn<typeof FileDropzone> = (args) => {
-  const inputId = useId();
   return (
     <Field label="Test JSON file">
-      <FileDropzone {...args} id={inputId} />
+      <FileDropzone {...args} />
     </Field>
   );
 };

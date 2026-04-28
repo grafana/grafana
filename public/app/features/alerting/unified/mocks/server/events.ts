@@ -1,5 +1,5 @@
-import { HttpHandler, matchRequestUrl } from 'msw';
-import { JsonValue } from 'type-fest';
+import { type HttpHandler, matchRequestUrl } from 'msw';
+import { type JsonValue } from 'type-fest';
 
 import server from '@grafana/test-utils/server';
 

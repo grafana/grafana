@@ -9,6 +9,8 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import ExportMenu from './ExportMenu';
 
 describe('ExportMenu', () => {
+  config.featureToggles.kubernetesDashboards = false;
+
   it('should render menu items', async () => {
     setup();
     expect(await screen.findByRole('menuitem', { name: /export as json/i })).toBeInTheDocument();

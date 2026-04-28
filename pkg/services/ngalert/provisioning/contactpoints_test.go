@@ -4,18 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/email"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/slack"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,11 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -47,6 +51,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingReceiversCreate:  nil,
 		},
 	}}
 	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -60,6 +65,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			accesscontrol.ActionAlertingProvisioningRead:         nil,
 			accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
 			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingProvisioningSetStatus:    nil,
 			accesscontrol.ActionAlertingReceiversUpdate:          nil,
 			accesscontrol.ActionAlertingReceiversUpdateProtected: nil,
 		},
@@ -438,6 +444,32 @@ func TestIntegrationContactPointService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
@@ -655,8 +687,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	}
 
 	configs := notifytest.AllKnownV1ConfigsForTesting
-	keys := maps.Keys(configs)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
 		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
@@ -698,6 +729,172 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	}
 }
 
+func TestIntegrationAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		sut := createContactPointServiceSut(t, secretsService)
+		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
+		sut.authz = authz
+		return sut, authz
+	}
+
+	user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	receiverA := "receiverA"
+	receiverB := "receiverB"
+	receiverC := "receiverC"
+	sut, authz := sutWithAuthz()
+	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(util.Pointer(gen()), models.ProvenanceAPI)
+	t.Run("CreateContactPoint", func(t *testing.T) {
+		t.Run("authorize create if receiver is new", func(t *testing.T) {
+			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+				assert.Equal(t, user, requester)
+				return nil
+			}
+			var err error
+			integration1, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration1, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Len(t, authz.Calls, 1)
+			assert.Equal(t, []string{"AuthorizeCreate"}, authz.Calls.Methods())
+		})
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			var err error
+			integration2, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration2, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration3, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration3, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+	})
+	t.Run("UpdateContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			newVersion := integration2
+			newVersion.Settings = integration2.Settings.DeepCopy()
+			newVersion.Settings.Set("message", "something else")
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration2 = newVersion
+		})
+		t.Run("when integration is moved between receivers", func(t *testing.T) {
+			t.Run("authorize update A and create B if receiver is not deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration1
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration1 = newVersion
+			})
+			t.Run("authorize update A and update B if integration is moved to existing receiver", func(t *testing.T) {
+				authz.Reset()
+				checked := make([]string, 0, 2)
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					checked = append(checked, uid)
+					return nil
+				}
+				newVersion := integration2
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				assert.ElementsMatch(t, []string{models.NameToUid(receiverA), models.NameToUid(receiverB)}, checked)
+				integration2 = newVersion
+			})
+
+			t.Run("authorize delete A and create B if receiver is deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverC
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+			t.Run("authorize delete A and update B if receivers are merged", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverC), uid)
+					return nil
+				}
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverB), uid)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+		})
+	})
+	t.Run("DeleteContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver is not deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
+			require.NoError(t, err)
+			err = sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration2.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+		t.Run("authorize delete if receiver is deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+		})
+	})
+}
+
 func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
@@ -723,7 +920,10 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 
 	return NewContactPointService(
@@ -734,8 +934,10 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		xact,
 		receiverService,
 		log.NewNopLogger(),
-		nil,
+		&fakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
+		nil,
+		&notifier.NoopOrgEmailValidator{},
 	)
 }
 
@@ -744,6 +946,15 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
 		Settings: settings,
 	}
 }
@@ -1645,5 +1856,65 @@ func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig
 				},
 			},
 		},
+	}
+}
+
+func TestValidateContactPointAllowedIntegrations(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newCP := func(integrationType string) *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-cp",
+			Type:     integrationType,
+			Settings: settings,
+		}
+	}
+
+	testCases := []struct {
+		name            string
+		allowed         map[schema.IntegrationType]struct{}
+		integrationType string
+		wantErr         string
+	}{
+		{
+			name:            "nil allowlist permits any valid type",
+			integrationType: "slack",
+		},
+		{
+			name:            "type in allowlist is permitted",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "slack",
+		},
+		{
+			name:            "type not in allowlist is rejected",
+			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "empty non-nil allowlist rejects all types",
+			allowed:         map[schema.IntegrationType]struct{}{},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "allowlist match is case-insensitive via canonical resolution",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "SLACK",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, err.Error(), tc.wantErr)
+			}
+		})
 	}
 }

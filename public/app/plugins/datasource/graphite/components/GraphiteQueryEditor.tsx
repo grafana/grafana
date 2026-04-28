@@ -1,10 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { actions } from '../state/actions';
-import { GraphiteQueryEditorContext, GraphiteQueryEditorProps, useDispatch, useGraphiteState } from '../state/context';
+import {
+  GraphiteQueryEditorContext,
+  type GraphiteQueryEditorProps,
+  useDispatch,
+  useGraphiteState,
+} from '../state/context';
 
 import { FunctionsSection } from './FunctionsSection';
 import { GraphiteTextEditor } from './GraphiteTextEditor';

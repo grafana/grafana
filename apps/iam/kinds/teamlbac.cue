@@ -8,13 +8,13 @@ teamlbacruleKind: {
 	kind:       "TeamLBACRule"
 	pluralName: "TeamLBACRules"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
 teamlbacrulev0alpha1: teamlbacruleKind & {
 	schema: {
-		spec:   v0alpha1.TeamLBACRuleSpec
+		spec: v0alpha1.TeamLBACRuleSpec
 	}
 }

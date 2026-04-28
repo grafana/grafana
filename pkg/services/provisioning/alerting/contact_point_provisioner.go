@@ -75,7 +75,7 @@ func (c *defaultContactPointProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, cp := range file.DeleteContactPoints {
-			err := c.contactPointService.DeleteContactPoint(ctx, cp.OrgID, cp.UID)
+			err := c.contactPointService.DeleteContactPoint(ctx, cp.OrgID, provisionerUser(cp.OrgID), cp.UID)
 			if err != nil {
 				return err
 			}

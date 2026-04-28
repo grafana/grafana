@@ -1,18 +1,19 @@
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
-import { DashboardViewItem } from 'app/features/search/types';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { config } from '@grafana/runtime';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
 import {
-  BrowseDashboardsState,
-  DashboardsTreeItem,
-  DashboardTreeSelection,
-  DashboardViewItemWithUIItems,
-  UIDashboardViewItem,
+  type BrowseDashboardsState,
+  type DashboardsTreeItem,
+  type DashboardTreeSelection,
+  type DashboardViewItemWithUIItems,
+  type UIDashboardViewItem,
 } from '../types';
-import { isSharedWithMe } from '../utils/dashboards';
+import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -183,12 +184,17 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    if (isSharedWithMe(thisItem.item.uid)) {
+    // Add a divider after the last virtual folder (shared with me / team folders)
+    const isLastVirtualFolder =
+      isVirtualTeamFolder(thisItem.item.uid) ||
+      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders);
+
+    if (isLastVirtualFolder) {
       items.push({
         item: {
           kind: 'ui',
           uiKind: 'divider',
-          uid: 'shared-with-me-divider',
+          uid: `${thisItem.item.uid}-divider`,
         },
         parentUID,
         level: level + 1,

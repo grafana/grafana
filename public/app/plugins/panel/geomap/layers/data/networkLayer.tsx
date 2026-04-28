@@ -1,34 +1,34 @@
 import { isNumber } from 'lodash';
-import Feature, { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
-import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
+import Feature, { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
+import { type Geometry, LineString, type Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
 import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type PanelData,
+  type GrafanaTheme2,
   FrameGeometrySourceMode,
-  EventBus,
-  DataFrame,
-  Field,
+  type EventBus,
+  type DataFrame,
+  type Field,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { GraphFrame } from 'app/plugins/panel/nodeGraph/types';
+import { type GraphFrame } from 'app/plugins/panel/nodeGraph/types';
 import { getGraphFrame } from 'app/plugins/panel/nodeGraph/utils';
 
-import { MarkersLegendProps, MarkersLegend } from '../../components/MarkersLegend';
+import { type MarkersLegendProps, MarkersLegend } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { StyleConfig, defaultStyleConfig } from '../../style/types';
+import { type StyleConfig, defaultStyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 

@@ -4,10 +4,10 @@ import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Box, Stack } from '@grafana/ui';
 
-import { LogGroup, LogGroupClass, LogsQueryLanguage, LogsQueryScope } from '../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../datasource';
+import { type LogGroup, type LogGroupClass, LogsQueryLanguage, type LogsQueryScope } from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
 import { useAccountOptions, useIsMonitoringAccount } from '../../../hooks';
-import { DescribeLogGroupsRequest } from '../../../resources/types';
+import { type DescribeLogGroupsRequest } from '../../../resources/types';
 import { isTemplateVariable } from '../../../utils/templateVariableUtils';
 
 import { AccountsSelector } from './AccountsSelector';

@@ -2,18 +2,18 @@ import { createContext, useContext } from 'react';
 
 import {
   EventBusSrv,
-  EventBus,
-  DashboardCursorSync,
-  AnnotationEventUIModel,
-  ThresholdsConfig,
-  CoreApp,
-  DataFrame,
-  DataLinkPostProcessor,
+  type EventBus,
+  type DashboardCursorSync,
+  type AnnotationEventUIModel,
+  type ThresholdsConfig,
+  type CoreApp,
+  type DataFrame,
+  type DataLinkPostProcessor,
 } from '@grafana/data';
 
-import { AdHocFilterItem } from '../Table/types';
+import { type AdHocFilterItem } from '../Table/types';
 
-import { OnSelectRangeCallback, SeriesVisibilityChangeMode } from './types';
+import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {

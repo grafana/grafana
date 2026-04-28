@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, sceneGraph, SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
@@ -13,7 +13,7 @@ import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelConte
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
-import { AutoGridItem } from './AutoGridItem';
+import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 

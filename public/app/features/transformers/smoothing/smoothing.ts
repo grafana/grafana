@@ -1,16 +1,16 @@
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   isTimeSeriesFrame,
   TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { asapSmooth, DataPoint } from './asap';
+import { asapSmooth, type DataPoint } from './asap';
 
 export interface SmoothingTransformerOptions {
   resolution?: number;

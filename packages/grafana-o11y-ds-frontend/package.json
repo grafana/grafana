@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "AGPL-3.0-only",
   "name": "@grafana/o11y-ds-frontend",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "description": "Shared UI components and utilities for observability datasource plugins in Grafana.",
   "sideEffects": false,
   "repository": {
@@ -41,12 +41,12 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "13.0.0-pre",
-    "@grafana/e2e-selectors": "13.0.0-pre",
+    "@grafana/data": "13.1.0-pre",
+    "@grafana/e2e-selectors": "13.1.0-pre",
     "@grafana/plugin-ui": "^0.13.1",
-    "@grafana/runtime": "13.0.0-pre",
-    "@grafana/schema": "13.0.0-pre",
-    "@grafana/ui": "13.0.0-pre",
+    "@grafana/runtime": "13.1.0-pre",
+    "@grafana/schema": "13.1.0-pre",
+    "@grafana/ui": "13.1.0-pre",
     "react-select": "5.10.2",
     "react-use": "17.6.0",
     "rxjs": "7.8.2",
@@ -66,10 +66,10 @@
     "@types/systemjs": "6.15.3",
     "jest": "^29.6.4",
     "react": "18.3.1",
-    "rollup": "4.59.0",
+    "rollup": "^4.60.1",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",

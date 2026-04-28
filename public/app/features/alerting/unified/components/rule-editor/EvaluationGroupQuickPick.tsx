@@ -5,7 +5,7 @@ import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
-const MIN_INTERVAl = config.unifiedAlerting.minInterval ?? '10s';
+const MIN_INTERVAl = config.unifiedAlerting?.minInterval ?? '10s';
 export const getEvaluationGroupOptions = (minInterval = MIN_INTERVAl) => {
   const MIN_OPTIONS_TO_SHOW = 8;
   const DEFAULT_INTERVAL_OPTIONS: number[] = [

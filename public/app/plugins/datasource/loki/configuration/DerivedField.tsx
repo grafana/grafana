@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
+import { type GrafanaTheme2, type DataSourceInstanceSettings, type VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
 
-import { DerivedFieldConfig } from '../types';
+import { type DerivedFieldConfig } from '../types';
 
 type MatcherType = 'label' | 'regex';
 

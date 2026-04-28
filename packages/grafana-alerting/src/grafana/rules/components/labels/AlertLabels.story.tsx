@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { Stack } from '@grafana/ui';
 

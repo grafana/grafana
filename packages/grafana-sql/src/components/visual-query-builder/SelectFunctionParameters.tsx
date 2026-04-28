@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useId, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField } from '@grafana/plugin-ui';
 import { InlineLabel, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType } from '../../expressions';
-import { DB, SQLExpression, SQLQuery } from '../../types';
+import { type DB, type SQLExpression, type SQLQuery } from '../../types';
 import { getColumnValue } from '../../utils/sql.utils';
 
 import { SelectColumn } from './SelectColumn';

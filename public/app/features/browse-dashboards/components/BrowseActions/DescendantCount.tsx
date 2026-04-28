@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { Alert, Text } from '@grafana/ui';
 import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
 
 import { buildBreakdownString } from './utils';
 

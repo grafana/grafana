@@ -124,6 +124,53 @@ func TestBasic(t *testing.T) {
 	})
 }
 
+func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
+	sut := testutils.Setup(t)
+
+	// Create and activate v1
+	sv1, err := sut.CreateSv(t.Context())
+	require.NoError(t, err)
+
+	// Advance time to wait for grace period
+	sut.Clock.AdvanceBy(10 * time.Minute)
+
+	// Create from metadata storage directly to insert v2 as *inactive*
+	// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
+	sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      sv1.Name,
+			Namespace: sv1.Namespace,
+		},
+		Spec: secretv1beta1.SecureValueSpec{
+			Description: "v2",
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("new-value")),
+			Decrypters:  []string{"decrypter1"},
+		},
+	}, "actor-uid")
+	require.NoError(t, err)
+	require.Equal(t, int64(2), sv2.Status.Version)
+
+	// Force the GC, nothing should have been cleaned, v1 is active and v2 is within the grace period
+	// If we were relying on the `created` field to check for eligible secure values, v2 would get deleted here!
+	cleaned, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+	require.NoError(t, err)
+	require.Empty(t, cleaned)
+
+	// Activate v2 and read it
+	err = sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name, sv2.Status.Version)
+	require.NoError(t, err)
+
+	read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
+	require.NoError(t, err)
+	require.Equal(t, sv2.Status.Version, read.Status.Version)
+
+	// Force the GC again, this time we expect v1 to be cleaned since v2 was activated
+	cleaned, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+	require.NoError(t, err)
+	require.Len(t, cleaned, 1)
+	require.Equal(t, sv1.Status.Version, cleaned[0].Status.Version)
+}
+
 func TestProperty(t *testing.T) {
 	t.Parallel()
 
@@ -190,8 +237,9 @@ func TestProperty(t *testing.T) {
 			"cleanup": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
 				minAge := 300 * time.Second
+				leaseTTL := 30 * time.Second
 				maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
-				modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, maxBatchSize)
+				modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 				require.ErrorIs(t, err, modelErr)
 

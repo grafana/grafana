@@ -810,17 +810,9 @@
       },
       "AnnotationPermission": {
         "type": "object",
-        "required": ["dashboard", "organization"],
+        "required": ["dashboard"],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {
@@ -868,6 +860,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Dashboard",
+            "version": "v1"
+          },
           {
             "group": "dashboard.grafana.app",
             "kind": "Dashboard",
@@ -976,6 +973,11 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardList",
+            "version": "v1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardList",
             "version": "v1beta1"
           }
         ]
@@ -1040,6 +1042,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardWithAccessInfo",
+            "version": "v1"
+          },
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardWithAccessInfo",

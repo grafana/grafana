@@ -2,13 +2,10 @@ package provisioning
 
 import (
 	"testing"
-	"time"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,12 +25,10 @@ var ownerRefsPatch = []byte(`[{
 }]`)
 
 func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            "test-repo",
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -73,13 +68,11 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 }
 
 func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	const repo = "test-repo"
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -101,20 +94,8 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err, "can list values")
-			for _, v := range foundFolders.Items {
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
+		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
 
 		_, err = helper.Folders.Resource.Patch(t.Context(), managedFolderName, types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.NoError(t, err, "should set ownerReferences on released folder")

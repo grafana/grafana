@@ -4,7 +4,7 @@
  * Add a template variable to the dashboard using v2beta1 VariableKind format.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';

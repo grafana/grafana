@@ -1,19 +1,19 @@
 import {
-  DataSourceApi,
-  DataSourceRef,
+  type DataSourceApi,
+  type DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  QueryVariableModel,
+  type QueryVariableModel,
   VariableHide,
   VariableRefresh,
   VariableSort,
 } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { notifyApp } from '../../../core/reducers/appNotification';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getTimeSrv, setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
@@ -25,7 +25,7 @@ import {
   variableEditorMounted,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
-import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import {
   addVariable,
@@ -36,7 +36,7 @@ import {
   variableStateFetching,
 } from '../state/sharedReducer';
 import { variablesInitTransaction } from '../state/transactionReducer';
-import { VariableQueryEditorProps } from '../types';
+import { type VariableQueryEditorProps } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';

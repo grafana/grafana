@@ -1145,6 +1145,45 @@
    },
    "type": "object"
   },
+  "ExternalAlertmanagerConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/Config"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "ExternalAlertmanagerStatus": {
+   "properties": {
+    "cluster": {
+     "$ref": "#/definitions/clusterStatus"
+    },
+    "config": {
+     "$ref": "#/definitions/Config"
+    },
+    "uptime": {
+     "description": "uptime",
+     "format": "date-time",
+     "type": "string"
+    },
+    "versionInfo": {
+     "$ref": "#/definitions/versionInfo"
+    }
+   },
+   "required": [
+    "cluster",
+    "config",
+    "uptime",
+    "versionInfo"
+   ],
+   "type": "object"
+  },
   "ExtraConfiguration": {
    "properties": {
     "alertmanager_config": {
@@ -2267,17 +2306,6 @@
    },
    "title": "Label is a key/value pair of strings.",
    "type": "object"
-  },
-  "LabelSet": {
-   "additionalProperties": {
-    "$ref": "#/definitions/LabelValue"
-   },
-   "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-   "type": "object"
-  },
-  "LabelValue": {
-   "title": "A LabelValue is an associated value for a LabelName.",
-   "type": "string"
   },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
@@ -4578,80 +4606,6 @@
    "title": "TelegramConfig configures notifications via Telegram.",
    "type": "object"
   },
-  "TestReceiverConfigResult": {
-   "properties": {
-    "error": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiverResult": {
-   "properties": {
-    "grafana_managed_receiver_configs": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverConfigResult"
-     },
-     "type": "array"
-    },
-    "name": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigAlertParams": {
-   "properties": {
-    "annotations": {
-     "$ref": "#/definitions/LabelSet"
-    },
-    "labels": {
-     "$ref": "#/definitions/LabelSet"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigBodyParams": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/PostableApiReceiver"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversResult": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "notified_at": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverResult"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
   "TestRulePayload": {
    "properties": {
     "expr": {
@@ -6293,6 +6247,7 @@
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
+    "deprecated": true,
     "responses": {
      "200": {
       "description": "ProvisionedAlertRules",
@@ -6317,6 +6272,7 @@
      "application/json"
     ],
     "operationId": "RoutePostAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "in": "body",
@@ -6435,6 +6391,7 @@
   "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -6467,6 +6424,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -6503,6 +6461,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -6628,12 +6587,19 @@
       "schema": {
        "$ref": "#/definitions/ContactPoints"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the contact points.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -6666,12 +6632,19 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Create a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/contact-points/export": {
@@ -6756,12 +6729,19 @@
     "responses": {
      "202": {
       "description": " The contact point was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Delete a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -6801,18 +6781,26 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Update an existing contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -6850,6 +6838,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -6891,6 +6880,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "header",
@@ -7018,12 +7008,19 @@
       "schema": {
        "$ref": "#/definitions/MuteTimings"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the mute timings.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -7056,12 +7053,19 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Create a new mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/export": {
@@ -7142,6 +7146,12 @@
      "204": {
       "description": " The mute timing was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7152,7 +7162,8 @@
     "summary": "Delete a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetMuteTiming",
@@ -7172,6 +7183,12 @@
        "$ref": "#/definitions/MuteTimeInterval"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -7179,7 +7196,8 @@
     "summary": "Get a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7220,6 +7238,12 @@
        "$ref": "#/definitions/ValidationError"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7230,7 +7254,8 @@
     "summary": "Replace an existing mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/{name}/export": {
@@ -7303,12 +7328,19 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Clears the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetPolicyTree",
@@ -7318,12 +7350,19 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7357,12 +7396,19 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Sets the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/policies/export": {
@@ -7380,6 +7426,12 @@
       "description": "AlertingFileExport",
       "schema": {
        "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -7404,12 +7456,19 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplates"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/templates/{name}": {
@@ -7434,6 +7493,12 @@
      "204": {
       "description": " The template was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7444,7 +7509,8 @@
     "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetTemplate",
@@ -7464,6 +7530,12 @@
        "$ref": "#/definitions/NotificationTemplate"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "PublicError",
       "schema": {
@@ -7474,7 +7546,8 @@
     "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -7515,6 +7588,12 @@
        "$ref": "#/definitions/PublicError"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7525,7 +7604,8 @@
     "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   }
  },

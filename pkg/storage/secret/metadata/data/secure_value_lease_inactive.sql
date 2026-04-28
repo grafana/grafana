@@ -11,7 +11,7 @@ WHERE {{ .Ident "guid" }} IN (
     FROM {{ .Ident "secret_secure_value" }}
     WHERE
       {{ .Ident "active" }} = FALSE AND
-      {{ .Arg .Now }} - {{ .Ident "created" }} > {{ .Arg .MinAge }} AND
+      {{ .Arg .Now }} - {{ .Ident "updated" }} > {{ .Arg .MinAge }} AND
       {{ .Arg .Now }} - {{ .Ident "lease_created" }} > {{ .Arg .LeaseTTL }}
   ) AS sub
   WHERE rn <= {{ .Arg .MaxBatchSize }}

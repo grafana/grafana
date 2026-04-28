@@ -1,6 +1,6 @@
-import { AnnotationEvent, DataFrame, DataTopic, arrayToDataFrame } from '@grafana/data';
+import { type AnnotationEvent, type DataFrame, DataTopic, arrayToDataFrame } from '@grafana/data';
 
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 
 // Function to get color based on alert state - matching EventState component colors
 function getStateColor(state: string): string {

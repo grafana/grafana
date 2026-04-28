@@ -26,7 +26,7 @@ type configStore interface {
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
-	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+	CompareAndSendConfiguration(context.Context, alertingNotify.NotificationsConfiguration) (bool, error)
 	GetRemoteState(context.Context) (notifier.ExternalState, error)
 	SendState(context.Context) error
 }
@@ -72,7 +72,6 @@ func NewRemoteSecondaryFactory(
 	cfgStore configStore,
 	syncInterval time.Duration,
 	crypto Crypto,
-	autogenRuleStore autogenRuleStore,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	withRemoteState bool,
@@ -83,7 +82,7 @@ func NewRemoteSecondaryFactory(
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenRuleStore, m, t, features)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, m, t, features)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
@@ -130,7 +129,7 @@ func newRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
-func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config alertingNotify.NotificationsConfiguration) (bool, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	// Figure out if we need to sync the external Alertmanager in another goroutine.
@@ -139,7 +138,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
 		// This will perform a readiness check and sync the Alertmanagers.
 		if !fam.remote.Ready() {
-			if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+			if _, err := fam.remote.ApplyConfig(ctx, config); err != nil {
 				fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
 				return
 			}
@@ -150,7 +149,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
 			fam.log.Debug("Syncing configuration with the remote Alertmanager", "lastSync", fam.lastSync)
-			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+			if _, err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 			} else {
 				fam.lastSync = time.Now()
@@ -162,18 +161,18 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 	if fam.shouldFetchRemoteState {
 		wg.Wait()
 		if !fam.remote.Ready() {
-			return fmt.Errorf("remote Alertmanager not ready, can't fetch remote state")
+			return false, fmt.Errorf("remote Alertmanager not ready, can't fetch remote state")
 		}
 		// Pull and merge the remote Alertmanager state.
 		rs, err := fam.remote.GetRemoteState(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to fetch remote state: %w", err)
+			return false, fmt.Errorf("failed to fetch remote state: %w", err)
 		}
 
 		// The internal Alertmanager should implement the StateMerger interface.
 		sm := fam.internal.(notifier.StateMerger)
 		if err := sm.MergeState(rs); err != nil {
-			return fmt.Errorf("failed to merge remote state: %w", err)
+			return false, fmt.Errorf("failed to merge remote state: %w", err)
 		}
 		fam.log.Info("Successfully merged remote silences and nflog entries")
 
@@ -182,19 +181,9 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 	}
 
 	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
-	err := fam.internal.ApplyConfig(ctx, config)
+	applied, err := fam.internal.ApplyConfig(ctx, config)
 	wg.Wait()
-	return err
-}
-
-// SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
-func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return fam.internal.SaveAndApplyConfig(ctx, config)
-}
-
-// SaveAndApplyDefaultConfig is only called on the internal Alertmanager when running in remote secondary mode.
-func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return fam.internal.SaveAndApplyDefaultConfig(ctx)
+	return applied, err
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
@@ -231,10 +220,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return fam.internal.GetReceivers(ctx)
-}
-
-func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {

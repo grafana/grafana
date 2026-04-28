@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useMemo, useContext, useEffect } from 'react';
+import { createContext, type ReactNode, useMemo, useContext, useEffect } from 'react';
 
 import { config, locationService, ScopesContext } from '@grafana/runtime';
 

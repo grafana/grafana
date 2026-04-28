@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { Fragment, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 
 import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
-import { CatalogPlugin, PluginStatus } from '../types';
+import { type CatalogPlugin, PluginStatus } from '../types';
 
 interface Props {
   plugin?: CatalogPlugin;

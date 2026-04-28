@@ -6,13 +6,18 @@ import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeRoute,
-  RoutingTreeRouteDefaults,
+  type RoutingTree,
+  type RoutingTreeRoute,
+  type RoutingTreeRouteDefaults,
   generatedAPI as routingTreeApi,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
+import {
+  MatcherOperator,
+  ROUTES_META_SYMBOL,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -23,13 +28,13 @@ import {
   deleteRouteAction,
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
-  InsertPosition,
+  type InsertPosition,
   addRouteToReferenceRoute,
   cleanKubernetesRouteIDs,
   mergePartialAmRouteWithRouteTree,

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { getAPINamespace } from '@grafana/api-clients';
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { getDefaultTimeRange, type TimeRange } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 export function isDashboardDatasource(query: DataQuery): boolean {

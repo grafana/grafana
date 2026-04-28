@@ -1,25 +1,26 @@
-import { Point } from 'ol/geom';
-import { SortColumn } from 'react-data-grid';
+import WKT from 'ol/format/WKT';
+import { type Geometry, Point } from 'ol/geom';
+import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
   createTheme,
-  DataFrame,
-  DataFrameWithValue,
-  DataLink,
-  DisplayValue,
-  Field,
+  type DataFrame,
+  type DataFrameWithValue,
+  type DataLink,
+  type DisplayValue,
+  type Field,
   FieldType,
-  GrafanaTheme2,
-  LinkModel,
-  ValueLinkConfig,
+  type GrafanaTheme2,
+  type LinkModel,
+  type ValueLinkConfig,
 } from '@grafana/data';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { MeasureCellHeightEntry, TableRow } from './types';
+import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
@@ -1189,14 +1190,53 @@ describe('TableNG utils', () => {
       expect(measurers![0].fieldIdxs).toEqual([0]);
     });
 
-    it('does not enable text counting for non-string fields', () => {
+    it('enables text counting for Time fields rendered by AutoCellRenderer', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: '2024-03-26 14:30:00', numeric: v as number, color: undefined, title: undefined }),
+        },
       ];
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
-      // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
+      // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([1]);
+    });
+
+    it('enables text counting for Number fields rendered by AutoCellRenderer', () => {
+      const fields: Field[] = [
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: String(v), numeric: v as number, color: undefined, title: undefined }),
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([0]);
+    });
+
+    it('does not enable text counting for non-AutoCellRenderer fields like Gauge', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        {
+          name: 'Score',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Gauge } } },
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      // Gauge cells don't use AutoCellRenderer, so no measurer is set up
       expect(measurers).toBeUndefined();
     });
 
@@ -1354,6 +1394,93 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      });
+    });
+
+    describe('non-string fields with display processor', () => {
+      it('measures the display-formatted string for Time fields, not the raw epoch number', () => {
+        const FORMATTED_TIME = '2024-03-26 14:30:00';
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: FORMATTED_TIME, numeric: EPOCH_MS, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: timeFields });
+        const frameToRecords = compileFrameToRecords(frame);
+        const timeRows = frameToRecords(frame);
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(timeFields, timeRows[0], [100], 36, [timeMeasurer], 20, 10);
+
+        // Must be called with the formatted string, not the raw epoch number
+        expect(timeMeasurer.measure).toHaveBeenCalledWith(FORMATTED_TIME, 100, timeFields[0], 0, 20);
+        expect(timeMeasurer.measure).not.toHaveBeenCalledWith(EPOCH_MS, 100, timeFields[0], 0, 20);
+      });
+
+      it('still passes the raw value for string fields (no display transformation)', () => {
+        const stringFields: Field[] = [
+          {
+            name: 'Name',
+            type: FieldType.string,
+            values: ['hello world'],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: 'SHOULD NOT BE USED', numeric: NaN, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: stringFields });
+        const frameToRecords = compileFrameToRecords(frame);
+        const stringRows = frameToRecords(frame);
+
+        const stringMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(stringFields, stringRows[0], [100], 36, [stringMeasurer], 20, 10);
+
+        // String fields pass through the raw value, not the display-formatted value
+        expect(stringMeasurer.measure).toHaveBeenCalledWith('hello world', 100, stringFields[0], 0, 20);
+      });
+
+      it('uses the display name for header rows (rowIdx === -1) regardless of field type', () => {
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({
+              text: '2024-03-26 14:30:00',
+              numeric: EPOCH_MS,
+              color: undefined,
+              title: undefined,
+            })),
+          },
+        ];
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        // rowIdx -1 = header row; value should be the field display name
+        getRowHeight(timeFields, { __index: -1, __depth: 0 }, [100], 36, [timeMeasurer], 20, 10);
+
+        expect(timeMeasurer.measure).toHaveBeenCalledWith('Time', 100, timeFields[0], -1, 20);
+        // display() should not have been called for header rows
+        expect(timeFields[0].display).not.toHaveBeenCalled();
       });
     });
   });
@@ -1580,7 +1707,7 @@ describe('TableNG utils', () => {
         ],
       });
       const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
+      const { filteredRows: filtered } = applyFilter(frameToRecords(frame), {}, frame.fields, false);
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
         { time: 1, value: 20 },
@@ -1607,7 +1734,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1637,7 +1764,7 @@ describe('TableNG utils', () => {
         ],
       });
       const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         frameToRecords(frame),
         {
           time: { filteredSet: new Set(['1', '2']), displayName: 'time' },
@@ -1677,7 +1804,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame, 'nested');
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         {
           time: { filteredSet: new Set(['1']), displayName: 'time' },
@@ -1694,6 +1821,44 @@ describe('TableNG utils', () => {
         { time: 1, value: 20, __depth: 0 },
         { __index: 1, __depth: 1 },
       ]);
+    });
+
+    it('ignores scoped filter entries when parentIndex is not passed (regression: useNestedRows must pass parentIndex)', () => {
+      // This is the bug: calling applyFilter without parentIndex when all filter entries have
+      // parentIndex set causes them to be treated as top-level and silently skipped, leaving
+      // the nested table unfiltered. The fix is to always pass parentRow.__index.
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const records = frameToRecords(frame, 5);
+
+      // Bug: no parentIndex arg — scoped filter is ignored, all rows returned
+      const { filteredRows: buggy } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false
+      );
+      expect(buggy).toHaveLength(3); // filter had no effect
+
+      // Fix: pass parentIndex — scoped filter is applied correctly
+      const { filteredRows: fixed } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false,
+        5
+      );
+      expect(fixed).toHaveLength(1);
+      expect(fixed).toMatchObject([{ value: 10 }]);
     });
 
     it('filters the records by the filter columns with a nested frame and a parent index', () => {
@@ -1715,11 +1880,12 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame, 'nested');
       const records = frameToRecords(frame, 3);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
         frame.fields,
-        false
+        false,
+        3
       );
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
@@ -1727,7 +1893,7 @@ describe('TableNG utils', () => {
       ]);
 
       // using a parent index that doesn't match the rows in the set, the rows should not be filtered.
-      const filtered2 = applyFilter(
+      const { filteredRows: filtered2 } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 2 } },
         frame.fields,
@@ -1759,7 +1925,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1774,6 +1940,114 @@ describe('TableNG utils', () => {
         { time: 1, value: 10 },
         { time: 1, value: 20 },
       ]);
+    });
+  });
+
+  describe('cross-filter metadata', () => {
+    const makeField = (name: string, values: unknown[]) => ({
+      name,
+      type: FieldType.string,
+      values,
+      config: {},
+      display: (v: unknown) => ({ text: String(v), numeric: NaN }),
+    });
+
+    const makeRows = (values: Array<{ category: string; status: string }>): TableRow[] =>
+      values.map((v, i) => ({ __depth: 0, __index: i, category: v.category, status: v.status }));
+
+    const rows = makeRows([
+      { category: 'A', status: 'up' },
+      { category: 'A', status: 'down' },
+      { category: 'B', status: 'up' },
+      { category: 'B', status: 'down' },
+      { category: 'C', status: 'up' },
+    ]);
+
+    const fields = [
+      makeField('category', ['A', 'A', 'B', 'B', 'C']),
+      makeField('status', ['up', 'down', 'up', 'down', 'up']),
+    ];
+
+    it('returns empty crossFilterOrder and full rows as tail when no filters active', () => {
+      const { crossFilterOrder, crossFilterTailRows } = applyFilter(rows, {}, fields);
+      expect(crossFilterOrder).toEqual([]);
+      expect(crossFilterTailRows).toHaveLength(rows.length);
+    });
+
+    it('stores all rows before the first filter and the filtered subset as tail', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category']);
+      // before the first filter: all rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // tail: only rows with category A
+      expect(crossFilterTailRows).toHaveLength(2);
+      expect(crossFilterTailRows.every((r) => r['category'] === 'A')).toBe(true);
+    });
+
+    it('builds a cascading chain for multiple filters', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A', 'B']), displayName: 'category' },
+        status: { filteredSet: new Set(['up']), displayName: 'status' },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category', 'status']);
+      // before category filter: all 5 rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // before status filter: rows passing category (A or B) = 4 rows
+      expect(crossFilterRows['status']).toHaveLength(4);
+      // tail: rows passing both = A-up and B-up
+      expect(crossFilterTailRows).toHaveLength(2);
+    });
+
+    it('scopes top-level cross-filter to depth-0 rows only', () => {
+      const mixedRows: TableRow[] = [
+        ...rows,
+        // simulate a depth-1 nested container row that should be ignored
+        { __depth: 1, __index: 0 },
+      ];
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterRows } = applyFilter(mixedRows, filter, fields);
+      // depth-1 row must not be counted
+      expect(crossFilterRows['category']).toHaveLength(5);
+    });
+
+    it('scopes nested cross-filter to matching parentIndex only', () => {
+      const nestedRows: TableRow[] = [
+        { __depth: 0, __index: 0, __parentIndex: 7, category: 'A', status: 'up' },
+        { __depth: 0, __index: 1, __parentIndex: 7, category: 'B', status: 'down' },
+        { __depth: 0, __index: 2, __parentIndex: 7, category: 'A', status: 'down' },
+      ];
+      const filter = {
+        'category-7': { filteredSet: new Set(['A']), displayName: 'category', parentIndex: 7 },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(
+        nestedRows,
+        filter,
+        fields,
+        false,
+        7
+      );
+      expect(crossFilterOrder).toEqual(['category-7']);
+      // before the filter: all 3 nested rows
+      expect(crossFilterRows['category-7']).toHaveLength(3);
+      // tail: only the 2 rows with category A
+      expect(crossFilterTailRows).toHaveLength(2);
+    });
+
+    it('ignores filters from a different nesting scope', () => {
+      const filter = {
+        // top-level filter — should be ignored when parentIndex=7 is requested
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+        'status-7': { filteredSet: new Set(['up']), displayName: 'status', parentIndex: 7 },
+      };
+      const { crossFilterOrder } = applyFilter(rows, filter, fields, false, 7);
+      // only the nested filter for parentIndex 7 should appear
+      expect(crossFilterOrder).toEqual(['status-7']);
     });
   });
 
@@ -2031,6 +2305,19 @@ describe('TableNG utils', () => {
       values: [new Point([0, -74.1])],
       config: {},
     };
+    const geoFieldInvalid: Field = {
+      name: 'geo-field',
+      type: FieldType.geo,
+      values: ['6y4h9b'],
+      config: {},
+    };
+
+    const formatGeometry = (val: Geometry) =>
+      new WKT().writeGeometry(val, {
+        featureProjection: 'EPSG:3857',
+        dataProjection: 'EPSG:4326',
+      });
+
     it.each([
       { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
       { name: 'string', input: { valueIdx: 0, field: stringField } },
@@ -2045,9 +2332,11 @@ describe('TableNG utils', () => {
       { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },
       { name: 'array', input: { valueIdx: 0, field: arrayField } },
       { name: 'object', input: { valueIdx: 0, field: objectField } },
-      { name: 'geo', input: { valueIdx: 0, field: geoField } },
-    ])('should handle $name', ({ input: { field, valueIdx = 0 } }) => {
-      expect(buildInspectValue(field.values[valueIdx], field)).toMatchSnapshot();
+      { name: 'geo', input: { valueIdx: 0, field: geoField, formatGeometry } },
+      { name: 'geo w/out formatGeometry', input: { valueIdx: 0, field: geoField } },
+      { name: 'geo w/ invalid format', input: { valueIdx: 0, field: geoFieldInvalid, formatGeometry } },
+    ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
+      expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
   });
 });

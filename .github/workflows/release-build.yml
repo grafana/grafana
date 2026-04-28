@@ -21,34 +21,19 @@ permissions:
 
 # Builds the following artifacts:
 #
-# npm:grafana
-# storybook
-# targz:grafana:linux/amd64
-# targz:grafana:linux/arm64
-# targz:grafana:linux/arm/v6
-# targz:grafana:linux/arm/v7
-# deb:grafana:linux/amd64
-# deb:grafana:linux/arm64
-# deb:grafana:linux/arm/v6
-# deb:grafana:linux/arm/v7
-# rpm:grafana:linux/amd64:sign
-# rpm:grafana:linux/arm64:sign
-# docker:grafana:linux/amd64
-# docker:grafana:linux/arm64
-# docker:grafana:linux/arm/v7
-# docker:grafana:linux/amd64:ubuntu
-# docker:grafana:linux/arm64:ubuntu
-# docker:grafana:linux/arm/v7:ubuntu
-# targz:grafana:windows/amd64
-# targz:grafana:windows/arm64
-# targz:grafana:darwin/amd64
-# targz:grafana:darwin/arm64
-# zip:grafana:windows/amd64
-# msi:grafana:windows/amd64
+# targz:grafana:* (via make build-targz)
+# deb / rpm (via make build-deb / build-rpm, from targz)
+# docker alpine / ubuntu (via make build-docker / build-docker-ubuntu, from targz)
+# zip / msi (Dagger, consuming prebuilt targz from dist)
+#
+# One shared frontend artifact is reused for every targz matrix cell (OSS), so assets-manifest.json matches all
+# binaries. For Grafana Cloud / Enterprise / Pro with CDN, do not split frontend and backend across pipelines
+# unless they consume the same frontend output—see pkg/build/daggerbuild/README.md.
+#
 jobs:
   setup:
     name: setup
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ubuntu-x64-small
     if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
     outputs:
       version: ${{ steps.output.outputs.version }}
@@ -56,7 +41,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up version (Release Branches)
@@ -76,7 +61,7 @@ jobs:
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
-    runs-on: github-hosted-ubuntu-x64-small
+    runs-on: ubuntu-x64-small
     needs: [setup]
     permissions:
       contents: read
@@ -109,10 +94,14 @@ jobs:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
-            let workflow = 'release-build.yml';
+            let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
               workflow = 'release-build-pro.yml';
+            }
+
+            if (SOURCE_EVENT == 'schedule') {
+              workflow = 'release-build-nightly.yml';
             }
 
             await github.rest.actions.createWorkflowDispatch({
@@ -130,58 +119,568 @@ jobs:
                 }
             })
 
-  build:
-    runs-on: github-hosted-ubuntu-x64-large
+  build-frontend:
+    name: build frontend
+    runs-on: ubuntu-x64-large
     needs: [setup]
     permissions:
       contents: read
-      id-token: write
-    name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        run: yarn install --immutable
+      - name: Build frontend
+        run: yarn build
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-frontend
+          path: public
+          retention-days: 1
+
+  build-backend:
+    name: build backend / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large
+    needs: [setup]
+    continue-on-error: ${{ matrix.allow-failure == true }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        # The artifacts in these lists are grouped by their os+arch because the
-        # build process can reuse the binaries for each artifact.
-        # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
-        # This could be a future improvement.
         include:
-          - name: linux-amd64 # publish-npm relies on this step building npm packages
-            artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
-            verify: true
+          - name: linux-amd64
+            os: linux
+            arch: amd64
           - name: linux-arm64
-            artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
-            verify: false
+            os: linux
+            arch: arm64
           - name: linux-s390x
-            artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
-            verify: true
-          - name: linux-armv7
-            artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
-            verify: true
+            os: linux
+            arch: s390x
           - name: linux-armv6
-            artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
-            verify: true
+            os: linux
+            arch: arm
+            arm: '6'
+          - name: linux-armv7
+            os: linux
+            arch: arm
+            arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
+          - name: linux-riscv64
+            os: linux
+            arch: riscv64
+            allow-failure: true
           - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64:nocgo,zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
-            verify: true
+            os: windows
+            arch: amd64
           - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64:nocgo,zip:grafana:windows/arm64:nocgo
-            verify: true
+            os: windows
+            arch: arm64
           - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64:nocgo
-            verify: true
+            os: darwin
+            arch: amd64
           - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64:nocgo
-            verify: true
+            os: darwin
+            arch: arm64
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - uses: ./.github/actions/setup-go
+      - name: Build Go
+        env:
+          CGO_ENABLED: '0'
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          # Env OS/ARCH are overridden by Makefile unless GOOS/GOARCH are set.
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+        run: make build-go BUILD_VERSION="${BUILD_VERSION}"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-backend-${{ matrix.name }}
+          path: bin/${{ matrix.os }}/${{ matrix.arch }}
+          retention-days: 1
+
+  build-targz:
+    name: targz / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large-io
+    continue-on-error: ${{ matrix.allow-failure == true }}
+    needs:
+      - setup
+      - build-frontend
+      - build-backend
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: linux
+            arch: amd64
+          - name: linux-arm64
+            os: linux
+            arch: arm64
+          - name: linux-s390x
+            os: linux
+            arch: s390x
+          - name: linux-armv6
+            os: linux
+            arch: arm
+            arm: '6'
+          - name: linux-armv7
+            os: linux
+            arch: arm
+            arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
+          - name: linux-riscv64
+            os: linux
+            arch: riscv64
+            allow-failure: true
+          - name: windows-amd64
+            os: windows
+            arch: amd64
+          - name: windows-arm64
+            os: windows
+            arch: arm64
+          - name: darwin-amd64
+            os: darwin
+            arch: amd64
+          - name: darwin-arm64
+            os: darwin
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      # Artifact paths are relative to public/; extract under public/ so public/build exists for make.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-frontend
+          path: public
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-backend-${{ matrix.name }}
+          path: bin/${{ matrix.os }}/${{ matrix.arch }}
+      - name: Fix backend binary permissions
+        if: matrix.os != 'windows'
+        run: chmod +x bin/${{ matrix.os }}/${{ matrix.arch }}/grafana*
+      - name: Build tar.gz
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          for f in dist/*.tar.gz; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+      - name: Write artifact list
+        run: |
+          listfile="artifacts-list-packages-${{ matrix.name }}.txt"
+          : > "$listfile"
+          for f in dist/*.tar.gz; do
+            [ -e "$f" ] || continue
+            echo "$f" >> "$listfile"
+            echo "${f}.sha256" >> "$listfile"
+          done
+      - name: Stage artifacts for upload
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/artifacts-list-packages-${{ matrix.name }}"
+          cp "artifacts-list-packages-${{ matrix.name }}.txt" "upload/artifacts-list-packages-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-packages-${{ matrix.name }}"
+          cp -R dist/. "upload/artifacts-packages-${{ matrix.name }}/"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-list-packages-${{ matrix.name }}
+          path: upload/artifacts-list-packages-${{ matrix.name }}
+          retention-days: 1
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-packages-${{ matrix.name }}
+          path: upload/artifacts-packages-${{ matrix.name }}
+          retention-days: 1
+
+  build-deb-rpm:
+    name: deb / rpm / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large
+    continue-on-error: ${{ matrix.allow-failure == true }}
+    needs:
+      - setup
+      - build-targz
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: linux
+            arch: amd64
+            rpm: true
+          - name: linux-arm64
+            os: linux
+            arch: arm64
+            rpm: true
+          - name: linux-s390x
+            os: linux
+            arch: s390x
+            rpm: true
+          - name: linux-armv6
+            os: linux
+            arch: arm
+            arm: '6'
+          - name: linux-armv7
+            os: linux
+            arch: arm
+            arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
+          - name: linux-riscv64
+            os: linux
+            arch: riscv64
+            rpm: true
+            allow-failure: true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-packages-${{ matrix.name }}
+          path: dist
+      - uses: ./.github/actions/setup-fpm
+      - name: Build deb and rpm
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          RPM: ${{ matrix.rpm }}
+        run: |
+          for TARGZ in dist/*.tar.gz; do break; done
+          if [[ "$RPM" == "true" ]]; then
+            make -j2 build-deb build-rpm -o "$TARGZ" BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          else
+            make build-deb -o "$TARGZ" BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          fi
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          for f in dist/*.deb dist/*.rpm; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+      - name: Write artifact list
+        run: |
+          listfile="artifacts-list-deb-rpm-${{ matrix.name }}.txt"
+          : > "$listfile"
+          for f in dist/*.deb dist/*.rpm; do
+            [ -e "$f" ] || continue
+            echo "$f" >> "$listfile"
+            echo "${f}.sha256" >> "$listfile"
+          done
+      - name: Stage artifacts for upload
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/artifacts-list-deb-rpm-${{ matrix.name }}"
+          cp "artifacts-list-deb-rpm-${{ matrix.name }}.txt" "upload/artifacts-list-deb-rpm-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-deb-rpm-${{ matrix.name }}"
+          for f in dist/*.deb dist/*.rpm; do
+            [ -e "$f" ] || continue
+            cp "$f" "upload/artifacts-deb-rpm-${{ matrix.name }}/"
+            cp "${f}.sha256" "upload/artifacts-deb-rpm-${{ matrix.name }}/"
+          done
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-list-deb-rpm-${{ matrix.name }}
+          path: upload/artifacts-list-deb-rpm-${{ matrix.name }}
+          retention-days: 1
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-deb-rpm-${{ matrix.name }}
+          path: upload/artifacts-deb-rpm-${{ matrix.name }}
+          retention-days: 1
+
+  verify-rpm-stig:
+    name: verify rpm stig (linux-amd64)
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-deb-rpm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-deb-rpm-linux-amd64
+          path: dist
+      - name: Verify RPM permissions (DISA-STIG)
+        run: |
+          for PKG in dist/*.rpm; do break; done
+          bash scripts/verify-pkg-stig.sh "$PKG"
+
+  build-docker-alpine:
+    name: docker (alpine) / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-targz
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: linux
+            arch: amd64
+            arch-tag: amd64
+          - name: linux-arm64
+            os: linux
+            arch: arm64
+            arch-tag: arm64
+          - name: linux-s390x
+            os: linux
+            arch: s390x
+            arch-tag: s390x
+          - name: linux-armv7
+            os: linux
+            arch: arm
+            arm: '7'
+            arch-tag: armv7
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-packages-${{ matrix.name }}
+          path: dist
       - name: Set up QEMU
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
         with:
           image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build docker image (alpine)
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          ARCH_TAG: ${{ matrix.arch-tag }}
+        run: |
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-${ARCH_TAG}"
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          for f in dist/*.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+      - name: Write artifact list
+        run: |
+          listfile="artifacts-list-docker-${{ matrix.name }}.txt"
+          : > "$listfile"
+          for f in dist/*.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            echo "$f" >> "$listfile"
+            echo "${f}.sha256" >> "$listfile"
+          done
+      - name: Stage artifacts for upload
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/artifacts-list-docker-${{ matrix.name }}"
+          cp "artifacts-list-docker-${{ matrix.name }}.txt" "upload/artifacts-list-docker-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-docker-${{ matrix.name }}"
+          for f in dist/*.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            cp "$f" "upload/artifacts-docker-${{ matrix.name }}/"
+            cp "${f}.sha256" "upload/artifacts-docker-${{ matrix.name }}/"
+          done
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-list-docker-${{ matrix.name }}
+          path: upload/artifacts-list-docker-${{ matrix.name }}
+          retention-days: 1
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-docker-${{ matrix.name }}
+          path: upload/artifacts-docker-${{ matrix.name }}
+          retention-days: 1
+
+  build-docker-ubuntu:
+    name: docker (ubuntu) / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-targz
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: linux
+            arch: amd64
+            arch-tag: amd64
+          - name: linux-arm64
+            os: linux
+            arch: arm64
+            arch-tag: arm64
+          - name: linux-s390x
+            os: linux
+            arch: s390x
+            arch-tag: s390x
+          - name: linux-armv7
+            os: linux
+            arch: arm
+            arm: '7'
+            arch-tag: armv7
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-packages-${{ matrix.name }}
+          path: dist
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+      - name: Build docker image (ubuntu)
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          ARCH_TAG: ${{ matrix.arch-tag }}
+        run: |
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker-ubuntu \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-${ARCH_TAG}"
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          for f in dist/*.ubuntu.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            sha256sum "$f" | awk '{print $1}' > "${f}.sha256"
+          done
+      - name: Write artifact list
+        run: |
+          listfile="artifacts-list-docker-ubuntu-${{ matrix.name }}.txt"
+          : > "$listfile"
+          for f in dist/*.ubuntu.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            echo "$f" >> "$listfile"
+            echo "${f}.sha256" >> "$listfile"
+          done
+      - name: Stage artifacts for upload
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/artifacts-list-docker-ubuntu-${{ matrix.name }}"
+          cp "artifacts-list-docker-ubuntu-${{ matrix.name }}.txt" "upload/artifacts-list-docker-ubuntu-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-docker-ubuntu-${{ matrix.name }}"
+          for f in dist/*.ubuntu.docker.tar.gz; do
+            [ -e "$f" ] || continue
+            cp "$f" "upload/artifacts-docker-ubuntu-${{ matrix.name }}/"
+            cp "${f}.sha256" "upload/artifacts-docker-ubuntu-${{ matrix.name }}/"
+          done
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-list-docker-ubuntu-${{ matrix.name }}
+          path: upload/artifacts-list-docker-ubuntu-${{ matrix.name }}
+          retention-days: 1
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: artifacts-docker-ubuntu-${{ matrix.name }}
+          path: upload/artifacts-docker-ubuntu-${{ matrix.name }}
+          retention-days: 1
+
+  verify-targz:
+    name: verify targz (linux-amd64)
+    needs:
+      - build-targz
+    uses: ./.github/workflows/release-verify.yml
+    with:
+      run-id: ${{ github.run_id }}
+      targz-artifact-name: artifacts-packages-linux-amd64
+
+  verify-packages:
+    name: verify packages (linux-amd64)
+    needs:
+      - build-deb-rpm
+      - build-docker-alpine
+      - build-docker-ubuntu
+    uses: ./.github/workflows/release-verify-packages.yml
+    with:
+      run-id: ${{ github.run_id }}
+      packages-artifact-name: artifacts-deb-rpm-linux-amd64
+      docker-artifact-name: artifacts-docker-linux-amd64
+      docker-ubuntu-artifact-name: artifacts-docker-ubuntu-linux-amd64
+
+  build-windows:
+    runs-on: ubuntu-x64-large
+    needs:
+      - setup
+      - build-targz
+    permissions:
+      contents: read
+      id-token: write
+    name: ${{ needs.setup.outputs.version }} / windows / ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-amd64
+            artifacts: zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
+          - name: windows-arm64
+            artifacts: zip:grafana:windows/arm64:nocgo
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-packages-${{ matrix.name }}
+          path: dist
       - uses: ./.github/actions/build-package
         id: build
         with:
@@ -191,96 +690,245 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ needs.setup.outputs.version }}
           output: artifacts-${{ matrix.name }}.txt
-          verify: ${{ matrix.verify }}
+          verify: false
           build-id: ${{ github.run_id }}
           cache-builders: true
+      - name: Stage package artifacts for upload
+        env:
+          BUILD_FILE: ${{ steps.build.outputs.file }}
+          BUILD_DIST_DIR: ${{ steps.build.outputs.dist-dir }}
+        run: |
+          set -euo pipefail
+          mkdir -p "upload/artifacts-list-${{ matrix.name }}"
+          cp "$BUILD_FILE" "upload/artifacts-list-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-${{ matrix.name }}"
+          cp -R "$BUILD_DIST_DIR/." "upload/artifacts-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
-          path: ${{ steps.build.outputs.file }}
+          path: upload/artifacts-list-${{ matrix.name }}
           retention-days: 1
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-${{ matrix.name }}
-          path: ${{ steps.build.outputs.dist-dir }}
+          path: upload/artifacts-${{ matrix.name }}
           retention-days: 1
 
-  publish-artifacts:
-    name: Upload artifacts
+  publish-targz:
+    name: Upload targz / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+          - target: linux-arm64
+          - target: linux-s390x
+          - target: linux-armv6
+          - target: linux-armv7
+          # riscv64 is not an officially supported architecture; failures are allowed.
+          - target: linux-riscv64
+            allow-failure: true
+          - target: windows-amd64
+          - target: windows-arm64
+          - target: darwin-amd64
+          - target: darwin-arm64
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
     needs:
       - setup
-      - build
+      - build-targz
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-*
+      pattern: artifacts-*packages-${{ matrix.target }}
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+      environment: prod
+      runs-on: ubuntu-x64-small
+
+  publish-deb-rpm:
+    name: Upload deb/rpm / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+          - target: linux-arm64
+          - target: linux-s390x
+          - target: linux-armv6
+          - target: linux-armv7
+          # riscv64 is not an officially supported architecture; failures are allowed.
+          - target: linux-riscv64
+            allow-failure: true
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build-deb-rpm
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*deb-rpm-${{ matrix.target }}
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+      environment: prod
+      runs-on: ubuntu-x64-small
+
+  publish-docker-alpine:
+    name: Upload docker (alpine) / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+          - target: linux-arm64
+          - target: linux-s390x
+          - target: linux-armv7
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build-docker-alpine
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*docker-${{ matrix.target }}
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+      environment: prod
+      runs-on: ubuntu-x64-small
+
+  publish-docker-ubuntu:
+    name: Upload docker (ubuntu) / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+          - target: linux-arm64
+          - target: linux-s390x
+          - target: linux-armv7
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build-docker-ubuntu
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*docker-ubuntu-${{ matrix.target }}
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+      environment: prod
+      runs-on: ubuntu-x64-small
+
+  publish-windows:
+    name: Upload windows / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-amd64
+          - target: windows-arm64
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build-windows
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
 
   publish-dockerhub:
-    if: github.ref_name == 'main'
+    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
     runs-on: ubuntu-x64-small
     needs:
       - setup
-      - build
+      - verify-targz
+      - build-docker-alpine
+      - build-docker-ubuntu
+      - verify-packages
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-list-linux-amd64
+          name: artifacts-list-docker-linux-amd64
           path: .
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-list-linux-arm64
+          name: artifacts-list-docker-linux-arm64
           path: .
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-list-linux-armv7
+          name: artifacts-list-docker-linux-armv7
           path: .
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-linux-amd64
+          name: artifacts-list-docker-ubuntu-linux-amd64
+          path: .
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-list-docker-ubuntu-linux-arm64
+          path: .
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-list-docker-ubuntu-linux-armv7
+          path: .
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-linux-amd64
           path: dist
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-linux-arm64
+          name: artifacts-docker-linux-arm64
           path: dist
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-linux-armv7
+          name: artifacts-docker-linux-armv7
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-ubuntu-linux-amd64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-ubuntu-linux-arm64
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-ubuntu-linux-armv7
           path: dist
       - name: Push to Docker Hub
         env:
           VERSION: ${{ needs.setup.outputs.version }}
         run: |
-          # grep can use a wildcard but then it includes the filename as part of the result and that gets complicated.
-          # It's easier to use cat to combine the artifact lists
+          TAG_VERSION="${VERSION//+/-}"
           cat artifacts-*.txt > artifacts.txt
-          grep 'grafana_.*docker.tar.gz$' artifacts.txt | xargs -I % docker load -i % | sed 's/Loaded image: //g' | tee docker_images
+          grep 'docker\.tar\.gz$' artifacts.txt | xargs -I % docker load -i % | sed 's/Loaded image: //g' | tee docker_images
           while read -r line; do
-            # This tag will be `grafana/grafana-image-tags:...`
             docker push "$line"
           done < docker_images
 
-          docker manifest create grafana/grafana:main "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
-          docker manifest create grafana/grafana:main-ubuntu "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
-          docker manifest create "grafana/grafana-dev:${VERSION}" "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
-          docker manifest create "grafana/grafana-dev:${VERSION}-ubuntu" "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
+          docker manifest create grafana/grafana:main "grafana/grafana-image-tags:${TAG_VERSION}-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-armv7"
+          docker manifest create grafana/grafana:main-ubuntu "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}" "grafana/grafana-image-tags:${TAG_VERSION}-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-armv7"
+          docker manifest create "grafana/grafana-dev:${TAG_VERSION}-ubuntu" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${TAG_VERSION}-ubuntu-armv7"
 
           docker manifest push grafana/grafana:main
           docker manifest push grafana/grafana:main-ubuntu
-          docker manifest push "grafana/grafana-dev:${VERSION}"
-          docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}"
+          docker manifest push "grafana/grafana-dev:${TAG_VERSION}-ubuntu"
 
   dispatch-npm-canaries:
-    if: github.ref_name == 'main'
+    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
     name: Dispatch publish NPM canaries
     permissions:
       actions: write
@@ -304,8 +952,6 @@ jobs:
             --field build_id="$BUILD_ID"\
             --field version_type="canary"
 
-  # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
-  # being built.
   notify-pr:
     runs-on: ubuntu-x64-small
     permissions:
@@ -348,9 +994,9 @@ jobs:
           comment-author: 'grafana-delivery-bot[bot]'
           body-includes: GitHub Actions Build
           token: ${{ steps.generate_token.outputs.token }}
-      - name: Create or update comment
+      - name: Create or update comment # zizmor: ignore[superfluous-actions]
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
-        if: ${{ steps.find-pr.outcome == 'success' }} # Run even if comment wasn't found
+        if: ${{ steps.find-pr.outcome == 'success' }}
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}

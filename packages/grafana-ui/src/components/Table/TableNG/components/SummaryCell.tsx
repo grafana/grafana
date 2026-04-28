@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
-import { GrafanaTheme2, Field, fieldReducers, ReducerID } from '@grafana/data';
+import { type GrafanaTheme2, type Field, fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableFooterOptions } from '@grafana/schema';
+import { type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles } from '../styles';
-import { TableRow } from '../types';
-import { getDisplayName, getJustifyContent, TextAlign } from '../utils';
+import { type TableRow } from '../types';
+import { getDisplayName, getJustifyContent, type TextAlign } from '../utils';
 
 interface SummaryCellProps {
   rows: TableRow[];

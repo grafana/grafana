@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
+import { IconButton, type Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';
 

@@ -114,3 +114,53 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 
 	return stars, updated.UnixMilli(), err
 }
+
+func (s *LegacySQL) GetMaxTime(ctx context.Context) (time.Time, error) {
+	var max sql.NullString
+	sql, err := s.db(ctx)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	req := newStarQueryReq(sql, "", 0)
+
+	q, err := sqltemplate.Execute(sqlDashboardStarsRV, req)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("execute template %q: %w", sqlDashboardStarsRV.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Get(ctx, &max, q)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("unable to get RV %w", err)
+	}
+	if max.Valid && max.String != "" {
+		t, _ := time.Parse(time.RFC3339, max.String)
+		if !t.IsZero() {
+			return t, nil
+		}
+	}
+	return time.Now(), nil
+}
+
+func (s *LegacySQL) ListUsers(ctx context.Context, orgId int64) ([]string, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newStarQueryReq(sql, "", orgId)
+
+	q, err := sqltemplate.Execute(sqlListUsersWithStars, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlListUsersWithStars.Name(), err)
+	}
+
+	var users []string
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Select(ctx, &users, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to list users with stars %w", err)
+	}
+	return users, nil
+}

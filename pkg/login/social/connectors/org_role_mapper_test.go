@@ -298,6 +298,24 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{"Group1": {1: org.RoleViewer}}, false),
 		},
 		{
+			name:       "should preserve backslashes in the external org name",
+			rawMapping: []string{`my.domain\my-group:1:Viewer`},
+			roleStrict: false,
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{`my.domain\my-group`: {1: org.RoleViewer}}, false),
+		},
+		{
+			name:       "should preserve backslashes when the external org name contains escaped colons",
+			rawMapping: []string{`my.domain\group\:sub:1:Viewer`},
+			roleStrict: false,
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{`my.domain\group:sub`: {1: org.RoleViewer}}, false),
+		},
+		{
+			name:       "should preserve double backslashes in the external org name",
+			rawMapping: []string{`my.domain\\my-group:1:Viewer`},
+			roleStrict: false,
+			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{`my.domain\\my-group`: {1: org.RoleViewer}}, false),
+		},
+		{
 			name:       "should return empty mapping when org mapping is nil",
 			rawMapping: nil,
 			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false),

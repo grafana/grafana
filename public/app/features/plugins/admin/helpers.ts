@@ -1,20 +1,20 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, type PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
-  CatalogPlugin,
-  InstancePlugin,
-  LocalPlugin,
+  type CatalogPlugin,
+  type InstancePlugin,
+  type LocalPlugin,
   PluginUpdateStrategy,
-  ProvisionedPlugin,
-  RemotePlugin,
+  type ProvisionedPlugin,
+  type RemotePlugin,
   RemotePluginStatus,
-  Version,
+  type Version,
 } from './types';
 
 export function mergeLocalsAndRemotes({
@@ -113,7 +113,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
   } = plugin;
 
   const isDisabled = !!error;
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
 
   return {
     description,
@@ -157,6 +157,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    distributionType: plugin.versionDistributionType,
   };
 }
 
@@ -176,7 +177,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
   } = plugin;
 
   const isDisabled = !!error;
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
   const isV1Managed = !managedPluginsV2Enabled && isManagedPlugin(id);
 
   return {
@@ -238,7 +239,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     logos = local.info.logos;
   }
 
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
 
   return {
     description: local?.info.description || remote?.description || '',
@@ -286,10 +287,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
           ? PluginUpdateStrategy.Assigned
           : undefined,
     },
+    distributionType: remote?.versionDistributionType,
   };
 }
 
 export const getExternalManageLink = (pluginId: string) => `${config.pluginCatalogURL}${pluginId}`;
+
+export function isMarketplacePlugin(plugin: CatalogPlugin): boolean {
+  return plugin.distributionType === 'marketplace';
+}
 
 export enum Sorters {
   nameAsc = 'nameAsc',

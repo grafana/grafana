@@ -1,9 +1,9 @@
-import { RenderResult, screen } from '@testing-library/react';
+import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { LayoutModes, PluginType } from '@grafana/data';
-import { setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
+import { setPluginLinksHook, setPluginComponentsHook, setPluginFunctionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -16,6 +16,7 @@ import { navIndex } from '../../mocks/store.navIndex.mock';
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+setPluginFunctionsHook(() => ({ functions: [], isLoading: false }));
 
 const mockDatasources = getMockDataSources(3);
 

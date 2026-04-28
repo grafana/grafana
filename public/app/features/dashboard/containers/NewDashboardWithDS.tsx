@@ -22,7 +22,7 @@ export default function NewDashboardWithDS() {
 
     dispatch(setInitialDatasource(datasourceUid));
 
-    locationService.replace(`/dashboard/new?dashboardLibraryDatasourceUid=${datasourceUid}`);
+    locationService.replace('/dashboard/new');
   }, [datasourceUid, dispatch]);
 
   if (error) {

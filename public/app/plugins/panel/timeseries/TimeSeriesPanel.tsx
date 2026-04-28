@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 import {
   alignTimeRangeCompareData,
   DashboardCursorSync,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
   FieldType,
-  PanelProps,
+  type PanelProps,
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
@@ -19,11 +19,11 @@ import {
   usePanelContext,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
@@ -177,7 +177,10 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                    seriesIdx !== null &&
+                    (config.featureToggles.perPanelFiltering ||
+                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                    getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
@@ -196,7 +199,10 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                        (config.featureToggles.perPanelFiltering ||
+                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                        groupingFilters.length &&
+                        onAddAdHocFilters
                           ? {
                               onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
                               onFilterOutGroupedLabels: () =>
@@ -219,7 +225,7 @@ export const TimeSeriesPanel = ({
                 <AnnotationsPlugin
                   replaceVariables={replaceVariables}
                   options={options.annotations}
-                  annotations={data.annotations ?? []}
+                  annotations={data.annotations}
                   config={uplotConfig}
                   timeZone={timeZone}
                   newRange={newAnnotationRange}

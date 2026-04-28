@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
 import { useDeleteDashboardsMutation } from '../../../browse-dashboards/api/browseDashboardsAPI';
@@ -54,7 +54,6 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     <Modal
       isOpen={true}
       title={t('dashboard-settings.provisioned-delete-modal.title', 'Cannot delete provisioned dashboard')}
-      icon="trash-alt"
       onDismiss={hideModal}
       className={css({
         width: '500px',

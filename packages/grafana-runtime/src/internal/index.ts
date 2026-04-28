@@ -26,22 +26,32 @@ export {
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
-export { UserStorage } from '../utils/userStorage';
+export { UserStorage, useUserStorage } from '../utils/userStorage';
 
 export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
 export {
+  getDatasourcePluginMeta,
+  getDatasourcePluginMetas,
+  setDatasourcePluginMetas,
+  refetchDatasourcePluginMetas,
+  getPluginIdFromDatasourceInstanceType,
+} from '../services/pluginMeta/datasources';
+export {
   useAppPluginMeta,
   useAppPluginMetas,
+  useDatasourcePluginMeta,
+  useDatasourcePluginMetas,
   useListedPanelPluginMetas,
   usePanelPluginMeta,
   usePanelPluginMetas,
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
-export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
-export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
-export { createInteractionEvent } from './analyticsFramework/main';
+export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export { getCachedPromise, getCachedPromiseWithArgs, invalidateCache } from '../utils/getCachedPromise';
+export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export {
   getListedPanelPluginMetas,
@@ -52,3 +62,5 @@ export {
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
+export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';

@@ -1,10 +1,10 @@
-import { DataHoverPayload } from '../events/common';
+import { type DataHoverPayload } from '../events/common';
 import { eventFactory } from '../events/eventFactory';
 import { BusEventBase, BusEventWithPayload } from '../events/types';
 
-import { DataFrame } from './dataFrame';
-import { DataQueryError, DataQueryResponseData } from './datasource';
-import { AngularPanelMenuItem } from './panel';
+import { type DataFrame } from './dataFrame';
+import { type DataQueryError, type DataQueryResponseData } from './datasource';
+import { type AngularPanelMenuItem } from './panel';
 
 export type AlertPayload = [string, string?, string?];
 export type AlertErrorPayload = [string, (string | Error)?, string?];

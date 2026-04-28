@@ -2,12 +2,12 @@ import { cloneDeep } from 'lodash';
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   getFieldMatcher,
-  DataTransformContext,
-  FieldMatcher,
+  type DataTransformContext,
+  type FieldMatcher,
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';

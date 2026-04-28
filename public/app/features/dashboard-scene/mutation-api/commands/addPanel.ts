@@ -6,11 +6,10 @@
  * to match the target layout (warning emitted if converted).
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { buildVizPanel, getElements } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -59,39 +58,37 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
       targetLayout.addPanel(vizPanel);
 
       const isAutoGrid = targetLayout instanceof AutoGridLayoutManager;
-      const isDefaultGrid = targetLayout instanceof DefaultGridLayoutManager;
 
       if (layoutItem) {
         if (layoutItem.kind === 'GridLayoutItem' && isAutoGrid) {
           warnings.push(
             'layoutItem adapted from GridLayoutItem to AutoGridLayoutItem: target uses AutoGridLayout which auto-arranges panels.'
           );
-        } else if (layoutItem.kind === 'AutoGridLayoutItem' && isDefaultGrid) {
-          warnings.push(
-            'layoutItem adapted from AutoGridLayoutItem to GridLayoutItem: target uses GridLayout which requires explicit positioning.'
-          );
         }
 
         const spec = layoutItem.spec;
-        if (isDefaultGrid && spec) {
-          const gridItem = vizPanel.parent;
-          if (gridItem instanceof DashboardGridItem) {
-            const updates: Record<string, number> = {};
-            if (spec.x !== undefined) {
-              updates.x = spec.x;
-            }
-            if (spec.y !== undefined) {
-              updates.y = spec.y;
-            }
-            if (spec.width !== undefined) {
-              updates.width = spec.width;
-            }
-            if (spec.height !== undefined) {
-              updates.height = spec.height;
-            }
-            if (Object.keys(updates).length > 0) {
-              gridItem.setState(updates);
-            }
+        const gridItem = vizPanel.parent;
+        if (gridItem instanceof DashboardGridItem && spec) {
+          if (layoutItem.kind === 'AutoGridLayoutItem') {
+            warnings.push(
+              'layoutItem adapted from AutoGridLayoutItem to GridLayoutItem: target uses GridLayout which requires explicit positioning.'
+            );
+          }
+          const updates: Record<string, number> = {};
+          if (spec.x !== undefined) {
+            updates.x = spec.x;
+          }
+          if (spec.y !== undefined) {
+            updates.y = spec.y;
+          }
+          if (spec.width !== undefined) {
+            updates.width = spec.width;
+          }
+          if (spec.height !== undefined) {
+            updates.height = spec.height;
+          }
+          if (Object.keys(updates).length > 0) {
+            gridItem.setState(updates);
           }
         }
       }

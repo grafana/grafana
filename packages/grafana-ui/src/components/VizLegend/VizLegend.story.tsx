@@ -1,13 +1,13 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { FC, useEffect, useState } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react';
+import { type FC, useEffect, useState } from 'react';
 
-import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { type DisplayValue, type GrafanaTheme2 } from '@grafana/data';
+import { LegendDisplayMode, type LegendPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { VizLegend } from './VizLegend';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 const meta: Meta = {
   title: 'Plugins/VizLegend',

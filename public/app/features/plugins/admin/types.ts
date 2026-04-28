@@ -1,16 +1,16 @@
-import { EntityState } from '@reduxjs/toolkit';
+import { type EntityState } from '@reduxjs/toolkit';
 
 import {
-  PluginType,
-  PluginSignatureStatus,
-  PluginSignatureType,
-  PluginDependencies,
-  PluginErrorCode,
-  WithAccessControlMetadata,
+  type PluginType,
+  type PluginSignatureStatus,
+  type PluginSignatureType,
+  type PluginDependencies,
+  type PluginErrorCode,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
-import { IconName } from '@grafana/ui';
-import { PluginsState } from 'app/types/plugins';
-import { StoreState } from 'app/types/store';
+import { type IconName } from '@grafana/ui';
+import { type PluginsState } from 'app/types/plugins';
+import { type StoreState } from 'app/types/store';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
@@ -69,6 +69,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  distributionType?: string;
 }
 export interface Screenshots {
   path: string;
@@ -197,6 +198,7 @@ export type RemotePlugin = {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  versionDistributionType?: string;
 };
 
 export enum PluginUpdateStrategy {

@@ -1,6 +1,13 @@
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { Field, PluginType, DataSourceInstanceSettings, PluginMetaInfo } from '@grafana/data';
+import {
+  FieldType,
+  MutableDataFrame,
+  type Field,
+  PluginType,
+  type DataSourceInstanceSettings,
+  type PluginMetaInfo,
+} from '@grafana/data';
 
 import {
   transformToOTLP,
@@ -15,7 +22,7 @@ import {
   otlpResponse,
   traceQlResponse,
 } from './test/testResponse';
-import { TraceSearchMetadata } from './types';
+import { type TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
@@ -38,6 +45,54 @@ describe('transformToOTLP()', () => {
   test('transforms dataframe to OTLP format', () => {
     const otlp = transformToOTLP(otlpDataFrameToResponse);
     expect(otlp).toMatchObject(otlpResponse);
+  });
+
+  test('groups multiple spans with the same service name into a single batch', () => {
+    const frame = new MutableDataFrame({
+      fields: [
+        {
+          name: 'traceID',
+          type: FieldType.string,
+          values: ['aabbccdd00000000aabbccdd00000000', 'aabbccdd00000000aabbccdd00000000'],
+        },
+        { name: 'spanID', type: FieldType.string, values: ['span000000000001', 'span000000000002'] },
+        { name: 'parentSpanID', type: FieldType.string, values: ['', 'span000000000001'] },
+        { name: 'operationName', type: FieldType.string, values: ['op1', 'op2'] },
+        { name: 'serviceName', type: FieldType.string, values: ['my-service', 'my-service'] },
+        { name: 'kind', type: FieldType.string, values: ['server', 'client'] },
+        { name: 'statusCode', type: FieldType.number, values: [0, 0] },
+        { name: 'statusMessage', type: FieldType.string, values: ['', ''] },
+        { name: 'instrumentationLibraryName', type: FieldType.string, values: ['', ''] },
+        { name: 'instrumentationLibraryVersion', type: FieldType.string, values: ['', ''] },
+        { name: 'traceState', type: FieldType.string, values: ['', ''] },
+        {
+          name: 'serviceTags',
+          type: FieldType.other,
+          values: [
+            [
+              { key: 'service.name', value: 'my-service' },
+              { key: 'host.name', value: 'host-1' },
+            ],
+            [
+              { key: 'service.name', value: 'my-service' },
+              { key: 'host.name', value: 'host-2' },
+            ],
+          ],
+        },
+        { name: 'startTime', type: FieldType.number, values: [1000, 2000] },
+        { name: 'duration', type: FieldType.number, values: [10, 20] },
+        { name: 'logs', type: FieldType.other, values: [[], []] },
+        { name: 'tags', type: FieldType.other, values: [[], []] },
+        { name: 'references', type: FieldType.other, values: [[], []] },
+      ],
+    });
+
+    const result = transformToOTLP(frame);
+
+    // Both spans share the same service and must land in exactly one batch
+    expect(result.batches).toHaveLength(1);
+    // That one batch must contain both spans
+    expect(result.batches[0].instrumentationLibrarySpans[0].spans).toHaveLength(2);
   });
 });
 

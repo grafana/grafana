@@ -1,10 +1,10 @@
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { TableMarkdownCellOptions } from '@grafana/schema';
+import { type TableMarkdownCellOptions } from '@grafana/schema';
 import { Badge, Field, Label, Switch } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 export const MarkdownCellOptionsEditor = ({
   cellOptions,

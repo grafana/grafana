@@ -724,9 +724,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("resolve ref: %w", err)
 	}
 
-	// Get commit hashes for base and ref
-	// Compare commits using nanogit (without rename detection for now)
-	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
+	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
@@ -754,9 +752,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
-				Path:   currentPath,
-				Ref:    ref,
-				Action: repository.FileActionUpdated,
+				Path:        currentPath,
+				Ref:         ref,
+				PreviousRef: base,
+				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
 			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
@@ -786,9 +785,50 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			// Rename handling will be implemented in follow-up PR
-			// For now, let renames fall through to default (logged as unhandled)
-			fallthrough
+			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
+
+			// A rename may span the repository boundary: one side inside the
+			// configured path and the other outside. Resolve this upfront so
+			// the switch below only deals with the four semantic cases.
+			newInsidePath := newPathErr == nil
+			oldInsidePath := oldPathErr == nil
+
+			// Tree entries (directories) are emitted with trailing slashes so
+			// downstream code can identify them via safepath.IsDir.
+			if f.Type == protocol.ObjectTypeTree {
+				if newInsidePath {
+					newPath = safepath.EnsureTrailingSlash(newPath)
+				}
+				if oldInsidePath {
+					oldPath = safepath.EnsureTrailingSlash(oldPath)
+				}
+			}
+
+			switch {
+			case newInsidePath && oldInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionRenamed,
+					Path:         newPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			case newInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   newPath,
+					Ref:    ref,
+				})
+			case oldInsidePath:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionDeleted,
+					Path:         oldPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			}
 		default:
 			logger.Error("ignore unhandled file", "file", f.Path, "status", string(f.Status))
 		}

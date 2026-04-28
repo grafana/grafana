@@ -2,21 +2,21 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import { useMemo, useState } from 'react';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, PanelProps, useDataLinksContext } from '@grafana/data';
+import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { AxisProps, ScaleProps, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -28,7 +28,7 @@ import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { defaultCandlestickColors, type Options, VizDisplayMode } from './panelcfg.gen';
-import { drawMarkers, FieldIndices } from './utils';
+import { drawMarkers, type FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}
 
@@ -326,7 +326,7 @@ export const CandlestickPanel = ({
             <AnnotationsPlugin
               replaceVariables={replaceVariables}
               options={options.annotations}
-              annotations={data.annotations ?? []}
+              annotations={data.annotations}
               config={uplotConfig}
               timeZone={timeZone}
               newRange={newAnnotationRange}

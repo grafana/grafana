@@ -14,14 +14,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -391,7 +393,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
-			cfg := backend.GrafanaConfigFromContext(ctx)
+			cfg := config.GrafanaConfigFromContext(ctx)
 			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
 			if !hasPromExemplarsToggle {
 				return nil, backend.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"))
@@ -477,7 +479,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	logLimitDisabled := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
+	logLimitDisabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
 
 	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat, logLimitDisabled)
 	if err != nil {
@@ -851,10 +853,6 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureRespon
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return AzureLogAnalyticsResponse{}, err
-	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			e.Logger.Warn("Failed to close response body", "err", err)
@@ -862,14 +860,20 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			return AzureLogAnalyticsResponse{}, fmt.Errorf("non-2xx response %s and failed to read body: %w", res.Status, readErr)
+		}
 		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse
-	d := json.NewDecoder(bytes.NewReader(body))
+	// UseNumber preserves int64 precision; downstream converters in
+	// azure-response-table-frame.go type-assert cells to json.Number and
+	// fail on any other numeric type, so this must stay.
+	d := json.NewDecoder(res.Body)
 	d.UseNumber()
-	err = d.Decode(&data)
-	if err != nil {
+	if err := d.Decode(&data); err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
 
@@ -882,10 +886,17 @@ type LogAnalyticsMeta struct {
 	AzurePortalLink string   `json:"azurePortalLink,omitempty"`
 }
 
+var gzipWriterPool = sync.Pool{
+	New: func() any { return gzip.NewWriter(io.Discard) },
+}
+
 // encodeQuery encodes the query in gzip so the frontend can build links.
 func encodeQuery(rawQuery string) (string, error) {
 	var b bytes.Buffer
-	gz := gzip.NewWriter(&b)
+	gz := gzipWriterPool.Get().(*gzip.Writer)
+	defer gzipWriterPool.Put(gz)
+	gz.Reset(&b)
+
 	if _, err := gz.Write([]byte(rawQuery)); err != nil {
 		return "", err
 	}

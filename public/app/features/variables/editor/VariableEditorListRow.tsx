@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
+import { type GrafanaTheme2, type TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -10,9 +10,9 @@ import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/types';
+import { type UsagesToNetwork, type VariableUsageTree } from '../inspect/types';
 import { getVariableUsages } from '../inspect/utils';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {
@@ -63,7 +63,7 @@ export function VariableEditorListRow({
                 propsOnEdit(identifier);
               }}
               className={styles.nameLink}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
             </Button>
@@ -75,7 +75,7 @@ export function VariableEditorListRow({
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
           >
             {definition}
           </td>
@@ -92,7 +92,7 @@ export function VariableEditorListRow({
                 }}
                 name="copy"
                 tooltip={t('variables.variable-editor-list-row.tooltip-duplicate-variable', 'Duplicate variable')}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
               />
               <IconButton
                 onClick={(event) => {
@@ -102,10 +102,18 @@ export function VariableEditorListRow({
                 }}
                 name="trash-alt"
                 tooltip={t('variables.variable-editor-list-row.tooltip-remove-variable', 'Remove variable')}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
-                <Icon name="draggabledots" size="lg" />
+                <Icon
+                  name="draggabledots"
+                  size="lg"
+                  title={t(
+                    'variables.variable-editor-list-row.drag-handle-label',
+                    'Reorder variable {{variableName}}',
+                    { variableName: variable.name }
+                  )}
+                />
               </div>
             </div>
           </td>

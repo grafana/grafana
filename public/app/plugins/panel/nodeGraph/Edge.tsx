@@ -1,10 +1,10 @@
-import { MouseEvent, memo } from 'react';
+import { type MouseEvent, memo } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
-import { EdgeDatumLayout, NodeDatum } from './types';
+import { type EdgeDatumLayout, type NodeDatum } from './types';
 import { shortenLine } from './utils';
 
 export const defaultHighlightedEdgeColor = '#a00';

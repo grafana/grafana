@@ -159,12 +159,12 @@ const preview: Preview = {
         }
 
         //
-        // If sorting different components, sort alphabetically
-        if (aComponent !== bComponent) {
+        // If sorting different components, sort alphabetically unless we're in docs
+        if (aComponent !== bComponent && a.type !== 'docs') {
           return aComponent.localeCompare(bComponent, undefined, { numeric: true });
         }
 
-        // Otherwise, sort stories within componmments according to source order
+        // Otherwise, sort stories within components according to source order
         return 0;
       },
     },

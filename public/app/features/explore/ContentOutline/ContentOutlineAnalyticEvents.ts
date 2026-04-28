@@ -1,4 +1,4 @@
-import { LogLevel } from '@grafana/data';
+import { type LogLevel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 export function contentOutlineTrackPinAdded() {

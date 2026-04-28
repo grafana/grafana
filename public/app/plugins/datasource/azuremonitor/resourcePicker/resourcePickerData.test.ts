@@ -8,7 +8,7 @@ import {
 } from '../mocks/argResourcePickerResponse';
 import createMockDatasource from '../mocks/datasource';
 import { createMockInstanceSetttings } from '../mocks/instanceSettings';
-import { AzureGraphResponse } from '../types/types';
+import { type AzureGraphResponse } from '../types/types';
 
 import ResourcePickerData from './resourcePickerData';
 

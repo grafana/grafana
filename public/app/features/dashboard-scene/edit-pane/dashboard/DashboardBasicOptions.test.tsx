@@ -4,10 +4,10 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 
-import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
+import { type DashboardScene, type DashboardSceneState } from '../../scene/DashboardScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { DashboardEditPane } from '../DashboardEditPane';
+import { type DashboardEditPane } from '../DashboardEditPane';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 

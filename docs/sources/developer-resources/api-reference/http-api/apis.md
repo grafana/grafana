@@ -14,16 +14,30 @@ labels:
     - enterprise
     - oss
     - cloud
-title: New API Structure
+title: API structure in Grafana
+menuTitle: API Structure
+weight: 01
 ---
 
-# Grafana's New API Structure
+# The new API structure in Grafana
 
-## Overview
+{{< admonition type="note" >}}
+Available in Grafana 12 and later.
+{{< /admonition >}}
 
-Going forward, Grafana's HTTP API will follow a standardized API structure alongside consistent API versioning.
+Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning.
 
-### API Path Structure
+## Migrate from legacy `api` endpoints
+
+**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
+
+Note that while Grafana is working on migrating existing APIs to the new `/apis` model, currently there may not be an exact match to the legacy API you're using.
+
+For more information refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration) documentation.
+
+## API structure
+
+### API path
 
 All Grafana APIs follow this standardized format:
 
@@ -33,9 +47,9 @@ All Grafana APIs follow this standardized format:
 
 Where the final `/<name>` segment is used for operations on individual resources (like Get, Update, Delete) and omitted for collection operations (like List, Create).
 
-### API Response Format
+### API response format
 
-All Grafana API responses will follow this structure:
+All Grafana API responses follow this structure:
 
 ```
 {
@@ -56,7 +70,7 @@ All Grafana API responses will follow this structure:
 }
 ```
 
-## Understanding the Components
+## Understand the components
 
 ### Group (`<group>`)
 
@@ -126,7 +140,7 @@ For example, to get a dashboard defined as:
 ```
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "production-overview", // This value IS used in the URL path
     "namespace": "default",
@@ -141,7 +155,7 @@ For example, to get a dashboard defined as:
 
 You would use the following API call:
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/production-overview`
+`GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview`
 
 ### Metadata
 

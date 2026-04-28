@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { FC } from 'react';
-import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
+import { type FC } from 'react';
+import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
@@ -19,9 +19,9 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';

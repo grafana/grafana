@@ -5,15 +5,15 @@ import { config } from '@grafana/runtime';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
 import {
-  DashboardsTreeCellProps,
-  DashboardsTreeItem,
-  DashboardViewItemWithUIItems,
+  type DashboardsTreeCellProps,
+  type DashboardsTreeItem,
+  type DashboardViewItemWithUIItems,
   SelectionState,
 } from 'app/features/browse-dashboards/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
-import { DashboardViewItem } from 'app/features/search/types';
-import { RootState } from 'app/store/configureStore';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type RootState } from 'app/store/configureStore';
 import { useSelector } from 'app/types/store';
 
 import CheckboxCell from './CheckboxCell';

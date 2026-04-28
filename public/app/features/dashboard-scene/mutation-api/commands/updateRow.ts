@@ -4,7 +4,7 @@
  * Update a row's metadata (title, collapse, hideHeader, fillScreen) by path.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 

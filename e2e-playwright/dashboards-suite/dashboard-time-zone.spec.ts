@@ -1,13 +1,14 @@
-import { differenceInMinutes, parseISO, toDate } from 'date-fns';
-import { Page } from 'playwright-core';
+import { differenceInMinutes } from 'date-fns/differenceInMinutes';
+import { parseISO } from 'date-fns/parseISO';
+import { toDate } from 'date-fns/toDate';
+import { type Page } from 'playwright-core';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
@@ -63,9 +64,9 @@ test.describe(
       // Open dashboard settings
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton).click();
 
-      // Change timezone to America/Chicago
+      // Change timezone to Chicago
       await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
-      await page.getByRole('option', { name: toTimeZone }).click();
+      await page.getByRole('option', { name: 'Chicago' }).click();
 
       // Close settings and refresh
       await dashboardPage
@@ -151,7 +152,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'Asia/Tokyo',
+        zone: 'Tokyo',
       });
 
       await expect(relativeTimeRow).toBeVisible();
@@ -169,7 +170,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'America/Los Angeles',
+        zone: 'Los Angeles',
       });
 
       await expect(relativeTimeRow).toBeVisible();

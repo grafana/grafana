@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -15,9 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestMain(m *testing.M) {
@@ -62,7 +63,7 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -90,7 +91,7 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 		require.NotNil(t, retrievedRule)
 		require.Equal(t, 200, status)
 		require.Equal(t, created.Spec.Title, retrievedRule.Title)
-		require.Equal(t, created.Spec.Metric, retrievedRule.Record.Metric)
+		require.Equal(t, string(created.Spec.Metric), retrievedRule.Record.Metric)
 		require.Equal(t, "A", retrievedRule.Data[0].RefID)
 
 		model := map[string]interface{}{}
@@ -239,7 +240,7 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioning(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.Equal(t, r.Record.Metric, retrievedRule.Spec.Metric)
+			require.Equal(t, r.Record.Metric, string(retrievedRule.Spec.Metric))
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
@@ -381,7 +382,7 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioningChangeGroupInK8s(t *
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.Equal(t, r.Record.Metric, retrievedRule.Spec.Metric)
+			require.Equal(t, r.Record.Metric, string(retrievedRule.Spec.Metric))
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
@@ -422,6 +423,160 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioningChangeGroupInK8s(t *
 			require.Equal(t, 200, status)
 			// verify the group label changed
 			require.Equal(t, "new-group", provisioningRetrievedRule.RuleGroup)
+		}
+	})
+}
+
+func TestIntegrationRecordingRuleCompatListWithGroupLabelSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	k8sClient := common.NewRecordingRuleClient(t, helper.Org1.Admin)
+	legacyClient := alerting.NewAlertingLegacyAPIClient(helper.GetListenerAddress(), "admin", "admin")
+
+	common.CreateTestFolder(t, helper, "compat-rr-group-sel-folder")
+
+	makeRule := func(uid, title, folder string) apimodels.ProvisionedAlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUID(uid),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithAllRecordingRules(),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return apimodels.ProvisionedAlertRule{
+			UID:   uid,
+			Title: title,
+			OrgID: 1,
+			Data: []apimodels.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: rule.Data[0].DatasourceUID,
+					Model:         rule.Data[0].Model,
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Minute),
+						To:   apimodels.Duration(0),
+					},
+				},
+			},
+			Record: &apimodels.Record{
+				Metric:              rule.Record.Metric,
+				From:                "A",
+				TargetDatasourceUID: rule.Record.TargetDatasourceUID,
+			},
+			FolderUID: folder,
+		}
+	}
+
+	rulesAlpha := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithAllRecordingRules(),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).GenerateMany(2)
+	rulesBeta := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithAllRecordingRules(),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).GenerateMany(2)
+
+	groupAlpha := apimodels.AlertRuleGroup{
+		Title:     "group-alpha",
+		FolderUID: "compat-rr-group-sel-folder",
+		Interval:  10,
+		Rules: []apimodels.ProvisionedAlertRule{
+			makeRule(rulesAlpha[0].UID, rulesAlpha[0].Title, "compat-rr-group-sel-folder"),
+			makeRule(rulesAlpha[1].UID, rulesAlpha[1].Title, "compat-rr-group-sel-folder"),
+		},
+	}
+	groupBeta := apimodels.AlertRuleGroup{
+		Title:     "group-beta",
+		FolderUID: "compat-rr-group-sel-folder",
+		Interval:  10,
+		Rules: []apimodels.ProvisionedAlertRule{
+			makeRule(rulesBeta[0].UID, rulesBeta[0].Title, "compat-rr-group-sel-folder"),
+			makeRule(rulesBeta[1].UID, rulesBeta[1].Title, "compat-rr-group-sel-folder"),
+		},
+	}
+
+	createdAlpha, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, groupAlpha)
+	require.Equalf(t, 200, status, "Expected status 200, got %d. Response body: %s", status, body)
+	createdBeta, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, groupBeta)
+	require.Equalf(t, 200, status, "Expected status 200, got %d. Response body: %s", status, body)
+
+	alphaUIDs := map[string]struct{}{createdAlpha.Rules[0].UID: {}, createdAlpha.Rules[1].UID: {}}
+	betaUIDs := map[string]struct{}{createdBeta.Rules[0].UID: {}, createdBeta.Rules[1].UID: {}}
+
+	t.Cleanup(func() {
+		legacyClient.DeleteRulesGroupProvisioning(t, "compat-rr-group-sel-folder", "group-alpha")
+		legacyClient.DeleteRulesGroupProvisioning(t, "compat-rr-group-sel-folder", "group-beta")
+	})
+
+	resultUIDs := func(list *v0alpha1.RecordingRuleList) map[string]struct{} {
+		m := make(map[string]struct{}, len(list.Items))
+		for _, item := range list.Items {
+			m[item.Name] = struct{}{}
+		}
+		return m
+	}
+
+	t.Run("filter by group label include", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group=group-alpha"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.Equal(t, "group-alpha", item.Labels[v0alpha1.GroupLabelKey])
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.Contains(t, names, uid, "group-alpha rule must appear in include results")
+		}
+		for uid := range betaUIDs {
+			require.NotContains(t, names, uid, "group-beta rule must not appear in group-alpha include results")
+		}
+	})
+
+	t.Run("filter by group label exclude", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group!=group-alpha"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.NotEqual(t, "group-alpha", item.Labels[v0alpha1.GroupLabelKey])
+		}
+		names := resultUIDs(list)
+		for uid := range betaUIDs {
+			require.Contains(t, names, uid, "group-beta rule must appear in exclude results")
+		}
+		for uid := range alphaUIDs {
+			require.NotContains(t, names, uid, "group-alpha rule must not appear in exclude results")
+		}
+	})
+
+	t.Run("filter by group label exists", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.Contains(t, item.Labels, v0alpha1.GroupLabelKey)
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.Contains(t, names, uid, "group-alpha rule must appear in exists results")
+		}
+		for uid := range betaUIDs {
+			require.Contains(t, names, uid, "group-beta rule must appear in exists results")
+		}
+	})
+
+	t.Run("filter by group label does not exist", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "!grafana.com/group"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.NotContains(t, item.Labels, v0alpha1.GroupLabelKey)
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.NotContains(t, names, uid, "group-alpha rule must not appear in does-not-exist results")
+		}
+		for uid := range betaUIDs {
+			require.NotContains(t, names, uid, "group-beta rule must not appear in does-not-exist results")
 		}
 	})
 }

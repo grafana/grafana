@@ -4,7 +4,7 @@ import mimirLogoRecordingSvg from 'img/alerting/mimir_logo_recording.svg';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';
-import { RuleType, SharedProps } from './RuleType';
+import { RuleType, type SharedProps } from './RuleType';
 
 const RecordingRuleType = ({ selected = false, disabled = false, onClick }: SharedProps) => {
   return (

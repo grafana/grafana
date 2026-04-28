@@ -1,10 +1,10 @@
 import { createAction } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
+import { type AnyAction } from 'redux';
 
 import { variableAdapters } from '../adapters';
 
 import { sharedReducer } from './sharedReducer';
-import { initialVariablesState, VariablesState } from './types';
+import { initialVariablesState, type VariablesState } from './types';
 
 export const cleanVariables = createAction<undefined>('templating/cleanVariables');
 

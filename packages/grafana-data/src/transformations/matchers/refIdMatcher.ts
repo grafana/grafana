@@ -1,6 +1,6 @@
 import { escapeStringForRegex, stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
-import { DataFrame } from '../../types/dataFrame';
-import { FrameMatcherInfo } from '../../types/transformations';
+import { type DataFrame } from '../../types/dataFrame';
+import { type FrameMatcherInfo } from '../../types/transformations';
 
 import { FrameMatcherID } from './ids';
 

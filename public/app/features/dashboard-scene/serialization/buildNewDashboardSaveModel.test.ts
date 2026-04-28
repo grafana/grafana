@@ -1,4 +1,4 @@
-import { DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
+import { type DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';

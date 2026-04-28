@@ -1,4 +1,4 @@
-import { render, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
@@ -8,10 +8,10 @@ import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanag
 import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
-import { Folder } from '../../../types/rule-form';
+import { type Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
-  AlertManagerDataSource,
+  type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
@@ -164,6 +164,43 @@ describe('NotificationPreview', () => {
 
     expect(matchingContactPoint[1]).toHaveTextContent(/Delivered to slack/);
     expect(matchingContactPoint[1]).toHaveTextContent(/1 instance/);
+  });
+
+  it('should show routing preview when user has only managed routes read permission', async () => {
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesRead]);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
+    });
+
+    expect(screen.queryByRole('alert', { name: /preview not available/i })).not.toBeInTheDocument();
+  });
+
+  it('should show permission warning when user has no alerting notification permissions', async () => {
+    grantUserPermissions([]);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert', { name: /preview not available/i })).toBeInTheDocument();
+    });
+
+    expect(ui.contactPointGroup.query()).not.toBeInTheDocument();
   });
 
   it('should render details when clicking see details button', async () => {

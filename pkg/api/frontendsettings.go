@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,9 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	dashboardkind "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -41,6 +43,13 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
+
+	ofClient := openfeature.NewDefaultClient()
+	autoLoginFlagEnabled := ofClient.Boolean(c.Req.Context(), featuremgmt.FlagFrontendServiceSSOAutoLogin, false, openfeature.TransactionContext(c.Req.Context()))
+	if autoLoginFlagEnabled && !c.IsSignedIn {
+		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
@@ -411,25 +420,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
-
-		if !hasEnabledProviders {
-			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-			for _, provider := range oauthInfos {
-				if provider.Enabled {
-					hasEnabledProviders = true
-					break
-				}
-			}
-		}
-
-		if !hasEnabledProviders {
-			frontendSettings.Auth.PasswordlessEnabled = true
-		}
-	}
-
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
 		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
 		if err != nil {
@@ -470,6 +460,7 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 	return commitHash
 }
 
+//nolint:gocyclo
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	c, span := hs.injectSpan(c, "api.getFSDataSources")
 	defer span.End()
@@ -484,7 +475,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 		if c.IsPublicDashboardView() {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
-			orgDataSources = dataSources
+			// But we can filter to only include datasources actually used by the dashboard
+			filtered, err := hs.publicDashFilterUsedDataSources(c, dataSources)
+			if err != nil {
+				return nil, err
+			}
+			orgDataSources = filtered
 		} else {
 			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
 			if err != nil {
@@ -839,4 +835,39 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
+}
+
+func (hs *HTTPServer) publicDashFilterUsedDataSources(c *contextmodel.ReqContext, allDataSources []*datasources.DataSource) ([]*datasources.DataSource, error) {
+	_, dash, err := hs.publicDashboardsService.FindPublicDashboardAndDashboardByAccessToken(c.Req.Context(), c.PublicDashboardAccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := dash.Data.Encode()
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode dashboard data: %w", err)
+	}
+
+	lookup := dashboardkind.CreateDatasourceLookup([]*dashboardkind.DatasourceQueryResult{
+		// empty values (does not resolve anything)
+	})
+
+	dashSummaryInfo, err := dashboardkind.ReadDashboard(bytes.NewReader(payload), lookup)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dashboard: %w", err)
+	}
+
+	usedUIDs := make(map[string]struct{}, len(dashSummaryInfo.Datasource))
+	for _, ds := range dashSummaryInfo.Datasource {
+		usedUIDs[ds.UID] = struct{}{}
+	}
+
+	filtered := make([]*datasources.DataSource, 0)
+	for _, ds := range allDataSources {
+		if _, ok := usedUIDs[ds.UID]; ok {
+			filtered = append(filtered, ds)
+		}
+	}
+
+	return filtered, nil
 }

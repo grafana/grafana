@@ -1,6 +1,6 @@
-import { HttpResponse, JsonBodyType, StrictResponse, http } from 'msw';
+import { HttpResponse, type JsonBodyType, type StrictResponse, http } from 'msw';
 
-import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
+import { type TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/mocks/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
@@ -11,7 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse

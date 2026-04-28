@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { MouseEvent, memo } from 'react';
+import { type MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useTheme2 } from '@grafana/ui';
 
-import { HoverState } from './NodeGraph';
-import { NodeDatum } from './types';
+import { type HoverState } from './NodeGraph';
+import { type NodeDatum } from './types';
 import { statToString } from './utils';
 
 export const nodeR = 40;

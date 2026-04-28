@@ -1,8 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
@@ -209,7 +209,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 
@@ -258,7 +258,7 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = async (dataSource: DataSourceSettings) => {
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let k8sVersion = 'v0alpha1';
     let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
       dataSource,
@@ -313,7 +313,7 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
 
 export const deleteDataSource = (uid: string) => {
   let deleteUrl = `/api/datasources/uid/${uid}`;
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let namespace = config.namespace;
     let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;

@@ -1,11 +1,11 @@
-import { DataSourceRef, DataQuery, TypedVariableModel } from '@grafana/data';
+import { type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import {
-  PublicDashboard,
+  type PublicDashboard,
   dashboardHasTemplateVariables,
   publicDashboardPersisted,
   generatePublicDashboardUrl,

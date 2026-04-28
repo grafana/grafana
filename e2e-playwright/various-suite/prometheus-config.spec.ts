@@ -1,4 +1,4 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
 import { test, expect } from '@grafana/plugin-e2e';
 

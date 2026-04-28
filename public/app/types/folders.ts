@@ -1,6 +1,6 @@
-import { WithAccessControlMetadata } from '@grafana/data';
+import { type WithAccessControlMetadata } from '@grafana/data';
 
-import { ManagerKind } from '../features/apiserver/types';
+import { type ManagerKind } from '../features/apiserver/types';
 
 export interface FolderListItemDTO {
   uid: string;
@@ -49,14 +49,19 @@ export interface FolderState {
 
 /**
  * API response from `/api/folders/${folderUID}/counts`
- * @deprecated The properties here are inconsistently named with App Platform API responses.
- * Avoid using this type as it will be removed after app platform folder migration is complete
+ * Supports both the current resource-style keys and older legacy aliases, which depends on whether the unified storage
+ * is used or not. Also, the API does not exactly guarantee the shape or keys as it does it dynamically based on
+ * existing resource types.
  */
 export interface DescendantCountDTO {
-  folder: number;
-  dashboard: number;
-  librarypanel: number;
-  alertrule: number;
+  folders?: number;
+  dashboards?: number;
+  library_elements?: number;
+  alertrules?: number;
+  folder?: number;
+  dashboard?: number;
+  librarypanel?: number;
+  alertrule?: number;
 }
 
 type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';

@@ -124,6 +124,34 @@ func TestFolderTree(t *testing.T) {
 		assert.Equal(t, "New Title", id.Title)
 	})
 
+	t.Run("get by path returns folder with normalized path", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+
+		ft := tree.(*folderTree)
+		byPath, ok := ft.GetByPath("a")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+
+		byPath, ok = ft.GetByPath("a/")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+	})
+
+	t.Run("updating folder path removes the previous path lookup", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "old/"}, "")
+		tree.Add(Folder{ID: "a", Title: "A", Path: "new/"}, "")
+
+		ft := tree.(*folderTree)
+		_, ok := ft.GetByPath("old")
+		require.False(t, ok)
+
+		byPath, ok := ft.GetByPath("new")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+	})
+
 	t.Run("remove existing folder decrements count and removes from tree", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
 		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
@@ -291,4 +319,54 @@ func TestNewFolderTreeFromResourceList_MetadataHash(t *testing.T) {
 		require.True(t, ok)
 		assert.Empty(t, got.MetadataHash)
 	})
+
+	t.Run("populates ParentID from ResourceListItem.Folder", func(t *testing.T) {
+		rl := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:   "parent-uid",
+					Title:  "Parent",
+					Path:   "parent",
+					Group:  folders.GROUP,
+					Folder: "",
+				},
+				{
+					Name:   "child-uid",
+					Title:  "Child",
+					Path:   "parent/child",
+					Group:  folders.GROUP,
+					Folder: "parent-uid",
+				},
+			},
+		}
+
+		tree := NewFolderTreeFromResourceList(rl)
+
+		parent, ok := tree.Get("parent-uid")
+		require.True(t, ok)
+		assert.Empty(t, parent.ParentID, "root folder should have empty ParentID")
+
+		child, ok := tree.Get("child-uid")
+		require.True(t, ok)
+		assert.Equal(t, "parent-uid", child.ParentID)
+	})
+}
+
+func TestFolderTree_Add_SetsParentID(t *testing.T) {
+	tree := NewEmptyFolderTree()
+
+	f := Folder{ID: "child", Title: "Child", Path: "child/"}
+	tree.Add(f, "parent-uid")
+
+	got, ok := tree.Get("child")
+	require.True(t, ok)
+	assert.Equal(t, "parent-uid", got.ParentID, "Add should set ParentID to parent")
+
+	// Root folder
+	root := Folder{ID: "root", Title: "Root", Path: "root/"}
+	tree.Add(root, "")
+
+	gotRoot, ok := tree.Get("root")
+	require.True(t, ok)
+	assert.Empty(t, gotRoot.ParentID, "root folder should have empty ParentID")
 }

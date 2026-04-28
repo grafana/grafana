@@ -34,7 +34,8 @@ type ShortURLMigrator interface {
 
 // shortURLMigrator handles migrating short URLs from legacy SQL storage.
 type shortURLMigrator struct {
-	sql legacysql.LegacyDatabaseProvider
+	sql             legacysql.LegacyDatabaseProvider
+	listShortURLsFn func(context.Context, int64, int64, int64) (*sql.Rows, error)
 }
 
 // ProvideShortURLMigrator creates a shortURLMigrator for use in wire DI.
@@ -49,9 +50,13 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 	var lastID int64 = 0
 	limit := int64(1000)
 	count := 0
+	readDuration := time.Duration(0)
+	convertDuration := time.Duration(0)
+	writeDuration := time.Duration(0)
 
 	for {
-		rows, err := m.ListShortURLs(ctx, orgId, lastID, limit)
+		readStart := time.Now()
+		rows, err := m.listShortURLs(ctx, orgId, lastID, limit)
 		if err != nil {
 			return err
 		}
@@ -63,10 +68,7 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 		var createdAt int64
 		var lastSeenAt int64
 
-		// We buffer them in memory so we can close the DB cursor before sending
-		// to the potentially slow gRPC stream.
-		chunk := make([]*resourcepb.BulkRequest, 0, limit)
-
+		rawRows := make([]shortURLRow, 0, limit)
 		for rows.Next() {
 			err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
 			if err != nil {
@@ -74,33 +76,55 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 				return err
 			}
 
-			lastID = id // Keep track of the highest ID in this batch
+			lastID = id
+			rawRows = append(rawRows, shortURLRow{
+				uid:        uid,
+				path:       path,
+				createdBy:  createdBy,
+				createdAt:  createdAt,
+				lastSeenAt: lastSeenAt,
+			})
+		}
 
+		if err = rows.Err(); err != nil {
+			_ = rows.Close()
+			return err
+		}
+
+		_ = rows.Close()
+		readDuration += time.Since(readStart)
+
+		if len(rawRows) == 0 {
+			break
+		}
+
+		convertStart := time.Now()
+		chunk := make([]*resourcepb.BulkRequest, 0, len(rawRows))
+		for _, row := range rawRows {
 			shortURL := &shorturlv1beta1.ShortURL{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: shorturlv1beta1.GroupVersion.String(),
 					Kind:       "ShortURL",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:              uid,
+					Name:              row.uid,
 					Namespace:         opts.Namespace,
-					CreationTimestamp: metav1.NewTime(time.Unix(createdAt, 0)),
+					CreationTimestamp: metav1.NewTime(time.Unix(row.createdAt, 0)),
 				},
 				Spec: shorturlv1beta1.ShortURLSpec{
-					Path: path,
+					Path: row.path,
 				},
 				Status: shorturlv1beta1.ShortURLStatus{
-					LastSeenAt: lastSeenAt,
+					LastSeenAt: row.lastSeenAt,
 				},
 			}
 
-			if createdBy > 0 {
-				shortURL.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(createdBy, 10)))
+			if row.createdBy > 0 {
+				shortURL.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(row.createdBy, 10)))
 			}
 
 			body, err := json.Marshal(shortURL)
 			if err != nil {
-				_ = rows.Close()
 				return err
 			}
 
@@ -109,28 +133,18 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 					Namespace: opts.Namespace,
 					Group:     shorturlv1beta1.APIGroup,
 					Resource:  "shorturls",
-					Name:      uid,
+					Name:      row.uid,
 				},
 				Value:  body,
 				Action: resourcepb.BulkRequest_ADDED,
 			}
 			chunk = append(chunk, req)
 		}
+		convertDuration += time.Since(convertStart)
 
-		if err = rows.Err(); err != nil {
-			_ = rows.Close()
-			return err
-		}
-
-		_ = rows.Close() // Close the db connection for this chunk
-
-		if len(chunk) == 0 {
-			break // No more rows found
-		}
-
+		writeStart := time.Now()
 		for _, req := range chunk {
 			count++
-
 			err = stream.Send(req)
 			if err != nil {
 				if errors.Is(err, io.EOF) {
@@ -139,15 +153,33 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 				return err
 			}
 		}
+		writeDuration += time.Since(writeStart)
 
-		if int64(len(chunk)) < limit {
-			// If we read less than the limit, we're at the end of the results.
+		if int64(len(rawRows)) < limit {
 			break
 		}
 	}
 
+	opts.Progress(count, fmt.Sprintf("finished reading legacy short URLs from legacy short_url table in %s (%d)", readDuration, count))
+	opts.Progress(count, fmt.Sprintf("finished converting legacy short URLs to unified storage format in %s (%d)", convertDuration, count))
+	opts.Progress(count, fmt.Sprintf("finished writing short URLs to unified storage in %s (%d)", writeDuration, count))
 	opts.Progress(-2, fmt.Sprintf("finished short URLs... (%d)", count))
 	return nil
+}
+
+type shortURLRow struct {
+	uid        string
+	path       string
+	createdBy  int64
+	createdAt  int64
+	lastSeenAt int64
+}
+
+func (m *shortURLMigrator) listShortURLs(ctx context.Context, orgID int64, lastID int64, limit int64) (*sql.Rows, error) {
+	if m.listShortURLsFn != nil {
+		return m.listShortURLsFn(ctx, orgID, lastID, limit)
+	}
+	return m.ListShortURLs(ctx, orgID, lastID, limit)
 }
 
 func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64, lastID int64, limit int64) (*sql.Rows, error) {

@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { Stack } from '@grafana/ui';
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';

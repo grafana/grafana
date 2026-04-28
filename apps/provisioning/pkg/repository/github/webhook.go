@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/google/go-github/v82/github"
 	"github.com/google/uuid"
@@ -33,27 +34,30 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config     *provisioning.Repository
-	owner      string
-	repo       string
-	secret     common.RawSecureValue
-	gh         Client
-	webhookURL string
+	config                *provisioning.Repository
+	owner                 string
+	repo                  string
+	secret                common.RawSecureValue
+	gh                    Client
+	webhookURL            string
+	folderMetadataEnabled bool
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
+	folderMetadataEnabled bool,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
-		GithubRepository: basic,
-		config:           basic.Config(),
-		owner:            basic.Owner(),
-		repo:             basic.Repo(),
-		gh:               basic.Client(),
-		webhookURL:       webhookURL,
-		secret:           secret,
+		GithubRepository:      basic,
+		config:                basic.Config(),
+		owner:                 basic.Owner(),
+		repo:                  basic.Repo(),
+		gh:                    basic.Client(),
+		webhookURL:            webhookURL,
+		secret:                secret,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
 
@@ -128,7 +132,7 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSync(deletedPaths)
+	incremental := repository.CanUseIncrementalSyncInWebhook(deletedPaths, r.folderMetadataEnabled)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
@@ -323,6 +327,7 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 				ID:               hook.ID,
 				URL:              hook.URL,
 				SubscribedEvents: hook.Events,
+				LastRotated:      time.Now().UnixMilli(),
 			},
 		},
 		{
@@ -369,6 +374,7 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 			ID:               hook.ID,
 			URL:              hook.URL,
 			SubscribedEvents: hook.Events,
+			LastRotated:      time.Now().UnixMilli(),
 		},
 	}, {
 		"op":   "replace",
@@ -385,6 +391,63 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 	}
 
 	return r.deleteWebhook(ctx)
+}
+
+// RotateWebhookSecret generates a new HMAC secret for the repository's GitHub
+// webhook and updates it via the API. If the remote webhook no longer exists
+// (404), the Status.Webhook entry is cleared so the next reconcile re-creates
+// it via processHooks, and an error is returned so the failure is surfaced in
+// logs.
+func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
+	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
+		return nil, nil
+	}
+
+	ctx, logger := r.logger(ctx, "")
+	logger.Info("rotating webhook secret", "trigger", "rotation")
+
+	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
+	switch {
+	case errors.Is(err, repository.ErrFileNotFound):
+		return []map[string]any{{
+			"op":    "replace",
+			"path":  "/status/webhook",
+			"value": nil,
+		}}, fmt.Errorf("webhook %d not found on remote during rotation: %w", r.config.Status.Webhook.ID, err)
+	case err != nil:
+		return nil, fmt.Errorf("get webhook for rotation: %w", err)
+	}
+
+	secret, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("generate rotation secret: %w", err)
+	}
+	hook.Secret = secret.String()
+
+	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
+		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
+	}
+
+	logger.Info("webhook secret rotated successfully")
+	return []map[string]any{
+		{
+			"op":   "replace",
+			"path": "/status/webhook",
+			"value": &provisioning.WebhookStatus{
+				ID:               hook.ID,
+				URL:              hook.URL,
+				SubscribedEvents: hook.Events,
+				LastRotated:      time.Now().UnixMilli(),
+			},
+		},
+		{
+			"op":   "replace",
+			"path": "/secure/webhookSecret",
+			"value": map[string]string{
+				"create": hook.Secret,
+			},
+		},
+	}, nil
 }
 
 func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
