@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"net/http"
+	"slices"
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
@@ -222,9 +223,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  searchPageSize, // pagination is in pages of searchPageSize
+			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -286,9 +286,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  searchPageSize, // pagination is in pages of searchPageSize
+			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -337,9 +336,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  10,
-			Offset: 20, // should be set as limit * (page - 1)
-			Page:   3,
+			Limit:  10, // user-supplied; under searchPageSize so a single page is fetched
+			Offset: 20, // user-supplied q.Limit * (q.Page - 1) = 10 * (3 - 1)
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -466,9 +464,8 @@ func TestGetChildren(t *testing.T) {
 					},
 				},
 			},
-			Limit:  folderSearchLimit, // should default to folderSearchLimit
-			Offset: 0,                 // should be set as limit * (page - 1)
-			Page:   1,                 // should be set to 1 by default
+			Limit:  searchPageSize, // pagination is in pages of searchPageSize
+			Offset: 0,              // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -686,11 +683,12 @@ func TestGetFolders(t *testing.T) {
 	}
 }
 
-// expectSearchChildren sets up a Search mock for the given parent UID,
-// returning rows whose Key.Name is each child UID and whose first cell is
-// the parent UID (matches the column definition the implementation does not
-// actually inspect, but mirrors the existing TestGetChildren mock shape).
-func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parent string, children []string) {
+// expectSearchChildren sets up a Search mock that matches a multi-value `In`
+// on the given parents and returns rows for each parent's children. The row
+// Key.Name is the child UID and the first cell is the parent UID (matches
+// the column definition the implementation does not actually inspect, but
+// mirrors the existing TestGetChildren mock shape).
+func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents []string, byParent map[string][]string) {
 	matcher := func(req *resourcepb.ResourceSearchRequest) bool {
 		if req == nil || req.Options == nil || len(req.Options.Fields) == 0 {
 			return false
@@ -698,14 +696,16 @@ func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parent st
 		f := req.Options.Fields[0]
 		return f.Key == resource.SEARCH_FIELD_FOLDER &&
 			f.Operator == string(selection.In) &&
-			len(f.Values) == 1 && f.Values[0] == parent
+			slices.Equal(f.Values, parents)
 	}
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(children))
-	for _, uid := range children {
-		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
-			Cells: [][]byte{[]byte(parent)},
-		})
+	var rows []*resourcepb.ResourceTableRow
+	for _, p := range parents {
+		for _, uid := range byParent[p] {
+			rows = append(rows, &resourcepb.ResourceTableRow{
+				Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
+				Cells: [][]byte{[]byte(p)},
+			})
+		}
 	}
 	mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(matcher)).Return(&resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
@@ -736,10 +736,10 @@ func TestGetDescendants(t *testing.T) {
 	t.Run("returns full subtree via level-by-level search", func(t *testing.T) {
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
-		expectSearchChildren(mockCli, orgID, "root", []string{"child1", "child3"})
-		expectSearchChildren(mockCli, orgID, "child1", []string{"child2"})
-		expectSearchChildren(mockCli, orgID, "child2", nil)
-		expectSearchChildren(mockCli, orgID, "child3", nil)
+		// One Search per level (parents at that level batched into a single In).
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"child1", "child3"}})
+		expectSearchChildren(mockCli, orgID, []string{"child1", "child3"}, map[string][]string{"child1": {"child2"}})
+		expectSearchChildren(mockCli, orgID, []string{"child2"}, nil)
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
@@ -763,7 +763,7 @@ func TestGetDescendants(t *testing.T) {
 	t.Run("returns empty when ancestor is a leaf", func(t *testing.T) {
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "leaf", orgID)
-		expectSearchChildren(mockCli, orgID, "leaf", nil)
+		expectSearchChildren(mockCli, orgID, []string{"leaf"}, nil)
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
@@ -799,9 +799,9 @@ func TestGetDescendants(t *testing.T) {
 		// a -> b -> c -> a
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "a", orgID)
-		expectSearchChildren(mockCli, orgID, "a", []string{"b"})
-		expectSearchChildren(mockCli, orgID, "b", []string{"c"})
-		expectSearchChildren(mockCli, orgID, "c", []string{"a"})
+		expectSearchChildren(mockCli, orgID, []string{"a"}, map[string][]string{"a": {"b"}})
+		expectSearchChildren(mockCli, orgID, []string{"b"}, map[string][]string{"b": {"c"}})
+		expectSearchChildren(mockCli, orgID, []string{"c"}, map[string][]string{"c": {"a"}})
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
@@ -818,7 +818,7 @@ func TestGetDescendants(t *testing.T) {
 		// self -> self
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "self", orgID)
-		expectSearchChildren(mockCli, orgID, "self", []string{"self"})
+		expectSearchChildren(mockCli, orgID, []string{"self"}, map[string][]string{"self": {"self"}})
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
@@ -840,9 +840,9 @@ func TestGetDescendants(t *testing.T) {
 		// would be truncated. The warning fires because depth > maxDepth.
 		mockCli := new(client.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
-		expectSearchChildren(mockCli, orgID, "root", []string{"l1"})
-		expectSearchChildren(mockCli, orgID, "l1", []string{"l2"})
-		expectSearchChildren(mockCli, orgID, "l2", []string{"l3"})
+		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"l1"}})
+		expectSearchChildren(mockCli, orgID, []string{"l1"}, map[string][]string{"l1": {"l2"}})
+		expectSearchChildren(mockCli, orgID, []string{"l2"}, map[string][]string{"l2": {"l3"}})
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
@@ -876,14 +876,14 @@ func TestSearchChildren(t *testing.T) {
 	t.Run("does not validate parent existence", func(t *testing.T) {
 		mockCli := new(client.MockK8sHandler)
 		// Only Search is expected; Get is NOT called for the parent.
-		expectSearchChildren(mockCli, orgID, "some-parent", []string{"a", "b"})
+		expectSearchChildren(mockCli, orgID, []string{"some-parent"}, map[string][]string{"some-parent": {"a", "b"}})
 
 		ss := &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
 			userService: usertest.NewUserServiceFake(),
 			tracer:      noop.NewTracerProvider().Tracer("test"),
 		}
-		got, err := ss.searchChildren(ctx, folder.GetChildrenQuery{UID: "some-parent", OrgID: orgID})
+		got, err := ss.searchChildren(ctx, []string{"some-parent"}, folder.GetChildrenQuery{OrgID: orgID})
 		require.NoError(t, err)
 		require.Len(t, got, 2)
 		mockCli.AssertExpectations(t)
