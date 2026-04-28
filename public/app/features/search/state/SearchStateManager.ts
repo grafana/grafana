@@ -46,12 +46,8 @@ export const defaultQueryParams: SearchQueryParams = {
   createdBy: null,
 };
 
-const getMainLayoutFromStore = () => {
-  const selectedLayout = store.get(SEARCH_SELECTED_LAYOUT);
-  if (selectedLayout === SearchLayout.List) {
-    return SearchLayout.List;
-  }
-  return SearchLayout.Folders;
+const getLayoutFromStore = (key: string) => {
+  return store.get(key) === SearchLayout.List ? SearchLayout.List : SearchLayout.Folders;
 };
 
 type SearchReportInfo = Parameters<typeof reportSearchQueryInteraction>[1];
@@ -74,16 +70,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   lastSearchTimestamp = 0;
 
-  protected sortStorageKey: string = SEARCH_SELECTED_SORT;
-  protected layoutStorageKey: string = SEARCH_SELECTED_LAYOUT;
-
-  protected getPersistedLayout(): SearchLayout {
-    const selectedLayout = store.get(this.layoutStorageKey);
-    if (selectedLayout === SearchLayout.List) {
-      return SearchLayout.List;
-    }
-    return SearchLayout.Folders;
-  }
+  protected sortStorageKey = SEARCH_SELECTED_SORT;
+  protected layoutStorageKey = SEARCH_SELECTED_LAYOUT;
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
@@ -93,7 +81,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       stateFromUrl.layout = SearchLayout.List;
     }
 
-    const layout = this.getPersistedLayout();
+    const layout = getLayoutFromStore(this.layoutStorageKey);
     let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
 
     // Guard against stale recently-deleted sort values persisted to the main sort key
@@ -368,7 +356,7 @@ let stateManager: SearchStateManager;
 
 export function getSearchStateManager() {
   if (!stateManager) {
-    const layout = getMainLayoutFromStore();
+    const layout = getLayoutFromStore(SEARCH_SELECTED_LAYOUT);
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
