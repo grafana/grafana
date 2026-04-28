@@ -54,9 +54,8 @@ type RepositoryView struct {
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
 
-	// Template used to pre-populate the commit/comment field when saving a
-	// provisioned resource. Mirrors the same-named field on the repository spec.
-	CommitMessageTemplate string `json:"commitMessageTemplate,omitempty"`
+	// Commit message options. Mirrors the same-named field on the repository spec.
+	Commit *CommitOptions `json:"commit,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {
