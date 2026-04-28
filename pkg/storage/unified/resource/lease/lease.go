@@ -24,9 +24,9 @@ var (
 )
 
 type Lease struct {
-	name       string
-	holder     string
-	generation int64
+	name       string //nolint:unused
+	holder     string //nolint:unused
+	generation int64  // nolint:unused
 }
 
 // Manager acquires and releases leases backed by a KV store.
