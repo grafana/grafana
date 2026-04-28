@@ -147,13 +147,9 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 			}
 			impl := strings.ToLower(ds.JsonData.Get("implementation").MustString(""))
 			if !slices.Contains(syncableAMImplementations, impl) {
-				var msg string
-				if impl == "prometheus" {
-					msg = `"prometheus" implementation is not supported for sync: vanilla Prometheus Alertmanager has no config API. Use the alertmanager import UI to upload config manually for these datasources.`
-				} else {
-					msg = fmt.Sprintf("%q implementation is not supported for sync (must be one of: %s)", impl, strings.Join(syncableAMImplementations, ", "))
-				}
-				return response.Error(http.StatusBadRequest, msg, nil)
+				return response.Error(http.StatusBadRequest, fmt.Sprintf(
+					"%q implementation is not supported for sync (must be one of: %s). Use the convert API for manual config import.",
+					impl, strings.Join(syncableAMImplementations, ", ")), nil)
 			}
 		}
 
