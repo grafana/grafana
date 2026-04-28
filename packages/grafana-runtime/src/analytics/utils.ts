@@ -48,9 +48,17 @@ export const reportPageview = () => {
 /**
  * Helper function to report interaction events to the {@link EchoSrv}.
  *
+ * @param options.silent - If true, the event fires onInteraction subscribers
+ * but is not sent to analytics backends. Use for CUJ-internal signals that
+ * don't need to be stored (e.g. command_palette_closed).
+ *
  * @public
  */
-export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
+export const reportInteraction = (
+  interactionName: string,
+  properties?: Record<string, unknown>,
+  options?: { silent?: boolean }
+) => {
   // get static reporting context and append it to properties
   if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
     properties = { ...properties, ...config.reportingStaticContext };
@@ -60,6 +68,7 @@ export const reportInteraction = (interactionName: string, properties?: Record<s
     payload: {
       interactionName,
       properties,
+      silent: options?.silent,
     },
   });
 };
@@ -78,4 +87,15 @@ export const reportExperimentView = (id: string, group: string, variant: string)
       experimentVariant: variant,
     },
   });
+};
+
+/**
+ * Subscribe to a named interaction event. Fires synchronously every time
+ * {@link reportInteraction} is called with a matching name.
+ *
+ * @returns unsubscribe function
+ * @public
+ */
+export const onInteraction = (name: string, callback: (properties: Record<string, unknown>) => void): (() => void) => {
+  return getEchoSrv().onInteraction(name, callback);
 };
