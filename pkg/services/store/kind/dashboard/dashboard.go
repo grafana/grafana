@@ -862,8 +862,11 @@ func readV2QueryExpression(m map[string]any) PanelQueryInfo {
 			return q
 		}
 	}
-	// Flat fallback: m.<expr> with datasource at m.datasource.
+	// Flat fallback: m.<expr> with refId/datasource at the root.
 	q := PanelQueryInfo{Expression: pickExpression(m)}
+	if rid, _ := m["refId"].(string); rid != "" {
+		q.RefID = rid
+	}
 	if ds, _ := m["datasource"].(map[string]any); ds != nil {
 		q.DatasourceUID = pickDatasourceRef(ds)
 	}
