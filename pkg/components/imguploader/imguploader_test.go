@@ -35,10 +35,10 @@ func TestImageUploaderFactory(t *testing.T) {
 
 				original, ok := uploader.(*S3Uploader)
 				require.True(t, ok)
-				require.Equal(t, "us-east-2", original.region)
-				require.Equal(t, "foo.bar.baz", original.bucket)
-				require.Equal(t, "access_key", original.accessKey)
-				require.Equal(t, "secret_key", original.secretKey)
+				require.Equal(t, "us-east-2", original.opts.Region)
+				require.Equal(t, "foo.bar.baz", original.opts.Bucket)
+				require.Equal(t, "access_key", original.opts.AccessKey)
+				require.Equal(t, "secret_key", original.opts.SecretKey)
 			})
 
 			t.Run("with bucket url https://s3.amazonaws.com/mybucket", func(t *testing.T) {
@@ -56,10 +56,10 @@ func TestImageUploaderFactory(t *testing.T) {
 
 				original, ok := uploader.(*S3Uploader)
 				require.True(t, ok)
-				require.Equal(t, "us-east-1", original.region)
-				require.Equal(t, "my.bucket.com", original.bucket)
-				require.Equal(t, "access_key", original.accessKey)
-				require.Equal(t, "secret_key", original.secretKey)
+				require.Equal(t, "us-east-1", original.opts.Region)
+				require.Equal(t, "my.bucket.com", original.opts.Bucket)
+				require.Equal(t, "access_key", original.opts.AccessKey)
+				require.Equal(t, "secret_key", original.opts.SecretKey)
 			})
 
 			t.Run("with bucket url https://s3-us-west-2.amazonaws.com/mybucket", func(t *testing.T) {
@@ -77,10 +77,10 @@ func TestImageUploaderFactory(t *testing.T) {
 
 				original, ok := uploader.(*S3Uploader)
 				require.True(t, ok)
-				require.Equal(t, "us-west-2", original.region)
-				require.Equal(t, "my.bucket.com", original.bucket)
-				require.Equal(t, "access_key", original.accessKey)
-				require.Equal(t, "secret_key", original.secretKey)
+				require.Equal(t, "us-west-2", original.opts.Region)
+				require.Equal(t, "my.bucket.com", original.opts.Bucket)
+				require.Equal(t, "access_key", original.opts.AccessKey)
+				require.Equal(t, "secret_key", original.opts.SecretKey)
 			})
 		})
 
@@ -105,9 +105,9 @@ func TestImageUploaderFactory(t *testing.T) {
 
 			original, ok := uploader.(*S3Uploader)
 			require.True(t, ok)
-			require.False(t, original.enablePresignedURLs)
-			require.Equal(t, "public-read", original.acl)
-			require.Equal(t, 7*24*time.Hour, original.presignedURLExpiration)
+			require.False(t, original.opts.EnablePresignedURLs)
+			require.Equal(t, "public-read", original.opts.ACL)
+			require.Equal(t, 7*24*time.Hour, original.opts.PresignedURLExpiration)
 		})
 
 		t.Run("S3ImageUploader with presigned URLs enabled and custom expiration", func(t *testing.T) {
@@ -135,12 +135,12 @@ func TestImageUploaderFactory(t *testing.T) {
 
 			original, ok := uploader.(*S3Uploader)
 			require.True(t, ok)
-			require.True(t, original.enablePresignedURLs)
-			require.Equal(t, "private", original.acl)
-			require.Equal(t, 48*time.Hour, original.presignedURLExpiration)
+			require.True(t, original.opts.EnablePresignedURLs)
+			require.Equal(t, "public-read", original.opts.ACL)
+			require.Equal(t, 48*time.Hour, original.opts.PresignedURLExpiration)
 		})
 
-		t.Run("S3ImageUploader with invalid presigned URL expiration", func(t *testing.T) {
+		t.Run("S3ImageUploader with unparseable presigned URL expiration", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
@@ -160,6 +160,29 @@ func TestImageUploaderFactory(t *testing.T) {
 
 			_, err = NewImageUploader(cfg)
 			require.Error(t, err)
+		})
+
+		t.Run("S3ImageUploader with negative presigned URL expiration", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+			require.NoError(t, err)
+
+			cfg.ImageUploadProvider = "s3"
+
+			s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("bucket", "test-bucket")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("region", "us-east-1")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("presigned_url_expiration", "-1h")
+			require.NoError(t, err)
+
+			_, err = NewImageUploader(cfg)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "presigned_url_expiration must be >= 0")
 		})
 
 		t.Run("Webdav uploader", func(t *testing.T) {
