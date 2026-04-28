@@ -36,6 +36,26 @@ type batchRequestBody struct {
 	ResourceIDs []string `json:"resourceids"`
 }
 
+// executeBatchRequests runs all batch requests in parallel (up to maxConcurrentBatches
+// at a time) and returns one batchResult per input batch, preserving input order.
+func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client) []batchResult {
+	results := make([]batchResult, len(batches))
+	sem := make(chan struct{}, maxConcurrentBatches)
+	var wg sync.WaitGroup
+	for i, batch := range batches {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(idx int, b Batch) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			resp, err := executeBatchRequest(ctx, b, cli)
+			results[idx] = batchResult{Batch: b, Response: resp, Err: err}
+		}(i, batch)
+	}
+	wg.Wait()
+	return results
+}
+
 // getRegionalEndpoint returns the Metrics Batch API hostname for the given region.
 // An empty region falls back to the global endpoint.
 func getRegionalEndpoint(region string) string {
@@ -135,26 +155,6 @@ func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*b
 	}
 
 	return &result, nil
-}
-
-// executeBatchRequests runs all batch requests in parallel (up to maxConcurrentBatches
-// at a time) and returns one batchResult per input batch, preserving input order.
-func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client) []batchResult {
-	results := make([]batchResult, len(batches))
-	sem := make(chan struct{}, maxConcurrentBatches)
-	var wg sync.WaitGroup
-	for i, batch := range batches {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(idx int, b Batch) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			resp, err := executeBatchRequest(ctx, b, cli)
-			results[idx] = batchResult{Batch: b, Response: resp, Err: err}
-		}(i, batch)
-	}
-	wg.Wait()
-	return results
 }
 
 // buildBatchRequest creates the HTTP POST request for a Metrics Batch API call.
