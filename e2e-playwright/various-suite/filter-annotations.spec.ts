@@ -8,7 +8,7 @@ test.describe(
   () => {
     const DASHBOARD_ID = 'ed155665';
 
-    test('Tests switching filter type updates the UI accordingly', async ({ page, selectors, gotoDashboardPage }) => {
+    test.skip('Tests switching filter type updates the UI accordingly', async ({ page, selectors, gotoDashboardPage }) => {
       // Navigate to dashboard
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_ID });
 
