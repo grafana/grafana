@@ -42,7 +42,6 @@ export function ContactPointInstanceDrawerIntegrations({ contactPoint }: { conta
 
   return (
     <Stack direction="column" gap={1.5}>
-      {/* Same subsection treatment as other Alerting drawer labels (e.g. notifier diagnostics). */}
       <Text element="h2" variant="bodySmall" color="secondary" weight="medium">
         {sectionTitle}
       </Text>
@@ -80,7 +79,6 @@ function InstanceDrawerIntegrationPanel({
   return (
     <div className={cx(!isLast && styles.integrationPanelWithSeparator)}>
       <Stack direction="column" gap={1.5}>
-        {/* Title row: margin on this wrapper; do not pass `className` to `Stack` (it would replace its flex styles). */}
         <div className={styles.integrationTitleRow}>
           <Stack direction="row" alignItems="center" gap={1.5}>
             {iconName && (
@@ -175,48 +173,50 @@ function NotifierDiagnosticsCollapsible({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  integrationTitleRow: css({
-    marginBottom: theme.spacing(1),
-  }),
-  /** Keeps the icon from shrinking; row `gap` on the inner Stack provides space before the title. */
-  integrationTitleIconWrap: css({
-    display: 'inline-flex',
-    flexShrink: 0,
-    alignItems: 'center',
-  }),
-  diagnosticsBlock: css({
-    marginTop: theme.spacing(2),
-  }),
-  integrationsIndent: css({
-    paddingLeft: theme.spacing(2),
-    borderLeft: `1px solid ${theme.colors.border.weak}`,
-  }),
-  /** Space + rule between stacked integrations (multiple only). */
-  integrationPanelWithSeparator: css({
-    paddingBottom: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  detailLabel: css({
-    flexShrink: 0,
-    minWidth: theme.spacing(12),
-  }),
-  detailValue: css({
-    wordBreak: 'break-word',
-    minWidth: 0,
-  }),
-  jsonPre: css({
-    margin: 0,
-    maxHeight: 240,
-    overflow: 'auto',
-    padding: theme.spacing(1),
-    borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontFamily: theme.typography.fontFamilyMonospace,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const borderWeak = `1px solid ${theme.colors.border.weak}`;
+
+  return {
+    integrationsIndent: css({
+      paddingLeft: theme.spacing(2),
+      borderLeft: borderWeak,
+    }),
+    integrationPanelWithSeparator: css({
+      paddingBottom: theme.spacing(2),
+      marginBottom: theme.spacing(2),
+      borderBottom: borderWeak,
+    }),
+    integrationTitleRow: css({
+      marginBottom: theme.spacing(1),
+    }),
+    integrationTitleIconWrap: css({
+      display: 'inline-flex',
+      flexShrink: 0,
+      alignItems: 'center',
+    }),
+    detailLabel: css({
+      flexShrink: 0,
+      minWidth: theme.spacing(12),
+    }),
+    detailValue: css({
+      minWidth: 0,
+      wordBreak: 'break-word',
+    }),
+    diagnosticsBlock: css({
+      marginTop: theme.spacing(2),
+    }),
+    jsonPre: css({
+      margin: 0,
+      maxHeight: 240,
+      overflow: 'auto',
+      padding: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      border: borderWeak,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+    }),
+  };
+};
