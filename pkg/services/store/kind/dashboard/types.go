@@ -3,15 +3,15 @@ package dashboard
 import "iter"
 
 type PanelSummaryInfo struct {
-	ID            int64           `json:"id"`
-	Title         string          `json:"title"`
-	Description   string          `json:"description,omitempty"`
-	Type          string          `json:"type,omitempty"` // PluginID
-	PluginVersion string          `json:"pluginVersion,omitempty"`
-	LibraryPanel  string          `json:"libraryPanel,omitempty"` // UID of referenced library panel
-	Datasource    []DataSourceRef `json:"datasource,omitempty"`   // UIDs
-	Transformer   []string        `json:"transformer,omitempty"`  // ids of the transformation steps
-	Queries       []PanelQueryInfo `json:"queries,omitempty"`     // per-target query expressions
+	ID            int64            `json:"id"`
+	Title         string           `json:"title"`
+	Description   string           `json:"description,omitempty"`
+	Type          string           `json:"type,omitempty"` // PluginID
+	PluginVersion string           `json:"pluginVersion,omitempty"`
+	LibraryPanel  string           `json:"libraryPanel,omitempty"` // UID of referenced library panel
+	Datasource    []DataSourceRef  `json:"datasource,omitempty"`   // UIDs
+	Transformer   []string         `json:"transformer,omitempty"`  // ids of the transformation steps
+	Queries       []PanelQueryInfo `json:"queries,omitempty"`      // per-target query expressions
 	// Rows define panels as sub objects
 	Collapsed []PanelSummaryInfo `json:"collapsed,omitempty"`
 }
