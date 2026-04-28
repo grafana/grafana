@@ -2,10 +2,18 @@ package imguploader
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/golang/mock/gomock"
+	"github.com/grafana/grafana/pkg/ifaces/s3ifaces"
+	"github.com/grafana/grafana/pkg/mocks/mock_s3ifaces"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,33 +35,89 @@ func TestUploadToS3(t *testing.T) {
 	})
 }
 
-func TestNewS3Uploader(t *testing.T) {
-	t.Run("creates uploader with presigned URLs disabled", func(t *testing.T) {
-		uploader := NewS3Uploader("endpoint", "us-east-1", "bucket", "path/", "public-read",
-			"ak", "sk", false, false, 7*24*time.Hour)
-
-		require.Equal(t, "endpoint", uploader.endpoint)
-		require.Equal(t, "us-east-1", uploader.region)
-		require.Equal(t, "bucket", uploader.bucket)
-		require.Equal(t, "path/", uploader.path)
-		require.Equal(t, "public-read", uploader.acl)
-		require.Equal(t, "ak", uploader.accessKey)
-		require.Equal(t, "sk", uploader.secretKey)
-		require.False(t, uploader.pathStyleAccess)
-		require.False(t, uploader.enablePresignedURLs)
-		require.Equal(t, 7*24*time.Hour, uploader.presignedURLExpiration)
-	})
-
-	t.Run("creates uploader with presigned URLs enabled", func(t *testing.T) {
-		uploader := NewS3Uploader("", "eu-west-1", "my-bucket", "images/", "private",
-			"", "", true, true, 48*time.Hour)
-
-		require.Equal(t, "eu-west-1", uploader.region)
-		require.Equal(t, "my-bucket", uploader.bucket)
-		require.Equal(t, "private", uploader.acl)
-		require.True(t, uploader.pathStyleAccess)
-		require.True(t, uploader.enablePresignedURLs)
-		require.Equal(t, 48*time.Hour, uploader.presignedURLExpiration)
-	})
+func stubS3Client(t *testing.T, mock s3ifaces.S3Client) {
+	t.Helper()
+	orig := newS3Client
+	t.Cleanup(func() { newS3Client = orig })
+	newS3Client = func(_ *aws.Config) (s3ifaces.S3Client, error) {
+		return mock, nil
+	}
 }
 
+func TestS3Upload(t *testing.T) {
+	const (
+		bucket    = "test-bucket"
+		region    = "us-east-1"
+		imgPath   = "images/"
+		publicURL = "https://test-bucket.s3.amazonaws.com/images/test.png"
+	)
+
+	tmpDir := t.TempDir()
+	fpath := filepath.Join(tmpDir, "test.png")
+	require.NoError(t, os.WriteFile(fpath, []byte("fake png"), 0600))
+
+	t.Run("without presigned URLs sets ACL and returns location", func(t *testing.T) {
+		ctx := context.Background()
+		ctrl := gomock.NewController(t)
+
+		m := mock_s3ifaces.NewMockS3Client(ctrl)
+		m.EXPECT().
+			Upload(gomock.Eq(ctx), gomock.Any()).
+			DoAndReturn(func(_ context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
+				assert.Equal(t, bucket, aws.StringValue(input.Bucket))
+				assert.Equal(t, "image/png", aws.StringValue(input.ContentType))
+				assert.NotNil(t, input.ACL, "ACL should be set when presigned URLs are disabled")
+				assert.Equal(t, "public-read", aws.StringValue(input.ACL))
+				return &s3manager.UploadOutput{Location: publicURL}, nil
+			})
+
+		stubS3Client(t, m)
+
+		uploader := NewS3Uploader(S3UploaderOptions{
+			Region:              region,
+			Bucket:              bucket,
+			Path:                imgPath,
+			ACL:                 "public-read",
+			EnablePresignedURLs: false,
+		})
+
+		url, err := uploader.Upload(ctx, fpath)
+		require.NoError(t, err)
+		assert.Equal(t, publicURL, url)
+	})
+
+	t.Run("with presigned URLs omits ACL and returns presigned URL", func(t *testing.T) {
+		ctx := context.Background()
+		ctrl := gomock.NewController(t)
+
+		const presignedURL = "https://test-bucket.s3.amazonaws.com/images/abc.png?X-Amz-Signature=sig"
+		expiration := 48 * time.Hour
+
+		m := mock_s3ifaces.NewMockS3Client(ctrl)
+		m.EXPECT().
+			Upload(gomock.Eq(ctx), gomock.Any()).
+			DoAndReturn(func(_ context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
+				assert.Equal(t, bucket, aws.StringValue(input.Bucket))
+				assert.Nil(t, input.ACL, "ACL should not be set when presigned URLs are enabled")
+				return &s3manager.UploadOutput{Location: publicURL}, nil
+			})
+		m.EXPECT().
+			PresignGetObject(gomock.Eq(bucket), gomock.Any(), gomock.Eq(expiration)).
+			Return(presignedURL, nil)
+
+		stubS3Client(t, m)
+
+		uploader := NewS3Uploader(S3UploaderOptions{
+			Region:                 region,
+			Bucket:                 bucket,
+			Path:                   imgPath,
+			ACL:                    "public-read",
+			EnablePresignedURLs:    true,
+			PresignedURLExpiration: expiration,
+		})
+
+		url, err := uploader.Upload(ctx, fpath)
+		require.NoError(t, err)
+		assert.Equal(t, presignedURL, url)
+	})
+}

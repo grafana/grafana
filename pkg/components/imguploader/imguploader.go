@@ -58,14 +58,14 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 			if err != nil {
 				return nil, err
 			}
+			if presignedURLExpiration < 0 {
+				return nil, fmt.Errorf("presigned_url_expiration must be >= 0, got %s", presignedURLExp)
+			}
 		} else {
 			presignedURLExpiration = defaultS3PresignedURLExpiration
 		}
 
 		acl := "public-read"
-		if enablePresignedURLs {
-			acl = "private"
-		}
 
 		if path != "" && path[len(path)-1:] != "/" {
 			path += "/"
@@ -80,8 +80,18 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 			region = info.region
 		}
 
-		return NewS3Uploader(endpoint, region, bucket, path, acl, accessKey, secretKey, pathStyleAccess,
-			enablePresignedURLs, presignedURLExpiration), nil
+		return NewS3Uploader(S3UploaderOptions{
+			Endpoint:               endpoint,
+			Region:                 region,
+			Bucket:                 bucket,
+			Path:                   path,
+			ACL:                    acl,
+			AccessKey:              accessKey,
+			SecretKey:              secretKey,
+			PathStyleAccess:        pathStyleAccess,
+			EnablePresignedURLs:    enablePresignedURLs,
+			PresignedURLExpiration: presignedURLExpiration,
+		}), nil
 	case "webdav":
 		webdavSec, err := cfg.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {
