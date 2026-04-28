@@ -106,7 +106,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		return
 	}
 
-	dualReadWriter, err := c.createDualReadWriter(ctx, repo, readWriter)
+	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
 		responder.Error(err)
 		return
@@ -143,7 +143,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		}
 	}
 
-	obj, err := c.handleMethodRequest(ctx, r, name, opts, isDir, dualReadWriter, readWriter)
+	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter, readWriter, authorizer)
 	if err != nil {
 		logger.Debug("got an error after processing request", "error", err)
 		respondWithError(responder, err)
@@ -160,25 +160,27 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 }
 
 // createDualReadWriter sets up the dual read writer with all required dependencies.
-func (c *filesConnector) createDualReadWriter(ctx context.Context, repo repository.Repository, readWriter repository.ReaderWriter) (*resources.DualReadWriter, error) {
+// It also returns the authorizer so callers that bypass the dual read/write path
+// (raw file reads, etc.) can run their own authorization checks.
+func (c *filesConnector) createDualReadWriter(ctx context.Context, repo repository.Repository, readWriter repository.ReaderWriter) (*resources.DualReadWriter, resources.Authorizer, error) {
 	parser, err := c.parsers.GetParser(ctx, readWriter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get parser: %w", err)
+		return nil, nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
 	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
+		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
 	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get folder client: %w", err)
+		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -230,7 +232,7 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 }
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
-func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, repoName string, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
 	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
 		return nil, apierrors.NewForbidden(
 			provisioning.RepositoryResourceInfo.GroupResource(),
@@ -240,7 +242,7 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 	switch r.Method {
 	case http.MethodGet:
-		return c.handleGet(ctx, repoName, opts, dualReadWriter, readWriter)
+		return c.handleGet(ctx, opts, dualReadWriter, readWriter, authorizer)
 	case http.MethodPost:
 		return c.handlePost(ctx, r, opts, isDir, dualReadWriter)
 	case http.MethodPut:
@@ -252,10 +254,10 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 }
 
-func (c *filesConnector) handleGet(ctx context.Context, repoName string, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
 	// Raw files (e.g. README.md) are returned without parsing as a k8s resource.
 	if resources.IsRawFile(opts.Path) {
-		return c.handleGetRawFile(ctx, repoName, opts, readWriter)
+		return c.handleGetRawFile(ctx, opts, readWriter, authorizer)
 	}
 
 	resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
@@ -267,8 +269,12 @@ func (c *filesConnector) handleGet(ctx context.Context, repoName string, opts re
 
 // handleGetRawFile reads a raw file (such as README.md) and returns its bytes
 // inside ResourceWrapper.Resource.File under the "content" key.
-func (c *filesConnector) handleGetRawFile(ctx context.Context, repoName string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
-	if err := c.authorizeListFiles(ctx, repoName); err != nil {
+//
+// Authorization is checked at folder scope: the caller needs read permission
+// on the folder containing the file, mirroring how parsed-resource reads
+// inherit folder-level permissions.
+func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
+	if err := authorizer.AuthorizeReadRawFile(ctx, opts.Path); err != nil {
 		return nil, err
 	}
 

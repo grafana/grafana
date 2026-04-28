@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -215,7 +216,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 			opts := resources.DualWriteOptions{Path: tc.path}
 
 			if tc.expectForbidden {
-				_, err := connector.handleMethodRequest(context.Background(), req, "test-repo", opts, false, nil, nil)
+				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err))
 			} else {
@@ -223,7 +224,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				// This is intentional: we only test the guard logic here, not the downstream handlers.
 				require.Panics(t, func() {
 					//nolint:errcheck
-					_, _ = connector.handleMethodRequest(context.Background(), req, "test-repo", opts, false, nil, nil)
+					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
 				}, "guard must not intercept; code should proceed past the guard")
 			}
 		})
@@ -298,7 +299,7 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 
 		require.Panics(t, func() {
 			//nolint:errcheck
-			_, _ = connector.handleMethodRequest(context.Background(), req, "test-repo", opts, true, nil, nil)
+			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil, nil, nil)
 		})
 	})
 
@@ -308,7 +309,7 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/", body)
 		opts := resources.DualWriteOptions{Path: "myfolder/"}
 
-		_, err := connector.handleMethodRequest(context.Background(), req, "test-repo", opts, true, nil, nil)
+		_, err := connector.handleMethodRequest(context.Background(), req, opts, true, nil, nil, nil)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsMethodNotSupported(err))
 	})
@@ -460,6 +461,15 @@ func TestHandleGetRawFile(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
+			repo := &provisioningapi.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Spec: provisioningapi.RepositorySpec{
+					Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+				},
+			}
+			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+
 			if tt.readError != nil {
 				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(nil, tt.readError)
 			} else {
@@ -475,7 +485,7 @@ func TestHandleGetRawFile(t *testing.T) {
 
 			opts := resources.DualWriteOptions{Path: tt.path}
 
-			result, err := connector.handleGetRawFile(context.Background(), "test-repo", opts, mockReadWriter)
+			result, err := connector.handleGetRawFile(context.Background(), opts, mockReadWriter, authorizer)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -491,6 +501,39 @@ func TestHandleGetRawFile(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
+	t.Run("denies the read when the user lacks folder read permission", func(t *testing.T) {
+		mockReadWriter := repository.NewMockReaderWriter(t)
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		repo := &provisioningapi.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioningapi.RepositorySpec{
+				Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+			},
+		}
+		mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+
+		// Folder check is denied — readWriter.Read on the file must never be called.
+		mockAccess.EXPECT().
+			Check(mock.Anything, mock.Anything, mock.Anything).
+			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
+
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+		connector := &filesConnector{access: mockAccess}
+
+		_, err := connector.handleGetRawFile(
+			context.Background(),
+			resources.DualWriteOptions{Path: "team-a/README.md"},
+			mockReadWriter,
+			authorizer,
+		)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+	})
 }
 
 func TestIsRawFileIntegration(t *testing.T) {
