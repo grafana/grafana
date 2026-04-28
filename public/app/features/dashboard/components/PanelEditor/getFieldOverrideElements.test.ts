@@ -4,6 +4,7 @@ import {
   type FieldConfigSource,
   Registry,
 } from '@grafana/data';
+import { fieldMatchersUI } from '@grafana/ui';
 
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 
@@ -20,17 +21,26 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  fieldMatchersUI: {
-    get: jest.fn().mockReturnValue({
-      name: 'By Name',
-      matcher: {},
-      component: () => null,
-    }),
-    selectOptions: jest.fn().mockReturnValue({ options: [] }),
-  },
-}));
+jest.mock('@grafana/ui', () => {
+  const mockMatcherUi = {
+    name: 'By Name',
+    matcher: {
+      validateOptions: (o: unknown): o is string => typeof o === 'string',
+    },
+    component: () => null,
+  };
+  return {
+    ...jest.requireActual('@grafana/ui'),
+    fieldMatchersUI: {
+      getIfExists: jest.fn().mockReturnValue(mockMatcherUi),
+      get: jest.fn().mockReturnValue(mockMatcherUi),
+      selectOptions: jest.fn().mockReturnValue({ options: [] }),
+    },
+  };
+});
+
+const getIfExistsMock = fieldMatchersUI.getIfExists as jest.Mock;
+const defaultMatcherUi = getIfExistsMock();
 
 function makeRegistry(items: FieldConfigPropertyItem[]): FieldConfigOptionsRegistry {
   return new Registry<FieldConfigPropertyItem>(() => items);
@@ -102,5 +112,35 @@ describe('getFieldOverrideCategories', () => {
 
       expect(element.props.options).toHaveLength(3);
     });
+  });
+
+  it('drops overrides with unknown matcher id or invalid options shape, keeps valid siblings', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    getIfExistsMock.mockReturnValueOnce(undefined);
+
+    const registry = makeRegistry([makeItem('custom.a')]);
+    const fieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        { matcher: { id: 'invalidMatcher', options: 'foo' }, properties: [] },
+        {
+          matcher: { id: 'byName', options: { name: 'value' } as unknown as string },
+          properties: [],
+        },
+        { matcher: { id: 'byName', options: 'value' }, properties: [] },
+      ],
+    };
+
+    const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+
+    expect(categories).toHaveLength(2);
+    expect(categories[0].props.title).toBe('Override 3');
+    expect(warnSpy).toHaveBeenCalledWith('Unknown field matcher id: "invalidMatcher", skipping override rule');
+    expect(warnSpy).toHaveBeenCalledWith('Invalid options for field matcher "byName", skipping override rule', {
+      name: 'value',
+    });
+
+    warnSpy.mockRestore();
+    getIfExistsMock.mockReturnValue(defaultMatcherUi);
   });
 });
