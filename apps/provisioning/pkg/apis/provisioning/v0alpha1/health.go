@@ -90,6 +90,11 @@ const (
 	// ReasonFolderOrphaned indicates the folder exists in the cluster but
 	// no longer in the git repository.
 	ReasonFolderOrphaned = "FolderOrphaned"
+	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
+	// the maximum folder depth enforced by the folder API. The repository
+	// owner must shorten the offending path; provisioning cannot recover
+	// automatically and will not retry the failed write.
+	ReasonFolderDepthExceeded = "FolderDepthExceeded"
 )
 
 // Condition reasons for the Quota condition

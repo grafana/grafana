@@ -30,6 +30,18 @@ import (
 const folderSearchLimit = 100000
 const folderListLimit = 100000
 
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// multi-value `In` Search when walking a subtree in GetDescendants. K=100
+// keeps per-call latency on the same order as a single-parent Search while
+// reducing the call count for non-trivial subtrees by ~100x.
+const descendantsBatchSize = 100
+
+// searchPageSize bounds the per-page hit count when searchChildren paginates
+// internally. At ~100 bytes per hit this keeps each response well under the
+// default 4 MiB gRPC max receive size, so a high-fanout search is split into
+// multiple round-trips instead of failing with ResourceExhausted.
+const searchPageSize = 10000
+
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
 	defer span.End()
