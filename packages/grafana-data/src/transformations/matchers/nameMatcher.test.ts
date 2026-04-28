@@ -1,6 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { type DataFrame, FieldType } from '../../types/dataFrame';
-import { getFieldMatcher } from '../matchers';
+import { fieldMatchers, getFieldMatcher } from '../matchers';
 
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
@@ -481,5 +481,24 @@ describe('Fields returned by query with refId', () => {
     const frameB = data[1];
     expect(matcher(frameB.fields[0], frameB, data)).toBe(false);
     expect(matcher(frameB.fields[1], frameB, data)).toBe(false);
+  });
+});
+
+describe('Field Name matcher with malformed options (pre-validation behavior)', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'value', type: FieldType.number, values: [1, 2] },
+      { name: 'value2', type: FieldType.number, values: [3, 4] },
+    ],
+    name: 'A',
+  });
+
+  it('byName with object options matches no field (silent no-op)', () => {
+    const info = fieldMatchers.get(FieldMatcherID.byName);
+    const matchFn = info.get({ name: 'value' } as unknown as string);
+
+    for (const field of frame.fields) {
+      expect(matchFn(field, frame, [frame])).toBe(false);
+    }
   });
 });

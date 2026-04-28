@@ -476,6 +476,43 @@ describe('applyFieldOverrides', () => {
     warnSpy.mockRestore();
   });
 
+  it('should skip byName overrides whose options shape is invalid', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          // Invalid: byName expects a string, not an object.
+          {
+            matcher: { id: FieldMatcherID.byName, options: { name: 'value' } as unknown as string },
+            properties: [{ id: 'decimals', value: 5 }],
+          },
+          // Valid sibling — must still apply to its target.
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'value2' },
+            properties: [{ id: 'decimals', value: 1 }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    });
+
+    expect(data).toHaveLength(1);
+    expect(data[0].fields[1].name).toEqual('value');
+    expect(data[0].fields[1].config.decimals).toEqual(6);
+    expect(data[0].fields[2].name).toEqual('value2');
+    expect(data[0].fields[2].config.decimals).toEqual(1);
+    expect(warnSpy).toHaveBeenCalledWith('Invalid options for field matcher "byName", skipping override rule', {
+      name: 'value',
+    });
+
+    warnSpy.mockRestore();
+  });
+
   it('displayName should be able to reference itself', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
