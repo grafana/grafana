@@ -80,6 +80,8 @@ jobs:
       - build-grafana
     if: needs.detect-changes.outputs.changed == 'true'
     name: Push PR Docker image
+    outputs:
+      IMAGE: ${{ steps.push-image.outputs.IMAGE }}
     permissions:
       contents: read
       id-token: write
@@ -100,6 +102,7 @@ jobs:
           name: grafana-docker-tar-gz
           path: .
       - name: Load & Push Docker image
+        id: push-image
         env:
           BUILD_ID: ${{ github.run_id }}
         run: |
@@ -128,6 +131,7 @@ jobs:
            -f 'output[title]=Docker image' \
            -f "output[summary]=${IMAGE}" \
            -f "output[text]=${IMAGE}"
+
   run-meticulous-tests:
     needs: push-docker-image
     name: Run Meticulous tests
