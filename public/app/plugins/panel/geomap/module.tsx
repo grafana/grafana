@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { GeomapPanel } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';

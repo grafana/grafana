@@ -20,7 +20,8 @@ import {
   GraphThresholdsStyleMode,
   GraphTransform,
 } from '@grafana/schema';
-import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { getGraphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';

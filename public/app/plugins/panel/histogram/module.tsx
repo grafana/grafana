@@ -10,8 +10,9 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
+import { getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { HistogramPanel } from './HistogramPanel';
 import { defaultHistogramConfig } from './config';

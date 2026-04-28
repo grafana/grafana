@@ -35,6 +35,21 @@
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
+    },
+    "./options": {
+      "@grafana-app/source": "./src/options/index.ts"
+    },
+    "./slate-plugins": {
+      "@grafana-app/source": "./src/slate-plugins/index.ts"
+    },
+    "./themes": {
+      "@grafana-app/source": "./src/themes/index.ts"
+    },
+    "./types": {
+      "@grafana-app/source": "./src/internal/index.ts"
+    },
+    "./utils": {
+      "@grafana-app/source": "./src/internal/index.ts"
     }
   },
   "publishConfig": {

@@ -9,8 +9,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
-import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { getGraphFieldOptions } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 

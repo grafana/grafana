@@ -11,7 +11,6 @@ import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMess
 import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
 import { Switch } from './components/Forms/Legacy/Switch/Switch';
 import { SecretFormField } from './components/SecretFormField/SecretFormField';
-import * as commonOptionsBuilder from './options/builder';
 import * as styleMixins from './themes/mixins';
 import * as DOMUtil from './utils/dom';
 import * as floatingUtils from './utils/floating';
@@ -367,19 +366,9 @@ export { Label as BrowserLabel } from './components/BrowserLabel/Label';
 export { PanelContainer } from './components/PanelContainer/PanelContainer';
 export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 
-// -----------------------------------------------------
-// Graveyard: exported, but no longer used internally
-// These will be removed in the future
-// -----------------------------------------------------
-
-export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
-export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
-export { useGraphNGContext } from './graveyard/GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './graveyard/GraphNG/utils';
-export { type GraphNGLegendEvent } from './graveyard/GraphNG/types';
-
-export { ZoomPlugin } from './graveyard/uPlot/plugins/ZoomPlugin';
-export { TooltipPlugin } from './graveyard/uPlot/plugins/TooltipPlugin';
+export * from './graveyard';
+export * from './options';
+export * from './slate-plugins';
 
 export {
   ElementSelectionContext,
@@ -454,17 +443,8 @@ export { getTheme, mockTheme } from './themes/getTheme';
 export { stylesFactory } from './themes/stylesFactory';
 export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
 
-export { styleMixins, commonOptionsBuilder };
+export { styleMixins };
 
-export { BracesPlugin } from './slate-plugins/braces';
-export { ClearPlugin } from './slate-plugins/clear';
-export { ClipboardPlugin } from './slate-plugins/clipboard';
-export { IndentationPlugin } from './slate-plugins/indentation';
-export { NewlinePlugin } from './slate-plugins/newline';
-export { RunnerPlugin } from './slate-plugins/runner';
-export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
-export { SlatePrism, type Token } from './slate-plugins/slate-prism';
-export { SuggestionsPlugin } from './slate-plugins/suggestions';
 export {
   Sidebar,
   useSidebar,

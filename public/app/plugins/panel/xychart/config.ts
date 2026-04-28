@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type LineStyle } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui/options';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
