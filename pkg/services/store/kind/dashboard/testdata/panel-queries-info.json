@@ -15,10 +15,6 @@
     {
       "uid": "pg-1",
       "type": "postgres"
-    },
-    {
-      "uid": "default.uid",
-      "type": "default.type"
     }
   ],
   "panels": [
@@ -100,10 +96,6 @@
         {
           "uid": "prom-1",
           "type": "prometheus"
-        },
-        {
-          "uid": "default.uid",
-          "type": "default.type"
         }
       ],
       "queries": [

@@ -89,13 +89,14 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[
 	for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
 		switch f {
 		case "datasource":
-			// Null means "inherit from the panel" — addDatasource resolves
-			// it to the org default for the panel-level aggregation, but we
-			// don't want to record that as the per-query datasource. Leave
-			// q.DatasourceUID empty so consumers fall back to panel.Datasource.
-			isNil := iter.WhatIsNext() == jsoniter.NilValue
-			ref := s.addDatasource(iter, jsonPath+".datasource", lc)
-			if !isNil && ref != nil && ref.UID != "" {
+			// Null means "inherit from the panel" — skip addDatasource
+			// entirely so we don't pollute the panel-level aggregation
+			// (s.uids → panel.Datasource) with the org default. Consumers
+			// fall back to panel.Datasource, which then accurately reflects
+			// only datasources the panel actually references.
+			if iter.WhatIsNext() == jsoniter.NilValue {
+				iter.Skip()
+			} else if ref := s.addDatasource(iter, jsonPath+".datasource", lc); ref != nil && ref.UID != "" {
 				q.DatasourceUID = ref.UID
 			}
 
