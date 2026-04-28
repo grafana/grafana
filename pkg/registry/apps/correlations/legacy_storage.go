@@ -61,21 +61,27 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
-	uids := []string{}
-	if options.FieldSelector != nil {
-		for _, r := range options.FieldSelector.Requirements() {
-			switch r.Field {
-			case "spec.datasource.name":
-				switch r.Operator {
-				case selection.Equals, selection.DoubleEquals:
-					uids = []string{r.Value}
-				case selection.In:
-					uids = strings.Split(r.Value, ";") // ??? not sure how/if this supports multiple values
-				default:
+	// only allow selecting up to 100 datasources
+	uids := make([]string, 0, 100)
+	if options.LabelSelector != nil {
+		reqs, selectable := options.LabelSelector.Requirements()
+
+		if !selectable {
+			return nil, fmt.Errorf("Label not selectable")
+		}
+
+		for _, r := range reqs {
+
+			if r.Key() == "correlations.grafana.app/sourceDS-ref" {
+				if r.Operator() == selection.Equals || r.Operator() == selection.In {
+					for _, item := range r.Values().List() {
+						uids = append(uids, strings.Split(item, ".")[1])
+					}
+				} else {
 					return nil, fmt.Errorf("unsupported operation")
 				}
-			default:
-				return nil, fmt.Errorf("unsupported field")
+			} else {
+				return nil, fmt.Errorf("unsupported label")
 			}
 		}
 	}

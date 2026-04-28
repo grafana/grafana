@@ -244,7 +244,7 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{})
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{Limit: cmd.Limit})
 	if err != nil {
 		return GetCorrelationsResponseBody{
 			Correlations: []Correlation{},
