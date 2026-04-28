@@ -194,8 +194,7 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder, rulerGroup }
 
   const readOnly = rulerGroup ? getRulerGroupReadOnlyStatus(rulerGroup).readOnly : false;
 
-  const canEdit =
-    Boolean(dsFeatures.rulerConfig) && canEditRules(dsFeatures.name) && canSaveInFolder && !readOnly;
+  const canEdit = Boolean(dsFeatures.rulerConfig) && canEditRules(dsFeatures.name) && canSaveInFolder && !readOnly;
 
   return (
     <>
