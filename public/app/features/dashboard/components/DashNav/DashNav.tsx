@@ -6,14 +6,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import {
-  ButtonGroup,
-  ModalsController,
-  ToolbarButton,
-  useForceUpdate,
-  ToolbarButtonRow,
-  ConfirmModal,
-} from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, ToolbarButtonRow, ConfirmModal } from '@grafana/ui';
+import { useForceUpdate } from '@grafana/ui/utils';
 import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';

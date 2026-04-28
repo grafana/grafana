@@ -3,8 +3,9 @@ import { take, takeRight, uniqueId } from 'lodash';
 import { type FC } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, getTagColorsFromName } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { getTagColorsFromName } from '@grafana/ui/utils';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { type MatcherFormatter, matcherFormatter } from '../../utils/matchers';

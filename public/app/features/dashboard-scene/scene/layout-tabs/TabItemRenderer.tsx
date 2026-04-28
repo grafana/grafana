@@ -7,8 +7,9 @@ import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance } from '@grafana/ui';
+import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { usePointerDistance } from '@grafana/ui/utils';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

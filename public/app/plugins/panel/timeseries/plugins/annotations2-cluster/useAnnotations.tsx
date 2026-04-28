@@ -3,8 +3,8 @@ import tinycolor from 'tinycolor2';
 
 import { arrayToDataFrame, type DataFrame, DataTopic } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui/utils';
 
 import { getXAnnotationFrames, getXYAnnotationFrames } from '../utils';
 

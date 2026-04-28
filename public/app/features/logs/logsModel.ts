@@ -42,7 +42,7 @@ import {
 import { SIPrefix } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { colors } from '@grafana/ui';
+import { colors } from '@grafana/ui/utils';
 import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 

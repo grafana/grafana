@@ -49,7 +49,7 @@
       "@grafana-app/source": "./src/types/index.ts"
     },
     "./utils": {
-      "@grafana-app/source": "./src/internal/index.ts"
+      "@grafana-app/source": "./src/utils/index.ts"
     }
   },
   "publishConfig": {

@@ -15,8 +15,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
-import { ClickOutsideWrapper, floatingUtils } from '@grafana/ui';
+import { ClickOutsideWrapper } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';

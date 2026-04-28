@@ -16,8 +16,8 @@ import {
   type VizTextDisplayOptions,
   type VizLegendOptions,
 } from '@grafana/schema';
-import { measureText } from '@grafana/ui';
 import { timeUnitSize, type StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
+import { measureText } from '@grafana/ui/utils';
 
 const intervals = systemDateFormats.interval;
 

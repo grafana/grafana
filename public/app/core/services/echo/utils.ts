@@ -1,4 +1,4 @@
-import { attachDebugger, createLogger } from '@grafana/ui';
+import { attachDebugger, createLogger } from '@grafana/ui/utils';
 
 export function loadScript(url: string, async = false) {
   return new Promise((resolve) => {

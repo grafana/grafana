@@ -20,7 +20,7 @@ import {
 import { type PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { type Dashboard, type DashboardLink, type VariableModel } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui/utils';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';

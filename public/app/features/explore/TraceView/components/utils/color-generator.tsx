@@ -16,7 +16,7 @@ import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { colors } from '@grafana/ui';
+import { colors } from '@grafana/ui/utils';
 
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {

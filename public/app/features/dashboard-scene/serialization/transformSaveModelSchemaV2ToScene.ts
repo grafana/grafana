@@ -47,7 +47,7 @@ import {
   type AnnotationQueryKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui/utils';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,

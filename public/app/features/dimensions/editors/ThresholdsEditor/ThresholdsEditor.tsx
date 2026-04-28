@@ -11,8 +11,9 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup } from '@grafana/ui';
+import { Button, ColorPicker, IconButton, Input, Label, RadioButtonGroup } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { colors } from '@grafana/ui/utils';
 
 export interface Props {
   thresholds: ThresholdsConfig;

@@ -8,19 +8,9 @@ import { useToggle } from 'react-use';
 import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  Dropdown,
-  Icon,
-  IconButton,
-  Menu,
-  Stack,
-  Text,
-  TextLink,
-  Tooltip,
-  getTagColorsFromName,
-} from '@grafana/ui';
+import { Button, Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { getTagColorsFromName } from '@grafana/ui/utils';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';

@@ -11,9 +11,6 @@ import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMess
 import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
 import { Switch } from './components/Forms/Legacy/Switch/Switch';
 import { SecretFormField } from './components/SecretFormField/SecretFormField';
-import * as DOMUtil from './utils/dom';
-import * as floatingUtils from './utils/floating';
-import * as ReactUtils from './utils/reactUtils';
 
 export { Icon } from './components/Icon/Icon';
 export { IconButton, type IconButtonVariant } from './components/IconButton/IconButton';
@@ -379,36 +376,6 @@ export {
   type ElementSelectionOnSelectOptions,
   type UseElementSelectionResult,
 } from './components/ElementSelectionContext/ElementSelectionContext';
-
-export {
-  DEFAULT_ANNOTATION_COLOR,
-  OK_COLOR,
-  ALERTING_COLOR,
-  NO_DATA_COLOR,
-  PENDING_COLOR,
-  REGION_FILL_ALPHA,
-  colors,
-  getTextColorForBackground,
-  getTextColorForAlphaBackground,
-  sortedColors,
-} from './utils/colors';
-export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
-export { SCHEMA, makeFragment, makeValue } from './utils/slate';
-export { linkModelToContextMenuItems } from './utils/dataLinks';
-export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
-export { getScrollbarWidth } from './utils/scrollbar';
-export { getCellLinks } from './utils/table';
-export { getCanvasContext, measureText, calculateFontSize } from './utils/measureText';
-export { createPointerDistance, usePointerDistance } from './utils/usePointerDistance';
-export { useForceUpdate } from './utils/useForceUpdate';
-export { SearchFunctionType } from './utils/searchFunctions';
-export { createLogger } from './utils/logger';
-export { attachDebugger } from './utils/debug';
-export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
-export { fuzzyMatch } from './utils/fuzzy';
-export { logOptions } from './utils/logOptions';
-
-export { DOMUtil, ReactUtils, floatingUtils };
 
 export {
   Sidebar,

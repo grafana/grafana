@@ -6,8 +6,8 @@ import { useUpdateEffect } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ReactUtils } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { ReactUtils } from '@grafana/ui/utils';
 
 import { QueryOperationRowHeader, type ExpanderMessages } from './QueryOperationRowHeader';
 

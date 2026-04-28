@@ -9,11 +9,11 @@ import {
   UPLOT_AXIS_FONT_SIZE,
   UPlotChart,
   VizLayout,
-  measureText,
   usePanelContext,
 } from '@grafana/ui';
 import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 import { useTheme2 } from '@grafana/ui/themes';
+import { measureText } from '@grafana/ui/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 

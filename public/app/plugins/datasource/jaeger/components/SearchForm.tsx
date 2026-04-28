@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { type SelectableValue, toOption } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
-import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { fuzzyMatch } from '@grafana/ui/utils';
 
 import { type JaegerDatasource } from '../datasource';
 import { type JaegerQuery } from '../types';

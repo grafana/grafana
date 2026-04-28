@@ -16,7 +16,7 @@ import {
   VizPanelMenu,
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
-import { createLogger } from '@grafana/ui';
+import { createLogger } from '@grafana/ui/utils';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';

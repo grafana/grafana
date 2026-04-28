@@ -13,8 +13,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
-import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, ScrollContainer } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { floatingUtils } from '@grafana/ui/utils';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 

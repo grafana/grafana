@@ -7,8 +7,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance } from '@grafana/ui';
+import { clearButtonStyles, Icon, Tooltip, useElementSelection } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { usePointerDistance } from '@grafana/ui/utils';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

@@ -6,9 +6,10 @@ import uPlot from 'uplot';
 
 import { colorManipulator, type DataFrame, type InterpolateFunction } from '@grafana/data';
 import { type TimeZone, type VizAnnotations } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+import { getPortalContainer, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
 import { useTheme2 } from '@grafana/ui/themes';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui/utils';
 
 import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';

@@ -9,7 +9,7 @@ import {
   type SceneVariable,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { createLogger } from '@grafana/ui';
+import { createLogger } from '@grafana/ui/utils';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 

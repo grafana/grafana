@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { getTagColorsFromName, Icon } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { getTagColorsFromName } from '@grafana/ui/utils';
 
 export interface Props {
   label: string;

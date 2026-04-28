@@ -3,8 +3,9 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, ReactUtils } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/themes';
+import { ReactUtils } from '@grafana/ui/utils';
 
 export interface Props {
   onRowToggle: () => void;
