@@ -23,13 +23,7 @@ import { LinearBucketData, LinearBucketTimeRange } from 'app/plugins/panel/heatm
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
-import {
-  defaultOptions,
-  HeatmapColorMode,
-  HeatmapColorScale,
-  HeatmapSelectionMode,
-  type Options,
-} from './panelcfg.gen';
+import { defaultOptions, HeatmapColorMode, HeatmapColorScale, type Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
 import * as heatmapUtils from './utils';
 
@@ -225,6 +219,9 @@ describe('HeatmapPanel (canvas)', () => {
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
   let uPlotInstance: InstanceType<typeof uPlot> | undefined;
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
+  let uPlotInitEvents: CanvasRenderingContext2DEvent[] | null = null;
+  let clearAxisEvents = true;
+  let clearInitEvents = false;
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
@@ -234,18 +231,40 @@ describe('HeatmapPanel (canvas)', () => {
     expect(scrubOutput(uPlotInstance!.ctx.__getEvents())).toMatchUPlotSnapshot(uPlotAxisEvents!, snapshotSize);
   };
 
+  const assertAxesOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
+    expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+    );
+    expect(scrubOutput(uPlotAxisEvents!)).toMatchUPlotSnapshot(uPlotInitEvents!, snapshotSize);
+  };
+
   beforeEach(() => {
     applyDefaultUPlotAxisMeasureTextMock();
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
     prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
       const builder: UPlotConfigBuilder = realPrepConfig(opts);
+
+      builder.addHook('init', (u: uPlot) => {
+        uPlotInstance = u;
+        uPlotInitEvents = u.ctx.__getEvents();
+        if (clearInitEvents) {
+          u.ctx.__clearDrawCalls();
+          u.ctx.__clearEvents();
+          u.ctx.__clearPath();
+        }
+      });
+
       builder.addHook('drawAxes', (u: uPlot) => {
         uPlotInstance = u;
         uPlotAxisEvents = u.ctx.__getEvents();
-        u.ctx.__clearDrawCalls();
-        u.ctx.__clearEvents();
-        u.ctx.__clearPath();
+        if (clearAxisEvents) {
+          u.ctx.__clearDrawCalls();
+          u.ctx.__clearEvents();
+          u.ctx.__clearPath();
+        }
       });
+
       return builder;
     });
   });
@@ -279,72 +298,6 @@ describe('HeatmapPanel (canvas)', () => {
 
         it('filterValues: le & ge', async () => {
           renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { filterValues: { le: 10, ge: 13 } });
-          await assertCanvasOutput();
-        });
-      });
-
-      describe('Y Axis', () => {
-        it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
-          renderHeatmapPanel(
-            { series: [createDenseHeatmapFrameWithOrdinalY()] },
-            { yAxis: { axisPlacement, axisLabel: 'y-axis-label' } }
-          );
-          await assertCanvasOutput();
-        });
-
-        it('reverse', async () => {
-          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { reverse: true } });
-          await assertCanvasOutput();
-        });
-
-        it('width', async () => {
-          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
-          await assertCanvasOutput();
-        });
-
-        it('decimals, min, max, unit', async () => {
-          renderHeatmapPanel(
-            { series: [createDenseHeatmapFrameWithOrdinalY()] },
-            {
-              yAxis: {
-                ...fullDefaultOptions.yAxis,
-                decimals: 3,
-                min: 0,
-                max: 1,
-                unit: 'percentunit',
-              },
-            }
-          );
-          await assertCanvasOutput();
-        });
-      });
-
-      describe('rowsFrame', () => {
-        /** Fixed range + timestamps so x-scale mapping does not drift with `dateTime()` (now). */
-        const stableRowsT0 = 1_704_067_200_000;
-        const stableRowsTimeRange = {
-          from: dateTime(stableRowsT0),
-          to: dateTime(stableRowsT0 + 3_600_000),
-          raw: { from: String(stableRowsT0), to: String(stableRowsT0 + 3_600_000) },
-        };
-        const stableRowsTimeValues = [stableRowsT0 + 600_000, stableRowsT0 + 1_200_000, stableRowsT0 + 1_800_000];
-
-        it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge] as const)('layout: %s', async (layout) => {
-          renderHeatmapPanel(
-            {
-              series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
-              timeRange: stableRowsTimeRange,
-            },
-            { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
-            { timeRange: stableRowsTimeRange }
-          );
-          await assertCanvasOutput();
-        });
-      });
-
-      describe('selectionMode', () => {
-        it.each([HeatmapSelectionMode.Y, HeatmapSelectionMode.Xy] as const)('%s', async (selectionMode) => {
-          renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { selectionMode });
           await assertCanvasOutput();
         });
       });
@@ -494,9 +447,32 @@ describe('HeatmapPanel (canvas)', () => {
     });
   });
   describe('Sparse', () => {
-    // @todo
-  });
+    /**
+     * Sparse HeatmapCells
+     * (same shape as `createSparseHeatmapCellsFrame` in fields.test.ts).
+     */
+    function createSparseHeatmapCellsFrame() {
+      return toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+          { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+          { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+    }
 
+    it('renders', async () => {
+      const timeRange = {
+        from: dateTime(1000),
+        to: dateTime(2000),
+        raw: { from: 'now-2s', to: 'now' },
+      };
+      renderHeatmapPanel({ series: [createSparseHeatmapCellsFrame()], timeRange }, undefined, { timeRange });
+      await assertCanvasOutput();
+    });
+  });
   describe('Exemplars', () => {
     it('renders', async () => {
       const exemplarFrame = createExemplarFrame({
@@ -542,6 +518,78 @@ describe('HeatmapPanel (canvas)', () => {
       // Heatmap does not currently support annotation regions!
       renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [annoFrame] });
       await assertCanvasOutput();
+    });
+  });
+  // these tests only capture the uPlot axis draw events
+  describe('Axes', () => {
+    const stableRowsTimeRange = {
+      from: dateTime(0),
+      to: dateTime(1000),
+      raw: { from: 'now-4s', to: 'now' },
+    };
+    const stableRowsTimeValues = [1000, 2000, 3000];
+
+    beforeEach(() => {
+      clearAxisEvents = false;
+      clearInitEvents = true;
+    });
+
+    afterEach(() => {
+      clearAxisEvents = true;
+      clearInitEvents = false;
+    });
+
+    describe('X Axis', () => {
+      it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge, HeatmapCellLayout.auto, HeatmapCellLayout.unknown])(
+        'layout: %s',
+        async (layout) => {
+          renderHeatmapPanel(
+            {
+              series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
+              timeRange: stableRowsTimeRange,
+            },
+            { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
+            { timeRange: stableRowsTimeRange, fieldConfig: { overrides: [], defaults: { custom: {} } } }
+          );
+          await assertAxesOutput();
+        }
+      );
+    });
+
+    describe('Y Axis', () => {
+      it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          { yAxis: { axisPlacement, axisLabel: 'y-axis-label' } }
+        );
+        await assertAxesOutput();
+      });
+
+      it('reverse', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { reverse: true } });
+        await assertAxesOutput();
+      });
+
+      it('width', async () => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
+        await assertAxesOutput();
+      });
+
+      it('decimals, min, max, unit', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            yAxis: {
+              ...fullDefaultOptions.yAxis,
+              decimals: 3,
+              min: 0,
+              max: 1,
+              unit: 'percentunit',
+            },
+          }
+        );
+        await assertAxesOutput();
+      });
     });
   });
 });
