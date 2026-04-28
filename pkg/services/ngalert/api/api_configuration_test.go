@@ -13,8 +13,10 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 )
@@ -345,4 +347,64 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 		ExternalAlertmanagerUID: ptrTo("different-uid"),
 	})
 	require.Equal(t, http.StatusBadRequest, resp.Status())
+}
+
+func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
+	ctx := createRequestCtxInOrg(1)
+	ctx.OrgRole = org.RoleAdmin
+
+	t.Run("ini set, no admin config in DB returns 200 with ini value", func(t *testing.T) {
+		sut := ConfigSrv{
+			store: store.NewFakeAdminConfigStore(t),
+			cfg:   &setting.UnifiedAlertingSettings{ExternalAlertmanagerUID: "ini-uid"},
+		}
+
+		resp := sut.RouteGetNGalertConfig(ctx)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var got definitions.GettableNGalertConfig
+		require.NoError(t, json.Unmarshal(resp.Body(), &got))
+		require.Equal(t, "ini-uid", got.ExternalAlertmanagerUID)
+	})
+
+	t.Run("ini set overrides DB value on read", func(t *testing.T) {
+		s := store.NewFakeAdminConfigStore(t)
+		dbUID := "db-uid"
+		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+			AdminConfiguration: &models.AdminConfiguration{
+				OrgID:                   1,
+				ExternalAlertmanagerUID: &dbUID,
+			},
+		}))
+		sut := ConfigSrv{
+			store: s,
+			cfg:   &setting.UnifiedAlertingSettings{ExternalAlertmanagerUID: "ini-uid"},
+		}
+
+		resp := sut.RouteGetNGalertConfig(ctx)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var got definitions.GettableNGalertConfig
+		require.NoError(t, json.Unmarshal(resp.Body(), &got))
+		require.Equal(t, "ini-uid", got.ExternalAlertmanagerUID)
+	})
+
+	t.Run("ini unset returns DB value", func(t *testing.T) {
+		s := store.NewFakeAdminConfigStore(t)
+		dbUID := "db-uid"
+		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+			AdminConfiguration: &models.AdminConfiguration{
+				OrgID:                   1,
+				ExternalAlertmanagerUID: &dbUID,
+			},
+		}))
+		sut := ConfigSrv{
+			store: s,
+			cfg:   &setting.UnifiedAlertingSettings{},
+		}
+
+		resp := sut.RouteGetNGalertConfig(ctx)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var got definitions.GettableNGalertConfig
+		require.NoError(t, json.Unmarshal(resp.Body(), &got))
+		require.Equal(t, "db-uid", got.ExternalAlertmanagerUID)
+	})
 }

@@ -19,6 +19,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/open-feature/go-sdk/openfeature"
 )
@@ -31,6 +32,7 @@ type ConfigSrv struct {
 	datasourceService    datasources.DataSourceService
 	alertmanagerProvider ExternalAlertmanagerProvider
 	store                store.AdminConfigurationStore
+	cfg                  *setting.UnifiedAlertingSettings
 	log                  log.Logger
 }
 
@@ -56,15 +58,28 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		return accessForbiddenResp()
 	}
 
-	cfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
-	if err != nil {
-		if errors.Is(err, store.ErrNoAdminConfiguration) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
+	// Operator-level ini value, if set, is the effective UID regardless of
+	// what's stored in the database (matches the sync worker's resolution
+	// order in resolveExternalAMUID). Surface it on read so the API reflects
+	// what the system will actually use.
+	iniUID := ""
+	if srv.cfg != nil {
+		iniUID = srv.cfg.ExternalAlertmanagerUID
+	}
 
+	cfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 		msg := "failed to fetch admin configuration from the database"
 		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusInternalServerError, err, msg)
+	}
+	if cfg == nil {
+		if iniUID != "" {
+			return response.JSON(http.StatusOK, apimodels.GettableNGalertConfig{
+				ExternalAlertmanagerUID: iniUID,
+			})
+		}
+		return ErrResp(http.StatusNotFound, store.ErrNoAdminConfiguration, "")
 	}
 
 	var resp apimodels.GettableNGalertConfig
@@ -72,7 +87,9 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		resp.AlertmanagersChoice = apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String())
 	}
 
-	if cfg.ExternalAlertmanagerUID != nil {
+	if iniUID != "" {
+		resp.ExternalAlertmanagerUID = iniUID
+	} else if cfg.ExternalAlertmanagerUID != nil {
 		resp.ExternalAlertmanagerUID = *cfg.ExternalAlertmanagerUID
 	}
 
