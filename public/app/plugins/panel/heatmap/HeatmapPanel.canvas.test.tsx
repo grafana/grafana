@@ -6,6 +6,7 @@ import {
   createDataFrame,
   DataFrameType,
   DataTopic,
+  dateTime,
   type Field,
   FieldType,
   getDefaultTimeRange,
@@ -15,14 +16,20 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AxisPlacement, ScaleDistribution, TooltipDisplayMode } from '@grafana/schema';
+import { AxisPlacement, HeatmapCellLayout, ScaleDistribution, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { LinearBucketData, LinearBucketTimeRange } from 'app/plugins/panel/heatmap/mocks/LinearBucketData';
 
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
-import { defaultOptions, HeatmapColorMode, type Options } from './panelcfg.gen';
+import {
+  defaultOptions,
+  HeatmapColorMode,
+  HeatmapColorScale,
+  HeatmapSelectionMode,
+  type Options,
+} from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
 import * as heatmapUtils from './utils';
 
@@ -204,7 +211,7 @@ describe('HeatmapPanel (canvas)', () => {
   const xVals = [1, 1, 2, 2, 3, 3, 5, 5, 6, 6];
   const yVals = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
   const countVals = [8, 12, 6, 13, 7, 9, 9, 7, 5, 9];
-  /** Dense HeatmapCells frame with ordinal y labels (same cell geometry as the previous hand-built uPlot data). */
+  /** Dense HeatmapCells frame with ordinal y labels */
   function createDenseHeatmapFrameWithOrdinalY() {
     return createDataFrame({
       meta: {
@@ -293,6 +300,52 @@ describe('HeatmapPanel (canvas)', () => {
         renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { yAxis: { axisWidth: 200 } });
         await assertCanvasOutput();
       });
+
+      it('decimals, min, max, unit', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            yAxis: {
+              ...fullDefaultOptions.yAxis,
+              decimals: 3,
+              min: 0,
+              max: 1,
+              unit: 'percentunit',
+            },
+          }
+        );
+        await assertCanvasOutput();
+      });
+    });
+
+    describe('rowsFrame', () => {
+      /** Fixed range + timestamps so x-scale mapping does not drift with `dateTime()` (now). */
+      const stableRowsT0 = 1_704_067_200_000;
+      const stableRowsTimeRange = {
+        from: dateTime(stableRowsT0),
+        to: dateTime(stableRowsT0 + 3_600_000),
+        raw: { from: String(stableRowsT0), to: String(stableRowsT0 + 3_600_000) },
+      };
+      const stableRowsTimeValues = [stableRowsT0 + 600_000, stableRowsT0 + 1_200_000, stableRowsT0 + 1_800_000];
+
+      it.each([HeatmapCellLayout.le, HeatmapCellLayout.ge] as const)('layout: %s', async (layout) => {
+        renderHeatmapPanel(
+          {
+            series: [createHeatmapRowsFrame({ timeValues: stableRowsTimeValues })],
+            timeRange: stableRowsTimeRange,
+          },
+          { rowsFrame: { ...fullDefaultOptions.rowsFrame, layout } },
+          { timeRange: stableRowsTimeRange }
+        );
+        await assertCanvasOutput();
+      });
+    });
+
+    describe('selectionMode', () => {
+      it.each([HeatmapSelectionMode.Y, HeatmapSelectionMode.Xy] as const)('%s', async (selectionMode) => {
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { selectionMode });
+        await assertCanvasOutput();
+      });
     });
 
     describe('color', () => {
@@ -324,6 +377,60 @@ describe('HeatmapPanel (canvas)', () => {
               reverse: false,
               scheme: 'BuGn',
               mode: HeatmapColorMode.Scheme,
+            },
+          }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('min and max', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            color: {
+              min: 7,
+              max: 11,
+              scheme: 'Oranges',
+              steps: 32,
+              exponent: Infinity, // unused
+              fill: 'dark-orange',
+              reverse: false,
+              mode: HeatmapColorMode.Scheme,
+            },
+          }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('scheme reverse', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            color: {
+              steps: 20,
+              exponent: 2,
+              fill: 'UNUSED-FOR-SCHEME',
+              reverse: true,
+              scheme: 'BuGn',
+              mode: HeatmapColorMode.Scheme,
+            },
+          }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('opacity scale linear', async () => {
+        renderHeatmapPanel(
+          { series: [createDenseHeatmapFrameWithOrdinalY()] },
+          {
+            color: {
+              scheme: 'UNUSED-FOR-OPACITY',
+              steps: 20,
+              exponent: 2,
+              fill: 'red',
+              reverse: false,
+              mode: HeatmapColorMode.Opacity,
+              scale: HeatmapColorScale.Linear,
             },
           }
         );
@@ -393,6 +500,19 @@ describe('HeatmapPanel (canvas)', () => {
 
       // Heatmap exemplars are rendered entirely within the canvas
       renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [exemplarFrame] });
+      await assertCanvasOutput();
+    });
+
+    it('exemplar color', async () => {
+      const exemplarFrame = createExemplarFrame({
+        timeValues: [1, 2, 3, 4, 5, 6],
+        values: [0, 1, 0, 1, 1, 1],
+      });
+
+      renderHeatmapPanel(
+        { series: [createDenseHeatmapFrameWithOrdinalY()], annotations: [exemplarFrame] },
+        { exemplars: { color: 'rgba(0, 200, 80, 0.95)' } }
+      );
       await assertCanvasOutput();
     });
   });
