@@ -49,8 +49,6 @@ export interface GrafanaReceiverFormProps {
   editMode?: boolean;
   /** When set, called instead of navigating to the notifications list after a successful save. */
   onSaveSuccess?: () => void;
-  /** Hides the in-form "Manage contact point permissions" control (e.g. instance drawer embed). */
-  hidePermissionsAction?: boolean;
 }
 
 export const GrafanaReceiverForm = ({
@@ -58,7 +56,6 @@ export const GrafanaReceiverForm = ({
   readOnly = false,
   editMode,
   onSaveSuccess,
-  hidePermissionsAction,
 }: GrafanaReceiverFormProps) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -215,10 +212,7 @@ export const GrafanaReceiverForm = ({
         commonSettingsComponent={GrafanaCommonChannelSettings}
         customValidators={{ [ReceiverTypes.OnCall]: onCallFormValidators }}
         canManagePermissions={
-          !hidePermissionsAction &&
-          editMode &&
-          contactPoint &&
-          showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
+          editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
         canEditProtectedFields={canEditProtectedFields}
       />
