@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,18 +45,16 @@ import (
 const (
 	defaultCacheDuration = 5 * time.Minute
 	subjectKindUser      = "User"
+	// usersGetParallelism caps concurrent User Gets when enriching members.
+	// Small enough that a team with hundreds of members doesn't blast the
+	// apiserver, large enough to keep latency bounded.
+	usersGetParallelism = 8
 )
 
 var teamGVR = schema.GroupVersionResource{
 	Group:    iamv0alpha1.APIGroup,
 	Version:  iamv0alpha1.APIVersion,
 	Resource: "teams",
-}
-
-var teamBindingGVR = schema.GroupVersionResource{
-	Group:    iamv0alpha1.APIGroup,
-	Version:  iamv0alpha1.APIVersion,
-	Resource: "teambindings",
 }
 
 var userGVR = schema.GroupVersionResource{
@@ -151,45 +149,6 @@ func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, use
 	return &user, nil
 }
 
-func (s *TeamK8sService) listTeamsByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*unstructured.Unstructured, error) {
-	if len(uids) == 0 {
-		return nil, nil
-	}
-
-	client, err := s.getClient(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]*unstructured.Unstructured, len(uids))
-	var g errgroup.Group
-	g.SetLimit(10)
-	for i, uid := range uids {
-		g.Go(func() error {
-			obj, err := client.Get(ctx, uid, metav1.GetOptions{})
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					return nil
-				}
-				return fmt.Errorf("failed to get team %s: %w", uid, err)
-			}
-			results[i] = obj
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-
-	teams := make(map[string]*unstructured.Unstructured, len(uids))
-	for _, obj := range results {
-		if obj != nil {
-			teams[obj.GetName()] = obj
-		}
-	}
-	return teams, nil
-}
-
 func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*iamv0alpha1.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
@@ -201,11 +160,11 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 	}
 
 	results := make([]*iamv0alpha1.User, len(uids))
-	var g errgroup.Group
-	g.SetLimit(10)
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(usersGetParallelism)
 	for i, uid := range uids {
 		g.Go(func() error {
-			obj, err := client.Get(ctx, uid, metav1.GetOptions{})
+			obj, err := client.Get(gctx, uid, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					return nil
@@ -233,39 +192,48 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 	return users, nil
 }
 
-func (s *TeamK8sService) listTeamBindings(ctx context.Context, namespace string, fieldSelector string) ([]iamv0alpha1.TeamBinding, error) {
-	client, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
+// listAllTeams walks the namespace because membership lookup keyed by user
+// can't be a field selector: spec.members is a list and Kubernetes selectors
+// only do scalar equality.
+func (s *TeamK8sService) listAllTeams(ctx context.Context, namespace string) ([]iamv0alpha1.Team, error) {
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	var bindings []iamv0alpha1.TeamBinding
-	listOpts := metav1.ListOptions{
-		FieldSelector: fieldSelector,
-		Limit:         common.DefaultListLimit,
-	}
+	var teams []iamv0alpha1.Team
+	listOpts := metav1.ListOptions{Limit: common.DefaultListLimit}
 	for {
 		result, err := client.List(ctx, listOpts)
 		if err != nil {
 			return nil, err
 		}
 		for _, item := range result.Items {
-			var binding iamv0alpha1.TeamBinding
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &binding); err != nil {
+			var t iamv0alpha1.Team
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &t); err != nil {
 				return nil, err
 			}
-			bindings = append(bindings, binding)
+			teams = append(teams, t)
 		}
 		if result.GetContinue() == "" {
 			break
 		}
 		listOpts.Continue = result.GetContinue()
 	}
-	return bindings, nil
+	return teams, nil
 }
 
-func permissionFromBinding(p iamv0alpha1.TeamBindingTeamPermission) team.PermissionType {
-	if p == iamv0alpha1.TeamBindingTeamPermissionAdmin {
+func findMemberInTeam(t *iamv0alpha1.Team, userUID string) (iamv0alpha1.TeamTeamMember, bool) {
+	for _, member := range t.Spec.Members {
+		if member.Kind == subjectKindUser && member.Name == userUID {
+			return member, true
+		}
+	}
+	return iamv0alpha1.TeamTeamMember{}, false
+}
+
+func permissionFromMember(perm iamv0alpha1.TeamTeamPermission) team.PermissionType {
+	if perm == iamv0alpha1.TeamTeamPermissionAdmin {
 		return team.PermissionTypeAdmin
 	}
 	return team.PermissionTypeMember
@@ -693,34 +661,31 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 		return nil, err
 	}
 
-	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
+	teams, err := s.listAllTeams(ctx, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	if len(bindings) == 0 {
-		return []*team.TeamDTO{}, nil
+	out := make([]*team.TeamDTO, 0)
+	for i := range teams {
+		t := &teams[i]
+		if _, ok := findMemberInTeam(t, userUID); !ok {
+			continue
+		}
+		out = append(out, &team.TeamDTO{
+			ID:            deprecatedInternalID(t),
+			UID:           t.Name,
+			OrgID:         orgID,
+			Name:          t.Spec.Title,
+			Email:         t.Spec.Email,
+			ExternalUID:   t.Spec.ExternalUID,
+			IsProvisioned: t.Spec.Provisioned,
+			AvatarURL:     dtos.GetGravatarUrlWithDefault(s.cfg, t.Spec.Email, t.Spec.Title),
+		})
 	}
-
-	teamUIDs := make([]string, 0, len(bindings))
-	for _, b := range bindings {
-		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
-	}
-
-	searchResult, err := s.SearchTeams(ctx, &team.SearchTeamsQuery{
-		OrgID: orgID,
-		UIDs:  teamUIDs,
-		Limit: len(teamUIDs),
-	})
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	return searchResult.Teams, nil
+	return out, nil
 }
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
@@ -743,38 +708,42 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, nil, err
 	}
 
-	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
+	teams, err := s.listAllTeams(ctx, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, nil, err
 	}
 
-	if len(bindings) == 0 {
-		return []int64{}, []string{}, nil
+	type teamRef struct {
+		teamID  int64
+		teamUID string
 	}
-
-	teamUIDs := make([]string, 0, len(bindings))
-	for _, b := range bindings {
-		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
-	}
-
-	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, teamUIDs)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
-	}
-
-	ids := make([]int64, 0, len(teamsMap))
-	uids := make([]string, 0, len(teamsMap))
-	for uid, t := range teamsMap {
-		if id := deprecatedInternalID(t); id != 0 {
-			ids = append(ids, id)
-			uids = append(uids, uid)
+	refs := make([]teamRef, 0)
+	for i := range teams {
+		t := &teams[i]
+		if _, ok := findMemberInTeam(t, userUID); !ok {
+			continue
 		}
+		teamID := deprecatedInternalID(t)
+		if teamID == 0 {
+			// Legacy permission middleware keys off the int64 ID and can't
+			// address k8s-native teams, so we drop them from both slices.
+			s.logger.FromContext(ctx).Debug("skipping team with no deprecated internal ID", "teamUID", t.Name, "userUID", userUID)
+			continue
+		}
+		refs = append(refs, teamRef{teamID: teamID, teamUID: t.Name})
 	}
 
+	// Match legacy ORDER BY tm.team_id asc.
+	sort.Slice(refs, func(i, j int) bool { return refs[i].teamID < refs[j].teamID })
+
+	ids := make([]int64, 0, len(refs))
+	uids := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		ids = append(ids, ref.teamID)
+		uids = append(uids, ref.teamUID)
+	}
 	return ids, uids, nil
 }
 
@@ -803,7 +772,6 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
-	teamUID := resolved.GetName()
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userId)
 	if err != nil {
@@ -815,18 +783,14 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 		return false, err
 	}
 
-	fieldSelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("spec.teamRef.name", teamUID),
-		fields.OneTermEqualSelector("spec.subject.name", userUID),
-	).String()
-	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
-	if err != nil {
+	var t iamv0alpha1.Team
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(resolved.Object, &t); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
-
-	return len(bindings) > 0, nil
+	_, ok := findMemberInTeam(&t, userUID)
+	return ok, nil
 }
 
 // RemoveUsersMemberships is instance-wide cleanup; the k8s service is namespace-scoped so teamimpl always routes this to legacy.
@@ -845,7 +809,7 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	if !bypassCache {
 		if cached, found := s.cache.Get(cacheKey); found {
 			if teams, ok := cached.([]*team.TeamMemberDTO); ok {
-				return teams, nil
+				return cloneTeamMemberDTOs(teams), nil
 			}
 			s.cache.Delete(cacheKey)
 		}
@@ -864,23 +828,32 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		return nil, err
 	}
 
-	selectors := []fields.Selector{
-		fields.OneTermEqualSelector("spec.subject.name", userUID),
-	}
-	if external {
-		selectors = append(selectors, fields.OneTermEqualSelector("spec.external", "true"))
-	}
-	fieldSelector := fields.AndSelectors(selectors...).String()
-
-	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
+	teams, err := s.listAllTeams(ctx, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
+	type membership struct {
+		team   *iamv0alpha1.Team
+		member iamv0alpha1.TeamTeamMember
+	}
+	memberships := make([]membership, 0)
+	for i := range teams {
+		t := &teams[i]
+		member, ok := findMemberInTeam(t, userUID)
+		if !ok {
+			continue
+		}
+		if external && !member.External {
+			continue
+		}
+		memberships = append(memberships, membership{team: t, member: member})
+	}
+
 	var k8sUser *iamv0alpha1.User
-	if len(bindings) > 0 {
+	if len(memberships) > 0 {
 		k8sUser, err = s.getUserByUID(ctx, namespace, userUID)
 		if err != nil {
 			span.RecordError(err)
@@ -889,48 +862,45 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		}
 	}
 
-	teamUIDs := make([]string, 0, len(bindings))
-	for _, b := range bindings {
-		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
-	}
-
-	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, teamUIDs)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	members := make([]*team.TeamMemberDTO, 0, len(bindings))
-	for _, b := range bindings {
+	members := make([]*team.TeamMemberDTO, 0, len(memberships))
+	for _, ms := range memberships {
 		dto := &team.TeamMemberDTO{
 			OrgID:      orgID,
-			TeamUID:    b.Spec.TeamRef.Name,
+			TeamID:     deprecatedInternalID(ms.team),
+			TeamUID:    ms.team.Name,
 			UserID:     userID,
 			UserUID:    userUID,
-			External:   b.Spec.External,
-			Permission: permissionFromBinding(b.Spec.Permission),
+			External:   ms.member.External,
+			Permission: permissionFromMember(ms.member.Permission),
 		}
-
 		if k8sUser != nil {
 			dto.Email = k8sUser.Spec.Email
 			dto.Name = k8sUser.Spec.Title
 			dto.Login = k8sUser.Spec.Login
 			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
 		}
-
-		if teamResult, ok := teamsMap[b.Spec.TeamRef.Name]; ok {
-			dto.TeamID = deprecatedInternalID(teamResult)
-		}
-
 		members = append(members, dto)
 	}
 
 	if !bypassCache {
-		s.cache.Set(cacheKey, members, defaultCacheDuration)
+		s.cache.Set(cacheKey, cloneTeamMemberDTOs(members), defaultCacheDuration)
 	}
 
 	return members, nil
+}
+
+// cloneTeamMemberDTOs deep-copies elements so a caller mutating a returned
+// DTO can't poison subsequent cache hits via the shared pointer.
+func cloneTeamMemberDTOs(in []*team.TeamMemberDTO) []*team.TeamMemberDTO {
+	out := make([]*team.TeamMemberDTO, len(in))
+	for i, m := range in {
+		if m == nil {
+			continue
+		}
+		clone := *m
+		out[i] = &clone
+	}
+	return out
 }
 
 func userTeamMembershipsCacheKey(orgID, userID int64, external bool) string {
@@ -948,24 +918,16 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 	orgID := query.OrgID
 	namespace := s.namespaceMapper(orgID)
 
-	teamUID := query.TeamUID
-	teamID := query.TeamID
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
-	if teamUID == "" {
-		resolved, err := resolveTeamByLegacyID(ctx, client, query.TeamID)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			return nil, err
-		}
-		teamUID = resolved.GetName()
-	} else if teamID == 0 {
-		teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{})
+
+	var teamObj *unstructured.Unstructured
+	if query.TeamUID != "" {
+		teamObj, err = client.Get(ctx, query.TeamUID, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				span.RecordError(team.ErrTeamNotFound)
@@ -976,34 +938,37 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
-		teamID = deprecatedInternalID(teamResult)
+	} else {
+		teamObj, err = resolveTeamByLegacyID(ctx, client, query.TeamID)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
 	}
 
-	selectors := []fields.Selector{
-		fields.OneTermEqualSelector("spec.teamRef.name", teamUID),
-	}
-	if query.External {
-		selectors = append(selectors, fields.OneTermEqualSelector("spec.external", "true"))
-	}
-	fieldSelector := fields.AndSelectors(selectors...).String()
-
-	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
-	if err != nil {
+	var t iamv0alpha1.Team
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(teamObj.Object, &t); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
-	// Legacy joins on user.is_service_account = false; drop non-user subjects
-	// (service accounts, teams) so they never appear in the member list.
-	userBindings := make([]iamv0alpha1.TeamBinding, 0, len(bindings))
-	userUIDs := make([]string, 0, len(bindings))
-	for _, b := range bindings {
-		if b.Spec.Subject.Kind != subjectKindUser {
+	teamUID := t.Name
+	teamID := deprecatedInternalID(&t)
+
+	// Match legacy WHERE user.is_service_account = false.
+	filtered := make([]iamv0alpha1.TeamTeamMember, 0, len(t.Spec.Members))
+	userUIDs := make([]string, 0, len(t.Spec.Members))
+	for _, member := range t.Spec.Members {
+		if member.Kind != subjectKindUser {
 			continue
 		}
-		userBindings = append(userBindings, b)
-		userUIDs = append(userUIDs, b.Spec.Subject.Name)
+		if query.External && !member.External {
+			continue
+		}
+		filtered = append(filtered, member)
+		userUIDs = append(userUIDs, member.Name)
 	}
 
 	usersMap, err := s.listUsersByUIDs(ctx, namespace, userUIDs)
@@ -1013,20 +978,18 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		return nil, err
 	}
 
-	members := make([]*team.TeamMemberDTO, 0, len(userBindings))
-	for _, b := range userBindings {
-		userUID := b.Spec.Subject.Name
-
+	members := make([]*team.TeamMemberDTO, 0, len(filtered))
+	for _, member := range filtered {
 		dto := &team.TeamMemberDTO{
 			OrgID:      orgID,
 			TeamID:     teamID,
 			TeamUID:    teamUID,
-			UserUID:    userUID,
-			External:   b.Spec.External,
-			Permission: permissionFromBinding(b.Spec.Permission),
+			UserUID:    member.Name,
+			External:   member.External,
+			Permission: permissionFromMember(member.Permission),
 		}
 
-		if k8sUser, ok := usersMap[userUID]; ok {
+		if k8sUser, ok := usersMap[member.Name]; ok {
 			dto.UserID = deprecatedInternalID(k8sUser)
 			dto.Email = k8sUser.Spec.Email
 			dto.Name = k8sUser.Spec.Title
@@ -1036,6 +999,14 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 		members = append(members, dto)
 	}
+
+	// Match legacy ORDER BY user.login, user.email.
+	sort.Slice(members, func(i, j int) bool {
+		if members[i].Login != members[j].Login {
+			return members[i].Login < members[j].Login
+		}
+		return members[i].Email < members[j].Email
+	})
 
 	return members, nil
 }
