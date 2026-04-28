@@ -1,6 +1,6 @@
 import prettier from 'prettier';
 
-import type { EventData } from '../types.ts';
+import type { EventData } from './types.mts';
 
 const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>): string => {
   if (properties.length === 0) {
@@ -15,7 +15,7 @@ const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>
   const rows = properties.map((property) => {
     const columns = keys.map((key) => {
       const value = property[key] ?? '';
-      return String(value).replace(/[\\|]/g, '\\$&');
+      return String(value).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
     });
 
     return '| ' + columns.join(' | ') + ' |';
