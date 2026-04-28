@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	alertingModels "github.com/grafana/alerting/models"
