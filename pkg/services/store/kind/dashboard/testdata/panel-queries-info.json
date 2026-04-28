@@ -15,6 +15,10 @@
     {
       "uid": "pg-1",
       "type": "postgres"
+    },
+    {
+      "uid": "default.uid",
+      "type": "default.type"
     }
   ],
   "panels": [
@@ -86,6 +90,26 @@
         {
           "refId": "B",
           "expression": "rate(errors_total[1m])"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Target with null datasource inherits panel",
+      "datasource": [
+        {
+          "uid": "prom-1",
+          "type": "prometheus"
+        },
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ],
+      "queries": [
+        {
+          "refId": "A",
+          "expression": "up{job=\"api\"}"
         }
       ]
     }
