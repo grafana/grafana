@@ -9,6 +9,7 @@ import { type FolderDTO, type FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
 
+export const getReadmeTabID = (folderUID: string) => `folder-readme-${folderUID}`;
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
@@ -19,21 +20,34 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
   const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
 
+  const children: NavModelItem[] = [];
+
+  // Show the README tab first for provisioned folders when the feature is enabled.
+  if (isProvisioned && config.featureToggles.provisioningReadmes) {
+    children.push({
+      active: false,
+      icon: 'document-info',
+      id: getReadmeTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.readme', 'README'),
+      url: `${folder.url}/readme`,
+    });
+  }
+
+  children.push({
+    active: false,
+    icon: 'apps',
+    id: getDashboardsTabID(folder.uid),
+    text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
+    url: folder.url,
+  });
+
   const model: NavModelItem = {
     icon: 'folder',
     id: FOLDER_ID,
     subTitle: getNavSubTitle('manage-folder'),
     url: folder.url,
     text: folder.title,
-    children: [
-      {
-        active: false,
-        icon: 'apps',
-        id: getDashboardsTabID(folder.uid),
-        text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
-        url: folder.url,
-      },
-    ],
+    children,
   };
 
   if (parents && parents.length > 0) {

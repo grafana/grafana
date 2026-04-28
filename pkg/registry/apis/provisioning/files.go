@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -142,7 +143,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		}
 	}
 
-	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter)
+	obj, err := c.handleMethodRequest(ctx, r, name, opts, isDir, dualReadWriter, readWriter)
 	if err != nil {
 		logger.Debug("got an error after processing request", "error", err)
 		respondWithError(responder, err)
@@ -197,8 +198,16 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 	}
 	opts.Path = path
 
-	if err := resources.IsPathSupported(opts.Path); err != nil {
-		return opts, err
+	// GET requests can read raw files (such as README.md) in addition to k8s
+	// resources. Write operations remain restricted to resource files.
+	if r.Method == http.MethodGet {
+		if err := resources.IsReadablePath(opts.Path); err != nil {
+			return opts, err
+		}
+	} else {
+		if err := resources.IsPathSupported(opts.Path); err != nil {
+			return opts, err
+		}
 	}
 
 	return opts, nil
@@ -221,7 +230,7 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 }
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
-func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, repoName string, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
 	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
 		return nil, apierrors.NewForbidden(
 			provisioning.RepositoryResourceInfo.GroupResource(),
@@ -231,7 +240,7 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 	switch r.Method {
 	case http.MethodGet:
-		return c.handleGet(ctx, opts, dualReadWriter)
+		return c.handleGet(ctx, repoName, opts, dualReadWriter, readWriter)
 	case http.MethodPost:
 		return c.handlePost(ctx, r, opts, isDir, dualReadWriter)
 	case http.MethodPut:
@@ -243,12 +252,46 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 }
 
-func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleGet(ctx context.Context, repoName string, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
+	// Raw files (e.g. README.md) are returned without parsing as a k8s resource.
+	if resources.IsRawFile(opts.Path) {
+		return c.handleGetRawFile(ctx, repoName, opts, readWriter)
+	}
+
 	resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 	if err != nil {
 		return nil, err
 	}
 	return resource.AsResourceWrapper(), nil
+}
+
+// handleGetRawFile reads a raw file (such as README.md) and returns its bytes
+// inside ResourceWrapper.Resource.File under the "content" key.
+func (c *filesConnector) handleGetRawFile(ctx context.Context, repoName string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter) (*provisioning.ResourceWrapper, error) {
+	if err := c.authorizeListFiles(ctx, repoName); err != nil {
+		return nil, err
+	}
+
+	info, err := readWriter.Read(ctx, opts.Path, opts.Ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), opts.Path)
+		}
+		return nil, fmt.Errorf("read raw file: %w", err)
+	}
+
+	return &provisioning.ResourceWrapper{
+		Path: info.Path,
+		Ref:  info.Ref,
+		Hash: info.Hash,
+		Resource: provisioning.ResourceObjects{
+			File: v0alpha1.Unstructured{
+				Object: map[string]any{
+					"content": string(info.Data),
+				},
+			},
+		},
+	}, nil
 }
 
 func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
