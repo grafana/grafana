@@ -28,7 +28,7 @@ const (
 var (
 	ErrInvalidDatasourceType = errutil.ValidationFailed(
 		"alerting.invalidDatasourceType",
-		errutil.WithPublicMessage("Datasource type must be Prometheus or Loki to import rules."),
+		errutil.WithPublicMessage("Datasource type must be Prometheus, Loki, AWS Managed Prometheus, or Azure Managed Prometheus to import rules."),
 	)
 	ErrInvalidTargetDatasourceType = errutil.ValidationFailed(
 		"alerting.invalidTargetDatasourceType",
@@ -118,8 +118,18 @@ func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.KeepOriginalRuleDefinition == nil {
 		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
 	}
-	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
-		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
+	switch cfg.DatasourceType {
+	case datasources.DS_PROMETHEUS, datasources.DS_LOKI, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS:
+		// supported
+	default:
+		return nil, ErrInvalidDatasourceType.Errorf(
+			"invalid datasource type: %s, must be one of %s, %s, %s, or %s",
+			cfg.DatasourceType,
+			datasources.DS_PROMETHEUS,
+			datasources.DS_LOKI,
+			datasources.DS_AMAZON_PROMETHEUS,
+			datasources.DS_AZURE_PROMETHEUS,
+		)
 	}
 
 	return &Converter{
