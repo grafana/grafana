@@ -19,16 +19,12 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { type ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
-
-/**
- * Identifier for notifications API calls (`useGetContactPoint`, delete, etc.).
- * Prefer K8s `metadata.name` (the `id` field); fall back to display `name` when `id`
- * is absent so legacy/config-only shapes still resolve.
- */
-function getReceiverResourceId(contactPoint: ContactPointWithMetadata): string {
-  return contactPoint.id ?? contactPoint.name;
-}
+import {
+  type ContactPointWithMetadata,
+  type ReceiverConfigWithMetadata,
+  getReceiverDescription,
+  getReceiverResourceId,
+} from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;

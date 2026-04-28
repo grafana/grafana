@@ -160,6 +160,14 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
   grafana_managed_receiver_configs: ReceiverConfigWithMetadata[];
 }
 
+/**
+ * Resource identifier for notifications API (`useGetContactPoint`, delete, etc.).
+ * Prefer K8s `metadata.name` (`id`); fall back to display `name` for legacy/config-only shapes.
+ */
+export function getReceiverResourceId(contactPoint: ContactPointWithMetadata): string {
+  return contactPoint.id ?? contactPoint.name;
+}
+
 type EnhanceContactPointsArgs = {
   status?: ReceiversStateDTO[];
   notifiers?: NotifierDTO[];
