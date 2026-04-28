@@ -199,3 +199,116 @@
   color: #5f6b7d;
   font-size: 13px;
 }
+
+.diff-panel-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--compare-gap, 12px);
+}
+
+.accept-baseline-panel {
+  padding: 0.65rem;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  background: #fbfcfe;
+  max-width: 100%;
+}
+
+.accept-baseline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.jest-rerun-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  background: #f8f9fc;
+  color: #334155;
+  cursor: pointer;
+}
+
+.jest-rerun-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #c8d1df;
+  background: #f1f3f6;
+  color: #64748b;
+}
+
+.accept-baseline-btn {
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #b71c1c;
+  border-radius: 6px;
+  background: #ffebee;
+  color: #b71c1c;
+  cursor: pointer;
+}
+
+.accept-baseline-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #c8d1df;
+  background: #f1f3f6;
+  color: #64748b;
+}
+
+.accept-baseline-success {
+  margin: 0.65rem 0 0;
+  font-size: 13px;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.accept-baseline-error {
+  margin: 0.65rem 0 0;
+  font-size: 13px;
+  color: #c62828;
+  font-weight: 600;
+}
+
+.accept-baseline-output {
+  margin-top: 0.65rem;
+  font-size: 12px;
+}
+
+.accept-baseline-output summary {
+  cursor: pointer;
+  color: #334155;
+  font-weight: 600;
+}
+
+.accept-baseline-command,
+.accept-baseline-stdout,
+.accept-baseline-stderr {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.accept-baseline-command {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.accept-baseline-stdout {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.accept-baseline-stderr {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+}

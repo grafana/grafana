@@ -660,7 +660,7 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
         {
           "props": {
             "height": 38,
-            "width": 2,
+            "width": 3,
             "x": 572,
             "y": 191,
           },
@@ -1045,7 +1045,7 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "path": [
         {
           "props": {
-            "height": 83,
+            "height": 84,
             "width": 37,
             "x": 82,
             "y": 72,
@@ -1327,7 +1327,7 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
   },
   {
     "props": {
-      "value": "#888888",
+      "value": "red",
     },
     "type": "fillStyle",
   },

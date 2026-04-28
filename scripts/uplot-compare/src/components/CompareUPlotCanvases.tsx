@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { isUPlotComparePayload } from '../testUtils.ts';
-import type { ResolvedPayload, UPlotComparePayload } from '../types.ts';
+import type { AcceptBaselineState, ResolvedPayload, UPlotComparePayload } from '../types.ts';
 
 import { ComparePlots } from './ComparePlots.tsx';
 
@@ -46,11 +46,52 @@ function payloadFetchUrl(basename: string): string {
   return `${import.meta.env.BASE_URL}${basename}`;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function readOptionalString(o: Record<string, unknown>, key: string): string | undefined {
+  const v = o[key];
+  return typeof v === 'string' ? v : undefined;
+}
+
+function readOptionalBoolean(o: Record<string, unknown>, key: string): boolean | undefined {
+  const v = o[key];
+  return typeof v === 'boolean' ? v : undefined;
+}
+
+function readOptionalNumber(o: Record<string, unknown>, key: string): number | undefined {
+  const v = o[key];
+  return typeof v === 'number' ? v : undefined;
+}
+
+function parseAcceptBaselineResponse(data: unknown): {
+  ok?: boolean;
+  exitCode?: number;
+  stdout: string;
+  stderr: string;
+  command: string;
+  error?: string;
+} {
+  if (!isRecord(data)) {
+    return { stdout: '', stderr: '', command: '' };
+  }
+  return {
+    ok: readOptionalBoolean(data, 'ok'),
+    exitCode: readOptionalNumber(data, 'exitCode'),
+    stdout: readOptionalString(data, 'stdout') ?? '',
+    stderr: readOptionalString(data, 'stderr') ?? '',
+    command: readOptionalString(data, 'command') ?? '',
+    error: readOptionalString(data, 'error'),
+  };
+}
+
 export const CompareUPlotCanvases = ({
   defaultWidth = FALLBACK_CANVAS_WIDTH,
   defaultHeight = FALLBACK_CANVAS_HEIGHT,
 }: Props = {}) => {
   const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
+  const [acceptBaselineState, setAcceptBaselineState] = React.useState<AcceptBaselineState>({ kind: 'idle' });
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
   const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
 
@@ -76,11 +117,13 @@ export const CompareUPlotCanvases = ({
       });
       return;
     }
+    setAcceptBaselineState({ kind: 'idle' });
     setView({
       kind: 'ready',
 
       payload: {
         testName: raw.testName,
+        testPath: typeof raw.testPath === 'string' ? raw.testPath : undefined,
         expected: raw.expected,
         actual: raw.actual,
         uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
@@ -125,6 +168,65 @@ export const CompareUPlotCanvases = ({
     },
     [applyPayload, navigate]
   );
+
+  const runJestForPayload = React.useCallback(async (payload: ResolvedPayload, updateSnapshot: boolean) => {
+    if (!payload.testPath) {
+      return;
+    }
+    setAcceptBaselineState({ kind: 'running', updateSnapshot });
+    try {
+      const res = await fetch('/__uplot-compare/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testPath: payload.testPath,
+          testName: payload.testName,
+          updateSnapshot,
+        }),
+      });
+      const data = parseAcceptBaselineResponse(await res.json());
+
+      if (!res.ok) {
+        setAcceptBaselineState({
+          kind: 'error',
+          updateSnapshot,
+          message: data.error ?? `Request failed (${res.status})`,
+          stdout: data.stdout ?? '',
+          stderr: data.stderr ?? '',
+          command: data.command,
+        });
+        return;
+      }
+
+      if (data.ok && data.exitCode === 0) {
+        setAcceptBaselineState({
+          kind: 'success',
+          updateSnapshot,
+          stdout: data.stdout ?? '',
+          stderr: data.stderr ?? '',
+          command: data.command ?? '',
+        });
+        return;
+      }
+
+      setAcceptBaselineState({
+        kind: 'error',
+        updateSnapshot,
+        message: data.error ?? `jest exited with code ${String(data.exitCode)}`,
+        stdout: data.stdout ?? '',
+        stderr: data.stderr ?? '',
+        command: data.command,
+      });
+    } catch (e) {
+      setAcceptBaselineState({
+        kind: 'error',
+        updateSnapshot,
+        message: e instanceof Error ? e.message : String(e),
+        stdout: '',
+        stderr: '',
+      });
+    }
+  }, []);
 
   const loadFromLocation = React.useCallback(() => {
     const run = async () => {
@@ -239,5 +341,24 @@ export const CompareUPlotCanvases = ({
     );
   }
 
-  return <ComparePlots defaultWidth={defaultWidth} defaultHeight={defaultHeight} payload={view.payload} />;
+  return (
+    <ComparePlots
+      defaultWidth={defaultWidth}
+      defaultHeight={defaultHeight}
+      payload={view.payload}
+      acceptBaselineState={acceptBaselineState}
+      onRerunTest={() => {
+        if (view.kind !== 'ready') {
+          return;
+        }
+        void runJestForPayload(view.payload, false);
+      }}
+      onAcceptBaseline={() => {
+        if (view.kind !== 'ready') {
+          return;
+        }
+        void runJestForPayload(view.payload, true);
+      }}
+    />
+  );
 };
