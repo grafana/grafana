@@ -73,6 +73,7 @@ export const PieChart = ({
     detectBounds: true,
     scroll: true,
   });
+  const { eventBus } = usePanelContext();
 
   const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
 
@@ -137,38 +138,128 @@ export const PieChart = ({
                     ? (gradientFills.get(arc.data) ?? arc.data.display.color ?? FALLBACK_COLOR)
                     : getGradientColor(color);
 
-                  if (arc.data.hasLinks && arc.data.getLinks) {
+                  const links = arc.data.hasLinks && arc.data.getLinks ? arc.data.getLinks() : [];
+
+                  const sliceBody = (
+                    <PieSlice
+                      tooltip={tooltip}
+                      highlightState={highlightState}
+                      arc={arc}
+                      pie={pie}
+                      fill={fill}
+                      openMenu={undefined}
+                      tooltipOptions={tooltipOptions}
+                      gradientFills={gradientFills}
+                    />
+                  );
+
+                  // Calculate relative coordinates within SVG (for tooltip and menu positioning)
+                  const getSvgCoords = (element: Element) => {
+                    const svg = element.closest('svg');
+                    if (!svg) {
+                      return { x: 0, y: 0 };
+                    }
+                    const svgRect = svg.getBoundingClientRect();
+                    const elemRect = element.getBoundingClientRect();
+                    return {
+                      x: elemRect.left + elemRect.width / 2 - svgRect.left,
+                      y: elemRect.top + elemRect.height / 2 - svgRect.top,
+                    };
+                  };
+
+                  // Show tooltip and trigger highlight when the keyboard is focused
+                  const handleFocus = (e: React.FocusEvent<Element>) => {
+                    const coords = getSvgCoords(e.currentTarget);
+                    if (tooltipOptions.mode !== 'none') {
+                      eventBus?.publish({
+                        type: DataHoverEvent.type,
+                        payload: {
+                          x: coords.x,
+                          y: coords.y,
+                          dataId: arc.data.display.title,
+                        },
+                      });
+                      tooltip.showTooltip({
+                        tooltipLeft: coords.x,
+                        tooltipTop: coords.y,
+                        tooltipData: getTooltipData(pie, arc, tooltipOptions, gradientFills),
+                      });
+                    }
+                  };
+
+                  const handleBlur = () => {
+                    eventBus?.publish({
+                      type: DataHoverClearEvent.type,
+                      payload: {
+                        x: 0,
+                        y: 0,
+                        dataId: arc.data.display.title,
+                      },
+                    });
+                    tooltip.hideTooltip();
+                  };
+
+                  // 1. No link
+                  if (links.length === 0) {
+                    return <React.Fragment key={arc.index}>{sliceBody}</React.Fragment>;
+                  }
+
+                  // 2. Single Link
+                  if (links.length === 1) {
+                    const singleLink = links[0];
                     return (
-                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
-                        {(api) => (
-                          <PieSlice
-                            tooltip={tooltip}
-                            highlightState={highlightState}
-                            arc={arc}
-                            pie={pie}
-                            fill={fill}
-                            openMenu={api.openMenu}
-                            targetClassName={api.targetClassName}
-                            tooltipOptions={tooltipOptions}
-                            gradientFills={gradientFills}
-                          />
-                        )}
-                      </DataLinksContextMenu>
-                    );
-                  } else {
-                    return (
-                      <PieSlice
+                      <a
                         key={arc.index}
-                        highlightState={highlightState}
-                        tooltip={tooltip}
-                        arc={arc}
-                        pie={pie}
-                        fill={fill}
-                        tooltipOptions={tooltipOptions}
-                        gradientFills={gradientFills}
-                      />
+                        href={singleLink.href}
+                        target={singleLink.target}
+                        onClick={singleLink.onClick}
+                        title={singleLink.title}
+                        className={styles.svgLink}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                        data-testid={selectors.components.DataLinksContextMenu.singleLink}
+                      >
+                        {sliceBody}
+                      </a>
                     );
                   }
+
+                  // 3. Multiple links
+                  return (
+                    <DataLinksContextMenu key={arc.index} links={arc.data.getLinks!}>
+                      {(api) => (
+                        // eslint-disable-next-line jsx-a11y/anchor-is-valid
+                        <a
+                          href="#"
+                          role="button"
+                          className={cx(styles.svgLink, api.targetClassName)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            api.openMenu?.(e);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              const target = e.currentTarget;
+                              const rect = target.getBoundingClientRect();
+                              const mouseEvent = new MouseEvent('click', {
+                                bubbles: true,
+                                cancelable: true,
+                                clientX: rect.left + rect.width / 2,
+                                clientY: rect.top + rect.height / 2,
+                              });
+                              target.dispatchEvent(mouseEvent);
+                            }
+                          }}
+                          onFocus={handleFocus}
+                          onBlur={handleBlur}
+                          aria-label={arc.data.display.title}
+                        >
+                          {sliceBody}
+                        </a>
+                      )}
+                    </DataLinksContextMenu>
+                  );
                 })}
                 {showLabel &&
                   pie.arcs.map((arc) => {
@@ -226,20 +317,9 @@ interface SliceProps {
   tooltipOptions: VizTooltipOptions;
   gradientFills?: Map<FieldDisplay, string>;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-  targetClassName?: string;
 }
 
-function PieSlice({
-  arc,
-  pie,
-  highlightState,
-  openMenu,
-  targetClassName,
-  fill,
-  tooltip,
-  tooltipOptions,
-  gradientFills,
-}: SliceProps) {
+function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions, gradientFills }: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
@@ -286,34 +366,15 @@ function PieSlice({
     [eventBus, arc, tooltip, pie, tooltipOptions, gradientFills]
   );
 
-  const onKeyDown = useCallback((event: React.KeyboardEvent<SVGGElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      const rect = event.currentTarget.getBoundingClientRect();
-      event.currentTarget.dispatchEvent(
-        new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          clientX: rect.left + rect.width / 2,
-          clientY: rect.top + rect.height / 2,
-        })
-      );
-    }
-  }, []);
-
   const pieStyle = getSvgStyle(highlightState, styles);
 
   return (
     <g
       key={arc.data.display.title}
-      className={cx(pieStyle, targetClassName)}
-      tabIndex={openMenu ? 0 : undefined}
-      role={openMenu ? 'button' : undefined}
-      aria-label={openMenu ? arc.data.display.title : undefined}
+      className={pieStyle}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
       onClick={openMenu}
-      onKeyDown={openMenu ? onKeyDown : undefined}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
@@ -539,6 +600,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+    }),
+    svgLink: css({
+      textDecoration: 'none',
+      color: 'inherit',
+      cursor: 'pointer',
+      '&:focus, &:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: '2px',
+      },
     }),
     svgArg: {
       normal: css({
