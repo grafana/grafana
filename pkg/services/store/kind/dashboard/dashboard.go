@@ -790,11 +790,6 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 							if !ok {
 								continue
 							}
-							// Pull the datasource ref using the same path
-							// priority readV2QueryExpression uses, so the
-							// per-query DatasourceUID and the panel-level
-							// aggregation always agree on which datasource
-							// the query references.
 							if ds := readV2QueryDatasourceRef(m); ds != nil {
 								panel.Datasource = append(panel.Datasource, *ds)
 							}
