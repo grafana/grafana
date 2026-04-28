@@ -16,14 +16,9 @@ export interface ContactPointDrawerProps {
   listSearchQuery: string;
   /** Optional K8s `metadata.name` hint; used to prefer an exact row from the fetched list when available. */
   receiverResourceId?: string;
-  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
 
-export function ContactPointDrawer({
-  listSearchQuery,
-  receiverResourceId,
-  onEditContactPoint,
-}: ContactPointDrawerProps) {
+export function ContactPointDrawer({ listSearchQuery, receiverResourceId }: ContactPointDrawerProps) {
   const fetchPolicies = useMemo(() => !shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME), []);
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
@@ -70,7 +65,7 @@ export function ContactPointDrawer({
         contactPoints={listContactPoints}
         search={searchForList}
         pageSize={DEFAULT_PAGE_SIZE}
-        onEditContactPoint={onEditContactPoint}
+        instanceDrawerEmbed
         fallbackWhenSearchUnmatched={!forResourceId}
       />
     </Stack>

@@ -272,7 +272,8 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   pageSize?: number;
-  onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
+  /** Alerts Activity instance drawer contact point list. */
+  instanceDrawerEmbed?: boolean;
   /**
    * If the search string matches nothing (e.g. stale title after rename) but receivers exist,
    * list all rows and show an info banner instead of an empty state (instance drawer embed).
@@ -284,7 +285,7 @@ export const ContactPointsList = ({
   contactPoints,
   search,
   pageSize = DEFAULT_PAGE_SIZE,
-  onEditContactPoint,
+  instanceDrawerEmbed,
   fallbackWhenSearchUnmatched,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
@@ -311,7 +312,7 @@ export const ContactPointsList = ({
       )}
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} onEditContactPoint={onEditContactPoint} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} instanceDrawerEmbed={instanceDrawerEmbed} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
