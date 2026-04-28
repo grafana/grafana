@@ -14,7 +14,7 @@ const DEFAULT_PAGE_SIZE = 10;
 
 export interface ContactPointDrawerProps {
   listSearchQuery: string;
-  /** K8s `metadata.name` (`id` in list) when known — narrows the list to one row so renames do not break fuzzy search. */
+  /** Optional K8s `metadata.name` hint; used to prefer an exact row from the fetched list when available. */
   receiverResourceId?: string;
   onEditContactPoint?: (receiverResourceName: string, displayTitle?: string) => void;
 }
@@ -45,6 +45,16 @@ export function ContactPointDrawer({
     return <LoadingPlaceholder text={t('alerting.contact-points-tab.text-loading', 'Loading...')} />;
   }
 
+  if (error) {
+    return (
+      <Alert
+        title={t('alerting.contact-points-tab.title-failed-to-fetch-contact-points', 'Failed to fetch contact points')}
+      >
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
+  }
+
   if (contactPoints.length === 0) {
     return (
       <EmptyState
@@ -56,24 +66,13 @@ export function ContactPointDrawer({
 
   return (
     <Stack direction="column" gap={1}>
-      {error ? (
-        <Alert
-          title={t(
-            'alerting.contact-points-tab.title-failed-to-fetch-contact-points',
-            'Failed to fetch contact points'
-          )}
-        >
-          {stringifyErrorLike(error)}
-        </Alert>
-      ) : (
-        <ContactPointsList
-          contactPoints={listContactPoints}
-          search={searchForList}
-          pageSize={DEFAULT_PAGE_SIZE}
-          onEditContactPoint={onEditContactPoint}
-          fallbackWhenSearchUnmatched={!forResourceId}
-        />
-      )}
+      <ContactPointsList
+        contactPoints={listContactPoints}
+        search={searchForList}
+        pageSize={DEFAULT_PAGE_SIZE}
+        onEditContactPoint={onEditContactPoint}
+        fallbackWhenSearchUnmatched={!forResourceId}
+      />
     </Stack>
   );
 }
