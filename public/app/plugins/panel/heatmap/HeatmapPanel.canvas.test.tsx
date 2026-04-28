@@ -11,11 +11,13 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
+  type PanelProps,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AxisPlacement, TooltipDisplayMode } from '@grafana/schema';
+import { AxisPlacement, ScaleDistribution, TooltipDisplayMode } from '@grafana/schema';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
+import { LinearBucketData, LinearBucketTimeRange } from 'app/plugins/panel/heatmap/mocks/LinearBucketData';
 
 import { getPanelProps } from '../test-utils';
 
@@ -43,9 +45,9 @@ jest.mock('../../../../../packages/grafana-ui/src/utils/measureText', () => {
 });
 
 /** Width scale matched roughly to 12px Inter. */
-function defaultAxisTextWidthForTests(text: string, fontSize: number): number {
+function defaultAxisTextWidthForTests(text: string | null, fontSize: number): number {
   const AXIS_TEXT_WIDTH_PER_CHAR = 7.2;
-  const w = text.length * AXIS_TEXT_WIDTH_PER_CHAR * (fontSize / 12);
+  const w = (text?.length ?? 1) * AXIS_TEXT_WIDTH_PER_CHAR * (fontSize / 12);
   return Math.max(8, w);
 }
 
@@ -90,17 +92,17 @@ function createHeatmapRowsFrame(overrides?: {
   bucketNames?: string[];
   bucketValues?: Array<Array<number | null>>;
 }) {
-  const timeValues = overrides?.timeValues ?? [1000, 2000, 3000];
+  const timeValues = overrides?.timeValues ?? [1, 2, 3];
   const bucketValues = overrides?.bucketValues ?? generateHeatmapBucketValues(['A', 'B', 'C'], timeValues);
   const bucketNames =
     overrides?.bucketNames ?? Array.from({ length: bucketValues.length }, (_, i) => String.fromCharCode(65 + i));
 
   const fields = [
-    { name: 'time', type: FieldType.time, values: timeValues },
+    { name: 'time', type: FieldType.time, values: timeValues, config: { unit: 'short' } },
     ...bucketNames.map((name, i) => ({
       name,
-      type: FieldType.number as const,
-      config: { unit: 'short' as const },
+      type: FieldType.number,
+      config: { unit: 'short' },
       values: bucketValues[i],
     })),
   ];
@@ -166,11 +168,7 @@ function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: strin
 function renderHeatmapPanel(
   dataOverrides?: Partial<Pick<PanelData, 'series' | 'annotations' | 'timeRange'>>,
   optionsOverrides?: Partial<Options>,
-  panelPropsOverrides?: Partial<{
-    replaceVariables: (v: string) => string;
-    width: number;
-    height: number;
-  }>
+  panelPropsOverrides?: Partial<PanelProps<Options>>
 ) {
   const mergedOptions: Options = {
     ...fullDefaultOptions,
@@ -277,14 +275,6 @@ describe('HeatmapPanel (canvas)', () => {
       });
     });
 
-    // maybe doesn't belong in this test suite
-    it('calculate', () => {
-      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-      renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { calculate: true });
-      expect(consoleError).toHaveBeenCalledWith('no heatmap fields found');
-      consoleError.mockRestore();
-    });
-
     describe('Y Axis', () => {
       it.each(Object.values(AxisPlacement))('placement: %s', async (axisPlacement) => {
         renderHeatmapPanel(
@@ -336,6 +326,59 @@ describe('HeatmapPanel (canvas)', () => {
               mode: HeatmapColorMode.Scheme,
             },
           }
+        );
+        await assertCanvasOutput();
+      });
+    });
+
+    describe('calculate', () => {
+      it('renders when disabled', async () => {
+        renderHeatmapPanel(
+          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+          { calculate: false },
+          { timeRange: LinearBucketTimeRange }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('throws with invalid frame', () => {
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+        renderHeatmapPanel({ series: [createDenseHeatmapFrameWithOrdinalY()] }, { calculate: true });
+        expect(consoleError).toHaveBeenCalledWith('no heatmap fields found');
+        consoleError.mockRestore();
+      });
+
+      it('throws with invalid frame (x-axis linear only)', () => {
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+        renderHeatmapPanel(
+          { series: [LinearBucketData] },
+          { calculate: true, calculation: { xBuckets: { scale: { type: ScaleDistribution.Log } } } }
+        );
+        expect(consoleError).toHaveBeenCalledWith('X axis only supports linear buckets');
+        consoleError.mockRestore();
+      });
+
+      it('no options', async () => {
+        renderHeatmapPanel(
+          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+          { calculate: true },
+          { timeRange: LinearBucketTimeRange }
+        );
+        await assertCanvasOutput();
+      });
+
+      it('y-axis logscale', async () => {
+        renderHeatmapPanel(
+          { series: [LinearBucketData], timeRange: LinearBucketTimeRange },
+          {
+            calculate: true,
+            calculation: {
+              yBuckets: {
+                scale: { type: ScaleDistribution.Log, log: 2 },
+              },
+            },
+          },
+          { timeRange: LinearBucketTimeRange }
         );
         await assertCanvasOutput();
       });
