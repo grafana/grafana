@@ -4,9 +4,11 @@ import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Box, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
+import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
 
@@ -92,7 +94,11 @@ export function FolderReadmePanel({ folderUID }: Props) {
             <Spinner size="lg" />
           </Box>
         ) : hasReadme && markdownContent ? (
-          <RenderedMarkdown markdown={markdownContent} />
+          <RenderedMarkdown
+            markdown={markdownContent}
+            repository={repository}
+            baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
+          />
         ) : hasReadme ? (
           <Text color="secondary">
             <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
@@ -105,9 +111,29 @@ export function FolderReadmePanel({ folderUID }: Props) {
   );
 }
 
-function RenderedMarkdown({ markdown }: { markdown: string }) {
+function RenderedMarkdown({
+  markdown,
+  repository,
+  baseDirInRepo,
+}: {
+  markdown: string;
+  repository: RepositoryView;
+  baseDirInRepo: string;
+}) {
   const html = renderMarkdown(markdown);
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: html }} />;
+  const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
+  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: rewritten }} />;
+}
+
+/**
+ * The README's containing directory inside the host repo:
+ *   `{repository.path}/{dirname(readmePath)}` with all empty segments dropped.
+ * Used as the base for resolving relative links inside the markdown.
+ */
+function getReadmeBaseDir(repositoryPath: string | undefined, readmePath: string): string {
+  const lastSlash = readmePath.lastIndexOf('/');
+  const readmeDir = lastSlash >= 0 ? readmePath.slice(0, lastSlash) : '';
+  return [repositoryPath ?? '', readmeDir].filter(Boolean).join('/');
 }
 
 function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: string; repositoryType?: string }) {

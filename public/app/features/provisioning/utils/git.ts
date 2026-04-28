@@ -167,6 +167,59 @@ export function getRepoFileUrl({
   }
 }
 
+/**
+ * Build a host URL for an arbitrary path inside the repository — file or
+ * directory. Picks the right segment per provider (`blob` for files,
+ * `tree` for directories), so e.g. links like `dev/resources/GTM/` in a
+ * README don't 404 on GitHub.
+ */
+export function getRepoLinkUrl({
+  repoType,
+  url,
+  branch,
+  filePath,
+}: {
+  repoType: RepoType;
+  url: string | undefined;
+  branch?: string | undefined;
+  /** Repo-relative path. Trailing slash means the target is a directory. */
+  filePath: string | undefined;
+}): string | undefined {
+  if (!url || !filePath) {
+    return undefined;
+  }
+
+  const isDir = filePath.endsWith('/');
+  const effectiveBranch = branch || 'main';
+  const cleanPath = stripSlashes(filePath);
+
+  switch (repoType) {
+    case 'github':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: [isDir ? 'tree' : 'blob'],
+        path: cleanPath,
+      });
+    case 'gitlab':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['-', isDir ? 'tree' : 'blob'],
+        path: cleanPath,
+      });
+    case 'bitbucket':
+      return buildRepoUrl({
+        baseUrl: url,
+        branch: effectiveBranch,
+        providerSegments: ['src'],
+        path: cleanPath,
+      });
+    default:
+      return undefined;
+  }
+}
+
 type GetRepoNewFileUrlParams = GetRepoFileUrlParams & {
   /** Optional content to prefill in the host's new-file editor. */
   template?: string;
