@@ -17,8 +17,13 @@ type PanelSummaryInfo struct {
 }
 
 // PanelQueryInfo is the captured form of one query target on a panel.
-// Language inference is left to consumers since it depends on the panel's
-// datasource type (PanelSummaryInfo.Datasource).
+//
+// DatasourceUID holds the explicit datasource identifier the target
+// referenced (uid or, for v2 schema-correct refs, name). Empty means the
+// target had a null/missing datasource at parse time — consumers should
+// not assume a fallback; runtime semantics for inheritance are not
+// preserved here. Language inference is also left to consumers since it
+// depends on the panel's datasource type (PanelSummaryInfo.Datasource).
 type PanelQueryInfo struct {
 	RefID         string `json:"refId,omitempty"`
 	DatasourceUID string `json:"datasourceUid,omitempty"`

@@ -89,14 +89,15 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[
 	for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
 		switch f {
 		case "datasource":
-			// Null means "inherit from the panel" — skip addDatasource
-			// entirely so we don't pollute the panel-level aggregation
-			// (s.uids → panel.Datasource) with the org default. Consumers
-			// fall back to panel.Datasource, which then accurately reflects
-			// only datasources the panel actually references.
-			if iter.WhatIsNext() == jsoniter.NilValue {
-				iter.Skip()
-			} else if ref := s.addDatasource(iter, jsonPath+".datasource", lc); ref != nil && ref.UID != "" {
+			// Null targets resolve to the org default at runtime in this
+			// codebase's interpretation, and the panel-level aggregation
+			// records that dependency via addDatasource. Don't propagate
+			// the resolved default into q.DatasourceUID though — leaving
+			// it empty signals "no explicit per-query datasource", and
+			// consumers should not assume a single fallback.
+			isNil := iter.WhatIsNext() == jsoniter.NilValue
+			ref := s.addDatasource(iter, jsonPath+".datasource", lc)
+			if !isNil && ref != nil && ref.UID != "" {
 				q.DatasourceUID = ref.UID
 			}
 

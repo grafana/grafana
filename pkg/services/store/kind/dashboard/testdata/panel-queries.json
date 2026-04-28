@@ -52,7 +52,7 @@
     },
     {
       "id": 5,
-      "title": "Target with null datasource inherits panel",
+      "title": "Target with null datasource",
       "datasource": { "uid": "prom-1", "type": "prometheus" },
       "targets": [
         { "refId": "A", "datasource": null, "expr": "up{job=\"api\"}" }

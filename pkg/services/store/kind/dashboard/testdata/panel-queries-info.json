@@ -15,6 +15,10 @@
     {
       "uid": "pg-1",
       "type": "postgres"
+    },
+    {
+      "uid": "default.uid",
+      "type": "default.type"
     }
   ],
   "panels": [
@@ -91,11 +95,15 @@
     },
     {
       "id": 5,
-      "title": "Target with null datasource inherits panel",
+      "title": "Target with null datasource",
       "datasource": [
         {
           "uid": "prom-1",
           "type": "prometheus"
+        },
+        {
+          "uid": "default.uid",
+          "type": "default.type"
         }
       ],
       "queries": [
