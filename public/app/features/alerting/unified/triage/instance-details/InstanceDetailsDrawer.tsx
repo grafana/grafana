@@ -10,7 +10,6 @@ import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
   Alert,
   Box,
-  Button,
   Drawer,
   Icon,
   LoadingBar,
@@ -53,17 +52,6 @@ import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
-
-function DrawerBackButton({ onClick }: { onClick: () => void }) {
-  const backLabel = t('alerting.triage.instance-details-drawer.back', 'Back');
-  return (
-    <Stack direction="row" alignItems="center">
-      <Button variant="secondary" size="sm" fill="text" icon="arrow-left" onClick={onClick} aria-label={backLabel}>
-        {backLabel}
-      </Button>
-    </Stack>
-  );
-}
 
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
