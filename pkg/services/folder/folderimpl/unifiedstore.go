@@ -463,6 +463,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 		depth++
 		for i := 0; i < levelSize; i++ {
 			parent := queue[0]
+			queue[0] = "" // allow to be GCed faster.
 			queue = queue[1:]
 
 			children, err := ss.searchChildren(ctx, folder.GetChildrenQuery{UID: parent, OrgID: orgID})
