@@ -905,6 +905,25 @@ export const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
+export const updateDashboardSettingsPayloadSchema = z.object({
+  title: z.string().optional().describe('Dashboard title'),
+  description: z.string().optional().describe('Dashboard description'),
+  tags: z.array(z.string()).optional().describe('Dashboard tags'),
+  refresh: z
+    .string()
+    .optional()
+    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+  timeRange: z
+    .object({
+      from: z.string().describe('Start of time range (e.g. "now-6h")'),
+      to: z.string().describe('End of time range (e.g. "now")'),
+    })
+    .optional()
+    .describe('Dashboard time range'),
+  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -937,4 +956,7 @@ export const payloads = {
     'Move a panel to a different group or reposition within the current group'
   ),
   getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
+    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+  ),
 };
