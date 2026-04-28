@@ -1428,6 +1428,19 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
+	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
+	// use an empty ReferenceCallback, so non-primitive fields like commit lose
+	// their $ref and have to be re-attached here (same pattern as RepositoryViewList.items).
+	commitSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"]
+	commitSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
+
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{

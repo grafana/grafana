@@ -4147,7 +4147,7 @@
         "type": "object",
         "properties": {
           "singleResourceMessageTemplate": {
-            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: \u003ctitle\u003e\").",
             "type": "string"
           }
         }
