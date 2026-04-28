@@ -24,7 +24,7 @@ weight: 450
 
 # Google Cloud Monitoring alerting
 
-The Google Cloud Monitoring data source supports [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/), allowing you to create alert rules based on GCP metrics and Service Level Objectives (SLOs). You can monitor Grafana's Google Cloud environment and receive notifications when specific conditions are met.
+The Google Cloud Monitoring data source supports [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/), allowing you to create alert rules based on GCP metrics and Service Level Objectives (SLOs). You can monitor your Google Cloud environment and receive notifications when specific conditions are met.
 
 ## Before you begin
 
