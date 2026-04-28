@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { type ReactElement } from 'react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
@@ -64,15 +63,15 @@ describe('FolderReadmeHint', () => {
 
     renderWithRouter(<FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />);
 
-    const link = screen.getByRole('link', { name: /See the README/i });
+    const link = screen.getByRole('link', { name: /Open README/i });
     expect(link).toHaveAttribute('href', '/dashboards/f/test-folder/readme');
   });
 
-  it('reports an interaction when the link is clicked', async () => {
+  it('reports an interaction when the link is clicked', () => {
     setReadmeResult();
 
     renderWithRouter(<FolderReadmeHint folderUID="test-folder" folderUrl="/dashboards/f/test-folder" />);
-    await userEvent.click(screen.getByRole('link', { name: /See the README/i }));
+    fireEvent.click(screen.getByRole('link', { name: /Open README/i }));
 
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_hint_clicked', {
       repositoryType: 'github',

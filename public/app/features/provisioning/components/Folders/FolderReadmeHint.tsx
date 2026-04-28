@@ -1,6 +1,6 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Icon, Stack, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton } from '@grafana/ui';
 
 import { useFolderReadme } from '../../hooks/useFolderReadme';
 
@@ -10,8 +10,8 @@ interface Props {
 }
 
 /**
- * Subtle one-line hint pointing users at the README tab when a provisioned folder
- * has a README.md available. Only shown when the provisioningReadmes feature is on.
+ * Info banner pointing users at the README tab when a provisioned folder has a
+ * README.md available. Only shown when the provisioningReadmes feature is on.
  */
 export function FolderReadmeHint({ folderUID, folderUrl }: Props) {
   const { repository, isRepoLoading, isFileLoading, isError, fileData } = useFolderReadme(folderUID);
@@ -26,25 +26,29 @@ export function FolderReadmeHint({ folderUID, folderUrl }: Props) {
   }
 
   return (
-    <Stack direction="row" alignItems="center" gap={1}>
-      <Icon name="info-circle" size="sm" />
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="browse-dashboards.readme.hint">
-          Looking for a specific dashboard?{' '}
-          <TextLink
-            href={`${folderUrl}/readme`}
-            inline
-            onClick={() => {
-              reportInteraction('grafana_provisioning_readme_hint_clicked', {
-                repositoryType: repository.type,
-              });
-            }}
-          >
-            See the README
-          </TextLink>
-          .
-        </Trans>
-      </Text>
-    </Stack>
+    <Alert
+      severity="info"
+      topSpacing={1}
+      bottomSpacing={1}
+      title={t('browse-dashboards.readme.hint-title', 'New to this folder?')}
+      action={
+        <LinkButton
+          variant="secondary"
+          fill="outline"
+          href={`${folderUrl}/readme`}
+          onClick={() => {
+            reportInteraction('grafana_provisioning_readme_hint_clicked', {
+              repositoryType: repository.type,
+            });
+          }}
+        >
+          <Trans i18nKey="browse-dashboards.readme.hint-action">Open README</Trans>
+        </LinkButton>
+      }
+    >
+      <Trans i18nKey="browse-dashboards.readme.hint-body">
+        The README explains how this folder is organized and where to find the dashboards you need.
+      </Trans>
+    </Alert>
   );
 }
