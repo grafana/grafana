@@ -8,7 +8,8 @@ import {
   type PanelData,
   type PanelModel,
 } from '@grafana/data';
-import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, PanelChrome, TimePickerTooltip, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PanelLinks } from '../PanelLinks';
 

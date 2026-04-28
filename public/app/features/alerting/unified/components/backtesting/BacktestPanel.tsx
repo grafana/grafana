@@ -5,17 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type DataFrameJSON, type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Icon,
-  LoadingPlaceholder,
-  RefreshPicker,
-  Stack,
-  Text,
-  TimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Icon, LoadingPlaceholder, RefreshPicker, Stack, Text, TimeRangePicker, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useRunBacktestMutation } from '../../api/backtestApi';
 import { type RuleFormValues } from '../../types/rule-form';

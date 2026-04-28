@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, Toggletip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;

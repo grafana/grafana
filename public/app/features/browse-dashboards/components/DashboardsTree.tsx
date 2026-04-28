@@ -8,7 +8,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { type GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { canSelectItems } from '../permissions';

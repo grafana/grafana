@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type DashboardLink } from '@grafana/schema';
-import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, TagList } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ProvisionedControlsSection, SourceIcon } from '../ProvisionedControlsSection';
 

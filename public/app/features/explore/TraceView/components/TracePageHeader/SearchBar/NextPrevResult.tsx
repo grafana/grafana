@@ -20,7 +20,8 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, type PopoverContent, Tooltip } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type Trace } from '../../types/trace';
 import { getServiceDisplayName } from '../../utils/service-name';

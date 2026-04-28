@@ -4,7 +4,8 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PanelRenderer } from '../PanelRenderer';
 

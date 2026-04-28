@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type NotificationChannelOption,
   type NotificationChannelSecureFields,

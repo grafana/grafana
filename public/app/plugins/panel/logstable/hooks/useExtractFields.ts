@@ -11,7 +11,7 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
 import { getLogsTableFieldConfigRegistry } from '../logsTableFieldConfig';

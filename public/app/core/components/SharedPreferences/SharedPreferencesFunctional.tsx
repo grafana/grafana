@@ -19,10 +19,10 @@ import {
   Stack,
   TextLink,
   TimeZonePicker,
-  useStyles2,
   type WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';

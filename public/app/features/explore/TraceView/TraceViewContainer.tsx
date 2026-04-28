@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 
 import { type DataFrame, DataLinksContext, type SplitOpen, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { PanelChrome, useStyles2 } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type StoreState, useSelector } from 'app/types/store';
 
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';

@@ -4,7 +4,8 @@ import { Controller, type FieldError, useFormContext, useWatch } from 'react-hoo
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type CorrelationExternal } from '@grafana/runtime';
-import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
+import { Field, FieldSet, Input, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { type CorrelationType } from '../types';

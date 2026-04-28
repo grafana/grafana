@@ -7,17 +7,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  ConfirmModal,
-  Field,
-  Input,
-  LinkButton,
-  Stack,
-  useStyles2,
-  withErrorBoundary,
-} from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Field, Input, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types/store';

@@ -5,7 +5,8 @@ import { type ReactElement } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
+import { FieldSet, InlineSwitch, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface RuleEditorSectionProps {
   title: string;

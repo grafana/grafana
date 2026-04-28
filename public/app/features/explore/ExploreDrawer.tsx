@@ -5,7 +5,8 @@ import * as React from 'react';
 
 // Services & Utils
 import { type GrafanaTheme2 } from '@grafana/data';
-import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 export interface Props {
   children: React.ReactNode;

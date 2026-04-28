@@ -10,7 +10,8 @@ import {
   convertLegacyAuthProps,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Divider, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
+import { Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type ParcaDataSourceOptions } from './types';
 

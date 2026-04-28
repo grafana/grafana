@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { Box, ControlledCollapse } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';

@@ -3,7 +3,8 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
-import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { type LabelStats } from '../useLabelsBreakdown';

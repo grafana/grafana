@@ -1,4 +1,5 @@
-import { useStyles2, Stack, Box } from '@grafana/ui';
+import { Stack, Box } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { SidebarItem, getStyles as getStepItemStyles } from './SidebarItem';
 

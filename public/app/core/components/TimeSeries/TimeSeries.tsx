@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { type DataFrame, type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 
 import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';

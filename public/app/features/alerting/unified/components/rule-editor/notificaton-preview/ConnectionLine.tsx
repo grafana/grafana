@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export function ConnectionLine() {
   const styles = useStyles2(getStyles);

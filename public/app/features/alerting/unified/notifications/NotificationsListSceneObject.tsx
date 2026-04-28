@@ -34,9 +34,9 @@ import {
   Text,
   TextLink,
   Tooltip,
-  useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { AlertEnrichments } from '../components/AlertEnrichments';

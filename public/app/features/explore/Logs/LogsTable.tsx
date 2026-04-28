@@ -30,9 +30,9 @@ import {
   type TableSortByFieldState,
   Table,
   TableCellDisplayMode,
-  useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';

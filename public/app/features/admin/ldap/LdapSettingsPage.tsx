@@ -7,7 +7,6 @@ import { AppEvents, type GrafanaTheme2, type NavModelItem } from '@grafana/data'
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
-  useStyles2,
   Alert,
   Box,
   Button,
@@ -23,6 +22,7 @@ import {
   MultiSelect,
   SecretInput,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';

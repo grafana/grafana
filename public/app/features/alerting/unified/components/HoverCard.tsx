@@ -4,7 +4,8 @@ import classnames from 'classnames';
 import { type ReactElement, type ReactNode, cloneElement, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Popover as GrafanaPopover, PopoverController, Stack, useStyles2 } from '@grafana/ui';
+import { Popover as GrafanaPopover, PopoverController, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface PopupCardProps {
   children: ReactElement<Record<string, unknown>>;

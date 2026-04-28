@@ -4,7 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, type GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, Menu, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Dropdown, Menu, usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DownloadFormat } from '../../utils';
 

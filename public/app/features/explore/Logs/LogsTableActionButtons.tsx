@@ -10,7 +10,8 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, type CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
+import { ClipboardButton, type CustomCellRendererProps, IconButton, Modal } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
 import { type LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';

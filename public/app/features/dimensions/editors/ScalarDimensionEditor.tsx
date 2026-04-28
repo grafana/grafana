@@ -4,8 +4,9 @@ import { useCallback, useId, useMemo } from 'react';
 import { FieldType, type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, type ScalarDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { type ScalarDimensionOptions } from '../types';

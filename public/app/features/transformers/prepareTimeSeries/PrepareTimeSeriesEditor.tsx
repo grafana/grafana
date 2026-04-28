@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 

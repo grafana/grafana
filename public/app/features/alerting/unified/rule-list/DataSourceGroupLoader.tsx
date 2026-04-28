@@ -5,7 +5,8 @@ import { useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   type PromRuleDTO,

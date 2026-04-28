@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const getStyles = () => ({
   BreakableText: css({

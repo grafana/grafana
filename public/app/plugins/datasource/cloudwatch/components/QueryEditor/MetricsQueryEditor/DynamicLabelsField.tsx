@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { useCallback, useRef } from 'react';
 
-import { CodeEditor, getInputStyles, type Monaco, useTheme2 } from '@grafana/ui';
+import { CodeEditor, getInputStyles, type Monaco } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { DynamicLabelsCompletionItemProvider } from '../../../language/dynamic-labels/CompletionItemProvider';
 import language from '../../../language/dynamic-labels/definition';

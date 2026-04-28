@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Card, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Card, Icon, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface StatItem {
   name: string;

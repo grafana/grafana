@@ -5,16 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import {
-  Button,
-  ClipboardButton,
-  DatePickerWithInput,
-  Field,
-  Input,
-  Modal,
-  RadioButtonGroup,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ClipboardButton, DatePickerWithInput, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const NO_EXPIRATION_OPTION = 'no-expiration';
 const CUSTOM_EXPIRATION_OPTION = 'custom-expiration';

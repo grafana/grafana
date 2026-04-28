@@ -5,7 +5,8 @@ import tinycolor from 'tinycolor2';
 
 import { type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type HoverState } from './NodeGraph';
 import { type NodeDatum } from './types';

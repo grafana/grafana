@@ -11,7 +11,8 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';

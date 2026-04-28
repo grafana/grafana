@@ -6,7 +6,8 @@ import { useToggle } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
-import { Button, FilterInput, Icon, LoadingBar, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, Icon, LoadingBar, ScrollContainer, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { countInstances } from '../SummaryStats';

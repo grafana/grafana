@@ -6,7 +6,8 @@ import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Modal, useStyles2, Input, Icon, ScrollContainer } from '@grafana/ui';
+import { Modal, Input, Icon, ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasources } from '../../hooks';

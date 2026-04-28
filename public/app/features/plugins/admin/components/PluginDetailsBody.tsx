@@ -5,7 +5,8 @@ import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
-import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { type CellProps, type Column, InteractiveTable, Stack, Carousel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';

@@ -4,7 +4,8 @@ import { Subscription } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
+import { Tab, TabContent, TabsBar, toIconName, useForceUpdate } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';

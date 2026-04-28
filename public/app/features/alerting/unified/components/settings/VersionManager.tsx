@@ -15,8 +15,8 @@ import {
   InteractiveTable,
   Stack,
   Text,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 

@@ -5,7 +5,8 @@ import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
-import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { Spinner, Alert } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
 

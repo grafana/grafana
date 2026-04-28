@@ -8,7 +8,8 @@ import { Trans, t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { isSupportedExternalRulesSourceType } from '../../utils/datasource';

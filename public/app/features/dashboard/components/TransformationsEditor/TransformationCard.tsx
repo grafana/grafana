@@ -7,7 +7,8 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, Card, IconButton, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Badge, Card, IconButton, Stack, Text } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { getCardStyles } from './getCardStyles';

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Input, useStyles2 } from '@grafana/ui';
+import { Icon, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   value: string;

@@ -15,7 +15,8 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export const getStyles = () => {
   return {

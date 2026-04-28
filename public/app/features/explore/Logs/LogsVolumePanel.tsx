@@ -14,7 +14,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
-import { Icon, type SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, type SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';

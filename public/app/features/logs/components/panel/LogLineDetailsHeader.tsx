@@ -4,7 +4,8 @@ import { useCallback, useMemo, type MouseEvent, useRef, type ChangeEvent } from 
 import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, Input, useStyles2 } from '@grafana/ui';
+import { IconButton, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';

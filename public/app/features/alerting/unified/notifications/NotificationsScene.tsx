@@ -35,8 +35,8 @@ import {
   Text,
   Tooltip,
   TooltipDisplayMode,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LogMessages, logInfo } from '../Analytics';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';

@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 
 import { type TransformerUIProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Tooltip, useTheme2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Tooltip } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import {

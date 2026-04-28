@@ -4,7 +4,8 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type IconName, locationUtil, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useScopesServices } from '../ScopesContextProvider';
 

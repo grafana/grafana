@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Label, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {

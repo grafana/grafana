@@ -12,7 +12,8 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, IconButton, Menu, Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { trackInsightsFeedback } from '../Analytics';
 

@@ -5,8 +5,9 @@ import React, { useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { getInputStyles, Icon, Text, ToolbarButton } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getModKey } from 'app/core/utils/browser';
 

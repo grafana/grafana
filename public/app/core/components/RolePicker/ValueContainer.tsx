@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { getInputStyles, Icon, type IconName, useStyles2, getSelectStyles } from '@grafana/ui';
+import { getInputStyles, Icon, type IconName, getSelectStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props {
   children: ReactNode;

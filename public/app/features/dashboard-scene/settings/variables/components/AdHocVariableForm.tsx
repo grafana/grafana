@@ -14,7 +14,8 @@ import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';

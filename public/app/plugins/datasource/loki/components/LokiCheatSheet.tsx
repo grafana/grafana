@@ -4,7 +4,8 @@ import { PureComponent } from 'react';
 
 import { type GrafanaTheme2, type QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TextLink, type Themeable2, withTheme2 } from '@grafana/ui';
+import { TextLink, type Themeable2 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 
 import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector } from '../languageUtils';

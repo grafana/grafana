@@ -23,9 +23,8 @@ import {
   RadioButtonGroup,
   Stack,
   Switch,
-  useStyles2,
-  useTheme2,
 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

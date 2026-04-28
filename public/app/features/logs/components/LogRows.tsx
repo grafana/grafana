@@ -13,7 +13,8 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { ConfirmModal, Icon, type PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, type PopoverContent } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';

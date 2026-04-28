@@ -29,7 +29,8 @@ import {
   TooltipDisplayMode,
   type VizLegendOptions,
 } from '@grafana/schema';
-import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
+import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { type Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { type ExploreGraphStyle } from 'app/types/explore';

@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';

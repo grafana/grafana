@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { EmptyState, useStyles2 } from '@grafana/ui';
+import { EmptyState } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { NavLandingPageCard } from 'app/core/components/NavLandingPage/NavLandingPageCard';

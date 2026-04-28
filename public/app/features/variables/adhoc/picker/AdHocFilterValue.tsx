@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
-import { SegmentAsync, useStyles2 } from '@grafana/ui';
+import { SegmentAsync } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';

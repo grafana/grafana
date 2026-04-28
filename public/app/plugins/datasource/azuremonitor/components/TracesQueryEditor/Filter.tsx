@@ -7,7 +7,8 @@ import { CoreApp, type DataFrame, getDefaultTimeRange, type SelectableValue, typ
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, Checkbox, Stack } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { type AzureMonitorQuery, AzureQueryType, type AzureTracesFilter } from '../../dataquery.gen';
 import type Datasource from '../../datasource';

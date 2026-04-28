@@ -3,7 +3,8 @@ import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataLinkButton, Icon, Toggletip, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, Icon, Toggletip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FieldDef } from '../logParser';
 

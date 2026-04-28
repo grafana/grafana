@@ -15,8 +15,8 @@ import {
   Spinner,
   Stack,
   Tooltip,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type Repository,
   useGetRepositoryFilesQuery,

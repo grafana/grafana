@@ -5,7 +5,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, type AdHocFiltersController } from '@grafana/scenes';
-import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { type Silence } from 'app/plugins/datasource/alertmanager/types';
 

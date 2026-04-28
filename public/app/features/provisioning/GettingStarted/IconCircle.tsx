@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { Icon, type IconName, useStyles2 } from '@grafana/ui';
+import { Icon, type IconName } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface IconCircleProps {
   icon: IconName;

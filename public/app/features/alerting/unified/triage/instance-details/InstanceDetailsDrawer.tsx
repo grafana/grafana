@@ -7,20 +7,8 @@ import { type GrafanaTheme2, type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import {
-  Alert,
-  Box,
-  Button,
-  Drawer,
-  Icon,
-  LoadingBar,
-  LoadingPlaceholder,
-  Stack,
-  Text,
-  TextLink,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Alert, Box, Button, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';

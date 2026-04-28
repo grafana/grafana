@@ -14,7 +14,7 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
+import { Portal, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -22,6 +22,7 @@ import {
   type VizTooltipItem,
   CloseButton,
 } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 

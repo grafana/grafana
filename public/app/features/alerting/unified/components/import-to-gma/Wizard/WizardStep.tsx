@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { FieldSet, Stack, useStyles2 } from '@grafana/ui';
+import { FieldSet, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { CancelButton } from './CancelButton';
 import { NextButton } from './NextButton';

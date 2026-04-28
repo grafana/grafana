@@ -4,7 +4,8 @@ import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2, type SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
-import { Alert, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Dimensions, type MetricStat } from '../../../dataquery.gen';
 import { type CloudWatchDatasource } from '../../../datasource';

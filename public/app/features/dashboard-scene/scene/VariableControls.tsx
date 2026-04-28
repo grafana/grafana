@@ -15,7 +15,8 @@ import {
   type SceneVariableState,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { useElementSelection } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { dashboardEditActions } from '../edit-pane/shared';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';

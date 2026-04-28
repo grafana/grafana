@@ -13,7 +13,8 @@ import {
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, type PopoverContent, Tooltip } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';

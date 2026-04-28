@@ -3,7 +3,8 @@ import { type FocusEvent, useCallback, useRef } from 'react';
 
 import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   useActionsContext,

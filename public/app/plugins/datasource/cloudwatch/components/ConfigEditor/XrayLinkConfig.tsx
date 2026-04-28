@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type DataSourceInstanceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Field, InlineField, useStyles2 } from '@grafana/ui';
+import { Alert, Field, InlineField } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css({

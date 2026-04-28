@@ -15,8 +15,8 @@ import {
   Text,
   type ComboboxOption,
   Alert,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { InfluxVersion } from '../../../types';
 

@@ -3,7 +3,8 @@ import { type ReactNode, useCallback, useState } from 'react';
 
 import { type DataQueryError, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Alert, type AlertVariant, Button, useTheme2 } from '@grafana/ui';
+import { Alert, type AlertVariant, Button } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 type Props = {
   error?: DataQueryError;

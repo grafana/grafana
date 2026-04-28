@@ -22,7 +22,8 @@ import {
   type TimeZone,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, InlineField, Alert, useStyles2, type SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Button, InlineField, Alert, type SeriesVisibilityChangeMode } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   mergeLogsVolumeDataFrames,

@@ -5,17 +5,8 @@ import { FixedSizeList } from 'react-window';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  FilterInput,
-  Icon,
-  LoadingPlaceholder,
-  Modal,
-  Tag,
-  Tooltip,
-  clearButtonStyles,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, FilterInput, Icon, LoadingPlaceholder, Modal, Tag, Tooltip, clearButtonStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerAlert, type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';

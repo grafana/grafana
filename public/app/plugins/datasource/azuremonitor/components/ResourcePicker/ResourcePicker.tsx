@@ -12,7 +12,6 @@ import {
   Button,
   LoadingPlaceholder,
   Modal,
-  useStyles2,
   Space,
   Stack,
   Field,
@@ -22,6 +21,7 @@ import {
   TabContent,
   Tab,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
 import { type AzureMonitorResource } from '../../dataquery.gen';

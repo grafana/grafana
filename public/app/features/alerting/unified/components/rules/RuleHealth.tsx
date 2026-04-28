@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type Rule } from 'app/types/unified-alerting';
 
 import { isErrorHealth } from '../rule-viewer/RuleViewer';

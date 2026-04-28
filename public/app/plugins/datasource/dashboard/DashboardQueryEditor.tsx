@@ -14,7 +14,8 @@ import {
 import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import { Alert, Field, Select, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

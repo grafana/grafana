@@ -4,7 +4,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
+import { Field, VirtualizedSelect } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type RuleFormValues } from '../../types/rule-form';
 

@@ -14,8 +14,9 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
+import { Button, ScrollContainer, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
+import { stylesFactory } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 

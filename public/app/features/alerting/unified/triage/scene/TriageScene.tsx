@@ -13,7 +13,7 @@ import {
   behaviors,
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { DATASOURCE_UID } from '../constants';
 

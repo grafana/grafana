@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type DataFrame, type GrafanaTheme2, type SelectableValue, type TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useSlowQuery } from '../../../hooks/useSlowQuery';

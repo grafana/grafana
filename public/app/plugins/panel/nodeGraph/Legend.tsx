@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 
 import { type Field, FieldColorModeId, type GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { Icon, useStyles2, useTheme2, VizLegend, type VizLegendItem, VizLegendListItem } from '@grafana/ui';
+import { Icon, VizLegend, type VizLegendItem, VizLegendListItem } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type Config } from './layout';
 import { type NodeDatum } from './types';

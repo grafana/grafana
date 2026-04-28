@@ -1,7 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore, type JSX } from 'react';
 
 import { type OrgRole } from '@grafana/data';
-import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Portal } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { pickerStateStore } from 'app/core/utils/roles';
 import type { Role } from 'app/types/accessControl';
 

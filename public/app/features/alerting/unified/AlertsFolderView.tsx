@@ -5,7 +5,8 @@ import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { type FolderDTO } from 'app/types/folders';

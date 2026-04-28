@@ -3,7 +3,8 @@ import { memo, useState, useCallback } from 'react';
 import * as React from 'react';
 
 import { type StandardEditorProps, type StringFieldConfigSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Input, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type Props = StandardEditorProps<string[], StringFieldConfigSettings>;
 

@@ -5,7 +5,8 @@ import React, { useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { type AutoGridColumnWidth, type AutoGridRowHeight, type AutoGridLayoutManager } from './AutoGridLayoutManager';

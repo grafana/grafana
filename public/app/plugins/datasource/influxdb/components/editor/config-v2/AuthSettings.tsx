@@ -19,11 +19,11 @@ import {
   Label,
   RadioButtonGroup,
   SecretInput,
-  useStyles2,
   Text,
   Stack,
   InlineLabel,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   AUTH_RADIO_BUTTON_OPTIONS,

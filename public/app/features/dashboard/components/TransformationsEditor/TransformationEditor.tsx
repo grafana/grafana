@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
+import { Icon, JSONFormatter, LoadingPlaceholder, Drawer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TransformationsEditorTransformation } from './types';
 

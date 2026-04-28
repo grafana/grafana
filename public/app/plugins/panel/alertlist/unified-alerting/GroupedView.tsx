@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel';
 import { getAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { type Alert } from 'app/types/unified-alerting';

@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Stack, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
+import { Stack, Icon, IconButton, Tooltip } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { QueryValidator, type QueryValidatorProps } from './QueryValidator';
 

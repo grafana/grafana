@@ -7,8 +7,9 @@ import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
-import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer } from '@grafana/ui';
 import { type ButtonLinkProps } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 

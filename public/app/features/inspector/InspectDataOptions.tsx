@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { type DataFrame, DataTransformerID, getFrameDisplayName, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, Select, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Field, Select, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';

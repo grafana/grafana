@@ -7,7 +7,8 @@ import { type Align } from 'react-window';
 import { store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 

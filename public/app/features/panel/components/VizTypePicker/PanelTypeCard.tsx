@@ -5,7 +5,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { IconButton, PluginSignatureBadge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

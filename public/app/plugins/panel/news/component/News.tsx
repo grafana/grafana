@@ -3,7 +3,8 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 
 import { type NewsItem } from '../types';

@@ -5,7 +5,8 @@ import { useToggle } from 'react-use';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, Menu, MenuItem, ToolbarButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';

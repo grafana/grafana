@@ -9,8 +9,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig } from '@grafana/schema';
-import { Combobox, ColorPicker, useStyles2 } from '@grafana/ui';
+import { Combobox, ColorPicker } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface ColorDimensionSettings {
   isClearable?: boolean;

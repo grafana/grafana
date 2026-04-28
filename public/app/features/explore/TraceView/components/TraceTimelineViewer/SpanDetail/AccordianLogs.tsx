@@ -18,7 +18,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceLog } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Counter, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import { formatDuration } from '../../utils/date';

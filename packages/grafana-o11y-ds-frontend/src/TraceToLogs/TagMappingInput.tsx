@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { InlineLabel, SegmentInput, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { InlineLabel, SegmentInput, ToolbarButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TraceToLogsTag } from './TraceToLogsSettings';
 

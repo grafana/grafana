@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
-import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface SpanBarOptions {
   type?: string;

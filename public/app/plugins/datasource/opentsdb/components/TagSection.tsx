@@ -3,16 +3,8 @@ import { has, size } from 'lodash';
 import { useState } from 'react';
 
 import { type SelectableValue, toOption } from '@grafana/data';
-import {
-  Select,
-  InlineFormLabel,
-  Icon,
-  clearButtonStyles,
-  useStyles2,
-  AsyncSelect,
-  Stack,
-  InlineLabel,
-} from '@grafana/ui';
+import { Select, InlineFormLabel, Icon, clearButtonStyles, AsyncSelect, Stack, InlineLabel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type OpenTsdbQuery } from '../types';
 

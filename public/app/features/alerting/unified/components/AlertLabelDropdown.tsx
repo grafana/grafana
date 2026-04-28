@@ -3,7 +3,8 @@ import { type FC, forwardRef } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Combobox, type ComboboxOption, Field, useStyles2 } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type AsyncOptionsLoader = (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 

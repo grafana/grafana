@@ -17,7 +17,6 @@ import {
   IconButton,
   Icon,
   FieldValidationMessage,
-  useStyles2,
   Stack,
   InlineLabel,
   Text,
@@ -26,6 +25,7 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';

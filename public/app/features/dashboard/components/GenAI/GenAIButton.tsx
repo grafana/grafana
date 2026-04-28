@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type llm } from '@grafana/llm';
-import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
+import { Button, Spinner, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, TIMEOUT, useLLMStream } from './hooks';

@@ -6,7 +6,8 @@ import { of } from 'rxjs';
 
 import { type GrafanaTheme2, type PluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';

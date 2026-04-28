@@ -3,7 +3,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, type IconName, useStyles2 } from '@grafana/ui';
+import { IconButton, type IconName } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface BaseQueryOperationActionProps {
   icon: IconName;

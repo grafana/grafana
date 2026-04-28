@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '@grafana/ui/themes';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';

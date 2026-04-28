@@ -6,13 +6,8 @@ import uPlot from 'uplot';
 
 import { arrayToDataFrame, colorManipulator, type DataFrame, DataTopic, type InterpolateFunction } from '@grafana/data';
 import { type TimeZone } from '@grafana/schema';
-import {
-  DEFAULT_ANNOTATION_COLOR,
-  getPortalContainer,
-  type UPlotConfigBuilder,
-  usePanelContext,
-  useTheme2,
-} from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 import { ANNOTATION_LANE_SIZE, getXAnnotationFrames, getXYAnnotationFrames } from './utils';

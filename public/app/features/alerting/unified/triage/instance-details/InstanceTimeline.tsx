@@ -8,7 +8,8 @@ import {
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 

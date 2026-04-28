@@ -20,7 +20,8 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, type PopoverContent } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 

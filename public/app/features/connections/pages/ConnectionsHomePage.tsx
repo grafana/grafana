@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { useSelector } from 'app/types/store';
 

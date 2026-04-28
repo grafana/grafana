@@ -15,8 +15,8 @@ import {
   TabContent,
   TabsBar,
   Text,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type SQLSchemaData, type SQLSchemaField, type SQLSchemas } from '../hooks/useSQLSchemas';
 

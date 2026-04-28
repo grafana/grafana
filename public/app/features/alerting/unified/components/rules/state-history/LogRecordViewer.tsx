@@ -6,7 +6,8 @@ import { Fragment, memo, useEffect, useRef } from 'react';
 import { AlertLabel } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, TagList } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { AlertStateTag } from '../AlertStateTag';

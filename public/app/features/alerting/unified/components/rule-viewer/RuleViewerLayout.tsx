@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { JSX } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { type PageProps } from 'app/core/components/Page/types';
 

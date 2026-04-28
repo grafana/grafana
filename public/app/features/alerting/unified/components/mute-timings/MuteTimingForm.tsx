@@ -4,7 +4,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type MuteTiming,
   useCreateMuteTiming,

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { nodeR } from './Node';
 import { type EdgeDatumLayout } from './types';

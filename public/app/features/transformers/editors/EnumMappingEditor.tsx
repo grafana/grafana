@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import { type DataFrame, type EnumFieldConfig, type GrafanaTheme2 } from '@grafana/data';
 import { type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import EnumMappingRow from './EnumMappingRow';
 

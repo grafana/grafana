@@ -7,7 +7,8 @@ import { useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, useStyles2, getPortalContainer } from '@grafana/ui';
+import { Button, getPortalContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type MediaType, PickerTabType, type ResourceFolderName } from '../types';
 

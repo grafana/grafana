@@ -3,7 +3,8 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, MappingType, type StandardEditorProps, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';

@@ -15,7 +15,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 
 import type TNil from '../../types/TNil';
 import DraggableManager from '../../utils/DraggableManager/DraggableManager';

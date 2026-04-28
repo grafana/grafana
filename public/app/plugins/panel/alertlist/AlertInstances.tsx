@@ -4,7 +4,8 @@ import pluralize from 'pluralize';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
-import { Button, clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
+import { Button, clearButtonStyles, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';

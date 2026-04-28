@@ -4,7 +4,8 @@ import { useTable, useSortBy, useExpanded, type Column, type Row, type UseExpand
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Tooltip } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';

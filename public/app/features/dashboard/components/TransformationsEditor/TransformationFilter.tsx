@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 import { type DataFrame, type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
-import { Field, Select, useStyles2 } from '@grafana/ui';
+import { Field, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 interface TransformationFilterProps {

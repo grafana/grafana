@@ -13,7 +13,8 @@ import {
   isTimeSeriesFrames,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';

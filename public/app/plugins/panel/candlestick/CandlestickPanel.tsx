@@ -13,10 +13,10 @@ import {
   TooltipPlugin2,
   type UPlotConfigBuilder,
   usePanelContext,
-  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';

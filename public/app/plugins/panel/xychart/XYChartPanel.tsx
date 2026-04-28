@@ -11,11 +11,10 @@ import {
   VizLayout,
   VizLegend,
   type VizLegendItem,
-  useStyles2,
-  useTheme2,
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { getDataLinks } from '../status-history/utils';
 

@@ -5,7 +5,8 @@ import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, MenuItem, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 

@@ -11,9 +11,9 @@ import {
   VizLayout,
   measureText,
   usePanelContext,
-  useTheme2,
 } from '@grafana/ui';
 import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 

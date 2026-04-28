@@ -5,7 +5,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { Icon, IconButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;

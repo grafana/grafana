@@ -5,7 +5,8 @@ import useMeasure from 'react-use/lib/useMeasure';
 
 import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';

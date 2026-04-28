@@ -4,7 +4,8 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Icon, Input, useStyles2 } from '@grafana/ui';
+import { Icon, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   searchContainer: css({

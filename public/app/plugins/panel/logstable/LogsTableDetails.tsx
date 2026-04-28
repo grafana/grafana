@@ -12,7 +12,8 @@ import {
   CoreApp,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, usePanelContext, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { LogLineDetailsComponent } from 'app/features/logs/components/panel/LogLineDetailsComponent';
 import { LogLineDetailsHeader } from 'app/features/logs/components/panel/LogLineDetailsHeader';
 import { LogListContextProvider } from 'app/features/logs/components/panel/LogListContext';

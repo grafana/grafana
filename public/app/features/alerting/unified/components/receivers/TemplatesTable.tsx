@@ -2,7 +2,8 @@ import { Fragment, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
-import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';

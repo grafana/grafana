@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import type { JSX } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ScrollContainer, Stack } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { isNotDelegatable } from 'app/core/utils/roles';
 import { type Role } from 'app/types/accessControl';
 

@@ -11,7 +11,8 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
+import { Select, Alert, Label, Combobox } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 import {
   discoveryResources,
   getAPIGroupDiscoveryList,

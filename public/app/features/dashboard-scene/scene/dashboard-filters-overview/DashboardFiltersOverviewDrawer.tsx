@@ -10,7 +10,8 @@ import {
   type SceneObjectState,
   sceneUtils,
 } from '@grafana/scenes';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';

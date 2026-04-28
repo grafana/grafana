@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, ClipboardButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type DetailTextProps = {
   id: string;

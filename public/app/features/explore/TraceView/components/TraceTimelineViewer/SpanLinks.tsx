@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
+import { MenuItem, Icon, ContextMenu } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type SpanLinkDef } from '../types/links';
 

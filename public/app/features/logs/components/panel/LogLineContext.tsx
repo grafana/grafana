@@ -28,7 +28,8 @@ import {
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 

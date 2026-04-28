@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, useStyles2, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
+import { IconButton, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type SqlExpressionQuery } from '../types';
 

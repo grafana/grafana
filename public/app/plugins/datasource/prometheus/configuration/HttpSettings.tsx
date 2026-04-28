@@ -1,7 +1,8 @@
 import { type DataSourceSettings } from '@grafana/data';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/plugin-ui';
 import { docsTip, overhaulStyles, type PromOptions } from '@grafana/prometheus';
-import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
+import { SecureSocksProxySettings } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 type Props = {
   options: DataSourceSettings<PromOptions>;

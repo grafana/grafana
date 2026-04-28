@@ -3,7 +3,8 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, FilterInput, Combobox, useStyles2, type ComboboxOption } from '@grafana/ui';
+import { Field, FilterInput, Combobox, type ComboboxOption } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type FileElement, type GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { InlineRenameInput } from './InlineRenameInput';
 import { type SavedSearch } from './savedSearchesSchema';

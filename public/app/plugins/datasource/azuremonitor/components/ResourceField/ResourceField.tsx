@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Modal, useStyles2, type IconName } from '@grafana/ui';
+import { Button, Icon, Modal, type IconName } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import type Datasource from '../../datasource';

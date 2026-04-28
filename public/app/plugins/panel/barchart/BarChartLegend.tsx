@@ -17,9 +17,9 @@ import {
   type VizLayoutLegendProps,
   VizLegend,
   type VizLegendItem,
-  useTheme2,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];

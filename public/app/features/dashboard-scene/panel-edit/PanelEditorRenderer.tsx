@@ -5,7 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, type VizPanel } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Spinner, ToolbarButton } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';

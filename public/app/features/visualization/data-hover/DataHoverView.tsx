@@ -9,7 +9,8 @@ import {
   type LinkModel,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 import { renderValue } from './renderValue';

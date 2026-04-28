@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 

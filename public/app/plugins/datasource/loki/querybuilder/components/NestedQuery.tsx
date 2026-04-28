@@ -3,7 +3,8 @@ import { memo } from 'react';
 
 import { type GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/plugin-ui';
-import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, IconButton, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type LokiDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';

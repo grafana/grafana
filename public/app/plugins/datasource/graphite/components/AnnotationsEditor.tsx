@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
-import { Box, InlineField, Input, TagsInput, useStyles2 } from '@grafana/ui';
+import { Box, InlineField, Input, TagsInput } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type GraphiteDatasource } from '../datasource';
 import { type GraphiteQuery, type GraphiteOptions } from '../types';

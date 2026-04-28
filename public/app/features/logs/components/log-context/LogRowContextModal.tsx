@@ -21,7 +21,8 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
-import { Button, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';

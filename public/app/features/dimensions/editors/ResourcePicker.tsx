@@ -4,18 +4,9 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import {
-  Button,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  LinkButton,
-  Popover,
-  PopoverController,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, LinkButton, Popover, PopoverController } from '@grafana/ui';
 import { closePopover } from '@grafana/ui/internal';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getPublicOrAbsoluteUrl } from '../resource';

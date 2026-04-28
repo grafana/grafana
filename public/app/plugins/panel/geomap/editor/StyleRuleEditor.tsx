@@ -12,8 +12,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
-import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { comparisonOperationOptions } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';

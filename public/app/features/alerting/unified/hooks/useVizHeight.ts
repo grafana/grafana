@@ -1,5 +1,5 @@
 import { type PanelData } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { STAT, TIMESERIES } from '../utils/constants';
 

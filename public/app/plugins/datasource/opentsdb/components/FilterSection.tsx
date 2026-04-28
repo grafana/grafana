@@ -10,10 +10,10 @@ import {
   InlineSwitch,
   Icon,
   clearButtonStyles,
-  useStyles2,
   AsyncSelect,
   Stack,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type OpenTsdbFilter, type OpenTsdbQuery } from '../types';
 

@@ -3,7 +3,8 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { Button, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';

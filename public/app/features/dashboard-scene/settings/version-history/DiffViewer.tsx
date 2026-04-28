@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import ReactDiffViewer, { type ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer-continued';
 import tinycolor from 'tinycolor2';
 
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 // NOTE: Wrap LazyDiffViewer with <Suspense>
 export const DiffViewer = ({ oldValue, newValue, ...diffProps }: ReactDiffViewerProps) => {

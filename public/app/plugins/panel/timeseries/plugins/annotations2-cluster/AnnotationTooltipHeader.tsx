@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AnnotationAlertState } from './AnnotationAlertState';
 import { AnnotationAvatar } from './AnnotationAvatar';

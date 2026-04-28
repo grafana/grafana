@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { type CatalogPlugin, PluginIconName } from '../types';

@@ -13,7 +13,8 @@ import {
   type SceneObjectUrlValues,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Container, ScrollContainer, TabContent, TabsBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';

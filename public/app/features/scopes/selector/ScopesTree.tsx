@@ -3,7 +3,7 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, type Scope } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';

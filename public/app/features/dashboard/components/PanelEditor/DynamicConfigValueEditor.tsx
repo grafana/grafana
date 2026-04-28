@@ -10,7 +10,8 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { Counter, Field, Stack, IconButton, Label } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 

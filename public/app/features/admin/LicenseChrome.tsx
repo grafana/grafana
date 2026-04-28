@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 import headerDarkSvg from 'img/licensing/header_dark.svg';
 import headerLightSvg from 'img/licensing/header_light.svg';

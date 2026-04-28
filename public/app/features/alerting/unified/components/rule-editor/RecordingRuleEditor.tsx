@@ -6,7 +6,7 @@ import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@graf
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';

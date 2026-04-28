@@ -4,7 +4,8 @@ import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@gr
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, type PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, useTheme2 } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { HttpSettings } from './HttpSettings';
 

@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, Space, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';

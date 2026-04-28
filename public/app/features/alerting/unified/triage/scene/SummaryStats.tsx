@@ -4,7 +4,8 @@ import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { Box, ErrorBoundaryAlert, Icon, Text, useStyles2 } from '@grafana/ui';
+import { Box, ErrorBoundaryAlert, Icon, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { FIELD_NAMES } from '../constants';

@@ -19,13 +19,12 @@ import {
   InlineSwitch,
   ModalsController,
   RadioButtonGroup,
-  stylesFactory,
   type Themeable2,
   ToolbarButton,
   ToolbarButtonRow,
-  withTheme2,
   Stack,
 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';

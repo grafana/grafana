@@ -4,7 +4,8 @@ import { useCallback } from 'react';
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, InlineLabel, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, InlineLabel, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { QueryEditorExpressionType } from '../../expressions';
 import { type SQLExpression, type SQLQuery } from '../../types';

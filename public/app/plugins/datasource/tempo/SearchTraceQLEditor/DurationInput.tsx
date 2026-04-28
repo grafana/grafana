@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { Select, Stack, Input, useStyles2 } from '@grafana/ui';
+import { Select, Stack, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TraceqlFilter } from '../dataquery.gen';
 

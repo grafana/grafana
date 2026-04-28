@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type LogGroup } from '../../../dataquery.gen';
 import getStyles from '../../styles';

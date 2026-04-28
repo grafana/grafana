@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { memo, type ReactElement, useCallback, useMemo } from 'react';
 
 import { FeatureState, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, FeatureBadge, Icon, Menu, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
 const EXPRESSION_ICON_MAP = {

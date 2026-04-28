@@ -18,7 +18,8 @@ import {
   usePluginComponents,
   renderLimitedComponents,
 } from '@grafana/runtime';
-import { type AlertVariant, Alert, useTheme2, Link, useStyles2, Spinner } from '@grafana/ui';
+import { type AlertVariant, Alert, Link, Spinner } from '@grafana/ui';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';

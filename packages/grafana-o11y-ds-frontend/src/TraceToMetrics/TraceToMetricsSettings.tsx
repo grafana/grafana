@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';

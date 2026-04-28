@@ -3,17 +3,8 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2, dateMath } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  CollapsableSection,
-  Divider,
-  Icon,
-  Link,
-  LinkButton,
-  LoadingPlaceholder,
-  Stack,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, CollapsableSection, Divider, Icon, Link, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';

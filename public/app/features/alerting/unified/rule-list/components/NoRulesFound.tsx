@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 // @TODO I don't like applying the margins to this component here, ideally the parent component should be layouting this.
 export const NoRulesFound = () => {

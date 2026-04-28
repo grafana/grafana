@@ -3,7 +3,8 @@ import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, type Monaco, useStyles2, type monacoTypes } from '@grafana/ui';
+import { CodeEditor, type Monaco, type monacoTypes } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type ParcaDataSource } from '../datasource';
 import { languageDefinition } from '../lang';

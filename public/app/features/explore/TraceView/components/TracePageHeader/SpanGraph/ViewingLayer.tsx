@@ -18,7 +18,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { withTheme2, stylesFactory, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { withTheme2, stylesFactory } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import {

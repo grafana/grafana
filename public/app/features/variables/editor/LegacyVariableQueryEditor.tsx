@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TextArea, useStyles2 } from '@grafana/ui';
+import { TextArea } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getStyles } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { type VariableQueryEditorProps } from '../types';

@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
+import { Input, Label, InlineField, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';

@@ -3,7 +3,8 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
+import { Button, SegmentAsync } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type GraphiteTag } from '../graphite_query';
 import { actions } from '../state/actions';

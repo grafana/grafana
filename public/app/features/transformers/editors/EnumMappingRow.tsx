@@ -4,7 +4,8 @@ import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
+import { Icon, Input, IconButton, FieldValidationMessage, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type EnumMappingRowProps = {
   transformIndex: number;

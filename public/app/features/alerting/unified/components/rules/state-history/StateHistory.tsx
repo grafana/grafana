@@ -5,7 +5,8 @@ import * as React from 'react';
 
 import { type AlertState, type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type StateHistoryItem, type StateHistoryItemData } from 'app/types/unified-alerting';
 import { type GrafanaAlertStateWithReason, type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

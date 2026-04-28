@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { CONTENT_SIDE_BAR } from '../../constants';
 import { CardEditorRenderer } from '../CardEditorRenderer';

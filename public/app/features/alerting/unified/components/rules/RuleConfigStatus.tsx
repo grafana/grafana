@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';

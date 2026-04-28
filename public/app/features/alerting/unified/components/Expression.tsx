@@ -5,8 +5,9 @@ import { Editor } from 'slate-react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { promqlGrammar } from '@grafana/prometheus';
-import { makeValue, useStyles2 } from '@grafana/ui';
+import { makeValue } from '@grafana/ui';
 import { SlatePrism } from '@grafana/ui/slate-plugins';
+import { useStyles2 } from '@grafana/ui/themes';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { type RulesSource } from 'app/types/unified-alerting';
 

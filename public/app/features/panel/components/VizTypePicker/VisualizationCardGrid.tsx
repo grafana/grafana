@@ -9,7 +9,8 @@ import {
   type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';

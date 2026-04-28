@@ -5,7 +5,8 @@ import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 

@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Card, LinkButton, Stack, Tag } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';

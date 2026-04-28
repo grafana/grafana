@@ -6,7 +6,8 @@ import { type TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
+import { Button, Stack, EmptyState, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { type UsagesToNetwork, type VariableUsageTree } from '../inspect/types';

@@ -10,7 +10,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, type PopoverContent, Icon, useStyles2 } from '@grafana/ui';
+import { Tooltip, type PopoverContent, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 

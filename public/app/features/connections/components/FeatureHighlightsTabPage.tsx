@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 import { Page } from 'app/core/components/Page/Page';
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';

@@ -11,7 +11,8 @@ import {
   type ValueMappingResult,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';

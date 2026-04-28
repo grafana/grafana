@@ -21,12 +21,12 @@ import {
   TextLink,
   SecretInput,
   Select,
-  useStyles2,
   SecureSocksProxySettings,
   Divider,
   Field,
   Switch,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {

@@ -18,7 +18,7 @@ import React from 'react';
 import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { type TimeZone } from '@grafana/schema';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 
 import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type TraceSpanReference } from '../types/trace';

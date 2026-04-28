@@ -3,7 +3,8 @@ import { isString } from 'lodash';
 import React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { MetaText } from '../../components/MetaText';
 import { type GenericGroupedRow } from '../types';

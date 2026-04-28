@@ -7,7 +7,7 @@ import { AssistantPromptCard, createAssistantContextItem } from '@grafana/assist
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type PopoverTarget } from './AssistantPopoverContext';
 import { getAnimatedBorderClass } from './DashboardAssistantViewMode';

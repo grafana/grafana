@@ -11,7 +11,6 @@ import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMess
 import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
 import { Switch } from './components/Forms/Legacy/Switch/Switch';
 import { SecretFormField } from './components/SecretFormField/SecretFormField';
-import * as styleMixins from './themes/mixins';
 import * as DOMUtil from './utils/dom';
 import * as floatingUtils from './utils/floating';
 import * as ReactUtils from './utils/reactUtils';
@@ -369,6 +368,7 @@ export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 export * from './graveyard';
 export * from './options';
 export * from './slate-plugins';
+export * from './themes';
 
 export {
   ElementSelectionContext,
@@ -378,26 +378,6 @@ export {
   type ElementSelectionOnSelectOptions,
   type UseElementSelectionResult,
 } from './components/ElementSelectionContext/ElementSelectionContext';
-
-export type { Themeable, Themeable2 } from './types/theme';
-export type { ValidationRule, ValidationEvents } from './types/input';
-export type {
-  SearchFunction,
-  CompletionItemGroup,
-  HighlightPart,
-  CompletionItem,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-} from './types/completion';
-export { CompletionItemKind } from './types/completion';
-export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
-export type { IconName, IconType, IconSize } from './types/icon';
-export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTypeIconName } from './types/icon';
-export type { ActionMeta } from './types/select';
-export type { ComponentSize } from './types/size';
-export type { Column } from './types/interactiveTable';
-export type { CellProps, SortByFn } from 'react-table';
 
 export {
   DEFAULT_ANNOTATION_COLOR,
@@ -428,22 +408,6 @@ export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
 
 export { DOMUtil, ReactUtils, floatingUtils };
-
-export { ThemeContext } from '@grafana/data';
-export {
-  withTheme,
-  withTheme2,
-  useTheme,
-  useTheme2,
-  useStyles,
-  useStyles2,
-  mockThemeContext,
-} from './themes/ThemeContext';
-export { getTheme, mockTheme } from './themes/getTheme';
-export { stylesFactory } from './themes/stylesFactory';
-export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
-
-export { styleMixins };
 
 export {
   Sidebar,

@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { type CatalogPluginInsights } from '../types';
 

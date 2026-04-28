@@ -11,7 +11,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Spinner, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';

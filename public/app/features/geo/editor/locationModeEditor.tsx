@@ -5,7 +5,8 @@ import { type StandardEditorProps, type DataFrame, type GrafanaTheme2 } from '@g
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo, useState, useEffect } from 'react';
 
 import { type StandardEditorProps, type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
-import { Alert, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 

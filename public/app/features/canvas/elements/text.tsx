@@ -6,7 +6,8 @@ import { of } from 'rxjs';
 
 import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Input, usePanelContext } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';

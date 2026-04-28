@@ -5,7 +5,8 @@ import { useFormContext } from 'react-hook-form';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Input, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Field, Input, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type RuleFormValues } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';

@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { type Themeable2, withTheme2 } from '@grafana/ui';
+import type { Themeable2 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';

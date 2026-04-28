@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { FeatureBadge, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { FeatureBadge, Icon, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';

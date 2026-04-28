@@ -6,7 +6,8 @@ import { type FormEvent, useEffect, useReducer } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { type ClassicCondition, type ExpressionQuery, thresholdFunctions } from '../types';

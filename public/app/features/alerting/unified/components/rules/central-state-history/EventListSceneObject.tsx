@@ -16,7 +16,8 @@ import {
   type VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, withErrorBoundary } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import {
   type GrafanaAlertStateWithReason,
   isAlertStateWithReason,

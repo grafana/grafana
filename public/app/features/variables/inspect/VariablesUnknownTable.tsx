@@ -5,7 +5,8 @@ import { useAsync } from 'react-use';
 import { type BaseVariableModel, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 

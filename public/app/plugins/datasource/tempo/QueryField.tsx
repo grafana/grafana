@@ -13,8 +13,8 @@ import {
   Modal,
   RadioButtonGroup,
   type Themeable2,
-  withTheme2,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';

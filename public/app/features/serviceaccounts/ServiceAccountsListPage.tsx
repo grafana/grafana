@@ -13,9 +13,9 @@ import {
   EmptyState,
   Box,
   Stack,
-  useStyles2,
   TextLink,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';

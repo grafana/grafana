@@ -16,8 +16,8 @@ import {
   TextLink,
   Label,
   Stack,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Form } from 'app/core/components/Form/Form';
 
 import { validateDashboardJson, validateGcomDashboard } from '../utils/validation';

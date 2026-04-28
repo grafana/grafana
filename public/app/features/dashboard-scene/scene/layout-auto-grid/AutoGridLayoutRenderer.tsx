@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getTestIdForLayout } from '../../utils/test-utils';

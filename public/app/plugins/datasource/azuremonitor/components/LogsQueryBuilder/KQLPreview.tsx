@@ -5,7 +5,8 @@ import React, { useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import 'prismjs/components/prism-kusto';
 import 'prismjs/themes/prism-tomorrow.min.css';

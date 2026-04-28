@@ -11,7 +11,8 @@ import {
   type GroupByVariable,
   type SceneQueryRunner,
 } from '@grafana/scenes';
-import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
+import { Tooltip, measureText } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
 

@@ -3,16 +3,8 @@ import { memo, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Checkbox,
-  type ComboboxOption,
-  getInputStyles,
-  Icon,
-  MultiSelect,
-  Select,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Checkbox, type ComboboxOption, getInputStyles, Icon, MultiSelect, Select, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface GroupHeaderProps {
   group: string;

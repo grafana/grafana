@@ -6,7 +6,8 @@ import { Observable } from 'rxjs';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';

@@ -11,7 +11,8 @@ import {
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';

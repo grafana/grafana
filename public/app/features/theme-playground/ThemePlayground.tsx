@@ -22,8 +22,9 @@ import zen from '@grafana/data/themes/definitions/zen.json';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
+import { CodeEditor, Combobox, Field, Stack } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { createErrorNotification } from '../../core/copy/appNotification';

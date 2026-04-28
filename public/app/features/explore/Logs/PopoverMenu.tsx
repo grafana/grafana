@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import { type GrafanaTheme2, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Menu, useStyles2 } from '@grafana/ui';
+import { Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { copyText } from '../../logs/utils';
 

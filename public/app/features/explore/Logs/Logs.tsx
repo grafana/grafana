@@ -46,8 +46,8 @@ import {
   RadioButtonGroup,
   SeriesVisibilityChangeMode,
   type Themeable2,
-  withTheme2,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';

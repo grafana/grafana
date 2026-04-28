@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, useStyles2, Spinner, Stack, Text } from '@grafana/ui';
+import { IconButton, Spinner, Stack, Text } from '@grafana/ui';
 import { ConfirmContent, type ConfirmContentProps } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export function ShareDrawerConfirmAction({
   onConfirm,

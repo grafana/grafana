@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 
 import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
+import { IconButton, Input, Stack, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

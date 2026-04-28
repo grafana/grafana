@@ -3,7 +3,8 @@ import { capitalize, filter, uniqBy } from 'lodash';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2, type QueryResultMetaNotice } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
 import { QueryEditorType } from '../../constants';

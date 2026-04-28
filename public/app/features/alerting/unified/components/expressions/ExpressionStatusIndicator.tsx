@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Badge, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { Badge, clearButtonStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type RuleFormValues } from '../../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../../utils/rules';

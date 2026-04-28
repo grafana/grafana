@@ -18,8 +18,8 @@ import {
   RenderUserContentAsHTML,
   Spinner,
   Tooltip,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   type LogContextProvider,

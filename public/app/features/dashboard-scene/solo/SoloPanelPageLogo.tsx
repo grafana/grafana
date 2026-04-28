@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
 import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 

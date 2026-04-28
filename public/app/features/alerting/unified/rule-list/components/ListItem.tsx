@@ -3,7 +3,8 @@ import React, { type AriaAttributes, type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface ListItemProps extends AriaAttributes {
   icon?: ReactNode;

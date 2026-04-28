@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { type GrafanaTheme2, locationUtil, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, Input, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { Page } from '../../../core/components/Page/Page';
 import { TeamRolePicker } from '../../../core/components/RolePicker/TeamRolePicker';

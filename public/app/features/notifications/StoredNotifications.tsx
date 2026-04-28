@@ -5,7 +5,8 @@ import { useEffectOnce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Checkbox, EmptyState, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, EmptyState } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
 import {
   clearAllNotifications,

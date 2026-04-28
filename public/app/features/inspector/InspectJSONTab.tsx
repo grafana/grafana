@@ -8,7 +8,8 @@ import { AppEvents, type PanelData, type SelectableValue, LoadingState } from '@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Field, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { appEvents } from 'app/core/app_events';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

@@ -18,7 +18,8 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
-import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
 import { LogRows } from '../../logs/components/LogRows';

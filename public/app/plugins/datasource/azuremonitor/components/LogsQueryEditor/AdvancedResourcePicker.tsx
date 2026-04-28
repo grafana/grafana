@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
+import { Icon, Input, Tooltip, Label, Button, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface ResourcePickerProps<T> {
   resources: T[];

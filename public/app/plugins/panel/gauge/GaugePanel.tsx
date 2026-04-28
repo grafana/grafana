@@ -11,8 +11,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenu, Stack, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
 import { type DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Options } from './panelcfg.gen';
 

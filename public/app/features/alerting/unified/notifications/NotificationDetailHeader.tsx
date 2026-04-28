@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { StateTag } from '../components/StateTag';
 

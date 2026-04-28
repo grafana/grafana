@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Alert, type AlertVariant, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, type AlertVariant, Icon, Link, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface StepResultAlertProps {
   severity: AlertVariant;

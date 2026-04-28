@@ -4,8 +4,9 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
+import { Icon, getInputStyles, Text } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { FolderPickerSkeleton } from './Skeleton';
 

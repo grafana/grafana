@@ -11,7 +11,8 @@ import {
   type ValueMapping,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
+import { Modal, ValuePicker, Button } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 

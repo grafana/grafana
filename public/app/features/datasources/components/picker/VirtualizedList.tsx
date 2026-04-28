@@ -6,7 +6,7 @@ import type { Observable } from 'rxjs';
 
 import type { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import type { FavoriteDatasources } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useKeyboardNavigatableList } from '../../hooks';
 

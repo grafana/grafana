@@ -3,7 +3,7 @@ import { PureComponent } from 'react';
 
 import { type MetadataInspectorProps, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 
 import { type GraphiteDatasource } from '../datasource';
 import { getRollupNotice, getRuntimeConsolidationNotice, parseSchemaRetentions } from '../meta';

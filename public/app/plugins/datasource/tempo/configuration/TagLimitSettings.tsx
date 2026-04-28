@@ -7,7 +7,8 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
-import { InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface TagLimitOptions extends DataSourceJsonData {
   tagLimit?: number;

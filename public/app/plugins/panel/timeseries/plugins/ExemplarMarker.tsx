@@ -6,8 +6,9 @@ import * as React from 'react';
 import { type DataFrame, type Field, formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type TimeZone } from '@grafana/schema';
-import { floatingUtils, Portal, type UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { floatingUtils, Portal, type UPlotConfigBuilder } from '@grafana/ui';
 import { type VizTooltipItem } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui/themes';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 

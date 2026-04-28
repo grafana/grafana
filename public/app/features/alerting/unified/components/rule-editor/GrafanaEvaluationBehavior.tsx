@@ -21,8 +21,8 @@ import {
   Switch,
   Text,
   Tooltip,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { evaluateEveryValidationOptions } from '../../group-details/validation';

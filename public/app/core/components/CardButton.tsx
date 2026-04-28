@@ -3,7 +3,8 @@ import { type HTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Icon, type IconName, useStyles2 } from '@grafana/ui';
+import { Icon, type IconName } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props extends HTMLAttributes<HTMLButtonElement> {
   icon: IconName;

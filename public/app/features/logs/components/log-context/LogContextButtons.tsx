@@ -5,7 +5,8 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, InlineSwitch, useStyles2 } from '@grafana/ui';
+import { Button, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type Props = {
   wrapLines?: boolean;

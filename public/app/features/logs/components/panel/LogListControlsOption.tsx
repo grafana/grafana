@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface LogControlOptionProps {
   label?: string;

@@ -3,7 +3,8 @@ import * as React from 'react';
 
 import { CoreApp, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
+import { RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import type { HeatmapQueryType } from '../dataquery.gen';
 import { type Query } from '../types';

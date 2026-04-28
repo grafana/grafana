@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Field, Input, Button, Legend, Container, useStyles2, LinkButton, Stack } from '@grafana/ui';
+import { Field, Input, Button, Legend, Container, LinkButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 
 interface EmailDTO {

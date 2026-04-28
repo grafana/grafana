@@ -5,7 +5,8 @@ import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'rea
 import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 

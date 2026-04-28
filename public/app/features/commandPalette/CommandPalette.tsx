@@ -10,7 +10,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';

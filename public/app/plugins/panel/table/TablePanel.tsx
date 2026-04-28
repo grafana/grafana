@@ -14,8 +14,9 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, usePanelContext } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
+import { useTheme2 } from '@grafana/ui/themes';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
 import { getActions } from 'app/features/actions/utils';

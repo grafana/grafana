@@ -3,7 +3,8 @@ import { type FormEvent } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { type ClassicCondition, type ReducerType } from '../types';

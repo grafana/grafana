@@ -5,7 +5,8 @@ import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { getDragStyles, IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';

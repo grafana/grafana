@@ -4,7 +4,8 @@ import { useToggle } from 'react-use';
 
 import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Collapse, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Collapse, Icon, Tooltip, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type QueryStats } from '../loki/types';
 

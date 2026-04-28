@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import type { GrafanaTheme2 } from '@grafana/data';
-import { getInputStyles, useStyles2 } from '@grafana/ui';
+import { getInputStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 // This component is used as a fallback for codesplitting, so aim to keep
 // the bundle size of it as small as possible :)

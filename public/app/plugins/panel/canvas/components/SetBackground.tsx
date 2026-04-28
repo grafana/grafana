@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
-import { Portal, useTheme2 } from '@grafana/ui';
+import { Portal } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 import { ResourcePickerPopover } from 'app/features/dimensions/editors/ResourcePickerPopover';
 import { MediaType, ResourceFolderName } from 'app/features/dimensions/types';

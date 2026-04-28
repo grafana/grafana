@@ -12,7 +12,8 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { AssistantPopoverContext } from './AssistantPopoverContext';
 

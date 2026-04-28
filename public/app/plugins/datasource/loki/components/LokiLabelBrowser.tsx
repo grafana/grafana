@@ -12,11 +12,11 @@ import {
   Input,
   Label,
   LoadingPlaceholder,
-  withTheme2,
   BrowserLabel as LokiLabel,
   fuzzyMatch,
   Stack,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 
 import type LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';

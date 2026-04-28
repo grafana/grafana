@@ -3,7 +3,8 @@ import { type PropsWithChildren, useId } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Field, Select, useStyles2 } from '@grafana/ui';
+import { Field, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface VariableSelectFieldProps<T> {
   name: string;

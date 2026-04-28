@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 
 import { type DataLink, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
+import { Dropdown, Icon, Menu, ToolbarButton, PanelChrome } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   panelLinks: DataLink[];

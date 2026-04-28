@@ -17,7 +17,8 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Counter, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import type TNil from '../../types/TNil';

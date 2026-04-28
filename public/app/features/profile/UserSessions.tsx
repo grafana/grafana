@@ -3,7 +3,8 @@ import { memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Button, Icon, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { formatDate } from 'app/core/internationalization/dates';
 import { type UserSession } from 'app/types/user';

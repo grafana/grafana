@@ -1,4 +1,5 @@
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { getAlertStateColor, QueryEditorType } from '../../../constants';
 import { useQueryEditorUIContext, useQueryEditorTypeConfig } from '../../QueryEditorContext';

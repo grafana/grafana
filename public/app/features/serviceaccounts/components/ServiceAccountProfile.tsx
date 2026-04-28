@@ -3,7 +3,8 @@ import { useEffect, useState, type JSX } from 'react';
 
 import { type GrafanaTheme2, type OrgRole, type TimeZone, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Label, TextLink, useStyles2 } from '@grafana/ui';
+import { Label, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, type Role } from 'app/types/accessControl';

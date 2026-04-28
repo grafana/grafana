@@ -4,7 +4,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Drawer, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';

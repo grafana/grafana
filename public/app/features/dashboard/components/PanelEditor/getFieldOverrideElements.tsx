@@ -20,10 +20,10 @@ import {
   getUniqueMatcherScopes,
   MatcherScopeSelector,
   buildScopeOptions,
-  useStyles2,
   ValuePicker,
   useFieldMatchersOptions,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';

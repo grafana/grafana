@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Box, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { NotificationsScene } from '../../../notifications/NotificationsScene';

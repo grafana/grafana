@@ -3,7 +3,8 @@ import { memo, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
+import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, Stack, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, type OrgSelectItem } from 'app/core/components/Select/OrgPicker';

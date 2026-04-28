@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TimeRangeLabel } from '../TimeRangeLabel';

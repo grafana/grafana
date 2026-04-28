@@ -23,8 +23,8 @@ import {
   type PopoverContent,
   type Themeable2,
   Tooltip,
-  withTheme2,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 import { getLabelTypeFromRow } from '../utils';

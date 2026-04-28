@@ -5,7 +5,8 @@ import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, type ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, type ComboboxOption, Field, InlineLabel, Input, Space, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';

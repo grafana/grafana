@@ -15,16 +15,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  ConfirmModal,
-  Container,
-  type Themeable,
-  withTheme,
-  IconButton,
-  ButtonGroup,
-  ScrollContainer,
-} from '@grafana/ui';
+import { Button, ConfirmModal, Container, type Themeable, IconButton, ButtonGroup, ScrollContainer } from '@grafana/ui';
+import { withTheme } from '@grafana/ui/themes';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { type PanelModel } from '../../state/PanelModel';

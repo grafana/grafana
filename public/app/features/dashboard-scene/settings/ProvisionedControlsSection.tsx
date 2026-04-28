@@ -6,7 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 type Column = {
   i18nKey: string;

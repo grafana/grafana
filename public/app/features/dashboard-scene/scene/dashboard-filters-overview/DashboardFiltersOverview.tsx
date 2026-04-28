@@ -6,7 +6,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
 import { useFiltersOverviewState } from './useFiltersOverviewState';

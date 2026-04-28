@@ -7,7 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
-import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, IconButton, Tooltip } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
 import { type UsagesToNetwork, type VariableUsageTree, getVariableUsages } from '../../variables/utils';

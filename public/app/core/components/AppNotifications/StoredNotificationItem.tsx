@@ -4,7 +4,8 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Card, Checkbox, useTheme2 } from '@grafana/ui';
+import { Card, Checkbox } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 

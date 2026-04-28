@@ -8,18 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import {
-  Button,
-  Field,
-  FilterInput,
-  ScrollContainer,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';

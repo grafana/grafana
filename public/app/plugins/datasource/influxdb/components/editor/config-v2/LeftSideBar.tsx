@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { Box, Icon, LinkButton, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Icon, LinkButton, Space, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { CONFIG_SECTION_HEADERS, CONFIG_SECTION_HEADERS_WITH_PDC } from './constants';
 

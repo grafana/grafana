@@ -4,7 +4,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type DataFrame, type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 interface Props {
   dataFrames: DataFrame[];

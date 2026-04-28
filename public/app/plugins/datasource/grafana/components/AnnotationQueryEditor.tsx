@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
+import { Field, FieldSet, Select, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { annotationServer } from 'app/features/annotations/api';

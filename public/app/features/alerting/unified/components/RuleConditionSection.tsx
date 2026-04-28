@@ -4,17 +4,8 @@ import { useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, ReducerID, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Combobox,
-  type ComboboxOption,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Combobox, type ComboboxOption, Icon, InlineField, InlineFieldRow, Input, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ToLabel } from 'app/features/expressions/components/ToLabel';

@@ -8,7 +8,8 @@ import { lastValueFrom } from 'rxjs';
 import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Text, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { ImagePreview } from '../components/ImagePreview';

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { isNodeSelectable } from './scopesTreeUtils';

@@ -5,7 +5,8 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { type FieldConfigSource, FieldMatcherID, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
-import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { TableCellDisplayMode } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType } from '../../types/rule-form';

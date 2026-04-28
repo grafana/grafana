@@ -13,13 +13,12 @@ import {
   InlineField,
   InlineFieldRow,
   RadioButtonGroup,
-  useTheme2,
   QueryField,
-  useStyles2,
   Modal,
   Stack,
   Button,
 } from '@grafana/ui';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 
 import { type ZipkinDatasource } from './datasource';
 import { type ZipkinQuery, type ZipkinQueryType, type ZipkinSpan } from './types';

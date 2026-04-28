@@ -20,7 +20,8 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/ui';
+import { Alert, JSONFormatter, CustomScrollbar } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/themes';
 
 import { TablePanel } from '../table/TablePanel';
 

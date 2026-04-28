@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type QueryEditorProps, textUtil } from '@grafana/data';
-import { useStyles2, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import type OpenTsDatasource from '../datasource';
 import { type OpenTsdbOptions, type OpenTsdbQuery } from '../types';

@@ -19,7 +19,8 @@ import * as React from 'react';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
-import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../Theme';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';

@@ -14,7 +14,8 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { type PopoverContent, useTheme2 } from '@grafana/ui';
+import type { PopoverContent } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';

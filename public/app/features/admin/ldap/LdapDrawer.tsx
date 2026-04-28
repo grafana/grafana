@@ -5,7 +5,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
-  useStyles2,
   Button,
   CollapsableSection,
   Divider,
@@ -23,6 +22,7 @@ import {
   RadioButtonGroup,
   SecretInput,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type MapKeyCertConfigured, type LdapPayload } from 'app/types/ldap';
 
 import { GroupMappingComponent } from './LdapGroupMapping';

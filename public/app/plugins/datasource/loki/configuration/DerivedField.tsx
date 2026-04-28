@@ -5,7 +5,8 @@ import { usePrevious } from 'react-use';
 
 import { type GrafanaTheme2, type DataSourceInstanceSettings, type VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
+import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, Select, Switch } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type DerivedFieldConfig } from '../types';
 

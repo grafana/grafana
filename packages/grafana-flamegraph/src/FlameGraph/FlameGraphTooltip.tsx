@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type DisplayValue, getValueFormat, type GrafanaTheme2, type ValueFormatter } from '@grafana/data';
-import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { InteractiveTable, Portal, VizTooltipContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type CollapseConfig, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 

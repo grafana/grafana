@@ -4,7 +4,8 @@ import tinycolor2 from 'tinycolor2';
 import { type MergeExclusive } from 'type-fest';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { Icon, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, getTagColorsFromName } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type LabelSize = 'md' | 'sm' | 'xs';
 

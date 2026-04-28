@@ -11,7 +11,8 @@ import {
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { type PopoverContent, useTheme2 } from '@grafana/ui';
+import type { PopoverContent } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { escapeUnescapedString } from '../utils';
 

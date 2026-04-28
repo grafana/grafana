@@ -10,7 +10,8 @@ import {
   textUtil,
   type InterpolateFunction,
 } from '@grafana/data';
-import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { CodeEditor, ScrollContainer } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, type Options, TextMode } from './panelcfg.gen';

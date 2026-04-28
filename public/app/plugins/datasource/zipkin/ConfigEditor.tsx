@@ -11,7 +11,8 @@ import {
   convertLegacyAuthProps,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2, Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
+import { Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 

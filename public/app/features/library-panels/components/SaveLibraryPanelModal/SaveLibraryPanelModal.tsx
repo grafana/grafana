@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getConnectedDashboards } from '../../state/api';
 import { getModalStyles } from '../../styles';

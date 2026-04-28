@@ -17,7 +17,8 @@ import * as React from 'react';
 
 import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Counter, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import { type TraceSpanReference } from '../../types/trace';

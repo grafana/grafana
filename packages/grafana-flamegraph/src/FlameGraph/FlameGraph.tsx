@@ -20,7 +20,8 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Icon, RadioButtonGroup } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { ColorSchemeButton } from '../ColorSchemeButton';
 import { alignOptions } from '../FlameGraphHeader';

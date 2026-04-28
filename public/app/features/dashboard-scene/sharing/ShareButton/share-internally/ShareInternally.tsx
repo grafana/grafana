@@ -4,7 +4,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, ClipboardButton, Divider, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import ShareInternallyConfiguration from '../../ShareInternallyConfiguration';
 import { ShareLinkTab, type ShareLinkTabState } from '../../ShareLinkTab';

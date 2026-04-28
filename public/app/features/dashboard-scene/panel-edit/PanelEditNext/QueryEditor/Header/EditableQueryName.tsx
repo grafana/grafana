@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+import { Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { trackRenameInitiated } from '../../tracking';
 

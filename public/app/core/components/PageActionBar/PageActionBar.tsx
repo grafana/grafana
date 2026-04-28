@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, FilterInput, InlineField, Checkbox, useStyles2 } from '@grafana/ui';
+import { LinkButton, FilterInput, InlineField, Checkbox } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { SortPicker } from '../Select/SortPicker';
 

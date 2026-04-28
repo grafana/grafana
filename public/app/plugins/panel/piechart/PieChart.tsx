@@ -19,15 +19,9 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type SortOrder, type VizTooltipOptions } from '@grafana/schema';
-import {
-  useTheme2,
-  useStyles2,
-  type SeriesTableRowProps,
-  DataLinksContextMenu,
-  SeriesTable,
-  usePanelContext,
-} from '@grafana/ui';
+import { type SeriesTableRowProps, DataLinksContextMenu, SeriesTable, usePanelContext } from '@grafana/ui';
 import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
+import { useTheme2, useStyles2 } from '@grafana/ui/themes';
 
 import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';

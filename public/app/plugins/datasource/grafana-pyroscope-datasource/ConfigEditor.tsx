@@ -11,7 +11,8 @@ import {
   convertLegacyAuthProps,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Divider, Field, Input, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
+import { Divider, Field, Input, SecureSocksProxySettings, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type PyroscopeDataSourceOptions } from './types';
 

@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';
+import { Spinner, TimeRangeLabel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export interface Props {
   timeRange: TimeRange;

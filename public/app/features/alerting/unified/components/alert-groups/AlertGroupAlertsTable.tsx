@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';

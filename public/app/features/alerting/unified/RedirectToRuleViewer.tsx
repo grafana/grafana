@@ -7,7 +7,8 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Card, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
 import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';

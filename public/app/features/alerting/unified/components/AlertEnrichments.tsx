@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { createRelativeUrl, isRelativeUrl } from '../utils/url';
 

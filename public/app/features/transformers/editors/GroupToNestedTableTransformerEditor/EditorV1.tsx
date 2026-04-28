@@ -9,7 +9,8 @@ import {
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { Alert, Field, InlineField, Select, Stack, StatsPicker, Switch, useTheme2 } from '@grafana/ui';
+import { Alert, Field, InlineField, Select, Stack, StatsPicker, Switch } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { useAllFieldNamesFromDataFrames } from '../../utils';
 

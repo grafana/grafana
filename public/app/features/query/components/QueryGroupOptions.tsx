@@ -3,7 +3,8 @@ import React, { useState, type ChangeEvent, type FocusEvent, useCallback } from 
 
 import { rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
+import { Input, InlineSwitch, InlineLabel } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { type QueryGroupOptions } from 'app/types/query';
 

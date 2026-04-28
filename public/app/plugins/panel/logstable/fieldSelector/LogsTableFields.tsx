@@ -3,7 +3,8 @@ import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, store } from '@grafana/data';
-import { getDragStyles, useStyles2 } from '@grafana/ui';
+import { getDragStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import {

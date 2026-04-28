@@ -6,7 +6,7 @@ import {
   FieldColorModeId,
   FieldType,
 } from '@grafana/data';
-import { getTheme } from '@grafana/ui';
+import { getTheme } from '@grafana/ui/themes';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 

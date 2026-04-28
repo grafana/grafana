@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import { getRgbColorByKey } from '../../utils/color-generator';

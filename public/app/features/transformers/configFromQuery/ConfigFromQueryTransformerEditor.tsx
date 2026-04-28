@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { FieldMatcherID, type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 

@@ -14,7 +14,8 @@ import { Trans, t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkButton, Dropdown, Menu } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';

@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { type DataFrame, type Field, type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
+import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Config } from './layout';
 import { type EdgeDatumLayout, type NodeDatum } from './types';

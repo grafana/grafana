@@ -19,8 +19,8 @@ import {
   Text,
   TextArea,
   TextLink,
-  useStyles2,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type RuleFormValues } from '../types/rule-form';

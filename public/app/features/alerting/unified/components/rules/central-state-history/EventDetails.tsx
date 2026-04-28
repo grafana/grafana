@@ -4,7 +4,8 @@ import { useEffect, useMemo } from 'react';
 
 import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 

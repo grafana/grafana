@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { t } from '@grafana/i18n';
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Modal } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 

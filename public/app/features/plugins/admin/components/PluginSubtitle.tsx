@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { Fragment, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Alert, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';

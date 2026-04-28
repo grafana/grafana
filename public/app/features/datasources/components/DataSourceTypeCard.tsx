@@ -3,7 +3,8 @@ import { css, cx } from '@emotion/css';
 import { type DataSourcePluginMeta, type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { Card, LinkButton, PluginSignatureBadge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 export type Props = {
   dataSourcePlugin: DataSourcePluginMeta;

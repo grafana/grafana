@@ -13,7 +13,8 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
+import { Select, Tooltip, Icon, Label } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { getAnnotationEventNames, type AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { type AnnotationQueryResponse } from '../types';

@@ -3,7 +3,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui/themes';
 
 import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
 import { QueryEditorType } from './constants';

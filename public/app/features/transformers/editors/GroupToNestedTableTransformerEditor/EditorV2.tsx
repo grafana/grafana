@@ -24,8 +24,8 @@ import {
   Stack,
   StatsPicker,
   Switch,
-  useTheme2,
 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { appendNewRule, DEFAULT_MATCHER_ID, deleteRuleByIndex, getRuleKey, updateRuleByIndex } from './utils';
 

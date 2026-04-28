@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { FALLBACK_TRACE_NAME } from '../constants';
 import type TNil from '../types/TNil';

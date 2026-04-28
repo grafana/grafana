@@ -2,12 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
-import {
-  CodeEditor,
-  useStyles2,
-  type CodeEditorSuggestionItem,
-  variableSuggestionToCodeEditorSuggestion,
-} from '@grafana/ui';
+import { CodeEditor, type CodeEditorSuggestionItem, variableSuggestionToCodeEditorSuggestion } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type Options, TextMode } from './panelcfg.gen';
 

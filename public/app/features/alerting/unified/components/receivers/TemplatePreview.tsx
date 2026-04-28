@@ -6,7 +6,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, CodeEditor } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import {
   type TemplatePreviewErrors,

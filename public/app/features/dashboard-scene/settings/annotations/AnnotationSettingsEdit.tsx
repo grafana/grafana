@@ -24,12 +24,12 @@ import {
   Input,
   MultiSelect,
   Select,
-  useStyles2,
   Stack,
   Alert,
   type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';

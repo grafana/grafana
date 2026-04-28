@@ -3,7 +3,8 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, ModalsController, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 

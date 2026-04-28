@@ -3,7 +3,8 @@ import { uniq } from 'lodash';
 
 import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';

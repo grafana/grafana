@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react';
 
 import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Select, useStyles2 } from '@grafana/ui';
+import { Icon, Select } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type UserOrg } from 'app/types/user';
 

@@ -24,7 +24,8 @@ import {
   type VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';

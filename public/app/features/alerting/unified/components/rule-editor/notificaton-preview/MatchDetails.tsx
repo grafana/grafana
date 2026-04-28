@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { AlertLabel, type LabelMatchDetails } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Box, Text, useStyles2 } from '@grafana/ui';
+import { Box, Text } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { MatcherBadge } from '../../notification-policies/Matchers';

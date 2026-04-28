@@ -12,8 +12,8 @@ import {
   type MonacoEditor,
   Segment,
   type Themeable2,
-  withTheme2,
 } from '@grafana/ui';
+import { withTheme2 } from '@grafana/ui/themes';
 
 import type InfluxDatasource from '../../../../datasource';
 import { type InfluxQuery } from '../../../../types';

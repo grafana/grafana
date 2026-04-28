@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Spinner, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

@@ -4,7 +4,8 @@ import { Fragment, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
-import { Button, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { FiringCount, PendingCount } from '../BadgeCounts';
 import { type LabelStats, type LabelValueCount } from '../useLabelsBreakdown';

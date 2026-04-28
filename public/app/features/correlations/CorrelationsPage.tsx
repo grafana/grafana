@@ -17,7 +17,6 @@ import {
   Button,
   DeleteButton,
   LoadingPlaceholder,
-  useStyles2,
   Alert,
   InteractiveTable,
   type Column,
@@ -26,6 +25,7 @@ import {
   Pagination,
   TextLink,
 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { contextSrv } from 'app/core/services/context_srv';

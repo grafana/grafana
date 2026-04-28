@@ -18,7 +18,8 @@ import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';

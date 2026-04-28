@@ -7,7 +7,8 @@ import { base64UrlEncode } from '@grafana/alerting';
 import { getContactPointDescription, notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { stringifyFieldSelector } from '../../../utils/k8s/utils';
 import { createContactPointLink } from '../../../utils/misc';

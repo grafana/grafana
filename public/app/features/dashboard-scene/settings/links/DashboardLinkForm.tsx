@@ -4,7 +4,8 @@ import * as React from 'react';
 import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
-import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, Stack, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, Stack } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LINK_ICON_MAP, NEW_LINK } from './utils';
 

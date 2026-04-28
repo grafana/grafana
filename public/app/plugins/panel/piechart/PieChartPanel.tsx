@@ -13,14 +13,8 @@ import {
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
-import {
-  SeriesVisibilityChangeBehavior,
-  usePanelContext,
-  useTheme2,
-  VizLayout,
-  VizLegend,
-  type VizLegendItem,
-} from '@grafana/ui';
+import { SeriesVisibilityChangeBehavior, usePanelContext, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { PieChart, computeGradientFills } from './PieChart';
 import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';

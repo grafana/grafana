@@ -4,7 +4,8 @@ import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { LayerName } from './LayerName';
 import { type LayerElement } from './types';

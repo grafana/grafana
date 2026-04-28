@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { type KeyboardEvent, useLayoutEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 const ARROW_DIRECTION: Partial<Record<string, 1 | -1>> = {
   ArrowRight: 1,

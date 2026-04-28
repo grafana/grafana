@@ -4,7 +4,7 @@ import { type MouseEvent } from 'react';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 
 import { type TutorialCardType } from '../types';
 

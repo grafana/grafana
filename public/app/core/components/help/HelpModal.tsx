@@ -5,7 +5,8 @@ import { useAssistant } from '@grafana/assistant';
 import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Grid, Modal, useStyles2, Text, FeatureBadge } from '@grafana/ui';
+import { Grid, Modal, Text, FeatureBadge } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/themes';
 import { getModKey } from 'app/core/utils/browser';
 
 export interface HelpModalProps {

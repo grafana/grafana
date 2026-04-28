@@ -4,7 +4,8 @@ import { useCallback } from 'react';
 import { ReducerID, type TransformerUIProps, type GrafanaTheme2 } from '@grafana/data';
 import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
+import { StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui/themes';
 
 import { DataFieldsErrorWrapper } from '../utils';
 
