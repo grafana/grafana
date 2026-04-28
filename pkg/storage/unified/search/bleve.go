@@ -116,7 +116,7 @@ type SnapshotOptions struct {
 	// for the same resource.
 	UploadInterval time.Duration
 
-	// MinDocChanges is the minimum resource version delta required before a new
+	// MinDocChanges is the minimum persisted mutation count required before a new
 	// upload is attempted after a previous successful upload.
 	MinDocChanges int
 }
@@ -208,6 +208,11 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 	be.bgTasksWg.Add(1)
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
+
+	if opts.Snapshot.Store != nil {
+		be.bgTasksWg.Add(1)
+		go be.uploadSnapshotsPeriodically(ctx)
+	}
 
 	if be.indexMetrics != nil {
 		be.bgTasksWg.Add(1)
@@ -343,7 +348,7 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 		return false, nil
 	}
 
-	mutationCount, err := getSnapshotMutationCount(idx.index)
+	mutationCount, err := idx.getSnapshotMutationCount()
 	if err != nil {
 		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
 	}
@@ -373,6 +378,87 @@ func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
 	b.uploadTrackingMu.Lock()
 	defer b.uploadTrackingMu.Unlock()
 	delete(b.lastUploadTime, key)
+}
+
+const (
+	snapshotUploadCheckInterval       = 5 * time.Minute
+	snapshotUploadStatusSuccess       = "success"
+	snapshotUploadStatusSkipNoChanges = "skip_no_changes"
+	snapshotUploadStatusSkipLockHeld  = "skip_lock_contention"
+	snapshotUploadStatusError         = "error"
+)
+
+func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
+	defer b.bgTasksWg.Done()
+
+	t := time.NewTicker(snapshotUploadCheckInterval)
+	defer t.Stop()
+
+	for ctx.Err() == nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			b.runUploadSnapshots(ctx)
+		}
+	}
+}
+
+func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
+	now := time.Now()
+	for _, key := range b.GetOpenIndexes() {
+		idx := b.getCachedIndex(key, now)
+		if idx == nil || idx.indexStorage != indexStorageFile {
+			continue
+		}
+
+		shouldUpload, err := b.shouldUpload(key, idx, now)
+		if err != nil {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
+			continue
+		}
+		if !shouldUpload {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusSkipNoChanges)
+			continue
+		}
+
+		baselineMutations, err := idx.getSnapshotMutationCount()
+		if err != nil {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+			b.log.Warn("failed to read snapshot mutation baseline", "key", key, "err", err)
+			continue
+		}
+
+		start := time.Now()
+		if err := b.uploadSnapshot(ctx, key, idx); err != nil {
+			if errors.Is(err, errLockHeld) {
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockHeld)
+			} else {
+				b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+				b.log.Warn("snapshot upload failed", "key", key, "err", err)
+			}
+			continue
+		}
+
+		if err := idx.subtractSnapshotMutationCount(baselineMutations); err != nil {
+			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+			b.log.Warn("failed to advance snapshot mutation baseline", "key", key, "err", err)
+			continue
+		}
+		b.setUploadTracking(key, time.Now())
+		b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexSnapshotUploadDuration.Observe(time.Since(start).Seconds())
+		}
+	}
+}
+
+func (b *bleveBackend) recordSnapshotUploadStatus(status string) {
+	if b.indexMetrics == nil {
+		return
+	}
+	b.indexMetrics.IndexSnapshotUploads.WithLabelValues(status).Inc()
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -980,13 +1066,13 @@ func setRV(index bleve.Index, rv int64) error {
 	return index.SetInternal([]byte(internalRVKey), buf)
 }
 
-func setSnapshotMutationCount(index bleve.Index, count int64) error {
+func writeSnapshotMutationCount(index bleve.Index, count int64) error {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(count))
 	return index.SetInternal([]byte(internalSnapshotMutationCountKey), buf)
 }
 
-func getSnapshotMutationCount(index bleve.Index) (int64, error) {
+func readSnapshotMutationCount(index bleve.Index) (int64, error) {
 	raw, err := index.GetInternal([]byte(internalSnapshotMutationCountKey))
 	if err != nil {
 		return 0, err
@@ -997,15 +1083,36 @@ func getSnapshotMutationCount(index bleve.Index) (int64, error) {
 	return int64(binary.BigEndian.Uint64(raw)), nil
 }
 
+func (b *bleveIndex) getSnapshotMutationCount() (int64, error) {
+	b.snapshotMutationMu.Lock()
+	defer b.snapshotMutationMu.Unlock()
+	return readSnapshotMutationCount(b.index)
+}
+
 func (b *bleveIndex) addSnapshotMutationCount(delta int64) error {
 	b.snapshotMutationMu.Lock()
 	defer b.snapshotMutationMu.Unlock()
 
-	current, err := getSnapshotMutationCount(b.index)
+	current, err := readSnapshotMutationCount(b.index)
 	if err != nil {
 		return err
 	}
-	return setSnapshotMutationCount(b.index, current+delta)
+	return writeSnapshotMutationCount(b.index, current+delta)
+}
+
+func (b *bleveIndex) subtractSnapshotMutationCount(delta int64) error {
+	b.snapshotMutationMu.Lock()
+	defer b.snapshotMutationMu.Unlock()
+
+	current, err := readSnapshotMutationCount(b.index)
+	if err != nil {
+		return err
+	}
+	remaining := current - delta
+	if remaining < 0 {
+		remaining = 0
+	}
+	return writeSnapshotMutationCount(b.index, remaining)
 }
 
 // getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
