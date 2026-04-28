@@ -1196,6 +1196,8 @@ describe('heatmapPathsDense', () => {
         scaleXDistr?: number;
         scaleYDistr?: number;
         scaleYLog?: 10 | 2;
+        /** Merged into orient mock scaleY (e.g. min/max for single-row bucket regression). */
+        scaleY?: Partial<uPlot.Scale>;
         ctx?: MockCtx;
       }
     ): { rect: jest.Mock; each: jest.Mock; ctx?: MockCtx } {
@@ -1206,13 +1208,11 @@ describe('heatmapPathsDense', () => {
       const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
         createOrientMock(data, {
           scaleX: overrides?.scaleXDistr != null ? { distr: overrides.scaleXDistr } : undefined,
-          scaleY:
-            overrides?.scaleYDistr != null || overrides?.scaleYLog != null
-              ? {
-                  ...(overrides.scaleYDistr != null && { distr: overrides.scaleYDistr }),
-                  ...(overrides.scaleYLog != null && { log: overrides.scaleYLog }),
-                }
-              : undefined,
+          scaleY: {
+            ...(overrides?.scaleYDistr != null && { distr: overrides.scaleYDistr }),
+            ...(overrides?.scaleYLog != null && { log: overrides.scaleYLog }),
+            ...overrides?.scaleY,
+          },
           rect,
         })
       );
@@ -1264,6 +1264,34 @@ describe('heatmapPathsDense', () => {
       expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 1000, 0, 999, 1);
       expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 1000, 1, 999, 1);
       expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 2000, -1, 999, 1);
+    });
+
+    // Regression: heatmap-rows with one Y bucket gives ys[1] === ys[0], so yBinIncr was 0 and
+    // linear cell height collapsed to the 1px clamp. Fallback uses scale range (see utils.ts heatmapPathsDense).
+    it('uses Y scale range for tile height when dense heatmap has a single Y bucket (linear scale)', () => {
+      const singleYBucketData: DenseHeatmap = [
+        [1000, 2000],
+        [0, 0],
+        [5, 10],
+      ];
+      const { rect } = invokeDensePathBuilder(
+        {
+          ...minimalPathbuilderOpts,
+          disp: {
+            fill: {
+              values: () => [0, 1],
+              index: ['#a', '#b'],
+            },
+          },
+        },
+        {
+          data: singleYBucketData,
+          scaleY: { distr: 1, min: 0, max: 100 },
+        }
+      );
+      expect(rect).toHaveBeenCalledTimes(2);
+      const ySizeFirstCell = rect.mock.calls[0][4];
+      expect(ySizeFirstCell).toBeGreaterThan(50);
     });
 
     it.each([['#ff0000', '#00ff00', '#0000ff'], undefined])(
