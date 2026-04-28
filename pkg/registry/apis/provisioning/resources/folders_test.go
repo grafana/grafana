@@ -413,6 +413,33 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.ErrorContains(t, err, "managed by a different repository (other-repo)")
 		require.Empty(t, client.updateCalls)
 	})
+
+	t.Run("wraps folder depth API error as FolderDepthExceededError", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "a/b/c/d/e/",
+		}, "")
+
+		require.Error(t, err)
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(err, &depthErr), "should return FolderDepthExceededError")
+		require.Equal(t, "a/b/c/d/e/", depthErr.Path)
+		require.NotEmpty(t, client.createCalls)
+	})
 }
 
 type fakeDynamicResourceClient struct {

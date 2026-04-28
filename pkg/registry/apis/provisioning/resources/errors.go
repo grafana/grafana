@@ -3,6 +3,7 @@ package resources
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -128,4 +129,49 @@ func NewResourceValidationError(err error) *ResourceValidationError {
 	return &ResourceValidationError{
 		Err: combinedError,
 	}
+}
+
+const folderDepthExceededMessage = "folder max depth exceeded"
+
+// ErrFolderDepthExceeded is a sentinel error.
+var ErrFolderDepthExceeded = errors.New(folderDepthExceededMessage)
+
+// FolderDepthExceededError wraps a folder-API depth violation.
+type FolderDepthExceededError struct {
+	Path string
+	Err  error
+}
+
+func (e *FolderDepthExceededError) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("folder %q exceeds the maximum folder depth allowed by the folder API", e.Path)
+	}
+	return fmt.Sprintf("folder %q exceeds the maximum folder depth allowed by the folder API: %v", e.Path, e.Err)
+}
+
+// Unwrap exposes both the sentinel and the underlying API error
+func (e *FolderDepthExceededError) Unwrap() []error {
+	if e.Err == nil {
+		return []error{ErrFolderDepthExceeded}
+	}
+	return []error{ErrFolderDepthExceeded, e.Err}
+}
+
+// NewFolderDepthExceededError wraps the original folder-API error so callers
+// can detect the depth violation via errors.As.
+func NewFolderDepthExceededError(path string, err error) *FolderDepthExceededError {
+	return &FolderDepthExceededError{Path: path, Err: err}
+}
+
+// IsFolderDepthExceededAPIError reports whether err originates from the
+// folder API rejecting a write because the maximum folder depth was
+// exceeded.
+func IsFolderDepthExceededAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, ErrFolderDepthExceeded) {
+		return true
+	}
+	return strings.Contains(err.Error(), folderDepthExceededMessage)
 }

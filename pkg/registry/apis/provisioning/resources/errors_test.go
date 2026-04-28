@@ -2,6 +2,7 @@ package resources
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -366,5 +367,57 @@ func TestResourceOwnershipConflictError(t *testing.T) {
 		require.Contains(t, errMsg, "plugin")
 		require.Contains(t, errMsg, "plugin-instance-1")
 		require.Contains(t, errMsg, "cannot be modified")
+	})
+}
+
+func TestFolderDepthExceededError(t *testing.T) {
+	t.Run("Error includes path and underlying message", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/c/d/e/", underlying)
+
+		require.Contains(t, err.Error(), "a/b/c/d/e/")
+		require.Contains(t, err.Error(), "max depth")
+	})
+
+	t.Run("Unwrap exposes both sentinel and underlying error", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/", underlying)
+
+		require.True(t, errors.Is(err, ErrFolderDepthExceeded), "should match sentinel via errors.Is")
+		require.True(t, errors.Is(err, underlying), "should preserve underlying error in chain")
+	})
+
+	t.Run("errors.As extracts FolderDepthExceededError through wrapping", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/", underlying)
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(wrapped, &depthErr))
+		require.Equal(t, "a/b/", depthErr.Path)
+	})
+}
+
+func TestIsFolderDepthExceededAPIError(t *testing.T) {
+	t.Run("nil returns false", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(nil))
+	})
+
+	t.Run("matches stable folder API substring", func(t *testing.T) {
+		err := errors.New("folder max depth exceeded, max depth is 4")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches BadRequest status error from folder API", func(t *testing.T) {
+		err := apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches sentinel error via errors.Is", func(t *testing.T) {
+		require.True(t, IsFolderDepthExceededAPIError(ErrFolderDepthExceeded))
+	})
+
+	t.Run("does not match unrelated errors", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(errors.New("something else")))
 	})
 }

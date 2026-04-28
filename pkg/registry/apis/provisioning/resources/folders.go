@@ -359,6 +359,17 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return nil
 		}
 
+		// HACK: The folder API enforces a global maximum folder depth that
+		// provisioning cannot influence. When a repository contains paths
+		// deeper than this limit the write will fail forever, so we surface
+		// it as a typed warning instead of a retryable error to keep the
+		// job queue from re-running the same sync every five minutes.
+		// Detection relies on a stable substring agreed with the folder API
+		// owners; do not change it without coordinating that contract.
+		if IsFolderDepthExceededAPIError(err) {
+			return NewFolderDepthExceededError(folder.Path, err)
+		}
+
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 	return nil
