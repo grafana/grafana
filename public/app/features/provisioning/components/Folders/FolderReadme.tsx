@@ -82,7 +82,7 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
               href={newFileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              icon="plus"
+              icon="external-link-alt"
               size="lg"
               onClick={() => {
                 reportInteraction('grafana_provisioning_readme_create_clicked', {
@@ -110,7 +110,7 @@ export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
             href={editUrl}
             target="_blank"
             rel="noopener noreferrer"
-            icon="pen"
+            icon="external-link-alt"
             variant="secondary"
             size="sm"
             onClick={() => {
