@@ -462,12 +462,53 @@ export const repeatOptionsSchema = z
   })
   .describe('Repeat options matching v2beta1 RepeatOptions');
 
+const conditionalRenderingVariableKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingVariable'),
+  spec: z.object({
+    variable: z.string().describe('Name of the dashboard template variable'),
+    operator: z.enum(['equals', 'notEquals', 'matches', 'notMatches']),
+    value: z.string().describe('Value to compare against. For matches/notMatches this is a regex.'),
+  }),
+});
+
+const conditionalRenderingDataKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingData'),
+  spec: z.object({
+    value: z.boolean().describe('true = "has data", false = "no data"'),
+  }),
+});
+
+const conditionalRenderingTimeRangeSizeKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingTimeRangeSize'),
+  spec: z.object({
+    value: z.string().describe('Duration threshold (e.g. "5m", "1h", "7d", "6M", "1y")'),
+  }),
+});
+
+export const conditionalRenderingGroupKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
+  spec: z.object({
+    visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
+    condition: z.enum(['and', 'or']).describe('"and" = match all rules; "or" = match any rule'),
+    items: z
+      .array(
+        z.discriminatedUnion('kind', [
+          conditionalRenderingVariableKindSchema,
+          conditionalRenderingDataKindSchema,
+          conditionalRenderingTimeRangeSizeKindSchema,
+        ])
+      )
+      .describe('List of conditions. Pass an empty array to remove all rules.'),
+  }),
+});
+
 export const rowsLayoutRowSpecSchema = z.object({
   title: z.string().optional().describe('Row heading title'),
   collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
   hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
 });
 
 export const partialRowSpecSchema = z
@@ -479,12 +520,16 @@ export const partialRowSpecSchema = z
     repeat: rowRepeatOptionsSchema
       .optional()
       .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this row. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
 export const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
 });
 
 export const partialTabSpecSchema = z
@@ -493,6 +538,9 @@ export const partialTabSpecSchema = z
     repeat: tabRepeatOptionsSchema
       .optional()
       .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
@@ -826,7 +874,20 @@ export const layoutItemInputSchema = z
         'Layout item type hint. If omitted, automatically determined from the target layout. ' +
           'A warning is emitted if the provided kind does not match the target layout.'
       ),
-    spec: gridLayoutItemKindSchema.shape.spec.omit({ element: true }).partial().optional().default({}),
+    spec: gridLayoutItemKindSchema.shape.spec
+      .omit({ element: true })
+      .extend({
+        conditionalRendering: conditionalRenderingGroupKindSchema
+          .optional()
+          .describe(
+            'Show/hide rules (Auto grid layout only). ' +
+              'On ADD_PANEL, ignored with a warning if the target is not Auto grid. ' +
+              'On UPDATE_PANEL, returns an error.'
+          ),
+      })
+      .partial()
+      .optional()
+      .default({}),
   })
   .describe(
     'Layout item with optional sizing hints. The kind is optional and auto-detected from the target layout. ' +
@@ -860,12 +921,28 @@ export const addPanelPayloadSchema = z.object({
     ),
 });
 
-export const updatePanelPayloadSchema = z.object({
-  element: elementReferenceSchema.describe('Panel to update, identified by element name'),
-  panel: partialPanelKindSchema.describe(
-    'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged.'
-  ),
-});
+export const updatePanelPayloadSchema = z
+  .object({
+    element: elementReferenceSchema.describe('Panel to update, identified by element name'),
+    panel: partialPanelKindSchema
+      .optional()
+      .describe(
+        'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged. ' +
+          'Can be omitted when only setting conditionalRendering.'
+      ),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this panel (Auto grid layout only). Omit to leave unchanged.'),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.panel && data.conditionalRendering === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'At least one of panel or conditionalRendering must be provided.',
+      });
+    }
+  });
 
 export const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
