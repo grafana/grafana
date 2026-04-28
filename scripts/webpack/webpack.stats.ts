@@ -1,12 +1,14 @@
-const { RsdoctorWebpackPlugin } = require('@rsdoctor/webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const { merge } = require('webpack-merge');
+import { RsdoctorWebpackPlugin } from '@rsdoctor/webpack-plugin';
+import type { Configuration } from 'webpack';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+import { merge } from 'webpack-merge';
 
-const { FilterStatsPlugin } = require('./plugins/FilterStatsPlugin');
-const prodConfig = require('./webpack.prod.js');
+import { FilterStatsPlugin } from './plugins/FilterStatsPlugin.ts';
+import type { Env } from './webpack.common.ts';
+import prodConfig from './webpack.prod.ts';
 
-module.exports = (env = {}) => {
-  const bundleAnalyzerOpts = env.filtered
+export default (env: Env = {}) => {
+  const bundleAnalyzerOpts: BundleAnalyzerPlugin.Options = env.filtered
     ? {
         analyzerMode: 'static',
         reportFilename: 'bundle-stats.html',
@@ -15,13 +17,13 @@ module.exports = (env = {}) => {
       }
     : {};
 
-  const config = {
+  const config: Configuration = {
     plugins: [new BundleAnalyzerPlugin(bundleAnalyzerOpts)],
   };
 
   // yarn build:smolstats
   if (env.filtered) {
-    config.plugins.push(
+    config.plugins?.push(
       new FilterStatsPlugin({
         exclude: /@kusto|monaco-editor|public\/locales/,
         minDominance: 0.75,
@@ -31,14 +33,7 @@ module.exports = (env = {}) => {
 
   // yarn build:stats --env doctor
   if (env.doctor) {
-    config.plugins.push(
-      new RsdoctorWebpackPlugin({
-        supports: {
-          // disable rsdoctor bundle-analyser
-          generateTileGraph: false,
-        },
-      })
-    );
+    config.plugins?.push(new RsdoctorWebpackPlugin());
   }
 
   // disable hashing in output filenames to make them easier to identify

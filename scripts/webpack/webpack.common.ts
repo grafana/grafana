@@ -1,10 +1,22 @@
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const path = require('path');
-const webpack = require('webpack');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import webpack, { type Configuration } from 'webpack';
 
-const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
+import { getEnvConfig } from '../cli/env-util.ts';
 
-module.exports = (env = {}) => ({
+import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
+import { esbuildRule, sassRule } from './rules.ts';
+
+const require = createRequire(import.meta.url);
+const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const envConfig = getEnvConfig(grafanaRoot);
+
+export type Env = Record<string, string | true | undefined>;
+
+export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -13,6 +25,8 @@ module.exports = (env = {}) => ({
       import: './public/boot/index.ts',
       runtime: false,
     },
+    dark: './public/sass/grafana.dark.scss',
+    light: './public/sass/grafana.light.scss',
   },
   experiments: {
     // Required to load WASM modules.
@@ -20,9 +34,9 @@ module.exports = (env = {}) => ({
   },
   output: {
     clean: env.react19 ? false : true,
-    path: path.resolve(__dirname, '../../public/build'),
+    path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {
-      if (pathData.chunk.name === 'boot') {
+      if (pathData.chunk?.name === 'boot') {
         return '[name].js';
       }
       return env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js';
@@ -94,23 +108,20 @@ module.exports = (env = {}) => ({
     }),
     new CopyWebpackPlugin({
       patterns: [
-        {
-          from: 'public/img',
-          to: 'img',
-        },
-        {
-          from: 'public/maps',
-          to: 'maps',
-        },
-        {
-          from: 'public/gazetteer',
-          to: 'gazetteer',
-        },
+        { from: 'public/img', to: 'img' },
+        { from: 'public/maps', to: 'maps' },
+        { from: 'public/gazetteer', to: 'gazetteer' },
       ],
     }),
+    new MiniCssExtractPlugin({
+      filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
+    }),
+    new webpack.EnvironmentPlugin(envConfig),
   ],
   module: {
     rules: [
+      esbuildRule,
+      sassRule,
       {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
@@ -131,40 +142,5 @@ module.exports = (env = {}) => ({
         },
       },
     ],
-  },
-  // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
-  optimization: {
-    runtimeChunk: 'single',
-    splitChunks: {
-      chunks: 'all',
-      minChunks: 1,
-      cacheGroups: {
-        moment: {
-          test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
-        angular: {
-          test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 50,
-          enforce: true,
-        },
-        defaultVendors: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: -10,
-          reuseExistingChunk: true,
-          enforce: true,
-        },
-        default: {
-          priority: -20,
-          chunks: 'all',
-          test: /.*[jt]sx?$/,
-          reuseExistingChunk: true,
-        },
-      },
-    },
   },
 });
