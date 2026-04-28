@@ -53,7 +53,8 @@ const testCases: Array<{
     rowTitle: 'ERRORS slo!',
   },
   {
-    description: 'nested row: prefers canonical query key when both canonical and legacy row keys are present',
+    description:
+      'nested row: prefers canonical query key when both canonical and legacy tab names are present in the layout',
     searchParams: {
       'SUCCESS-slo!-dtab': 'Bugs-Fixed!!',
     },
@@ -64,7 +65,7 @@ const testCases: Array<{
     description:
       'nested row: empty canonical tab param skips to legacy key (TabsLayoutManager getSlug / updateFromUrl)',
     searchParams: {
-      'ERRORS slo!-dtab': '',
+      'ERRORS-slo!-dtab': '',
       'errors-slo-dtab': 'perfzk',
     },
     expectedSelectedTab: 'PerfZk',

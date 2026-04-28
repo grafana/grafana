@@ -562,8 +562,7 @@ function buildUrlKeyForTabs(manager: TabsLayoutManager, getSegment: (node: TabIt
   return key;
 }
 
-// export for testing purposes
-/** push current key to march with first, then legacy keys to account for old url encoding way */
+/** push current key to match with first, then legacy keys to account for old url encoding way */
 export function getTabsLayoutUrlKeysToTry(manager: TabsLayoutManager): string[] {
   const currentKey = manager.getUrlKey();
   const slugifyKey = buildUrlKeyForTabs(manager, (node) => getLegacySlugForRowOrTab(node));
