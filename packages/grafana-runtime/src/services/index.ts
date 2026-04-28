@@ -2,6 +2,7 @@ export * from './backendSrv';
 export * from './dataSourceSrv';
 export * from './LocationSrv';
 export * from './EchoSrv';
+export * from './JourneyTracker';
 export * from './templateSrv';
 export * from './live';
 export * from './LocationService';
