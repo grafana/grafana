@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -15,7 +16,11 @@ import { useOnCallIntegration } from 'app/features/alerting/unified/components/r
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { receiverConfigToK8sIntegration, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  receiverConfigToK8sIntegration,
+  shouldUseK8sApi,
+  stringifyFieldSelector,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -211,30 +216,109 @@ const useGetAlertmanagerContactPoint = (
 
 /**
  * Load one Grafana-managed receiver via `GET .../receivers/{name}`.
- * `name` is the path segment: use `metadata.name` / `id` from a list or save response, not the display title alone.
+ * If `name` is a display title and the live resource id is `base64UrlEncode(title)`, the GET may 404; we then
+ * list with `metadata.name = base64UrlEncode(name)` (same resolution as the notifications UI).
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
   queryOptions?: Parameters<typeof useGetReceiverQuery>[1]
 ) => {
-  return useGetReceiverQuery(
-    { name },
-    {
-      ...queryOptions,
-      skip: queryOptions?.skip || !name,
-      selectFromResult: (result) => {
-        const data = result.data ? parseK8sReceiver(result.data) : undefined;
+  const skipBase = Boolean(queryOptions?.skip || !name);
 
-        return {
-          ...result,
-          data,
-          currentData: data,
-          isLoading: result.isLoading || result.isFetching,
-          isSuccess: result.isSuccess && Boolean(data),
-        };
-      },
+  const primary = useGetReceiverQuery({ name }, { ...queryOptions, skip: skipBase });
+
+  const parsedFromPrimary = primary.isSuccess && primary.data ? parseK8sReceiver(primary.data) : undefined;
+
+  // Do not require `primary.isFetched`: for this endpoint, RTK Query can report `isFetched: false` on a failed GET
+  // while `isError` is true, which would block the list fallback and leave the 404 visible to consumers.
+  const needsEncodedNameLookup = !skipBase && !parsedFromPrimary && primary.isError;
+
+  const listQuery = useListReceiverQuery(
+    {
+      fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(name)]]),
+    },
+    {
+      skip: skipBase || !needsEncodedNameLookup,
     }
   );
+
+  const parsedFromList = listQuery.data?.items?.[0] ? parseK8sReceiver(listQuery.data.items[0]) : undefined;
+
+  return useMemo(() => {
+    if (skipBase) {
+      return primary;
+    }
+
+    if (parsedFromPrimary) {
+      return {
+        ...primary,
+        data: parsedFromPrimary,
+        currentData: parsedFromPrimary,
+        isLoading: primary.isLoading || primary.isFetching,
+        isSuccess: true,
+        isError: false,
+        error: undefined,
+      };
+    }
+
+    if (needsEncodedNameLookup) {
+      if (parsedFromList) {
+        return {
+          ...listQuery,
+          data: parsedFromList,
+          currentData: parsedFromList,
+          isLoading: listQuery.isLoading || listQuery.isFetching,
+          isSuccess: true,
+          isError: false,
+          error: undefined,
+        };
+      }
+      // Until the list request settles, avoid surfacing the primary GET error (e.g. 404 when `name` is a title).
+      // RTK Query can briefly report not-loading before `isFetched` flips after `skip` becomes false.
+      if (!listQuery.isFetched) {
+        return {
+          ...listQuery,
+          data: undefined,
+          currentData: undefined,
+          isLoading: true,
+          isSuccess: false,
+          isError: false,
+          error: undefined,
+        };
+      }
+      return {
+        ...listQuery,
+        data: undefined,
+        currentData: undefined,
+        isLoading: false,
+        isSuccess: false,
+        isError: Boolean(listQuery.isError || primary.isError),
+        error: listQuery.error ?? primary.error,
+      };
+    }
+
+    if (primary.isLoading || primary.isFetching) {
+      return {
+        ...primary,
+        data: undefined,
+        currentData: undefined,
+        isLoading: true,
+        isSuccess: false,
+        isError: false,
+        error: undefined,
+      };
+    }
+
+    return {
+      ...primary,
+      data: undefined,
+      currentData: undefined,
+      isLoading: false,
+      isSuccess: false,
+      isError: primary.isError,
+      error: primary.error,
+    };
+  }, [skipBase, primary, parsedFromPrimary, needsEncodedNameLookup, listQuery, parsedFromList]);
 };
 
 export interface UseGetContactPointArgs {
