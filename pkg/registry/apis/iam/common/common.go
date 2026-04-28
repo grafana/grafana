@@ -62,7 +62,7 @@ type ListResponse[T metav1.Object] struct {
 type ListFunc[T metav1.Object] func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[T], error)
 
 // List is a helper function that will perform access check on resources if
-// prvovided with a authlib.AccessClient.
+// provided with a authlib.AccessClient.
 func List[T metav1.Object](
 	ctx context.Context,
 	resource utils.ResourceInfo,

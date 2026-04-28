@@ -475,18 +475,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.dual != nil && b.unified != nil {
-		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
-
-		teamBindingSearchClient := resource.NewSearchClient(
-			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamBindingResourceInfo.GroupResource(),
-			b.unified,
-			legacyTeamBindingSearchClient,
-		)
-
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
