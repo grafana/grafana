@@ -733,9 +733,10 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for DELETE .md files")
 	})
 
-	// Viewers have folder:get on the root folder by default, so the folder-scoped
-	// auth check on raw file reads should pass for them.
-	t.Run("viewer can GET README.md", func(t *testing.T) {
+	// The folder-scoped auth check resolves the file's parent folder ID and
+	// requires folders:get on it. The default Viewer/Editor roles include
+	// folders:read, so reads at the repo root should succeed.
+	t.Run("viewer can GET README.md at the repo root", func(t *testing.T) {
 		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
 		req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -748,7 +749,98 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md")
 	})
 
+	t.Run("editor can GET README.md at the repo root", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to GET README.md")
+	})
+
+	// Negative case for the folder-scoped check: the nested 'folder/' directory
+	// exists in the repo file tree but has not been synced into Grafana, so the
+	// viewer has no permission grant on its hash-based folder UID. Admins still
+	// pass thanks to wildcard access.
+	t.Run("viewer is denied for README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"viewer without folders:get on the parent folder should be denied")
+	})
+
+	t.Run("admin can GET README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README in any folder")
+	})
+
 	_ = ctx
+}
+
+// TestIntegrationProvisioning_ReadmeFiles_FolderTarget exercises the folder-scoped
+// auth check on a folder-target repository, where RootFolder() resolves to the
+// repo's name as the folder UID. This is the path that proved the new authorizer
+// resolves the synced folder rather than always falling back to the empty root.
+func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "readme-folder-target-repo"
+	const readmeContent = "# Folder-target README"
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              helper.ProvisioningPath,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("admin can GET README.md", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README.md on folder-target repo")
+	})
+
+	t.Run("viewer can GET README.md when they have folders:read on the synced folder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md on folder-target repo")
+	})
 }
 
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
