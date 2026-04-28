@@ -3130,7 +3130,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-
 			Name:        "cujTracking",
 			Description: "Enables Critical User Journey (CUJ) tracking",
 			Stage:       FeatureStageExperimental,

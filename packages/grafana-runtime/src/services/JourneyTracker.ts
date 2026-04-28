@@ -55,9 +55,10 @@ export interface JourneyOptions {
  * @internal
  */
 export interface JourneyStartOptions extends JourneyOptions {
-  /** If true (default), starting a same-type journey cancels the previous instance. */
-  cancelOnRestart?: boolean;
   /** Parent journey types from {@link JourneyMeta.parents}. */
+  /** @internal - set by registry, not by callers */
+  cancelOnRestart?: boolean;
+  /** @internal - set by registry from JourneyMeta.parents, not by callers */
   parents?: string[];
 }
 

@@ -4,54 +4,62 @@ This documentation describes the Critical User Journey tracking framework in Gra
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Configuration](#configuration)
-- [Architecture](#architecture)
-  - [Components](#components)
-  - [Data Flow](#data-flow)
-- [Journeys](#journeys)
-  - [search_to_resource](#search_to_resource)
-  - [browse_to_resource](#browse_to_resource)
-  - [dashboard_edit](#dashboard_edit)
-  - [panel_edit](#panel_edit)
-  - [datasource_configure](#datasource_configure)
-  - [explore_to_dashboard](#explore_to_dashboard)
-- [Adding a New Journey](#adding-a-new-journey)
-  - [Step 0: Decide whether you need a journey](#step-0-decide-whether-you-need-a-journey)
-  - [Step 1: Plan the journey shape](#step-1-plan-the-journey-shape)
-  - [Step 2: Identify or add interactions](#step-2-identify-or-add-the-interactions-youll-listen-on)
-  - [Step 3: Register metadata](#step-3-register-metadata)
-  - [Step 4: Create the wiring file](#step-4-create-the-wiring-file)
-  - [Step 5: Import at bootstrap](#step-5-import-at-bootstrap)
-  - [Step 6: Write tests](#step-6-write-tests)
-  - [Step 7: Verify locally](#step-7-verify-locally)
-  - [Worked example: alert_rule_save](#worked-example-alert_rule_save)
-  - [Lazy-Loaded Journeys](#lazy-loaded-journeys)
-  - [Pre-merge checklist](#pre-merge-checklist)
-- [API Reference](#api-reference)
-  - [JourneyTracker](#journeytracker)
-  - [JourneyHandle](#journeyhandle)
-  - [StepHandle](#stephandle)
-  - [JourneyRegistry](#journeyregistry)
-- [Journey Patterns](#journey-patterns)
-  - [Duration-Based Steps](#duration-based-steps)
-  - [Late Attribute Enrichment](#late-attribute-enrichment)
-  - [Concurrent Journeys](#concurrent-journeys)
-  - [Parent Journeys](#parent-journeys)
-  - [Discard vs Cancel vs Timeout](#discard-vs-cancel-vs-timeout)
-- [Telemetry Output](#telemetry-output)
-  - [OTel Traces (Tempo)](#otel-traces-tempo)
-  - [Faro Measurements (Loki)](#faro-measurements-loki)
-- [Debugging and Development](#debugging-and-development)
-  - [Enable Debug Logging](#enable-debug-logging)
-  - [Console Output Examples](#console-output-examples)
-  - [Smoke runner: scripts/cuj-smoke.ts](#smoke-runner-scriptscuj-smokets)
-- [Implementation Details](#implementation-details)
-  - [Noop Tracker](#noop-tracker)
-  - [Handle Lifecycle](#handle-lifecycle)
-  - [Tab Visibility and Unload](#tab-visibility-and-unload)
-  - [Registry Validation](#registry-validation)
-  - [Handle Buffering](#handle-buffering)
+- [Critical User Journey (CUJ) Tracking](#critical-user-journey-cuj-tracking)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Configuration](#configuration)
+  - [Architecture](#architecture)
+    - [Components](#components)
+    - [Data Flow](#data-flow)
+  - [Journeys](#journeys)
+  - [Phase 1 Journeys](#phase-1-journeys)
+    - [search_to_resource](#search_to_resource)
+    - [browse_to_resource](#browse_to_resource)
+    - [dashboard_edit](#dashboard_edit)
+    - [panel_edit](#panel_edit)
+    - [datasource_configure](#datasource_configure)
+    - [explore_to_dashboard](#explore_to_dashboard)
+  - [Adding a New Journey](#adding-a-new-journey)
+    - [Step 0: Decide whether you need a journey](#step-0-decide-whether-you-need-a-journey)
+    - [Step 1: Plan the journey shape](#step-1-plan-the-journey-shape)
+    - [Step 2: Identify or add the interactions you'll listen on](#step-2-identify-or-add-the-interactions-youll-listen-on)
+    - [Step 3: Register metadata](#step-3-register-metadata)
+    - [Step 4: Create the wiring file](#step-4-create-the-wiring-file)
+    - [Step 5: Import at bootstrap](#step-5-import-at-bootstrap)
+    - [Step 6: Write tests](#step-6-write-tests)
+    - [Step 7: Verify locally](#step-7-verify-locally)
+    - [Worked example: alert_rule_save](#worked-example-alert_rule_save)
+    - [Lazy-Loaded Journeys](#lazy-loaded-journeys)
+    - [Pre-merge checklist](#pre-merge-checklist)
+  - [API Reference](#api-reference)
+    - [JourneyTracker](#journeytracker)
+    - [JourneyHandle](#journeyhandle)
+    - [StepHandle](#stephandle)
+    - [JourneyRegistry](#journeyregistry)
+  - [Journey Patterns](#journey-patterns)
+    - [Duration-Based Steps](#duration-based-steps)
+    - [Late Attribute Enrichment](#late-attribute-enrichment)
+    - [Concurrent Journeys](#concurrent-journeys)
+    - [Parent Journeys](#parent-journeys)
+    - [Discard vs Cancel vs Timeout](#discard-vs-cancel-vs-timeout)
+  - [Silent Interactions](#silent-interactions)
+  - [Telemetry Output](#telemetry-output)
+    - [OTel Traces (Tempo)](#otel-traces-tempo)
+    - [Faro Measurements (Loki)](#faro-measurements-loki)
+  - [Debugging and Development](#debugging-and-development)
+    - [Enable Debug Logging](#enable-debug-logging)
+    - [Console Output Examples](#console-output-examples)
+      - [Journey Lifecycle](#journey-lifecycle)
+      - [Steps with Duration](#steps-with-duration)
+      - [Registry Logs](#registry-logs)
+      - [Discarded Journey](#discarded-journey)
+    - [Smoke runner: `scripts/cuj-smoke.ts`](#smoke-runner-scriptscuj-smokets)
+  - [Implementation Details](#implementation-details)
+    - [Noop Tracker](#noop-tracker)
+    - [Handle Lifecycle](#handle-lifecycle)
+    - [Tab Visibility and Unload](#tab-visibility-and-unload)
+    - [Registry Validation](#registry-validation)
+    - [Handle Buffering](#handle-buffering)
 
 ## Overview
 
@@ -176,7 +184,11 @@ handle.end('success', { dashboardUid })
 
 ## Journeys
 
-> **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+> # **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+
+## Phase 1 Journeys
+
+> > > > > > > 4eae6ba5f0d (Dashboards: Critical User Journey instrumentation framework)
 
 ### search_to_resource
 
@@ -476,7 +488,7 @@ See `panelEdit.test.ts` (recordEvent-heavy) and `browseToResource.test.ts` (star
    cujTracking = true
    ```
 
-2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (see [Configuration](#configuration) for the `[log.frontend]` block).
+2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (`[grafana_javascript_agent]` enabled, `tracingInstrumentalizationEnabled = true`, an endpoint pointing at a dev Faro collector). The `memos.grafana-dev.net` instance has `grafanacloud-traces` and `grafanacloud-logs` already wired.
 
 3. Open Chrome devtools console. The framework logs every journey lifecycle event when `localStorage.setItem('grafana.debug.journeyTracker', 'true')` is set. You'll see `journeyTracker.JourneyTracker startJourney …`, step events, and the end outcome.
 
