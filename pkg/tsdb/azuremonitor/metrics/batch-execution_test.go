@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -36,10 +37,10 @@ func (t *redirectTransport) RoundTrip(req *http.Request) (*http.Response, error)
 // and the azureMonitorEnableUserAuth toggle set so that the batch dispatch path
 // in ExecuteTimeSeriesQuery is active.
 func batchCtx() context.Context {
-	cfg := backend.NewGrafanaCfg(map[string]string{
+	cfg := config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "azureMonitorBatchAPI",
 	})
-	return backend.WithGrafanaConfig(context.Background(), cfg)
+	return config.WithGrafanaConfig(context.Background(), cfg)
 }
 
 // makeBatchDsInfo builds a minimal DatasourceInfo with batch mode enabled and
