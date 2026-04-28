@@ -548,7 +548,6 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 								serverIdx, op.leaseIdx, err)
 							violated.Store(true)
 							return
-
 						}
 						held[serverIdx][op.leaseIdx] = l
 						if !m.acquired(serverIdx, op.leaseIdx) {
