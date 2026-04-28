@@ -1,16 +1,15 @@
 import { Stack } from '@grafana/ui';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
 import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { type ContactPointWithMetadata } from 'app/features/alerting/unified/components/contact-points/utils';
+import {
+  type ContactPointWithMetadata,
+  getReceiverResourceId,
+} from 'app/features/alerting/unified/components/contact-points/utils';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { ContactPointInstanceDrawerIntegrations } from './ContactPointInstanceDrawerIntegrations';
 import { ContactPointInstanceDrawerToolbar } from './ContactPointInstanceDrawerToolbar';
 import { ContactPointInstanceDrawerUsage } from './ContactPointInstanceDrawerUsage';
-
-function getReceiverResourceId(contactPoint: ContactPointWithMetadata): string {
-  return contactPoint.id ?? contactPoint.name;
-}
 
 export interface ContactPointInstanceDrawerDetailsProps {
   contactPoint: ContactPointWithMetadata;
