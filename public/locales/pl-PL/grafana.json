@@ -6550,6 +6550,7 @@
     },
     "transformation-editor": {
       "input-data": "Dane wejściowe",
+      "loading": "",
       "output-data": "Dane wyjściowe",
       "title-debug-transformation": "Debugowanie transformacji"
     },
@@ -8361,6 +8362,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Szukaj"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10238,12 @@
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Wartość RGBA"
     },
@@ -10581,6 +10589,7 @@
     "sidebar": {
       "close": "Zamknij",
       "dock": "Zadokuj",
+      "go-back": "",
       "hide": "Ukryj",
       "show": "Pokaż",
       "undock": "Odepnij"
@@ -12040,8 +12049,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Wszystkie",
-      "title-filtered": "Wszystkie (przefiltrowane)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Wyczyść wszystko"
@@ -16194,6 +16205,9 @@
         "grouping-to-matrix": "Grupowanie do macierzy"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Oblicz histogram na podstawie danych wejściowych."
@@ -16528,6 +16542,9 @@
       "label-time-field": "Pole czasu",
       "tooltip-statistic-should-calculated-series": "Statystyka, która powinna zostać obliczona dla tego szeregu czasowego.",
       "tooltip-time-field": "Pole czasu, które będzie używane dla szeregu czasowego. Jeśli nie zostanie wybrane, zostanie użyta pierwsza znaleziona wartość."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nazwa pierwszego pola",
