@@ -3,6 +3,7 @@ package appplugin
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,19 +45,24 @@ func TestSettingsGet_NoPersistedSettings(t *testing.T) {
 	settings := obj.(*apppluginV0.Settings)
 	require.Equal(t, "instance", settings.Name)
 	require.Equal(t, "default", settings.Namespace)
+	require.Equal(t, getLegacySettingsUID(1, "test-app"), settings.UID)
+	require.Equal(t, getLegacySettingsResourceVersion(nil), settings.ResourceVersion)
 	require.False(t, settings.Spec.Enabled)
 	require.False(t, settings.Spec.Pinned)
 	require.Nil(t, settings.Spec.JsonData.Object)
 }
 
 func TestSettingsGet_WithPersistedSettings(t *testing.T) {
+	updated := time.Unix(123, 456)
 	storage := newTestStorage(map[string]*pluginsettings.DTO{
 		"test-app": {
+			ID:       7,
 			PluginID: "test-app",
 			OrgID:    1,
 			Enabled:  true,
 			Pinned:   true,
 			JSONData: map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)},
+			Updated:  updated,
 		},
 	})
 
@@ -65,6 +71,15 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 	require.NoError(t, err)
 
 	settings := obj.(*apppluginV0.Settings)
+	require.Equal(t, getLegacySettingsUID(1, "test-app"), settings.UID)
+	require.Equal(t, getLegacySettingsResourceVersion(&pluginsettings.DTO{
+		PluginID: "test-app",
+		OrgID:    1,
+		Enabled:  true,
+		Pinned:   true,
+		JSONData: map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)},
+		Updated:  updated,
+	}), settings.ResourceVersion)
 	require.True(t, settings.Spec.Enabled)
 	require.True(t, settings.Spec.Pinned)
 	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)

@@ -83,7 +83,7 @@ export const WithCustomValue = Template.bind({});
 WithCustomValue.args = {
   initialValue: 'Custom Initial Value',
   allowCustomValue: true,
-  formatCreateLabel: (val) => 'Custom Label' + val,
+  formatCreateLabel: (val) => 'Use custom value: ' + val,
 };
 
 export const WithDisplayAllSelectedLevels = Template.bind({});

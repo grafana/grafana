@@ -1,4 +1,6 @@
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Observable } from 'rxjs';
+import type uPlot from 'uplot';
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
@@ -12,6 +14,21 @@ declare global {
        * test fails.
        */
       toEmitValuesWith<E = ObservableType<T>>(expectations: (received: E[]) => void): Promise<CustomMatcherResult>;
+
+      /**
+       * Canvas snapshot tests to be used on the output of jest-canvas-mock
+       * Failed tests will generate a link to view the diff between canvas outputs
+       * See public/app/plugins/panel/candlestick/utils.canvas.test.ts for an example
+       *
+       * @param uPlotEvents
+       * @param size - canvas dimensions for the uplot-compare JSON payload
+       * @param snapshotHint - optional Jest snapshot name passed to toMatchSnapshot
+       */
+      toMatchUPlotSnapshot(
+        uPlotEvents: CanvasRenderingContext2DEvent[],
+        size: { width: number; height: number },
+        snapshotHint?: string
+      ): CustomMatcherResult;
     }
   }
 }

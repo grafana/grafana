@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -34,6 +35,21 @@ func getLegacySecureValueName(pluginID string, key string) string {
 	h.Write([]byte("|"))
 	h.Write([]byte(key))
 	return legacyPluginSecureValueNamePrefix + hex.EncodeToString(h.Sum(nil))
+}
+
+func getLegacySettingsUID(orgID int64, pluginID string) types.UID {
+	h := sha256.New()
+	h.Write([]byte(strconv.FormatInt(orgID, 10)))
+	h.Write([]byte("|"))
+	h.Write([]byte(pluginID))
+	return types.UID("lps-uid-" + hex.EncodeToString(h.Sum(nil)))
+}
+
+func getLegacySettingsResourceVersion(ps *pluginsettings.DTO) string {
+	if ps == nil || ps.Updated.IsZero() {
+		return "0"
+	}
+	return strconv.FormatInt(ps.Updated.UnixMilli(), 10)
 }
 
 // toSecureJSONData translates InlineSecureValues from a write request into the
@@ -109,8 +125,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 
 	obj := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      apppluginV0.INSTANCE_NAME,
-			Namespace: nsInfo.Value,
+			Name:            apppluginV0.INSTANCE_NAME,
+			Namespace:       nsInfo.Value,
+			UID:             getLegacySettingsUID(nsInfo.OrgID, s.pluginID),
+			ResourceVersion: getLegacySettingsResourceVersion(nil),
 		},
 	}
 
@@ -128,8 +146,7 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		}
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
-		obj.SetResourceVersion(fmt.Sprintf("%d", ps.Updated.UnixMicro()))
-		obj.SetUID(types.UID(getFastHash(nsInfo.Value + "/" + s.pluginID)))
+		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
 
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.Pinned = ps.Pinned

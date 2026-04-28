@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, DEFAULT_A11Y_TAGS } from '@grafana/plugin-e2e';
 
 type TestFn = Parameters<typeof test>[2];
 type TestOptions = Parameters<TestFn>[0];
@@ -71,7 +71,17 @@ test.describe(
         await page.goto(url, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId(selectors.components.Breadcrumbs.breadcrumb('Home')).first()).toBeVisible();
         await page.waitForTimeout(1_000); // wait an additional second to allow any animations to complete and for the page to stabilize before starting the scan
-        const results = await scanForA11yViolations();
+        const results = await scanForA11yViolations({
+          options: {
+            rules: {
+              'heading-order': { enabled: true },
+            },
+            runOnly: {
+              type: 'tag',
+              values: DEFAULT_A11Y_TAGS,
+            },
+          },
+        });
         expect(results).toHaveNoA11yViolations(options);
       })
     );
