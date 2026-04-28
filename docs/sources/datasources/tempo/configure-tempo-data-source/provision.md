@@ -14,8 +14,6 @@ labels:
 menuTitle: Provision
 title: Provision the Tempo data source
 weight: 800
-aliases:
-  - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#provision-the-data-source
 ---
 
 # Provision the Tempo data source
