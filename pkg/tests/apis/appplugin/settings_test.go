@@ -89,7 +89,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode == rest.Mode5 {
 					current = writeSettings(t)
 				} else {
-					current, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					current, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 				}
 
@@ -123,10 +123,10 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				obj, err := client.Resource.Patch(ctx, testAppID, types.JSONPatchType, patchData, metav1.PatchOptions{})
+				obj, err := client.Resource.Patch(ctx, instanceName, types.JSONPatchType, patchData, metav1.PatchOptions{})
 				require.NoError(t, err)
 
-				require.Equal(t, testAppID, obj.GetName())
+				require.Equal(t, instanceName, obj.GetName())
 				if mode < rest.Mode5 {
 					require.NotEmpty(t, obj.GetUID(), "PATCH needs the legacy-backed settings resource to look persisted")
 				}
@@ -145,7 +145,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode == rest.Mode5 {
 					current = writeSettings(t)
 				} else {
-					current, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					current, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 				}
 
@@ -167,9 +167,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 				_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": testAppID + ".grafana.app/v0alpha1",
+						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
-						"metadata":   map[string]any{"name": testAppID},
+						"metadata":   map[string]any{"name": instanceName},
 						"spec":       updateSpec,
 					},
 				}, metav1.UpdateOptions{})
@@ -177,7 +177,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 				var latest *unstructured.Unstructured
 				require.Eventually(t, func() bool {
-					latest, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
+					latest, err = client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 					require.NoError(t, err)
 					if latest.GetResourceVersion() != staleRV {
 						return true
@@ -186,9 +186,9 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 					updateSpec["pinned"] = !(updateSpec["pinned"].(bool))
 					_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 						Object: map[string]any{
-							"apiVersion": testAppID + ".grafana.app/v0alpha1",
+							"apiVersion": testAppID + "/v0alpha1",
 							"kind":       "Settings",
-							"metadata":   map[string]any{"name": testAppID},
+							"metadata":   map[string]any{"name": instanceName},
 							"spec":       updateSpec,
 						},
 					}, metav1.UpdateOptions{})
@@ -210,7 +210,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				_, err = client.Resource.Patch(ctx, testAppID, types.JSONPatchType, patchData, metav1.PatchOptions{})
+				_, err = client.Resource.Patch(ctx, instanceName, types.JSONPatchType, patchData, metav1.PatchOptions{})
 				helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 			})
 
@@ -286,7 +286,7 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			t.Run("patch can add a new secure value", func(t *testing.T) {
 				writeSettings(t)
 
-				obj, err := client.Resource.Patch(ctx, testAppID, types.JSONPatchType, []byte(`[
+				obj, err := client.Resource.Patch(ctx, instanceName, types.JSONPatchType, []byte(`[
 						{"op":"add","path":"/secure/patchedSecret","value":{"create":"patched-secret-value"}}
 					]`), metav1.PatchOptions{})
 				require.NoError(t, err)
@@ -350,7 +350,7 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	}
 
 	// Create the grafana dir, then copy the test-app plugin into its plugins directory
-	// so RegisterAPIService discovers it and registers the test-app.grafana.app API group.
+	// so RegisterAPIService discovers it and registers the test-app API group.
 	dir, cfgPath := testinfra.CreateGrafDir(t, baseOpts)
 
 	_, thisFile, _, ok := runtime.Caller(0)

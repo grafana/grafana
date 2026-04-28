@@ -224,8 +224,3 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*appplu
 	}
 	return s.get(ctx)
 }
-
-func getFastHash(data string) string {
-	sum := sha256.Sum256([]byte(data))
-	return hex.EncodeToString(sum[:])
-}

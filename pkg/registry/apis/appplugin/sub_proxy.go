@@ -60,7 +60,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		// TODO... actually proxy!!!
-		_, err = w.Write([]byte(fmt.Sprintf("TODO, proxy: %s", clonedReq.URL.Path)))
+		_, err = w.Write(fmt.Appendf(nil, "TODO, proxy: %s", clonedReq.URL.Path))
 		if err != nil {
 			responder.Error(err)
 		}
