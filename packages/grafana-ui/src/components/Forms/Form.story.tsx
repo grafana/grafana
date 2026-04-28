@@ -1,5 +1,4 @@
 import { type StoryFn } from '@storybook/react';
-import { useId } from 'react';
 import { type ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
@@ -57,8 +56,6 @@ interface FormDTO {
 }
 
 const renderForm = (defaultValues?: FormDTO) => {
-  const textId = useId();
-  const radioId = useId();
   return (
     <Form
       defaultValues={defaultValues}
@@ -88,7 +85,7 @@ const renderForm = (defaultValues?: FormDTO) => {
             </Field>
 
             <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-              <TextArea {...register('text', { required: true })} placeholder="Long text" id={textId} />
+              <TextArea {...register('text', { required: true })} placeholder="Long text" />
             </Field>
 
             <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
@@ -99,11 +96,11 @@ const renderForm = (defaultValues?: FormDTO) => {
               <Switch name="switch" {...register} />
             </Field>
 
-            <Field label="RadioButton" htmlFor={radioId}>
+            <Field label="RadioButton">
               <InputControl
                 name="radio"
                 control={control}
-                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} id={radioId} />}
+                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} />}
               />
             </Field>
 

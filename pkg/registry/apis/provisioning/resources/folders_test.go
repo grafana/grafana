@@ -385,7 +385,10 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		}, "")
 
 		require.Error(t, err)
-		require.ErrorContains(t, err, "not managed by a repository")
+		var unmanagedErr *ResourceUnmanagedConflictError
+		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
+		require.ErrorContains(t, err, "folder-id")
+		require.ErrorContains(t, err, "already exists and is not managed")
 		require.Empty(t, client.updateCalls)
 	})
 
@@ -409,6 +412,65 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "managed by a different repository (other-repo)")
 		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("wraps folder depth API error as FolderDepthExceededError", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "a/b/c/d/e/",
+		}, "")
+
+		require.Error(t, err)
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(err, &depthErr), "should return FolderDepthExceededError")
+		require.Equal(t, "a/b/c/d/e/", depthErr.Path)
+		require.NotEmpty(t, client.createCalls)
+	})
+
+	t.Run("wraps folder depth API error from Update (move) as FolderDepthExceededError", func(t *testing.T) {
+		// When a managed folder already exists and provisioning tries to
+		// move it (via Update) into a path that exceeds the folder API's
+		// max depth, the resulting error must also be classified as a
+		// depth violation so the sync surfaces it as a warning instead
+		// of looping retries.
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("Maximum nested folder depth reached")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "deep/path/that/exceeds/limit/",
+		}, "")
+
+		require.Error(t, err)
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(err, &depthErr), "Update path should also return FolderDepthExceededError")
+		require.Equal(t, "deep/path/that/exceeds/limit/", depthErr.Path)
+		require.NotEmpty(t, client.updateCalls)
 	})
 }
 

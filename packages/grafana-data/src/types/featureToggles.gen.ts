@@ -39,11 +39,6 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
-  * Configurable storage for dashboards, datasources, and resources
-  * @default false
-  */
-  storage?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -999,11 +994,6 @@ export interface FeatureToggles {
   * @default false
   */
   newShareReportDrawer?: boolean;
-  /**
-  * Enables SRI checks for Grafana JavaScript assets
-  * @default false
-  */
-  assetSriChecks?: boolean;
   /**
   * Enables the alert rule restore feature
   * @default true
