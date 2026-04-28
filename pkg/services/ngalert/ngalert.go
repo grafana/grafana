@@ -248,6 +248,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+			ng.Cfg.UnifiedAlerting.SkipClustering = true
 			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")

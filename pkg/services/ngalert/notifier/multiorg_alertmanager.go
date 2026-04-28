@@ -201,6 +201,11 @@ func NewMultiOrgAlertmanager(
 }
 
 func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
+	if cfg.UnifiedAlerting.SkipClustering {
+		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
+		return nil
+	}
+
 	clusterLogger := moa.logger.New("component", "clustering")
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby

@@ -124,6 +124,7 @@ type UnifiedAlertingSettings struct {
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
+	SkipClustering                bool
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	NotificationHistory           UnifiedAlertingNotificationHistorySettings
