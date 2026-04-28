@@ -144,5 +144,5 @@ export function useExternalGlobalRuleAbility(action: ExternalRuleAction): Abilit
  * folder-scoped or async dependency.
  */
 export function useRuleExploreAbility(): Ability {
-  return makeAbility(true, [AccessControlAction.DataSourcesExplore]);
+  return useMemo(() => makeAbility(true, [AccessControlAction.DataSourcesExplore]), []);
 }
