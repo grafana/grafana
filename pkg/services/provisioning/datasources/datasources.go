@@ -113,7 +113,8 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 			targetUID, ok := correlation["targetUID"].(string)
 			targetType := ""
 			if ok {
-				cmd := &datasources.GetDataSourceQuery{OrgID: dataSource.OrgID, Name: targetUID}
+				// if this changes, run test TODO remove this comment before merge
+				cmd := &datasources.GetDataSourceQuery{OrgID: dataSource.OrgID, UID: targetUID}
 				targetDS, err := dc.dsService.GetDataSource(ctx, cmd)
 				if errors.Is(err, datasources.ErrDataSourceNotFound) {
 					return err

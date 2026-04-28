@@ -292,7 +292,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		t.Run("Updating existing datasource deletes existing correlations and creates two", func(t *testing.T) {
-			store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgID: 1, ID: 1}}}
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgID: 1, ID: 1, UID: "graphite"}}}
 			orgFake := &orgtest.FakeOrgService{}
 			correlationsStore := &mockCorrelationsStore{}
 			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -452,7 +452,7 @@ type spyStore struct {
 
 func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, v := range s.items {
-		if query.Name == v.Name && query.OrgID == v.OrgID { // nolint:staticcheck
+		if query.OrgID == v.OrgID && (query.Name == v.Name || query.UID == v.UID) { // nolint:staticcheck
 			return v, nil
 		}
 	}
