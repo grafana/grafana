@@ -149,6 +149,7 @@ func NewMultiOrgAlertmanager(
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
+	skipClustering bool,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -170,8 +171,12 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 	}
 
-	if err := moa.setupClustering(cfg); err != nil {
-		return nil, err
+	if skipClustering {
+		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
+	} else {
+		if err := moa.setupClustering(cfg); err != nil {
+			return nil, err
+		}
 	}
 
 	moa.initAlertBroadcast()
@@ -201,11 +206,6 @@ func NewMultiOrgAlertmanager(
 }
 
 func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
-	if cfg.UnifiedAlerting.SkipClustering {
-		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
-		return nil
-	}
-
 	clusterLogger := moa.logger.New("component", "clustering")
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
