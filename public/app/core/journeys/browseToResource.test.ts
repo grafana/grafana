@@ -227,19 +227,40 @@ describe('browseToResource journey wiring', () => {
     expect(secondStep.end).not.toHaveBeenCalled();
   });
 
-  it('should record a folder_created event when grafana_manage_dashboards_folder_created fires', () => {
+  it('should start create_folder step when drawer opens and end it when folder is created', () => {
     loadWiring();
     simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    const createStep = createMockStepHandle();
+    mockHandle.startStep.mockReturnValue(createStep);
+
+    simulateInteraction('grafana_browse_dashboards_new_folder_drawer_opened', { from: '/dashboards' });
+    expect(mockHandle.startStep).toHaveBeenCalledWith('create_folder');
 
     simulateInteraction('grafana_manage_dashboards_folder_created', {
       is_subfolder: true,
       folder_depth: 2,
     });
-
-    expect(mockHandle.recordEvent).toHaveBeenCalledWith('folder_created', {
+    expect(createStep.end).toHaveBeenCalledWith({
+      outcome: 'success',
       isSubfolder: 'true',
       folderDepth: '2',
     });
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('should not call createStep.end if folder_created fires without a prior drawer-open', () => {
+    loadWiring();
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    // No drawer-open interaction; folder_created fires directly (e.g. provisioned flow).
+    simulateInteraction('grafana_manage_dashboards_folder_created', {
+      is_subfolder: false,
+      folder_depth: 0,
+    });
+
+    // No step started, no step ended, journey not ended.
+    expect(mockHandle.startStep).not.toHaveBeenCalled();
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
 });
