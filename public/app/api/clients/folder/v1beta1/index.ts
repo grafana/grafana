@@ -1,10 +1,23 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { refreshTeamFoldersIfLoaded } from 'app/features/browse-dashboards/state/actions';
+import { config } from '@grafana/runtime';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
+
+async function refreshTeamFolders() {
+  if (!config.featureToggles.teamFolders) {
+    return;
+  }
+
+  // Lazy-imported to avoid a circular dependency: state/actions transitively imports
+  // browseDashboardsAPI, which imports this module via folder/v1beta1/hooks.
+  const { refetchChildren } = await import('app/features/browse-dashboards/state/actions');
+  dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+}
 
 const folderListTag = { type: 'Folder' as const, id: 'LIST' };
 
@@ -33,7 +46,7 @@ export const folderAPIv1beta1 = generatedAPI
             // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here.
             //  We probably need to get the full folder before deleting or change the arg to refresh the parent.
             // dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
-            dispatch(refreshTeamFoldersIfLoaded());
+            await refreshTeamFolders();
             invalidateQuotaUsage(dispatch);
           } catch {
             // Error handled by mutation caller
@@ -49,7 +62,7 @@ export const folderAPIv1beta1 = generatedAPI
               patch.some((part) => 'path' in part && part.path === '/metadata/ownerReferences')
             ) {
               await queryFulfilled;
-              dispatch(refreshTeamFoldersIfLoaded());
+              await refreshTeamFolders();
             }
           } catch {
             // Error handled by mutation caller
@@ -61,7 +74,7 @@ export const folderAPIv1beta1 = generatedAPI
           try {
             if (folder.metadata?.ownerReferences && folder.metadata?.ownerReferences.length) {
               await queryFulfilled;
-              dispatch(refreshTeamFoldersIfLoaded());
+              await refreshTeamFolders();
             }
           } catch {
             // Error handled by mutation caller

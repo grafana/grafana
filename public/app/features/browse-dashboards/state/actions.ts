@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
@@ -60,20 +59,6 @@ export const refreshParents = createAsyncThunk(
 
     for (const parentUID of parentsToRefresh) {
       dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE }));
-    }
-  }
-);
-
-export const refreshTeamFoldersIfLoaded = createAsyncThunk(
-  'browseDashboards/refreshTeamFoldersIfLoaded',
-  async (_, { getState, dispatch }) => {
-    if (!config.featureToggles.teamFolders) {
-      return;
-    }
-
-    const { browseDashboards } = getState();
-    if (browseDashboards.childrenByParentUID[TEAM_FOLDERS_UID]) {
-      dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
     }
   }
 );
