@@ -144,6 +144,19 @@ describe('dashboardEdit journey wiring', () => {
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
 
+  it('should start journey on dashboards_new_dashboard_init (auto edit mode for /dashboard/new)', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_new_dashboard_init', {});
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'dashboard_edit',
+      expect.objectContaining({
+        attributes: expect.objectContaining({ source: 'new_dashboard', dashboardUID: '' }),
+      })
+    );
+  });
+
   it('should end as abandoned when navigating to a different pathname mid-edit', () => {
     setLocation('/d/abc/my-dash');
     Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
