@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { type ReactElement, useMemo, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 import { type Labels, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -119,11 +119,20 @@ export const AlertInstanceNotificationAction = ({
   const expectedTreeName = routingPolicyName ?? ROOT_ROUTE_NAME;
   const isFresh = matched !== undefined && journeys[0]?.policyName === expectedTreeName;
 
+  // When all journeys resolve to the same single receiver, surface it next to the button.
+  const policyReceivers = isFresh
+    ? [...new Set(journeys.map((j) => j.journey.at(-1)?.route.receiver).filter((r): r is string => Boolean(r)))]
+    : [];
+  const singlePolicyReceiver = policyReceivers.length === 1 ? policyReceivers[0] : undefined;
+
   return (
     <>
-      <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
-        <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
-      </Button>
+      <Stack direction="column" gap={0.5} alignItems="flex-start">
+        {singlePolicyReceiver && <ContactPointLink name={singlePolicyReceiver} />}
+        <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
+          <Trans i18nKey="alerting.alert-instance-extension-point.view-route">View route</Trans>
+        </Button>
+      </Stack>
       {isOpen && isFresh && journeys.length > 0 && (
         <NotificationPolicySidebar journeys={journeys} labels={matched.labels} onClose={() => setIsOpen(false)} />
       )}
