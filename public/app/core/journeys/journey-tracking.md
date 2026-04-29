@@ -300,6 +300,8 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 
 ## Adding a New Journey
 
+> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
+
 This section walks through instrumenting a new CUJ end-to-end. Worked example at the bottom.
 
 ### Step 0: Decide whether you need a journey
