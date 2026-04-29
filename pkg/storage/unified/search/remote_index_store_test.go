@@ -782,32 +782,21 @@ func TestRemoteIndexStore_ListNamespaceIndexes_SkipsLockSibling(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	backend := newFakeBackend(newConditionalBucket())
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+	store := newTestRemoteIndexStore(t, bucket)
 
 	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
 		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
 	require.NoError(t, err)
 
-	// Acquire the cleanup lock so a `stack-1/locks/cleanup` object exists.
-	cleanupLock, err := store.LockNamespaceForCleanup(ctx, "stack-1")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = cleanupLock.Release() })
+	// Plant a `stack-1/locks/...` object directly in the data bucket. In production
+	// the lock backend shares the snapshot bucket, so this prefix is observable
+	// alongside resource directories. ListNamespaceIndexes must skip it.
+	require.NoError(t, bucket.WriteAll(ctx, "stack-1/locks/cleanup", []byte("{}"), nil))
 
 	got, err := store.ListNamespaceIndexes(ctx, "stack-1")
 	require.NoError(t, err)
 	assert.Equal(t, []resource.NamespacedResource{nsRes}, got)
-}
-
-func TestRemoteIndexStore_ListNamespaceIndexes_RejectsEmptyNamespace(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStore(t, bucket)
-
-	_, err := store.ListNamespaceIndexes(ctx, "")
-	require.Error(t, err)
 }
 
 func TestRemoteIndexStore_LockNamespaceForCleanup_AcquireRelease(t *testing.T) {
@@ -870,15 +859,4 @@ func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testi
 	require.NoError(t, buildLock.Release())
 
 	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
-}
-
-func TestRemoteIndexStore_LockNamespaceForCleanup_RejectsEmptyNamespace(t *testing.T) {
-	ctx := context.Background()
-	backend := newFakeBackend(newConditionalBucket())
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
-
-	_, err := store.LockNamespaceForCleanup(ctx, "")
-	require.Error(t, err)
 }

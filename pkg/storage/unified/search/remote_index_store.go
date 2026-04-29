@@ -159,9 +159,6 @@ func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource 
 }
 
 func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
-	if namespace == "" {
-		return nil, fmt.Errorf("namespace must not be empty")
-	}
 	l, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           s.lockBackend,
 		Key:               cleanupLockKey(namespace),
@@ -468,9 +465,6 @@ func (s *BucketRemoteIndexStore) ListNamespaces(ctx context.Context) ([]string, 
 // ListNamespaceIndexes returns the resources currently known under the given
 // namespace.
 func (s *BucketRemoteIndexStore) ListNamespaceIndexes(ctx context.Context, namespace string) ([]resource.NamespacedResource, error) {
-	if namespace == "" {
-		return nil, fmt.Errorf("namespace must not be empty")
-	}
 	pfx := cleanFileSegment(namespace) + "/"
 	iter := s.bucket.List(&blob.ListOptions{Prefix: pfx, Delimiter: "/"})
 	var resources []resource.NamespacedResource
@@ -502,7 +496,6 @@ func (s *BucketRemoteIndexStore) ListNamespaceIndexes(ctx context.Context, names
 	return resources, nil
 }
 
-// TODO: caller must hold a namespace-level cleanup lock.
 func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
