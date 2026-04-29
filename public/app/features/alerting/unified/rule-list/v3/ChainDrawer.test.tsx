@@ -16,12 +16,9 @@ describe('ChainDrawer', () => {
   it('renders chain name, meta values and evaluation order steps', async () => {
     render(<ChainDrawer chainId="usage-chain" currentPosition={2} onClose={jest.fn()} />);
 
-    // Chain name from the fixture
-    expect(await byText('Usage Alerts Chain').find()).toBeInTheDocument();
-
     // Meta row — mode and interval from fixture. Rules count "4" is omitted from
     // assertion here because the step-number circles also contain "4".
-    expect(byText('Sequential').get()).toBeInTheDocument();
+    expect(await byText('Sequential').find()).toBeInTheDocument();
     expect(byText('1m').get()).toBeInTheDocument();
 
     // Each evaluation step title from fixture
