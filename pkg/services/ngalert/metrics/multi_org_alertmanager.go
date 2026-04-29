@@ -26,7 +26,7 @@ type MultiOrgAlertmanager struct {
 	// ExternalAMConfigSyncFailures counts failed sync attempts by org and reason.
 	ExternalAMConfigSyncFailures *prometheus.CounterVec
 	// ExternalAMConfigSyncDuration measures per-org sync duration in seconds.
-	ExternalAMConfigSyncDuration prometheus.Histogram
+	ExternalAMConfigSyncDuration *prometheus.HistogramVec
 	// ExternalAMConfigSyncHash exposes the hash of the most recently synced external
 	// Alertmanager configuration per org so operators can correlate sync state with
 	// what's actually applied. Hash is masked to 53 bits (Prometheus stores values
@@ -65,13 +65,13 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "external_alertmanager_config_sync_failures_total",
 			Help:      "Total number of failed external Alertmanager config sync attempts, partitioned by org and failure reason.",
 		}, []string{"org_id", "reason"}),
-		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
+		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "external_alertmanager_config_sync_duration_seconds",
-			Help:      "Duration of external Alertmanager config sync operations in seconds.",
+			Help:      "Duration of external Alertmanager config sync operations in seconds, partitioned by org.",
 			Buckets:   prometheus.DefBuckets,
-		}),
+		}, []string{"org_id"}),
 		ExternalAMConfigSyncHash: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,

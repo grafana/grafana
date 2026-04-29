@@ -159,7 +159,7 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 		if err != nil {
 			s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", err)
 			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
-			s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
+			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 			continue
 		}
 		// SaveAndApplyExtraConfiguration is the same entry point used by the convert
@@ -174,7 +174,7 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 			reason := classifySyncError(err)
 			s.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
 			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
-			s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
+			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 			continue
 		}
 
@@ -185,7 +185,7 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 		s.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
 		s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
 		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(extraConfigHashAsMetricValue(fingerprintExtraConfig(ec)))
-		s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
+		s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 	}
 }
 
