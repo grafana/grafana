@@ -31,9 +31,9 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
 
       // Clicking a panel should scroll that panel in view
-      await expect(page.getByText('Dashboard panel 48')).toBeHidden();
+      await expect(page.getByText('Dashboard panel 48')).not.toBeInViewport();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel #48')).click();
-      await expect(page.getByText('Dashboard panel 48')).toBeVisible();
+      await expect(page.getByText('Dashboard panel 48')).toBeInViewport();
     });
   }
 );
