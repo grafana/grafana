@@ -62,7 +62,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-18,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-16,datasourcesApiserverEnableResourceEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2026-03-30,datasourcesQuerierRawOutput,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/data-sources-plugins,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
@@ -93,6 +92,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 2025-07-24,timeComparison,preview,@grafana/dataviz-squad,false,false,true
 2023-12-13,tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
+2026-04-23,stateTimeline.nameAboveBars,experimental,@grafana/dataviz-squad,false,false,true
 2024-01-10,cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 2024-01-10,alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 2024-01-18,jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false

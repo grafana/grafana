@@ -2004,7 +2004,8 @@
       "metadata": {
         "name": "datasourcesQuerierRawOutput",
         "resourceVersion": "1774855676428",
-        "creationTimestamp": "2026-03-30T07:27:56Z"
+        "creationTimestamp": "2026-03-30T07:27:56Z",
+        "deletionTimestamp": "2026-04-28T09:16:40Z"
       },
       "spec": {
         "description": "use raw output mode for the data source querier",
@@ -5459,6 +5460,35 @@
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "stateTimeline.nameAboveBars",
+        "resourceVersion": "1776910622317",
+        "creationTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "stateTimelineNameAboveBars",
+        "resourceVersion": "1774329986283",
+        "creationTimestamp": "2026-03-24T05:26:26Z",
+        "deletionTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

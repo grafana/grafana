@@ -8,7 +8,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66
+	github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/semconv v0.0.0
@@ -50,7 +50,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // indirect
+	github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect

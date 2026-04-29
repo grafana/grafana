@@ -4551,6 +4551,8 @@
       "label": {
         "alphabetically-az": "Abecedně (A–Z)",
         "alphabetically-za": "Abecedně (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Odstraněno (od nejnovějších)",
         "deleted-oldest": "Odstraněno (od nejstarších)"
       }
@@ -13727,6 +13729,7 @@
       "contact-admin": "Chcete-li tento zdroj převést na místní nebo odstranit všechny zdroje z chybějícího úložiště, obraťte se na správce Grafany.",
       "convert-to-local-button": "Převést na místní",
       "delete-button": "Odstranit",
+      "go-to-dashboards": "",
       "job-error": "Při zpracování osiřelých zdrojů došlo k chybě",
       "job-success": "Osiřelé zdroje byly úspěšně zpracovány",
       "job-warning": "Některé zdroje byly zpracovány s varováními. Zkontrolujte výsledky.",
@@ -14463,6 +14466,10 @@
     "buttons": {
       "restore": "Obnovit"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "V poslední době jste neodstranili žádné nástěnky.",
       "no-deleted-dashboards-text": "Když odstraníte nástěnku, bude uložena v historii po dobu až 12 měsíců. Potom ji trvale odstraníme. Uživatelé s oprávněním k odstranění mohou obnovit nástěnky, které odstranili, a správci mohou obnovit nástěnky odstraněné kterýmkoli uživatelem.",
@@ -14628,6 +14635,10 @@
     },
     "results-table": {
       "datasource-header": "Zdroj dat",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min.",
       "deleted-remaining-header": "Zbývající čas",
       "location-header": "Poloha",
