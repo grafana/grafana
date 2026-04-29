@@ -256,13 +256,16 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
-		storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		dualStore, err := opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+		if err != nil {
+			return err
+		}
+		// generatedNameStorage assigns a server-generated name when the client
+		// sends none, which is the normal datasource create flow.
+		storage[ds.StoragePath()] = &generatedNameStorage{Storage: dualStore}
 		storage[ds.StoragePath("access")] = &subAccessREST{
 			builder: b,
 			getter:  legacyStore,
-		}
-		if err != nil {
-			return err
 		}
 	} else {
 		storage[ds.StoragePath()] = &connectionAccess{
