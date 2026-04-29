@@ -400,9 +400,9 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	keysB := listSeededIndexKeys(t, ctx, storeB, nsB)
 	assert.Equal(t, []ulid.ULID{fresh}, keysB, "stack-2 must have its older snapshot cleaned up")
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusSkipLockHeld)))
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusSuccess)))
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeletedKindSnapshot)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSkipLockHeld)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeSuccess)))
 }
 
 func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
@@ -422,8 +422,8 @@ func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 	_, err := iter.Next(ctx)
 	require.Error(t, err, "incomplete upload prefix must be removed")
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeletedKindIncomplete)))
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotIncompleteUploadsCleaned))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
 }
 
 func TestRunCleanup_DeletesPerRetentionRules(t *testing.T) {
@@ -445,7 +445,7 @@ func TestRunCleanup_DeletesPerRetentionRules(t *testing.T) {
 
 	keys := listSeededIndexKeys(t, ctx, store, ns)
 	assert.Equal(t, []ulid.ULID{keep}, keys)
-	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeletedKindSnapshot)))
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeSuccess)))
 }
 
 // --- ownership filter ---
@@ -573,8 +573,8 @@ func TestRunCleanup_OwnershipFilter_NamespaceLevel(t *testing.T) {
 	assert.Equal(t, 1, store.listNamespaceIndexes["ownedNs"])
 	assert.Equal(t, 1, store.lockNamespaceCleanup["ownedNs"])
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusSkipUnowned)))
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSkipUnowned)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
 }
 
 // --- lock loss mid-run ---
@@ -701,8 +701,8 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 	assert.Equal(t, 3, totalSurviving, "lock loss must abort processing of remaining resources")
 
 	// Only one Delete fired; lock loss is reported as an error.
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeletedKindSnapshot)))
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusError)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusError)))
 }
 
 // --- lifecycle ---
@@ -752,5 +752,45 @@ func TestRunCleanup_ListNamespacesErrorRecorded(t *testing.T) {
 	be, metrics := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(context.Background())
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotCleanups.WithLabelValues(snapshotCleanupStatusError)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusError)))
+}
+
+// deleteFailingStore wraps an inner store and forces every DeleteIndex call to
+// return an error, so we can exercise the per-snapshot failure path without
+// depending on bucket internals.
+type deleteFailingStore struct {
+	RemoteIndexStore
+	err error
+}
+
+func (s *deleteFailingStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
+	return s.err
+}
+
+func TestRunCleanup_DeleteFailureRecordedAndFlipsNamespaceStatus(t *testing.T) {
+	ctx := context.Background()
+	bucket, inner := newCleanupTestBucket(t)
+	ns := newTestNsResource()
+
+	now := time.Now()
+	old := makeULID(t, now.Add(-3*time.Hour))
+	fresh := makeULID(t, now.Add(-2*time.Hour))
+	seedSnapshot(t, ctx, bucket, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+	seedSnapshot(t, ctx, bucket, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+
+	store := &deleteFailingStore{RemoteIndexStore: inner, err: errors.New("bucket 5xx")}
+	be, metrics := newCleanupTestBackend(t, store, nil)
+	be.runCleanup(ctx)
+
+	// Per-snapshot failure recorded under outcome=error; nothing under success.
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeError)))
+	assert.Equal(t, 0.0, testutil.ToFloat64(metrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeSuccess)))
+
+	// Namespace status flips to error — cleanup ran to completion but the
+	// delete that should have succeeded didn't, so this isn't a "success".
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusError)))
+	assert.Equal(t, 0.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
+
+	// Bucket state confirms the delete didn't actually happen.
+	assert.ElementsMatch(t, []ulid.ULID{old, fresh}, listSeededIndexKeys(t, ctx, inner, ns))
 }

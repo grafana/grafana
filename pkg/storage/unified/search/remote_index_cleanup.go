@@ -16,19 +16,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// snapshotCleanupStatus labels for the index_server_snapshot_cleanups_total counter.
-// One increment per (namespace, outcome) tuple.
+// snapshotNamespaceCleanupStatus labels for the
+// index_server_snapshot_namespace_cleanups_total counter. One increment per
+// (namespace, outcome) tuple per cleanup pass.
 const (
-	snapshotCleanupStatusSuccess      = "success"
-	snapshotCleanupStatusError        = "error"
-	snapshotCleanupStatusSkipLockHeld = "skip_lock_held"
-	snapshotCleanupStatusSkipUnowned  = "skip_unowned"
+	snapshotNamespaceCleanupStatusSuccess      = "success"
+	snapshotNamespaceCleanupStatusError        = "error"
+	snapshotNamespaceCleanupStatusSkipLockHeld = "skip_lock_held"
+	snapshotNamespaceCleanupStatusSkipUnowned  = "skip_unowned"
 )
 
-// snapshotDeletedKind labels for the index_server_snapshot_deleted_total counter.
+// snapshotDeleteOutcome labels for the index_server_snapshot_deleted_total
+// counter. Cleaned-up incomplete-upload prefixes are tracked in a separate
+// metric (IndexSnapshotIncompleteUploadsCleaned) since they have no
+// outcome=error series — CleanupIncompleteUploads short-circuits on internal
+// errors and only reports successful prefix deletes.
 const (
-	snapshotDeletedKindSnapshot   = "snapshot"
-	snapshotDeletedKindIncomplete = "incomplete"
+	snapshotDeleteOutcomeSuccess = "success"
+	snapshotDeleteOutcomeError   = "error"
 )
 
 // cleanupIncompleteUploadsMinAge is the minimum age of a partial upload prefix
@@ -84,7 +89,7 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 	if err != nil {
 		// We can't attribute this error to any single namespace, so it shows up
 		// as a single "error" cleanup. Logged at warn so operators see it.
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		b.log.Warn("listing namespaces for snapshot cleanup", "err", err)
 		return
 	}
@@ -112,22 +117,22 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 	// trip the assertion in TestRunCleanup_OwnershipFilter_NamespaceLevel.
 	owned, err := b.ownsIndexFn(resource.NamespacedResource{Namespace: namespace})
 	if err != nil {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		logger.Warn("ownership check failed during cleanup", "err", err)
 		return
 	}
 	if !owned {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusSkipUnowned)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusSkipUnowned)
 		return
 	}
 
 	lock, err := store.LockNamespaceForCleanup(ctx, namespace)
 	if errors.Is(err, errLockHeld) {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusSkipLockHeld)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusSkipLockHeld)
 		return
 	}
 	if err != nil {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		logger.Warn("acquiring cleanup lock", "err", err)
 		return
 	}
@@ -157,7 +162,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 
 	resources, err := store.ListNamespaceIndexes(nsCtx, namespace)
 	if err != nil {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		logger.Warn("listing namespace indexes", "err", err)
 		return
 	}
@@ -191,17 +196,17 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 
 	if errors.Is(context.Cause(nsCtx), errCleanupLockLost) {
 		logger.Warn("cleanup lock lost mid-run, aborted namespace")
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		return
 	}
 	if ctx.Err() != nil {
 		return
 	}
 	if hadResourceError {
-		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
+		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
 		return
 	}
-	b.recordSnapshotCleanupStatus(snapshotCleanupStatusSuccess)
+	b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusSuccess)
 }
 
 // runResourceCleanup applies the retention rules to one resource and sweeps any
@@ -216,29 +221,43 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 	}
 
 	toDelete := selectSnapshotsToDelete(metas, time.Now(), b.opts.Snapshot.MaxIndexAge, b.opts.Snapshot.CleanupGracePeriod)
+	deleteFailures := 0
 	for _, key := range toDelete {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 		if err := store.DeleteIndex(ctx, res, key); err != nil {
 			logger.Warn("deleting snapshot", "resource", res, "snapshot", key.String(), "err", err)
+			b.recordSnapshotDeleted(snapshotDeleteOutcomeError)
+			deleteFailures++
 			continue
 		}
-		b.recordSnapshotDeleted(snapshotDeletedKindSnapshot)
+		b.recordSnapshotDeleted(snapshotDeleteOutcomeSuccess)
 	}
 
 	// CleanupIncompleteUploads returns a partial cleaned count even on error;
-	// record those before propagating so metrics don't undercount on transient
-	// bucket failures.
-	cleaned, err := store.CleanupIncompleteUploads(ctx, res, cleanupIncompleteUploadsMinAge)
+	// record successes before checking the error so metrics don't undercount
+	// on transient bucket failures. Treated symmetrically with the per-snapshot
+	// delete loop above: log, flag, continue — don't short-circuit the resource.
+	cleaned, incompleteErr := store.CleanupIncompleteUploads(ctx, res, cleanupIncompleteUploadsMinAge)
 	for range cleaned {
-		b.recordSnapshotDeleted(snapshotDeletedKindIncomplete)
+		b.recordIncompleteUploadCleaned()
 	}
-	if err != nil {
-		return fmt.Errorf("cleaning up incomplete uploads: %w", err)
+	if incompleteErr != nil {
+		logger.Warn("cleaning up incomplete uploads", "resource", res, "err", incompleteErr)
 	}
 
-	return nil
+	// Surface failures so the namespace-level cleanup status flips to "error"
+	// instead of being recorded as success. Per-snapshot detail is already in
+	// the metrics above; this is the aggregate signal.
+	var errs []error
+	if deleteFailures > 0 {
+		errs = append(errs, fmt.Errorf("%d snapshot delete(s) failed", deleteFailures))
+	}
+	if incompleteErr != nil {
+		errs = append(errs, fmt.Errorf("cleaning up incomplete uploads: %w", incompleteErr))
+	}
+	return errors.Join(errs...)
 }
 
 // selectSnapshotsToDelete applies the retention policy and returns the keys
@@ -312,16 +331,23 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 	return toDelete
 }
 
-func (b *bleveBackend) recordSnapshotCleanupStatus(status string) {
+func (b *bleveBackend) recordSnapshotNamespaceCleanupStatus(status string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotCleanups.WithLabelValues(status).Inc()
+	b.indexMetrics.IndexSnapshotNamespaceCleanups.WithLabelValues(status).Inc()
 }
 
-func (b *bleveBackend) recordSnapshotDeleted(kind string) {
+func (b *bleveBackend) recordSnapshotDeleted(outcome string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotDeleted.WithLabelValues(kind).Inc()
+	b.indexMetrics.IndexSnapshotDeleted.WithLabelValues(outcome).Inc()
+}
+
+func (b *bleveBackend) recordIncompleteUploadCleaned() {
+	if b.indexMetrics == nil {
+		return
+	}
+	b.indexMetrics.IndexSnapshotIncompleteUploadsCleaned.Inc()
 }
