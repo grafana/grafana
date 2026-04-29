@@ -43,25 +43,18 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		return err
 	}
 
-	roles := FixedRoleRegistrations()
-
 	//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
-	if hs.Cfg.ViewersCanEdit {
-		roles = addGrant(roles, datasourcesExplorerRoleName, string(org.RoleViewer))
-	}
-
-	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
-		roles = setGrants(roles, datasourcesReaderRoleName, []string{string(org.RoleViewer)})
-	}
-
-	return hs.accesscontrolService.DeclareFixedRoles(roles...)
+	return hs.accesscontrolService.DeclareFixedRoles(
+		FixedRoleRegistrations(hs.Cfg.ViewersCanEdit, hs.License.FeatureEnabled("dspermissions.enforcement"))...)
 }
 
-// FixedRoleRegistrations returns all HTTP API role registrations with their
-// default grants. This must be unconditional — instance-specific overrides
-// (e.g. ViewersCanEdit, dspermissions enforcement) belong in namespace-scoped
-// Role resources.
-func FixedRoleRegistrations() []ac.RoleRegistration {
+// FixedRoleRegistrations returns all HTTP API role registrations with grants
+// adjusted for the running instance.
+//
+// viewersCanEdit: when true the datasources explorer role also grants Viewer.
+// dsPermissionsEnforced: when false (OSS / enterprise without license) the
+// datasources reader role is granted to Viewer.
+func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.RoleRegistration {
 	provisioningWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:provisioning:writer",
@@ -78,6 +71,10 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
+	explorerGrants := []string{string(org.RoleEditor)}
+	if viewersCanEdit {
+		explorerGrants = append(explorerGrants, string(org.RoleViewer))
+	}
 	datasourcesExplorerRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        datasourcesExplorerRoleName,
@@ -90,9 +87,13 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleEditor)},
+		Grants: explorerGrants,
 	}
 
+	dsReaderGrants := []string{string(org.RoleAdmin)}
+	if !dsPermissionsEnforced {
+		dsReaderGrants = []string{string(org.RoleViewer)}
+	}
 	datasourcesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        datasourcesReaderRoleName,
@@ -110,7 +111,7 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: dsReaderGrants,
 	}
 
 	builtInDatasourceReader := ac.RoleRegistration{
@@ -629,24 +630,6 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
-}
-
-func addGrant(roles []ac.RoleRegistration, name, grant string) []ac.RoleRegistration {
-	for i := range roles {
-		if roles[i].Role.Name == name {
-			roles[i].Grants = append(roles[i].Grants, grant)
-		}
-	}
-	return roles
-}
-
-func setGrants(roles []ac.RoleRegistration, name string, grants []string) []ac.RoleRegistration {
-	for i := range roles {
-		if roles[i].Role.Name == name {
-			roles[i].Grants = grants
-		}
-	}
-	return roles
 }
 
 // Metadata helpers

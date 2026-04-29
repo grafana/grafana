@@ -46,9 +46,10 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-// FixedRoleRegistrations returns plugin role registrations with default grants.
-// The default includes the maintainer grant to GrafanaAdmin.
-func FixedRoleRegistrations() []ac.RoleRegistration {
+// FixedRoleRegistrations returns plugin role registrations with grants adjusted
+// for the running instance. When pluginAdminEnabled is false the maintainer
+// role receives no grants (plugin install/uninstall is disabled).
+func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -73,6 +74,11 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
+
+	maintainerGrants := []string{ac.RoleGrafanaAdmin}
+	if !pluginAdminEnabled {
+		maintainerGrants = []string{}
+	}
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        pluginsMaintainerRoleName,
@@ -83,23 +89,14 @@ func FixedRoleRegistrations() []ac.RoleRegistration {
 				{Action: ActionInstall},
 			},
 		},
-		Grants: []string{ac.RoleGrafanaAdmin},
+		Grants: maintainerGrants,
 	}
 
 	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
 }
 
 func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
-	roles := FixedRoleRegistrations()
-	if !cfg.PluginAdminEnabled {
-		for i := range roles {
-			if roles[i].Role.Name == pluginsMaintainerRoleName {
-				roles[i].Grants = []string{}
-			}
-		}
-	}
-
-	return service.DeclareFixedRoles(roles...)
+	return service.DeclareFixedRoles(FixedRoleRegistrations(cfg.PluginAdminEnabled)...)
 }
 
 var datasourcesActions = map[string]bool{
