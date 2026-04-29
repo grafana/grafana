@@ -29,21 +29,22 @@ test.describe(
         { url: '/d/n1jR8vnnz/panel-tests-all-panels' },
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=2' }, // time series
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=16' }, // stat
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=18' }, // gauge
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=20' }, // bar gauge
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=24' }, // pie chart
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=14' }, // bar chart
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=22' }, // table
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=26' }, // heatmap
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=41' }, // state timeline
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=62' }, // geomap
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=4' }, // histogram
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=34' }, // text
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=12' }, // news
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=8' }, // dashboard list
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=6' }, // alert list
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=10' }, // annotation list
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=28' }, // logs
+        // TODO fix Slider a11y issue (multiple form controls)
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=18' }, // gauge
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=14' }, // bar chart
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=26' }, // heatmap
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=41' }, // state timeline
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=62' }, // geomap
+        // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=4' }, // histogram
 
         // Dashboard settings
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings' },

@@ -386,9 +386,9 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
         </Stack>
       </FieldSet>
       <FieldSet>
-        <h3 className="page-heading">
+        <h2 className="page-heading">
           <Trans i18nKey="dashboard-scene.annotation-settings-edit.query">Query</Trans>
-        </h3>
+        </h2>
         {ds?.annotations && dsi && (
           <StandardAnnotationQueryEditor
             datasource={ds}
