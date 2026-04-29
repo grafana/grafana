@@ -13857,6 +13857,7 @@
       "tool-tile-managed-count_other": "{{count}} managed",
       "tool-tile-recommended": "Recommended",
       "tooling-support-compare": "Compare tools",
+      "tooling-support-description": "Grafana supports multiple GitOps and provisioning tools. Choose the best fit for your workflow.",
       "tooling-support-heading": "Tooling support",
       "unmanaged-by-type-empty": "Everything is under management.",
       "unmanaged-by-type-heading": "Unmanaged by type"

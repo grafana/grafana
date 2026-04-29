@@ -919,14 +919,9 @@ function NextStepsPanel({
 
   return (
     <div className={styles.sidePanel}>
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <Text variant="h5">
-          <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
-        </Text>
-        <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
-        </TextLink>
-      </Stack>
+      <Text variant="h5">
+        <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
+      </Text>
       <Stack direction="column" gap={1.5}>
         {steps.map((step, index) => (
           <Stack key={step.key} direction="row" gap={2} alignItems="flex-start">
@@ -947,6 +942,9 @@ function NextStepsPanel({
           </Stack>
         ))}
       </Stack>
+      <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
+        <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
+      </TextLink>
     </div>
   );
 }
@@ -995,19 +993,22 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
 
   return (
     <div className={styles.sidePanel}>
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <Text variant="h5">
-          <Trans i18nKey="provisioning.stats.tooling-support-heading">Tooling support</Trans>
-        </Text>
-        <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.tooling-support-compare">Compare tools</Trans>
-        </TextLink>
-      </Stack>
+      <Text variant="h5">
+        <Trans i18nKey="provisioning.stats.tooling-support-heading">Tooling support</Trans>
+      </Text>
+      <Text color="secondary" variant="bodySmall">
+        <Trans i18nKey="provisioning.stats.tooling-support-description">
+          Grafana supports multiple GitOps and provisioning tools. Choose the best fit for your workflow.
+        </Trans>
+      </Text>
       <div className={styles.toolingGrid}>
         {SUPPORTED_TOOLS.map((tool) => (
           <ToolTile key={tool.key} tool={tool} count={counts.get(tool.kind) ?? 0} />
         ))}
       </div>
+      <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
+        <Trans i18nKey="provisioning.stats.tooling-support-compare">Compare tools</Trans>
+      </TextLink>
     </div>
   );
 }
