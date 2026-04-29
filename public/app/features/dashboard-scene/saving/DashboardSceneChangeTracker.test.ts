@@ -68,9 +68,9 @@ describe('DashboardSceneChangeTracker', () => {
   it('should set isDirty immediately when changes are detected on startTrackingChanges', () => {
     const scene = new DashboardScene({});
 
-    jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(
-      () => ({ postMessage: jest.fn() }) as unknown as CorsWorker
-    );
+    jest
+      .spyOn(createDetectChangesWorker, 'createWorker')
+      .mockImplementation(() => ({ postMessage: jest.fn() }) as unknown as CorsWorker);
     jest.spyOn(scene, 'getInitialSaveModel').mockReturnValue({ title: 'initial dashboard' } as unknown as Dashboard);
 
     const changeTracker = new DashboardSceneChangeTracker(scene);
@@ -82,9 +82,9 @@ describe('DashboardSceneChangeTracker', () => {
   it('should not set isDirty when no changes are detected on startTrackingChanges', () => {
     const scene = new DashboardScene({});
 
-    jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(
-      () => ({ postMessage: jest.fn() }) as unknown as CorsWorker
-    );
+    jest
+      .spyOn(createDetectChangesWorker, 'createWorker')
+      .mockImplementation(() => ({ postMessage: jest.fn() }) as unknown as CorsWorker);
     // matches what transformSceneToSaveModel returns after JSON stripping (functions removed)
     jest.spyOn(scene, 'getInitialSaveModel').mockReturnValue({ title: 'updated dashboard' } as unknown as Dashboard);
 
