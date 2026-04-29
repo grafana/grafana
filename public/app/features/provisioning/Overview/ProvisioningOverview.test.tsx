@@ -94,7 +94,7 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
-  it('hides the Migrate action when no Git Sync repository is connected', () => {
+  it('routes Migrate to Get started when no Git Sync repository is connected', () => {
     mockUseRepositoryList.mockReturnValue([[], false]);
     mockQuery({
       data: {
@@ -109,9 +109,13 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // No repository → no usable migration target → the button is omitted
-    // entirely instead of being shown disabled.
-    expect(screen.queryAllByRole('link', { name: /migrate/i })).toHaveLength(0);
+    // Without a repository the button still renders but points at Get
+    // started so the user can connect one.
+    const migrateLinks = screen.getAllByRole('link', { name: /migrate/i });
+    expect(migrateLinks.length).toBeGreaterThan(0);
+    migrateLinks.forEach((link) => {
+      expect(link).toHaveAttribute('href', '/admin/provisioning/getting-started');
+    });
   });
 
   it('shows a Migrate link only for Git-Sync-supported rows that still have unmanaged resources', () => {

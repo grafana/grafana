@@ -31,7 +31,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { PROVISIONING_URL } from '../constants';
+import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
@@ -563,15 +563,22 @@ function ProviderStat({
 }
 
 /**
- * Per-row action that points the user at the Git Sync repository where they
- * can migrate the unmanaged folders or dashboards. Only rendered for
- * Git-Sync-supported rows (folders and dashboards) when at least one
- * repository is connected — Migrate from the Grafana UI only works against
- * Git Sync, so without a repo there's nothing the button can usefully do.
+ * Per-row action that points the user at the right place to migrate
+ * unmanaged folders or dashboards. With at least one Git Sync repository
+ * we drop them on that repo (or the Repositories tab when there are
+ * several); without a repository we send them to the Get started tab so
+ * they can connect one.
  */
 function MigrateRowButton({ repos }: { repos: Repository[] }) {
-  const target =
-    repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
+  const target = (() => {
+    if (repos.length === 0) {
+      return GETTING_STARTED_URL;
+    }
+    if (repos.length === 1 && repos[0].metadata?.name) {
+      return `${PROVISIONING_URL}/${repos[0].metadata.name}`;
+    }
+    return PROVISIONING_URL;
+  })();
   return (
     <LinkButton variant="secondary" size="sm" icon="upload" href={target}>
       <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
@@ -821,14 +828,11 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
         header: '',
         disableGrow: true,
         cell: ({ row }) => {
-          // Migrate from the UI is Git-Sync-only and needs a repository to
-          // point at, so only render the action on Git-Sync-supported rows
-          // with unmanaged resources when there's at least one repo.
-          if (
-            !row.original.isGitSyncSupported ||
-            row.original.unmanagedCount === 0 ||
-            gitSyncRepos.length === 0
-          ) {
+          // Migrate from the UI is Git-Sync-only, so only render the action
+          // on Git-Sync-supported rows that still have unmanaged resources.
+          // Whether or not a repo is configured the button is shown — it
+          // routes to the Get started tab when there isn't one yet.
+          if (!row.original.isGitSyncSupported || row.original.unmanagedCount === 0) {
             return null;
           }
           return <MigrateRowButton repos={gitSyncRepos} />;
