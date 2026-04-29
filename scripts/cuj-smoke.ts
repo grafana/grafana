@@ -1,29 +1,32 @@
 /**
- * Local smoke runner for the search_to_resource Critical User Journey.
+ * Local smoke runner for Critical User Journeys.
  *
- * Drives a real browser through the journey N times and reports the outcome
- * histogram. Each run produces real Faro/OTel telemetry against whatever
- * collector the local Grafana is wired to (see conf/custom.ini).
+ * Drives a real browser through one or more journeys N times and reports the
+ * outcome histogram. Each run produces real Faro/OTel telemetry against
+ * whatever collector the local Grafana is wired to (see conf/custom.ini).
  *
  * Usage:
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 20
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
  *   node --experimental-strip-types scripts/cuj-smoke.ts --runs 10 --scenario discarded
+ *   node --experimental-strip-types scripts/cuj-smoke.ts --journeys search_to_resource
  *
  * Requires: local Grafana running on $GRAFANA_URL (default localhost:3000)
  * with the cujTracking feature toggle enabled and Faro tracing wired in
  * conf/custom.ini.
+ *
+ * Each journey owns its smoke driver under
+ * public/app/core/journeys/<name>.smoke.ts (using shared helpers from
+ * __smoke__/). Add a new journey to DRIVERS to expose it via --journeys.
  */
 
-import { type Browser, type BrowserContext, type Page, chromium } from '@playwright/test';
+import { type Browser, type Page, chromium } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-// Mirror of selectors.components.NavToolbar.commandPaletteTrigger from
-// packages/grafana-e2e-selectors. Hardcoded because this script runs as a plain
-// Node process and the workspace package isn't built into node_modules.
-const COMMAND_PALETTE_TRIGGER = 'data-testid Command palette trigger';
+import { type JourneyDriver } from '../public/app/core/journeys/__smoke__/types.ts';
+import { searchToResourceDriver } from '../public/app/core/journeys/searchToResource.smoke.ts';
 
 // --------------------------------------------------------------------------
 // Config
@@ -35,35 +38,19 @@ const ADMIN_PASS = process.env.GRAFANA_ADMIN_PASSWORD ?? 'admin';
 // Standard storage state path used by the rest of the e2e suite (see playwright.config.ts).
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 const STORAGE_STATE = path.join(REPO_ROOT, 'playwright', '.auth', `${ADMIN_USER}.json`);
-const JOURNEY_TYPE = 'search_to_resource';
 const JOURNEY_TIMEOUT_MS = 30_000;
 
 // Fixture dashboard for the existing-dashboard scenario. Created idempotently
 // via the Grafana API at startup so the smoke runner is self-sufficient on a
-// vanilla local install.
+// vanilla local install. Title kept in sync with searchToResource.smoke.ts.
 const FIXTURE_UID = 'cuj-smoke-fixture';
 const FIXTURE_TITLE = 'CUJ Smoke Fixture';
-
-const SCENARIOS = ['new-dashboard', 'home-dashboard', 'import-dashboard', 'existing-dashboard', 'discarded'] as const;
-type Scenario = (typeof SCENARIOS)[number];
-
-// Per-scenario query variants. The runner picks one uniformly so the dashboard
-// sees a realistic spread of query strings, casings, and lengths.
-const QUERY_VARIANTS: Record<Scenario, string[]> = {
-  'new-dashboard': ['new dashboard', 'new', 'create dashboard', 'new dash'],
-  'home-dashboard': ['home', 'Home', 'home dashboard'],
-  'import-dashboard': ['import', 'import dashboard'],
-  'existing-dashboard': [FIXTURE_TITLE, 'CUJ Smoke', 'cuj smoke', 'smoke fixture'],
-  discarded: ['something'],
-};
-
-type TypingPattern = 'burst' | 'normal' | 'thinking' | 'hunting';
-type ActivationStyle = 'mouse' | 'keyboard-immediate' | 'keyboard-browse';
 
 interface Args {
   runs: number;
   headless: boolean;
-  scenario?: Scenario;
+  scenario?: string;
+  journeys: string[];
 }
 
 interface JourneyEnd {
@@ -73,6 +60,11 @@ interface JourneyEnd {
   attributes: Record<string, unknown>;
 }
 
+// Registry of journey drivers. Add new drivers here to expose them via --journeys.
+const DRIVERS: Record<string, JourneyDriver> = {
+  [searchToResourceDriver.type]: searchToResourceDriver,
+};
+
 // --------------------------------------------------------------------------
 // CLI
 // --------------------------------------------------------------------------
@@ -81,7 +73,8 @@ function parseArgs(): Args {
   const args = process.argv.slice(2);
   let runs = 10;
   let headless = true;
-  let scenario: Scenario | undefined;
+  let scenario: string | undefined;
+  let journeys: string[] = ['search_to_resource'];
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -93,11 +86,15 @@ function parseArgs(): Args {
         headless = false;
         break;
       case '--scenario': {
-        const s = args[++i];
-        if (!SCENARIOS.includes(s as Scenario)) {
-          throw new Error(`Unknown scenario "${s}". Valid: ${SCENARIOS.join(', ')}`);
-        }
-        scenario = s as Scenario;
+        scenario = args[++i];
+        break;
+      }
+      case '--journeys': {
+        const raw = args[++i] ?? '';
+        journeys = raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
         break;
       }
       case '-h':
@@ -110,20 +107,51 @@ function parseArgs(): Args {
   if (!Number.isFinite(runs) || runs < 1) {
     throw new Error(`--runs must be a positive integer, got "${runs}"`);
   }
-  return { runs, headless, scenario };
+
+  if (journeys.length === 0) {
+    throw new Error(`--journeys must list at least one journey type`);
+  }
+  const registered = Object.keys(DRIVERS);
+  for (const j of journeys) {
+    if (!DRIVERS[j]) {
+      throw new Error(`unknown journey '${j}'. Registered: ${registered.join(', ')}`);
+    }
+  }
+
+  if (scenario) {
+    const supported = journeys.some((j) => DRIVERS[j].scenarios.includes(scenario as string));
+    if (!supported) {
+      const valid = journeys.flatMap((j) => DRIVERS[j].scenarios);
+      throw new Error(
+        `--scenario "${scenario}" is not supported by any selected journey. ` +
+          `Valid for {${journeys.join(', ')}}: ${[...new Set(valid)].join(', ')}`
+      );
+    }
+  }
+
+  return { runs, headless, scenario, journeys };
 }
 
 function printHelp(): void {
+  const journeyLines: string[] = ['Registered journeys:'];
+  for (const [type, driver] of Object.entries(DRIVERS)) {
+    journeyLines.push(`  ${type}`);
+    journeyLines.push(`    scenarios: ${driver.scenarios.join(', ')}`);
+  }
+
   console.log(
     [
-      'cuj-smoke: drive search_to_resource N times against local Grafana',
+      'cuj-smoke: drive Critical User Journeys N times against local Grafana',
       '',
       'Options:',
       '  --runs, -n <N>         number of runs (default 10)',
       '  --headed               run with visible browser',
-      `  --scenario <name>      pin a single scenario (default: uniform random)`,
-      `                         valid: ${SCENARIOS.join(', ')}`,
+      '  --journeys <list>      comma-separated journey types (default: search_to_resource)',
+      '  --scenario <name>      pin a single scenario across selected journeys',
+      '                         (must be supported by at least one selected journey)',
       '  -h, --help             show this help',
+      '',
+      ...journeyLines,
       '',
       'Env: GRAFANA_URL (default http://localhost:3000),',
       '     GRAFANA_ADMIN_USER (default admin) - matches the playwright authenticate project',
@@ -280,172 +308,19 @@ function nextJourneyEnd(page: Page, type: string): Promise<JourneyEnd> {
 }
 
 // --------------------------------------------------------------------------
-// Scenario actions
+// Selection helpers
 // --------------------------------------------------------------------------
 
-async function openCommandPalette(page: Page): Promise<void> {
-  // Click the canonical trigger button (more reliable than the keyboard shortcut
-  // across focus contexts). Selector imported from @grafana/e2e-selectors so we
-  // pick up any future renames automatically.
-  await page.getByTestId(COMMAND_PALETTE_TRIGGER).click();
-  // KBar's search input renders with role="combobox" (see KBarSearch.tsx).
-  await page.getByRole('combobox').waitFor({ state: 'visible', timeout: 5_000 });
+function pickJourney(journeys: string[]): JourneyDriver {
+  const type = journeys[Math.floor(Math.random() * journeys.length)];
+  return DRIVERS[type];
 }
 
-function jitter(n: number): number {
-  return Math.random() * n;
-}
-
-function pickTypingPattern(): TypingPattern {
-  const r = Math.random();
-  if (r < 0.3) return 'burst';
-  if (r < 0.7) return 'normal';
-  if (r < 0.9) return 'thinking';
-  return 'hunting';
-}
-
-function pickActivationStyle(): ActivationStyle {
-  const r = Math.random();
-  if (r < 0.4) return 'mouse';
-  if (r < 0.7) return 'keyboard-immediate';
-  return 'keyboard-browse';
-}
-
-function pickQuery(scenario: Scenario): string {
-  const variants = QUERY_VARIANTS[scenario];
-  return variants[Math.floor(Math.random() * variants.length)];
-}
-
-/**
- * Type a query with a human-shaped cadence so the search_query telemetry sees
- * realistic timing and the occasional typo+correction. Always pads with 700ms
- * after typing so the 500ms debounce flushes.
- */
-async function humanType(page: Page, text: string, pattern: TypingPattern = pickTypingPattern()): Promise<void> {
-  switch (pattern) {
-    case 'burst':
-      await page.keyboard.type(text, { delay: 40 + jitter(20) });
-      break;
-    case 'normal':
-      await page.keyboard.type(text, { delay: 80 + jitter(40) });
-      break;
-    case 'thinking': {
-      const split = Math.floor(text.length / 2);
-      await page.keyboard.type(text.slice(0, split), { delay: 100 + jitter(80) });
-      await page.waitForTimeout(500 + jitter(1000));
-      await page.keyboard.type(text.slice(split), { delay: 100 + jitter(80) });
-      break;
-    }
-    case 'hunting': {
-      // Pick a non-terminal index to fat-finger, then correct.
-      const idx = text.length > 1 ? Math.floor(Math.random() * (text.length - 1)) : 0;
-      await page.keyboard.type(text.slice(0, idx), { delay: 80 + jitter(40) });
-      const wrong = String.fromCodePoint((text.codePointAt(idx) ?? 97) + 1);
-      await page.keyboard.type(wrong, { delay: 80 + jitter(40) });
-      await page.waitForTimeout(150);
-      await page.keyboard.press('Backspace');
-      await page.keyboard.type(text.slice(idx), { delay: 80 + jitter(40) });
-      break;
-    }
-  }
-  await page.waitForTimeout(700);
-}
-
-async function activate(page: Page, style: ActivationStyle = pickActivationStyle()): Promise<void> {
-  switch (style) {
-    case 'mouse':
-      await page.getByRole('option').first().click();
-      return;
-    case 'keyboard-immediate':
-      await page.keyboard.press('ArrowDown');
-      await page.keyboard.press('Enter');
-      return;
-    case 'keyboard-browse': {
-      const downs = 1 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < downs; i++) {
-        await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(150 + jitter(200));
-      }
-      if (Math.random() < 0.3) {
-        const ups = 1 + Math.floor(Math.random() * 2);
-        for (let i = 0; i < ups; i++) {
-          await page.keyboard.press('ArrowUp');
-          await page.waitForTimeout(150 + jitter(200));
-        }
-      }
-      await page.keyboard.press('Enter');
-      return;
-    }
-  }
-}
-
-/**
- * Search for a query, wait for the first result, activate it. Query, typing
- * cadence, and activation modality are all randomised so the dashboard sees
- * a realistic spread of telemetry shapes.
- */
-async function searchAndActivate(page: Page, scenario: Scenario): Promise<void> {
-  await openCommandPalette(page);
-  await humanType(page, pickQuery(scenario));
-  // kbar's dashboard search is async; allow up to 10s. If results never show
-  // (or the query genuinely matches nothing), fall back to Escape so the
-  // journey ends as `discarded` instead of leaving its 60s timeout running.
-  const firstOption = page.getByRole('option').first();
-  try {
-    await firstOption.waitFor({ state: 'visible', timeout: 10_000 });
-  } catch {
-    await page.keyboard.press('Escape');
-    return;
-  }
-  await activate(page);
-}
-
-async function runDiscarded(page: Page): Promise<void> {
-  const r = Math.random();
-  if (r < 0.2) {
-    // immediate-close: open and bail before typing anything.
-    await openCommandPalette(page);
-    await page.waitForTimeout(200 + jitter(800));
-    await page.keyboard.press('Escape');
-    return;
-  }
-
-  await openCommandPalette(page);
-  const query = pickQuery('discarded');
-  await humanType(page, query);
-
-  if (r < 0.6) {
-    // type-and-abandon
-    await page.keyboard.press('Escape');
-    return;
-  }
-
-  // type-clear-abandon: backspace through the query before escaping.
-  for (let i = 0; i < query.length; i++) {
-    await page.keyboard.press('Backspace');
-    await page.waitForTimeout(40 + jitter(60));
-  }
-  await page.waitForTimeout(300 + jitter(500));
-  await page.keyboard.press('Escape');
-}
-
-async function runScenario(page: Page, scenario: Scenario): Promise<void> {
-  switch (scenario) {
-    case 'new-dashboard':
-    case 'home-dashboard':
-    case 'import-dashboard':
-    case 'existing-dashboard':
-      return searchAndActivate(page, scenario);
-    case 'discarded':
-      return runDiscarded(page);
-  }
-}
-
-function pickScenario(pinned?: Scenario): Scenario {
-  if (pinned) {
+function pickScenario(driver: JourneyDriver, pinned?: string): string {
+  if (pinned && driver.scenarios.includes(pinned)) {
     return pinned;
   }
-  return SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+  return driver.scenarios[Math.floor(Math.random() * driver.scenarios.length)];
 }
 
 // --------------------------------------------------------------------------
@@ -466,7 +341,7 @@ class SessionExpiredError extends Error {
   }
 }
 
-async function runOnce(browser: Browser, scenario: Scenario): Promise<JourneyEnd> {
+async function runOnce(browser: Browser, driver: JourneyDriver, scenario: string): Promise<JourneyEnd> {
   const ctx = await browser.newContext({ storageState: STORAGE_STATE });
   await ctx.addInitScript(() => {
     // Enable journey debug logs so we can detect end events from console output.
@@ -487,13 +362,13 @@ async function runOnce(browser: Browser, scenario: Scenario): Promise<JourneyEnd
       throw new SessionExpiredError(url.pathname);
     }
 
-    const journeyP = nextJourneyEnd(page, JOURNEY_TYPE);
+    const journeyP = nextJourneyEnd(page, driver.type);
     // Defuse the journey timeout: if runScenario throws before the journey
     // ends, nextJourneyEnd's 30s rejection would otherwise be unhandled and
     // crash the whole runner. Attach a no-op catch so the runtime is happy;
     // we still re-await journeyP below if runScenario succeeds.
     journeyP.catch(() => {});
-    await runScenario(page, scenario);
+    await driver.runScenario(page, scenario);
     const end = await journeyP;
     // Wait for Faro's batched transport to flush so OTel spans reach Tempo before the page is killed.
     await page.waitForTimeout(2000);
@@ -517,7 +392,8 @@ function refreshAuth(): void {
 interface Summary {
   total: number;
   byOutcome: Map<string, number>;
-  byScenario: Map<string, Map<string, number>>; // scenario -> outcome -> count
+  // journey -> scenario -> outcome -> count
+  byJourney: Map<string, Map<string, Map<string, number>>>;
   totalDurationMs: number;
   failures: string[];
 }
@@ -535,10 +411,12 @@ function printSummary(s: Summary): void {
       console.log(`  ${o.padEnd(12)} ${n}`);
     }
   }
-  console.log('Scenario × outcome:');
-  for (const [scenario, outcomes] of s.byScenario) {
-    const parts = [...outcomes.entries()].map(([o, n]) => `${o}=${n}`).join(' ');
-    console.log(`  ${scenario.padEnd(14)} ${parts}`);
+  console.log('Journey / scenario × outcome:');
+  for (const [journey, scenarios] of s.byJourney) {
+    for (const [scenario, outcomes] of scenarios) {
+      const parts = [...outcomes.entries()].map(([o, n]) => `${o}=${n}`).join(' ');
+      console.log(`  ${`${journey}/${scenario}`.padEnd(40)} ${parts}`);
+    }
   }
   if (s.failures.length > 0) {
     console.log('\nFailures:');
@@ -548,10 +426,20 @@ function printSummary(s: Summary): void {
   }
 }
 
+function recordOutcome(summary: Summary, journey: string, scenario: string, outcome: string): void {
+  summary.byOutcome.set(outcome, (summary.byOutcome.get(outcome) ?? 0) + 1);
+  const perJourney = summary.byJourney.get(journey) ?? new Map<string, Map<string, number>>();
+  const perScenario = perJourney.get(scenario) ?? new Map<string, number>();
+  perScenario.set(outcome, (perScenario.get(outcome) ?? 0) + 1);
+  perJourney.set(scenario, perScenario);
+  summary.byJourney.set(journey, perJourney);
+}
+
 async function main(): Promise<void> {
   const args = parseArgs();
   console.log(
-    `[start] grafana=${GRAFANA_URL} runs=${args.runs} headless=${args.headless} scenario=${args.scenario ?? 'random'}`
+    `[start] grafana=${GRAFANA_URL} runs=${args.runs} headless=${args.headless} ` +
+      `journeys=${args.journeys.join(',')} scenario=${args.scenario ?? 'random'}`
   );
 
   const browser = await chromium.launch({ headless: args.headless });
@@ -563,47 +451,46 @@ async function main(): Promise<void> {
     const summary: Summary = {
       total: args.runs,
       byOutcome: new Map(),
-      byScenario: new Map(),
+      byJourney: new Map(),
       totalDurationMs: 0,
       failures: [],
     };
 
     for (let i = 1; i <= args.runs; i++) {
-      const scenario = pickScenario(args.scenario);
+      const driver = pickJourney(args.journeys);
+      const scenario = pickScenario(driver, args.scenario);
+      const label = `${driver.type} / ${scenario}`;
       let end: JourneyEnd | undefined;
       try {
-        end = await runOnce(browser, scenario);
+        end = await runOnce(browser, driver, scenario);
       } catch (err) {
         // One automatic retry on session expiry: refresh the storage state
         // and try the same scenario again so a stale cookie doesn't take
         // down a long N-run loop.
         if (err instanceof SessionExpiredError) {
-          console.log(`[${i}/${args.runs}] ${scenario.padEnd(14)} session expired, refreshing auth and retrying`);
+          console.log(`[${i}/${args.runs}] ${label} session expired, refreshing auth and retrying`);
           refreshAuth();
           try {
-            end = await runOnce(browser, scenario);
+            end = await runOnce(browser, driver, scenario);
           } catch (retryErr) {
             const msg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-            console.log(`[${i}/${args.runs}] ${scenario.padEnd(14)} -> FAILED (after re-auth)  ${msg}`);
-            summary.failures.push(`run ${i} (${scenario}, post-reauth): ${msg}`);
+            console.log(`[${i}/${args.runs}] ${label} -> FAILED (after re-auth)  ${msg}`);
+            summary.failures.push(`run ${i} (${label}, post-reauth): ${msg}`);
             continue;
           }
         } else {
           const msg = err instanceof Error ? err.message : String(err);
-          console.log(`[${i}/${args.runs}] ${scenario.padEnd(14)} -> FAILED  ${msg}`);
-          summary.failures.push(`run ${i} (${scenario}): ${msg}`);
+          console.log(`[${i}/${args.runs}] ${label} -> FAILED  ${msg}`);
+          summary.failures.push(`run ${i} (${label}): ${msg}`);
           continue;
         }
       }
 
       const interactionMode = String(end.attributes['interactionMode'] ?? '-');
       console.log(
-        `[${i}/${args.runs}] ${scenario.padEnd(14)} -> ${end.outcome.padEnd(10)} ${end.durationMs}ms  mode=${interactionMode}`
+        `[${i}/${args.runs}] ${label} -> ${end.outcome.padEnd(10)} ${end.durationMs}ms  mode=${interactionMode}`
       );
-      summary.byOutcome.set(end.outcome, (summary.byOutcome.get(end.outcome) ?? 0) + 1);
-      const perScenario = summary.byScenario.get(scenario) ?? new Map();
-      perScenario.set(end.outcome, (perScenario.get(end.outcome) ?? 0) + 1);
-      summary.byScenario.set(scenario, perScenario);
+      recordOutcome(summary, driver.type, scenario, end.outcome);
       summary.totalDurationMs += end.durationMs;
     }
 

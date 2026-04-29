@@ -1007,7 +1007,7 @@ Reload the page after setting. Uses `createDebugLog` from `app/core/utils/debugL
 
 ### Smoke runner: `scripts/cuj-smoke.ts`
 
-A Playwright-driven runner that exercises `search_to_resource` repeatedly against a local Grafana, useful for populating CUJ dashboards with realistic telemetry while iterating on instrumentation or visualisations.
+A Playwright-driven runner that exercises journeys repeatedly against a local Grafana, useful for populating CUJ dashboards with realistic telemetry while iterating on instrumentation or visualisations.
 
 **Quick start:**
 
@@ -1016,22 +1016,37 @@ A Playwright-driven runner that exercises `search_to_resource` repeatedly agains
 node --experimental-strip-types scripts/cuj-smoke.ts --runs 200
 node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
 node --experimental-strip-types scripts/cuj-smoke.ts --runs 50 --scenario discarded
+node --experimental-strip-types scripts/cuj-smoke.ts --runs 100 --journeys search_to_resource
 ```
 
-**What it does per iteration:**
+**Architecture.** Each journey owns its smoke driver, co-located with the wiring file:
+
+```
+public/app/core/journeys/
+├── searchToResource.ts            # browser-side wiring
+├── searchToResource.smoke.ts      # Node-side Playwright driver
+├── __smoke__/
+│   ├── types.ts                   # JourneyDriver interface
+│   └── playwright-utils.ts        # shared helpers (humanType, activate, ...)
+└── ...
+```
+
+`scripts/cuj-smoke.ts` is the orchestrator: parses CLI flags, handles login + fixture creation, imports each journey driver, runs the loop, prints the summary. Adding a new journey to the runner means adding a `<name>.smoke.ts` file next to the wiring; the orchestrator imports and registers it.
+
+**What a typical driver iteration does** (search_to_resource example):
 
 - Picks a uniform-random scenario: `new-dashboard`, `home-dashboard`, `import-dashboard`, `existing-dashboard`, or `discarded`.
 - Picks a uniform-random query variant for that scenario (`new dashboard`, `new dash`, `create dashboard`, …).
 - Types it with one of four cadences: `burst` (40-60ms/char), `normal` (80-120ms/char), `thinking` (mid-word pause), or `hunting` (typo and correction).
 - Activates with one of three styles: `mouse` (click first result), `keyboard-immediate` (ArrowDown + Enter), or `keyboard-browse` (1-4 ArrowDowns with occasional ArrowUp).
-- Listens for the journey end log via `page.on('console')` and captures the outcome + duration.
+- The orchestrator listens for the journey end log via `page.on('console')` and captures the outcome + duration.
 - Waits 2s after the journey ends so Faro's batched transport flushes the trace.
 
 **One-time setup:** the script reuses `@grafana/plugin-e2e`'s `authenticate` Playwright project for login, caching storage state in `playwright/.auth/admin.json`. It also creates a fixture dashboard (`CUJ Smoke Fixture`) via the HTTP API for the `existing-dashboard` scenario.
 
-**Output:** outcome histogram, scenario × outcome breakdown, average duration, list of failures.
+**Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-See `scripts/cuj-smoke.ts` for source — adding scenarios, tweaking weights, or running other journeys is a small change.
+**Note:** `*.smoke.ts` files and `__smoke__/` directories are excluded from `tsconfig.json` because they import each other with explicit `.ts` extensions (Node ESM requirement). They aren't typechecked by `yarn typecheck`; `node --experimental-strip-types --check` validates syntax.
 
 ## Implementation Details
 
