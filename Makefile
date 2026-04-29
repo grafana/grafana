@@ -208,12 +208,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
 
 
-.PHONY: gen-cuev2
-gen-cuev2: ## Do all CUE code generation
-	@echo "generate code from .cue files (v2)"
-	@$(MAKE) -C ./kindsv2 all
-
-
 APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
 # Alternatively use an explicit list of apps:
 # APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications

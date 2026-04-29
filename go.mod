@@ -25,6 +25,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.4.0 // @grafana/grafana-backend-services-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
+	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/VividCortex/mysqlerr v1.0.0 // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.34.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.2.0 // @grafana/data-sources-plugins
@@ -151,6 +152,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // @grafana/grafana-search-and-storage
 	github.com/openzipkin/zipkin-go v0.4.3 // @grafana/data-sources-plugins
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
+	github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
 	github.com/phpdave11/gofpdi v1.0.14 // @grafana/sharing-squad
 	github.com/pressly/goose/v3 v3.27.0 // @grafana/identity-access-team
 	github.com/prometheus/alertmanager v0.28.2 // @grafana/alerting-backend
@@ -335,6 +337,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.4.5 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
@@ -695,8 +698,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // @grafana/identity-access-team
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
-
-require github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
 
 require (
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
