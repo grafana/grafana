@@ -81,7 +81,6 @@ export function ContactPointDrawer({ listSearchQuery }: ContactPointDrawerProps)
         search={searchForList}
         pageSize={DEFAULT_PAGE_SIZE}
         contactPointFromInstanceDrawer
-        fallbackWhenSearchUnmatched={!resolvedUniqueContactPoint}
       />
     </Stack>
   );

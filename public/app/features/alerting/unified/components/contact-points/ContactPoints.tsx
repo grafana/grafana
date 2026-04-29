@@ -275,11 +275,6 @@ interface ContactPointsListProps {
   pageSize?: number;
   /** True when this list is rendered inside the alert instance contact-point drawer: single-row compact layout + headers use new-tab full edit; multi-row passes the flag through to each `ContactPoint`. */
   contactPointFromInstanceDrawer?: boolean;
-  /**
-   * If the search string matches nothing (e.g. stale title after rename) but receivers exist,
-   * list all rows and show an info banner instead of an empty state (when from the instance drawer list).
-   */
-  fallbackWhenSearchUnmatched?: boolean;
 }
 
 export const ContactPointsList = ({
@@ -287,15 +282,9 @@ export const ContactPointsList = ({
   search,
   pageSize = DEFAULT_PAGE_SIZE,
   contactPointFromInstanceDrawer,
-  fallbackWhenSearchUnmatched,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
-  const searchTrim = typeof search === 'string' ? search.trim() : '';
-  const usedFallback = Boolean(
-    fallbackWhenSearchUnmatched && searchTrim && searchResults.length === 0 && contactPoints.length > 0
-  );
-  const listForPagination = usedFallback ? contactPoints : searchResults;
-  const { page, pageItems, numberOfPages, onPageChange } = usePagination(listForPagination, 1, pageSize);
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
   if (pageItems.length === 0) {
     const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
@@ -304,13 +293,6 @@ export const ContactPointsList = ({
 
   return (
     <>
-      {usedFallback && (
-        <Alert severity="info" title={t('alerting.contact-points.search-fallback-title', 'Filter had no matches')}>
-          <Trans i18nKey="alerting.contact-points.search-fallback-body" values={{ term: searchTrim }}>
-            {`No contact point matched \"{{term}}\" (for example the name may have changed). Showing all contact points.`}
-          </Trans>
-        </Alert>
-      )}
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
         const singleInstanceDrawer = Boolean(contactPointFromInstanceDrawer && pageItems.length === 1);
