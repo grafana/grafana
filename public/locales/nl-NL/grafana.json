@@ -3589,9 +3589,9 @@
         "declare-incident": "Incident melden",
         "declare-incident-no-permission": "Je hebt geen toestemming om het incident te openen",
         "instance-details": "Instantiedetails",
+        "section-silence": "",
         "silence-button": "Stilte",
-        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Je hebt geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
         "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Verwijderd (nieuwste eerst)",
         "deleted-oldest": "Verwijderd (oudste eerst)"
       }
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Data invoer",
+      "loading": "",
       "output-data": "Uitvoergegevens",
       "title-debug-transformation": "Debugtransformatie"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Zoeken"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10124,12 @@
     "cascader": {
       "clear-button": "Selectie wissen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-waarde"
     },
@@ -10465,6 +10475,7 @@
     "sidebar": {
       "close": "Sluiten",
       "dock": "Vastzetten",
+      "go-back": "",
       "hide": "Verbergen",
       "show": "Tonen",
       "undock": "Losmaken"
@@ -11221,6 +11232,7 @@
       "label-numbers": "Nummers",
       "label-signature": "Handtekening"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimenteel. Toon een onderdeel om de weergegeven velden uit de logs te beheren.",
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren.",
@@ -11518,6 +11530,7 @@
         "common-labels": "Gemeenschappelijke labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Gemeenschappelijke labels",
     "name-deduplication": "Dedupliceren",
     "name-details-mode": "Paneelmodus logdetails",
@@ -11906,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefilterd)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles wissen"
@@ -13564,6 +13579,7 @@
       "contact-admin": "Neem contact op met je Grafana-beheerder om deze bron naar lokaal om te zetten of om alle bronnen uit de ontbrekende repository te verwijderen.",
       "convert-to-local-button": "Converteren naar lokaal",
       "delete-button": "Verwijderen",
+      "go-to-dashboards": "",
       "job-error": "Er is een fout opgetreden bij het verwerken van verweesde bronnen",
       "job-success": "Verweesde bronnen zijn succesvol verwerkt",
       "job-warning": "Sommige bronnen zijn verwerkt met waarschuwingen. Controleer de resultaten.",
@@ -14272,6 +14288,10 @@
     "buttons": {
       "restore": "Herstellen"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
       "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit maximaal 12 maanden in de geschiedenis bewaard voordat het definitief wordt verwijderd. Gebruikers met verwijderingsmachtigingen kunnen de dashboards die ze hebben verwijderd herstellen en beheerders kunnen dashboards herstellen die door een gebruiker zijn verwijderd.",
@@ -14433,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Gegevensbron",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Resterende tijd",
       "location-header": "Locatie",
@@ -14787,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Startpagina dashboard",
       "home-dashboard-placeholder": "Standaard dashboard",
@@ -16002,6 +16030,9 @@
         "grouping-to-matrix": "Groeperen naar matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Bereken een histogram op basis van invoergegevens."
@@ -16336,6 +16367,9 @@
       "label-time-field": "Tijdveld",
       "tooltip-statistic-should-calculated-series": "De statistiek die voor deze tijdreeks moet worden berekend.",
       "tooltip-time-field": "Het tijdveld dat zal worden gebruikt voor de tijdreeks. Indien niet geselecteerd, zal de eerst gevonden worden gebruikt."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Naam eerste veld",

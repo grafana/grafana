@@ -1,5 +1,6 @@
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import type { PluginMetasResponse } from './types';
@@ -12,7 +13,7 @@ function getApiVersion(): string {
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     const result = { items: [] };
     return result;
   }
@@ -27,7 +28,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     return;
   }
 
@@ -53,7 +54,7 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     return;
   }
 

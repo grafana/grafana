@@ -3589,9 +3589,9 @@
         "declare-incident": "Déclarer un incident",
         "declare-incident-no-permission": "Vous n’avez pas l’autorisation d’accéder à l’incident",
         "instance-details": "Détails de l’instance",
+        "section-silence": "",
         "silence-button": "Mise en sourdine",
-        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Vous n’avez pas l’autorisation de créer des mises en sourdine"
       },
       "labels-column-title": "Étiquettes",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Par ordre alphabétique (A-Z)",
         "alphabetically-za": "Par ordre alphabétique (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Supprimés (du plus récent au plus ancien)",
         "deleted-oldest": "Supprimés (du plus ancien au plus récent)"
       }
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Données d’entrée",
+      "loading": "",
       "output-data": "Données sortantes",
       "title-debug-transformation": "Déboguer la transformation"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Rechercher"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10124,12 @@
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valeur RVBA"
     },
@@ -10465,6 +10475,7 @@
     "sidebar": {
       "close": "Fermer",
       "dock": "Ancrer",
+      "go-back": "",
       "hide": "Masquer",
       "show": "Afficher",
       "undock": "Désancrer"
@@ -11221,6 +11232,7 @@
       "label-numbers": "Nombres",
       "label-signature": "Signature"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "En phase de test. Afficher un composant permettant de gérer les champs affichés à partir des journaux.",
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
     "description-enable-logs-highlighting": "Utiliser un code couleurs prédéfini pour mettre en évidence les parties pertinentes des lignes de journal.",
@@ -11518,6 +11530,7 @@
         "common-labels": "Étiquettes communes :"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Étiquettes communes",
     "name-deduplication": "Déduplication",
     "name-details-mode": "Mode du panneau de détails des journaux",
@@ -11906,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tout",
-      "title-filtered": "Tout (filtré)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Tout effacer"
@@ -13564,6 +13579,7 @@
       "contact-admin": "Contactez votre administrateur Grafana pour convertir cette ressource en ressource locale ou pour supprimer toutes les ressources du référentiel manquant.",
       "convert-to-local-button": "Convertir en local",
       "delete-button": "Supprimer",
+      "go-to-dashboards": "",
       "job-error": "Une erreur s’est produite lors du traitement des ressources orphelines",
       "job-success": "Ressources orphelines traitées avec succès",
       "job-warning": "Certaines ressources ont été traitées avec des avertissements. Veuillez examiner les résultats.",
@@ -14272,6 +14288,10 @@
     "buttons": {
       "restore": "Restaurer"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Vous n'avez pas supprimé de tableau de bord récemment.",
       "no-deleted-dashboards-text": "Lorsque vous supprimez un tableau de bord, il sera conservé dans l’historique pendant une durée maximale de 12 mois avant d’être définitivement supprimé. Les utilisateurs disposant de l’autorisation de suppression peuvent restaurer les tableaux de bord qu’ils ont supprimés. Les administrateurs peuvent, quant à eux, restaurer les tableaux de bord supprimés par tout utilisateur.",
@@ -14433,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Source de données",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Temps restant",
       "location-header": "Emplacement",
@@ -14787,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Tableau de bord d'accueil",
       "home-dashboard-placeholder": "Tableau de bord par défaut",
@@ -16002,6 +16030,9 @@
         "grouping-to-matrix": "Regrouper en matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calculez un histogramme à partir des données en entrée."
@@ -16336,6 +16367,9 @@
       "label-time-field": "Champ horaire",
       "tooltip-statistic-should-calculated-series": "La statistique qui doit être calculée pour cette série chronologique.",
       "tooltip-time-field": "Le champ temporel qui sera utilisé pour la série chronologique. S’il n’est pas sélectionné, le premier trouvé sera utilisé."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nom du premier champ",

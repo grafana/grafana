@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"math/rand"
 	"regexp"
 	"time"
 
@@ -17,6 +18,15 @@ var ErrNotFound = errors.New("key not found")
 var ErrEmptyValue = errors.New("key must have a value")
 var ErrKeyAlreadyExists = errors.New("key already exists")
 var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
+
+// ErrRetryable marks a transient error that a caller iterating a KV stream
+// (Keys, Get, BatchGet) may retry by re-opening the call from a known
+// resume point.
+//
+// KV implementations may opt-in to wrap backend-specific
+// transient errors (gRPC status codes, SQL driver errors, retryable
+// filesystem errors) with this sentinel.
+var ErrRetryable = errors.New("retryable error")
 
 // KeyValue represents a key-value pair returned by BatchGet
 type KeyValue struct {
@@ -435,6 +445,31 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
+	// Retry the batch operation up to `maxAttempts` times in case of conflict, with a
+	// random delay between retries to increase the chances of success. Badger will
+	// fail the `Commit()` call on the transaction if a conflict is detected internally,
+	// which can happen if multiple callers are trying to apply a similar batch of
+	// operations at the same time.
+	const maxAttempts = 5
+	const maxRetryJitter = 100 * time.Millisecond
+	var lastConflict error
+	for attempt := range maxAttempts {
+		err := k.batchOnce(section, ops)
+		if errors.Is(err, badger.ErrConflict) {
+			lastConflict = err
+			if attempt < maxAttempts-1 {
+				if err := sleepWithJitter(ctx, maxRetryJitter); err != nil {
+					return err
+				}
+			}
+			continue
+		}
+		return err
+	}
+	return fmt.Errorf("after %d attempts: %w", maxAttempts, lastConflict)
+}
+
+func (k *badgerKV) batchOnce(section string, ops []BatchOp) error {
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
@@ -495,4 +530,17 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	}
 
 	return txn.Commit()
+}
+
+func sleepWithJitter(ctx context.Context, max time.Duration) error {
+	delay := time.Duration(rand.Int63n(int64(max) + 1))
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }

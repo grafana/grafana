@@ -69,7 +69,7 @@
 /go.sum @grafana/grafana-backend-group
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
-/.citools @grafana/grafana-developer-enablement-squad
+/.citools @grafana/grafana-backend-servicdes-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
@@ -78,6 +78,7 @@
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
+/scripts/uplot-compare/ @grafana/dataviz-squad
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
@@ -316,6 +317,7 @@
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
+/devenv/docker/blocks/pgvector/ @grafana/grafana-search-and-storage
 /devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
 /devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus/ @grafana/data-sources-plugins
@@ -1328,6 +1330,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
+/.github/workflows/govulncheck.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad

@@ -103,6 +103,18 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteTeamMembersBulk := func(q *DeleteTeamMembersBulkCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeamMembersBulk(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createTeamMembersBulk := func(q *CreateTeamMembersBulkCommand) sqltemplate.SQLTemplate {
+		v := newCreateTeamMembersBulk(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	deleteTeam := func(q *DeleteTeamCommand) sqltemplate.SQLTemplate {
 		v := newDeleteTeam(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -346,6 +358,14 @@ func TestIdentityQueries(t *testing.T) {
 						External: boolPtr(true),
 					}),
 				},
+				{
+					Name: "team_bindings_team_uids",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID:      1,
+						TeamUIDs:   []string{"team-1", "team-2"},
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
 			},
 			sqlUpdateTeamMemberQuery: {
 				{
@@ -380,6 +400,74 @@ func TestIdentityQueries(t *testing.T) {
 					Name: "delete_team_member_basic",
 					Data: deleteTeamMember(&DeleteTeamMemberCommand{
 						UID: "team-member-1",
+					}),
+				},
+			},
+			sqlDeleteTeamMembersBulkQuery: {
+				{
+					Name: "delete_team_members_bulk_single",
+					Data: deleteTeamMembersBulk(&DeleteTeamMembersBulkCommand{
+						OrgID: 1,
+						UIDs:  []string{"team-member-1"},
+					}),
+				},
+				{
+					Name: "delete_team_members_bulk_many",
+					Data: deleteTeamMembersBulk(&DeleteTeamMembersBulkCommand{
+						OrgID: 1,
+						UIDs:  []string{"team-member-1", "team-member-2", "team-member-3"},
+					}),
+				},
+			},
+			sqlCreateTeamMembersBulkQuery: {
+				{
+					Name: "create_team_members_bulk_single",
+					Data: createTeamMembersBulk(&CreateTeamMembersBulkCommand{
+						Members: []CreateTeamMemberCommand{
+							{
+								UID:        "team-member-1",
+								TeamID:     1,
+								TeamUID:    "team-1",
+								UserID:     10,
+								UserUID:    "user-10",
+								OrgID:      1,
+								Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								External:   false,
+								Permission: 0,
+							},
+						},
+					}),
+				},
+				{
+					Name: "create_team_members_bulk_many",
+					Data: createTeamMembersBulk(&CreateTeamMembersBulkCommand{
+						Members: []CreateTeamMemberCommand{
+							{
+								UID:        "team-member-1",
+								TeamID:     1,
+								TeamUID:    "team-1",
+								UserID:     10,
+								UserUID:    "user-10",
+								OrgID:      1,
+								Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								External:   false,
+								Permission: 0,
+							},
+							{
+								UID:        "team-member-2",
+								TeamID:     1,
+								TeamUID:    "team-1",
+								UserID:     11,
+								UserUID:    "user-11",
+								OrgID:      1,
+								Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+								External:   true,
+								Permission: 4,
+							},
+						},
 					}),
 				},
 			},

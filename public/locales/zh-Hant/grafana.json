@@ -3570,9 +3570,9 @@
         "declare-incident": "宣告事件",
         "declare-incident-no-permission": "您沒有存取事件的權限",
         "instance-details": "執行個體詳細資料",
+        "section-silence": "",
         "silence-button": "靜默通知",
-        "silence-no-permission": "您沒有權限建立靜默通知",
-        "silence-title-with-name": ""
+        "silence-no-permission": "您沒有權限建立靜默通知"
       },
       "labels-column-title": "標籤",
       "no-firing-or-pending-instances": "您在所選時間範圍內，沒有處於觸發或待處理狀態的警示執行個體。",
@@ -4461,6 +4461,8 @@
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
         "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已刪除（最新排前）",
         "deleted-oldest": "已刪除（最舊排前）"
       }
@@ -6457,6 +6459,7 @@
     },
     "transformation-editor": {
       "input-data": "輸入資料",
+      "loading": "",
       "output-data": "輸出資料",
       "title-debug-transformation": "偵錯轉換"
     },
@@ -8223,6 +8226,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜尋"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10066,12 @@
     "cascader": {
       "clear-button": "清空選項"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10417,7 @@
     "sidebar": {
       "close": "關閉",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隱藏",
       "show": "顯示",
       "undock": "取消停靠"
@@ -11158,6 +11169,7 @@
       "label-numbers": "數字",
       "label-signature": "簽名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "實驗性。顯示一個元件，用於管理記錄中顯示的欄位。",
     "description-enable-infinite-scrolling": "實驗性。捲動至記錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "使用預先定義的著色方案，來突顯記錄行中的相關部分。",
@@ -11452,6 +11464,7 @@
         "common-labels": "通用標籤："
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "通用標籤",
     "name-deduplication": "重複",
     "name-details-mode": "詳細資訊面板模式",
@@ -11840,8 +11853,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已篩選）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13489,6 +13504,7 @@
       "contact-admin": "請聯絡您的 Grafana 管理員，以將此資源轉換為本機資源，或刪除缺失的儲存庫中的所有資源。",
       "convert-to-local-button": "轉換為本機資源",
       "delete-button": "刪除",
+      "go-to-dashboards": "",
       "job-error": "處理孤立的資源時發生錯誤",
       "job-success": "孤立的資源已成功處理",
       "job-warning": "某些資源在處理時出現警告。請檢查結果。",
@@ -14183,6 +14199,10 @@
     "buttons": {
       "restore": "還原"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
       "no-deleted-dashboards-text": "刪除儀表板後，儀表板會在歷史記錄中保留最多 12 個月，之後才會被永久刪除。具有刪除權限的使用者可還原已刪除的儀表板，管理員則可還原任何使用者刪除的儀表板。",
@@ -14342,6 +14362,10 @@
     },
     "results-table": {
       "datasource-header": "資料來源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分鐘",
       "deleted-remaining-header": "剩餘時間",
       "location-header": "位置",
@@ -14695,6 +14719,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "首頁儀表板",
       "home-dashboard-placeholder": "預設儀表板",
@@ -15909,6 +15937,9 @@
         "grouping-to-matrix": "分組到矩陣"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "從輸入資料計算直方圖。"
@@ -16243,6 +16274,9 @@
       "label-time-field": "時間欄位",
       "tooltip-statistic-should-calculated-series": "應該為此時間系列計算的統計資料。",
       "tooltip-time-field": "將用於時間系列的時間欄位。如果未選擇，將使用第一個找到的欄位。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一個欄位名稱",

@@ -3589,9 +3589,9 @@
         "declare-incident": "Incidens deklarálása",
         "declare-incident-no-permission": "Nincs engedélye az incidenshez való hozzáférésre",
         "instance-details": "Példány részletei",
+        "section-silence": "",
         "silence-button": "Némítás",
-        "silence-no-permission": "Nincs engedélye némítások létrehozásához",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Nincs engedélye némítások létrehozásához"
       },
       "labels-column-title": "Címkék",
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Betűrendben (A–Z)",
         "alphabetically-za": "Betűrendben (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Törölve (legújabb elöl)",
         "deleted-oldest": "Törölve (legrégebbi elöl)"
       }
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Bemeneti adatok",
+      "loading": "",
       "output-data": "Kimeneti adatok",
       "title-debug-transformation": "Transzformáció hibakeresése"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Keresés"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10124,12 @@
     "cascader": {
       "clear-button": "Kijelölés törlése"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-érték"
     },
@@ -10465,6 +10475,7 @@
     "sidebar": {
       "close": "Bezárás",
       "dock": "Dokkolás",
+      "go-back": "",
       "hide": "Elrejtés",
       "show": "Megjelenítés",
       "undock": "Dokkolás feloldása"
@@ -11221,6 +11232,7 @@
       "label-numbers": "Számok",
       "label-signature": "Aláírás"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Kísérleti. Egy olyan összetevő megjelenítése, amellyel a naplókból származó megjelenített mezők kezelhetők.",
     "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
     "description-enable-logs-highlighting": "Egy előre definiált színsémát használhat a naplósorok releváns részeinek kiemeléséhez.",
@@ -11518,6 +11530,7 @@
         "common-labels": "Közös címkék:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Közös címkék",
     "name-deduplication": "Duplikátumok törlése",
     "name-details-mode": "Naplórészletek panelmód",
@@ -11906,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Összes",
-      "title-filtered": "Összes (szűrt)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Összes törlése"
@@ -13564,6 +13579,7 @@
       "contact-admin": "Vegye fel a kapcsolatot Grafana-rendszergazdájával, hogy ezt az erőforrást helyi erőforrássá alakítsa, vagy törölje az összes erőforrást a hiányzó adattárból.",
       "convert-to-local-button": "Konvertálás helyi erőforrássá",
       "delete-button": "Törlés",
+      "go-to-dashboards": "",
       "job-error": "Hiba történt az árva erőforrások feldolgozása során",
       "job-success": "Az árva erőforrások feldolgozása sikeres volt",
       "job-warning": "Bizonyos erőforrások feldolgozása figyelmeztetésekkel fejeződött be. Tekintse át az eredményeket.",
@@ -14272,6 +14288,10 @@
     "buttons": {
       "restore": "Visszaállítás"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Mostanában nem törölt irányítópultokat.",
       "no-deleted-dashboards-text": "Ha töröl egy irányítópultot, az legfeljebb 12 hónapig marad elérhető az előzményekben, mielőtt véglegesen törlődik. A törlési engedéllyel rendelkező felhasználók visszaállíthatják az általuk törölt irányítópultokat, a rendszergazdák pedig visszaállíthatják a bármely felhasználó által törölt irányítópultokat.",
@@ -14433,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Adatforrás",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 perc",
       "deleted-remaining-header": "Hátralévő idő",
       "location-header": "Hely",
@@ -14787,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Kezdőlap irányítópultja",
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
@@ -16002,6 +16030,9 @@
         "grouping-to-matrix": "Csoportosítás mátrixba"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Számítson ki egy hisztogramot a bemeneti adatokból."
@@ -16336,6 +16367,9 @@
       "label-time-field": "Időmező",
       "tooltip-statistic-should-calculated-series": "Az ehhez az idősorhoz kiszámítandó statisztika.",
       "tooltip-time-field": "Az idősorhoz használt időmező. Ha nincs kiválasztva, az elsőként talált lesz felhasználva."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Első mezőnév",

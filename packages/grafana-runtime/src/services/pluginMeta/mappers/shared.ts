@@ -3,6 +3,7 @@ import {
   type PluginDependencies,
   type PluginExtensions,
   PluginLoadingStrategy,
+  type PluginMeta,
   type PluginMetaInfo,
   PluginSignatureStatus,
   PluginState,
@@ -26,9 +27,9 @@ export function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy
   return PluginLoadingStrategy.fetch;
 }
 
-export function toCDNUrl(spec: v0alpha1Spec, path: string): string {
+function toCDNUrl(spec: v0alpha1Spec, path: string): string {
   try {
-    const normalizedBase = spec.baseURL.endsWith('/') ? spec.baseURL : `${spec.baseURL}/`;
+    const normalizedBase = normalizeEnd(spec.baseURL);
     const url = new URL(path, normalizedBase);
     return url.toString();
   } catch (error) {
@@ -163,4 +164,63 @@ export function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
   };
 
   return extensions;
+}
+
+export function isCorePlugin(spec: v0alpha1Spec): boolean {
+  return spec.class === 'core';
+}
+
+export function isDecoupledCorePlugin(spec: v0alpha1Spec): boolean {
+  return isCorePlugin(spec) && !spec.module?.path?.startsWith('core:');
+}
+
+export function normalizeEnd(url: string): string {
+  if (url.endsWith('/')) {
+    return url;
+  }
+
+  return `${url}/`;
+}
+
+export function combinePathAndUrl(url: string, path: string): string {
+  const normalized = normalizeEnd(url);
+  try {
+    const returnUrl = new URL(path, normalized);
+    return returnUrl.toString();
+  } catch (error) {
+    return `${normalized}${path}`;
+  }
+}
+
+function getPublicPath(): string {
+  return typeof window !== 'undefined' && window.__grafana_public_path__ ? window.__grafana_public_path__ : '';
+}
+
+export function prependPublicPathToCorePlugins<T extends PluginMeta>(meta: T, spec: v0alpha1Spec): T {
+  const publicPath = getPublicPath();
+
+  if (!publicPath) {
+    return meta;
+  }
+
+  return {
+    ...meta,
+    baseUrl: combinePathAndUrl(publicPath, spec.baseURL),
+    module: isDecoupledCorePlugin(spec) ? combinePathAndUrl(publicPath, spec.module.path) : spec.module.path,
+    info: {
+      ...meta.info,
+      logos: {
+        ...spec.pluginJson.info.logos,
+        large: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.large),
+        small: combinePathAndUrl(publicPath, spec.pluginJson.info.logos.small),
+      },
+      screenshots: spec.pluginJson.info.screenshots
+        ? spec.pluginJson.info.screenshots.map((s) => ({
+            ...s,
+            name: s.name ?? '',
+            path: combinePathAndUrl(publicPath, s.path ?? ''),
+          }))
+        : [],
+    },
+  };
 }

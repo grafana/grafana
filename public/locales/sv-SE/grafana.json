@@ -3589,9 +3589,9 @@
         "declare-incident": "Deklarera incident",
         "declare-incident-no-permission": "Du saknar behörighet att komma åt incidenten",
         "instance-details": "Instansdetaljer",
+        "section-silence": "",
         "silence-button": "Tystnad",
-        "silence-no-permission": "Du saknar behörighet att skapa tystnader",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Du saknar behörighet att skapa tystnader"
       },
       "labels-column-title": "Etiketter",
       "no-firing-or-pending-instances": "Du har inga varningsinstanser i ett utlösande eller väntande tillstånd för det valda tidsintervallet.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alfabetiskt (A–Ö)",
         "alphabetically-za": "Alfabetiskt (Ö–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Raderat (nyaste först)",
         "deleted-oldest": "Raderat (äldsta först)"
       }
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Inmatning av uppgifter",
+      "loading": "",
       "output-data": "Datautmatning",
       "title-debug-transformation": "Felsök transformering"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Sök"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10124,12 @@
     "cascader": {
       "clear-button": "Rensa val"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-värde"
     },
@@ -10465,6 +10475,7 @@
     "sidebar": {
       "close": "Stäng",
       "dock": "Docka",
+      "go-back": "",
       "hide": "Dölj",
       "show": "Visa",
       "undock": "Avdocka"
@@ -11221,6 +11232,7 @@
       "label-numbers": "Nummer",
       "label-signature": "Underskrift"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentellt. Visa en komponent för att hantera de visade fälten från loggarna.",
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
     "description-enable-logs-highlighting": "Använd ett fördefinierat färgschema för att markera relevanta delar av loggraderna.",
@@ -11518,6 +11530,7 @@
         "common-labels": "Vanliga etiketter:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Vanliga etiketter",
     "name-deduplication": "Avduplicering",
     "name-details-mode": "Panelläge för loggdetaljer",
@@ -11906,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alla",
-      "title-filtered": "Alla (filtrerade)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Rensa alla"
@@ -13564,6 +13579,7 @@
       "contact-admin": "Kontakta din Grafana-administratör för att konvertera denna resurs till lokal eller radera alla resurser från den saknade lagringsplatsen.",
       "convert-to-local-button": "Konvertera till lokala",
       "delete-button": "Radera",
+      "go-to-dashboards": "",
       "job-error": "Ett fel uppstod vid behandlingen av övergivna resurser",
       "job-success": "Övergivna resurser har behandlats",
       "job-warning": "Vissa resurser behandlades med varningar. Granska resultaten.",
@@ -14272,6 +14288,10 @@
     "buttons": {
       "restore": "Återställ"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
       "no-deleted-dashboards-text": "När du tar bort en instrumentpanel kommer den att sparas i historiken i upp till 12 månader innan den raderas permanent. Användare med behörighet att radera kan återställa de instrumentpaneler de själva har raderat och administratörer kan återställa instrumentpaneler som tagits bort av alla användare.",
@@ -14433,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Datakälla",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Återstående tid",
       "location-header": "Plats",
@@ -14787,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Heminstrumentpanel",
       "home-dashboard-placeholder": "Standardinstrumentpanel",
@@ -16002,6 +16030,9 @@
         "grouping-to-matrix": "Gruppera till matris"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Beräkna ett histogram från inmatningsdata."
@@ -16336,6 +16367,9 @@
       "label-time-field": "Tidsfält",
       "tooltip-statistic-should-calculated-series": "Den statistik som ska beräknas för denna tidsserie.",
       "tooltip-time-field": "Det tidsfält som kommer att användas för tidsserien. Om det inte väljs kommer det första som hittas att användas."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Namn för första fältet",

@@ -4,6 +4,7 @@ import { PluginType, type PluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
@@ -89,7 +90,7 @@ async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMet
 }
 
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPluginSettings', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
 
@@ -104,7 +105,7 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
 }
 
 export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPluginSettings', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     return refetchCachedLegacySettings(pluginId, false);
   }
 
@@ -119,7 +120,7 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
 }
 
 export async function updatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta | null> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPluginSettings', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
   }
