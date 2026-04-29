@@ -112,7 +112,7 @@ resource "grafana_data_source" "alertmanager" {
 
 For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
 
-## Troubleshoot the data source
+## Troubleshoot Alertmanager data source issues
 
 This section covers common issues when configuring or using the Alertmanager data source.
 
