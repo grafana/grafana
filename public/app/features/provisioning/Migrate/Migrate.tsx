@@ -42,6 +42,8 @@ interface SupportedTool {
   /** Manager kind reported by the backend; what we group counts under. */
   kind: string;
   label: string;
+  /** Short tagline describing what the tool is for, shown under the label. */
+  description: string;
   /** Static SVG asset (e.g. the Git logo). Takes precedence over `icon`/`initial`. */
   image?: string;
   /** Grafana UI icon name. Takes precedence over `initial`. */
@@ -61,6 +63,7 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     key: 'git-sync',
     kind: ManagerKind.Repo,
     label: 'Git Sync',
+    description: 'Sync folders and dashboards from a Git repository.',
     image: gitSvg,
     recommended: true,
   },
@@ -68,18 +71,21 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     key: 'file-system',
     kind: CLASSIC_FILE_PROVISIONING,
     label: 'File System',
+    description: 'Provision from local YAML or JSON files on the Grafana host.',
     icon: 'file-alt',
   },
   {
     key: 'terraform',
     kind: ManagerKind.Terraform,
     label: 'Terraform',
+    description: 'Manage Grafana resources as Terraform infrastructure.',
     initial: 'T',
   },
   {
     key: 'cli',
     kind: ManagerKind.Kubectl,
     label: 'CLI',
+    description: 'Apply manifests with kubectl, gcx, or grafanactl.',
     initial: 'C',
   },
 ];
@@ -912,15 +918,21 @@ function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
           <span className={styles.toolTileInitial}>{tool.initial}</span>
         )}
       </div>
-      <Text variant="bodySmall" weight="medium">
-        {tool.label}
-      </Text>
-      {tool.recommended ? (
-        <Text variant="bodySmall" color="success">
-          <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
+      <Stack direction="row" gap={0.5} alignItems="center" wrap>
+        <Text variant="bodySmall" weight="medium">
+          {tool.label}
         </Text>
-      ) : (
-        <Text variant="bodySmall" color="secondary">
+        {tool.recommended && (
+          <Text variant="bodySmall" color="success">
+            <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
+          </Text>
+        )}
+      </Stack>
+      <Text variant="bodySmall" color="secondary">
+        {tool.description}
+      </Text>
+      {count > 0 && (
+        <Text variant="bodySmall" color="primary">
           {t('provisioning.stats.tool-tile-managed-count', '{{count}} managed', { count })}
         </Text>
       )}
@@ -1253,8 +1265,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolTileBadge: css({
     width: theme.spacing(5),
     height: theme.spacing(5),
-    borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.canvas,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1273,8 +1283,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourceIcon: css({
     width: theme.spacing(3),
     height: theme.spacing(3),
-    borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.canvas,
     color: theme.colors.text.secondary,
     display: 'inline-flex',
     alignItems: 'center',
