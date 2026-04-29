@@ -558,7 +558,11 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 						// so there's nothing to release.
 						return false
 					}
-					_ = managers[serverIdx].Release(ctx, l)
+					if err := managers[serverIdx].Release(ctx, l); err != nil {
+						t.Logf("violation: server %d failed to release: %v",
+							serverIdx, err)
+						return true
+					}
 					delete(held[serverIdx], op.leaseIdx)
 					m.released(serverIdx, op.leaseIdx)
 				}
