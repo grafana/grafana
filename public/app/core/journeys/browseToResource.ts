@@ -1,12 +1,6 @@
-import {
-  locationService,
-  onInteraction,
-  onJourneyInstance,
-  registerJourneyTriggers,
-  type StepHandle,
-} from '@grafana/runtime';
+import { onInteraction, onJourneyInstance, registerJourneyTriggers, type StepHandle } from '@grafana/runtime';
 
-import { collectUnsubs, str } from './utils';
+import { abandonOnRouteChange, collectUnsubs, str } from './utils';
 
 // Path prefixes the journey treats as still in-scope. Anything else is treated
 // as the user leaving the browse area and the journey ends as `abandoned`.
@@ -133,22 +127,10 @@ onJourneyInstance('browse_to_resource', (handle) => {
     })
   );
 
-  // SPA route change: if the user navigates outside the browse / dashboard area
-  // (e.g., to /explore, /connections), end the journey as `abandoned`. The framework's
-  // beforeunload + visibility-change handlers only catch tab-level signals; in-app
-  // navigation needs explicit handling.
-  let initialLocation = true;
-  const sub = locationService.getLocationObservable().subscribe((location) => {
-    if (initialLocation) {
-      // BehaviorSubject fires with current location on subscribe; ignore that.
-      initialLocation = false;
-      return;
-    }
-    if (!pathInScope(location.pathname) && handle.isActive) {
-      handle.end('abandoned', { abandonedAt: location.pathname });
-    }
-  });
-  add(() => sub.unsubscribe());
+  // SPA route change to a path outside the browse / dashboard area ends the
+  // journey as `abandoned`. (Framework beforeunload + visibility handlers only
+  // catch tab-level signals.)
+  add(abandonOnRouteChange(handle, pathInScope));
 
   // Dashboard loads -> end the select step and the journey.
   add(

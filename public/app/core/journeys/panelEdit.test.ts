@@ -1,3 +1,5 @@
+import { BehaviorSubject } from 'rxjs';
+
 import type { JourneyHandle, JourneyTracker } from '@grafana/runtime';
 
 import type { JourneyRegistryImpl } from '../services/JourneyRegistryImpl';
@@ -9,6 +11,8 @@ import {
   createMockTracker,
   setupJourneyTest,
 } from './__test-utils__/journeyTestHarness';
+
+const locationSubject = new BehaviorSubject<{ pathname: string }>({ pathname: '/d/abc' });
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -28,8 +32,16 @@ jest.mock('@grafana/runtime', () => {
         }
       };
     },
+    locationService: {
+      getLocationObservable: () => locationSubject.asObservable(),
+    },
   };
 });
+
+function setLocation(pathname: string) {
+  Object.defineProperty(window, 'location', { value: { pathname }, writable: true });
+  locationSubject.next({ pathname });
+}
 
 describe('panelEdit journey wiring', () => {
   let mockTracker: jest.Mocked<JourneyTracker>;
@@ -208,5 +220,28 @@ describe('panelEdit journey wiring', () => {
         }),
       })
     );
+  });
+
+  it('should end as abandoned when navigating to a different pathname mid-edit', () => {
+    setLocation('/d/abc/my-dash');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_panel_action_clicked', { item: 'edit', id: 1, source: 'menu' });
+    locationSubject.next({ pathname: '/explore' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/explore' });
+  });
+
+  it('should not abandon when query params change but pathname stays', () => {
+    setLocation('/d/abc/my-dash');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_panel_action_clicked', { item: 'edit', id: 1, source: 'menu' });
+    // Same pathname; pretend query params changed (e.g. ?editPanel=1).
+    locationSubject.next({ pathname: '/d/abc/my-dash' });
+
+    expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
   });
 });
