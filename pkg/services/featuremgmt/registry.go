@@ -545,15 +545,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourcesQuerierRawOutput",
-			Description:     "use raw output mode for the data source querier",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: false,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -799,6 +790,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "stateTimeline.nameAboveBars",
+			Description: "Enables option to position series names above bars in the state timeline panel",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStagePublicPreview,
@@ -986,7 +985,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -2548,6 +2547,14 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePrivatePreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryEditorNextMultiSelect",
+			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},

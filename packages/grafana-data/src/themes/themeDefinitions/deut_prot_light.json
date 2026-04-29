@@ -1,6 +1,6 @@
 {
   "name": "Deuteranopia/Protanopia Light",
-  "id": "deuteranopia_protanopia_light",
+  "id": "deut_prot_light",
   "colors": {
     "mode": "light",
     "success": {
