@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { Stack, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
