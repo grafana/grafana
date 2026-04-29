@@ -42,10 +42,10 @@ async function fetchAllFolders(): Promise<Array<{ uid: string; title: string; ma
 }
 
 async function fetchAllDashboards(): Promise<
-  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
+  Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
 > {
   const searcher = getGrafanaSearcher();
-  const all: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }> = [];
+  const all: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }> = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const result = await searcher.search({
       kind: ['dashboard'],
@@ -57,10 +57,14 @@ async function fetchAllDashboards(): Promise<
     const rows: DashboardQueryResult[] = result.view.toArray();
     for (const item of rows) {
       const view = queryResultToViewItem(item, result.view);
+      // `item.location` is the full ancestor path, e.g. "rootUid/subUid".
+      // Empty when the dashboard sits in the General folder.
+      const path = typeof item.location === 'string' ? item.location : '';
+      const ancestors = path.split('/').filter(Boolean);
       all.push({
         uid: view.uid,
         title: view.title,
-        parentUid: view.parentUID,
+        ancestors,
         managedBy: view.managedBy,
         url: view.url ?? '',
       });
@@ -74,19 +78,17 @@ async function fetchAllDashboards(): Promise<
 
 function aggregate(
   folders: Array<{ uid: string; title: string; managedBy?: string }>,
-  dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
+  dashboards: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
 ): FolderRow[] {
-  // A folder is single-managed: its `managedBy` is the source of truth for
-  // every dashboard inside. We only use the dashboard list to count how many
-  // dashboards each folder holds.
+  // Migration is recursive: picking a folder migrates that folder plus every
+  // descendant folder and dashboard. The dashboard count for a folder is the
+  // number of dashboards anywhere in its subtree, so we walk every dashboard's
+  // ancestor path and increment the counter for each ancestor.
   const dashboardCountByFolder = new Map<string, number>();
   for (const dash of dashboards) {
-    if (!dash.parentUid) {
-      // Dashboards in the General folder are a special case — they don't map
-      // to a folder migration target.
-      continue;
+    for (const ancestorUid of dash.ancestors) {
+      dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
     }
-    dashboardCountByFolder.set(dash.parentUid, (dashboardCountByFolder.get(dash.parentUid) ?? 0) + 1);
   }
 
   const rows: FolderRow[] = folders.map((folder) => ({
