@@ -778,6 +778,28 @@ func TestRemoteIndexStore_ListNamespaceIndexes_Empty(t *testing.T) {
 	assert.Empty(t, got)
 }
 
+func TestRemoteIndexStore_ListIndexes_SkipsLockSibling(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+
+	indexKey, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
+		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+	require.NoError(t, err)
+
+	// Plant a `<resource-group>/locks/build` object directly in the data bucket.
+	// In production the lock backend shares the snapshot bucket, so this prefix
+	// is observable alongside index-key directories. ListIndexes must skip it.
+	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns), []byte("{}"), nil))
+
+	indexes, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Len(t, indexes, 1)
+	assert.Contains(t, indexes, indexKey)
+}
+
 func TestRemoteIndexStore_ListNamespaceIndexes_SkipsLockSibling(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
