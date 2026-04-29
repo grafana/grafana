@@ -20,6 +20,10 @@
   row-gap: var(--compare-gap);
 }
 
+.wrap.wrap--actual-only {
+  flex-wrap: nowrap;
+}
+
 .compare-blocked {
   max-width: 56rem;
   padding: 1rem;
@@ -80,6 +84,18 @@
   cursor: pointer;
 }
 
+.compare-file-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.compare-file-name {
+  word-break: break-all;
+  min-width: 0;
+}
+
 .compare-file-modified {
   font-size: 11px;
   color: #5f6b7d;
@@ -90,10 +106,48 @@
   background: #eef4ff;
 }
 
+.compare-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .compare-title {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1rem;
   font-weight: 600;
+}
+
+.compare-snapshot-status {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #c8d1df;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.compare-snapshot-status.is-pass {
+  border-color: #86efac;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.compare-snapshot-status.is-fail {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.compare-snapshot-status.is-compact {
+  font-size: 10px;
+  padding: 0.12rem 0.35rem;
+  flex-shrink: 0;
 }
 
 .plot-panel {

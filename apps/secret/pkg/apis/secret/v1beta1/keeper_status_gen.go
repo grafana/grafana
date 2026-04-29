@@ -27,6 +27,8 @@ func (KeeperstatusOperatorState) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type KeeperStatus struct {
+	// True when the keeper is the current active keeper
+	Active bool `json:"active"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]KeeperstatusOperatorState `json:"operatorStates,omitempty"`

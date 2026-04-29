@@ -119,6 +119,11 @@ type SnapshotOptions struct {
 	// MinDocChanges is the minimum persisted mutation count required before a new
 	// upload is attempted after a previous successful upload.
 	MinDocChanges int
+
+	// CleanupGracePeriod is the time a newly uploaded snapshot must have existed
+	// before its predecessor in the same Grafana-version group is eligible for
+	// cleanup. Consumed by the cleanup loop only; no effect on upload/download.
+	CleanupGracePeriod time.Duration
 }
 
 type bleveBackend struct {
