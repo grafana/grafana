@@ -24,9 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// ErrAPIInvalidUID and ErrAPIUIDTooLong wrap the legacy
-// dashboards sentinels so the apiserver returns 400 instead 500.
-// They are defined here to avoid import cycles.
+// ErrAPIInvalidUID and ErrAPIUIDTooLong are errutil.BadRequest values so the
+// apiserver renders them via APIStatus as 400 (not "Unhandled Error" 500).
+// They wrap the legacy dashboards sentinels via %w so errors.Is/As keeps
+// matching for /api/folders consumers (ToFolderErrorResponse). Defined here
+// rather than in pkg/services/folder/model.go to avoid the dashboards->folder
+// import cycle.
 var (
 	ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid-chars", errutil.WithPublicMessage("uid contains illegal characters")).
 				Errorf("%w", dashboards.ErrDashboardInvalidUid)
