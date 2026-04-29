@@ -13,6 +13,8 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
+
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
 const GIT_SYNC_SUPPORTED_GROUPS = [...FOLDER_GROUPS, ...DASHBOARD_GROUPS];
@@ -289,57 +291,70 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
   const styles = useStyles2(getStyles);
   const gitSyncTotal = stats.gitSync?.totals.total ?? 0;
   const otherTotal = stats.otherProviders.reduce((acc, p) => acc + p.totals.total, 0);
+  const managedPct = percent(stats.managedTotal, stats.instanceTotal);
   return (
-    <div className={styles.summaryPanel}>
-      <div className={styles.summaryDonut}>
-        <Donut
-          gitSync={gitSyncTotal}
-          other={otherTotal}
-          unmanaged={stats.unmanagedTotal}
-          size={140}
-          strokeWidth={18}
-          centerLabel={percent(stats.managedTotal, stats.instanceTotal)}
-          centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'managed')}
-        />
+    <Stack direction="column" gap={1}>
+      <Text variant="h5">
+        <Trans i18nKey="provisioning.stats.summary-headline" values={{ pct: managedPct }}>
+          {'{{pct}}'} of resources are provisioned as code
+        </Trans>
+      </Text>
+      <Text color="secondary" variant="bodySmall">
+        <Trans i18nKey="provisioning.stats.summary-subhead">
+          A resource is provisioned as code when a tool like Git Sync, Terraform, or kubectl manages it.
+        </Trans>
+      </Text>
+      <div className={styles.summaryPanel}>
+        <div className={styles.summaryDonut}>
+          <Donut
+            gitSync={gitSyncTotal}
+            other={otherTotal}
+            unmanaged={stats.unmanagedTotal}
+            size={140}
+            strokeWidth={18}
+            centerLabel={managedPct}
+            centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'as code')}
+          />
+        </div>
+        <Stack direction="row" gap={2} wrap flex={1}>
+          <PercentageStat
+            big={stats.instanceTotal.toLocaleString()}
+            label={t('provisioning.stats.summary-total', 'Total resources')}
+            dotClass={undefined}
+          />
+          <PercentageStat
+            big={percent(gitSyncTotal, stats.instanceTotal)}
+            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+              value: gitSyncTotal,
+              total: stats.instanceTotal,
+            })}
+            label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
+            dotClass={styles.legendDotSuccess}
+            color="success"
+          />
+          <PercentageStat
+            big={percent(otherTotal, stats.instanceTotal)}
+            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+              value: otherTotal,
+              total: stats.instanceTotal,
+            })}
+            label={t('provisioning.stats.legend-other', 'Managed by other tools')}
+            dotClass={styles.legendDotInfo}
+            color="info"
+          />
+          <PercentageStat
+            big={percent(stats.unmanagedTotal, stats.instanceTotal)}
+            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+              value: stats.unmanagedTotal,
+              total: stats.instanceTotal,
+            })}
+            label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
+            dotClass={styles.legendDotWarning}
+            color="warning"
+          />
+        </Stack>
       </div>
-      <Stack direction="row" gap={2} wrap flex={1}>
-        <PercentageStat
-          big={stats.instanceTotal.toLocaleString()}
-          label={t('provisioning.stats.summary-total', 'Total resources')}
-          dotClass={undefined}
-        />
-        <PercentageStat
-          big={percent(gitSyncTotal, stats.instanceTotal)}
-          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-            value: gitSyncTotal,
-            total: stats.instanceTotal,
-          })}
-          label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
-          dotClass={styles.legendDotSuccess}
-          color="success"
-        />
-        <PercentageStat
-          big={percent(otherTotal, stats.instanceTotal)}
-          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-            value: otherTotal,
-            total: stats.instanceTotal,
-          })}
-          label={t('provisioning.stats.legend-other', 'Managed by other tools')}
-          dotClass={styles.legendDotInfo}
-          color="info"
-        />
-        <PercentageStat
-          big={percent(stats.unmanagedTotal, stats.instanceTotal)}
-          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-            value: stats.unmanagedTotal,
-            total: stats.instanceTotal,
-          })}
-          label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-          dotClass={styles.legendDotWarning}
-          color="warning"
-        />
-      </Stack>
-    </div>
+    </Stack>
   );
 }
 
@@ -383,6 +398,8 @@ function FoldersAndDashboardsSection({ breakdowns }: { breakdowns: GroupBreakdow
     return null;
   }
 
+  const totalSupported = supported.reduce((acc, b) => acc + b.total, 0);
+  const gitSyncCovered = supported.reduce((acc, b) => acc + b.gitSyncCount, 0);
   const totalEligible = supported.reduce((acc, b) => acc + b.unmanagedCount, 0);
 
   return (
@@ -399,6 +416,7 @@ function FoldersAndDashboardsSection({ breakdowns }: { breakdowns: GroupBreakdow
           kubectl, plugins, etc.) can also manage them.
         </Trans>
       </Text>
+      <GitSyncCoverageCard gitSyncCovered={gitSyncCovered} totalSupported={totalSupported} />
       {totalEligible > 0 && (
         <Alert
           severity="info"
@@ -416,6 +434,45 @@ function FoldersAndDashboardsSection({ breakdowns }: { breakdowns: GroupBreakdow
         ))}
       </Stack>
     </Stack>
+  );
+}
+
+function GitSyncCoverageCard({ gitSyncCovered, totalSupported }: { gitSyncCovered: number; totalSupported: number }) {
+  const styles = useStyles2(getStyles);
+  if (totalSupported === 0) {
+    // Nothing to manage yet — avoid showing a 0 / 0 stat that reads like an error.
+    return null;
+  }
+  const coveragePct = percent(gitSyncCovered, totalSupported);
+  return (
+    <div className={styles.gitSyncCard}>
+      <Stack direction="row" gap={3} alignItems="center" wrap>
+        <div className={styles.gitSyncHeadline}>
+          <Text variant="h1" color="success">
+            {coveragePct}
+          </Text>
+          <Text color="secondary" variant="bodySmall">
+            <Trans i18nKey="provisioning.stats.git-sync-coverage-detail">
+              {{ covered: gitSyncCovered }} of {{ total: totalSupported }} via Git Sync
+            </Trans>
+          </Text>
+        </div>
+        <Stack direction="column" gap={0.5} flex={1}>
+          <Text variant="h5">
+            <Trans i18nKey="provisioning.stats.git-sync-encourage-title">
+              Git Sync is the simplest way to manage folders and dashboards as code
+            </Trans>
+          </Text>
+          <Text color="secondary" variant="bodySmall">
+            <Trans i18nKey="provisioning.stats.git-sync-encourage-description">
+              Connect a repository and your folders and dashboards stay versioned automatically — every save becomes a
+              commit.
+            </Trans>
+          </Text>
+        </Stack>
+        <ConnectRepositoryButton />
+      </Stack>
+    </div>
   );
 }
 
@@ -718,6 +775,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
+  }),
+  gitSyncCard: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    padding: theme.spacing(2, 3),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.success.borderTransparent}`,
+    background: theme.colors.success.transparent,
+  }),
+  gitSyncHeadline: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    minWidth: 110,
   }),
   kindChip: css({
     display: 'inline-flex',

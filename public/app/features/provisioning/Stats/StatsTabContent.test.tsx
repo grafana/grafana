@@ -8,6 +8,12 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
 }));
 
+// ConnectRepositoryButton requires Router + Redux + frontend settings; stub it
+// so this test stays focused on the StatsTabContent rendering logic.
+jest.mock('../Shared/ConnectRepositoryButton', () => ({
+  ConnectRepositoryButton: () => <button>Connect a repository</button>,
+}));
+
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 
 function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) {
@@ -146,6 +152,38 @@ describe('StatsTabContent', () => {
     // Specific manager identities are surfaced.
     expect(screen.getByText('tf-1')).toBeInTheDocument();
     expect(screen.getByText('cool-plugin')).toBeInTheDocument();
+  });
+
+  it('shows the provisioned-as-code headline and Git Sync coverage CTA', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 16 },
+        ],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [
+              { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
+            ],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Total = 20, managed = 5, so 25% of resources are provisioned as code.
+    expect(screen.getByText(/25% of resources are provisioned as code/i)).toBeInTheDocument();
+    // Git Sync coverage of folders + dashboards = 5 / 20 = 25%.
+    expect(screen.getByText(/5 of 20 via Git Sync/i)).toBeInTheDocument();
+    // Encouragement copy + CTA.
+    expect(screen.getByText(/git sync is the simplest way/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
   });
 
   it('lists per-manager-kind chips on each Folders/Dashboards card', () => {
