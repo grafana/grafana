@@ -307,3 +307,7 @@ export function createVariableKindFromSceneVariable(
 
   throw new Error(`Unsupported variable type: ${variable.state.type}`);
 }
+
+export function isSceneNativeVariablePayload(payload: unknown): payload is { __scenesPayload: SceneVariable } {
+  return typeof payload === 'object' && payload !== null && '__scenesPayload' in payload;
+}

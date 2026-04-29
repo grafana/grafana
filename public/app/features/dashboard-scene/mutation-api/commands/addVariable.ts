@@ -6,14 +6,14 @@
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
+import { sceneGraph, type SceneVariable } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import { isSceneNativeVariablePayload, replaceVariableSet } from './variableUtils';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
@@ -32,8 +32,23 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const { variable: variableKind, position } = payload;
-      const name = variableKind.spec.name;
+      let sceneVariable: SceneVariable;
+      let name: string;
+      let position: number | undefined;
+
+      if (isSceneNativeVariablePayload(payload)) {
+        sceneVariable = payload.__scenesPayload;
+        name = sceneVariable.state.name;
+        position = undefined;
+      } else {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- validated by Zod in DashboardMutationClient
+        const typedPayload = payload as AddVariablePayload;
+        const variableKind = typedPayload.variable;
+        name = variableKind.spec.name;
+        position = typedPayload.position;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
+        sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
+      }
 
       const existingVariables = scene.state.$variables;
       if (existingVariables) {
@@ -42,9 +57,6 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
           throw new Error(`Variable '${name}' already exists`);
         }
       }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
-      const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
 
       const varSet = sceneGraph.getVariables(scene);
       const currentVariables = [...varSet.state.variables];
@@ -59,8 +71,8 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
       return {
         success: true,
-        data: { variable: variableKind },
-        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
+        data: { name },
+        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: name }],
       };
     } catch (error) {
       return {

@@ -28,7 +28,6 @@ import {
   type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
-  getNextAvailableId,
   getVariableDefault,
   getVariableScene,
   isVariableEditable,
@@ -80,10 +79,14 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
   public onDelete = async (identifier: string) => {
     if (config.featureToggles.dashboardMutationApiVariablePilot) {
-      const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
-      const { cmd } = await import('../mutation-api/cmd');
-      const client = new DashboardMutationClient(this.getDashboard());
-      await client.execute(cmd.removeVariable({ name: identifier }));
+      const variables = this.getVariables();
+      const sceneVar = variables.find((v) => v.state.name === identifier);
+      if (sceneVar) {
+        const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
+        const { cmd } = await import('../mutation-api/cmd');
+        const client = new DashboardMutationClient(this.getDashboard());
+        await client.execute(cmd.removeVariable(sceneVar));
+      }
       this.setState({ editIndex: undefined });
       return;
     }
@@ -173,35 +176,11 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const variableIndex = variables.length;
 
     if (config.featureToggles.dashboardMutationApiVariablePilot) {
-      // Build a default QueryVariable as a VariableKind for the Mutation API.
-      const nextName = getNextAvailableId('query', variables);
-      const defaultVariableKind = {
-        kind: 'QueryVariable' as const,
-        spec: {
-          name: nextName,
-          query: {
-            kind: 'DataQuery' as const,
-            version: 'v0',
-            group: '',
-            spec: {},
-          },
-          refresh: 'onDashboardLoad' as const,
-          regex: '',
-          sort: 'disabled' as const,
-          multi: false,
-          includeAll: false,
-          allowCustomValue: true,
-          current: { text: '', value: '' },
-          options: [],
-          skipUrlSync: false,
-          hide: 'dontHide' as const,
-        },
-      };
-
+      const defaultNewVariable = getVariableDefault(variables);
       const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
       const { cmd } = await import('../mutation-api/cmd');
       const client = new DashboardMutationClient(this.getDashboard());
-      const result = await client.execute(cmd.addVariable({ variable: defaultVariableKind }));
+      const result = await client.execute(cmd.addVariable(defaultNewVariable));
 
       if (result.success) {
         this.setState({ editIndex: variableIndex });
@@ -243,14 +222,12 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
         const variable = variables[editIndex];
         if (variable) {
           try {
-            const { createVariableKindFromSceneVariable } = await import('../mutation-api/commands/variableUtils');
             const { DashboardMutationClient } = await import('../mutation-api/DashboardMutationClient');
             const { cmd } = await import('../mutation-api/cmd');
-            const variableKind = createVariableKindFromSceneVariable(variable, this.getDashboard());
             const client = new DashboardMutationClient(this.getDashboard());
-            await client.execute(cmd.updateVariable({ name: variable.state.name, variable: variableKind }));
+            await client.execute(cmd.updateVariable(variable));
           } catch (error) {
-            // Non-fatal: if serialization fails, fall through to navigation.
+            // Non-fatal: fall through to navigation.
             console.error('Failed to call UPDATE_VARIABLE on goBack:', error);
           }
         }

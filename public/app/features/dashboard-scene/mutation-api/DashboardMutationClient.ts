@@ -52,14 +52,19 @@ export class DashboardMutationClient implements MutationClient {
       return { success: false, error: permissionResult.error, changes: [] };
     }
 
-    const validationResult = validatePayload(type, mutation.payload);
-    if (!validationResult.success) {
-      return { success: false, error: validationResult.error, changes: [] };
+    let payload: unknown;
+    if ('__scenesPayload' in mutation) {
+      // UI path: SceneObject passed directly — skip Zod validation and forward transformer.
+      payload = { __scenesPayload: mutation.__scenesPayload };
+    } else {
+      const validationResult = validatePayload(type, mutation.payload);
+      if (!validationResult.success) {
+        return { success: false, error: validationResult.error, changes: [] };
+      }
+      // Zod may return frozen or shared default objects. Deep-clone write payloads
+      // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
+      payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
     }
-
-    // Zod may return frozen or shared default objects. Deep-clone write payloads
-    // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
-    const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
 
     const context: MutationContext = { scene: this.scene };
 

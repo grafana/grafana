@@ -1,4 +1,4 @@
-import { type CustomVariable, type QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, type QueryVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardEditActionEvent } from '../../edit-pane/events';
 import type { DashboardScene } from '../../scene/DashboardScene';
@@ -448,6 +448,58 @@ describe('Variable mutation commands', () => {
 
       perform();
       expect(sceneWithEvents.state.$variables?.state.variables.find((v) => v.state.name === 'redoable')).toBeDefined();
+    });
+  });
+
+  // --- Scenes-native path (cmd.addVariable/updateVariable/removeVariable with SceneVariable) ---
+
+  describe('Scenes-native path', () => {
+    it('cmd.addVariable with SceneVariable adds it to the dashboard', async () => {
+      const sceneVar = new CustomVariable({ name: 'native', query: 'x,y,z' });
+      const result = await client.execute(cmd.addVariable(sceneVar));
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/variables/native');
+      expect(scene.state.$variables?.state.variables.find((v) => v.state.name === 'native')).toBeDefined();
+    });
+
+    it('cmd.updateVariable with SceneVariable updates the existing variable', async () => {
+      await client.execute(
+        cmd.addVariable({ variable: { kind: 'CustomVariable', spec: { name: 'updateme', query: 'before' } } })
+      );
+
+      const updatedVar = new CustomVariable({ name: 'updateme', query: 'after' });
+      const result = await client.execute(cmd.updateVariable(updatedVar));
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/variables/updateme');
+      const stored = scene.state.$variables?.state.variables.find((v) => v.state.name === 'updateme');
+      expect((stored as CustomVariable | undefined)?.state.query).toBe('after');
+    });
+
+    it('cmd.removeVariable with SceneVariable removes it from the dashboard', async () => {
+      await client.execute(
+        cmd.addVariable({ variable: { kind: 'CustomVariable', spec: { name: 'removeme', query: 'a,b' } } })
+      );
+
+      const sceneVar = new CustomVariable({ name: 'removeme', query: 'a,b' });
+      const result = await client.execute(cmd.removeVariable(sceneVar));
+
+      expect(result.success).toBe(true);
+      expect(scene.state.$variables?.state.variables.find((v) => v.state.name === 'removeme')).toBeUndefined();
+    });
+
+    it('cmd.addVariable Scenes-native path produces __scenesPayload request', () => {
+      const sceneVar = new CustomVariable({ name: 'check', query: 'a' });
+      const request = cmd.addVariable(sceneVar);
+      expect(request.type).toBe('ADD_VARIABLE');
+      expect('__scenesPayload' in request).toBe(true);
+    });
+
+    it('cmd.addVariable payload path still produces payload request', () => {
+      const request = cmd.addVariable({ variable: { kind: 'CustomVariable', spec: { name: 'x', query: 'a' } } });
+      expect(request.type).toBe('ADD_VARIABLE');
+      expect('payload' in request).toBe(true);
     });
   });
 

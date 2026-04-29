@@ -8,7 +8,7 @@ import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import { isSceneNativeVariablePayload, replaceVariableSet } from './variableUtils';
 
 export const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -24,8 +24,15 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene } = context;
-    const { name } = payload;
     enterEditModeIfNeeded(scene);
+
+    let name: string;
+    if (isSceneNativeVariablePayload(payload)) {
+      name = payload.__scenesPayload.state.name;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- validated by Zod in DashboardMutationClient
+      name = (payload as RemoveVariablePayload).name;
+    }
 
     try {
       const variables = scene.state.$variables;
