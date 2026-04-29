@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
@@ -246,7 +246,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
-          showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          showBackButton={hasPickedViz || !isNewPanel}
           isNewPanel={isNewPanel}
           hasPickedViz={hasPickedViz}
         />
