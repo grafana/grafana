@@ -20,7 +20,7 @@
  * __smoke__/). Add a new journey to DRIVERS to expose it via --journeys.
  */
 
-import { type Browser, type Page, chromium } from '@playwright/test';
+import { type Browser, type ConsoleMessage, type Page, chromium } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -64,6 +64,10 @@ interface JourneyEnd {
 const DRIVERS: Record<string, JourneyDriver> = {
   [searchToResourceDriver.type]: searchToResourceDriver,
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 // --------------------------------------------------------------------------
 // CLI
@@ -119,7 +123,7 @@ function parseArgs(): Args {
   }
 
   if (scenario) {
-    const supported = journeys.some((j) => DRIVERS[j].scenarios.includes(scenario as string));
+    const supported = journeys.some((j) => DRIVERS[j].scenarios.includes(scenario));
     if (!supported) {
       const valid = journeys.flatMap((j) => DRIVERS[j].scenarios);
       throw new Error(
@@ -275,29 +279,26 @@ function nextJourneyEnd(page: Page, type: string): Promise<JourneyEnd> {
       JOURNEY_TIMEOUT_MS
     );
 
-    const listener = async (msg: import('@playwright/test').ConsoleMessage) => {
+    const listener = async (msg: ConsoleMessage) => {
       if (!msg.text().startsWith('[JourneyTracker] end')) {
         return;
       }
       try {
         const args = await Promise.all(msg.args().map((a) => a.jsonValue()));
         const ctx = String(args[1] ?? '');
-        const data = (args[2] ?? {}) as {
-          journeyId?: string;
-          durationMs?: number;
-          attributes?: Record<string, unknown>;
-        };
+        const data = isRecord(args[2]) ? args[2] : {};
         const [endedType, outcome] = ctx.split(' -> ');
         if (endedType !== type) {
           return;
         }
         clearTimeout(timer);
         page.off('console', listener);
+        const attrs = data.attributes;
         resolve({
           type: endedType,
           outcome,
           durationMs: Number(data.durationMs ?? 0),
-          attributes: data.attributes ?? {},
+          attributes: isRecord(attrs) ? attrs : {},
         });
       } catch {
         // ignore arg-resolution failures (e.g. closed page)
@@ -345,6 +346,9 @@ async function runOnce(browser: Browser, driver: JourneyDriver, scenario: string
   const ctx = await browser.newContext({ storageState: STORAGE_STATE });
   await ctx.addInitScript(() => {
     // Enable journey debug logs so we can detect end events from console output.
+    // The init script runs in the browser context (Playwright injects it before page scripts),
+    // so direct localStorage access is correct here despite the Node-side lint rule.
+    // eslint-disable-next-line @grafana/no-direct-local-storage-access
     localStorage.setItem('grafana.debug.journeyTracker', 'true');
   });
 

@@ -886,6 +886,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
 /public/app/core/profiler.ts @grafana/dashboards-squad
 /public/app/core/journeys/ @grafana/dashboards-squad
+/scripts/cuj-new.ts @grafana/dashboards-squad
+/scripts/cuj-smoke.ts @grafana/dashboards-squad
+/tsconfig.smoke.json @grafana/dashboards-squad
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
 /public/app/core/services/__mocks__/backend_srv.ts @grafana/grafana-frontend-platform

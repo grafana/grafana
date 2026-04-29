@@ -1,7 +1,7 @@
 import { type Page } from '@playwright/test';
 
-import { type JourneyDriver } from './__smoke__/types.ts';
 import { activate, humanType, jitter, openCommandPalette, pickQuery } from './__smoke__/playwright-utils.ts';
+import { type JourneyDriver } from './__smoke__/types.ts';
 
 // Title of the fixture dashboard auto-created by the smoke runner. Kept in
 // sync with FIXTURE_TITLE in scripts/cuj-smoke.ts so the existing-dashboard
