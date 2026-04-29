@@ -486,7 +486,7 @@ See `panelEdit.test.ts` (recordEvent-heavy) and `browseToResource.test.ts` (star
    cujTracking = true
    ```
 
-2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (`[grafana_javascript_agent]` enabled, `tracingInstrumentalizationEnabled = true`, an endpoint pointing at a dev Faro collector).
+2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (see [Configuration](#configuration) for the `[log.frontend]` block).
 
 3. Open Chrome devtools console. The framework logs every journey lifecycle event when `localStorage.setItem('grafana.debug.journeyTracker', 'true')` is set. You'll see `journeyTracker.JourneyTracker startJourney …`, step events, and the end outcome.
 
