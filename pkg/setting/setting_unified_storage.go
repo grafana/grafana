@@ -174,6 +174,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -262,6 +263,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
 		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
 	}
+
+	// Vector storage (separate pgvector database)
+	vectorSection := cfg.Raw.Section("database_vector")
+	cfg.VectorDBHost = vectorSection.Key("db_host").String()
+	cfg.VectorDBPort = vectorSection.Key("db_port").MustString("5432")
+	cfg.VectorDBName = vectorSection.Key("db_name").String()
+	cfg.VectorDBUser = vectorSection.Key("db_user").String()
+	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
+	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
+	cfg.VectorPromotionThreshold = vectorSection.Key("promotion_threshold").MustInt(9999999) // effectively disabled by default
+	cfg.VectorPromoterInterval = vectorSection.Key("promoter_interval").MustDuration(1 * time.Hour)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
