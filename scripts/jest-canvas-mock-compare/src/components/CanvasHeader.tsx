@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
 
-import { OverlayBlendSelect } from './OverlayBlendSelect.tsx';
-import { ToggleCanvasContextButton } from './ToggleCanvasContextButton.tsx';
+import { ToggleCanvasContextButton } from './CanvasContextToggleButton.tsx';
+import { OverlayBlendSelect } from './CanvasDiffOverlaySelect.tsx';
 
-export function PlotHeader(props: {
+export function CanvasHeader(props: {
   onClick: () => void;
   showCanvasContext: boolean;
   showBlend: boolean;

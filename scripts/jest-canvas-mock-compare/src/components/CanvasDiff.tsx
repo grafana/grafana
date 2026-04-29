@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import type { CanvasEventArray } from '../types.ts';
 
-import { ToggleCanvasContextButton } from './ToggleCanvasContextButton.tsx';
+import { ToggleCanvasContextButton } from './CanvasContextToggleButton.tsx';
 
 interface DiffCanvasProps {
   width: number;

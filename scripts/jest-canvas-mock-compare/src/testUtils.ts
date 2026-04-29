@@ -1,10 +1,10 @@
-import type { UPlotComparePayload } from './types.ts';
+import type { JestCanvasMockComparePayload } from './types.ts';
 
 /**
  * Narrow the payload type
  * @param payload
  */
-export function isUPlotComparePayload(payload: unknown): payload is UPlotComparePayload {
+export function isCanvasComparePayload(payload: unknown): payload is JestCanvasMockComparePayload {
   if (!payload || typeof payload !== 'object' || !('testName' in payload)) {
     return false;
   }

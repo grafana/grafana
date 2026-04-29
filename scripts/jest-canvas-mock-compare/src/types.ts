@@ -2,7 +2,7 @@ import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 
 import type { eventsToCanvasScript } from './canvasUtils.ts';
 
-export type { UPlotComparePayload } from './exportedTypes.ts';
+export type { JestCanvasMockComparePayload } from './exportedTypes.ts';
 
 export type CanvasEventArray = Parameters<typeof eventsToCanvasScript>[0];
 

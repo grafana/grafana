@@ -1,8 +1,8 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isUPlotComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
-import type { AcceptBaselineState, ResolvedPayload, UPlotComparePayload } from '../types.ts';
+import { isCanvasComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
+import type { AcceptBaselineState, ResolvedPayload, JestCanvasMockComparePayload } from '../types.ts';
 
 import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { ComparePlots } from './ComparePlots.tsx';
@@ -21,7 +21,7 @@ const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.jso
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
-function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
+function readPayloadDimensions(raw: JestCanvasMockComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
   const w = raw.width;
   const h = raw.height;
   return {
@@ -100,8 +100,8 @@ function sortPayloadFilesForIndex(
     }
     const ma = modifiedMsByBasename[a];
     const mb = modifiedMsByBasename[b];
-    const maNum = typeof ma === 'number' && !Number.isNaN(ma) ? ma : -Infinity;
-    const mbNum = typeof mb === 'number' && !Number.isNaN(mb) ? mb : -Infinity;
+    const maNum = !Number.isNaN(ma) ? ma : -Infinity;
+    const mbNum = !Number.isNaN(mb) ? mb : -Infinity;
     if (maNum !== mbNum) {
       return mbNum - maNum;
     }
@@ -150,10 +150,7 @@ function parseAcceptBaselineResponse(data: unknown): {
   };
 }
 
-export const CompareUPlotCanvases = ({
-  defaultWidth = FALLBACK_CANVAS_WIDTH,
-  defaultHeight = FALLBACK_CANVAS_HEIGHT,
-}) => {
+export const CompareCanvas = ({ defaultWidth = FALLBACK_CANVAS_WIDTH, defaultHeight = FALLBACK_CANVAS_HEIGHT }) => {
   const [view, setView] = useState<ViewState>({ kind: 'loading' });
   const [acceptBaselineState, setAcceptBaselineState] = useState<AcceptBaselineState>({ kind: 'idle' });
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -177,8 +174,8 @@ export const CompareUPlotCanvases = ({
   }, []);
 
   const applyPayload = useCallback(
-    (raw: ResolvedPayload | UPlotComparePayload, sourceLabel: string, options?: { resetJestActions?: boolean }) => {
-      if (!isUPlotComparePayload(raw)) {
+    (raw: JestCanvasMockComparePayload, sourceLabel: string, options?: { resetJestActions?: boolean }) => {
+      if (!isCanvasComparePayload(raw)) {
         setView({
           kind: 'blocked',
           error: `${sourceLabel}: not a valid uplot snapshot payload`,
@@ -240,7 +237,7 @@ export const CompareUPlotCanvases = ({
           });
           return;
         }
-        const raw: ResolvedPayload = await res.json();
+        const raw: JestCanvasMockComparePayload = await res.json();
         applyPayload(raw, basename);
         if (historyMode) {
           navigate(basename, historyMode);
@@ -286,7 +283,7 @@ export const CompareUPlotCanvases = ({
         return;
       }
       const rawUnknown: unknown = await res.json();
-      if (!isUPlotComparePayload(rawUnknown)) {
+      if (!isCanvasComparePayload(rawUnknown)) {
         return;
       }
       const assertionPassed = readSnapshotAssertionPassed(rawUnknown);
