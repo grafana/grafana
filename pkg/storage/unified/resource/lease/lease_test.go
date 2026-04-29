@@ -52,9 +52,7 @@ func (m *mapKV) Get(ctx context.Context, sec, key string) (io.ReadCloser, error)
 	if !ok {
 		return nil, kv.ErrNotFound
 	}
-	out := make([]byte, len(v))
-	copy(out, v)
-	return io.NopCloser(bytes.NewReader(out)), nil
+	return io.NopCloser(bytes.NewReader(v)), nil
 }
 
 func (m *mapKV) Keys(ctx context.Context, sec string, opt kv.ListOptions) iter.Seq2[string, error] {
@@ -76,19 +74,9 @@ func (m *mapKV) Keys(ctx context.Context, sec string, opt kv.ListOptions) iter.S
 	}
 	m.mu.Unlock()
 
+	slices.Sort(keys)
 	if opt.Sort == kv.SortOrderDesc {
-		slices.SortFunc(keys, func(a, b string) int {
-			switch {
-			case a > b:
-				return -1
-			case a < b:
-				return 1
-			default:
-				return 0
-			}
-		})
-	} else {
-		slices.Sort(keys)
+		slices.Reverse(keys)
 	}
 
 	if opt.Limit > 0 && int64(len(keys)) > opt.Limit {
