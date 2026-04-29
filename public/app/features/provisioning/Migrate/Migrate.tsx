@@ -546,7 +546,13 @@ function StatCard({
 }) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.statCard, emphasized && styles.statCardEmphasized)}>
+    <div
+      className={cx(
+        styles.statCard,
+        styles[`statCardSurface_${tone}` as const],
+        emphasized && styles.statCardEmphasized
+      )}
+    >
       <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
         <Icon name={icon} size="lg" />
       </div>
@@ -966,6 +972,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
     alignItems: 'center',
     boxShadow: theme.shadows.z1,
+  }),
+  statCardSurface_neutral: css({}),
+  statCardSurface_success: css({
+    background: theme.colors.success.transparent,
+    borderColor: theme.colors.success.borderTransparent,
+  }),
+  statCardSurface_info: css({
+    background: theme.colors.info.transparent,
+    borderColor: theme.colors.info.borderTransparent,
+  }),
+  statCardSurface_warning: css({
+    background: theme.colors.warning.transparent,
+    borderColor: theme.colors.warning.borderTransparent,
+  }),
+  statCardSurface_primary: css({
+    background: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 12%, ${theme.colors.background.secondary})`,
+    borderColor: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 35%, transparent)`,
   }),
   statCardEmphasized: css({
     borderColor: theme.colors.warning.border,
