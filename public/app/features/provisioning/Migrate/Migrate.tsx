@@ -286,32 +286,63 @@ function StatCard({
   );
 }
 
-function lastScanLabel(timestamp?: number): string {
-  if (!timestamp) {
-    return t('provisioning.stats.last-scan-unknown', 'Unknown');
-  }
-  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
-  if (seconds < 60) {
-    return t('provisioning.stats.last-scan-just-now', 'Just now');
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return t('provisioning.stats.last-scan-minutes', '{{count}} min ago', { count: minutes });
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return t('provisioning.stats.last-scan-hours', '{{count}} h ago', { count: hours });
-  }
-  const days = Math.floor(hours / 24);
-  return t('provisioning.stats.last-scan-days', '{{count}} d ago', { count: days });
+function SemicircleGauge({ pct }: { pct: number }) {
+  const styles = useStyles2(getStyles);
+  // Half-circle with radius 40 centered at (50, 50). Path goes from (10,50)
+  // along the top arc to (90,50). Length = π * r = π * 40 ≈ 125.66.
+  const radius = 40;
+  const length = Math.PI * radius;
+  const dashLen = Math.max(0, Math.min(1, pct)) * length;
+  return (
+    <svg width="120" height="68" viewBox="0 0 100 60" className={styles.gauge} role="img" aria-hidden>
+      <path
+        d="M 10 50 A 40 40 0 0 1 90 50"
+        fill="none"
+        strokeWidth={10}
+        strokeLinecap="round"
+        className={styles.gaugeTrack}
+      />
+      <path
+        d="M 10 50 A 40 40 0 0 1 90 50"
+        fill="none"
+        strokeWidth={10}
+        strokeLinecap="round"
+        strokeDasharray={`${dashLen} ${length}`}
+        className={styles.gaugeFill}
+      />
+    </svg>
+  );
+}
+
+function FolderProgressCard({ folders }: { folders: FolderRow[] }) {
+  const styles = useStyles2(getStyles);
+  const total = folders.length;
+  const managed = folders.filter((f) => Boolean(f.managedBy)).length;
+  const pct = total === 0 ? 0 : managed / total;
+  return (
+    <div className={cx(styles.statCard, styles.gaugeCard)}>
+      <span className={cx(styles.statCardLabel, styles.statCardTone_success)}>
+        <Trans i18nKey="provisioning.stats.folder-progress-label">Folders managed</Trans>
+      </span>
+      <SemicircleGauge pct={pct} />
+      <Text variant="h2">
+        {t('provisioning.stats.folder-progress-fraction', '{{managed}} / {{total}}', { managed, total })}
+      </Text>
+      <Text color="secondary" variant="bodySmall">
+        {t('provisioning.stats.folder-progress-pct', '{{pct}}% complete', {
+          pct: Math.round(pct * 100),
+        })}
+      </Text>
+    </div>
+  );
 }
 
 function OverviewStatCards({
   totals,
-  lastScannedAt,
+  folders,
 }: {
   totals: ReturnType<typeof aggregateTotals>;
-  lastScannedAt?: number;
+  folders: FolderRow[];
 }) {
   const styles = useStyles2(getStyles);
   const progressSubLabel =
@@ -354,13 +385,7 @@ function OverviewStatCards({
         subLabel={progressSubLabel}
         label={t('provisioning.stats.progress-gitops', 'Progress to GitOps')}
       />
-      <StatCard
-        icon="clock-nine"
-        tone="neutral"
-        big={lastScanLabel(lastScannedAt)}
-        subLabel={t('provisioning.stats.last-scan-sub', 'Auto-scan enabled')}
-        label={t('provisioning.stats.last-scan-label', 'Last scan')}
-      />
+      <FolderProgressCard folders={folders} />
     </div>
   );
 }
@@ -541,10 +566,7 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
 }
 
 export function Migrate() {
-  const query = useGetResourceStatsQuery();
-  const { data, isLoading, isError, error } = query;
-  const lastScannedAt =
-    'fulfilledTimeStamp' in query && typeof query.fulfilledTimeStamp === 'number' ? query.fulfilledTimeStamp : undefined;
+  const { data, isLoading, isError, error } = useGetResourceStatsQuery();
   const [repos] = useRepositoryList({ watch: false });
   const repoList = repos ?? [];
 
@@ -605,7 +627,7 @@ export function Migrate() {
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader unmanagedFolders={unmanagedFolderCount} repos={repoList} />
-      <OverviewStatCards totals={totals} lastScannedAt={lastScannedAt} />
+      <OverviewStatCards totals={totals} folders={folders} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
           <QuickWinsPanel
@@ -644,6 +666,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z1,
   }),
   statCardSurface_neutral: css({}),
+  gaugeCard: css({
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: theme.spacing(0.25),
+  }),
+  gauge: css({
+    alignSelf: 'center',
+  }),
+  gaugeTrack: css({
+    stroke: theme.colors.background.canvas,
+  }),
+  gaugeFill: css({
+    stroke: theme.colors.success.main,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'stroke-dasharray 240ms ease',
+    },
+  }),
   statCardSurface_success: css({
     background: theme.colors.success.transparent,
     borderColor: theme.colors.success.borderTransparent,

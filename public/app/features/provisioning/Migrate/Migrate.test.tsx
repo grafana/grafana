@@ -152,6 +152,33 @@ describe('Migrate', () => {
     expect(connectLink).toHaveAttribute('href', '/admin/provisioning/getting-started');
   });
 
+  it('renders the Folders managed gauge card showing managed/total and a percentage', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({ uid: 'a', title: 'A', dashboardCount: 2, managedBy: 'repo' }),
+        makeFolder({ uid: 'b', title: 'B', dashboardCount: 2 }),
+        makeFolder({ uid: 'c', title: 'C', dashboardCount: 0 }),
+        makeFolder({ uid: 'd', title: 'D', dashboardCount: 0, managedBy: 'repo' }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    // The gauge card uses an exact "Folders managed" label; the next-steps
+    // panel also includes the phrase as part of a longer sentence, so we
+    // accept multiple matches here.
+    expect(screen.getAllByText(/folders managed/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('2 / 4')).toBeInTheDocument();
+    expect(screen.getByText(/50% complete/i)).toBeInTheDocument();
+  });
+
   it('renders the five overview stat cards including Progress to GitOps', () => {
     mockQuery({
       data: {
