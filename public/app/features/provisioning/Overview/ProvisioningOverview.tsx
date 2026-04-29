@@ -454,6 +454,25 @@ function Donut({
   );
 }
 
+function OverviewIntro() {
+  return (
+    <Stack direction="column" gap={1}>
+      <Text variant="h3">
+        <Trans i18nKey="provisioning.stats.overview-heading">Provisioning overview</Trans>
+      </Text>
+      <Text color="secondary">
+        <Trans i18nKey="provisioning.stats.overview-subhead">
+          Manage your folders, dashboards, and other resources as code. Tools like Git Sync, Terraform, and kubectl let
+          you store these definitions in a Git repository (or another source of truth) so every change is versioned,
+          reviewable, and reproducible. This is what GitOps means in practice — the live state of the instance comes
+          from your repository, not the other way around. The breakdown below shows how much of your instance is managed
+          this way today, and which tools are involved.
+        </Trans>
+      </Text>
+    </Stack>
+  );
+}
+
 function SummarySection({ stats }: { stats: ComputedStats }) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -462,55 +481,43 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
   const managedPct = percent(stats.managedTotal, stats.instanceTotal);
 
   return (
-    <Stack direction="column" gap={1.5}>
-      <Stack direction="column" gap={0.5}>
-        <Text variant="h4">
-          <Trans i18nKey="provisioning.stats.overview-heading">Provisioning overview</Trans>
-        </Text>
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.overview-subhead">
-            How resources are managed across providers like Git Sync, Terraform, and kubectl.
-          </Trans>
-        </Text>
-      </Stack>
-      <div className={styles.summaryPanel}>
-        <div className={styles.summaryDonut}>
-          <Donut
-            segments={segments}
-            size={140}
-            strokeWidth={18}
-            centerLabel={managedPct}
-            centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'as code')}
-            hoveredKey={hoveredKey}
-            onHover={setHoveredKey}
-          />
-        </div>
-        <Stack direction="row" gap={1.5} wrap flex={1}>
-          <ProviderStat
-            segmentKey="total"
-            big={stats.instanceTotal.toLocaleString()}
-            label={t('provisioning.stats.summary-total', 'Total resources')}
-            hoveredKey={hoveredKey}
-            onHover={setHoveredKey}
-          />
-          {segments.map((seg) => (
-            <ProviderStat
-              key={seg.key}
-              segmentKey={seg.key}
-              big={percent(seg.value, stats.instanceTotal)}
-              subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-                value: seg.value,
-                total: stats.instanceTotal,
-              })}
-              label={seg.label}
-              colorHex={seg.color}
-              hoveredKey={hoveredKey}
-              onHover={setHoveredKey}
-            />
-          ))}
-        </Stack>
+    <div className={styles.summaryPanel}>
+      <div className={styles.summaryDonut}>
+        <Donut
+          segments={segments}
+          size={140}
+          strokeWidth={18}
+          centerLabel={managedPct}
+          centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'as code')}
+          hoveredKey={hoveredKey}
+          onHover={setHoveredKey}
+        />
       </div>
-    </Stack>
+      <Stack direction="row" gap={1.5} wrap flex={1}>
+        <ProviderStat
+          segmentKey="total"
+          big={stats.instanceTotal.toLocaleString()}
+          label={t('provisioning.stats.summary-total', 'Total resources')}
+          hoveredKey={hoveredKey}
+          onHover={setHoveredKey}
+        />
+        {segments.map((seg) => (
+          <ProviderStat
+            key={seg.key}
+            segmentKey={seg.key}
+            big={percent(seg.value, stats.instanceTotal)}
+            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+              value: seg.value,
+              total: stats.instanceTotal,
+            })}
+            label={seg.label}
+            colorHex={seg.color}
+            hoveredKey={hoveredKey}
+            onHover={setHoveredKey}
+          />
+        ))}
+      </Stack>
+    </div>
   );
 }
 
@@ -850,6 +857,7 @@ export function ProvisioningOverview() {
 
   return (
     <Stack direction="column" gap={4}>
+      <OverviewIntro />
       <GitSyncBanner breakdowns={computed.groupBreakdowns} />
       <SummarySection stats={computed} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
