@@ -822,7 +822,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function StatsTabContent() {
+export function ProvisioningOverview() {
   const { data, isLoading, isError, error } = useGetResourceStatsQuery();
 
   const computed = useMemo(() => computeStats(data), [data]);

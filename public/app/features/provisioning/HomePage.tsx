@@ -9,9 +9,9 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
+import { ProvisioningOverview } from './Overview/ProvisioningOverview';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
-import { StatsTabContent } from './Stats/StatsTabContent';
 import { CONNECTIONS_URL } from './constants';
 import { useConnectionList } from './hooks/useConnectionList';
 import { useRepositoryList } from './hooks/useRepositoryList';
@@ -93,7 +93,7 @@ export default function HomePage() {
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       case 'stats':
-        return <StatsTabContent />;
+        return <ProvisioningOverview />;
       case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;

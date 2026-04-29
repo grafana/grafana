@@ -4,14 +4,14 @@ import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1'
 
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
-import { StatsTabContent } from './StatsTabContent';
+import { ProvisioningOverview } from './ProvisioningOverview';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
 }));
 
 // ConnectRepositoryButton requires Router + Redux + frontend settings; stub it
-// so this test stays focused on the StatsTabContent rendering logic.
+// so this test stays focused on the ProvisioningOverview rendering logic.
 jest.mock('../Shared/ConnectRepositoryButton', () => ({
   ConnectRepositoryButton: () => <button>Connect a repository</button>,
 }));
@@ -39,7 +39,7 @@ function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) 
   } as ReturnType<typeof useGetResourceStatsQuery>);
 }
 
-describe('StatsTabContent', () => {
+describe('ProvisioningOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRepositoryList.mockReturnValue([[], false]);
@@ -47,19 +47,19 @@ describe('StatsTabContent', () => {
 
   it('renders a loading indicator while fetching', () => {
     mockQuery({ isLoading: true, isSuccess: false, status: 'pending' });
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
     expect(screen.getByText(/loading stats/i)).toBeInTheDocument();
   });
 
   it('renders an error alert on failure', () => {
     mockQuery({ isError: true, isSuccess: false, status: 'rejected', error: { status: 500 } });
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
     expect(screen.getByText(/failed to load provisioning stats/i)).toBeInTheDocument();
   });
 
   it('renders the empty state when no resources exist', () => {
     mockQuery({ data: { instance: [], unmanaged: [], managed: [] } });
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
@@ -84,7 +84,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // 5 of 20 = 25% of resources are provisioned as code; surfaced as the
     // donut center label.
@@ -106,7 +106,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /^export$/i })).not.toBeInTheDocument();
@@ -130,7 +130,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     const exportLink = screen.getByRole('link', { name: /^export$/i });
     expect(exportLink).toBeInTheDocument();
@@ -148,7 +148,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // Without any folders or dashboards the encourage-to-use-Git-Sync banner
     // shouldn't show — there's nothing to connect a repository for yet.
@@ -175,7 +175,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     expect(screen.getByText('Other providers')).toBeInTheDocument();
     // Specific manager identities are surfaced.
@@ -197,7 +197,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // Unknown shows up in both the new Summary panel (per-provider stat card)
     // and the Other providers section, so just assert it appears at all.
@@ -231,7 +231,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // Total = 40, Git Sync = 16, Other = 6, Unmanaged = 18.
     expect(screen.getByText('40')).toBeInTheDocument();
@@ -263,7 +263,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // Summary should show one stat per provider that has resources, alongside
     // Total resources and Unmanaged. With Repo + Terraform + 3 unmanaged, the
@@ -289,7 +289,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     // The Folders row should now include File provisioning (classic) — it
     // creates folders implicitly via the dashboard provider's folder option.
@@ -310,7 +310,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     expect(screen.getByText('Resource types')).toBeInTheDocument();
     // Both datasources and alert rules should list Terraform and Classic file
@@ -342,7 +342,7 @@ describe('StatsTabContent', () => {
       },
     });
 
-    render(<StatsTabContent />);
+    render(<ProvisioningOverview />);
 
     expect(screen.getByText('Resource types')).toBeInTheDocument();
     // Each resource type should appear exactly once in the table even when
