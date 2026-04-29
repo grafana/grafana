@@ -757,3 +757,119 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestEnableCompression(t *testing.T) {
+	t.Run("defaults to enable_gzip value when enable_compression is not set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = true
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("defaults to true when neither is set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("defaults to false when enable_compression is unset and enable_gzip is false", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = false
+`))
+		require.NoError(t, err)
+		require.False(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression overrides enable_gzip when explicitly set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = true
+enable_compression = false
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.False(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression true overrides enable_gzip false", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = false
+enable_compression = true
+`))
+		require.NoError(t, err)
+		require.False(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression can be set via environment variable", func(t *testing.T) {
+		t.Setenv("GF_SERVER_ENABLE_COMPRESSION", "true")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("content_encoding defaults to gzip", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+`))
+		require.NoError(t, err)
+		require.Equal(t, []string{"gzip"}, cfg.ContentEncodings)
+	})
+
+	t.Run("content_encoding preserves configured priority and filters invalid values", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+content_encoding = zstd, br, bad, deflate, gzip, br
+`))
+		require.NoError(t, err)
+		require.Equal(t, []string{"zstd", "br", "deflate", "gzip"}, cfg.ContentEncodings)
+	})
+
+	t.Run("content_encoding falls back to gzip when all values are invalid", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+content_encoding = identity, compress
+`))
+		require.NoError(t, err)
+		require.Equal(t, []string{"gzip"}, cfg.ContentEncodings)
+	})
+
+	t.Run("content_encoding can be set via environment variable", func(t *testing.T) {
+		t.Setenv("GF_SERVER_CONTENT_ENCODING", "zstd,br")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		require.Equal(t, []string{"zstd", "br"}, cfg.ContentEncodings)
+	})
+}
+
+func TestParseContentEncodings(t *testing.T) {
+	t.Run("returns gzip default without fallback when value is empty", func(t *testing.T) {
+		encodings, invalid := parseContentEncodings("")
+		require.Equal(t, []string{"gzip"}, encodings)
+		require.Empty(t, invalid)
+	})
+
+	t.Run("keeps valid values and returns invalid values", func(t *testing.T) {
+		encodings, invalid := parseContentEncodings("zstd, br, bad, deflate, gzip, bad")
+		require.Equal(t, []string{"zstd", "br", "deflate", "gzip"}, encodings)
+		require.Equal(t, []string{"bad"}, invalid)
+	})
+
+	t.Run("falls back to gzip when all values are invalid", func(t *testing.T) {
+		encodings, invalid := parseContentEncodings("identity, compress")
+		require.Equal(t, []string{"gzip"}, encodings)
+		require.Equal(t, []string{"identity", "compress"}, invalid)
+	})
+}

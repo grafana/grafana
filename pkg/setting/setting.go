@@ -50,12 +50,20 @@ const (
 )
 
 const (
-	RedactedPassword = "*********"
-	DefaultHTTPAddr  = "0.0.0.0"
-	Dev              = "development"
-	Prod             = "production"
-	ApplicationName  = "Grafana"
+	RedactedPassword       = "*********"
+	DefaultHTTPAddr        = "0.0.0.0"
+	Dev                    = "development"
+	Prod                   = "production"
+	ApplicationName        = "Grafana"
+	DefaultContentEncoding = "gzip"
 )
+
+var SupportedContentEncodings = map[string]struct{}{
+	"zstd":    {},
+	"br":      {},
+	"deflate": {},
+	"gzip":    {},
+}
 
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
@@ -124,6 +132,8 @@ type Cfg struct {
 	CDNRootURL        *url.URL
 	ReadTimeout       time.Duration
 	EnableGzip        bool
+	EnableCompression bool
+	ContentEncodings  []string
 	EnforceDomain     bool
 	MinTLSVersion     string
 
@@ -2242,6 +2252,20 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(true)
+
+	// enable_compression supersedes enable_gzip when explicitly set
+	if compressionKey := server.Key("enable_compression"); compressionKey.String() != "" {
+		cfg.EnableCompression = compressionKey.MustBool(true)
+	} else {
+		cfg.EnableCompression = cfg.EnableGzip
+	}
+	rawContentEncodings := server.Key("content_encoding").MustString("")
+	contentEncodings, invalidContentEncodings := parseContentEncodings(rawContentEncodings)
+	cfg.ContentEncodings = contentEncodings
+	if len(invalidContentEncodings) > 0 {
+		cfg.Logger.Warn("ignoring invalid [server].content_encoding values, falling back to gzip if necessary", "invalid_values", strings.Join(invalidContentEncodings, ","))
+	}
+
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)
@@ -2269,6 +2293,44 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	return nil
+}
+
+func parseContentEncodings(encodings string) ([]string, []string) {
+	if strings.TrimSpace(encodings) == "" {
+		return []string{DefaultContentEncoding}, nil
+	}
+
+	parsed := util.SplitString(encodings)
+	filtered := make([]string, 0, len(parsed))
+	invalid := make([]string, 0)
+	seen := make(map[string]struct{}, len(parsed))
+	seenInvalid := make(map[string]struct{}, len(parsed))
+	for _, encoding := range parsed {
+		normalized := strings.ToLower(strings.TrimSpace(encoding))
+		if normalized == "" {
+			continue
+		}
+
+		if _, ok := SupportedContentEncodings[normalized]; ok {
+			if _, ok := seen[normalized]; ok {
+				continue
+			}
+			seen[normalized] = struct{}{}
+			filtered = append(filtered, normalized)
+		} else {
+			if _, ok := seenInvalid[normalized]; ok {
+				continue
+			}
+			seenInvalid[normalized] = struct{}{}
+			invalid = append(invalid, normalized)
+		}
+	}
+
+	if len(filtered) == 0 {
+		return []string{DefaultContentEncoding}, invalid
+	}
+
+	return filtered, invalid
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
