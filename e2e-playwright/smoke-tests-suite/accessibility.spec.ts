@@ -23,17 +23,45 @@ test.describe(
         { url: '/?orgId=1' },
         { url: '/dashboards', ignoredRules: ['label'] },
         { url: '/explore' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge' },
         { url: '/alerting/list', ignoredRules: ['button-name', 'aria-required-parent'] },
+
+        // Dashboard
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels' },
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=2' }, // time series
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=16' }, // stat
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=18' }, // gauge
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=20' }, // bar gauge
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=24' }, // pie chart
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=14' }, // bar chart
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=22' }, // table
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=26' }, // heatmap
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=41' }, // state timeline
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=62' }, // geomap
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=4' }, // histogram
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=34' }, // text
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=12' }, // news
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=8' }, // dashboard list
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=6' }, // alert list
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=10' }, // annotation list
+        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=28' }, // logs
 
         // Dashboard settings
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json' },
+
+        // - Annotations
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations&editIndex=0' },
+
+        // - Variables
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables' },
+
+        // - Links
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links' },
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links&editIndex=0' }, // Link
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links&editIndex=1' }, // Dashboard link
 
         // Connections
         { url: '/connections' },
