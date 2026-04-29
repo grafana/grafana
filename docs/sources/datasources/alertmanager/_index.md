@@ -25,7 +25,7 @@ review_date: 2026-04-29
 
 # Alertmanager data source
 
-Grafana includes built-in support for Alertmanager implementations in Prometheus and Grafana Mimir. Once you add an Alertmanager data source, you can use the **Choose Alertmanager** drop-down in [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to view and manage Alertmanager resources such as silences, contact points, and notification policies. You can also enable the Alertmanager to receive Grafana-managed alerts.
+Grafana includes built-in support for Alertmanager implementations in Prometheus and Grafana Mimir. After you add an Alertmanager data source, you can use the **Choose Alertmanager** drop-down in [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to view and manage Alertmanager resources such as silences, contact points, and notification policies. You can also enable the Alertmanager to receive Grafana-managed alerts.
 
 ## Alertmanager implementations
 
@@ -43,7 +43,9 @@ When using the Prometheus implementation, you can manage silences in the Grafana
 
 To add and configure the Alertmanager data source, complete the following steps:
 
+<!-- vale Grafana.WordList = NO -->
 {{< docs/shared lookup="alerts/add-alertmanager-ds.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+<!-- vale Grafana.WordList = YES -->
 
 ### Authentication
 
@@ -61,7 +63,7 @@ If you're using the Mimir implementation and Mimir Alertmanager hasn't been conf
 
 ## Provision the data source
 
-You can provision Alertmanager data sources using Grafana's configuration files or Terraform.
+You can provision Alertmanager data sources using configuration files or Terraform.
 
 The `jsonData` fields used across both methods are:
 
@@ -177,8 +179,8 @@ If you need full read/write access to contact points and notification policies, 
 
 ## Related resources
 
-- [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) — Configure and use alerting with Grafana
-- [Configure external Alertmanagers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) — Connect an external Prometheus or Mimir Alertmanager to Grafana
+- [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- [Configure external Alertmanagers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/)
 - [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 - [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/)
 - [Grafana community forums](https://community.grafana.com/)
