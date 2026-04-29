@@ -92,7 +92,11 @@ func (h *K8sHandler) UpdatePreferences(c *contextmodel.ReqContext, owner prefuti
 // given owner, matching the legacy PATCH semantics (fields not present in
 // the request are left unchanged).
 func (h *K8sHandler) PatchPreferences(c *contextmodel.ReqContext, owner prefutils.OwnerReference, dto *dtos.PatchPrefsCmd) response.Response {
-	homeDashboardUID, errResp := h.resolveHomeDashboardUID(c, dto.HomeDashboardUID, *dto.HomeDashboardID)
+	var legacyID int64
+	if dto.HomeDashboardID != nil {
+		legacyID = *dto.HomeDashboardID
+	}
+	homeDashboardUID, errResp := h.resolveHomeDashboardUID(c, dto.HomeDashboardUID, legacyID)
 	if errResp != nil {
 		return errResp
 	}
