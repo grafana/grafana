@@ -13846,7 +13846,7 @@
       "resource-types-footer_one": "Showing {{count}} of {{total}} resource types",
       "resource-types-footer_other": "Showing {{count}} of {{total}} resource types",
       "resource-types-heading": "Resource types",
-      "resource-types-subtitle": "Folders and dashboards on this instance, grouped by type. Bring any unmanaged ones under Git Sync to track and review their changes.",
+      "resource-types-subtitle": "Folders and dashboards on this instance, grouped by type. Migrate any unmanaged ones to a provisioning tool to track and review their changes.",
       "summary-total": "Total resources",
       "summary-total-sub": "Across all providers",
       "summary-unmanaged": "Unmanaged",

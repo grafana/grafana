@@ -813,8 +813,8 @@ function ResourceTypesTable({
         </Text>
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="provisioning.stats.resource-types-subtitle">
-            Folders and dashboards on this instance, grouped by type. Bring any unmanaged ones under Git Sync to
-            track and review their changes.
+            Folders and dashboards on this instance, grouped by type. Migrate any unmanaged ones to a
+            provisioning tool to track and review their changes.
           </Trans>
         </Text>
       </Stack>
