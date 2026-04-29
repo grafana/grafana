@@ -113,33 +113,20 @@ type MultiOrgAlertmanager struct {
 	alertsBroadcastChannel alertingCluster.ClusterChannel
 	settleCancel           context.CancelFunc
 
-	configStore      AlertingStore
-	orgStore         store.OrgStore
-	kvStore          kvstore.KVStore
-	adminConfigStore store.AdminConfigurationStore
-	factory          OrgAlertmanagerFactory
+	configStore AlertingStore
+	orgStore    store.OrgStore
+	kvStore     kvstore.KVStore
+	factory     OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 
-	datasourceService  datasources.DataSourceService
-	httpClientProvider httpclient.Provider
-	// requestValidator gates outbound datasource HTTP calls against the
-	// configured allow/deny lists. The OSS implementation is a no-op; the
-	// Enterprise validator enforces egress policy. Mirrors the gate used by
-	// the user-driven datasource proxy (datasourceproxy.go).
-	requestValidator validations.DataSourceRequestValidator
-
-	// lastSyncHash stores the FNV-1a hash of the most recent successful Mimir/Cortex
-	// alertmanager-config response body per org. The sync worker compares against
-	// this on the next tick and skips the save when bytes are identical, avoiding
-	// alert_configuration_history pollution from idle Mimir tenants. The map resets
-	// on process restart, which means each org pays one extra save per restart
-	// before the dedup engages — acceptable trade-off vs. an additional schema migration.
-	lastSyncHashMu sync.Mutex
-	lastSyncHash   map[int64]uint64
+	// externalAMSyncer owns the Mimir/Cortex sync state and dependencies
+	// (datasource service, HTTP transport, request validator). MultiOrgAlertmanager
+	// only delegates to it; the sync surface is intentionally kept off this struct.
+	externalAMSyncer *ExternalAMSyncer
 
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
@@ -188,18 +175,25 @@ func NewMultiOrgAlertmanager(
 		configStore:                 configStore,
 		orgStore:                    orgStore,
 		kvStore:                     kvStore,
-		adminConfigStore:            adminConfigStore,
 		decryptFn:                   decryptFn,
 		receiverResourcePermissions: receiverResourcePermissions,
 		routesResourcePermissions:   routesResourcePermissions,
 		metrics:                     m,
 		ns:                          ns,
-		datasourceService:           datasourceService,
-		httpClientProvider:          httpClientProvider,
-		requestValidator:            requestValidator,
-		lastSyncHash:                map[int64]uint64{},
 		peer:                        &NilPeer{},
 	}
+	// Sync responsibilities live on ExternalAMSyncer; MOA exposes only the persister
+	// surface. Built after the MOA literal so we can pass moa as the ConfigPersister.
+	moa.externalAMSyncer = NewExternalAMSyncer(
+		moa,
+		adminConfigStore,
+		datasourceService,
+		httpClientProvider,
+		requestValidator,
+		cfg,
+		m,
+		l,
+	)
 
 	if skipClustering {
 		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
@@ -373,7 +367,7 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	}
 
 	// Sync remote AM configs to DB first so SyncAlertmanagersForOrgs sees fresh data.
-	moa.syncExternalAMs(ctx, orgIDs)
+	moa.externalAMSyncer.Sync(ctx, orgIDs)
 
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
@@ -533,6 +527,18 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // Returns nil if clustering is not configured.
 func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
 	return moa.peer
+}
+
+// IsExternalAMSyncConfiguredForOrg reports whether external Alertmanager sync
+// configuration exists for the given org (operator-level ini value or per-org
+// admin_config UID). It does not consider whether the sync feature flag is on —
+// gating on configuration alone is intentional so that the convert API stays
+// consistent with the persisted admin_config regardless of feature-flag state.
+// Thin wrapper around ExternalAMSyncer.IsConfiguredForOrg kept here so the
+// Alertmanager interface used by the convert API does not need to know about
+// ExternalAMSyncer.
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Context, orgID int64) (bool, error) {
+	return moa.externalAMSyncer.IsConfiguredForOrg(orgID)
 }
 
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
