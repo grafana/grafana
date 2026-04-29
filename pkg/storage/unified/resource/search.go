@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
@@ -136,14 +137,15 @@ type SearchBackend interface {
 
 // searchServer supports indexing+search regardless of implementation.
 type searchServer struct {
-	log          log.Logger
-	storage      StorageBackend
-	search       SearchBackend
-	indexMetrics *BleveIndexMetrics
-	access       types.AccessClient
-	builders     *builderCache
-	initWorkers  int
-	initMinSize  int
+	log           log.Logger
+	storage       StorageBackend
+	vectorBackend vector.VectorBackend
+	search        SearchBackend
+	indexMetrics  *BleveIndexMetrics
+	access        types.AccessClient
+	builders      *builderCache
+	initWorkers   int
+	initMinSize   int
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -185,7 +187,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -208,6 +210,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
+		vectorBackend:  vectorBackend,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,

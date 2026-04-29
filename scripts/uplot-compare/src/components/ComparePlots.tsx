@@ -4,6 +4,7 @@ import { useCanvasEventsEffect } from '../hooks/useCanvasEventsEffect.ts';
 import { useDiffImageData } from '../hooks/useDiffImageData.ts';
 import type { ComparePlotsProps } from '../types.ts';
 
+import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { CanvasStack } from './CanvasStack.tsx';
 import { DiffCanvas } from './DiffCanvas.tsx';
 import { PlotHeader } from './PlotHeader.tsx';
@@ -52,29 +53,38 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
     }
   }, [diffImageData, height, showOverlay, width]);
 
+  const showActualOnly = payload.snapshotAssertionPassed === true;
+
   return (
     <>
-      <h3 className="compare-title">Test: {payload.testName}</h3>
-      <div className="wrap">
-        <div className="plot-panel expected">
-          <PlotHeader
-            title={'Expected'}
-            onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
-            renderSetupEvents={renderExpectedSetupEvents}
-            mixBlendMode={blendMode}
-            onChangeBlendMode={setBlendMode}
-            showBlend={showOverlay && hasDiff}
-          />
-          <CanvasStack
-            uPlotRef={expectedUPlotRef}
-            width={width}
-            height={height}
-            overlayRef={expectedOverlayRef}
-            showOverlay={showOverlay}
-            hasDiff={hasDiff}
-            mixBlendMode={blendMode}
-          />
-        </div>
+      <div className="compare-title-row">
+        <h3 className="compare-title">Test: {payload.testName}</h3>
+        {payload.snapshotAssertionPassed !== undefined ? (
+          <AssertionStatusBadge passed={payload.snapshotAssertionPassed} />
+        ) : null}
+      </div>
+      <div className={`wrap${showActualOnly ? ' wrap--actual-only' : ''}`}>
+        {!showActualOnly ? (
+          <div className="plot-panel expected">
+            <PlotHeader
+              title={'Expected'}
+              onClick={() => setRenderExpectedSetupEvents((prev) => !prev)}
+              renderSetupEvents={renderExpectedSetupEvents}
+              mixBlendMode={blendMode}
+              onChangeBlendMode={setBlendMode}
+              showBlend={showOverlay && hasDiff}
+            />
+            <CanvasStack
+              uPlotRef={expectedUPlotRef}
+              width={width}
+              height={height}
+              overlayRef={expectedOverlayRef}
+              showOverlay={showOverlay}
+              hasDiff={hasDiff}
+              mixBlendMode={blendMode}
+            />
+          </div>
+        ) : null}
 
         <div className="plot-panel actual">
           <PlotHeader
@@ -95,18 +105,22 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             mixBlendMode={blendMode}
           />
         </div>
-        <div className="diff-panel-wrap">
-          <DiffCanvas
-            width={width}
-            height={height}
-            hasDiff={hasDiff}
-            diffImageData={diffImageData}
-            showOverlay={showOverlay}
-            onToggleOverlay={() => setShowOverlay((prev) => !prev)}
-            renderDiffSetupEvents={renderDiffSetupEvents}
-            onToggleDiffSetupEvents={() => setRenderDiffSetupEvents((prev) => !prev)}
-          />
-        </div>
+        {!showActualOnly ? (
+          <div className="diff-panel-wrap">
+            <DiffCanvas
+              width={width}
+              height={height}
+              hasDiff={hasDiff}
+              diffImageData={diffImageData}
+              showOverlay={showOverlay}
+              onToggleOverlay={() => setShowOverlay((prev) => !prev)}
+              renderDiffSetupEvents={renderDiffSetupEvents}
+              onToggleDiffSetupEvents={() => setRenderDiffSetupEvents((prev) => !prev)}
+              expected={payload.expected}
+              actual={payload.actual}
+            />
+          </div>
+        ) : null}
       </div>
     </>
   );

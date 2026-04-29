@@ -61,6 +61,8 @@ export const FlagKeys = {
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables option to position series names above bars in the state timeline panel */
+  StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables plugins decoupling from bootdata */
@@ -329,6 +331,17 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("splashScreen", true, options).value;
+};
+
+/**
+ * Enables option to position series names above bars in the state timeline panel
+ *
+ * **Details:**
+ * - flag key: `stateTimeline.nameAboveBars`
+ * - default value: `false`
+ */
+export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("stateTimeline.nameAboveBars", false, options).value;
 };
 
 /**
