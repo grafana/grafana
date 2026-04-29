@@ -133,6 +133,31 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 					Schema:     &versionSchemaDashboardv2,
 				},
+
+				{
+					Kind:       "Variable",
+					Plural:     "Variables",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaVariablev2,
+					SelectableFields: []string{
+						"spec.spec.name",
+					},
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -195,6 +220,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"Dashboard/v1":       v1.DashboardKind(),
 	"Dashboard/v1beta1":  v1beta1.DashboardKind(),
 	"Dashboard/v2":       v2.DashboardKind(),
+	"Variable/v2":        v2.VariableKind(),
 	"Dashboard/v2alpha1": v2alpha1.DashboardKind(),
 	"Dashboard/v2beta1":  v2beta1.DashboardKind(),
 }
