@@ -2551,6 +2551,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryEditorNextMultiSelect",
+			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
 			Stage:        FeatureStageExperimental,
