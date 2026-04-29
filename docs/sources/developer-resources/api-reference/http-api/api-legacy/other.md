@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/other/ # /docs/grafana/next/http_api/other/
-  - ../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
+  - ../../../../http_api/other/ # /docs/grafana/next/http_api/other/
+  - ../../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
   - ../../../../developer-resources/api-reference/http-api/other/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/other/
 description: Grafana Other HTTP API

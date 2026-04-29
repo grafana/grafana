@@ -1,7 +1,6 @@
 ---
 aliases:
-  - ../../../http_api/folder_dashboard_search/ # /docs/grafana/next/http_api/folder_dashboard_search/
-  - ../../../developers/http_api/folder_dashboard_search/ # /docs/grafana/next/developers/http_api/folder_dashboard_search/
+  - ../../../../http_api/folder_dashboard_search/ # /docs/grafana/next/http_api/folder_dashboard_search/
   - ../../../../developers/http_api/folder_dashboard_search/ # /docs/grafana/next/developers/http_api/folder_dashboard_search/
   - ../../../../developer-resources/api-reference/http-api/folder_dashboard_search/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/
