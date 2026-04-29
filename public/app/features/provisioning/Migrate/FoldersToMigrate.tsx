@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
+  Button,
   type Column,
   EmptyState,
   FilterInput,
@@ -12,6 +13,7 @@ import {
   LinkButton,
   Stack,
   Text,
+  Toggletip,
   useStyles2,
 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -44,6 +46,63 @@ function migrateButtonLabel(repos: Repository[]): string {
 
 function folderBrowseUrl(uid: string): string {
   return `/dashboards/f/${encodeURIComponent(uid)}`;
+}
+
+function FolderPeek({ folder }: { folder: FolderRow }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.peek}>
+      {folder.subfolders.length === 0 && folder.directDashboards.length === 0 ? (
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="provisioning.stats.folders-peek-empty">
+            This folder is empty. Migrating it creates an empty folder in your repository.
+          </Trans>
+        </Text>
+      ) : (
+        <Stack direction="column" gap={1}>
+          {folder.subfolders.length > 0 && (
+            <Stack direction="column" gap={0.5}>
+              <Text variant="bodySmall" weight="medium">
+                {t('provisioning.stats.folders-peek-subfolders', 'Subfolders ({{count}})', {
+                  count: folder.subfolders.length,
+                })}
+              </Text>
+              {folder.subfolders.map((sub) => (
+                <Stack key={sub.uid} direction="row" gap={1} alignItems="center">
+                  <Icon name="folder" size="sm" />
+                  <a className={styles.peekLink} href={folderBrowseUrl(sub.uid)}>
+                    {sub.title}
+                  </a>
+                  <Text variant="bodySmall" color="secondary">
+                    {t('provisioning.stats.folders-peek-subfolder-count', '· {{count}} dashboards', {
+                      count: sub.dashboardCount,
+                    })}
+                  </Text>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+          {folder.directDashboards.length > 0 && (
+            <Stack direction="column" gap={0.5}>
+              <Text variant="bodySmall" weight="medium">
+                {t('provisioning.stats.folders-peek-dashboards', 'Dashboards ({{count}})', {
+                  count: folder.directDashboards.length,
+                })}
+              </Text>
+              {folder.directDashboards.map((dash) => (
+                <Stack key={dash.uid} direction="row" gap={1} alignItems="center">
+                  <Icon name="apps" size="sm" />
+                  <a className={styles.peekLink} href={dash.url || `/d/${encodeURIComponent(dash.uid)}`}>
+                    {dash.title}
+                  </a>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      )}
+    </div>
+  );
 }
 
 interface Props {
@@ -108,9 +167,15 @@ export function FoldersToMigrate({ folders, repos }: Props) {
             <LinkButton variant="primary" size="sm" icon="upload" href={target}>
               {ctaLabel}
             </LinkButton>
-            <LinkButton variant="secondary" size="sm" fill="text" href={folderBrowseUrl(row.original.uid)}>
-              <Trans i18nKey="provisioning.stats.folders-browse">Browse</Trans>
-            </LinkButton>
+            <Toggletip
+              content={<FolderPeek folder={row.original} />}
+              title={row.original.title}
+              placement="top-end"
+            >
+              <Button variant="secondary" size="sm" fill="text" icon="eye">
+                <Trans i18nKey="provisioning.stats.folders-peek">Peek</Trans>
+              </Button>
+            </Toggletip>
           </Stack>
         ),
       },
@@ -191,5 +256,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   searchInput: css({
     flex: '1 1 auto',
     minWidth: 200,
+  }),
+  peek: css({
+    minWidth: 220,
+    maxWidth: 360,
+    maxHeight: 320,
+    overflowY: 'auto',
+  }),
+  peekLink: css({
+    color: theme.colors.text.link,
+    fontSize: theme.typography.bodySmall.fontSize,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
   }),
 });

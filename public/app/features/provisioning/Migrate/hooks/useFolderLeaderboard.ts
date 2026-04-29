@@ -10,6 +10,18 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 const PAGE_SIZE = 200;
 const MAX_PAGES = 25;
 
+export interface FolderPeekDashboard {
+  uid: string;
+  title: string;
+  url: string;
+}
+
+export interface FolderPeekSubfolder {
+  uid: string;
+  title: string;
+  dashboardCount: number;
+}
+
 export interface FolderRow {
   uid: string;
   title: string;
@@ -20,7 +32,12 @@ export interface FolderRow {
    * managed by the same tool; when it's unset, every dashboard is unmanaged.
    */
   managedBy?: string;
+  /** Recursive count: dashboards anywhere inside this folder's subtree. */
   dashboardCount: number;
+  /** Dashboards directly in this folder (not nested), used by the Peek view. */
+  directDashboards: FolderPeekDashboard[];
+  /** Folders directly under this folder, used by the Peek view. */
+  subfolders: FolderPeekSubfolder[];
 }
 
 interface State {
@@ -29,12 +46,14 @@ interface State {
   isError: boolean;
 }
 
-async function fetchAllFolders(): Promise<Array<{ uid: string; title: string; managedBy?: string }>> {
-  const all: Array<{ uid: string; title: string; managedBy?: string }> = [];
+async function fetchAllFolders(): Promise<
+  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
+> {
+  const all: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }> = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const batch = await listFolders(undefined, undefined, page, PAGE_SIZE);
     for (const f of batch) {
-      all.push({ uid: f.uid, title: f.title, managedBy: f.managedBy });
+      all.push({ uid: f.uid, title: f.title, parentUid: f.parentUID, managedBy: f.managedBy });
     }
     if (batch.length < PAGE_SIZE) {
       break;
@@ -81,7 +100,7 @@ async function fetchAllDashboards(): Promise<
 }
 
 function aggregate(
-  folders: Array<{ uid: string; title: string; managedBy?: string }>,
+  folders: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>,
   dashboards: Array<{ uid: string; title: string; ancestors: string[]; managedBy?: string; url: string }>
 ): FolderRow[] {
   // Migration is recursive: picking a folder migrates that folder plus every
@@ -93,14 +112,46 @@ function aggregate(
   // are still migration targets — they roll up into a synthetic "General"
   // row that picks them all up in one shot.
   const dashboardCountByFolder = new Map<string, number>();
+  const directDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
+  const rootDirectDashboards: FolderPeekDashboard[] = [];
   let rootDashboardCount = 0;
+
+  const pushDirect = (folderUid: string, dash: FolderPeekDashboard) => {
+    const existing = directDashboardsByFolder.get(folderUid);
+    if (existing) {
+      existing.push(dash);
+    } else {
+      directDashboardsByFolder.set(folderUid, [dash]);
+    }
+  };
+
   for (const dash of dashboards) {
+    const dashItem: FolderPeekDashboard = { uid: dash.uid, title: dash.title, url: dash.url };
     if (dash.ancestors.length === 0) {
       rootDashboardCount += 1;
+      rootDirectDashboards.push(dashItem);
       continue;
     }
     for (const ancestorUid of dash.ancestors) {
       dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
+    }
+    pushDirect(dash.ancestors[dash.ancestors.length - 1], dashItem);
+  }
+
+  // Group folders by parent so each row knows its direct subfolders.
+  const subfoldersByParent = new Map<string, FolderPeekSubfolder[]>();
+  for (const folder of folders) {
+    const parent = folder.parentUid && folder.parentUid !== GENERAL_FOLDER_UID ? folder.parentUid : GENERAL_FOLDER_UID;
+    const sub: FolderPeekSubfolder = {
+      uid: folder.uid,
+      title: folder.title,
+      dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
+    };
+    const existing = subfoldersByParent.get(parent);
+    if (existing) {
+      existing.push(sub);
+    } else {
+      subfoldersByParent.set(parent, [sub]);
     }
   }
 
@@ -109,13 +160,17 @@ function aggregate(
     title: folder.title,
     managedBy: folder.managedBy,
     dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
+    directDashboards: directDashboardsByFolder.get(folder.uid) ?? [],
+    subfolders: subfoldersByParent.get(folder.uid) ?? [],
   }));
 
-  if (rootDashboardCount > 0) {
+  if (rootDashboardCount > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.stats.general-folder-title', 'General (root dashboards)'),
       dashboardCount: rootDashboardCount,
+      directDashboards: rootDirectDashboards,
+      subfolders: subfoldersByParent.get(GENERAL_FOLDER_UID) ?? [],
     });
   }
 

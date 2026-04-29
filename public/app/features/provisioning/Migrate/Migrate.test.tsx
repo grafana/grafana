@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -39,6 +40,8 @@ function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) 
 function makeFolder(partial: Partial<FolderRow> & { uid: string; title: string }): FolderRow {
   return {
     dashboardCount: 0,
+    directDashboards: [],
+    subfolders: [],
     ...partial,
   };
 }
@@ -260,7 +263,7 @@ describe('Migrate', () => {
     expect(screen.queryByText(/quick wins/i)).not.toBeInTheDocument();
   });
 
-  it('renders the Folders to migrate table with per-row Migrate and Browse actions', () => {
+  it('renders the Folders to migrate table with per-row Migrate and Peek actions', () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {
@@ -289,11 +292,41 @@ describe('Migrate', () => {
     expect(screen.getByText(/folders to migrate/i)).toBeInTheDocument();
     // "Payments" appears in both the Quick wins card and the folder list row.
     expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(2);
-    // Per-row actions: Migrate to {{repo}} and Browse.
-    const browse = screen.getByRole('link', { name: /^browse$/i });
-    expect(browse).toHaveAttribute('href', '/dashboards/f/pay');
+    // Per-row actions: Migrate to {{repo}} and Peek.
+    expect(screen.getByRole('button', { name: /^peek$/i })).toBeInTheDocument();
     const migrate = screen.getByRole('link', { name: /^migrate to my-repo$/i });
     expect(migrate).toHaveAttribute('href', '/admin/provisioning/my-repo');
+  });
+
+  it('opens a Peek tooltip listing the folder contents', async () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({
+          uid: 'pay',
+          title: 'Payments',
+          dashboardCount: 2,
+          directDashboards: [
+            { uid: 'd1', title: 'Daily revenue', url: '/d/d1' },
+            { uid: 'd2', title: 'Refund rate', url: '/d/d2' },
+          ],
+          subfolders: [{ uid: 'sub', title: 'EU subteam', dashboardCount: 0 }],
+        }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    await userEvent.click(screen.getByRole('button', { name: /^peek$/i }));
+    expect(screen.getByText('Daily revenue')).toBeInTheDocument();
+    expect(screen.getByText('Refund rate')).toBeInTheDocument();
+    expect(screen.getByText('EU subteam')).toBeInTheDocument();
   });
 
   it('hides already-managed folders from the Folders to migrate table', () => {
