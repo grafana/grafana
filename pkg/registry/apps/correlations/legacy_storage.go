@@ -233,7 +233,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	labelSelectors, _ := listOptions.LabelSelector.Requirements()
 	datasourceRef := labelSelectors[0].Values().List()[0]
 	datasourceData := strings.Split(datasourceRef, ".") // the selector is type.uid
-	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDS-ref" {
+	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
 		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceData[1], SourceType: datasourceData[0], OrgId: orgID, OnlyProvisioned: true})
 	}
 	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {

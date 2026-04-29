@@ -3,6 +3,7 @@ package correlations
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -272,9 +273,8 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	}, nil
 }
 
-// correlations.grafana.app/sourceDS-ref in (${labelStr})
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	dsLabel := fmt.Sprintf("correlations.grafana.app/sourceDS-ref in (%s.%s)", cmd.SourceType, cmd.SourceUID)
+	dsLabel := fmt.Sprintf("correlations.grafana.app/sourceDSProv-ref in (%s.%s.%s)", cmd.SourceType, cmd.SourceUID, strconv.FormatBool(cmd.OnlyProvisioned))
 	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
 }
 
