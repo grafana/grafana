@@ -295,6 +295,13 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				if IsFolderUIDTooLongAPIError(err) {
 					return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
 				}
+				// Catch-all for any other folder-API validation 4xx
+				// (illegal-uid-chars, reserved-uid, etc.). The repository
+				// owner must fix the offending input; retrying produces
+				// the same rejection.
+				if IsFolderValidationAPIError(err) {
+					return NewFolderValidationError(folder.Path, err)
+				}
 				return fmt.Errorf("update folder: %w", err)
 			}
 		}
@@ -386,6 +393,14 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// Surface it as a typed warning so the sync moves on.
 		if IsFolderUIDTooLongAPIError(err) {
 			return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+		}
+		// Catch-all for any other folder-API validation 4xx the more
+		// specific matchers above did not claim (illegal-uid-chars,
+		// reserved-uid, future folder validations). The repository owner
+		// must fix the offending input; retrying produces the same
+		// rejection.
+		if IsFolderValidationAPIError(err) {
+			return NewFolderValidationError(folder.Path, err)
 		}
 
 		return fmt.Errorf("failed to create folder: %w", err)

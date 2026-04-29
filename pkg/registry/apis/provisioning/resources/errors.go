@@ -302,3 +302,93 @@ func IsFolderUIDTooLongAPIError(err error) bool {
 	return strings.Contains(msg, folderUIDTooLongLegacyMsg) ||
 		strings.Contains(msg, folderUIDTooLongMessageID)
 }
+
+// folderMessageIDPrefix matches every errutil base declared in
+// pkg/services/folder/model.go and pkg/registry/apis/folders/errors.go. Any
+// message ID with this prefix is, by construction, a folder-API validation
+// rejection that the sync cannot fix by retrying.
+const folderMessageIDPrefix = "folder."
+
+// ErrFolderValidation is a sentinel for any user-actionable 4xx rejection
+// from the folder API that does not match a more specific sentinel above
+// (e.g. an invalid-uid-chars or reserved-uid rejection coming from a
+// _folder.json UID the user controls). Like the depth and uid-too-long
+// sentinels, it is surfaced as a job warning so the sync is not retried.
+var ErrFolderValidation = errors.New("folder validation failed")
+
+// FolderValidationError wraps a generic folder-API validation rejection.
+// More specific wrappers — FolderDepthExceededError, FolderUIDTooLongError —
+// take precedence in EnsureFolderExists; this type is the catch-all for any
+// remaining folder-API 4xx that the sync cannot recover from automatically.
+type FolderValidationError struct {
+	Path string
+	Err  error
+}
+
+func (e *FolderValidationError) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("folder API rejected %q with a validation error", e.Path)
+	}
+	return fmt.Sprintf("folder API rejected %q with a validation error: %v", e.Path, e.Err)
+}
+
+// Unwrap exposes both the sentinel and the underlying API error so callers
+// can match either via errors.Is/errors.As.
+func (e *FolderValidationError) Unwrap() []error {
+	if e.Err == nil {
+		return []error{ErrFolderValidation}
+	}
+	return []error{ErrFolderValidation, e.Err}
+}
+
+// NewFolderValidationError wraps the original folder-API error so callers
+// can detect the validation rejection via errors.As.
+func NewFolderValidationError(path string, err error) *FolderValidationError {
+	return &FolderValidationError{Path: path, Err: err}
+}
+
+// IsFolderValidationAPIError reports whether err is a 4xx rejection from the
+// folder API caused by a validation rule the sync cannot fix by retrying.
+//
+// It returns true for:
+//   - any of the more specific sentinels (depth, uid-too-long), so callers
+//     can use a single check when they don't care about the subtype;
+//   - any K8s StatusError whose code is 400 and whose Details.UID has the
+//     "folder." messageID prefix — covers every existing and future folder
+//     errutil sentinel post-#123709;
+//   - the in-process errutil.Error itself (it implements APIStatus and the
+//     above branch matches it via errors.As).
+//
+// It does NOT match:
+//   - 5xx errors (genuinely retryable transient failures);
+//   - 4xx errors with no folder messageID (likely caller bugs we want to
+//     keep visible so we can debug them);
+//   - 401/403/404, where retry semantics differ and the existing
+//     ResourceOwnershipConflictError / ResourceUnmanagedConflictError
+//     paths handle the meaningful cases.
+func IsFolderValidationAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if IsFolderDepthExceededAPIError(err) || IsFolderUIDTooLongAPIError(err) {
+		return true
+	}
+
+	if errors.Is(err, ErrFolderValidation) {
+		return true
+	}
+
+	// Structured 400 from a folder errutil error. errutil.Error implements
+	// APIStatus, so errors.As matches both an in-process error and one that
+	// has round-tripped through the K8s API as a *StatusError.
+	var statusErr apierrors.APIStatus
+	if errors.As(err, &statusErr) {
+		s := statusErr.Status()
+		if s.Code == 400 && s.Details != nil && strings.HasPrefix(string(s.Details.UID), folderMessageIDPrefix) {
+			return true
+		}
+	}
+
+	return false
+}

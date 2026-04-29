@@ -101,6 +101,13 @@ const (
 	// the offending path/UID; provisioning cannot recover automatically and
 	// will not retry the failed write.
 	ReasonFolderUIDTooLong = "FolderUIDTooLong"
+	// ReasonFolderValidationFailed indicates that the folder API rejected a
+	// write with a validation 4xx the more specific reasons above did not
+	// claim (illegal-uid-chars, reserved-uid, future folder validations).
+	// Like the more specific folder reasons, the rejection is permanent
+	// without user action, so provisioning surfaces it as a warning rather
+	// than retrying the failed write.
+	ReasonFolderValidationFailed = "FolderValidationFailed"
 )
 
 // Condition reasons for the Quota condition

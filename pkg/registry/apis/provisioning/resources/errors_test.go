@@ -564,3 +564,133 @@ func TestIsFolderUIDTooLongAPIError(t *testing.T) {
 		require.False(t, IsFolderUIDTooLongAPIError(ErrFolderDepthExceeded))
 	})
 }
+
+func TestFolderValidationError(t *testing.T) {
+	t.Run("Error includes path and underlying message", func(t *testing.T) {
+		underlying := errors.New("uid contains illegal characters")
+		err := NewFolderValidationError("bad path/", underlying)
+
+		require.Contains(t, err.Error(), "bad path/")
+		require.Contains(t, err.Error(), "uid contains illegal characters")
+	})
+
+	t.Run("Unwrap exposes both sentinel and underlying error", func(t *testing.T) {
+		underlying := errors.New("uid contains illegal characters")
+		err := NewFolderValidationError("a/b/", underlying)
+
+		require.True(t, errors.Is(err, ErrFolderValidation), "should match sentinel via errors.Is")
+		require.True(t, errors.Is(err, underlying), "should preserve underlying error in chain")
+	})
+
+	t.Run("errors.As extracts FolderValidationError through wrapping", func(t *testing.T) {
+		underlying := errors.New("uid contains illegal characters")
+		err := NewFolderValidationError("a/b/", underlying)
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+
+		var validationErr *FolderValidationError
+		require.True(t, errors.As(wrapped, &validationErr))
+		require.Equal(t, "a/b/", validationErr.Path)
+	})
+}
+
+func TestIsFolderValidationAPIError(t *testing.T) {
+	t.Run("nil returns false", func(t *testing.T) {
+		require.False(t, IsFolderValidationAPIError(nil))
+	})
+
+	t.Run("matches structured 400 with folder.* message ID", func(t *testing.T) {
+		// Simulates a StatusError that rolled out of pkg/registry/apis/folders.
+		// e.g. ErrAPIInvalidUIDChars (illegal chars in a _folder.json UID).
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "uid contains illegal characters",
+				Details: &metav1.StatusDetails{
+					UID: "folder.invalid-uid-chars",
+				},
+			},
+		}
+		require.True(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("matches the depth-exceeded specific sentinel", func(t *testing.T) {
+		require.True(t, IsFolderValidationAPIError(ErrFolderDepthExceeded))
+	})
+
+	t.Run("matches the uid-too-long specific sentinel", func(t *testing.T) {
+		require.True(t, IsFolderValidationAPIError(ErrFolderUIDTooLong))
+	})
+
+	t.Run("matches the generic sentinel via errors.Is", func(t *testing.T) {
+		require.True(t, IsFolderValidationAPIError(ErrFolderValidation))
+	})
+
+	t.Run("matches FolderValidationError through fmt.Errorf wrapping", func(t *testing.T) {
+		err := NewFolderValidationError("p/", errors.New("title cannot be empty"))
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+		require.True(t, IsFolderValidationAPIError(wrapped))
+	})
+
+	t.Run("does not match 4xx without a folder message ID", func(t *testing.T) {
+		// A 400 with no Details.UID — likely a caller bug in our request,
+		// not a folder-API validation. Keep it visible as an error so we
+		// can debug it instead of silently treating it as a warning.
+		require.False(t, IsFolderValidationAPIError(apierrors.NewBadRequest("malformed JSON")))
+	})
+
+	t.Run("does not match a 400 from a non-folder errutil error", func(t *testing.T) {
+		// Simulates a structured 400 from a different apiserver, e.g.
+		// "dashboard.invalid-something". We must not classify it as a
+		// folder-API validation rejection.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "Bad Request",
+				Details: &metav1.StatusDetails{
+					UID: "dashboard.invalid-uid",
+				},
+			},
+		}
+		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("does not match a 5xx with a folder message ID", func(t *testing.T) {
+		// Server-side errors (database-error, internal, etc.) are
+		// genuinely retryable transient failures and must not be
+		// converted into warnings.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    500,
+				Message: "internal error",
+				Details: &metav1.StatusDetails{
+					UID: "folder.internal",
+				},
+			},
+		}
+		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("does not match a 403 with a folder message ID", func(t *testing.T) {
+		// Forbidden is the existing ResourceOwnershipConflictError /
+		// ResourceUnmanagedConflictError territory; we don't want to
+		// double-classify.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    403,
+				Message: "forbidden",
+				Details: &metav1.StatusDetails{
+					UID: "folders.forbiddenMove",
+				},
+			},
+		}
+		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("does not match unrelated errors", func(t *testing.T) {
+		require.False(t, IsFolderValidationAPIError(errors.New("something else")))
+	})
+}
