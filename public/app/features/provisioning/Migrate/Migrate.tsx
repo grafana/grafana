@@ -743,7 +743,28 @@ function ResourceTypesTable({
     [repos, styles.managedPctCell, styles.managedPctBar, styles.resourceIcon]
   );
 
-  return <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />;
+  return (
+    <div className={styles.tablePanel}>
+      <Stack direction="column" gap={0.5}>
+        <Text variant="h5">
+          <Trans i18nKey="provisioning.stats.resource-types-heading">Resource types</Trans>
+        </Text>
+        <Text color="secondary" variant="bodySmall">
+          <Trans i18nKey="provisioning.stats.resource-types-subtitle">
+            Folders and dashboards on this instance, grouped by type. Bring any unmanaged ones under Git Sync to
+            track and review their changes.
+          </Trans>
+        </Text>
+      </Stack>
+      <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />
+      <Text color="secondary" variant="bodySmall">
+        {t('provisioning.stats.resource-types-footer', 'Showing {{count}} of {{total}} resource types', {
+          count: rows.length,
+          total: rows.length,
+        })}
+      </Text>
+    </div>
+  );
 }
 
 interface NextStep {
@@ -1119,6 +1140,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(2),
     minWidth: 0,
+  }),
+  tablePanel: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(2.5),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    background: theme.colors.background.secondary,
   }),
   sidePanel: css({
     display: 'flex',
