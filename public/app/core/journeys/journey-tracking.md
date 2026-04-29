@@ -1046,7 +1046,7 @@ public/app/core/journeys/
 
 **Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them.
+**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
 
 ## Implementation Details
 
