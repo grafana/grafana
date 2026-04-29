@@ -12,6 +12,10 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+// noopFinishUpdate is returned by BeginTeamUpdate when there is nothing to
+// sync. See BeginTeamUpdate for why a nil FinishFunc would panic.
+var noopFinishUpdate registry.FinishFunc = func(_ context.Context, _ bool) {}
+
 // teamMembersByName indexes spec.members by subject UID. The diff in
 // BeginTeamUpdate keys on subject only — Permission is not part of the key
 // because a member can only have one permission per team, so a permission
@@ -166,18 +170,28 @@ func (b *IdentityAccessManagementAPIBuilder) AfterTeamCreate(obj runtime.Object,
 
 // BeginTeamUpdate is a pre-update hook that diffs old and new team.spec.members
 // and applies the resulting Zanzana mutations after the K8s update succeeds.
+//
+// MUST return a non-nil FinishFunc when err is nil — the apiserver dereferences
+// it without a nil check (k8s.io/apiserver@v0.35.1 pkg/registry/generic/registry/store.go
+// L740-L787).
+//
+// Use noopFinishUpdate for no-op branches (when there are no changes to sync).
+//
+// dualWriterMode changes where the panic lands:
+// - foreground in Mode 4/5 (pkg/storage/legacysql/dualwrite/dualwriter.go:377) (bubbles panic to the caller)
+// - background in Mode 1/2/3 (pkg/storage/legacysql/dualwrite/dualwriter.go:420) (swallows panic)
 func (b *IdentityAccessManagementAPIBuilder) BeginTeamUpdate(_ context.Context, obj, oldObj runtime.Object, _ *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if b.zClient == nil {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	oldTeam, ok := oldObj.(*iamv0.Team)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 	newTeam, ok := obj.(*iamv0.Team)
 	if !ok {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	// See AfterTeamCreate: skip rather than send a guaranteed-bad mutation.
@@ -186,7 +200,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamUpdate(_ context.Context, 
 			"namespace", newTeam.Namespace,
 			"name", newTeam.Name,
 		)
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	oldByName := teamMembersByName(oldTeam.Spec.Members)
@@ -215,7 +229,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginTeamUpdate(_ context.Context, 
 	}
 
 	if len(operations) == 0 {
-		return nil, nil
+		return noopFinishUpdate, nil
 	}
 
 	resourceType := "team"

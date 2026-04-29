@@ -259,7 +259,7 @@ func TestAfterTeamCreate(t *testing.T) {
 }
 
 func TestBeginTeamUpdate(t *testing.T) {
-	t.Run("returns nil finish func when members are unchanged", func(t *testing.T) {
+	t.Run("returns no-op finish func when members are unchanged", func(t *testing.T) {
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 
@@ -276,7 +276,8 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
 	t.Run("creates tuples for added members", func(t *testing.T) {
@@ -494,7 +495,7 @@ func TestBeginTeamUpdate(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 	})
 
-	t.Run("returns nil finish func when zClient is nil", func(t *testing.T) {
+	t.Run("returns no-op finish func when zClient is nil", func(t *testing.T) {
 		b := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
 			zTickets: make(chan bool, 1),
@@ -503,7 +504,8 @@ func TestBeginTeamUpdate(t *testing.T) {
 		next := newTeam("org-1", "team-1", member("user-2", iamv0.TeamTeamPermissionMember))
 		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
 	// Parity with the old "empty old binding subject" case: empty-subject members
@@ -554,7 +556,7 @@ func TestBeginTeamUpdate(t *testing.T) {
 	// Parity with the old "empty new subject" / "empty new teamRef" cases: when
 	// the only would-be addition has an empty subject, it gets filtered and the
 	// diff collapses to nothing.
-	t.Run("returns nil finish func when only diff is an empty-subject member added", func(t *testing.T) {
+	t.Run("returns no-op finish func when only diff is an empty-subject member added", func(t *testing.T) {
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("org-1", "team-1",
 			member("user-1", iamv0.TeamTeamPermissionMember),
@@ -574,10 +576,11 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
-	t.Run("returns nil finish func when team name is empty", func(t *testing.T) {
+	t.Run("returns no-op finish func when team name is empty", func(t *testing.T) {
 		callback := func(_ context.Context, _ *v1.MutateRequest) error {
 			require.Fail(t, "Mutate must not be called when team name is empty")
 			return nil
@@ -594,10 +597,11 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
-	t.Run("returns nil finish func when team namespace is empty", func(t *testing.T) {
+	t.Run("returns no-op finish func when team namespace is empty", func(t *testing.T) {
 		callback := func(_ context.Context, _ *v1.MutateRequest) error {
 			require.Fail(t, "Mutate must not be called when team namespace is empty")
 			return nil
@@ -614,10 +618,11 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
-	t.Run("returns nil finish func when oldObj is not a Team", func(t *testing.T) {
+	t.Run("returns no-op finish func when oldObj is not a Team", func(t *testing.T) {
 		b := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
 			zTickets: make(chan bool, 1),
@@ -629,10 +634,11 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, notATeam, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
-	t.Run("returns nil finish func when newObj is not a Team", func(t *testing.T) {
+	t.Run("returns no-op finish func when newObj is not a Team", func(t *testing.T) {
 		b := &IdentityAccessManagementAPIBuilder{
 			logger:   log.NewNopLogger(),
 			zTickets: make(chan bool, 1),
@@ -644,7 +650,8 @@ func TestBeginTeamUpdate(t *testing.T) {
 
 		finish, err := b.BeginTeamUpdate(context.Background(), notATeam, old, nil)
 		require.NoError(t, err)
-		require.Nil(t, finish)
+		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
+		finish(context.Background(), true)
 	})
 
 	t.Run("does not panic when zanzana returns an error during finish", func(t *testing.T) {
