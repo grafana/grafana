@@ -640,8 +640,8 @@ func TestV1ToV2alpha1(t *testing.T) {
 									"id":   201,
 									"type": "timeseries",
 									"datasource": map[string]interface{}{
-										"uid":  "existing-ref-uid",
-										"type": "prometheus",
+										"uid":  "-- Mixed --",
+										"type": "mixed",
 									},
 									"targets": []interface{}{
 										map[string]interface{}{
@@ -653,10 +653,6 @@ func TestV1ToV2alpha1(t *testing.T) {
 								map[string]interface{}{
 									"id":   203,
 									"type": "timeseries",
-									"datasource": map[string]interface{}{
-										"uid":  "existing-ref-uid",
-										"type": "prometheus",
-									},
 									"targets": []interface{}{
 										map[string]interface{}{
 											"refId":      "A",
