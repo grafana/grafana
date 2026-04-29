@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -317,6 +318,53 @@ describe('ProvisioningOverview', () => {
     // provisioning as supporting providers via chips in the row.
     expect(screen.getAllByText('Terraform').length).toBeGreaterThan(1);
     expect(screen.getAllByText('Files (Classic)').length).toBeGreaterThan(0);
+  });
+
+  it('filters the Resource types table by the search input', async () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 1 },
+          { group: 'alerting.grafana.app', resource: 'alertrules', count: 1 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    expect(screen.getByText('Folders')).toBeInTheDocument();
+    expect(screen.getByText('alertrules')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByPlaceholderText(/search resource types/i), 'alert');
+
+    expect(screen.queryByText('Folders')).not.toBeInTheDocument();
+    expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
+    expect(screen.getByText('alertrules')).toBeInTheDocument();
+  });
+
+  it('shows the fully-managed status icon for resources with no unmanaged count', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+          },
+        ],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // Look for the localized aria-label exposed by the status icon for fully
+    // managed resource types.
+    expect(screen.getByLabelText(/fully managed/i)).toBeInTheDocument();
   });
 
   it('lists every resource type once in the Resource types section', () => {

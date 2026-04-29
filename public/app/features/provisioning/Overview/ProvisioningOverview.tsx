@@ -8,8 +8,11 @@ import {
   Badge,
   type BadgeColor,
   Card,
+  type Column,
   EmptyState,
+  FilterInput,
   Icon,
+  InteractiveTable,
   LinkButton,
   Select,
   Spinner,
@@ -717,9 +720,58 @@ function ManagerIdentityList({
   );
 }
 
+type ManagementState = 'fully' | 'partial' | 'none';
+
+function getManagementState(row: GroupBreakdown): ManagementState {
+  if (row.unmanagedCount === 0) {
+    return 'fully';
+  }
+  if (row.gitSyncCount + row.otherManagedCount === 0) {
+    return 'none';
+  }
+  return 'partial';
+}
+
+function ManagementStatusIcon({ state }: { state: ManagementState }) {
+  const theme = useTheme2();
+  if (state === 'fully') {
+    return (
+      <span aria-label={t('provisioning.stats.status-fully', 'Fully managed')} role="img">
+        <Icon name="check-circle" style={{ color: theme.colors.success.main }} />
+      </span>
+    );
+  }
+  if (state === 'none') {
+    return (
+      <svg
+        width={16}
+        height={16}
+        viewBox="0 0 16 16"
+        aria-label={t('provisioning.stats.status-none', 'Not managed')}
+        role="img"
+      >
+        <circle cx="8" cy="8" r="6" fill="none" stroke={theme.colors.error.main} strokeWidth={1.5} />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 16 16"
+      aria-label={t('provisioning.stats.status-partial', 'Partially managed')}
+      role="img"
+    >
+      <circle cx="8" cy="8" r="6" fill="none" stroke={theme.colors.warning.main} strokeWidth={1.5} />
+      <path d="M 8 2 A 6 6 0 0 1 8 14 Z" fill={theme.colors.warning.main} />
+    </svg>
+  );
+}
+
 function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
   const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Drop seeded zero-count rows so we don't list types nobody has any of.
   const baseRows = useMemo(() => breakdowns.filter((b) => b.total > 0), [breakdowns]);
@@ -733,11 +785,74 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
   );
 
   const rows = useMemo(() => {
-    if (providerFilter === 'all') {
-      return baseRows;
+    let result = baseRows;
+    if (providerFilter !== 'all') {
+      result = result.filter((b) => providerSupports(providerFilter, b.group));
     }
-    return baseRows.filter((b) => providerSupports(providerFilter, b.group));
-  }, [baseRows, providerFilter]);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (b) =>
+          b.label.toLowerCase().includes(q) || b.resource.toLowerCase().includes(q) || b.group.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [baseRows, providerFilter, searchQuery]);
+
+  const columns: Array<Column<GroupBreakdown>> = useMemo(
+    () => [
+      {
+        id: 'status',
+        header: '',
+        cell: ({ row }) => <ManagementStatusIcon state={getManagementState(row.original)} />,
+        disableGrow: true,
+      },
+      {
+        id: 'label',
+        header: t('provisioning.stats.column-resource', 'Resource'),
+        sortType: 'string',
+        cell: ({ row }) => <Text>{row.original.label}</Text>,
+      },
+      {
+        id: 'total',
+        header: t('provisioning.stats.column-total', 'Total'),
+        sortType: 'number',
+        cell: ({ row }) => <Text>{row.original.total.toLocaleString()}</Text>,
+      },
+      {
+        id: 'otherManagedCount',
+        header: t('provisioning.stats.column-managed', 'Managed'),
+        sortType: 'number',
+        cell: ({ row }) => (
+          <Text color={row.original.otherManagedCount > 0 ? 'info' : 'secondary'}>
+            {row.original.otherManagedCount.toLocaleString()}
+          </Text>
+        ),
+      },
+      {
+        id: 'unmanagedCount',
+        header: t('provisioning.stats.column-unmanaged', 'Unmanaged'),
+        sortType: 'number',
+        cell: ({ row }) => (
+          <Text color={row.original.unmanagedCount > 0 ? 'warning' : 'secondary'}>
+            {row.original.unmanagedCount.toLocaleString()}
+          </Text>
+        ),
+      },
+      {
+        id: 'supportedBy',
+        header: t('provisioning.stats.column-supported-by', 'Supported by'),
+        cell: ({ row }) => (
+          <Stack direction="row" gap={0.5} wrap>
+            {providersThatSupport(row.original.group).map((kind) => (
+              <Badge key={kind} color={badgeColorForKind(kind)} text={kindLabel(kind)} />
+            ))}
+          </Stack>
+        ),
+      },
+    ],
+    []
+  );
 
   if (baseRows.length === 0) {
     return null;
@@ -756,63 +871,40 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
           Each provisioning tool supports a different set of resource types — pick one to see only what it can manage.
         </Trans>
       </Text>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
-        </Text>
-        <div className={styles.providerSelect}>
-          <Select
-            value={providerFilter}
-            options={filterOptions}
-            onChange={(v) => setProviderFilter(v.value ?? 'all')}
-            aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
+      <Stack direction="row" gap={1.5} alignItems="center" wrap>
+        <div className={styles.searchInput}>
+          <FilterInput
+            placeholder={t('provisioning.stats.search-placeholder', 'Search resource types')}
+            value={searchQuery}
+            onChange={setSearchQuery}
           />
         </div>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
+          </Text>
+          <div className={styles.providerSelect}>
+            <Select
+              value={providerFilter}
+              options={filterOptions}
+              onChange={(v) => setProviderFilter(v.value ?? 'all')}
+              aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
+            />
+          </div>
+        </Stack>
       </Stack>
       {rows.length === 0 ? (
         <Alert
           severity="info"
-          title={t(
-            'provisioning.stats.filter-empty-title',
-            '{{provider}} doesn’t manage any of your current resources',
-            {
-              provider: kindLabel(providerFilter),
-            }
-          )}
+          title={t('provisioning.stats.filter-empty-title', 'No resource types match the current filters')}
         />
       ) : (
-        <div className={styles.otherResourcesGrid} role="table">
-          <div className={styles.otherResourcesHeader} role="row">
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.column-resource">Resource</Trans>
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.column-total">Total</Trans>
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.column-managed">Managed</Trans>
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.column-unmanaged">Unmanaged</Trans>
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.column-supported-by">Supported by</Trans>
-            </Text>
-          </div>
-          {rows.map((b) => (
-            <div key={`${b.group}/${b.resource}`} className={styles.otherResourcesRow} role="row">
-              <Text>{b.label}</Text>
-              <Text>{b.total.toLocaleString()}</Text>
-              <Text color={b.otherManagedCount > 0 ? 'info' : 'secondary'}>{b.otherManagedCount.toLocaleString()}</Text>
-              <Text color={b.unmanagedCount > 0 ? 'warning' : 'secondary'}>{b.unmanagedCount.toLocaleString()}</Text>
-              <Stack direction="row" gap={0.5} wrap>
-                {providersThatSupport(b.group).map((kind) => (
-                  <Badge key={kind} color={badgeColorForKind(kind)} text={kindLabel(kind)} />
-                ))}
-              </Stack>
-            </div>
-          ))}
-        </div>
+        <InteractiveTable
+          columns={columns}
+          data={rows}
+          getRowId={(row) => `${row.group}/${row.resource}`}
+          pageSize={10}
+        />
       )}
     </Stack>
   );
@@ -960,20 +1052,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     background: theme.colors.warning.main,
   }),
-  otherResourcesGrid: css({
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 2fr)',
-    rowGap: theme.spacing(1),
-    columnGap: theme.spacing(2),
-    alignItems: 'center',
-  }),
-  otherResourcesHeader: css({
-    display: 'contents',
-  }),
-  otherResourcesRow: css({
-    display: 'contents',
-  }),
   providerSelect: css({
     minWidth: 220,
+  }),
+  searchInput: css({
+    flex: '1 1 220px',
+    maxWidth: 360,
   }),
 });

@@ -13793,7 +13793,7 @@
       "error-title": "Failed to load provisioning stats",
       "filter-all": "All providers",
       "filter-aria-label": "Filter resource types by provider",
-      "filter-empty-title": "{{provider}} doesn’t manage any of your current resources",
+      "filter-empty-title": "No resource types match the current filters",
       "filter-label": "Show types supported by",
       "folders": "Folders",
       "folders-count_one": "{{count}} folder",
@@ -13824,6 +13824,10 @@
       "resource-total_other": "{{count}} total",
       "resource-types-description": "Each provisioning tool supports a different set of resource types — pick one to see only what it can manage.",
       "resource-types-heading": "Resource types",
+      "search-placeholder": "Search resource types",
+      "status-fully": "Fully managed",
+      "status-none": "Not managed",
+      "status-partial": "Partially managed",
       "summary-total": "Total resources"
     },
     "status-badge": {
