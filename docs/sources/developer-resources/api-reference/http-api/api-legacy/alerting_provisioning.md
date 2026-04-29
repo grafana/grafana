@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/alerting_provisioning/ # /docs/grafana/next/http_api/alerting_provisioning/
-  - ../../../developers/http_api/alerting_provisioning/ # /docs/grafana/next/developers/http_api/alerting_provisioning/
+  - ../../../../http_api/alerting_provisioning/ # /docs/grafana/next/http_api/alerting_provisioning/
+  - ../../../../developers/http_api/alerting_provisioning/ # /docs/grafana/next/developers/http_api/alerting_provisioning/
   - ../../../../developer-resources/api-reference/http-api/alerting_provisioning/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/alerting_provisioning/
 description: Grafana Alerts HTTP API
