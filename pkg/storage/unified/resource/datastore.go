@@ -496,9 +496,9 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 
 	bo := backoff.New(ctx, datastoreRetryBackoff)
 	for attempt := 1; ; attempt++ {
-		raw, err := d.kv.Get(ctx, dataSection, key.String())
+		r, err := d.kv.Get(ctx, dataSection, key.String())
 		if err == nil {
-			return raw, nil
+			return r, nil
 		}
 		if errors.Is(err, kvpkg.ErrRetryable) && attempt < maxKvGetRetryAttempts {
 			getRetryLogger.Warn("kv Get retrying after retryable error",
