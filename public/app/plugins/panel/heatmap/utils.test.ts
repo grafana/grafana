@@ -469,6 +469,27 @@ describe('prepConfig', () => {
         expect(result[0]).toEqual(2);
         expect(result[1]).toEqual(64);
       });
+
+      // Regression: rowsToCellsHeatmap with a single bucket starting at 0 produces yMin=yMax=0.
+      // bucketFactor * 0 = 0, so scaleMax collapsed to 0, causing heatmapPathsDense to clamp tile
+      // height to 1px. The range callback must return a positive scaleMax in this case.
+      it('returns positive scaleMax when single-bucket sparse data has yMin = yMax = 0', () => {
+        const dataRef = { current: createSparseHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } },
+        });
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        // data[1][1] = yMin = [0], data[1][2] = yMax = [0]; uPlot reports dataMax = 0.
+        const mockU = { data: [[1000], [null, [0], [0]]] } as unknown as uPlot;
+        const result = range(mockU, 0, 0, scaleKey);
+        expect(result[1]).toBeGreaterThan(0);
+      });
     });
 
     describe('dense heatmap', () => {
