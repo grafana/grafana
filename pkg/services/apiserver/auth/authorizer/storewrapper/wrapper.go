@@ -41,8 +41,8 @@ type ResourceStorageAuthorizer interface {
 // Layer constants distinguish the two timing slices the wrapper records.
 // Consumers map these to whatever histogram label scheme they want.
 const (
-	LayerAuthz = "authz" // Authorization hook (BeforeCreate, BeforeUpdate, BeforeDelete, AfterGet, FilterList).
-	LayerInner = "inner" // Inner store call (Create, Get, List, Update, Delete, Watch).
+	LayerAuthz = "store_wrapper_authz" // Authorization hook (BeforeCreate, BeforeUpdate, BeforeDelete, AfterGet, FilterList).
+	LayerInner = "store_wrapper_inner" // Inner store call (Create, Get, List, Update, Delete, Watch).
 )
 
 // Observer records wrapper latency for authorization hooks and inner store calls.

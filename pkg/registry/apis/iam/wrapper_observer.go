@@ -8,24 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
-const (
-	permissionLayerStoreWrapper      = "store_wrapper"
-	permissionLayerStoreWrapperAuthz = "store_wrapper_authz"
-)
-
 type wrapperObserver struct{}
 
-// NewWrapperObserver records storewrapper timings in the IAM permission latency histogram.
+// NewWrapperObserver records storewrapper timings in the IAM resource handler latency histogram.
 func NewWrapperObserver() storewrapper.Observer {
 	return wrapperObserver{}
 }
 
 func (wrapperObserver) Observe(layer, op string, resource schema.GroupResource, dur time.Duration, status string) {
-	promLayer := permissionLayerStoreWrapper
-	if layer == storewrapper.LayerAuthz {
-		promLayer = permissionLayerStoreWrapperAuthz
-	}
-	PermissionLatencyHistogram.WithLabelValues(promLayer, op, groupResourceLabel(resource), status).Observe(dur.Seconds())
+	ResourceHandlerDurationHistogram.WithLabelValues(layer, op, groupResourceLabel(resource), status).Observe(dur.Seconds())
 }
 
 func groupResourceLabel(resource schema.GroupResource) string {

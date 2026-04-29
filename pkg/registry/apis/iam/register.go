@@ -568,7 +568,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 
 	b.userGetter = userStore
 	userWrapperOptions := append(b.storeWrapperOptions(), storewrapper.WithPreserveIdentity())
-	storage[userResource.StoragePath()] = storewrapper.New(userStore, userResource.GroupResource(), user.NewStoreWrapper(b.cfgProvider, b.settingService), userWrapperOptions...)
+	storage[userResource.StoragePath()] = storewrapper.New(
+		userStore,
+		userResource.GroupResource(),
+		user.NewStoreWrapper(b.cfgProvider, b.settingService),
+		userWrapperOptions...,
+	)
 
 	if b.dual != nil && b.unified != nil {
 		teamSearchClient := resource.NewSearchClient(
