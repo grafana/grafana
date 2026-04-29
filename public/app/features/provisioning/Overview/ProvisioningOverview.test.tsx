@@ -376,20 +376,20 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Before filtering: donut shows 0% (none managed) but the totals are
-    // computed against 20 resources, so the cards show "0 of 20".
+    // Before filtering: nothing is managed, totals are computed against 20.
     expect(screen.getAllByText(/0 of 20/i).length).toBeGreaterThan(0);
 
-    await userEvent.type(screen.getByPlaceholderText(/search resource types/i), 'folder');
+    // Pick "Folders" from the resource types MultiSelect.
+    const typesInput = screen.getByLabelText(/filter by resource type/i);
+    await userEvent.click(typesInput);
+    await userEvent.click(screen.getByText('Folders', { selector: '[role="option"] *' }));
 
-    // After filtering to "folder" only: 4 folders, all unmanaged. Cards
-    // should now compute against 4, not 20, so "4 of 4" appears for the
-    // unmanaged segment.
+    // After filtering to folders: 4 unmanaged of 4 total.
     expect(screen.getAllByText(/4 of 4/i).length).toBeGreaterThan(0);
     expect(screen.queryAllByText(/0 of 20/i)).toHaveLength(0);
   });
 
-  it('filters the Resource types table by the search input', async () => {
+  it('narrows the table to the resource types picked in the MultiSelect', async () => {
     mockQuery({
       data: {
         instance: [
@@ -407,11 +407,15 @@ describe('ProvisioningOverview', () => {
     expect(screen.getByText('Folders')).toBeInTheDocument();
     expect(screen.getByText('alertrules')).toBeInTheDocument();
 
-    await userEvent.type(screen.getByPlaceholderText(/search resource types/i), 'alert');
+    const typesInput = screen.getByLabelText(/filter by resource type/i);
+    await userEvent.click(typesInput);
+    await userEvent.click(screen.getByText('alertrules', { selector: '[role="option"] *' }));
 
     expect(screen.queryByText('Folders')).not.toBeInTheDocument();
     expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
-    expect(screen.getByText('alertrules')).toBeInTheDocument();
+    // alertrules appears as the selected chip in the MultiSelect AND as the
+    // row in the table — at least one occurrence is enough.
+    expect(screen.getAllByText('alertrules').length).toBeGreaterThan(0);
   });
 
   it('renders the % managed column for each row', () => {

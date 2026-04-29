@@ -10,10 +10,10 @@ import {
   Card,
   type Column,
   EmptyState,
-  FilterInput,
   Icon,
   InteractiveTable,
   LinkButton,
+  MultiSelect,
   Select,
   Spinner,
   Stack,
@@ -335,61 +335,35 @@ function aggregateLensTotals(breakdowns: GroupBreakdown[], providerFilter: strin
   };
 }
 
-interface BarSegment {
-  key: string;
-  value: number;
-  color: string;
-  label: string;
-}
-
-function StackedProgressBar({ segments }: { segments: BarSegment[] }) {
+/**
+ * Single horizontal fill bar that visualises coverage as a percentage.
+ * Empty (0%) shows a faint warning-tinted track; the fill grows with
+ * coverage and its color shifts along an HSL hue ramp from warning
+ * (~30°, orange) to success (~120°, green) so the visual feedback is
+ * smooth — half-empty looks yellow-ish, full looks confidently green.
+ */
+function CoverageBar({ covered, total }: { covered: number; total: number }) {
   const styles = useStyles2(getStyles);
-  const total = segments.reduce((acc, s) => acc + s.value, 0);
+  const pct = total === 0 ? 0 : Math.max(0, Math.min(100, (covered / total) * 100));
+  const hue = 30 + (pct / 100) * 90;
+  const fillColor = `hsl(${hue}, 70%, 45%)`;
+  const tooltip = t('provisioning.stats.coverage-bar-tooltip', '{{covered}} of {{total}} ({{pct}}%)', {
+    covered,
+    total,
+    pct: Math.round(pct),
+  });
   return (
-    <Stack direction="column" gap={1}>
+    <div
+      className={styles.coverageTrack}
+      role="img"
+      aria-label={t('provisioning.stats.coverage-bar-aria', 'Coverage progress')}
+      title={tooltip}
+    >
       <div
-        className={styles.progressBar}
-        role="img"
-        aria-label={t('provisioning.stats.progress-aria', 'Provisioning breakdown')}
-      >
-        {total === 0
-          ? null
-          : segments
-              .filter((s) => s.value > 0)
-              .map((s) => {
-                const pct = Math.round((s.value / total) * 100);
-                return (
-                  <div
-                    key={s.key}
-                    className={styles.progressSegment}
-                    style={{ flex: s.value, background: s.color }}
-                    title={t('provisioning.stats.progress-segment-tooltip', '{{label}}: {{value}} ({{pct}}%)', {
-                      label: s.label,
-                      value: s.value,
-                      pct,
-                    })}
-                  />
-                );
-              })}
-      </div>
-      <Stack direction="row" gap={2} wrap justifyContent="center">
-        {segments.map((s) => {
-          const pct = total === 0 ? 0 : Math.round((s.value / total) * 100);
-          return (
-            <Stack key={s.key} direction="row" gap={1} alignItems="center">
-              <span className={styles.progressLegendDot} style={{ background: s.color }} aria-hidden />
-              <Text variant="bodySmall" color="secondary">
-                {t('provisioning.stats.progress-legend-entry', '{{label}} · {{value}} ({{pct}}%)', {
-                  label: s.label,
-                  value: s.value,
-                  pct,
-                })}
-              </Text>
-            </Stack>
-          );
-        })}
-      </Stack>
-    </Stack>
+        className={styles.coverageFill}
+        style={{ width: `${pct}%`, background: fillColor }}
+      />
+    </div>
   );
 }
 
@@ -398,46 +372,13 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const totals = useMemo(() => aggregateLensTotals(breakdowns, providerFilter), [breakdowns, providerFilter]);
   const isAll = providerFilter === 'all';
-
-  const barSegments: BarSegment[] = isAll
-    ? [
-        {
-          key: 'managed',
-          value: totals.managed,
-          color: theme.colors.success.main,
-          label: t('provisioning.stats.summary-managed', 'Managed'),
-        },
-        {
-          key: 'unmanaged',
-          value: totals.unmanaged,
-          color: theme.colors.warning.main,
-          label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
-        },
-      ]
-    : [
-        {
-          key: providerFilter,
-          value: totals.selected,
-          color: theme.colors.success.main,
-          label: kindLabel(providerFilter),
-        },
-        {
-          key: 'other',
-          value: totals.other,
-          color: theme.colors.info.main,
-          label: t('provisioning.stats.legend-other', 'Managed by other tools'),
-        },
-        {
-          key: 'unmanaged',
-          value: totals.unmanaged,
-          color: theme.colors.warning.main,
-          label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
-        },
-      ];
+  // The "selected coverage" the bar visualises is whichever number the lens
+  // emphasises: total managed under "All", or just the selected provider's
+  // managed count under a specific lens.
+  const selectedCount = isAll ? totals.managed : totals.selected;
 
   return (
     <Stack direction="column" gap={2}>
-      <StackedProgressBar segments={barSegments} />
       <Stack direction="row" gap={1.5} wrap justifyContent="center">
         <ProviderStat
           segmentKey="total"
@@ -500,6 +441,7 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
           onHover={setHoveredKey}
         />
       </Stack>
+      <CoverageBar covered={selectedCount} total={totals.instanceTotal} />
     </Stack>
   );
 }
@@ -734,35 +676,71 @@ function ManagementStatusIcon({ state }: { state: ManagementState }) {
 
 interface FiltersValue {
   providerFilter: string;
-  searchQuery: string;
+  selectedTypes: string[];
 }
 
-function FiltersBar({ value, onChange }: { value: FiltersValue; onChange: (next: FiltersValue) => void }) {
+function rowKey(b: GroupBreakdown): string {
+  return `${b.group}/${b.resource}`;
+}
+
+function FiltersBar({
+  value,
+  onChange,
+  breakdowns,
+}: {
+  value: FiltersValue;
+  onChange: (next: FiltersValue) => void;
+  breakdowns: GroupBreakdown[];
+}) {
   const styles = useStyles2(getStyles);
-  const filterOptions: Array<SelectableValue<string>> = useMemo(
+  const providerOptions: Array<SelectableValue<string>> = useMemo(
     () => [
       { value: 'all', label: t('provisioning.stats.filter-all', 'All providers') },
       ...Object.keys(PROVIDER_SUPPORT).map((kind) => ({ value: kind, label: kindLabel(kind) })),
     ],
     []
   );
+  const typeOptions: Array<SelectableValue<string>> = useMemo(
+    () =>
+      breakdowns
+        .filter((b) => b.total > 0)
+        .map((b) => ({ value: rowKey(b), label: b.label || b.resource })),
+    [breakdowns]
+  );
+  const selectedTypeValues = useMemo(
+    () => typeOptions.filter((o) => o.value && value.selectedTypes.includes(o.value)),
+    [typeOptions, value.selectedTypes]
+  );
   return (
-    <Stack direction="row" gap={1.5} alignItems="center" wrap>
-      <div className={styles.searchInput}>
-        <FilterInput
-          placeholder={t('provisioning.stats.search-placeholder', 'Search resource types')}
-          value={value.searchQuery}
-          onChange={(searchQuery) => onChange({ ...value, searchQuery })}
-        />
-      </div>
+    <Stack direction="row" gap={2} alignItems="center" wrap justifyContent="center">
       <Stack direction="row" gap={1} alignItems="center">
         <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
+          <Trans i18nKey="provisioning.stats.filter-types-label">Resource types</Trans>
+        </Text>
+        <div className={styles.typeSelect}>
+          <MultiSelect
+            value={selectedTypeValues}
+            options={typeOptions}
+            onChange={(items) =>
+              onChange({
+                ...value,
+                selectedTypes: (items ?? []).map((i) => i.value).filter((v): v is string => Boolean(v)),
+              })
+            }
+            placeholder={t('provisioning.stats.types-placeholder', 'All resource types')}
+            aria-label={t('provisioning.stats.filter-types-aria', 'Filter by resource type')}
+            isClearable
+          />
+        </div>
+      </Stack>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="provisioning.stats.filter-label">Provider</Trans>
         </Text>
         <div className={styles.providerSelect}>
           <Select
             value={value.providerFilter}
-            options={filterOptions}
+            options={providerOptions}
             onChange={(v) => onChange({ ...value, providerFilter: v.value ?? 'all' })}
             aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
           />
@@ -774,12 +752,8 @@ function FiltersBar({ value, onChange }: { value: FiltersValue; onChange: (next:
 
 function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): GroupBreakdown[] {
   let result = breakdowns.filter((b) => b.total > 0);
-  if (filters.searchQuery) {
-    const q = filters.searchQuery.toLowerCase();
-    result = result.filter(
-      (b) =>
-        b.label.toLowerCase().includes(q) || b.resource.toLowerCase().includes(q) || b.group.toLowerCase().includes(q)
-    );
+  if (filters.selectedTypes.length > 0) {
+    result = result.filter((b) => filters.selectedTypes.includes(rowKey(b)));
   }
   return result;
 }
@@ -898,28 +872,22 @@ function ResourceTypesSection({
     return null;
   }
 
+  if (rows.length === 0) {
+    return (
+      <Alert
+        severity="info"
+        title={t('provisioning.stats.filter-empty-title', 'No resource types match the current filters')}
+      />
+    );
+  }
+
   return (
-    <Stack direction="column" gap={2}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Icon name="list-ul" />
-        <Text variant="h4">
-          <Trans i18nKey="provisioning.stats.resource-types-heading">Resource types</Trans>
-        </Text>
-      </Stack>
-      {rows.length === 0 ? (
-        <Alert
-          severity="info"
-          title={t('provisioning.stats.filter-empty-title', 'No resource types match the current filters')}
-        />
-      ) : (
-        <InteractiveTable
-          columns={columns}
-          data={rows}
-          getRowId={(row) => `${row.group}/${row.resource}`}
-          pageSize={10}
-        />
-      )}
-    </Stack>
+    <InteractiveTable
+      columns={columns}
+      data={rows}
+      getRowId={(row) => `${row.group}/${row.resource}`}
+      pageSize={10}
+    />
   );
 }
 
@@ -936,7 +904,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 export function ProvisioningOverview() {
   const { data, isLoading, isError, error } = useGetResourceStatsQuery();
-  const [filters, setFilters] = useState<FiltersValue>({ providerFilter: 'all', searchQuery: '' });
+  const [filters, setFilters] = useState<FiltersValue>({ providerFilter: 'all', selectedTypes: [] });
 
   const computed = useMemo(() => computeStats(data), [data]);
   const filteredBreakdowns = useMemo(
@@ -972,7 +940,9 @@ export function ProvisioningOverview() {
   return (
     <Stack direction="column" gap={4}>
       <GitOpsExplainer />
-      {hasUnfilteredRows && <FiltersBar value={filters} onChange={setFilters} />}
+      {hasUnfilteredRows && (
+        <FiltersBar value={filters} onChange={setFilters} breakdowns={computed.groupBreakdowns} />
+      )}
       <SummarySection breakdowns={filteredBreakdowns} providerFilter={filters.providerFilter} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
@@ -1061,26 +1031,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   providerSelect: css({
     minWidth: 220,
   }),
-  progressBar: css({
-    display: 'flex',
+  coverageTrack: css({
+    position: 'relative',
     width: '100%',
     height: theme.spacing(1.25),
     borderRadius: theme.shape.radius.pill,
     overflow: 'hidden',
-    background: theme.colors.background.secondary,
+    background: theme.colors.warning.transparent,
   }),
-  progressSegment: css({
+  coverageFill: css({
     height: '100%',
+    borderRadius: theme.shape.radius.pill,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'width 200ms ease, background 200ms ease',
+    },
   }),
-  progressLegendDot: css({
-    display: 'inline-block',
-    width: 10,
-    height: 10,
-    borderRadius: theme.shape.radius.circle,
-    flex: '0 0 auto',
-  }),
-  searchInput: css({
-    flex: '1 1 220px',
-    maxWidth: 360,
+  typeSelect: css({
+    minWidth: 260,
+    maxWidth: 420,
   }),
 });
