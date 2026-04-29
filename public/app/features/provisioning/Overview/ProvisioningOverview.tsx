@@ -31,7 +31,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { PROVISIONING_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
@@ -457,22 +456,17 @@ function Donut({
   );
 }
 
-function OverviewIntro() {
+function GitOpsExplainer() {
   return (
-    <Stack direction="column" gap={1}>
-      <Text variant="h3">
-        <Trans i18nKey="provisioning.stats.overview-heading">Overview</Trans>
-      </Text>
-      <Text color="secondary">
-        <Trans i18nKey="provisioning.stats.overview-subhead">
-          Manage your folders, dashboards, and other resources as code. Tools like Git Sync, Terraform, and kubectl let
-          you store these definitions in a Git repository (or another source of truth) so every change is versioned,
-          reviewable, and reproducible. This is what GitOps means in practice — the live state of the instance comes
-          from your repository, not the other way around. The breakdown below shows how much of your instance is managed
-          this way today, and which tools are involved.
-        </Trans>
-      </Text>
-    </Stack>
+    <Alert severity="info" title={t('provisioning.stats.gitops-title', 'What is GitOps?')}>
+      <Trans i18nKey="provisioning.stats.gitops-body">
+        Manage your folders, dashboards, and other resources as code. Tools like Git Sync, Terraform, and kubectl let
+        you store these definitions in a Git repository (or another source of truth) so every change is versioned,
+        reviewable, and reproducible. The live state of the instance comes from your repository, not the other way
+        around. The breakdown below shows how much of your instance is managed this way today, and which tools are
+        involved.
+      </Trans>
+    </Alert>
   );
 }
 
@@ -568,49 +562,31 @@ function ProviderStat({
   );
 }
 
-function GitSyncBanner({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
-  const [repos] = useRepositoryList({ watch: false });
-  const supported = breakdowns.filter((b) => b.isGitSyncSupported);
-  const totalSupported = supported.reduce((acc, b) => acc + b.total, 0);
-  if (totalSupported === 0) {
-    // No folders or dashboards to manage yet — skip the banner so we don't
-    // promote a CTA before the user has anything to point it at.
-    return null;
-  }
-  const gitSyncCovered = supported.reduce((acc, b) => acc + b.gitSyncCount, 0);
-
-  return (
-    <Alert
-      severity="info"
-      title={t(
-        'provisioning.stats.git-sync-banner-title',
-        '{{covered}} of {{total}} folders and dashboards are managed by Git Sync',
-        { covered: gitSyncCovered, total: totalSupported }
-      )}
-      action={<GitSyncBannerCta repos={repos ?? []} />}
-    >
-      <Trans i18nKey="provisioning.stats.git-sync-banner-body">
-        Git Sync is the simplest way to manage folders and dashboards as code — connect a repository and every change
-        gets versioned automatically. Other tools like Terraform or kubectl work too.
-      </Trans>
-    </Alert>
-  );
-}
-
-function GitSyncBannerCta({ repos }: { repos: Repository[] }) {
-  // No repos yet → the user needs to set Git Sync up before they can do
-  // anything else, so surface the existing Configure dropdown.
+/**
+ * Action button for a Git-Sync-supported resource type that still has
+ * unmanaged rows. Encourages the user to migrate them. The button is a link
+ * — the actual migrate action lives on the repository's status page (or in
+ * the connect wizard when no repository exists yet).
+ */
+function MigrateRowButton({ repos }: { repos: Repository[] }) {
   if (repos.length === 0) {
-    return <ConnectRepositoryButton items={repos} />;
+    return (
+      <LinkButton
+        variant="secondary"
+        size="sm"
+        icon="upload"
+        href={PROVISIONING_URL}
+        tooltip={t('provisioning.stats.migrate-needs-repo', 'Connect a Git Sync repository first')}
+      >
+        <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
+      </LinkButton>
+    );
   }
-  // Repos exist → the action that pushes more resources into the repo lives
-  // on the repository status page. Link there: directly when there's one
-  // repo, otherwise to the Repositories tab so the user can pick.
   const target =
     repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
   return (
-    <LinkButton variant="primary" icon="upload" href={target}>
-      <Trans i18nKey="provisioning.stats.git-sync-banner-export">Export</Trans>
+    <LinkButton variant="secondary" size="sm" icon="upload" href={target}>
+      <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
     </LinkButton>
   );
 }
@@ -772,6 +748,8 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
   const styles = useStyles2(getStyles);
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [repos] = useRepositoryList({ watch: false });
+  const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
 
   // Drop seeded zero-count rows so we don't list types nobody has any of.
   const baseRows = useMemo(() => breakdowns.filter((b) => b.total > 0), [breakdowns]);
@@ -850,8 +828,19 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
           </Stack>
         ),
       },
+      {
+        id: 'actions',
+        header: '',
+        disableGrow: true,
+        cell: ({ row }) => {
+          if (!row.original.isGitSyncSupported || row.original.unmanagedCount === 0) {
+            return null;
+          }
+          return <MigrateRowButton repos={gitSyncRepos} />;
+        },
+      },
     ],
-    []
+    [gitSyncRepos]
   );
 
   if (baseRows.length === 0) {
@@ -949,8 +938,7 @@ export function ProvisioningOverview() {
 
   return (
     <Stack direction="column" gap={4}>
-      <OverviewIntro />
-      <GitSyncBanner breakdowns={computed.groupBreakdowns} />
+      <GitOpsExplainer />
       <SummarySection stats={computed} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />

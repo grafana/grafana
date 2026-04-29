@@ -64,7 +64,7 @@ describe('ProvisioningOverview', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
-  it('shows the provisioned-as-code headline and the Git Sync banner', () => {
+  it('shows the provisioned-as-code donut and the GitOps explainer', () => {
     mockQuery({
       data: {
         instance: [
@@ -87,33 +87,13 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // 5 of 20 = 25% of resources are provisioned as code; surfaced as the
-    // donut center label.
+    // The page leads with a "What is GitOps?" alert and the donut shows 25%
+    // (5 of 20 managed) in its center label.
+    expect(screen.getByText(/what is gitops\?/i)).toBeInTheDocument();
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
-    // The single Git Sync banner replaces the previous green card + unmanaged
-    // alert pair: it leads with the coverage count and ends with the CTA.
-    expect(screen.getByText(/5 of 20 folders and dashboards are managed by Git Sync/i)).toBeInTheDocument();
-    expect(screen.getByText(/git sync is the simplest way/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
   });
 
-  it('shows the Configure dropdown when no Git Sync repository is connected', () => {
-    mockUseRepositoryList.mockReturnValue([[], false]);
-    mockQuery({
-      data: {
-        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
-        unmanaged: [],
-        managed: [],
-      },
-    });
-
-    render(<ProvisioningOverview />);
-
-    expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /^export$/i })).not.toBeInTheDocument();
-  });
-
-  it('shows the Export button instead of Configure once a repository exists', () => {
+  it('shows a Migrate button per Git-Sync-supported row that still has unmanaged resources', () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {
@@ -125,7 +105,10 @@ describe('ProvisioningOverview', () => {
     ]);
     mockQuery({
       data: {
-        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 3 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 },
+        ],
         unmanaged: [],
         managed: [],
       },
@@ -133,11 +116,11 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    const exportLink = screen.getByRole('link', { name: /^export$/i });
-    expect(exportLink).toBeInTheDocument();
-    // Single repo → link goes straight to the repository's status page.
-    expect(exportLink).toHaveAttribute('href', '/admin/provisioning/my-repo');
-    expect(screen.queryByRole('button', { name: /connect a repository/i })).not.toBeInTheDocument();
+    // Both folders and dashboards have unmanaged resources, so each row
+    // exposes a Migrate link to the existing Git Sync repository.
+    const migrateLinks = screen.getAllByRole('link', { name: /migrate/i });
+    expect(migrateLinks.length).toBeGreaterThanOrEqual(2);
+    expect(migrateLinks[0]).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
   it('hides the Git Sync banner when there are no folders or dashboards', () => {
