@@ -1,4 +1,7 @@
-import { type PanelProps } from '@grafana/data';
+import { useState } from 'react';
+
+import { dateTime, type DateTime, type PanelProps } from '@grafana/data';
+import { DateTimePicker, TimeOfDayPicker } from '@grafana/ui';
 
 import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
@@ -10,6 +13,24 @@ type Props = PanelProps<Options>;
 
 export function DebugPanel(props: Props) {
   const { options } = props;
+
+  const [date, setDate] = useState<DateTime | undefined>(dateTime(new Date()));
+
+  return (
+    <>
+      <DateTimePicker
+        label="Label"
+        date={date}
+        showSeconds={false}
+        clearable={true}
+        onChange={(newValue) => {
+          setDate(newValue);
+        }}
+      />
+
+      <TimeOfDayPicker allowEmpty={true} onChange={() => {}} />
+    </>
+  );
 
   switch (options.mode) {
     case DebugMode.Events:

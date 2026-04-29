@@ -1,24 +1,19 @@
-import { css, cx } from '@emotion/css';
-import RcPicker, { type PickerProps } from '@rc-component/picker';
-import generateConfig from '@rc-component/picker/lib/generate/moment';
-import locale from '@rc-component/picker/lib/locale/en_US';
-import { type Moment } from 'moment';
+import { useMemo, useState } from 'react';
 
-import { dateTime, type DateTime, dateTimeAsMoment, type GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+// import { dateTime, type DateTime, dateTimeAsMoment, isDateTimeInput } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { inputSizes } from '../Forms/commonStyles';
+import { type DateTime } from '@grafana/data';
+
+import { Combobox } from '../Combobox/Combobox';
+import { type ComboboxOption } from '../Combobox/types';
 import { type FormInputSize } from '../Forms/types';
-import { Icon } from '../Icon/Icon';
-import '@rc-component/picker/assets/index.css';
 
 interface BaseProps {
   onChange: (value: DateTime) => void | ((value?: DateTime) => void);
   value?: DateTime;
   showHour?: boolean;
   showSeconds?: boolean;
-  minuteStep?: PickerProps['minuteStep'];
+  minuteStep?: 1 | 5 | 10 | 15 | 20 | 30;
   size?: FormInputSize;
   disabled?: boolean;
   disabledHours?: () => number[];
@@ -41,10 +36,8 @@ interface NoAllowEmptyProps extends BaseProps {
 
 export type Props = AllowEmptyProps | NoAllowEmptyProps;
 
-export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
-
 export const TimeOfDayPicker = ({
-  minuteStep = 1,
+  minuteStep = 15,
   showHour = true,
   showSeconds = false,
   value,
@@ -55,193 +48,47 @@ export const TimeOfDayPicker = ({
   disabledSeconds,
   id,
   placeholder,
-  // note: we can't destructure allowEmpty/onChange here
-  // in order to discriminate the types properly later in the onChange handler
-  ...restProps
+  allowEmpty = false,
 }: Props) => {
-  const styles = useStyles2(getStyles);
-  const allowClear = restProps.allowEmpty ?? false;
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const opts = useMemo(() => {
+    let opts: Array<ComboboxOption<string>> = [];
+
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += minuteStep) {
+        opts.push({ value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}` });
+      }
+    }
+
+    return opts;
+  }, [minuteStep]);
 
   return (
-    <RcPicker<Moment>
+    <Combobox
       id={id}
-      generateConfig={generateConfig}
-      locale={locale}
-      allowClear={
-        allowClear && {
-          clearIcon: <Icon name="times" className={styles.clearIcon} />,
-        }
-      }
-      className={cx(inputSizes()[size], styles.input)}
-      classNames={{
-        popup: {
-          container: cx(styles.picker, POPUP_CLASS_NAME),
-        },
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder="HH:mm"
+      createCustomValue={true}
+      options={opts}
+      value={selected}
+      isClearable={allowEmpty}
+
+      width={12}
+
+      onChange={(option?: ComboboxOption<string> | null) => {
+        // console.log(value);
+
+        setSelected(option?.value ?? null);
+
+        // if (isDateTimeInput(value)) {
+        //   if (restProps.allowEmpty) {
+        //     return restProps.onChange(value ? dateTime(value) : undefined);
+        //   } else {
+        //     return restProps.onChange(dateTime(value));
+        //   }
+        // }
       }}
-      defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
-      disabled={disabled}
-      disabledTime={() => ({
-        disabledHours,
-        disabledMinutes,
-        disabledSeconds,
-      })}
-      format={generateFormat(showHour, showSeconds)}
-      minuteStep={minuteStep}
-      onChange={(value) => {
-        if (isDateTimeInput(value)) {
-          if (restProps.allowEmpty) {
-            return restProps.onChange(value ? dateTime(value) : undefined);
-          } else {
-            return restProps.onChange(dateTime(value));
-          }
-        }
-      }}
-      picker="time"
-      placeholder={placeholder}
-      showNow={false}
-      needConfirm={false}
-      suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value ? dateTimeAsMoment(value) : value}
     />
   );
-};
-
-function generateFormat(showHour = true, showSeconds = false) {
-  const maybeHour = showHour ? 'HH:' : '';
-  const maybeSecond = showSeconds ? ':ss' : '';
-  return maybeHour + 'mm' + maybeSecond;
-}
-
-interface CaretProps {
-  wrapperStyle?: string;
-}
-
-const Caret = ({ wrapperStyle = '' }: CaretProps) => {
-  return (
-    <div className={wrapperStyle}>
-      <Icon name="angle-down" />
-    </div>
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const bgColor = theme.components.input.background;
-  const optionBgHover = theme.colors.action.hover;
-  const borderRadius = theme.shape.radius.default;
-  const borderColor = theme.components.input.borderColor;
-
-  return {
-    caretWrapper: css({
-      position: 'relative',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      display: 'inline-block',
-      color: theme.colors.text.secondary,
-    }),
-    clearIcon: css({
-      color: theme.colors.text.secondary,
-
-      '&:hover': {
-        color: theme.colors.text.maxContrast,
-      },
-    }),
-    picker: css({
-      '&.rc-picker-dropdown': {
-        boxShadow: 'none',
-        zIndex: theme.zIndex.portal,
-      },
-      '.rc-picker-time-panel-column': {
-        fontSize: theme.typography.htmlFontSize,
-        backgroundColor: bgColor,
-        color: theme.colors.text.secondary,
-        padding: 'unset',
-        overflowY: 'auto',
-        scrollbarWidth: 'thin',
-        width: theme.spacing(8),
-        li: {
-          paddingRight: theme.spacing(2),
-          width: 'auto',
-          '&.rc-picker-time-panel-cell-selected': {
-            backgroundColor: 'inherit',
-            border: `1px solid ${theme.colors.action.selectedBorder}`,
-            borderRadius,
-            color: theme.colors.text.primary,
-          },
-
-          '&:hover': {
-            background: optionBgHover,
-            color: theme.colors.text.primary,
-          },
-
-          '&.rc-picker-time-panel-cell-disabled': {
-            color: theme.colors.action.disabledText,
-          },
-        },
-
-        '.rc-picker-time-panel-cell-inner': {
-          color: 'inherit',
-        },
-
-        '&:not(:last-of-type)': {
-          borderRight: `1px solid ${borderColor}`,
-        },
-      },
-
-      '.rc-picker-panel': {
-        boxShadow: theme.shadows.z3,
-        backgroundColor: bgColor,
-        borderColor,
-        borderRadius,
-        overflow: 'hidden',
-      },
-    }),
-    input: css({
-      '&.rc-picker-focused': {
-        border: 'none',
-
-        '.rc-picker-input': getFocusStyles(theme),
-      },
-
-      '&.rc-picker-disabled': {
-        '.rc-picker-input': {
-          backgroundColor: theme.colors.action.disabledBackground,
-          color: theme.colors.action.disabledText,
-          border: `1px solid ${theme.colors.action.disabledBackground}`,
-          '&:focus': {
-            boxShadow: 'none',
-          },
-        },
-      },
-
-      '.rc-picker-input': {
-        backgroundColor: bgColor,
-        borderRadius,
-        borderColor,
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        color: theme.colors.text.primary,
-        height: theme.spacing(4),
-        padding: theme.spacing(0, 1),
-
-        input: {
-          color: 'unset',
-          backgroundColor: 'unset',
-          '&:focus': {
-            outline: 'none',
-          },
-
-          '&::placeholder': {
-            color: theme.colors.text.disabled,
-          },
-        },
-      },
-
-      '.rc-picker-clear': {
-        alignItems: 'center',
-        display: 'flex',
-        insetInlineEnd: 'unset',
-        position: 'relative',
-      },
-    }),
-  };
 };
