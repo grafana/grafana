@@ -24,16 +24,6 @@ const (
 	CosineDistance DistanceMetric = "cosine"
 )
 
-// Truncation tells providers how to handle texts that exceed the model's
-// token limit.
-type Truncation int
-
-const (
-	TruncateNone  Truncation = iota // error if any text exceeds the limit
-	TruncateRight                   // drop the tail
-	TruncateLeft                    // drop the head
-)
-
 /*
 Task is a provider-specific hint. Vertex uses task_type; Bedrock Cohere
 uses input_type. Providers translate generically-named tasks to their own values.
@@ -64,7 +54,6 @@ type Embedding struct {
 type EmbedTextInput struct {
 	Texts     []string
 	Normalize bool
-	Truncate  Truncation
 	Task      Task
 	// Tenant labels metrics for per-caller attribution. Empty is fine.
 	Tenant string
