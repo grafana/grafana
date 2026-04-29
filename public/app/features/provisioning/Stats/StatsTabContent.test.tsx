@@ -104,4 +104,52 @@ describe('StatsTabContent', () => {
     // Git Sync should still render but with the empty state.
     expect(screen.getByText(/no resources are managed by git sync/i)).toBeInTheDocument();
   });
+
+  it('buckets managers with no kind under Unknown rather than Git Sync', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [
+          {
+            id: 'orphan',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    // Git Sync should remain empty since the missing-kind manager is not Repo.
+    expect(screen.getByText(/no resources are managed by git sync/i)).toBeInTheDocument();
+  });
+
+  it('aggregates duplicate other-resource counts across managers of the same kind', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'alerting.grafana.app', resource: 'alertrules', count: 10 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'terraform',
+            id: 'tf-a',
+            stats: [{ group: 'alerting.grafana.app', resource: 'alertrules', count: 4 }],
+          },
+          {
+            kind: 'terraform',
+            id: 'tf-b',
+            stats: [{ group: 'alerting.grafana.app', resource: 'alertrules', count: 6 }],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Both managers report the same resource — the Other providers panel should
+    // render a single aggregated alertrules stat (4 + 6 = 10), not two duplicates.
+    expect(screen.getAllByText('alertrules')).toHaveLength(1);
+  });
 });

@@ -24,6 +24,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isLoading = isLoadingRepos || isLoadingConnections;
+  const isStatsEnabled = !!config.featureToggles.provisioningExport;
 
   const urlTab = searchParams.get('tab');
   const defaultTab = useMemo(() => {
@@ -39,7 +40,10 @@ export default function HomePage() {
     return 'getting-started';
   }, [isLoading, items?.length, connections?.length]);
 
-  const activeTab = urlTab ?? defaultTab;
+  // If the URL points at the stats tab but the feature flag is off (e.g. a stale
+  // bookmark), fall back to the default tab so the bar, content, and action button
+  // stay in sync.
+  const activeTab = urlTab === 'stats' && !isStatsEnabled ? defaultTab : (urlTab ?? defaultTab);
 
   // Handler to update URL when tab changes
   const handleTabChange = (tab: string) => {
@@ -66,7 +70,7 @@ export default function HomePage() {
       },
     ];
 
-    if (config.featureToggles.provisioningExport) {
+    if (isStatsEnabled) {
       tabs.push({
         value: 'stats',
         label: t('provisioning.home-page.tab-stats', 'Stats'),
@@ -75,7 +79,7 @@ export default function HomePage() {
     }
 
     return tabs;
-  }, []);
+  }, [isStatsEnabled]);
 
   const onConfirmDelete = () => {
     deleteAll({});
@@ -89,10 +93,7 @@ export default function HomePage() {
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       case 'stats':
-        if (config.featureToggles.provisioningExport) {
-          return <StatsTabContent />;
-        }
-        return <RepositoryList items={items ?? []} />;
+        return <StatsTabContent />;
       case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Card, EmptyState, Icon, Spinner, Stack, Text } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
   type ManagerStats,
   type ResourceCount,
@@ -32,7 +33,12 @@ function addCounts(target: ResourceTotals, counts: ResourceCount[] | undefined) 
     } else if (DASHBOARD_GROUPS.includes(c.group)) {
       target.dashboards += c.count;
     } else {
-      target.other.push(c);
+      const existing = target.other.find((o) => o.group === c.group && o.resource === c.resource);
+      if (existing) {
+        existing.count += c.count;
+      } else {
+        target.other.push({ ...c });
+      }
     }
   });
 }
@@ -61,7 +67,7 @@ function computeStats(data?: ResourceStats): ComputedStats {
 
   const byKind = new Map<string, BreakdownByKind>();
   data?.managed?.forEach((m: ManagerStats) => {
-    const kind = m.kind || ManagerKind.Repo;
+    const kind = m.kind ?? '';
     let entry = byKind.get(kind);
     if (!entry) {
       entry = { kind, totals: emptyTotals(), managers: [] };
@@ -162,8 +168,8 @@ function GitSyncSection({ gitSync }: { gitSync: BreakdownByKind | null }) {
           </Card>
 
           <Stack direction="column" gap={1}>
-            {gitSync.managers.map((m) => (
-              <Card noMargin key={m.id || 'git-sync'}>
+            {gitSync.managers.map((m, index) => (
+              <Card noMargin key={m.id || `git-sync-${index}`}>
                 <Card.Heading>
                   <Text variant="h5">{m.id || t('provisioning.stats.repository-fallback-name', 'Repository')}</Text>
                 </Card.Heading>
@@ -209,11 +215,13 @@ function OtherProvidersSection({ providers }: { providers: BreakdownByKind[] }) 
             <Card.Description>
               <Stack direction="column" gap={1}>
                 <Text color="secondary">
-                  {t(
-                    'provisioning.stats.other-provider-totals',
-                    '{{count}} resources across {{managerCount}} manager(s)',
-                    { count: p.totals.total, managerCount: p.managers.length }
-                  )}
+                  {t('provisioning.stats.other-provider-resource-count', '{{count}} resource', {
+                    count: p.totals.total,
+                  })}
+                  {' • '}
+                  {t('provisioning.stats.other-provider-manager-count', '{{count}} manager', {
+                    count: p.managers.length,
+                  })}
                 </Text>
                 <Stack direction="row" gap={3} wrap>
                   {p.totals.folders > 0 && (
@@ -263,7 +271,7 @@ export function StatsTabContent() {
   if (isError) {
     return (
       <Alert severity="error" title={t('provisioning.stats.error-title', 'Failed to load provisioning stats')}>
-        {error instanceof Error ? error.message : null}
+        {getErrorMessage(error)}
       </Alert>
     );
   }
