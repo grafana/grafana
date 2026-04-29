@@ -18,6 +18,10 @@ export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: stri
     const events = parseEventsFromFile(file, eventNamespaces);
 
     for (const event of events) {
+      if (eventMap.has(event.fullEventName)) {
+        throw new Error(`Duplicate event name ${event.fullEventName} found in ${file.getFilePath()}`);
+      }
+
       eventMap.set(event.fullEventName, event);
     }
   }
