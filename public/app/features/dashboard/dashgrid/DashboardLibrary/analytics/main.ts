@@ -24,7 +24,6 @@ const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard
 /**
  * Analytics events for the Dashboard Library feature.
  */
-
 export const NewDashboardLibraryInteractions = {
   /** Fired when the library panel finishes rendering and its items are visible. */
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
@@ -59,12 +58,12 @@ export const NewTemplateDashboardInteractions = {
 
   loaded: async (properties: LoadedProperties) => {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
-    NewTemplateDashboardInteractions.loaded({ ...properties, isDashboardTemplatesAssistantEnabled });
+    NewDashboardLibraryInteractions.loaded({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
 
   itemClicked: async (properties: ItemClickedProperties) => {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
-    NewTemplateDashboardInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
+    NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
 };
 
@@ -74,13 +73,13 @@ export const NewTemplateDashboardInteractions = {
 export const NewSuggestedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
 
-  itemClicked: async (properties: ItemClickedProperties) => {
+  itemClicked: async (properties: ItemClickedProperties & { action: 'use_dashboard' | 'assistant' }) => {
     const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewTemplateDashboardInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+    NewDashboardLibraryInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
   },
 
   loaded: async (properties: LoadedProperties) => {
     const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewTemplateDashboardInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+    NewDashboardLibraryInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
   },
 };
