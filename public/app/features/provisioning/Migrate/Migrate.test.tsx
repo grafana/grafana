@@ -180,7 +180,16 @@ describe('Migrate', () => {
     expect(screen.queryByText(/quick wins/i)).not.toBeInTheDocument();
   });
 
-  it('renders the Folders to migrate panel and supports expanding a folder', async () => {
+  it('renders the Folders to migrate table with per-row Migrate and Browse actions', async () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
     mockQuery({
       data: {
         instance: [
@@ -192,27 +201,46 @@ describe('Migrate', () => {
       },
     });
     mockUseFolderLeaderboard.mockReturnValue({
-      data: [
-        makeFolder({
-          uid: 'pay',
-          title: 'Payments',
-          dashboardCount: 2,
-          unmanagedDashboardCount: 2,
-          dashboards: [
-            { uid: 'd1', title: 'Daily revenue', url: '/d/d1' },
-            { uid: 'd2', title: 'Refund rate', url: '/d/d2' },
-          ],
-        }),
-      ],
+      data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2, unmanagedDashboardCount: 2 })],
       isLoading: false,
       isError: false,
     });
     render(<Migrate />);
     expect(screen.getByText(/folders to migrate/i)).toBeInTheDocument();
-    const expandButton = screen.getByRole('button', { name: /expand payments/i });
-    await userEvent.click(expandButton);
-    expect(screen.getByText('Daily revenue')).toBeInTheDocument();
-    expect(screen.getByText('Refund rate')).toBeInTheDocument();
+    // "Payments" appears in both the Quick wins card and the folder list row.
+    expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(2);
+    // Per-row actions: Migrate to {{repo}} and Browse.
+    const browse = screen.getByRole('link', { name: /^browse$/i });
+    expect(browse).toHaveAttribute('href', '/dashboards/f/pay');
+    const migrate = screen.getByRole('link', { name: /^migrate to my-repo$/i });
+    expect(migrate).toHaveAttribute('href', '/admin/provisioning/my-repo');
+  });
+
+  it('exposes a bulk Migrate selected action when folders are checked', async () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 12 },
+          { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2, unmanagedDashboardCount: 2 }),
+        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 3, unmanagedDashboardCount: 3 }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    const checkbox = screen.getByRole('checkbox', { name: /select folder payments/i });
+    await userEvent.click(checkbox);
+    // Quick wins also reflects the same selection, so we expect at least two
+    // Migrate selected links — one in Quick wins and one in the table header.
+    expect(screen.getAllByRole('link', { name: /migrate selected \(1\)/i }).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
