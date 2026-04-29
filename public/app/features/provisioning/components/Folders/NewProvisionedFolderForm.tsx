@@ -16,6 +16,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { renderCommitMessage } from '../../utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -145,7 +146,14 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       ref,
       name: repoName,
       path,
-      message: comment || `Create folder: ${title}`,
+      message:
+        comment ||
+        renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, {
+          action: 'create',
+          resourceKind: 'folder',
+          resourceID: '',
+          title,
+        }),
       body: folderModel,
     });
   };

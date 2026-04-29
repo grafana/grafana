@@ -13210,6 +13210,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: action (create/update/delete/move/rename), resourceKind (dashboard/folder), resourceID, title. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13220,6 +13221,7 @@
       "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-commit-message-template": "Commit message template",
       "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
@@ -13228,6 +13230,7 @@
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
       "option-managed-folder": "Managed folder",
+      "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
     },

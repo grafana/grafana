@@ -259,6 +259,51 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(newDashboard);
   });
 
+  it('uses the repository commit.singleResourceMessageTemplate when the comment is empty', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
+
+    const { user, props } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+    // dashboard.state.title is accessed directly in handleFormSubmit (not via useState)
+    (props.dashboard as unknown as { state: { title: string; meta: object } }).state = {
+      title: 'Test Dashboard',
+      meta: {},
+    };
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
+  });
+
   it('should update an existing dashboard successfully', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

@@ -192,6 +192,24 @@ export function ConfigForm({ data }: ConfigFormProps) {
             placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
           />
         </Field>
+        <Field
+          noMargin
+          label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
+          description={t(
+            'provisioning.config-form.description-commit-message-template',
+            'Default commit message when saving a provisioned resource. Available placeholders: action (create/update/delete/move/rename), resourceKind (dashboard/folder), resourceID, title. Leave empty to use the built-in defaults.'
+          )}
+        >
+          <Input
+            id="commit-message-template"
+            {...register('commit.singleResourceMessageTemplate')}
+            placeholder={t(
+              'provisioning.config-form.placeholder-commit-message-template',
+              'feat(dashboards): {{actionVar}} {{titleVar}}',
+              { actionVar: '{{action}}', titleVar: '{{title}}' }
+            )}
+          />
+        </Field>
         {gitFields && (
           <>
             {usesGitHubApp ? (
