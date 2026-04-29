@@ -394,221 +394,249 @@ func (m *model) released(serverIdx, leaseIdx int) {
 	delete(m.holders[leaseIdx], serverIdx)
 }
 
-func runLeasePBT(t *testing.T, store kv.KV) {
-	newRNG := func(t *testing.T) *rand.Rand {
-		seed := time.Now().UnixNano()
-		if seedStr := os.Getenv("KV_LEASES_SEED"); seedStr != "" {
-			var err error
-			seed, err = strconv.ParseInt(seedStr, 10, 64)
-			require.NoError(t, err, "parsing seed from KV_LEASES_SEED")
-		}
+const (
+	executeSequential = 0
+	executeConcurrent = 1
+)
 
-		t.Logf("using random seed: %d", seed)
-		return rand.New(rand.NewSource(seed))
+// pbtTTL is large relative to any plausible iteration length so that no
+// lease expires mid-workload. The model does not track per-lease expiration so,
+// without this margin, a real expiration plus reacquire would look like a
+// violation.
+const pbtTTL = 3 * time.Minute
+
+// newRNG returns the random source used by the property-based test, seeded
+// from KV_LEASES_SEED if set so failing runs can be reproduced.
+func newRNG(t *testing.T) *rand.Rand {
+	seed := time.Now().UnixNano()
+	if seedStr := os.Getenv("KV_LEASES_SEED"); seedStr != "" {
+		var err error
+		seed, err = strconv.ParseInt(seedStr, 10, 64)
+		require.NoError(t, err, "parsing seed from KV_LEASES_SEED")
+	}
+	t.Logf("using random seed: %d", seed)
+	return rand.New(rand.NewSource(seed))
+}
+
+// numBetween returns a uniformly-random int in [low, high].
+func numBetween(rng *rand.Rand, low, high int) int {
+	return low + rng.Intn(high-low+1)
+}
+
+// candidateReleases lists currently-held (server, lease) pairs from the
+// generator's optimistic model as candidate Release ops, in deterministic order.
+func candidateReleases(numLeases int, heldByLease map[int]int) []operation {
+	var out []operation
+	for leaseIdx := range numLeases {
+		if serverIdx, ok := heldByLease[leaseIdx]; ok {
+			out = append(out, operation{
+				kind:      opRelease,
+				serverIdx: serverIdx,
+				leaseIdx:  leaseIdx,
+			})
+		}
+	}
+	return out
+}
+
+// leasePBT carries the state shared by the generator and the workload runner
+// across quick.Check iterations.
+type leasePBT struct {
+	t          *testing.T
+	ctx        context.Context
+	managers   []*lease.Manager
+	numServers int
+	numLeases  int
+
+	// Per-iteration state, reset at the top of RunWorkload.
+	iteration int
+	held      []map[int]*lease.Lease
+	m         *model
+}
+
+func newLeasePBT(t *testing.T, store kv.KV, rng *rand.Rand) *leasePBT {
+	numServers := numBetween(rng, 3, 10)
+	numLeases := numBetween(rng, 1, 10)
+	t.Logf("servers: %d, leases: %d", numServers, numLeases)
+
+	managers := make([]*lease.Manager, numServers)
+	for i := range numServers {
+		managers[i] = lease.NewManager(store, fmt.Sprintf("server-%d", i))
+	}
+	return &leasePBT{
+		t:          t,
+		ctx:        t.Context(),
+		managers:   managers,
+		numServers: numServers,
+		numLeases:  numLeases,
+	}
+}
+
+// Generator picks ops + mode randomly and feeds them to quick.Check.
+//
+// Generator-side optimistic model: leaseIdx -> serverIdx for leases the
+// generator believes are currently held. Lets us pick Release ops against
+// pairs that have a real chance of being held by the runner. Without this,
+// ~half of all ops would be no-op Releases on (server, lease) pairs that
+// were never Acquired — those don't exercise the protocol.
+//
+// In sequential mode this prediction matches the runner exactly. In
+// concurrent mode races may invalidate some predictions; the runner skips
+// Releases without a matching local handle.
+func (p *leasePBT) Generator(values []reflect.Value, rng *rand.Rand) {
+	numOps := numBetween(rng, 5, 10)
+	mode := executeConcurrent
+	if rng.Float64() < 0.5 {
+		mode = executeSequential
 	}
 
-	numBetween := func(rng *rand.Rand, low, high int) int {
-		return low + rng.Intn(high-low+1)
+	heldByLease := make(map[int]int)
+
+	ops := make([]operation, numOps)
+	for i := range numOps {
+		if opKind(rng.Intn(2)) == opRelease {
+			if held := candidateReleases(p.numLeases, heldByLease); len(held) > 0 {
+				ops[i] = held[rng.Intn(len(held))]
+				delete(heldByLease, ops[i].leaseIdx)
+				continue
+			}
+			// Nothing held yet: fall through to an Acquire instead of
+			// emitting a guaranteed-no-op Release.
+		}
+
+		op := operation{
+			kind:      opAcquire,
+			serverIdx: rng.Intn(p.numServers),
+			leaseIdx:  rng.Intn(p.numLeases),
+		}
+		ops[i] = op
+		// Optimistic update: only record as held if no other server
+		// already holds the lease in our model.
+		if _, taken := heldByLease[op.leaseIdx]; !taken {
+			heldByLease[op.leaseIdx] = op.serverIdx
+		}
 	}
 
-	const (
-		executeSequential = 0
-		executeConcurrent = 1
-	)
+	values[0] = reflect.ValueOf(mode)
+	values[1] = reflect.ValueOf(ops)
+}
 
-	// pbtTTL is large relative to any plausible iteration length so that
-	// no lease expires mid-workload. The model does not track per-lease
-	// expiration — without this margin, a real expiration plus reacquire
-	// would look like a violation.
-	const pbtTTL = 1 * time.Minute
+// leaseName is the KV-side name of the leaseIdx-th lease in the current
+// iteration. The iteration prefix isolates rounds of quick.Check from each
+// other.
+func (p *leasePBT) leaseName(leaseIdx int) string {
+	return fmt.Sprintf("iter-%d/lease-%d", p.iteration, leaseIdx)
+}
 
-	t.Run("randomized workload", func(t *testing.T) {
-		rng := newRNG(t)
-		numServers := numBetween(rng, 3, 10)
-		numLeases := numBetween(rng, 1, 10)
-		t.Logf("servers: %d, leases: %d", numServers, numLeases)
+// RunWorkload runs ops against the managers (sequentially or per-server
+// concurrent) and returns true if no violation was observed. Called by
+// quick.Check once per iteration.
+func (p *leasePBT) RunWorkload(mode int, ops []operation) bool {
+	p.iteration++
+	p.t.Logf("iteration %d: mode=%d ops=%d", p.iteration, mode, len(ops))
 
-		managers := make([]*lease.Manager, numServers)
-		for i := range numServers {
-			managers[i] = lease.NewManager(store, fmt.Sprintf("server-%d", i))
+	// Per-server held-lease handles. Each server's map is touched only by
+	// the goroutine running that server's ops (or by the single
+	// sequential-mode goroutine), so it needs no synchronization.
+	p.held = make([]map[int]*lease.Lease, p.numServers)
+	for i := range p.numServers {
+		p.held[i] = make(map[int]*lease.Lease)
+	}
+	p.m = &model{holders: make(map[int]map[int]struct{})}
+
+	var violated atomic.Bool
+	if mode == executeSequential {
+		// Walk the trace in generated order.
+		for _, op := range ops {
+			if p.runOp(op.serverIdx, op) {
+				violated.Store(true)
+				break
+			}
 		}
-
-		var iteration int
-
-		generator := func(values []reflect.Value, rng *rand.Rand) {
-			numOps := numBetween(rng, 5, 10)
-			mode := executeConcurrent
-			if rng.Float64() < 0.5 {
-				mode = executeSequential
-			}
-
-			// Generator-side optimistic model: leaseIdx -> serverIdx for
-			// leases the generator believes are currently held. Lets us
-			// pick Release ops against pairs that have a real chance of
-			// being held by the runner. Without this, ~half of all ops
-			// would be no-op Releases on (server, lease) pairs that were
-			// never Acquired — those don't exercise the protocol.
-			//
-			// In sequential mode this prediction matches the runner
-			// exactly. In concurrent mode races may invalidate some
-			// predictions; the runner skips Releases without a matching
-			// local handle.
-			heldByLease := make(map[int]int)
-
-			// heldOps lists currently-held (server, lease) pairs as
-			// candidate Release ops, in deterministic order so the same
-			// seed produces the same sequence (Go map iteration is
-			// randomized independently of the math/rand source).
-			heldOps := func() []operation {
-				var out []operation
-				for leaseIdx := range numLeases {
-					if serverIdx, ok := heldByLease[leaseIdx]; ok {
-						out = append(out, operation{
-							kind:      opRelease,
-							serverIdx: serverIdx,
-							leaseIdx:  leaseIdx,
-						})
-					}
-				}
-				return out
-			}
-
-			ops := make([]operation, numOps)
-			for i := range numOps {
-				if opKind(rng.Intn(2)) == opRelease {
-					if held := heldOps(); len(held) > 0 {
-						ops[i] = held[rng.Intn(len(held))]
-						delete(heldByLease, ops[i].leaseIdx)
-						continue
-					}
-					// Nothing held yet: fall through to an Acquire instead
-					// of emitting a guaranteed-no-op Release.
-				}
-
-				op := operation{
-					kind:      opAcquire,
-					serverIdx: rng.Intn(numServers),
-					leaseIdx:  rng.Intn(numLeases),
-				}
-				ops[i] = op
-				// Optimistic update: only record as held if no other
-				// server already holds the lease in our model.
-				if _, taken := heldByLease[op.leaseIdx]; !taken {
-					heldByLease[op.leaseIdx] = op.serverIdx
-				}
-			}
-
-			values[0] = reflect.ValueOf(mode)
-			values[1] = reflect.ValueOf(ops)
+	} else {
+		// Per-server goroutines: ops within a server run in generated
+		// order; servers race each other.
+		opsByServer := make([][]operation, p.numServers)
+		for _, op := range ops {
+			opsByServer[op.serverIdx] = append(opsByServer[op.serverIdx], op)
 		}
-
-		runWorkload := func(mode int, operations []operation) bool {
-			ctx := t.Context()
-			iteration++
-			t.Logf("iteration %d: mode=%d ops=%d", iteration, mode, len(operations))
-			leaseName := func(i int) string {
-				return fmt.Sprintf("iter-%d/lease-%d", iteration, i)
-			}
-
-			// Per-server held-lease handles. Each server's map is touched
-			// only by the goroutine running that server's ops (or by the
-			// single sequential-mode goroutine), so it needs no
-			// synchronization.
-			held := make([]map[int]*lease.Lease, numServers)
-			for i := range numServers {
-				held[i] = make(map[int]*lease.Lease)
-			}
-
-			m := &model{holders: make(map[int]map[int]struct{})}
-			var violated atomic.Bool
-
-			// runOp executes one operation against the given server,
-			// updates the model, and returns whether a violation was
-			// observed. Safe to call concurrently as long as no two callers
-			// share a serverIdx (model's mutations are mutex-protected).
-			runOp := func(serverIdx int, op operation) (violation bool) {
-				switch op.kind {
-				case opAcquire:
-					l, err := managers[serverIdx].Acquire(ctx, leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
-					if err != nil {
-						// Errors are only expected if the lease is already
-						// held by another server.
-						if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
-							return false
-						}
-						t.Logf("violation: server %d failed to acquire lease %d with unexpected error: %v",
-							serverIdx, op.leaseIdx, err)
-						return true
+		var wg sync.WaitGroup
+		for i := range p.numServers {
+			wg.Go(func() {
+				for _, op := range opsByServer[i] {
+					if p.runOp(i, op) {
+						violated.Store(true)
+						return
 					}
-					held[serverIdx][op.leaseIdx] = l
-					if !m.acquired(serverIdx, op.leaseIdx) {
-						t.Logf("violation: server %d acquired lease %d while another server still holds it",
-							serverIdx, op.leaseIdx)
-						return true
-					}
-				case opRelease:
-					l, ok := held[serverIdx][op.leaseIdx]
-					if !ok {
-						// This server doesn't believe it holds the lease,
-						// so there's nothing to release.
-						return false
-					}
-					if err := managers[serverIdx].Release(ctx, l); err != nil {
-						t.Logf("violation: server %d failed to release: %v",
-							serverIdx, err)
-						return true
-					}
-					delete(held[serverIdx], op.leaseIdx)
-					m.released(serverIdx, op.leaseIdx)
 				}
+			})
+		}
+		wg.Wait()
+	}
+
+	// Drain anything still held so the next iteration starts clean, even
+	// if the test failed mid-run.
+	for serverIdx, leases := range p.held {
+		for _, l := range leases {
+			_ = p.managers[serverIdx].Release(p.ctx, l)
+		}
+	}
+
+	return !violated.Load()
+}
+
+// runOp executes one operation against the given server, updates the model,
+// and returns whether a violation was observed. Safe to call concurrently
+// as long as no two callers share a serverIdx (model's mutations are
+// mutex-protected; held[serverIdx] is touched only by serverIdx's caller).
+func (p *leasePBT) runOp(serverIdx int, op operation) (violation bool) {
+	switch op.kind {
+	case opAcquire:
+		l, err := p.managers[serverIdx].Acquire(p.ctx, p.leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
+		if err != nil {
+			// Errors are only expected if the lease is already held by
+			// another server.
+			if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 				return false
 			}
-
-			if mode == executeSequential {
-				// Walk the trace in generated order.
-				for _, op := range operations {
-					if runOp(op.serverIdx, op) {
-						violated.Store(true)
-						break
-					}
-				}
-			} else {
-				// Per-server goroutines: ops within a server run in
-				// generated order; servers race each other.
-				opsByServer := make([][]operation, numServers)
-				for _, op := range operations {
-					opsByServer[op.serverIdx] = append(opsByServer[op.serverIdx], op)
-				}
-				var wg sync.WaitGroup
-				for i := range numServers {
-					wg.Go(func() {
-						for _, op := range opsByServer[i] {
-							if runOp(i, op) {
-								violated.Store(true)
-								return
-							}
-						}
-					})
-				}
-				wg.Wait()
-			}
-
-			// Drain anything still held so the next iteration starts
-			// clean, even if the test failed mid-run.
-			for serverIdx, leases := range held {
-				for _, l := range leases {
-					_ = managers[serverIdx].Release(ctx, l)
-				}
-			}
-
-			return !violated.Load()
+			p.t.Logf("violation: server %d failed to acquire lease %d with unexpected error: %v",
+				serverIdx, op.leaseIdx, err)
+			return true
 		}
+		p.held[serverIdx][op.leaseIdx] = l
+		if !p.m.acquired(serverIdx, op.leaseIdx) {
+			p.t.Logf("violation: server %d acquired lease %d while another server still holds it",
+				serverIdx, op.leaseIdx)
+			return true
+		}
+	case opRelease:
+		l, ok := p.held[serverIdx][op.leaseIdx]
+		if !ok {
+			// This server doesn't believe it holds the lease, so there's
+			// nothing to release.
+			return false
+		}
+		if err := p.managers[serverIdx].Release(p.ctx, l); err != nil {
+			p.t.Logf("violation: server %d failed to release: %v",
+				serverIdx, err)
+			return true
+		}
+		delete(p.held[serverIdx], op.leaseIdx)
+		p.m.released(serverIdx, op.leaseIdx)
+	}
+	return false
+}
+
+func runLeasePBT(t *testing.T, store kv.KV) {
+	t.Run("randomized workload", func(t *testing.T) {
+		rng := newRNG(t)
+		pbt := newLeasePBT(t, store, rng)
 
 		require.NoError(t, quick.Check(
-			runWorkload, &quick.Config{
+			pbt.RunWorkload, &quick.Config{
 				MaxCount: 10,
 				Rand:     rng,
-				Values:   generator,
+				Values:   pbt.Generator,
 			}),
 		)
 	})
