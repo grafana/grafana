@@ -73,16 +73,16 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 }
 
 func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
-	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
-	if err != nil {
-		return nil, err
-	}
 	if postable.HasMimirIntegrations() {
-		mimir, err := PostableMimirReceiverToIntegrations(postable.Receiver)
+		p, err := PostableMimirReceiverToPostableGrafanaReceiver(postable)
 		if err != nil {
 			return nil, err
 		}
-		integrations = append(integrations, mimir...)
+		postable = p
+	}
+	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
+	if err != nil {
+		return nil, err
 	}
 	r := &models.Receiver{
 		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
@@ -128,6 +128,54 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 	}
 
 	return integrations, nil
+}
+
+// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to apimodels.PostableGrafanaReceiver.
+// If receiver does not have any legacy receivers, returns the original receiver.
+// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
+func PostableMimirReceiverToPostableGrafanaReceiver(r *apimodels.PostableApiReceiver) (*apimodels.PostableApiReceiver, error) {
+	if !r.HasMimirIntegrations() {
+		return r, nil
+	}
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := &apimodels.PostableApiReceiver{
+		Receiver: apimodels.Receiver{
+			Name: r.Name,
+		},
+		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*apimodels.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
+		},
+	}
+	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
+	for idx, config := range v0 {
+		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(config, r.Name, idx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
+		}
+		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+	}
+	return result, nil
+}
+
+// MimirIntegrationConfigToPostableGrafanaReceiver Converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
+func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*definition.PostableGrafanaReceiver, error) {
+	raw, err := config.ConfigJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &definition.PostableGrafanaReceiver{
+		UID:                   fmt.Sprintf("%s-%d", models.NameToUid(receiverName), idx),
+		Name:                  receiverName,
+		Type:                  string(config.Schema.Type()),
+		Version:               string(config.Schema.Version),
+		DisableResolveMessage: false, // V0 ignore this flag as they have their own SendResolved one.
+		Settings:              raw,
+		SecureSettings:        nil,
+	}, nil
 }
 
 func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
