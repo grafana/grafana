@@ -8,7 +8,6 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 
@@ -20,9 +19,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      newVizSuggestions: true,
-    },
   },
 }));
 
@@ -47,10 +43,6 @@ describe('VisualizationSuggestionCard', () => {
     hash: 'ts-hash',
     options: {},
   };
-
-  afterEach(() => {
-    config.featureToggles.newVizSuggestions = true;
-  });
 
   it('should render a panel renderer card when no imgSrc is provided', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
@@ -81,14 +73,6 @@ describe('VisualizationSuggestionCard', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={suggestion} width={200} />);
 
     expect(previewModifier).toHaveBeenCalled();
-  });
-
-  it('should wrap content in a Tooltip when newVizSuggestions feature flag is disabled', () => {
-    config.featureToggles.newVizSuggestions = false;
-
-    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={200} />);
-
-    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
   });
 
   it('should render successfully when isSelected is true', () => {
