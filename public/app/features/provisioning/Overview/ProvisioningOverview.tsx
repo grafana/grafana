@@ -95,6 +95,17 @@ function providersThatSupport(group: string): string[] {
     .map(([kind]) => kind);
 }
 
+function providerSupports(kind: string, group: string): boolean {
+  const support = PROVIDER_SUPPORT[kind];
+  if (!support) {
+    return false;
+  }
+  if (support.groups === '*') {
+    return true;
+  }
+  return support.groups.includes(group);
+}
+
 interface BreakdownByKind {
   kind: string;
   totals: { total: number; folders: number; dashboards: number };
@@ -401,13 +412,17 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
   // managed count under a specific lens.
   const selectedCount = isAll ? totals.managed : totals.selected;
 
+  const totalLabel = isAll
+    ? t('provisioning.stats.summary-total', 'Total resources')
+    : t('provisioning.stats.summary-supported', 'Supported resources');
+
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="row" gap={1.5} wrap justifyContent="center">
         <ProviderStat
           segmentKey="total"
           big={totals.instanceTotal.toLocaleString()}
-          label={t('provisioning.stats.summary-total', 'Total resources')}
+          label={totalLabel}
           hoveredKey={hoveredKey}
           onHover={setHoveredKey}
         />
@@ -445,7 +460,7 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
                 value: totals.other,
                 total: totals.instanceTotal,
               })}
-              label={t('provisioning.stats.legend-other', 'Other tools')}
+              label={t('provisioning.stats.legend-others', 'Others')}
               colorHex={theme.colors.info.main}
               hoveredKey={hoveredKey}
               onHover={setHoveredKey}
@@ -725,6 +740,13 @@ function FiltersBar({
 
 function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): GroupBreakdown[] {
   let result = breakdowns.filter((b) => b.total > 0);
+  // When a specific provider is picked, restrict the page to the resources
+  // that provider can actually manage. The cards then read as "of the
+  // supported resources, this many are managed by the provider, others, or
+  // unmanaged".
+  if (filters.providerFilter !== 'all') {
+    result = result.filter((b) => providerSupports(filters.providerFilter, b.group));
+  }
   if (filters.selectedTypes.length > 0) {
     result = result.filter((b) => filters.selectedTypes.includes(rowKey(b)));
   }
@@ -791,7 +813,7 @@ function ResourceTypesSection({
     if (providerFilter !== 'all') {
       cols.push({
         id: 'others',
-        header: t('provisioning.stats.column-others', 'Other tools'),
+        header: t('provisioning.stats.column-others', 'Others'),
         sortType: (a, b) => otherFor(a.original) - otherFor(b.original),
         cell: ({ row }) => {
           const value = otherFor(row.original);

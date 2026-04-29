@@ -449,7 +449,43 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
-  it('adds the Other tools column to the table when a specific provider is selected', async () => {
+  it('limits the table and counts to supported resources when a provider is selected', async () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 1 },
+          { group: 'alerting.grafana.app', resource: 'alertrules', count: 5 },
+          { group: 'user-storage.grafana.app', resource: 'user-storage', count: 1 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // Initial "All" lens shows everything.
+    expect(screen.getByText('alertrules')).toBeInTheDocument();
+    expect(screen.getByText('user-storage')).toBeInTheDocument();
+
+    // Switching to Git Sync narrows to only the resources Git Sync supports.
+    await userEvent.click(screen.getByLabelText(/filter resource types by provider/i));
+    await userEvent.click(screen.getByText('Git Sync', { selector: '[role="option"] *' }));
+
+    // Folders + Dashboards are the only supported types under Git Sync.
+    expect(screen.getByText('Folders')).toBeInTheDocument();
+    expect(screen.getByText('Dashboards')).toBeInTheDocument();
+    // Unsupported types disappear from the table.
+    expect(screen.queryByText('alertrules')).not.toBeInTheDocument();
+    expect(screen.queryByText('user-storage')).not.toBeInTheDocument();
+    // Total card relabels to "Supported resources" and counts only the
+    // supported types: 1 folder + 1 dashboard = 2.
+    expect(screen.getByText('Supported resources')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+  });
+
+  it('adds an Others column to the table when a specific provider is selected', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
@@ -472,14 +508,14 @@ describe('ProvisioningOverview', () => {
     render(<ProvisioningOverview />);
 
     // No Other tools column under the "All" lens.
-    expect(screen.queryByRole('columnheader', { name: /other tools/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /^others$/i })).not.toBeInTheDocument();
 
     // Switch the lens to Terraform.
     await userEvent.click(screen.getByLabelText(/filter resource types by provider/i));
     await userEvent.click(screen.getByText('Terraform', { selector: '[role="option"] *' }));
 
     // Now the table picks up the Other tools column too.
-    expect(screen.getByRole('columnheader', { name: /other tools/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^others$/i })).toBeInTheDocument();
   });
 
   it('renders a per-row coverage bar instead of the old status icon', () => {
