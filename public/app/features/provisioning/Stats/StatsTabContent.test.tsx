@@ -277,7 +277,29 @@ describe('StatsTabContent', () => {
     expect(screen.getAllByText('45%').length).toBeGreaterThan(0);
   });
 
-  it('lists every resource type once in the All resources section', () => {
+  it('shows supported-by chips per row in Other resource types', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'datasource.grafana.app', resource: 'datasources', count: 5 },
+          { group: 'alerting.grafana.app', resource: 'alertrules', count: 7 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Both datasources and alert rules should list Terraform and Classic file
+    // provisioning as supporting providers via chips in the row.
+    const terraformChips = screen.getAllByText('Terraform');
+    expect(terraformChips.length).toBeGreaterThan(1);
+    const classicChips = screen.getAllByText('File provisioning (classic)');
+    expect(classicChips.length).toBeGreaterThan(0);
+  });
+
+  it('lists every resource type once in the Other resource types section', () => {
     mockQuery({
       data: {
         instance: [
@@ -302,7 +324,7 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    expect(screen.getByText('All resource types')).toBeInTheDocument();
+    expect(screen.getByText('Other resource types')).toBeInTheDocument();
     // Each resource type should appear exactly once in the table even when
     // multiple managers of the same kind report it.
     expect(screen.getAllByText('alertrules')).toHaveLength(1);

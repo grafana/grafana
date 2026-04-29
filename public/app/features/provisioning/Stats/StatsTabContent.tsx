@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Card, EmptyState, Icon, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Card, EmptyState, Icon, Select, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
   type ManagerStats,
@@ -18,6 +18,67 @@ import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
 const GIT_SYNC_SUPPORTED_GROUPS = [...FOLDER_GROUPS, ...DASHBOARD_GROUPS];
+
+const CLASSIC_FILE_PROVISIONING = 'classic-file-provisioning';
+const GRAFANA_INTERNAL = 'grafana';
+
+/**
+ * What each provisioning manager can manage. Sourced from the Grafana docs
+ * (`docs/sources/`) and the supported-resources lists in
+ * `pkg/registry/apis/provisioning/resources/client.go`. Use `'*'` for
+ * managers that can manage anything exposed via the Grafana Kubernetes API.
+ */
+const PROVIDER_SUPPORT: Record<string, { groups: string[] | '*' }> = {
+  [ManagerKind.Repo]: {
+    groups: GIT_SYNC_SUPPORTED_GROUPS,
+  },
+  [CLASSIC_FILE_PROVISIONING]: {
+    // YAML/JSON config under `provisioning/`: dashboards, datasources,
+    // alerting, access control. Deprecated path; documented in
+    // docs/sources/administration/provisioning/.
+    groups: [...DASHBOARD_GROUPS, 'datasource.grafana.app', 'alerting.grafana.app', 'access-control.grafana.app'],
+  },
+  [ManagerKind.Terraform]: {
+    // Grafana Terraform provider — broad coverage of Grafana resources.
+    groups: [
+      ...FOLDER_GROUPS,
+      ...DASHBOARD_GROUPS,
+      'datasource.grafana.app',
+      'alerting.grafana.app',
+      'notifications.grafana.app',
+    ],
+  },
+  [ManagerKind.Kubectl]: {
+    // The Kubernetes API surface covers any Grafana K8s-native resource.
+    groups: '*',
+  },
+  [ManagerKind.Plugin]: {
+    // Plugin-bundled resources are typically dashboards.
+    groups: DASHBOARD_GROUPS,
+  },
+  [GRAFANA_INTERNAL]: {
+    // Internal Grafana-managed resources (system roles etc.); not surfaced
+    // to users in this view.
+    groups: [],
+  },
+};
+
+function providerSupports(kind: string, group: string): boolean {
+  const support = PROVIDER_SUPPORT[kind];
+  if (!support) {
+    return false;
+  }
+  if (support.groups === '*') {
+    return true;
+  }
+  return support.groups.includes(group);
+}
+
+function providersThatSupport(group: string): string[] {
+  return Object.entries(PROVIDER_SUPPORT)
+    .filter(([, info]) => info.groups === '*' || info.groups.includes(group))
+    .map(([kind]) => kind);
+}
 
 interface BreakdownByKind {
   kind: string;
@@ -651,57 +712,107 @@ function ManagerIdentityList({
   );
 }
 
-function AllResourcesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+function OtherResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
-  // Drop the seeded zero-count entries — they're useful in the migration
-  // readiness section but would just be noise here.
-  const visible = breakdowns.filter((b) => b.total > 0);
-  if (visible.length === 0) {
+  const [providerFilter, setProviderFilter] = useState<string>('all');
+
+  // Folders and dashboards live in their own section above; everything else
+  // ends up here. Drop seeded zero-count rows so we don't show empty types.
+  const baseRows = useMemo(() => breakdowns.filter((b) => !b.isGitSyncSupported && b.total > 0), [breakdowns]);
+
+  const filterOptions: Array<SelectableValue<string>> = useMemo(
+    () => [
+      { value: 'all', label: t('provisioning.stats.filter-all', 'All providers') },
+      ...Object.keys(PROVIDER_SUPPORT).map((kind) => ({ value: kind, label: kindLabel(kind) })),
+    ],
+    []
+  );
+
+  const rows = useMemo(() => {
+    if (providerFilter === 'all') {
+      return baseRows;
+    }
+    return baseRows.filter((b) => providerSupports(providerFilter, b.group));
+  }, [baseRows, providerFilter]);
+
+  if (baseRows.length === 0) {
     return null;
   }
+
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="row" gap={1} alignItems="center">
         <Icon name="list-ul" />
         <Text variant="h4">
-          <Trans i18nKey="provisioning.stats.all-resources-heading">All resource types</Trans>
+          <Trans i18nKey="provisioning.stats.other-resources-heading">Other resource types</Trans>
         </Text>
       </Stack>
-      <div className={styles.allResourcesGrid} role="table">
-        <div className={styles.allResourcesHeader} role="row">
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.column-resource">Resource</Trans>
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.column-total">Total</Trans>
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.column-git-sync">Git Sync</Trans>
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.column-other">Other</Trans>
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.column-unmanaged">Unmanaged</Trans>
-          </Text>
+      <Text color="secondary" variant="bodySmall">
+        <Trans i18nKey="provisioning.stats.other-resources-description">
+          Resources beyond folders and dashboards. Different provisioning tools support different types — pick one to
+          see only what it can manage.
+        </Trans>
+      </Text>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
+        </Text>
+        <div className={styles.providerSelect}>
+          <Select
+            value={providerFilter}
+            options={filterOptions}
+            onChange={(v) => setProviderFilter(v.value ?? 'all')}
+            aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
+          />
         </div>
-        {visible.map((b) => (
-          <div key={`${b.group}/${b.resource}`} className={styles.allResourcesRow} role="row">
-            <Stack direction="row" gap={1} alignItems="center">
-              <Text>{b.label}</Text>
-              {b.isGitSyncSupported && (
-                <Text color="secondary" variant="bodySmall">
-                  <Trans i18nKey="provisioning.stats.git-sync-supported-label">Supported</Trans>
-                </Text>
-              )}
-            </Stack>
-            <Text>{b.total.toLocaleString()}</Text>
-            <Text color={b.gitSyncCount > 0 ? 'success' : 'secondary'}>{b.gitSyncCount.toLocaleString()}</Text>
-            <Text color={b.otherManagedCount > 0 ? 'info' : 'secondary'}>{b.otherManagedCount.toLocaleString()}</Text>
-            <Text color={b.unmanagedCount > 0 ? 'warning' : 'secondary'}>{b.unmanagedCount.toLocaleString()}</Text>
+      </Stack>
+      {rows.length === 0 ? (
+        <Alert
+          severity="info"
+          title={t('provisioning.stats.filter-empty-title', '{{provider}} doesn’t manage any other resource types', {
+            provider: kindLabel(providerFilter),
+          })}
+        >
+          <Trans i18nKey="provisioning.stats.filter-empty-description">
+            For folders and dashboards see the section above.
+          </Trans>
+        </Alert>
+      ) : (
+        <div className={styles.otherResourcesGrid} role="table">
+          <div className={styles.otherResourcesHeader} role="row">
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.column-resource">Resource</Trans>
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.column-total">Total</Trans>
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.column-managed">Managed</Trans>
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.column-unmanaged">Unmanaged</Trans>
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.column-supported-by">Supported by</Trans>
+            </Text>
           </div>
-        ))}
-      </div>
+          {rows.map((b) => (
+            <div key={`${b.group}/${b.resource}`} className={styles.otherResourcesRow} role="row">
+              <Text>{b.label}</Text>
+              <Text>{b.total.toLocaleString()}</Text>
+              <Text color={b.otherManagedCount > 0 ? 'info' : 'secondary'}>{b.otherManagedCount.toLocaleString()}</Text>
+              <Text color={b.unmanagedCount > 0 ? 'warning' : 'secondary'}>{b.unmanagedCount.toLocaleString()}</Text>
+              <Stack direction="row" gap={0.5} wrap>
+                {providersThatSupport(b.group).map((kind) => (
+                  <span key={kind} className={styles.kindChip}>
+                    <Text variant="bodySmall">{kindLabel(kind)}</Text>
+                  </span>
+                ))}
+              </Stack>
+            </div>
+          ))}
+        </div>
+      )}
     </Stack>
   );
 }
@@ -749,7 +860,7 @@ export function StatsTabContent() {
       <FoldersAndDashboardsSection breakdowns={computed.groupBreakdowns} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
-      <AllResourcesSection breakdowns={computed.groupBreakdowns} />
+      <OtherResourceTypesSection breakdowns={computed.groupBreakdowns} />
     </Stack>
   );
 }
@@ -841,16 +952,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     background: theme.colors.warning.main,
   }),
-  allResourcesGrid: css({
+  otherResourcesGrid: css({
     display: 'grid',
-    gridTemplateColumns: 'minmax(0, 2fr) repeat(4, minmax(0, 1fr))',
+    gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 2fr)',
     rowGap: theme.spacing(1),
     columnGap: theme.spacing(2),
+    alignItems: 'center',
   }),
-  allResourcesHeader: css({
+  otherResourcesHeader: css({
     display: 'contents',
   }),
-  allResourcesRow: css({
+  otherResourcesRow: css({
     display: 'contents',
+  }),
+  providerSelect: css({
+    minWidth: 220,
   }),
 });
