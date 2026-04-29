@@ -257,4 +257,3 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
     undo: () => updatePanelTitleState(panel, prevTitle),
   });
 }
-
