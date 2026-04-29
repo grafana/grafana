@@ -68,13 +68,6 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     recommended: true,
   },
   {
-    key: 'file-system',
-    kind: CLASSIC_FILE_PROVISIONING,
-    label: 'File System',
-    description: 'Provision from local YAML or JSON files on the Grafana host.',
-    icon: 'file-alt',
-  },
-  {
     key: 'terraform',
     kind: ManagerKind.Terraform,
     label: 'Terraform',
@@ -82,11 +75,18 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     initial: 'T',
   },
   {
-    key: 'cli',
+    key: 'gcx',
     kind: ManagerKind.Kubectl,
-    label: 'CLI',
-    description: 'Apply manifests with kubectl, gcx, or grafanactl.',
-    initial: 'C',
+    label: 'GCX',
+    description: 'Apply manifests from the Grafana command line.',
+    initial: 'G',
+  },
+  {
+    key: 'file-system',
+    kind: CLASSIC_FILE_PROVISIONING,
+    label: 'File System',
+    description: 'Provision from local YAML or JSON files on the Grafana host.',
+    icon: 'file-alt',
   },
 ];
 
@@ -203,7 +203,7 @@ function kindLabel(kind: string): string {
     case ManagerKind.Terraform:
       return t('provisioning.stats.manager-kind-terraform', 'Terraform');
     case ManagerKind.Kubectl:
-      return t('provisioning.stats.manager-kind-cli', 'CLI');
+      return t('provisioning.stats.manager-kind-gcx', 'GCX');
     case ManagerKind.Plugin:
       return t('provisioning.stats.manager-kind-plugin', 'Plugin');
     case CLASSIC_FILE_PROVISIONING:

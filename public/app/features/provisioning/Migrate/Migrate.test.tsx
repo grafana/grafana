@@ -208,7 +208,7 @@ describe('Migrate', () => {
     expect(screen.getByRole('link', { name: /open repository/i })).toBeInTheDocument();
   });
 
-  it('renders the Tooling support panel as tiles ordered Git Sync, File System, Terraform, CLI', () => {
+  it('renders the Tooling support panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -228,17 +228,17 @@ describe('Migrate', () => {
     expect(screen.getByText(/tooling support/i)).toBeInTheDocument();
     // The four supported-tool tiles appear, each by its label.
     expect(screen.getAllByText(/^git sync$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/^file system$/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^terraform$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/^cli$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^gcx$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^file system$/i)).toBeInTheDocument();
     // Tile DOM order should match the supported-tools list.
     const firstIndex = (label: RegExp) => {
       const el = screen.getAllByText(label)[0];
       return Array.from(document.body.querySelectorAll('*')).indexOf(el as Element);
     };
-    expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^file system$/i));
-    expect(firstIndex(/^file system$/i)).toBeLessThan(firstIndex(/^terraform$/i));
-    expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^cli$/i));
+    expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^terraform$/i));
+    expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^gcx$/i));
+    expect(firstIndex(/^gcx$/i)).toBeLessThan(firstIndex(/^file system$/i));
     // Git Sync is flagged as recommended on its tile.
     expect(screen.getByText(/^recommended$/i)).toBeInTheDocument();
     // Terraform managed count surfaces on its tile.
