@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { listFolders } from 'app/features/browse-dashboards/api/services';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
@@ -84,8 +86,17 @@ function aggregate(
   // descendant folder and dashboard. The dashboard count for a folder is the
   // number of dashboards anywhere in its subtree, so we walk every dashboard's
   // ancestor path and increment the counter for each ancestor.
+  //
+  // Dashboards that sit directly under the General root (empty ancestor path)
+  // are still migration targets — they roll up into a synthetic "General"
+  // row that picks them all up in one shot.
   const dashboardCountByFolder = new Map<string, number>();
+  let rootDashboardCount = 0;
   for (const dash of dashboards) {
+    if (dash.ancestors.length === 0) {
+      rootDashboardCount += 1;
+      continue;
+    }
     for (const ancestorUid of dash.ancestors) {
       dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
     }
@@ -97,6 +108,14 @@ function aggregate(
     managedBy: folder.managedBy,
     dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
   }));
+
+  if (rootDashboardCount > 0) {
+    rows.push({
+      uid: GENERAL_FOLDER_UID,
+      title: t('provisioning.stats.general-folder-title', 'General (root dashboards)'),
+      dashboardCount: rootDashboardCount,
+    });
+  }
 
   // Sort: unmanaged folders first (the migration targets), then by dashboard
   // count desc so the highest-leverage targets surface at the top, then title.

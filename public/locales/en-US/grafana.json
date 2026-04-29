@@ -13802,6 +13802,7 @@
       "folders-to-migrate-migrate-all_other": "Migrate everything ({{count}} folders)",
       "folders-to-migrate-search": "Search folders",
       "folders-to-migrate-subtitle": "Folders that aren't managed by any provisioning tool yet. Migrate one at a time, or use Browse to jump into a folder and act on individual dashboards.",
+      "general-folder-title": "General (root dashboards)",
       "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
       "loading": "Loading stats...",
