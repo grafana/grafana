@@ -515,15 +515,10 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 				return fmt.Sprintf("iter-%d/lease-%d", iteration, i)
 			}
 
-			// Group operations by server so each server runs its share in the
-			// generated order.
-			opsByServer := make([][]operation, numServers)
-			for _, op := range operations {
-				opsByServer[op.serverIdx] = append(opsByServer[op.serverIdx], op)
-			}
-
 			// Per-server held-lease handles. Each server's map is touched
-			// only by its own goroutine, so it needs no synchronization.
+			// only by the goroutine running that server's ops (or by the
+			// single sequential-mode goroutine), so it needs no
+			// synchronization.
 			held := make([]map[int]*lease.Lease, numServers)
 			for i := range numServers {
 				held[i] = make(map[int]*lease.Lease)
@@ -532,52 +527,69 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 			m := &model{holders: make(map[int]map[int]struct{})}
 			var violated atomic.Bool
 
-			runServer := func(serverIdx int) {
-				for _, op := range opsByServer[serverIdx] {
-					switch op.kind {
-					case opAcquire:
-						_, l, err := managers[serverIdx].Acquire(ctx, leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
-						if err != nil {
-							// Failed to acquire a lease: errors are only expected if the lease
-							// is already held by another server.
-							if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
-								continue
-							}
-
-							t.Logf("violation: server %d failed to acquire lease %d with unexpected error: %v",
-								serverIdx, op.leaseIdx, err)
-							violated.Store(true)
-							return
+			// runOp executes one operation against the given server,
+			// updates the model, and returns whether a violation was
+			// observed. Safe to call concurrently as long as no two callers
+			// share a serverIdx (model's mutations are mutex-protected).
+			runOp := func(serverIdx int, op operation) (violation bool) {
+				switch op.kind {
+				case opAcquire:
+					_, l, err := managers[serverIdx].Acquire(ctx, leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
+					if err != nil {
+						// Errors are only expected if the lease is already
+						// held by another server.
+						if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+							return false
 						}
-						held[serverIdx][op.leaseIdx] = l
-						if !m.acquired(serverIdx, op.leaseIdx) {
-							t.Logf("violation: server %d acquired lease %d while another server still holds it",
-								serverIdx, op.leaseIdx)
-							violated.Store(true)
-							return
-						}
-					case opRelease:
-						l, ok := held[serverIdx][op.leaseIdx]
-						if !ok {
-							// This server doesn't believe it holds the
-							// lease, so there's nothing to release.
-							continue
-						}
-						_ = managers[serverIdx].Release(ctx, l)
-						delete(held[serverIdx], op.leaseIdx)
-						m.released(serverIdx, op.leaseIdx)
+						t.Logf("violation: server %d failed to acquire lease %d with unexpected error: %v",
+							serverIdx, op.leaseIdx, err)
+						return true
 					}
+					held[serverIdx][op.leaseIdx] = l
+					if !m.acquired(serverIdx, op.leaseIdx) {
+						t.Logf("violation: server %d acquired lease %d while another server still holds it",
+							serverIdx, op.leaseIdx)
+						return true
+					}
+				case opRelease:
+					l, ok := held[serverIdx][op.leaseIdx]
+					if !ok {
+						// This server doesn't believe it holds the lease,
+						// so there's nothing to release.
+						return false
+					}
+					_ = managers[serverIdx].Release(ctx, l)
+					delete(held[serverIdx], op.leaseIdx)
+					m.released(serverIdx, op.leaseIdx)
 				}
+				return false
 			}
 
 			if mode == executeSequential {
-				for i := range numServers {
-					runServer(i)
+				// Walk the trace in generated order.
+				for _, op := range operations {
+					if runOp(op.serverIdx, op) {
+						violated.Store(true)
+						break
+					}
 				}
 			} else {
+				// Per-server goroutines: ops within a server run in
+				// generated order; servers race each other.
+				opsByServer := make([][]operation, numServers)
+				for _, op := range operations {
+					opsByServer[op.serverIdx] = append(opsByServer[op.serverIdx], op)
+				}
 				var wg sync.WaitGroup
 				for i := range numServers {
-					wg.Go(func() { runServer(i) })
+					wg.Go(func() {
+						for _, op := range opsByServer[i] {
+							if runOp(i, op) {
+								violated.Store(true)
+								return
+							}
+						}
+					})
 				}
 				wg.Wait()
 			}
