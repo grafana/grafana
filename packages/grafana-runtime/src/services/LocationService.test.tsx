@@ -6,6 +6,7 @@ import {
   useLocationService,
   LocationServiceProvider,
   setLocationServiceOrgIdGetter,
+  appendOrgIdToPath,
 } from './LocationService';
 
 describe('LocationService', () => {
@@ -116,6 +117,17 @@ describe('LocationService', () => {
       expect(locationService.getLocation().hash).toBe('#section');
     });
 
+    it('appends orgId to a LocationDescriptor without a search property', () => {
+      locationService.push({ pathname: '/test' });
+      expect(locationService.getLocation().search).toBe('?orgId=7');
+    });
+
+    it('appends orgId to a LocationDescriptor with only a hash', () => {
+      locationService.push({ pathname: '/test', hash: '#section' });
+      expect(locationService.getLocation().search).toBe('?orgId=7');
+      expect(locationService.getLocation().hash).toBe('#section');
+    });
+
     it('leaves a LocationDescriptor object unchanged when orgId is already present', () => {
       locationService.push({ pathname: '/test', search: '?orgId=3' });
       expect(locationService.getLocation().search).toBe('?orgId=3');
@@ -125,6 +137,42 @@ describe('LocationService', () => {
       locationService.replace('/test?foo=1#section');
       expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
       expect(locationService.getLocation().hash).toBe('#section');
+    });
+  });
+
+  describe('appendOrgIdToPath', () => {
+    it('returns input unchanged for non-positive or non-finite orgId', () => {
+      expect(appendOrgIdToPath('/p', 0)).toBe('/p');
+      expect(appendOrgIdToPath('/p', -1)).toBe('/p');
+      expect(appendOrgIdToPath('/p', NaN)).toBe('/p');
+    });
+
+    it('appends orgId to a bare path', () => {
+      expect(appendOrgIdToPath('/p', 7)).toBe('/p?orgId=7');
+    });
+
+    it('appends orgId with & when a query is already present', () => {
+      expect(appendOrgIdToPath('/p?a=1', 7)).toBe('/p?a=1&orgId=7');
+    });
+
+    it('preserves fragment ordering on a bare path', () => {
+      expect(appendOrgIdToPath('/p#h', 7)).toBe('/p?orgId=7#h');
+    });
+
+    it('preserves fragment ordering when a query exists', () => {
+      expect(appendOrgIdToPath('/p?a=1#h', 7)).toBe('/p?a=1&orgId=7#h');
+    });
+
+    it('returns input unchanged when orgId is already present', () => {
+      expect(appendOrgIdToPath('/p?orgId=3', 7)).toBe('/p?orgId=3');
+    });
+
+    it('does not false-match notOrgId=', () => {
+      expect(appendOrgIdToPath('/p?notOrgId=5', 7)).toBe('/p?notOrgId=5&orgId=7');
+    });
+
+    it('floors fractional orgId', () => {
+      expect(appendOrgIdToPath('/p', 7.9)).toBe('/p?orgId=7');
     });
   });
 

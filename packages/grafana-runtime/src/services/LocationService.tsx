@@ -23,31 +23,48 @@ export function setLocationServiceOrgIdGetter(fn: () => number): void {
   orgIdGetter = fn;
 }
 
+/**
+ * Appends `orgId=<N>` to a URL string, preserving the fragment ordering.
+ * Returns the input unchanged if `orgId` is non-positive, non-finite, or
+ * already present.
+ *
+ * Pure — reused by HistoryWrapper.push/replace and by the React Router
+ * <Link to> helper in core (public/app/core/utils/navigationUrl.ts).
+ *
+ * @internal
+ */
+export function appendOrgIdToPath(path: string, orgId: number): string {
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    return path;
+  }
+  const hashIdx = path.indexOf('#');
+  const fragment = hashIdx >= 0 ? path.slice(hashIdx) : '';
+  const pathAndQuery = hashIdx >= 0 ? path.slice(0, hashIdx) : path;
+  const queryIdx = pathAndQuery.indexOf('?');
+  const pathname = queryIdx >= 0 ? pathAndQuery.slice(0, queryIdx) : pathAndQuery;
+  const params = new URLSearchParams(queryIdx >= 0 ? pathAndQuery.slice(queryIdx + 1) : '');
+  if (params.has('orgId')) {
+    return path;
+  }
+  params.set('orgId', String(Math.floor(orgId)));
+  return `${pathname}?${params.toString()}${fragment}`;
+}
+
 function withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H.LocationDescriptor<unknown> {
   const orgId = orgIdGetter?.();
   if (!orgId) {
     return location;
   }
-
   if (typeof location === 'string') {
-    const hashIndex = location.indexOf('#');
-    const pathAndQuery = hashIndex >= 0 ? location.slice(0, hashIndex) : location;
-    const fragment = hashIndex >= 0 ? location.slice(hashIndex) : '';
-    if (pathAndQuery.includes('orgId=')) {
-      return location;
-    }
-    return pathAndQuery + (pathAndQuery.includes('?') ? '&' : '?') + `orgId=${orgId}` + fragment;
+    return appendOrgIdToPath(location, orgId);
   }
-
-  // LocationDescriptorObject — search and hash are separate fields, no splitting needed
   const search = location.search ?? '';
-  if (search.includes('orgId=')) {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  if (params.has('orgId')) {
     return location;
   }
-  return {
-    ...location,
-    search: search + (search.length > 0 ? '&' : '?') + `orgId=${orgId}`,
-  };
+  params.set('orgId', String(Math.floor(orgId)));
+  return { ...location, search: `?${params.toString()}` };
 }
 
 /**

@@ -1,3 +1,5 @@
+import { appendOrgIdToPath } from '@grafana/runtime';
+
 import { contextSrv } from '../services/context_srv';
 
 /**
@@ -6,15 +8,5 @@ import { contextSrv } from '../services/context_srv';
  * and therefore don't benefit from the automatic orgId injection there.
  */
 export function appendOrgId(path: string): string {
-  const orgId = contextSrv.user.orgId;
-  if (!orgId) {
-    return path;
-  }
-  const hashIndex = path.indexOf('#');
-  const pathAndQuery = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
-  const fragment = hashIndex >= 0 ? path.slice(hashIndex) : '';
-  if (pathAndQuery.includes('orgId=')) {
-    return path;
-  }
-  return pathAndQuery + (pathAndQuery.includes('?') ? '&' : '?') + `orgId=${orgId}` + fragment;
+  return appendOrgIdToPath(path, contextSrv.user.orgId);
 }
