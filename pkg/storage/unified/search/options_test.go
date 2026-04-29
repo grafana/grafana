@@ -87,28 +87,19 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 }
 
 func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
-	bucketURL := fileBucketURL(t, t.TempDir())
+	cfg := snapshotOptionsTestCfg(t)
+	cfg.IndexSnapshotEnabled = true
+	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
-	cfg1 := snapshotOptionsTestCfg(t)
-	cfg1.IndexSnapshotEnabled = true
-	cfg1.IndexSnapshotBucketURL = bucketURL
-	cfg1.InstanceID = "instance-1"
-	snapshot1, err := buildSnapshotOptions(cfg1, nil)
-	require.NoError(t, err)
-
-	cfg2 := snapshotOptionsTestCfg(t)
-	cfg2.IndexSnapshotEnabled = true
-	cfg2.IndexSnapshotBucketURL = bucketURL
-	cfg2.InstanceID = "instance-2"
-	snapshot2, err := buildSnapshotOptions(cfg2, nil)
+	snapshot, err := buildSnapshotOptions(cfg, nil)
 	require.NoError(t, err)
 
 	ns := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	lock1, err := snapshot1.Store.LockBuildIndex(context.Background(), ns)
+	lock1, err := snapshot.Store.LockBuildIndex(context.Background(), ns)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, lock1.Release()) }()
 
-	lock2, err := snapshot2.Store.LockBuildIndex(context.Background(), ns)
+	lock2, err := snapshot.Store.LockBuildIndex(context.Background(), ns)
 	require.ErrorIs(t, err, errLockHeld)
 	assert.Nil(t, lock2)
 }
