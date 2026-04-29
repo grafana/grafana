@@ -19,6 +19,7 @@ import {
   Text,
   TextLink,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
@@ -246,6 +247,216 @@ function CoverageBar({
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="provisioning.stats.coverage-bar-end">100%</Trans>
       </Text>
+    </div>
+  );
+}
+
+interface DonutSegment {
+  key: string;
+  value: number;
+  color: string;
+  label: string;
+}
+
+function Donut({
+  segments,
+  size = 140,
+  strokeWidth = 18,
+  centerLabel,
+  centerSubLabel,
+}: {
+  segments: DonutSegment[];
+  size?: number;
+  strokeWidth?: number;
+  centerLabel?: string;
+  centerSubLabel?: string;
+}) {
+  const theme = useTheme2();
+  const total = segments.reduce((acc, s) => acc + s.value, 0);
+  const radius = 50 - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+  let cumulative = 0;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img">
+      <circle
+        cx="50"
+        cy="50"
+        r={radius}
+        fill="none"
+        stroke={theme.colors.background.canvas}
+        strokeWidth={strokeWidth}
+      />
+      {total > 0 &&
+        segments
+          .filter((s) => s.value > 0)
+          .map((seg) => {
+            const pct = seg.value / total;
+            const dashLen = pct * circumference;
+            const offset = -cumulative * circumference;
+            cumulative += pct;
+            return (
+              <circle
+                key={seg.key}
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={`${dashLen} ${circumference - dashLen}`}
+                strokeDashoffset={offset}
+                transform="rotate(-90 50 50)"
+                strokeLinecap="butt"
+              >
+                <title>{`${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)`}</title>
+              </circle>
+            );
+          })}
+      {centerLabel !== undefined && (
+        <text
+          x="50"
+          y={centerSubLabel ? 46 : 50}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="20"
+          fontWeight={600}
+          fill={theme.colors.text.primary}
+        >
+          {centerLabel}
+        </text>
+      )}
+      {centerSubLabel && (
+        <text
+          x="50"
+          y="63"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="11"
+          fill={theme.colors.text.secondary}
+        >
+          {centerSubLabel}
+        </text>
+      )}
+    </svg>
+  );
+}
+
+function colorForKind(theme: GrafanaTheme2, kind: string): string {
+  switch (kind) {
+    case ManagerKind.Repo:
+      return theme.colors.success.main;
+    case ManagerKind.Terraform:
+      return theme.visualization.getColorByName('blue');
+    case ManagerKind.Kubectl:
+      return theme.visualization.getColorByName('purple');
+    case ManagerKind.Plugin:
+      return theme.visualization.getColorByName('yellow');
+    case CLASSIC_FILE_PROVISIONING:
+      return theme.visualization.getColorByName('red');
+    default:
+      return theme.colors.text.secondary;
+  }
+}
+
+function MigrationProgressPanel({
+  totals,
+}: {
+  totals: ReturnType<typeof aggregateTotals>;
+}) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const pct = totals.instanceTotal === 0 ? 0 : Math.round((totals.managed / totals.instanceTotal) * 100);
+  const hue = 30 + (pct / 100) * 90;
+  const fillColor = `hsl(${hue}, 70%, 45%)`;
+  const segments: DonutSegment[] = [
+    {
+      key: 'managed',
+      value: totals.managed,
+      color: fillColor,
+      label: t('provisioning.stats.summary-managed', 'Managed'),
+    },
+    {
+      key: 'unmanaged',
+      value: totals.unmanaged,
+      color: theme.colors.warning.main,
+      label: t('provisioning.stats.summary-unmanaged', 'Unmanaged'),
+    },
+  ];
+  return (
+    <div className={styles.chartPanel}>
+      <Text variant="h5">
+        <Trans i18nKey="provisioning.stats.migration-progress-heading">Migration progress</Trans>
+      </Text>
+      <Stack direction="row" gap={2} alignItems="center">
+        <Donut segments={segments} centerLabel={`${pct}%`} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
+        <Stack direction="column" gap={1} flex={1}>
+          <Stack direction="row" gap={1} alignItems="center">
+            <span className={styles.legendDot} style={{ background: fillColor }} aria-hidden />
+            <Text variant="bodySmall" color="secondary">
+              {t('provisioning.stats.legend-managed-count', 'Managed: {{count}}', { count: totals.managed })}
+            </Text>
+          </Stack>
+          <Stack direction="row" gap={1} alignItems="center">
+            <span className={styles.legendDot} style={{ background: theme.colors.warning.main }} aria-hidden />
+            <Text variant="bodySmall" color="secondary">
+              {t('provisioning.stats.legend-unmanaged-count', 'Unmanaged: {{count}}', { count: totals.unmanaged })}
+            </Text>
+          </Stack>
+        </Stack>
+      </Stack>
+    </div>
+  );
+}
+
+function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const segments: DonutSegment[] = useMemo(() => {
+    const counts = new Map<string, number>();
+    breakdowns.forEach((b) => {
+      counts.set(ManagerKind.Repo, (counts.get(ManagerKind.Repo) ?? 0) + b.gitSyncCount);
+      Object.entries(b.managedByKind).forEach(([kind, c]) => {
+        counts.set(kind, (counts.get(kind) ?? 0) + c);
+      });
+    });
+    return Array.from(counts.entries())
+      .filter(([, value]) => value > 0)
+      .map(([kind, value]) => ({
+        key: kind,
+        value,
+        label: kindLabel(kind),
+        color: colorForKind(theme, kind),
+      }));
+  }, [breakdowns, theme]);
+
+  const total = segments.reduce((acc, s) => acc + s.value, 0);
+
+  return (
+    <div className={styles.chartPanel}>
+      <Text variant="h5">
+        <Trans i18nKey="provisioning.stats.managed-by-tool-heading">Managed resources by tool</Trans>
+      </Text>
+      {total === 0 ? (
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="provisioning.stats.managed-by-tool-empty">
+            Nothing is managed yet. Connect a Git Sync repository to get started.
+          </Trans>
+        </Text>
+      ) : (
+        <Stack direction="row" gap={2} alignItems="center">
+          <Donut segments={segments} centerLabel={total.toLocaleString()} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
+          <Stack direction="column" gap={1} flex={1}>
+            {segments.map((s) => (
+              <Stack key={s.key} direction="row" gap={1} alignItems="center">
+                <span className={styles.legendDot} style={{ background: s.color }} aria-hidden />
+                <Text variant="bodySmall" color="secondary">
+                  {`${s.label}: ${s.value}`}
+                </Text>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      )}
     </div>
   );
 }
@@ -722,10 +933,13 @@ export function ProvisioningOverview() {
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} />
-      <CoverageBar covered={totals.managed} total={totals.instanceTotal} showRange />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
           <ResourceTypesTable rows={tableRows} repos={repos ?? []} />
+          <div className={styles.chartsRow}>
+            <MigrationProgressPanel totals={totals} />
+            <ManagedByToolPanel breakdowns={breakdowns} />
+          </div>
         </div>
         <div className={styles.sideColumn}>
           <NextStepsPanel totals={totals} repos={repos ?? []} />
@@ -792,7 +1006,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   tableColumn: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
     minWidth: 0,
+  }),
+  chartsRow: css({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: theme.spacing(2),
+  }),
+  chartPanel: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    padding: theme.spacing(2.5),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    background: theme.colors.background.secondary,
+  }),
+  legendDot: css({
+    display: 'inline-block',
+    width: 10,
+    height: 10,
+    borderRadius: theme.shape.radius.circle,
   }),
   sideColumn: css({
     display: 'flex',
