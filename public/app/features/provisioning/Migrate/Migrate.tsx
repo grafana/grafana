@@ -547,16 +547,18 @@ function StatCard({
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.statCard, emphasized && styles.statCardEmphasized)}>
-      <div className={cx(styles.statCardHeader, styles[`statCardTone_${tone}` as const])}>
-        <Icon name={icon} size="sm" />
-        <span className={styles.statCardLabel}>{label}</span>
+      <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
+        <Icon name={icon} size="lg" />
       </div>
-      <Text variant="h2">{big}</Text>
-      {subLabel && (
-        <Text color="secondary" variant="bodySmall">
-          {subLabel}
-        </Text>
-      )}
+      <div className={styles.statCardBody}>
+        <span className={cx(styles.statCardLabel, styles[`statCardTone_${tone}` as const])}>{label}</span>
+        <Text variant="h2">{big}</Text>
+        {subLabel && (
+          <Text color="secondary" variant="bodySmall">
+            {subLabel}
+          </Text>
+        )}
+      </div>
     </div>
   );
 }
@@ -965,20 +967,53 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   statCard: css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.5),
+    flexDirection: 'row',
+    gap: theme.spacing(2),
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
+    border: `1px solid ${theme.colors.border.medium}`,
     background: theme.colors.background.secondary,
+    alignItems: 'center',
+    boxShadow: theme.shadows.z1,
   }),
   statCardEmphasized: css({
     borderColor: theme.colors.warning.border,
+    boxShadow: `0 0 0 1px ${theme.colors.warning.borderTransparent}, ${theme.shadows.z1}`,
   }),
-  statCardHeader: css({
+  statCardBody: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    minWidth: 0,
+  }),
+  statCardIcon: css({
+    flex: '0 0 auto',
+    width: theme.spacing(5),
+    height: theme.spacing(5),
+    borderRadius: theme.shape.radius.circle,
     display: 'inline-flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
+    justifyContent: 'center',
+  }),
+  statIconTone_neutral: css({
+    background: theme.colors.background.canvas,
+    color: theme.colors.text.secondary,
+  }),
+  statIconTone_success: css({
+    background: theme.colors.success.transparent,
+    color: theme.colors.success.text,
+  }),
+  statIconTone_info: css({
+    background: theme.colors.info.transparent,
+    color: theme.colors.info.text,
+  }),
+  statIconTone_warning: css({
+    background: theme.colors.warning.transparent,
+    color: theme.colors.warning.text,
+  }),
+  statIconTone_primary: css({
+    background: `color-mix(in srgb, ${theme.visualization.getColorByName('purple')} 20%, transparent)`,
+    color: theme.visualization.getColorByName('purple'),
   }),
   statCardLabel: css({
     fontSize: theme.typography.bodySmall.fontSize,
