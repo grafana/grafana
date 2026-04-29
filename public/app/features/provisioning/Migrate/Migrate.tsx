@@ -400,7 +400,7 @@ function MigrationProgressPanel({
         <Trans i18nKey="provisioning.stats.migration-progress-heading">Migration progress</Trans>
       </Text>
       <Stack direction="row" gap={2} alignItems="center">
-        <Donut segments={segments} centerLabel={`${pct}%`} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
+        <Donut segments={segments} centerLabel={`${pct}%`} />
         <Stack direction="column" gap={1} flex={1}>
           <Stack direction="row" gap={1} alignItems="center">
             <span className={styles.legendDot} style={{ background: fillColor }} aria-hidden />
@@ -876,18 +876,9 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
       <Stack direction="column" gap={1}>
         {FOLDERS_DASHBOARDS_TOOLS.map((kind) => {
           const count = counts.get(kind) ?? 0;
-          const isRepo = kind === ManagerKind.Repo;
           return (
             <Stack key={kind} direction="row" gap={1} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" gap={1} alignItems="center">
-                <Badge color={badgeColorForKind(kind)} text={kindLabel(kind)} />
-                {isRepo && (
-                  <Badge
-                    color="green"
-                    text={t('provisioning.stats.tooling-recommended', 'Recommended')}
-                  />
-                )}
-              </Stack>
+              <Badge color={badgeColorForKind(kind)} text={kindLabel(kind)} />
               <Text variant="bodySmall" color={count > 0 ? 'primary' : 'secondary'}>
                 {t('provisioning.stats.tooling-managed-count', '{{count}} managed', { count })}
               </Text>

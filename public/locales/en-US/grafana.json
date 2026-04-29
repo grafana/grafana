@@ -13849,7 +13849,6 @@
       "summary-unmanaged": "Unmanaged",
       "tooling-managed-count_one": "{{count}} managed",
       "tooling-managed-count_other": "{{count}} managed",
-      "tooling-recommended": "Recommended",
       "tooling-support-compare": "Compare tools",
       "tooling-support-description": "Folders and dashboards can be managed by any of these tools. Git Sync is the recommended starting point.",
       "tooling-support-heading": "Tooling support"

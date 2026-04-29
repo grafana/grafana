@@ -206,7 +206,7 @@ describe('Migrate', () => {
     expect(screen.getByRole('link', { name: /open repository/i })).toBeInTheDocument();
   });
 
-  it('renders the Tooling support panel with Git Sync flagged Recommended', () => {
+  it('renders the Tooling support panel with Git Sync first', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -233,10 +233,6 @@ describe('Migrate', () => {
     };
     expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^terraform$/i));
     expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^files \(classic\)$/i));
-    // The "Recommended" word appears both in the panel heading
-    // ("Recommended next steps") and as the Git-Sync badge — assert at
-    // least two occurrences.
-    expect(screen.getAllByText(/recommended/i).length).toBeGreaterThanOrEqual(2);
     // All five tool kinds appear at least once (Git Sync, Files (Classic),
     // Terraform, kubectl, Plugin).
     expect(screen.getAllByText(/git sync/i).length).toBeGreaterThan(0);
