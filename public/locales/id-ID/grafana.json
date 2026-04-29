@@ -4461,6 +4461,8 @@
       "label": {
         "alphabetically-az": "Sesuai abjad (A-Z)",
         "alphabetically-za": "Sesuai abjad (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Dihapus (terbaru lebih dulu)",
         "deleted-oldest": "Dihapus (terlama lebih dulu)"
       }
@@ -13502,6 +13504,7 @@
       "contact-admin": "Hubungi administrator Grafana Anda untuk mengonversi sumber daya ini menjadi lokal atau menghapus semua sumber daya dari repositori yang tidak ditemukan.",
       "convert-to-local-button": "Konversi ke lokal",
       "delete-button": "Hapus",
+      "go-to-dashboards": "",
       "job-error": "Terjadi kesalahan saat memproses sumber daya yang terabaikan",
       "job-success": "Sumber daya terabaikan berhasil diproses",
       "job-warning": "Beberapa sumber daya diproses dengan peringatan. Silakan tinjau hasilnya.",
@@ -14196,6 +14199,10 @@
     "buttons": {
       "restore": "Pulihkan"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
       "no-deleted-dashboards-text": "Saat Anda menghapus dasbor, dasbor akan disimpan dalam riwayat hingga 12 bulan sebelum dihapus secara permanen. Pengguna yang memiliki izin untuk menghapus dapat memulihkan dasbor yang mereka hapus, dan admin dapat memulihkan dasbor yang dihapus oleh pengguna mana pun.",
@@ -14355,6 +14362,10 @@
     },
     "results-table": {
       "datasource-header": "Sumber data",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 menit",
       "deleted-remaining-header": "Waktu yang tersisa",
       "location-header": "Lokasi",

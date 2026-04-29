@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alphabetisch (A–Z)",
         "alphabetically-za": "Alphabetisch (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Gelöscht (neueste zuerst)",
         "deleted-oldest": "Gelöscht (älteste zuerst)"
       }
@@ -13577,6 +13579,7 @@
       "contact-admin": "Wenden Sie sich an Ihren Grafana-Administrator, um diese Ressource in eine lokale Ressource umzuwandeln oder alle Ressourcen aus dem fehlenden Repository zu löschen.",
       "convert-to-local-button": "In lokal konvertieren",
       "delete-button": "Löschen",
+      "go-to-dashboards": "",
       "job-error": "Bei der Verarbeitung verwaister Ressourcen ist ein Fehler aufgetreten",
       "job-success": "Verwaiste Ressourcen erfolgreich verarbeitet",
       "job-warning": "Einige Ressourcen wurden mit Warnungen verarbeitet. Bitte überprüfen Sie die Ergebnisse.",
@@ -14285,6 +14288,10 @@
     "buttons": {
       "restore": "Wiederherstellen"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
       "no-deleted-dashboards-text": "Wenn Sie ein Dashboard löschen, wird es bis zu 12 Monate im Verlauf gespeichert, bevor es endgültig gelöscht wird. Nutzer mit Löschberechtigungen können die von ihnen selbst gelöschten Dashboards wiederherstellen und Administratoren können von jedem beliebigen Nutzer gelöschte Dashboards wiederherstellen.",
@@ -14446,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Datenquelle",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 Min.",
       "deleted-remaining-header": "Verbleibende Zeit",
       "location-header": "Standort",

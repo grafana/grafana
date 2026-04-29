@@ -4461,6 +4461,8 @@
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
         "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已刪除（最新排前）",
         "deleted-oldest": "已刪除（最舊排前）"
       }
@@ -13502,6 +13504,7 @@
       "contact-admin": "請聯絡您的 Grafana 管理員，以將此資源轉換為本機資源，或刪除缺失的儲存庫中的所有資源。",
       "convert-to-local-button": "轉換為本機資源",
       "delete-button": "刪除",
+      "go-to-dashboards": "",
       "job-error": "處理孤立的資源時發生錯誤",
       "job-success": "孤立的資源已成功處理",
       "job-warning": "某些資源在處理時出現警告。請檢查結果。",
@@ -14196,6 +14199,10 @@
     "buttons": {
       "restore": "還原"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
       "no-deleted-dashboards-text": "刪除儀表板後，儀表板會在歷史記錄中保留最多 12 個月，之後才會被永久刪除。具有刪除權限的使用者可還原已刪除的儀表板，管理員則可還原任何使用者刪除的儀表板。",
@@ -14355,6 +14362,10 @@
     },
     "results-table": {
       "datasource-header": "資料來源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分鐘",
       "deleted-remaining-header": "剩餘時間",
       "location-header": "位置",

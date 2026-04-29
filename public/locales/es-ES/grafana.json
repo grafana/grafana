@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alfabéticamente (A-Z)",
         "alphabetically-za": "Alfabéticamente (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Eliminados (el más nuevo primero)",
         "deleted-oldest": "Eliminados (el más antiguo primero)"
       }
@@ -13577,6 +13579,7 @@
       "contact-admin": "Ponte en contacto con tu administrador de Grafana para convertir este recurso en local o eliminar todos los recursos del repositorio que falta.",
       "convert-to-local-button": "Convertir a local",
       "delete-button": "Eliminar",
+      "go-to-dashboards": "",
       "job-error": "Se ha producido un error al procesar los recursos huérfanos.",
       "job-success": "Recursos huérfanos procesados correctamente",
       "job-warning": "Algunos recursos se han procesado con advertencias. Revisa los resultados.",
@@ -14285,6 +14288,10 @@
     "buttons": {
       "restore": "Restaurar"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
       "no-deleted-dashboards-text": "Cuando elimines un dashboard, se mantendrá en el historial durante un máximo de 12 meses antes de eliminarse de forma permanente. Los usuarios con permisos de eliminación pueden restaurar los dashboards que han eliminado y los administradores pueden restaurar los dashboards eliminados por cualquier usuario.",
@@ -14446,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Fuente de datos",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tiempo restante",
       "location-header": "Ubicación",
