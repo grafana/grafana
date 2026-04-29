@@ -77,6 +77,26 @@ describe('StatsTabContent', () => {
     expect(screen.getAllByText('20').length).toBeGreaterThan(0);
   });
 
+  it('always shows Folders and Dashboards rows in migration readiness, even at zero', () => {
+    mockQuery({
+      data: {
+        // Backend only reports a single dashboard; folders are absent entirely.
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 1 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Migration readiness should still surface the Folders row even though
+    // the API didn't return any.
+    expect(screen.getAllByText('Folders').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Dashboards').length).toBeGreaterThan(0);
+    // The 1 dashboard the user knows they have is reflected in the totals.
+    expect(screen.getAllByText(/1 total/i).length).toBeGreaterThan(0);
+  });
+
   it('shows unmanaged counts for Git-Sync-supported types', () => {
     mockQuery({
       data: {

@@ -92,6 +92,12 @@ function computeGroupBreakdowns(data?: ResourceStats): GroupBreakdown[] {
     return entry;
   };
 
+  // Always seed the Git-Sync-supported types so the migration readiness
+  // section answers "how many folders and dashboards do I have?" even when
+  // the count is zero.
+  ensure('folder.grafana.app', 'folders');
+  ensure('dashboard.grafana.app', 'dashboards');
+
   data?.instance?.forEach((c) => {
     ensure(c.group, c.resource).total += c.count;
   });
@@ -460,7 +466,10 @@ function OtherProvidersSection({ providers }: { providers: BreakdownByKind[] }) 
 
 function AllResourcesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
-  if (breakdowns.length === 0) {
+  // Drop the seeded zero-count entries — they're useful in the migration
+  // readiness section but would just be noise here.
+  const visible = breakdowns.filter((b) => b.total > 0);
+  if (visible.length === 0) {
     return null;
   }
   return (
@@ -489,7 +498,7 @@ function AllResourcesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
             <Trans i18nKey="provisioning.stats.column-unmanaged">Unmanaged</Trans>
           </Text>
         </div>
-        {breakdowns.map((b) => (
+        {visible.map((b) => (
           <div key={`${b.group}/${b.resource}`} className={styles.allResourcesRow} role="row">
             <Stack direction="row" gap={1} alignItems="center">
               <Text>{b.label}</Text>
