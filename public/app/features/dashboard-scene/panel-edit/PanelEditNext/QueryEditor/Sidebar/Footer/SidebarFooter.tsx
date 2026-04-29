@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,14 +18,8 @@ export function SidebarFooter() {
   const { alertRules } = useAlertingContext();
   const { cardType } = useQueryEditorUIContext();
   const styles = useStyles2(getStyles);
-  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
 
   const isAlertView = cardType === QueryEditorType.Alert;
-
-  if (isMultiSelectEnabled && !isAlertView) {
-    return <div className={styles.footer}>{/* TODO(queryEditorNextMultiSelect): new footer goes here */}</div>;
-  }
-
   const total = isAlertView ? alertRules.length : queries.length + transformations.length;
   const hidden = isAlertView
     ? 0
