@@ -48,9 +48,11 @@ const CLASSIC_FILE_PROVISIONING = 'classic-file-provisioning';
  * lists in `pkg/registry/apis/provisioning/resources/client.go`.
  */
 const FOLDERS_DASHBOARDS_TOOLS = [
+  // Order intentional: Git Sync is the recommended path, Terraform is the
+  // most common runner-up, then the rest.
   ManagerKind.Repo,
-  CLASSIC_FILE_PROVISIONING,
   ManagerKind.Terraform,
+  CLASSIC_FILE_PROVISIONING,
   ManagerKind.Kubectl,
   ManagerKind.Plugin,
 ] as const;
@@ -567,6 +569,9 @@ function OverviewStatCards({
   lastScannedAt?: number;
 }) {
   const styles = useStyles2(getStyles);
+  const gitSyncSubLabel = totals.managed > 0
+    ? t('provisioning.stats.fully-managed-sub', '{{count}} via Git Sync (recommended)', { count: totals.gitSync })
+    : t('provisioning.stats.fully-managed-empty', 'Nothing managed yet');
   return (
     <div className={styles.statCardsRow}>
       <StatCard
@@ -579,11 +584,8 @@ function OverviewStatCards({
         icon="check-circle"
         tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.managed,
-          total: totals.instanceTotal,
-        })}
-        label={t('provisioning.stats.summary-managed', 'Managed')}
+        subLabel={gitSyncSubLabel}
+        label={t('provisioning.stats.fully-managed', 'Fully managed')}
       />
       <StatCard
         icon="exclamation-circle"
@@ -594,16 +596,6 @@ function OverviewStatCards({
           total: totals.instanceTotal,
         })}
         label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
-      />
-      <StatCard
-        icon="rocket"
-        tone="info"
-        big={percent(totals.gitSync, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.gitSync,
-          total: totals.instanceTotal,
-        })}
-        label={t('provisioning.stats.progress-to-gitops', 'Progress to GitOps')}
       />
       <StatCard
         icon="clock-nine"

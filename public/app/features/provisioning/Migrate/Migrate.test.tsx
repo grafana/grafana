@@ -135,11 +135,14 @@ describe('Migrate', () => {
     render(<Migrate />);
 
     expect(screen.getByText('Total resources')).toBeInTheDocument();
-    // "Managed" / "Unmanaged" appear both as Summary card labels and as
-    // table column headers, so just assert presence at all.
-    expect(screen.getAllByText('Managed').length).toBeGreaterThan(0);
+    // "Fully managed" replaces the old separate "Managed" / "Progress to
+    // GitOps" cards. "Unmanaged" still appears as a card label and as a
+    // table column header, so just assert presence at all.
+    expect(screen.getByText('Fully managed')).toBeInTheDocument();
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
-    expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
+    // Sublabel calls out the Git Sync (recommended) share — 5 managed all
+    // via Git Sync in this fixture.
+    expect(screen.getByText(/5 via git sync \(recommended\)/i)).toBeInTheDocument();
     // 5 of 20 = 25% managed and Progress to GitOps (Git Sync managed only)
     // also 5/20 since only Git Sync managed exists in this fixture.
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
@@ -219,6 +222,15 @@ describe('Migrate', () => {
     render(<Migrate />);
 
     expect(screen.getByText(/tooling support/i)).toBeInTheDocument();
+    // Git Sync should render before Terraform in document order, and
+    // Terraform before Files (Classic). Use first occurrences from
+    // `getAllByText` (which preserves DOM order) as a stable signal.
+    const firstIndex = (label: RegExp) => {
+      const el = screen.getAllByText(label)[0];
+      return Array.from(document.body.querySelectorAll('*')).indexOf(el as Element);
+    };
+    expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^terraform$/i));
+    expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^files \(classic\)$/i));
     // The "Recommended" word appears both in the panel heading
     // ("Recommended next steps") and as the Git-Sync badge — assert at
     // least two occurrences.
