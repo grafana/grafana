@@ -11,6 +11,7 @@ import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { manifestPluginOptions } from './plugins/assetsManifest.ts';
 import { esbuildOptions } from './rules.ts';
 import common, { type Env } from './webpack.common.ts';
+import swaggerConfig from './webpack.swagger.ts';
 
 // SRI plugin has broken esm builds so we use require.
 // https://github.com/waysact/webpack-subresource-integrity/issues/236
@@ -19,6 +20,7 @@ const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
 
 export default (env: Env = {}) => {
   const prodConfig: Configuration = {
+    name: 'grafana',
     mode: 'production',
     devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 
@@ -95,18 +97,11 @@ export default (env: Env = {}) => {
       },
     ],
   };
-
-  return merge(common(env), prodConfig);
+  const mergedProdConfig = merge(common(env), prodConfig);
+  const multipleConfigs = Object.assign([mergedProdConfig], { parallelism: 2 });
+  // TODO: this is temporary until we've split react 19 out into its own webpack config.
+  if (!env.react19) {
+    multipleConfigs.push(swaggerConfig(env));
+  }
+  return multipleConfigs;
 };
-
-interface EntrypointAssets {
-  assets: { js?: string[]; css?: string[] };
-}
-
-function isEntrypointsMap(value: unknown): value is Record<string, EntrypointAssets> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isAssetEntry(value: unknown): value is { src: string } {
-  return typeof value === 'object' && value !== null && 'src' in value;
-}
