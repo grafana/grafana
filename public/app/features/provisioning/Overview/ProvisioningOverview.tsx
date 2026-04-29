@@ -766,20 +766,6 @@ function ResourceTypesSection({
       row.gitSyncCount + row.otherManagedCount - selectedManagedFor(row, providerFilter);
     const cols: Array<Column<GroupBreakdown>> = [
       {
-        id: 'progress',
-        header: '',
-        disableGrow: true,
-        cell: ({ row }) => (
-          <div className={styles.tableMiniBar}>
-            <CoverageBar
-              covered={row.original.gitSyncCount + row.original.otherManagedCount}
-              total={row.original.total}
-              compact
-            />
-          </div>
-        ),
-      },
-      {
         id: 'label',
         header: t('provisioning.stats.column-resource', 'Resource'),
         sortType: 'string',
@@ -832,7 +818,18 @@ function ResourceTypesSection({
           const share = managedShare(row.original);
           const pctText = `${Math.round(share * 100)}%`;
           const color = share === 1 ? 'success' : share === 0 ? 'warning' : 'info';
-          return <Text color={color}>{pctText}</Text>;
+          return (
+            <div className={styles.managedPctCell}>
+              <div className={styles.managedPctBar}>
+                <CoverageBar
+                  covered={row.original.gitSyncCount + row.original.otherManagedCount}
+                  total={row.original.total}
+                  compact
+                />
+              </div>
+              <Text color={color}>{pctText}</Text>
+            </div>
+          );
         },
       },
       {
@@ -863,7 +860,7 @@ function ResourceTypesSection({
       }
     );
     return cols;
-  }, [gitSyncRepos, managedHeader, providerFilter, styles.tableMiniBar]);
+  }, [gitSyncRepos, managedHeader, providerFilter, styles.managedPctCell, styles.managedPctBar]);
 
   if (!hasUnfilteredRows) {
     return null;
@@ -1054,8 +1051,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transition: 'width 200ms ease, background 200ms ease',
     },
   }),
-  tableMiniBar: css({
-    width: 80,
+  managedPctCell: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+  }),
+  managedPctBar: css({
+    flex: '1 1 auto',
+    minWidth: 60,
+    maxWidth: 120,
   }),
   typeSelect: css({
     minWidth: 260,
