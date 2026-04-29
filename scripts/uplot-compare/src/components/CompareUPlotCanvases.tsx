@@ -16,12 +16,6 @@ const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.jso
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
-interface Props {
-  /** Default canvas CSS px if payload does not include `width` / `height` */
-  defaultWidth?: number;
-  defaultHeight?: number;
-}
-
 function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
   const w = raw.width;
   const h = raw.height;
@@ -159,7 +153,7 @@ function parseAcceptBaselineResponse(data: unknown): {
 export const CompareUPlotCanvases = ({
   defaultWidth = FALLBACK_CANVAS_WIDTH,
   defaultHeight = FALLBACK_CANVAS_HEIGHT,
-}: Props = {}) => {
+}) => {
   const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
   const [acceptBaselineState, setAcceptBaselineState] = React.useState<AcceptBaselineState>({ kind: 'idle' });
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
@@ -225,7 +219,7 @@ export const CompareUPlotCanvases = ({
     });
   }, []);
 
-  const loadPayloadFromPublicFile = React.useCallback(
+  const setTest = React.useCallback(
     async (basename: string, historyMode?: 'push' | 'replace') => {
       if (!isSafePayloadBasename(basename)) {
         setView({
@@ -276,8 +270,8 @@ export const CompareUPlotCanvases = ({
     if (!nextFailedTestBasename) {
       return;
     }
-    void loadPayloadFromPublicFile(nextFailedTestBasename, 'push');
-  }, [nextFailedTestBasename, loadPayloadFromPublicFile]);
+    void setTest(nextFailedTestBasename, 'push');
+  }, [nextFailedTestBasename, setTest]);
 
   const reloadPayloadAfterJest = React.useCallback(async () => {
     const basename = selectedFile ?? new URLSearchParams(window.location.search).get('file');
@@ -369,6 +363,20 @@ export const CompareUPlotCanvases = ({
     [reloadPayloadAfterJest]
   );
 
+  const onRerunTest = React.useCallback(() => {
+    if (view.kind !== 'ready') {
+      return;
+    }
+    void runJestForPayload(view.payload, false);
+  }, [runJestForPayload, view]);
+
+  const onAcceptBaseline = React.useCallback(() => {
+    if (view.kind !== 'ready') {
+      return;
+    }
+    void runJestForPayload(view.payload, true);
+  }, [runJestForPayload, view]);
+
   const loadFromLocation = React.useCallback(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -393,11 +401,11 @@ export const CompareUPlotCanvases = ({
         return;
       }
 
-      void loadPayloadFromPublicFile(fileParam);
+      void setTest(fileParam);
     };
 
     void run();
-  }, [loadPayloadFromPublicFile]);
+  }, [setTest]);
 
   React.useEffect(() => {
     loadFromLocation();
@@ -509,7 +517,7 @@ export const CompareUPlotCanvases = ({
                 key={basename}
                 type="button"
                 className={`compare-file-item${selectedFile === basename ? ' is-selected' : ''}`}
-                onClick={() => loadPayloadFromPublicFile(basename, 'push')}
+                onClick={() => setTest(basename, 'push')}
               >
                 <span className="compare-file-item-header">
                   <span className="compare-file-name">{basename}</span>
@@ -537,18 +545,8 @@ export const CompareUPlotCanvases = ({
       onBackToIndex={navigateToIndex}
       nextFailedTestBasename={nextFailedTestBasename}
       onGoToNextFailedTest={goToNextFailedTest}
-      onRerunTest={() => {
-        if (view.kind !== 'ready') {
-          return;
-        }
-        void runJestForPayload(view.payload, false);
-      }}
-      onAcceptBaseline={() => {
-        if (view.kind !== 'ready') {
-          return;
-        }
-        void runJestForPayload(view.payload, true);
-      }}
+      onRerunTest={onRerunTest}
+      onAcceptBaseline={onAcceptBaseline}
     />
   );
 };
