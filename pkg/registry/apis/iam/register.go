@@ -378,7 +378,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength: 80,
+		MaximumNameLength:           80,
+		RequireDeprecatedInternalID: true,
 	})
 
 	if enableTeamsApi {
