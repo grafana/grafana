@@ -57,8 +57,8 @@ describe('Migrate', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
-  it('shows the primary header CTA: Connect a repository when no repo, Start migration when one is connected', () => {
-    mockUseRepositoryList.mockReturnValueOnce([[], false]);
+  it('puts a primary Connect button in the next steps when no repository is connected', () => {
+    mockUseRepositoryList.mockReturnValue([[], false]);
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -66,20 +66,21 @@ describe('Migrate', () => {
         managed: [],
       },
     });
-    const { rerender } = render(<Migrate />);
-    expect(screen.getByRole('link', { name: /connect a repository/i })).toBeInTheDocument();
+    render(<Migrate />);
+    const connectLink = screen.getByRole('link', { name: /^connect$/i });
+    expect(connectLink).toHaveAttribute('href', '/admin/provisioning/getting-started');
+  });
 
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
-    rerender(<Migrate />);
-    expect(screen.getByRole('link', { name: /start migration/i })).toBeInTheDocument();
+  it('marks the page header with an Experimental feature badge', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    render(<Migrate />);
+    expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
   });
 
   it('renders a Last scan stat card', () => {
@@ -97,7 +98,7 @@ describe('Migrate', () => {
     expect(screen.getByText(/just now/i)).toBeInTheDocument();
   });
 
-  it('shows the Migrate to GitOps header with a Migration guide link', () => {
+  it('shows the Migrate to GitOps header and exposes the Migration guide link in the Next steps panel', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -107,10 +108,11 @@ describe('Migrate', () => {
     });
     render(<Migrate />);
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
+    // Migration guide moved out of the page header into the Next steps card header.
     expect(screen.getByRole('link', { name: /migration guide/i })).toBeInTheDocument();
   });
 
-  it('renders the four overview stat cards including Progress to GitOps', () => {
+  it('renders the five overview stat cards including Progress to GitOps', () => {
     mockQuery({
       data: {
         instance: [
@@ -134,16 +136,15 @@ describe('Migrate', () => {
     render(<Migrate />);
 
     expect(screen.getByText('Total resources')).toBeInTheDocument();
-    // "Fully managed" replaces the old separate "Managed" / "Progress to
-    // GitOps" cards. "Unmanaged" still appears as a card label and as a
-    // table column header, so just assert presence at all.
-    expect(screen.getByText('Fully managed')).toBeInTheDocument();
+    // "Managed" appears both as a card label and a table column header, so
+    // assert at least one occurrence.
+    expect(screen.getAllByText('Managed').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
-    // Sublabel calls out the Git Sync (recommended) share — 5 managed all
-    // via Git Sync in this fixture.
-    expect(screen.getByText(/5 via git sync \(recommended\)/i)).toBeInTheDocument();
-    // 5 of 20 = 25% managed and Progress to GitOps (Git Sync managed only)
-    // also 5/20 since only Git Sync managed exists in this fixture.
+    // Progress to GitOps card is back, with a "{count} via Git Sync" sublabel.
+    expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
+    expect(screen.getByText(/5 via git sync/i)).toBeInTheDocument();
+    // 5 of 20 = 25%; both the Managed card and the Progress to GitOps card
+    // round to 25% in this fixture (all managed are Git Sync).
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 

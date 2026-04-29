@@ -1,7 +1,7 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
@@ -9,6 +9,7 @@ import {
   type BadgeColor,
   type Column,
   EmptyState,
+  FeatureBadge,
   Icon,
   type IconName,
   InteractiveTable,
@@ -507,40 +508,21 @@ function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   );
 }
 
-function MigrateToGitopsHeader({ repos }: { repos: Repository[] }) {
-  const hasRepo = repos.length > 0;
-  const target = migrateTarget(repos);
+function MigrateToGitopsHeader() {
   return (
-    <Stack direction="row" gap={2} wrap alignItems="flex-start" justifyContent="space-between">
-      <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" gap={1} alignItems="center">
         <Text element="h2" variant="h2">
           <Trans i18nKey="provisioning.stats.header-title">Migrate to GitOps</Trans>
         </Text>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.stats.header-subtitle">
-            Version-control your dashboards and folders. Track changes, review updates, and keep your instance
-            reproducible. Start by connecting a Git repository, then migrate the resources below.
-          </Trans>
-        </Text>
+        <FeatureBadge featureState={FeatureState.experimental} />
       </Stack>
-      <Stack direction="row" gap={1} wrap>
-        <LinkButton
-          variant="secondary"
-          icon="external-link-alt"
-          href={CONFIGURE_GRAFANA_DOCS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
-        </LinkButton>
-        <LinkButton variant="primary" icon={hasRepo ? 'upload' : 'plus'} href={target}>
-          {hasRepo ? (
-            <Trans i18nKey="provisioning.stats.start-migration">Start migration</Trans>
-          ) : (
-            <Trans i18nKey="provisioning.stats.connect-repo">Connect a repository</Trans>
-          )}
-        </LinkButton>
-      </Stack>
+      <Text color="secondary">
+        <Trans i18nKey="provisioning.stats.header-subtitle">
+          Version-control your dashboards and folders. Track changes, review updates, and keep your instance
+          reproducible. Start by connecting a Git repository, then migrate the resources below.
+        </Trans>
+      </Text>
     </Stack>
   );
 }
@@ -612,9 +594,6 @@ function OverviewStatCards({
   lastScannedAt?: number;
 }) {
   const styles = useStyles2(getStyles);
-  const gitSyncSubLabel = totals.managed > 0
-    ? t('provisioning.stats.fully-managed-sub', '{{count}} via Git Sync (recommended)', { count: totals.gitSync })
-    : t('provisioning.stats.fully-managed-empty', 'Nothing managed yet');
   return (
     <div className={styles.statCardsRow}>
       <StatCard
@@ -627,8 +606,11 @@ function OverviewStatCards({
         icon="check-circle"
         tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
-        subLabel={gitSyncSubLabel}
-        label={t('provisioning.stats.fully-managed', 'Fully managed')}
+        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+          value: totals.managed,
+          total: totals.instanceTotal,
+        })}
+        label={t('provisioning.stats.managed', 'Managed')}
       />
       <StatCard
         icon="exclamation-circle"
@@ -639,6 +621,13 @@ function OverviewStatCards({
           total: totals.instanceTotal,
         })}
         label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
+      />
+      <StatCard
+        icon="code-branch"
+        tone="info"
+        big={percent(totals.gitSync, totals.instanceTotal)}
+        subLabel={t('provisioning.stats.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })}
+        label={t('provisioning.stats.progress-gitops', 'Progress to GitOps')}
       />
       <StatCard
         icon="clock-nine"
@@ -754,6 +743,7 @@ interface NextStep {
   title: string;
   description: string;
   action?: { label: string; href: string };
+  primary?: boolean;
 }
 
 function NextStepsPanel({
@@ -781,6 +771,7 @@ function NextStepsPanel({
       action: hasRepo
         ? undefined
         : { label: t('provisioning.stats.next-step-connect-cta', 'Connect'), href: GETTING_STARTED_URL },
+      primary: !hasRepo,
     },
     {
       key: 'review',
@@ -819,9 +810,14 @@ function NextStepsPanel({
 
   return (
     <div className={styles.sidePanel}>
-      <Text variant="h5">
-        <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
-      </Text>
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+        <Text variant="h5">
+          <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
+        </Text>
+        <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
+          <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
+        </TextLink>
+      </Stack>
       <Stack direction="column" gap={1.5}>
         {steps.map((step, index) => (
           <Stack key={step.key} direction="row" gap={2} alignItems="flex-start">
@@ -835,7 +831,7 @@ function NextStepsPanel({
               </Text>
             </Stack>
             {step.action && (
-              <LinkButton variant="secondary" size="sm" href={step.action.href}>
+              <LinkButton variant={step.primary ? 'primary' : 'secondary'} size="sm" href={step.action.href}>
                 {step.action.label}
               </LinkButton>
             )}
@@ -933,7 +929,7 @@ export function Migrate() {
   if (totals.instanceTotal === 0) {
     return (
       <Stack direction="column" gap={3}>
-        <MigrateToGitopsHeader repos={repoList} />
+        <MigrateToGitopsHeader />
         <EmptyState variant="not-found" message={t('provisioning.stats.empty', 'No provisioned resources yet')} />
       </Stack>
     );
@@ -941,7 +937,7 @@ export function Migrate() {
 
   return (
     <Stack direction="column" gap={3}>
-      <MigrateToGitopsHeader repos={repoList} />
+      <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} lastScannedAt={lastScannedAt} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
