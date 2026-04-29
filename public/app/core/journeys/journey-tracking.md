@@ -227,13 +227,14 @@ User navigates the browse dashboards page, drills into folders, and opens a reso
 
 User enters dashboard edit mode, makes changes, and saves or discards.
 
-| Event           | Trigger                                                  | Action         |
-| --------------- | -------------------------------------------------------- | -------------- |
-| Start           | `dashboards_edit_button_clicked`                         | Journey starts |
-| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created` | Journey ends   |
-| End (discarded) | `dashboards_edit_discarded`                              | Journey ends   |
+| Event           | Trigger                                                                  | Action                                                      |
+| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Start           | `dashboards_edit_button_clicked`                                         | Journey starts                                              |
+| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created`                 | Journey ends                                                |
+| End (discarded) | `dashboards_edit_discarded`                                              | Journey ends                                                |
+| End (abandoned) | SPA route change to a different pathname (`/explore`, another dashboard) | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected).
+**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; any change abandons the journey, except `/dashboard/new` → `/d/<new-uid>` which is allowed (the `_created` interaction races with the route change).
 
 ### panel_edit
 
@@ -241,15 +242,16 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 
 User opens a panel in edit mode and configures queries, transformations, or visualization.
 
-| Event           | Trigger                                                                       | Action                              |
-| --------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
-| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                      |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                    |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step           |
-| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                  |
-| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action         |
-| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close |
-| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                    |
+| Event           | Trigger                                                                       | Action                                                      |
+| --------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                                              |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                                            |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step                                   |
+| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                                          |
+| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action                                 |
+| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close                         |
+| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                                            |
+| End (abandoned) | SPA route change to a different pathname                                      | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
 **Silent interactions added by this journey:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates), `panel_edit_discarded` (emitted when the user hits Discard).
 

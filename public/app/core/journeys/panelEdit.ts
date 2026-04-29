@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs, str } from './utils';
+import { abandonOnRouteChange, collectUnsubs, str } from './utils';
 
 /**
  * Journey: panel_edit
@@ -19,6 +19,7 @@ import { collectUnsubs, str } from './utils';
  * End conditions:
  *   - success: panel_edit_closed — panel editor deactivates without a prior discard
  *   - discarded: panel_edit_closed — panel editor deactivates after panel_edit_discarded fired
+ *   - abandoned: SPA route change to a different pathname (user navigates away mid-edit)
  *   - timeout: 30 min — no end condition fires
  *
  * Silent interactions added by this journey:
@@ -42,6 +43,12 @@ registerJourneyTriggers('panel_edit', (tracker) => {
 
 onJourneyInstance('panel_edit', (handle) => {
   const { add, cleanup } = collectUnsubs();
+
+  // Capture the dashboard pathname at journey start. Closing the panel editor
+  // doesn't change the pathname (only query params), so any pathname change
+  // means the user navigated away from the dashboard mid-edit -> abandoned.
+  const editingPath = window.location.pathname;
+  add(abandonOnRouteChange(handle, (pathname) => pathname === editingPath));
 
   // Track panel edit interactions as pointwise events (no duration).
   // recordEvent is the fire-and-forget form - no StepHandle to leak.
