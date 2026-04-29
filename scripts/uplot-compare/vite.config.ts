@@ -1,13 +1,13 @@
 import react from '@vitejs/plugin-react';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import type { IncomingMessage } from 'node:http';
+import { type IncomingMessage, type ServerResponse } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type ViteDevServer } from 'vite';
 
 const OUTPUT_CAP_BYTES = 256 * 1024;
-const JEST_TIMEOUT_MS = 5 * 60 * 1000;
+const JEST_TIMEOUT_MS = 60 * 1000;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,17 +59,42 @@ function narrowBool(o: Record<string, unknown>, key: string): boolean | undefine
   return typeof v === 'boolean' ? v : undefined;
 }
 
+const throwErr = (statusCode: number, error: string, res: ServerResponse) => {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ ok: false, error }));
+};
+
+const capStream = (d: Buffer, out: string) => {
+  out += d.toString('utf8');
+  if (out.length > OUTPUT_CAP_BYTES * 2) {
+    out.slice(-OUTPUT_CAP_BYTES * 2);
+  }
+  return out;
+};
+
+const buildJestCommand = (testName: string, updateSnapshot: boolean, testPath: string) => {
+  const pattern = `^${escapeRegex(testName)}$`;
+
+  const args = ['jest'];
+  if (updateSnapshot) {
+    args.push('--updateSnapshot');
+  }
+  args.push(JSON.stringify(`--testNamePattern ${pattern} -- ${testPath}`));
+  args.push('--testNamePattern', pattern, '--', testPath);
+  const jestCommand = `${args.join(' ')}`;
+  return { args, jestCommand };
+};
+
 function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteDevServer) => void } {
   const repoRoot = path.resolve(__dirname, '..', '..');
 
   return {
     name: 'uplot-compare-accept-snapshot',
     configureServer(server: ViteDevServer) {
-      server.middlewares.use('/__uplot-compare/accept', async (req, res) => {
+      server.middlewares.use('/__uplot-compare/test', async (req, res) => {
         if (req.method !== 'POST') {
-          res.statusCode = 405;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ ok: false, error: 'Method not allowed' }));
+          throwErr(405, 'Method not allowed', res);
           return;
         }
 
@@ -77,16 +102,12 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
         try {
           body = await readJsonBody(req);
         } catch {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ ok: false, error: 'Invalid JSON body' }));
+          throwErr(400, 'Invalid JSON body', res);
           return;
         }
 
         if (!isRecord(body)) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ ok: false, error: 'Invalid payload' }));
+          throwErr(400, 'Invalid payload', res);
           return;
         }
 
@@ -95,31 +116,20 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
         const updateSnapshot = narrowBool(body, 'updateSnapshot') ?? true;
 
         if (!testPath || !testName) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ ok: false, error: 'Invalid testPath or testName' }));
+          throwErr(400, 'Invalid testPath or testName', res);
           return;
         }
 
         if (!path.isAbsolute(testPath) || !isPathInsideRoot(testPath, repoRoot) || !existsSync(testPath)) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(
-            JSON.stringify({ ok: false, error: 'testPath must be an absolute path inside the repo and must exist' })
-          );
+          throwErr(400, 'Invalid testPath', res);
           return;
         }
 
-        const pattern = `^${escapeRegex(testName)}$`;
-        const yarnBin = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
-        const args = ['jest'];
-        if (updateSnapshot) {
-          args.push('--updateSnapshot');
-        }
-        args.push('--testNamePattern', pattern, '--', testPath);
-        const command = `${yarnBin} ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`;
+        const yarnBinary = 'yarn';
+        const { args, jestCommand } = buildJestCommand(testName, updateSnapshot, testPath);
+        const command = `${yarnBinary} ${jestCommand}`;
 
-        const child = spawn(yarnBin, args, {
+        const child = spawn(yarnBinary, args, {
           cwd: repoRoot,
           env: {
             ...process.env,
@@ -133,18 +143,9 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
 
         let stdout = '';
         let stderr = '';
-        child.stdout?.on('data', (d: Buffer) => {
-          stdout += d.toString('utf8');
-          if (stdout.length > OUTPUT_CAP_BYTES * 2) {
-            stdout = stdout.slice(-OUTPUT_CAP_BYTES * 2);
-          }
-        });
-        child.stderr?.on('data', (d: Buffer) => {
-          stderr += d.toString('utf8');
-          if (stderr.length > OUTPUT_CAP_BYTES * 2) {
-            stderr = stderr.slice(-OUTPUT_CAP_BYTES * 2);
-          }
-        });
+
+        child.stdout?.on('data', (d) => (stdout = capStream(d, stdout)));
+        child.stderr?.on('data', (d) => (stderr = capStream(d, stderr)));
 
         const exitCode: number = await new Promise((resolve) => {
           let settled = false;
@@ -174,6 +175,7 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
           ...(exitCode === -1 ? { error: 'jest timed out or failed to spawn' } : {}),
         };
 
+        // Success!
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(payload));

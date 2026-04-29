@@ -312,7 +312,7 @@ export const CompareUPlotCanvases = ({
       }
       setAcceptBaselineState({ kind: 'running', updateSnapshot });
       try {
-        const res = await fetch('/__uplot-compare/accept', {
+        const res = await fetch('/__uplot-compare/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
