@@ -1,5 +1,8 @@
-/** Stable prefix for payload files: `jest-canvas-mock-compare-payload-<slug>.json`. */
-export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'jest-canvas-mock-compare-payload';
+/**
+ * Stable prefix for payload files: `jest-canvas-compare-<slug>.json`.
+ * @todo move to package
+ */
+export const CANVAS_COMPARE_PAYLOAD_FILE_PREFIX = 'jest-canvas-compare';
 
 export const SLUG_MAX_LENGTH = 96;
 
@@ -37,7 +40,7 @@ export function slugifyJestTestNameForFilename(testName: string): string {
 }
 
 /** Readable slug from the test name */
-export function createUPlotComparePayloadBasename(testName: string): string {
+export function createCanvasComparePayloadBasename(testName: string): string {
   const slug = slugifyJestTestNameForFilename(testName);
-  return `${UPLOT_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
+  return `${CANVAS_COMPARE_PAYLOAD_FILE_PREFIX}-${slug}.json`;
 }

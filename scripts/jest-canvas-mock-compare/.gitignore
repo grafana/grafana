@@ -1,5 +1,4 @@
 dist
 node_modules
-public/uplot-compare-payload*.json
-public/jest-canvas-mock-compare*.json
+public/*.json
 tsconfig.app.tsbuildinfo

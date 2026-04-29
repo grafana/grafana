@@ -7,7 +7,10 @@ export interface JestCanvasMockComparePayload {
   testPath?: string;
   expected: unknown;
   actual: unknown;
-  uPlotCanvasEvents: CanvasRenderingContext2DEvent[];
+  /**
+   * additional canvas context outside the scope of the test assertion. These events will be rendered in the panel
+   */
+  canvasContextEvents: CanvasRenderingContext2DEvent[];
   /** uPlot `width` / `height` (CSS px) for the test canvas; used by jest-canvas-mock-compare to size replay canvases */
   width: number;
   height: number;

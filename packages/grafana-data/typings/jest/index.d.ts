@@ -20,12 +20,12 @@ declare global {
        * Failed tests will generate a link to view the diff between canvas outputs
        * See public/app/plugins/panel/candlestick/utils.canvas.test.ts for an example
        *
-       * @param uPlotEvents
+       * @param canvasContextEvents
        * @param size - canvas dimensions for the jest-canvas-mock-compare JSON payload
        * @param snapshotHint - optional Jest snapshot name passed to toMatchSnapshot
        */
-      toMatchUPlotSnapshot(
-        uPlotEvents: CanvasRenderingContext2DEvent[],
+      toMatchCanvasSnapshot(
+        canvasContextEvents: CanvasRenderingContext2DEvent[],
         size: { width: number; height: number },
         snapshotHint?: string
       ): CustomMatcherResult;

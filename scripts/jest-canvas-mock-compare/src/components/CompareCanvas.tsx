@@ -179,7 +179,7 @@ export const CompareCanvas = ({ defaultWidth = FALLBACK_CANVAS_WIDTH, defaultHei
         setView({
           kind: 'blocked',
           error: `${sourceLabel}: not a valid uplot snapshot payload`,
-          hint: 'Paste the JSON logged by toMatchUPlotSnapshot or choose a payload file.',
+          hint: 'Paste the JSON logged by toMatchCanvasSnapshot or choose a payload file.',
         });
         return;
       }
@@ -195,7 +195,7 @@ export const CompareCanvas = ({ defaultWidth = FALLBACK_CANVAS_WIDTH, defaultHei
           expected: raw.expected as CanvasRenderingContext2DEvent[],
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           actual: raw.actual as CanvasRenderingContext2DEvent[],
-          uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
+          uPlotCanvasEvents: Array.isArray(raw.canvasContextEvents) ? raw.canvasContextEvents : [],
           ...readPayloadDimensions(raw),
           snapshotAssertionPassed: raw.snapshotAssertionPassed,
         },
