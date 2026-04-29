@@ -206,15 +206,16 @@ User searches for a resource via command palette and navigates to it.
 
 User navigates the browse dashboards page, drills into folders, and opens a resource.
 
-| Event         | Trigger                                                       | Action                                      |
-| ------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| Start         | `grafana_browse_dashboards_page_view` (first)                 | Journey starts                              |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (folder)     | `navigate_folder` step starts               |
-| Step end      | `grafana_browse_dashboards_page_view` (subsequent)            | `navigate_folder` step ends (folder loaded) |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (non-folder) | `select_resource` step starts               |
-| End (success) | `dashboards_init_dashboard_completed`                         | `select_resource` step ends, journey ends   |
+| Event         | Trigger                                                       | Action                                                   |
+| ------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| Start         | `grafana_browse_dashboards_page_view` (first)                 | Journey starts                                           |
+| Step          | `grafana_browse_dashboards_page_click_list_item` (folder)     | `navigate_folder` step starts                            |
+| Step end      | `grafana_browse_dashboards_page_view` (subsequent)            | `navigate_folder` step ends (folder loaded)              |
+| Step          | `grafana_browse_dashboards_page_click_list_item` (non-folder) | `select_resource` step starts                            |
+| Event         | `grafana_manage_dashboards_folder_created`                    | `folder_created` recorded (`isSubfolder`, `folderDepth`) |
+| End (success) | `dashboards_init_dashboard_completed`                         | `select_resource` step ends, journey ends                |
 
-**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts.
+**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts. `folder_created` is point-in-time — the post-create page reload re-fires `page_view` and updates the journey's `folderUID` attribute, so the user can keep browsing after creating a folder.
 
 **Concurrent with search:** If the user opens the command palette mid-browse, both `browse_to_resource` and `search_to_resource` run concurrently. Both end on `dashboards_init_dashboard_completed`. The concurrent journey attributes and OTel span links capture the relationship.
 
