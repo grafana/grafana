@@ -59,10 +59,12 @@ async function fetchAllDashboards(): Promise<
     const rows: DashboardQueryResult[] = result.view.toArray();
     for (const item of rows) {
       const view = queryResultToViewItem(item, result.view);
-      // `item.location` is the full ancestor path, e.g. "rootUid/subUid".
-      // Empty when the dashboard sits in the General folder.
+      // `item.location` is the full ancestor path, e.g. "rootUid/subUid". The
+      // searcher returns the literal `general` UID for dashboards that sit at
+      // the root, so we strip that out — the synthetic General row in
+      // aggregate() picks them up via an empty ancestor path.
       const path = typeof item.location === 'string' ? item.location : '';
-      const ancestors = path.split('/').filter(Boolean);
+      const ancestors = path.split('/').filter((segment) => segment && segment !== GENERAL_FOLDER_UID);
       all.push({
         uid: view.uid,
         title: view.title,
