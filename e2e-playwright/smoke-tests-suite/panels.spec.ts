@@ -33,7 +33,7 @@ test.describe(
 
       const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
 
-      // when newVizSuggestions=true the viz picker may be auto-opened
+      // the viz picker is auto-opened for new unconfigured panels
       if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
         await vizPicker.click({ force: true });
       }
