@@ -80,6 +80,26 @@ describe('FolderReadmeHint', () => {
     });
   });
 
+  it('scrolls the README panel into view when the link is clicked', () => {
+    setReadmeResult();
+
+    // Stand-in for the panel anchor in the document so the hint can find it.
+    const anchor = document.createElement('section');
+    anchor.id = 'folder-readme';
+    const scrollIntoView = jest.fn();
+    anchor.scrollIntoView = scrollIntoView;
+    document.body.appendChild(anchor);
+
+    try {
+      renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={FOLDER_README_HINT_MIN_ITEMS} />);
+      fireEvent.click(screen.getByRole('link', { name: /See the README/i }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    } finally {
+      anchor.remove();
+    }
+  });
+
   it('renders nothing when the dashboards list is below the threshold', () => {
     setReadmeResult();
 

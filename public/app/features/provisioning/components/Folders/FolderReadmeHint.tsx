@@ -1,3 +1,5 @@
+import { type MouseEvent } from 'react';
+
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, Stack, Text, TextLink } from '@grafana/ui';
@@ -39,21 +41,27 @@ export function FolderReadmeHint({ folderUID, itemCount }: Props) {
     return null;
   }
 
+  const handleClick = (event: MouseEvent) => {
+    // Grafana's Page component owns the scroll container; native hash nav
+    // would update the URL without actually scrolling. Drive the scroll
+    // ourselves so the panel comes into view regardless of who owns scroll.
+    event.preventDefault();
+    document.getElementById(FOLDER_README_ANCHOR_ID)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+    reportInteraction('grafana_provisioning_readme_hint_clicked', {
+      repositoryType: repository.type,
+    });
+  };
+
   return (
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon name="info-circle" size="sm" />
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="browse-dashboards.readme.hint">
           Lots of dashboards or new to this folder?{' '}
-          <TextLink
-            inline
-            href={`#${FOLDER_README_ANCHOR_ID}`}
-            onClick={() => {
-              reportInteraction('grafana_provisioning_readme_hint_clicked', {
-                repositoryType: repository.type,
-              });
-            }}
-          >
+          <TextLink inline href={`#${FOLDER_README_ANCHOR_ID}`} onClick={handleClick}>
             See the README
           </TextLink>
         </Trans>
