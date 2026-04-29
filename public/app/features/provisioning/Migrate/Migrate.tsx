@@ -615,12 +615,7 @@ export function Migrate() {
             onToggle={toggleFolder}
             onSelectAll={selectAllFolders}
           />
-          <FoldersToMigrate
-            folders={folders}
-            repos={repoList}
-            selectedFolders={selectedFolderUids}
-            onToggleFolder={toggleFolder}
-          />
+          <FoldersToMigrate folders={folders} repos={repoList} />
         </div>
         <div className={styles.sideColumn}>
           <NextStepsPanel folders={folders} repos={repoList} />

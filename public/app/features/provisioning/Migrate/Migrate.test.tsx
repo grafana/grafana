@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -234,7 +233,7 @@ describe('Migrate', () => {
     expect(screen.queryByText(/quick wins/i)).not.toBeInTheDocument();
   });
 
-  it('renders the Folders to migrate table with per-row Migrate and Browse actions', async () => {
+  it('renders the Folders to migrate table with per-row Migrate and Browse actions', () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {
@@ -270,13 +269,10 @@ describe('Migrate', () => {
     expect(migrate).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
-  it('exposes a bulk Migrate selected action when folders are checked', async () => {
+  it('hides already-managed folders from the Folders to migrate table', () => {
     mockQuery({
       data: {
-        instance: [
-          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 12 },
-          { group: 'folder.grafana.app', resource: 'folders', count: 2 },
-        ],
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 8 }],
         unmanaged: [],
         managed: [],
       },
@@ -284,20 +280,20 @@ describe('Migrate', () => {
     mockUseFolderLeaderboard.mockReturnValue({
       data: [
         makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2 }),
-        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 3 }),
+        makeFolder({ uid: 'mgd', title: 'Already managed', dashboardCount: 6, managedBy: 'repo' }),
       ],
       isLoading: false,
       isError: false,
     });
     render(<Migrate />);
-    const checkbox = screen.getByRole('checkbox', { name: /select folder payments/i });
-    await userEvent.click(checkbox);
-    // Quick wins also reflects the same selection, so we expect at least two
-    // Migrate selected links — one in Quick wins and one in the table header.
-    expect(screen.getAllByRole('link', { name: /migrate selected \(1\)/i }).length).toBeGreaterThanOrEqual(1);
+    // "Payments" appears in the Quick wins card and the table row.
+    expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('Already managed')).not.toBeInTheDocument();
+    // Footer reflects the unmanaged-only total.
+    expect(screen.getByText(/showing 1 of 1 folders/i)).toBeInTheDocument();
   });
 
-  it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
+it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
