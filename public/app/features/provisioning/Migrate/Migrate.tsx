@@ -77,6 +77,16 @@ function resourceLabel(group: string): string {
   return group;
 }
 
+function resourceIcon(group: string): IconName {
+  if (FOLDER_GROUPS.includes(group)) {
+    return 'folder';
+  }
+  if (DASHBOARD_GROUPS.includes(group)) {
+    return 'apps';
+  }
+  return 'database';
+}
+
 /**
  * Build per-type breakdowns for Folders and Dashboards from the API
  * response. Always emits one row per type even when the API doesn't
@@ -553,7 +563,7 @@ function StatCard({
   const styles = useStyles2(getStyles);
   const textColor = tone === 'neutral' ? undefined : tone;
   return (
-    <div className={styles.statCard}>
+    <div className={cx(styles.statCard, styles[`statCardTone_${tone}` as const])}>
       <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
         <Icon name={icon} />
       </div>
@@ -609,7 +619,7 @@ function OverviewStatCards({
     <div className={styles.statCardsRow}>
       <StatCard
         icon="apps"
-        tone="neutral"
+        tone="info"
         big={totals.instanceTotal.toLocaleString()}
         label={t('provisioning.stats.summary-total', 'Total resources')}
       />
@@ -664,7 +674,14 @@ function ResourceTypesTable({
         id: 'label',
         header: t('provisioning.stats.column-resource', 'Resource'),
         sortType: 'string',
-        cell: ({ row }) => <Text>{row.original.label}</Text>,
+        cell: ({ row }) => (
+          <Stack direction="row" gap={1} alignItems="center">
+            <span className={styles.resourceIcon} aria-hidden>
+              <Icon name={resourceIcon(row.original.group)} />
+            </span>
+            <Text>{row.original.label}</Text>
+          </Stack>
+        ),
       },
       {
         id: 'total',
@@ -725,7 +742,7 @@ function ResourceTypesTable({
           row.original.unmanagedCount === 0 ? null : <MigrateRowButton repos={repos} />,
       },
     ],
-    [repos, styles.managedPctCell, styles.managedPctBar]
+    [repos, styles.managedPctCell, styles.managedPctBar, styles.resourceIcon]
   );
 
   return <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />;
@@ -956,8 +973,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.secondary,
     alignItems: 'flex-start',
+  }),
+  statCardTone_neutral: css({
+    background: theme.colors.background.secondary,
+  }),
+  statCardTone_success: css({
+    background: theme.colors.success.transparent,
+    borderColor: theme.colors.success.borderTransparent,
+  }),
+  statCardTone_info: css({
+    background: theme.colors.info.transparent,
+    borderColor: theme.colors.info.borderTransparent,
+  }),
+  statCardTone_warning: css({
+    background: theme.colors.warning.transparent,
+    borderColor: theme.colors.warning.borderTransparent,
   }),
   statCardIcon: css({
     flex: '0 0 auto',
@@ -973,16 +1004,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
   statIconTone_success: css({
-    background: theme.colors.success.transparent,
-    color: theme.colors.success.text,
+    background: theme.colors.success.main,
+    color: theme.colors.success.contrastText,
   }),
   statIconTone_info: css({
-    background: theme.colors.info.transparent,
-    color: theme.colors.info.text,
+    background: theme.colors.info.main,
+    color: theme.colors.info.contrastText,
   }),
   statIconTone_warning: css({
-    background: theme.colors.warning.transparent,
-    color: theme.colors.warning.text,
+    background: theme.colors.warning.main,
+    color: theme.colors.warning.contrastText,
   }),
   coverageTrack: css({
     position: 'relative',
@@ -1091,6 +1122,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 auto',
     minWidth: 60,
     maxWidth: 120,
+  }),
+  resourceIcon: css({
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.canvas,
+    color: theme.colors.text.secondary,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: '0 0 auto',
   }),
   emptyDonutWrap: css({
     position: 'relative',
