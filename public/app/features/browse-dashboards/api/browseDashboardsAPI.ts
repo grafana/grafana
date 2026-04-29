@@ -21,7 +21,6 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
 import { type PermissionLevel } from 'app/types/acl';
 import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -34,7 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { refetchChildren, refreshParents } from '../state/actions';
+import { refetchChildren, refreshParents, refreshTeamFoldersIfLoaded } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
@@ -158,7 +157,7 @@ export const browseDashboardsAPI = createApi({
             pageSize: PAGE_SIZE,
           })
         );
-        dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+        dispatch(refreshTeamFoldersIfLoaded());
         // Refetch quota usage after mutations that change the total number of dashboards or folders
         invalidateQuotaUsage(dispatch);
       },
@@ -186,7 +185,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -208,7 +207,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -225,7 +224,7 @@ export const browseDashboardsAPI = createApi({
         try {
           await queryFulfilled;
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
-          dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
           invalidateQuotaUsage(dispatch);
         } catch {
           // Error handled by mutation caller
@@ -346,7 +345,7 @@ export const browseDashboardsAPI = createApi({
             })
           );
           dispatch(refreshParents(folderUIDs));
-          dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -374,7 +373,7 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(folderUIDs));
-          dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);

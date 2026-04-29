@@ -1,8 +1,6 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
-import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { refreshTeamFoldersIfLoaded } from 'app/features/browse-dashboards/state/actions';
 import { dispatch } from 'app/store/store';
 import { type DescendantCount } from 'app/types/folders';
 
@@ -32,10 +30,10 @@ export const folderAPIv1beta1 = generatedAPI
         onQueryStarted: async (arg, { queryFulfilled }) => {
           try {
             await queryFulfilled;
-            // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here,
-            //   we probably need to get the full folder somehow before deleting or changing the arg
+            // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here.
+            //  We probably need to get the full folder before deleting or change the arg to refresh the parent.
             // dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
-            dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+            dispatch(refreshTeamFoldersIfLoaded());
             invalidateQuotaUsage(dispatch);
           } catch {
             // Error handled by mutation caller
@@ -51,7 +49,7 @@ export const folderAPIv1beta1 = generatedAPI
               patch.some((part) => 'path' in part && part.path === '/metadata/ownerReferences')
             ) {
               await queryFulfilled;
-              dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+              dispatch(refreshTeamFoldersIfLoaded());
             }
           } catch {
             // Error handled by mutation caller
@@ -63,7 +61,7 @@ export const folderAPIv1beta1 = generatedAPI
           try {
             if (folder.metadata?.ownerReferences && folder.metadata?.ownerReferences.length) {
               await queryFulfilled;
-              dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+              dispatch(refreshTeamFoldersIfLoaded());
             }
           } catch {
             // Error handled by mutation caller
