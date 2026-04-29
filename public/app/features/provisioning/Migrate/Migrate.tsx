@@ -16,6 +16,7 @@ import {
   Stack,
   Text,
   TextLink,
+  Tooltip,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
@@ -944,20 +945,25 @@ function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
         <Text variant="bodySmall" weight="medium">
           {tool.label}
         </Text>
-        {tool.recommended && (
-          <Text variant="bodySmall" color="success">
-            <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
-          </Text>
-        )}
+        <Tooltip content={tool.description} placement="top">
+          <Icon
+            name="info-circle"
+            size="xs"
+            className={styles.toolTileInfo}
+            tabIndex={0}
+            aria-label={t('provisioning.stats.tool-tile-info-aria', 'About {{tool}}', { tool: tool.label })}
+          />
+        </Tooltip>
       </Stack>
-      <Text variant="bodySmall" color="secondary">
-        {tool.description}
-      </Text>
-      {count > 0 && (
+      {tool.recommended ? (
+        <Text variant="bodySmall" color="success">
+          <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
+        </Text>
+      ) : count > 0 ? (
         <Text variant="bodySmall" color="primary">
           {t('provisioning.stats.tool-tile-managed-count', '{{count}} managed', { count })}
         </Text>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -1296,6 +1302,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(3.5),
     height: theme.spacing(3.5),
     objectFit: 'contain',
+  }),
+  toolTileInfo: css({
+    color: theme.colors.text.secondary,
+    cursor: 'help',
+    '&:hover, &:focus-visible': {
+      color: theme.colors.text.primary,
+    },
   }),
   toolTileInitial: css({
     fontSize: theme.typography.h4.fontSize,

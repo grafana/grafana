@@ -13848,6 +13848,7 @@
       "summary-total": "Total resources",
       "summary-total-sub": "Across all providers",
       "summary-unmanaged": "Unmanaged",
+      "tool-tile-info-aria": "About {{tool}}",
       "tool-tile-managed-count_one": "{{count}} managed",
       "tool-tile-managed-count_other": "{{count}} managed",
       "tool-tile-recommended": "Recommended",
