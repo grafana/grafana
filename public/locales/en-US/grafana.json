@@ -13499,8 +13499,8 @@
       "tab-getting-started-title": "Get started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "tab-stats": "Overview",
-      "tab-stats-title": "Provisioning resource overview",
+      "tab-stats": "Migrate",
+      "tab-stats-title": "Migrate to GitOps",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
     "http-utils": {

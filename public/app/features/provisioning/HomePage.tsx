@@ -9,7 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
-import { ProvisioningOverview } from './Overview/ProvisioningOverview';
+import { Migrate } from './Migrate/Migrate';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
 import { CONNECTIONS_URL } from './constants';
@@ -73,8 +73,8 @@ export default function HomePage() {
     if (isStatsEnabled) {
       tabs.push({
         value: 'stats',
-        label: t('provisioning.home-page.tab-stats', 'Overview'),
-        title: t('provisioning.home-page.tab-stats-title', 'Provisioning resource overview'),
+        label: t('provisioning.home-page.tab-stats', 'Migrate'),
+        title: t('provisioning.home-page.tab-stats-title', 'Migrate to GitOps'),
       });
     }
 
@@ -93,7 +93,7 @@ export default function HomePage() {
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       case 'stats':
-        return <ProvisioningOverview />;
+        return <Migrate />;
       case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;

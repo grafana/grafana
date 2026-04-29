@@ -5,7 +5,7 @@ import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1'
 
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
-import { ProvisioningOverview } from './ProvisioningOverview';
+import { Migrate } from './Migrate';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
@@ -33,7 +33,7 @@ function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) 
   } as ReturnType<typeof useGetResourceStatsQuery>);
 }
 
-describe('ProvisioningOverview', () => {
+describe('Migrate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRepositoryList.mockReturnValue([[], false]);
@@ -41,19 +41,19 @@ describe('ProvisioningOverview', () => {
 
   it('renders a loading indicator while fetching', () => {
     mockQuery({ isLoading: true, isSuccess: false, status: 'pending' });
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByText(/loading stats/i)).toBeInTheDocument();
   });
 
   it('renders an error alert on failure', () => {
     mockQuery({ isError: true, isSuccess: false, status: 'rejected', error: { status: 500 } });
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByText(/failed to load provisioning stats/i)).toBeInTheDocument();
   });
 
   it('renders the empty state with the Migrate to GitOps header when there are no resources', () => {
     mockQuery({ data: { instance: [], unmanaged: [], managed: [] } });
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
@@ -67,7 +67,7 @@ describe('ProvisioningOverview', () => {
         managed: [],
       },
     });
-    const { rerender } = render(<ProvisioningOverview />);
+    const { rerender } = render(<Migrate />);
     expect(screen.getByRole('link', { name: /connect a repository/i })).toBeInTheDocument();
 
     mockUseRepositoryList.mockReturnValue([
@@ -79,7 +79,7 @@ describe('ProvisioningOverview', () => {
       ] as ReturnType<typeof useRepositoryList>[0],
       false,
     ]);
-    rerender(<ProvisioningOverview />);
+    rerender(<Migrate />);
     expect(screen.getByRole('link', { name: /start migration/i })).toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('ProvisioningOverview', () => {
       // RTK Query exposes `fulfilledTimeStamp` on resolved queries.
       fulfilledTimeStamp: Date.now(),
     } as Partial<ReturnType<typeof useGetResourceStatsQuery>>);
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByText(/last scan/i)).toBeInTheDocument();
     expect(screen.getByText(/just now/i)).toBeInTheDocument();
   });
@@ -106,7 +106,7 @@ describe('ProvisioningOverview', () => {
         managed: [],
       },
     });
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /migration guide/i })).toBeInTheDocument();
   });
@@ -132,7 +132,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     expect(screen.getByText('Total resources')).toBeInTheDocument();
     // "Managed" / "Unmanaged" appear both as Summary card labels and as
@@ -160,7 +160,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     expect(screen.getByText('Folders')).toBeInTheDocument();
     expect(screen.getByText('Dashboards')).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     expect(screen.getByText(/recommended next steps/i)).toBeInTheDocument();
     expect(screen.getByText(/connect a git repository/i)).toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     expect(screen.getByText(/tooling support/i)).toBeInTheDocument();
     // The "Recommended" word appears both in the panel heading
@@ -253,7 +253,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     // No bulk-action bar before any row is checked.
     expect(screen.queryByRole('link', { name: /migrate selected/i })).not.toBeInTheDocument();
@@ -285,7 +285,7 @@ describe('ProvisioningOverview', () => {
         ],
       },
     });
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
     expect(screen.getByText(/migration progress/i)).toBeInTheDocument();
     expect(screen.getByText(/managed resources by tool/i)).toBeInTheDocument();
     // The donuts include a "managed" sublabel.
@@ -307,7 +307,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     // One bar per row in the table — the page-level bar moved into the
     // Migration progress donut.
@@ -335,7 +335,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     const links = screen.getAllByRole('link', { name: /^migrate$/i });
     expect(links.length).toBeGreaterThanOrEqual(2);
@@ -355,7 +355,7 @@ describe('ProvisioningOverview', () => {
       },
     });
 
-    render(<ProvisioningOverview />);
+    render(<Migrate />);
 
     const migrateLinks = screen.getAllByRole('link', { name: /^migrate$/i });
     migrateLinks.forEach((link) => {

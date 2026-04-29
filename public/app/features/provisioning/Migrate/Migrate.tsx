@@ -949,7 +949,7 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   );
 }
 
-export function ProvisioningOverview() {
+export function Migrate() {
   const query = useGetResourceStatsQuery();
   const { data, isLoading, isError, error } = query;
   const lastScannedAt =
