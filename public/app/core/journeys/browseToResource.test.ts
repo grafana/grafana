@@ -1,3 +1,5 @@
+import { BehaviorSubject } from 'rxjs';
+
 import type { JourneyHandle, JourneyTracker } from '@grafana/runtime';
 
 import type { JourneyRegistryImpl } from '../services/JourneyRegistryImpl';
@@ -10,6 +12,8 @@ import {
   createMockTracker,
   setupJourneyTest,
 } from './__test-utils__/journeyTestHarness';
+
+const locationSubject = new BehaviorSubject<{ pathname: string }>({ pathname: '/dashboards' });
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -29,6 +33,9 @@ jest.mock('@grafana/runtime', () => {
         }
       };
     },
+    locationService: {
+      getLocationObservable: () => locationSubject.asObservable(),
+    },
   };
 });
 
@@ -42,6 +49,8 @@ describe('browseToResource journey wiring', () => {
     mockTracker = createMockTracker();
     mockTracker.startJourney.mockReturnValue(mockHandle);
     registry = setupJourneyTest(mockTracker);
+    // Reset to an in-scope path before each test.
+    locationSubject.next({ pathname: '/dashboards' });
   });
 
   afterEach(() => {
@@ -247,6 +256,29 @@ describe('browseToResource journey wiring', () => {
       folderDepth: '2',
     });
     expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('should end as abandoned when navigating to a path outside the browse area', () => {
+    loadWiring();
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    locationSubject.next({ pathname: '/explore' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/explore' });
+  });
+
+  it('should not end when navigating between in-scope paths (folder, dashboard)', () => {
+    loadWiring();
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    locationSubject.next({ pathname: '/dashboards/folder/abc' });
+    locationSubject.next({ pathname: '/d/some-dash/some-slug' });
+
+    expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
   });
 
   it('should not call createStep.end if folder_created fires without a prior drawer-open', () => {
