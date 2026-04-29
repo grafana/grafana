@@ -21,7 +21,7 @@ declare global {
        * See public/app/plugins/panel/candlestick/utils.canvas.test.ts for an example
        *
        * @param uPlotEvents
-       * @param size - canvas dimensions for the uplot-compare JSON payload
+       * @param size - canvas dimensions for the jest-canvas-mock-compare JSON payload
        * @param snapshotHint - optional Jest snapshot name passed to toMatchSnapshot
        */
       toMatchUPlotSnapshot(

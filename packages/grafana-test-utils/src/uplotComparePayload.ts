@@ -1,5 +1,5 @@
-/** Stable prefix for payload files: `uplot-compare-payload-<slug>.json`. */
-export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'uplot-compare-payload';
+/** Stable prefix for payload files: `jest-canvas-mock-compare-payload-<slug>.json`. */
+export const UPLOT_COMPARE_PAYLOAD_FILE_PREFIX = 'jest-canvas-mock-compare-payload';
 
 export const SLUG_MAX_LENGTH = 96;
 

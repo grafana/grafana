@@ -78,7 +78,7 @@
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
-/scripts/uplot-compare/ @grafana/dataviz-squad
+/scripts/jest-canvas-mock-compare/ @grafana/dataviz-squad
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 

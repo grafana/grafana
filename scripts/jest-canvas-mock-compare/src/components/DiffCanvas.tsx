@@ -4,6 +4,8 @@ import 'json-diff-kit/dist/viewer.css';
 
 import type { CanvasEventArray } from '../types.ts';
 
+import { ToggleCanvasContextButton } from './ToggleCanvasContextButton.tsx';
+
 interface DiffCanvasProps {
   width: number;
   height: number;
@@ -71,9 +73,7 @@ export function DiffCanvas({
       <div className="plot-header">
         <div className={'plot-label'}>Diff</div>
         <div className="plot-actions">
-          <button className="plot-action-btn" type="button" onClick={onToggleDiffSetupEvents}>
-            {renderDiffSetupEvents ? 'Hide uPlot setup' : 'Show uPlot setup'}
-          </button>
+          <ToggleCanvasContextButton onClick={onToggleDiffSetupEvents} showCanvasContext={renderDiffSetupEvents} />
           <button className="overlay-toggle-btn" type="button" onClick={onToggleOverlay}>
             {showOverlay ? 'Hide overlay' : 'Overlay on charts'}
           </button>

@@ -6,7 +6,7 @@ import type { ResolvedPayload, UPlotComparePayload } from '../types.ts';
 import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { ComparePlots } from './ComparePlots.tsx';
 
-/** When payload JSON has no `width`/`height` (older files), uplot-compare still needs a canvas size for replay. */
+/** When payload JSON has no `width`/`height` (older files), jest-canvas-mock-compare still needs a canvas size for replay. */
 const FALLBACK_CANVAS_WIDTH = 400;
 const FALLBACK_CANVAS_HEIGHT = 200;
 const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
