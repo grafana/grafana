@@ -18,16 +18,20 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
-	// ExternalAMConfigSyncTotal counts successful sync attempts by org.
+	// ExternalAMConfigSyncTotal counts successful sync attempts by org. A tick where
+	// the fetched config matches what's already stored counts as success (no save
+	// is performed but the sync ran cleanly), matching the regular apply loop's
+	// behavior of treating no-op apply as a non-event.
 	ExternalAMConfigSyncTotal *prometheus.CounterVec
 	// ExternalAMConfigSyncFailures counts failed sync attempts by org and reason.
 	ExternalAMConfigSyncFailures *prometheus.CounterVec
-	// ExternalAMConfigSyncSkipped counts ticks where the response body hash matched
-	// the previous successful sync, so no save was performed. Tracked separately
-	// from saves so restart-noise (one save per org per restart) is visible.
-	ExternalAMConfigSyncSkipped *prometheus.CounterVec
 	// ExternalAMConfigSyncDuration measures per-org sync duration in seconds.
 	ExternalAMConfigSyncDuration prometheus.Histogram
+	// ExternalAMConfigSyncHash exposes the hash of the most recently synced external
+	// Alertmanager configuration per org so operators can correlate sync state with
+	// what's actually applied. Hash is masked to 53 bits (Prometheus stores values
+	// as float64), matching the pattern used by alertmanager_config_hash.
+	ExternalAMConfigSyncHash *prometheus.GaugeVec
 
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
@@ -61,12 +65,6 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "external_alertmanager_config_sync_failures_total",
 			Help:      "Total number of failed external Alertmanager config sync attempts, partitioned by org and failure reason.",
 		}, []string{"org_id", "reason"}),
-		ExternalAMConfigSyncSkipped: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "external_alertmanager_config_sync_skipped_total",
-			Help:      "Total number of external Alertmanager config sync attempts skipped because the response body hash matched the previous successful sync, partitioned by org.",
-		}, []string{"org_id"}),
 		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
@@ -74,6 +72,12 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Help:      "Duration of external Alertmanager config sync operations in seconds.",
 			Buckets:   prometheus.DefBuckets,
 		}),
+		ExternalAMConfigSyncHash: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "external_alertmanager_config_sync_hash",
+			Help:      "FNV-1a hash of the most recently synced external Alertmanager configuration per org. Masked to 53 bits to fit Prometheus float64 storage; useful for correlating sync state with applied config but not for cryptographic verification.",
+		}, []string{"org_id"}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
 

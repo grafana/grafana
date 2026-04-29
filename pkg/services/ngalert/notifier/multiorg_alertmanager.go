@@ -541,6 +541,38 @@ func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Cont
 	return moa.externalAMSyncer.IsConfiguredForOrg(orgID)
 }
 
+// StoredExtraConfigHash returns the FNV-1a hash of the stored ExtraConfiguration
+// with the given identifier (after decryption). Returns (0, false, nil) when no
+// row exists for the org or no ExtraConfig matches the identifier; (0, false, err)
+// when load/parse/decrypt fails. Used by the sync worker to skip a save when the
+// fetched Mimir/Cortex config is byte-equivalent to what's already stored —
+// dedup that survives process restart without a sidecar table.
+func (moa *MultiOrgAlertmanager) StoredExtraConfigHash(ctx context.Context, orgID int64, identifier string) (uint64, bool, error) {
+	stored, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	if err != nil {
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+	parsed, err := Load([]byte(stored.AlertmanagerConfiguration))
+	if err != nil {
+		return 0, false, fmt.Errorf("parse stored alertmanager configuration: %w", err)
+	}
+	for i := range parsed.ExtraConfigs {
+		if parsed.ExtraConfigs[i].Identifier != identifier {
+			continue
+		}
+		// Decrypt before hashing — the persisted form has fresh per-call IVs that
+		// would defeat any byte comparison even for identical input.
+		if err := moa.Crypto.DecryptExtraConfigs(ctx, parsed); err != nil {
+			return 0, false, fmt.Errorf("decrypt stored extra config: %w", err)
+		}
+		return fingerprintExtraConfig(parsed.ExtraConfigs[i]), true, nil
+	}
+	return 0, false, nil
+}
+
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
