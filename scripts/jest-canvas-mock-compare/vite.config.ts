@@ -80,7 +80,7 @@ const buildJestCommand = (testName: string, updateSnapshot: boolean, testPath: s
   if (updateSnapshot) {
     args.push('--updateSnapshot');
   }
-  args.push(JSON.stringify(`--testNamePattern ${pattern} -- ${testPath}`));
+  args.push('--testNamePattern', pattern, '--', testPath);
   const jestCommand = `${args.join(' ')}`;
   return { args, jestCommand };
 };
@@ -187,4 +187,8 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
 export default defineConfig({
   base: './',
   plugins: [react(), acceptSnapshotPlugin()],
+  // Snapshot types use `import type` from jest-canvas-mock; do not pre-bundle its runtime (global `jest`) for the client.
+  optimizeDeps: {
+    exclude: ['jest-canvas-mock'],
+  },
 });
