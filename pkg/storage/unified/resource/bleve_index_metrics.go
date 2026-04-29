@@ -127,7 +127,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}),
 		IndexSnapshotCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_cleanups_total",
-			Help: "Number of remote index snapshot cleanup attempts per namespace, by outcome.",
+			Help: "Number of remote index snapshot cleanup attempts by outcome.",
 		}, []string{"status"}), // status: success, error, skip_lock_held, skip_unowned
 		IndexSnapshotDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_deleted_total",

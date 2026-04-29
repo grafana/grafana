@@ -81,7 +81,9 @@ func TestSelectSnapshotsToDelete_NewestInGroupAlwaysKept(t *testing.T) {
 		keys[i] = makeULID(t, now.Add(-time.Duration(i)*time.Minute))
 		metas[keys[i]] = mkMeta("11.5.0", int64(100+i*10), now.Add(-time.Duration(i+60)*time.Minute))
 	}
-	// Make the highest-RV (i=4 -> rv=140) the newest by upload time, well past grace.
+	// Make the highest-RV (i=4 -> rv=140) the oldest by upload time, well past
+	// grace. RV-desc beats UploadTimestamp-desc in the per-group sort, so this
+	// snapshot still wins as the per-group keep.
 	metas[keys[4]].UploadTimestamp = now.Add(-2 * time.Hour)
 
 	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)

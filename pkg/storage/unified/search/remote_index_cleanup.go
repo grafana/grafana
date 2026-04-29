@@ -51,12 +51,8 @@ var errCleanupLockLost = errors.New("cleanup lock lost")
 func (b *bleveBackend) cleanupSnapshotsPeriodically(ctx context.Context) {
 	defer b.bgTasksWg.Done()
 
+	// Caller (NewBleveBackend) only starts this goroutine when CleanupInterval > 0.
 	interval := b.opts.Snapshot.CleanupInterval
-	if interval <= 0 {
-		// Caller (NewBleveBackend) only starts this goroutine when CleanupInterval > 0.
-		return
-	}
-
 	initialDelay := time.Duration(rand.Int64N(int64(interval)))
 	select {
 	case <-ctx.Done():
@@ -113,7 +109,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 	// Ownership is checked at namespace granularity. The production OwnsIndex
 	// implementation hashes on Namespace alone, so calling it with an empty
 	// Group/Resource is the contract. A future change to that semantics will
-	// trip the assertion in Test_RunCleanup_OwnershipFilter_NamespaceLevel.
+	// trip the assertion in TestRunCleanup_OwnershipFilter_NamespaceLevel.
 	owned, err := b.ownsIndexFn(resource.NamespacedResource{Namespace: namespace})
 	if err != nil {
 		b.recordSnapshotCleanupStatus(snapshotCleanupStatusError)
@@ -231,12 +227,15 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 		b.recordSnapshotDeleted(snapshotDeletedKindSnapshot)
 	}
 
+	// CleanupIncompleteUploads returns a partial cleaned count even on error;
+	// record those before propagating so metrics don't undercount on transient
+	// bucket failures.
 	cleaned, err := store.CleanupIncompleteUploads(ctx, res, cleanupIncompleteUploadsMinAge)
-	if err != nil {
-		return fmt.Errorf("cleaning up incomplete uploads: %w", err)
-	}
 	for range cleaned {
 		b.recordSnapshotDeleted(snapshotDeletedKindIncomplete)
+	}
+	if err != nil {
+		return fmt.Errorf("cleaning up incomplete uploads: %w", err)
 	}
 
 	return nil
@@ -282,7 +281,8 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 		}
 		// Group by normalised version string so "11.5.0" and "v11.5.0" land in
 		// the same bucket.
-		groups[v.String()] = append(groups[v.String()], entry{key: k, meta: m, v: v})
+		version := v.String()
+		groups[version] = append(groups[version], entry{key: k, meta: m, v: v})
 	}
 
 	for _, g := range groups {
