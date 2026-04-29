@@ -65,21 +65,14 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     });
   }
 
-  // Add team folders virtual item only if the user actually has team folders
-  if (!parentUID && config.featureToggles.teamFolders) {
-    try {
-      const teamFolders = await listTeamFolders();
-      if (teamFolders.length > 0) {
-        const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-        folders.splice(insertIndex, 0, {
-          ...virtualFolderBase,
-          name: t('browse-dashboards.my-team-folders', 'My team folders'),
-          uid: TEAM_FOLDERS_UID,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load team folders', error);
-    }
+  // Add team folders virtual item
+  if (page === 1 && !parentUID && config.featureToggles.teamFolders) {
+    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+    folders.splice(insertIndex, 0, {
+      ...virtualFolderBase,
+      name: t('browse-dashboards.my-team-folders', 'My team folders'),
+      uid: TEAM_FOLDERS_UID,
+    });
   }
 
   return folders.map<NestedFolderDTO>((item) => {
@@ -153,7 +146,12 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
  * with team owner info attached to each folder.
  */
 export async function listTeamFolders(): Promise<DashboardViewItem[]> {
-  const teams = await dispatch(legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined)).unwrap();
+  // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need requests
+  // here not to be cached.
+
+  const teams = await dispatch(
+    legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined, { forceRefetch: true })
+  ).unwrap();
 
   if (!teams || teams.length === 0) {
     return [];
@@ -162,7 +160,15 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
   const ownerReference = teams.map(teamOwnerRef);
 
   const result = await dispatch(
-    dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate({ ownerReference, type: 'folder' })
+    dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(
+      {
+        ownerReference,
+        type: 'folder',
+      },
+      {
+        forceRefetch: true,
+      }
+    )
   ).unwrap();
 
   const hits = result.hits ?? [];

@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
@@ -63,6 +64,27 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+export const refreshTeamFoldersIfLoaded = createAsyncThunk(
+  'browseDashboards/refreshTeamFoldersIfLoaded',
+  async (_, { getState, dispatch }) => {
+    if (!config.featureToggles.teamFolders) {
+      return;
+    }
+
+    const { browseDashboards } = getState();
+    if (browseDashboards.childrenByParentUID[TEAM_FOLDERS_UID]) {
+      dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+    }
+  }
+);
+
+/**
+ * Refetches children of a folder after changes that should be reflected in the redux state which is then rendered
+ * in the dashboard browse page.
+ *
+ * For this to work properly the requests have to be uncached themselves here so make sure any RTK query used here
+ * does not use builtin cache.
+ */
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {

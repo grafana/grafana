@@ -33,7 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { refetchChildren, refreshParents } from '../state/actions';
+import { refetchChildren, refreshParents, refreshTeamFoldersIfLoaded } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
@@ -157,6 +157,7 @@ export const browseDashboardsAPI = createApi({
             pageSize: PAGE_SIZE,
           })
         );
+        dispatch(refreshTeamFoldersIfLoaded());
         // Refetch quota usage after mutations that change the total number of dashboards or folders
         invalidateQuotaUsage(dispatch);
       },
@@ -184,6 +185,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -205,6 +207,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -221,6 +224,7 @@ export const browseDashboardsAPI = createApi({
         try {
           await queryFulfilled;
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
+          dispatch(refreshTeamFoldersIfLoaded());
           invalidateQuotaUsage(dispatch);
         } catch {
           // Error handled by mutation caller
@@ -341,6 +345,7 @@ export const browseDashboardsAPI = createApi({
             })
           );
           dispatch(refreshParents(folderUIDs));
+          dispatch(refreshTeamFoldersIfLoaded());
         });
       },
     }),
@@ -368,6 +373,7 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(folderUIDs));
+          dispatch(refreshTeamFoldersIfLoaded());
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);

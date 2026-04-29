@@ -1,4 +1,7 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { refreshTeamFoldersIfLoaded } from 'app/features/browse-dashboards/state/actions';
+import { dispatch } from 'app/store/store';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
@@ -24,6 +27,46 @@ export const folderAPIv1beta1 = generatedAPI
       },
       deleteFolder: {
         invalidatesTags: (_result, error) => (error ? [] : [folderListTag]),
+        onQueryStarted: async (arg, { queryFulfilled }) => {
+          try {
+            await queryFulfilled;
+            // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here.
+            //  We probably need to get the full folder before deleting or change the arg to refresh the parent.
+            // dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
+            dispatch(refreshTeamFoldersIfLoaded());
+            invalidateQuotaUsage(dispatch);
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
+      },
+      updateFolder: {
+        onQueryStarted: async ({ patch }, { queryFulfilled }) => {
+          try {
+            if (
+              Array.isArray(patch) &&
+              patch.length &&
+              patch.some((part) => 'path' in part && part.path === '/metadata/ownerReferences')
+            ) {
+              await queryFulfilled;
+              dispatch(refreshTeamFoldersIfLoaded());
+            }
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
+      },
+      createFolder: {
+        onQueryStarted: async ({ folder }, { queryFulfilled }) => {
+          try {
+            if (folder.metadata?.ownerReferences && folder.metadata?.ownerReferences.length) {
+              await queryFulfilled;
+              dispatch(refreshTeamFoldersIfLoaded());
+            }
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
       },
     },
   })
