@@ -149,6 +149,20 @@ func isDataSourceRef(ref interface{}) bool {
 	return hasUID || hasType
 }
 
+// ResolveDatasourceRef resolves a bare-string datasource name/UID via the index.
+// "default" resolves to the configured default, otherwise falls through to Lookup.
+func ResolveDatasourceRef(name string, index *DatasourceIndex) *DataSourceInfo {
+	if index == nil || name == "" {
+		return nil
+	}
+	if name == "default" {
+		if ds := index.GetDefault(); ds != nil {
+			return ds
+		}
+	}
+	return index.Lookup(name)
+}
+
 // MigrateDatasourceNameToRef converts a datasource name/uid string to a reference object
 // Matches the frontend migrateDatasourceNameToRef function in DashboardMigrator.ts
 // Options:
@@ -164,30 +178,28 @@ func MigrateDatasourceNameToRef(nameOrRef interface{}, options map[string]bool, 
 		return nameOrRef.(map[string]interface{})
 	}
 
-	// Look up datasource by name/UID
-	if nameOrRef == nil || nameOrRef == "default" {
+	if nameOrRef == nil {
 		if ds := index.GetDefault(); ds != nil {
 			return GetDataSourceRef(ds)
 		}
+		return nil
 	}
 
-	// Check if it's a string name/UID
-	if str, ok := nameOrRef.(string); ok {
-		// Handle empty string case
-		if str == "" {
-			// Empty string should return {} (frontend behavior)
-			return map[string]interface{}{}
-		}
-
-		if ds := index.Lookup(str); ds != nil {
-			return GetDataSourceRef(ds)
-		}
-
-		// Unknown datasource name should be preserved as UID-only reference
-		return map[string]interface{}{
-			"uid": str,
-		}
+	str, ok := nameOrRef.(string)
+	if !ok {
+		return nil
 	}
 
-	return nil
+	if str == "" {
+		return map[string]interface{}{}
+	}
+
+	if ds := ResolveDatasourceRef(str, index); ds != nil {
+		return GetDataSourceRef(ds)
+	}
+
+	// Unknown name is preserved as a UID-only ref.
+	return map[string]interface{}{
+		"uid": str,
+	}
 }
