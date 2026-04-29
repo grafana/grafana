@@ -345,6 +345,78 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 }
 
+func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
+	const amConfig = "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
+
+	mimirSrv := startMimirServer(t, amConfig)
+
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
+		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
+	}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+
+	// First tick: stores the config and writes a history row on top of the
+	// bootstrap default. Bootstrap counts as one history entry; the first sync
+	// adds a second.
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 2)
+
+	// Second tick on byte-identical Mimir output: hash matches the cached value
+	// for org 1, so SaveAndApplyExtraConfiguration is not called and no new
+	// history row is written.
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
+
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncSkipped.WithLabelValues("1")))
+}
+
+func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
+	// Server flips the response on the second call so the body hash differs and
+	// the sync re-saves.
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		amCfg := "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
+		if calls > 1 {
+			amCfg = "route:\n  receiver: mimir-changed\nreceivers:\n  - name: mimir-changed"
+		}
+		resp := mimirConfigResponse{AlertmanagerConfig: amCfg, TemplateFiles: map[string]string{}}
+		body, err := yaml.Marshal(resp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/yaml")
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := makeMimirDS("mimir-uid", 1, srv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
+		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
+	}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 2, "first sync writes one history row on top of bootstrap")
+
+	moa.syncExternalAMs(context.Background(), []int64{1})
+	require.Len(t, cs.historicConfigs[1], 3, "different response bytes should trigger a new save")
+
+	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncSkipped.WithLabelValues("1")))
+}
+
 func TestBuildMimirConfigURL(t *testing.T) {
 	moa := &MultiOrgAlertmanager{}
 

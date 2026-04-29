@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"net/url"
@@ -77,11 +78,29 @@ func (moa *MultiOrgAlertmanager) syncExternalAMs(ctx context.Context, orgIDs []i
 			continue
 		}
 
-		mimirCfg, err := moa.fetchMimirConfig(fetchCtx, ds)
+		mimirCfg, body, err := moa.fetchMimirConfig(fetchCtx, ds)
 		cancel()
 		if err != nil {
 			moa.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "error", err)
 			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonMimirFetch).Inc()
+			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
+			continue
+		}
+
+		// Dedup against the previous successful sync. Hashing the raw response body
+		// (instead of the parsed ExtraConfiguration) is deterministic regardless of
+		// map iteration order in TemplateFiles and unaffected by encryption IV churn
+		// downstream. The hash map is in-process only — on restart, every org pays
+		// one save before dedup engages.
+		h := fnv.New64a()
+		_, _ = h.Write(body)
+		newHash := h.Sum64()
+		moa.lastSyncHashMu.Lock()
+		prevHash, hasPrev := moa.lastSyncHash[orgID]
+		moa.lastSyncHashMu.Unlock()
+		if hasPrev && prevHash == newHash {
+			moa.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
+			moa.metrics.ExternalAMConfigSyncSkipped.WithLabelValues(orgIDStr).Inc()
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}
@@ -103,6 +122,10 @@ func (moa *MultiOrgAlertmanager) syncExternalAMs(ctx context.Context, orgIDs []i
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}
+
+		moa.lastSyncHashMu.Lock()
+		moa.lastSyncHash[orgID] = newHash
+		moa.lastSyncHashMu.Unlock()
 
 		moa.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
 		moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
@@ -144,46 +167,47 @@ func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Cont
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex datasource.
 // It builds an HTTP client off the datasource service's HTTP transport so TLS, basic auth,
 // bearer tokens, custom headers, OAuth pass-through and other middlewares are applied
-// transparently from the datasource's stored configuration.
-func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, error) {
+// transparently from the datasource's stored configuration. The raw response body is
+// returned alongside the parsed config so callers can hash it for change detection.
+func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, []byte, error) {
 	configURL, err := moa.buildMimirConfigURL(ds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build config URL: %w", err)
+		return nil, nil, fmt.Errorf("failed to build config URL: %w", err)
 	}
 
 	transport, err := moa.datasourceService.GetHTTPTransport(ctx, ds, moa.httpClientProvider)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build datasource HTTP transport: %w", err)
+		return nil, nil, fmt.Errorf("failed to build datasource HTTP transport: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, configURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-		return nil, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
+		return nil, nil, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	var cfg mimirConfigResponse
 	decoder := yaml.NewDecoder(bytes.NewReader(body))
 	if err := decoder.Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	return &cfg, nil
+	return &cfg, body, nil
 }
 
 // buildMimirConfigURL constructs the Mimir alertmanager configuration API URL.

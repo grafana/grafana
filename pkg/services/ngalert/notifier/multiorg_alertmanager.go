@@ -126,6 +126,15 @@ type MultiOrgAlertmanager struct {
 	datasourceService  datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 
+	// lastSyncHash stores the FNV-1a hash of the most recent successful Mimir/Cortex
+	// alertmanager-config response body per org. The sync worker compares against
+	// this on the next tick and skips the save when bytes are identical, avoiding
+	// alert_configuration_history pollution from idle Mimir tenants. The map resets
+	// on process restart, which means each org pays one extra save per restart
+	// before the dedup engages — acceptable trade-off vs. an additional schema migration.
+	lastSyncHashMu sync.Mutex
+	lastSyncHash   map[int64]uint64
+
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
 }
@@ -180,6 +189,7 @@ func NewMultiOrgAlertmanager(
 		ns:                          ns,
 		datasourceService:           datasourceService,
 		httpClientProvider:          httpClientProvider,
+		lastSyncHash:                map[int64]uint64{},
 		peer:                        &NilPeer{},
 	}
 

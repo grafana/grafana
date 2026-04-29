@@ -22,6 +22,10 @@ type MultiOrgAlertmanager struct {
 	ExternalAMConfigSyncTotal *prometheus.CounterVec
 	// ExternalAMConfigSyncFailures counts failed sync attempts by org and reason.
 	ExternalAMConfigSyncFailures *prometheus.CounterVec
+	// ExternalAMConfigSyncSkipped counts ticks where the response body hash matched
+	// the previous successful sync, so no save was performed. Tracked separately
+	// from saves so restart-noise (one save per org per restart) is visible.
+	ExternalAMConfigSyncSkipped *prometheus.CounterVec
 	// ExternalAMConfigSyncDuration measures per-org sync duration in seconds.
 	ExternalAMConfigSyncDuration prometheus.Histogram
 
@@ -57,6 +61,12 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "external_alertmanager_config_sync_failures_total",
 			Help:      "Total number of failed external Alertmanager config sync attempts, partitioned by org and failure reason.",
 		}, []string{"org_id", "reason"}),
+		ExternalAMConfigSyncSkipped: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "external_alertmanager_config_sync_skipped_total",
+			Help:      "Total number of external Alertmanager config sync attempts skipped because the response body hash matched the previous successful sync, partitioned by org.",
+		}, []string{"org_id"}),
 		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
