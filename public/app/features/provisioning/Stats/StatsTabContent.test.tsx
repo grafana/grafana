@@ -195,11 +195,16 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    // Total = 40, Managed = 22 (4 + 12 + 6), Unmanaged = 40 - 22 = 18.
-    // toLocaleString() in tests will not insert separators for these values.
+    // Total = 40, Git Sync = 16 (4 folders + 12 dashboards), Other = 6
+    // (terraform dashboards), Unmanaged = 18.
     expect(screen.getByText('40')).toBeInTheDocument();
-    expect(screen.getByText('22')).toBeInTheDocument();
-    expect(screen.getByText('18')).toBeInTheDocument();
+    expect(screen.getAllByText(/16 of 40/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/6 of 40/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/18 of 40/i).length).toBeGreaterThan(0);
+    // The donut center reports the combined managed share (22/40 = 55%).
+    expect(screen.getAllByText('55%').length).toBeGreaterThan(0);
+    // 18/40 = 45% appears as the Unmanaged card big number.
+    expect(screen.getAllByText('45%').length).toBeGreaterThan(0);
   });
 
   it('lists every resource type once in the All resources section', () => {

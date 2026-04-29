@@ -13787,6 +13787,7 @@
       "column-total": "Total",
       "column-unmanaged": "Unmanaged",
       "dashboards": "Dashboards",
+      "donut-center-sublabel": "managed",
       "empty": "No provisioned resources yet",
       "error-title": "Failed to load provisioning stats",
       "folders": "Folders",
@@ -13808,6 +13809,7 @@
       "migration-eligible-description_other": "{{count}} unmanaged resources of a Git-Sync-supported type could be moved into a repository.",
       "migration-eligible-title": "Resources eligible to migrate to Git Sync",
       "migration-heading": "Git Sync migration readiness",
+      "n-of-m": "{{value}} of {{total}}",
       "other-provider-manager-count_one": "{{count}} manager",
       "other-provider-manager-count_other": "{{count}} managers",
       "other-provider-resource-count_one": "{{count}} resource",
@@ -13817,9 +13819,7 @@
       "repository-fallback-name": "Repository",
       "resource-total_one": "{{count}} total",
       "resource-total_other": "{{count}} total",
-      "summary-managed": "Managed",
-      "summary-total": "Total resources",
-      "summary-unmanaged": "Unmanaged"
+      "summary-total": "Total resources"
     },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",

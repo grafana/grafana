@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, Card, EmptyState, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Card, EmptyState, Icon, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
   type ManagerStats,
@@ -189,94 +189,186 @@ function percent(part: number, total: number): string {
   return `${Math.round((part / total) * 100)}%`;
 }
 
-function StackedBar({ gitSync, other, unmanaged }: { gitSync: number; other: number; unmanaged: number }) {
-  const styles = useStyles2(getStyles);
+function Donut({
+  gitSync,
+  other,
+  unmanaged,
+  size = 96,
+  strokeWidth = 14,
+  centerLabel,
+  centerSubLabel,
+}: {
+  gitSync: number;
+  other: number;
+  unmanaged: number;
+  size?: number;
+  strokeWidth?: number;
+  centerLabel?: string;
+  centerSubLabel?: string;
+}) {
+  const theme = useTheme2();
   const total = gitSync + other + unmanaged;
-  if (total === 0) {
-    return <div className={styles.bar} />;
-  }
+  const radius = 50 - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  const segments = [
+    { value: gitSync, color: theme.colors.success.main },
+    { value: other, color: theme.colors.info.main },
+    { value: unmanaged, color: theme.colors.warning.main },
+  ].filter((s) => s.value > 0);
+
+  let cumulative = 0;
+
   return (
-    <div className={styles.bar} role="img">
-      {gitSync > 0 && <Box flex={gitSync} backgroundColor="success" height={1} />}
-      {other > 0 && <Box flex={other} backgroundColor="info" height={1} />}
-      {unmanaged > 0 && <Box flex={unmanaged} backgroundColor="warning" height={1} />}
-    </div>
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-hidden>
+      <circle
+        cx="50"
+        cy="50"
+        r={radius}
+        fill="none"
+        stroke={theme.colors.background.secondary}
+        strokeWidth={strokeWidth}
+      />
+      {total > 0 &&
+        segments.map((seg, idx) => {
+          const pct = seg.value / total;
+          const dashLen = pct * circumference;
+          const offset = -cumulative * circumference;
+          cumulative += pct;
+          return (
+            <circle
+              key={idx}
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${dashLen} ${circumference - dashLen}`}
+              strokeDashoffset={offset}
+              transform="rotate(-90 50 50)"
+              strokeLinecap="butt"
+            />
+          );
+        })}
+      {centerLabel !== undefined && (
+        <text
+          x="50"
+          y={centerSubLabel ? 46 : 50}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="20"
+          fontWeight={600}
+          fill={theme.colors.text.primary}
+        >
+          {centerLabel}
+        </text>
+      )}
+      {centerSubLabel && (
+        <text
+          x="50"
+          y="62"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="9"
+          fill={theme.colors.text.secondary}
+        >
+          {centerSubLabel}
+        </text>
+      )}
+    </svg>
   );
 }
 
 function SummarySection({ stats }: { stats: ComputedStats }) {
   const styles = useStyles2(getStyles);
-  const managedPct = percent(stats.managedTotal, stats.instanceTotal);
-  const unmanagedPct = percent(stats.unmanagedTotal, stats.instanceTotal);
+  const gitSyncTotal = stats.gitSync?.totals.total ?? 0;
+  const otherTotal = stats.otherProviders.reduce((acc, p) => acc + p.totals.total, 0);
   return (
-    <Stack direction="column" gap={1.5}>
-      <Stack direction="row" gap={2} wrap>
-        <div className={styles.summaryCard}>
-          <Text variant="h2">{stats.instanceTotal.toLocaleString()}</Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.summary-total">Total resources</Trans>
-          </Text>
-        </div>
-        <div className={styles.summaryCard}>
-          <Stack direction="row" alignItems="baseline" gap={1}>
-            <Text variant="h2" color="success">
-              {stats.managedTotal.toLocaleString()}
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              {managedPct}
-            </Text>
-          </Stack>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.summary-managed">Managed</Trans>
-          </Text>
-        </div>
-        <div className={styles.summaryCard}>
-          <Stack direction="row" alignItems="baseline" gap={1}>
-            <Text variant="h2" color="warning">
-              {stats.unmanagedTotal.toLocaleString()}
-            </Text>
-            <Text color="secondary" variant="bodySmall">
-              {unmanagedPct}
-            </Text>
-          </Stack>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.summary-unmanaged">Unmanaged</Trans>
-          </Text>
-        </div>
+    <div className={styles.summaryPanel}>
+      <div className={styles.summaryDonut}>
+        <Donut
+          gitSync={gitSyncTotal}
+          other={otherTotal}
+          unmanaged={stats.unmanagedTotal}
+          size={140}
+          strokeWidth={18}
+          centerLabel={percent(stats.managedTotal, stats.instanceTotal)}
+          centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'managed')}
+        />
+      </div>
+      <Stack direction="row" gap={2} wrap flex={1}>
+        <PercentageStat
+          big={stats.instanceTotal.toLocaleString()}
+          label={t('provisioning.stats.summary-total', 'Total resources')}
+          dotClass={undefined}
+        />
+        <PercentageStat
+          big={percent(gitSyncTotal, stats.instanceTotal)}
+          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+            value: gitSyncTotal,
+            total: stats.instanceTotal,
+          })}
+          label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
+          dotClass={styles.legendDotSuccess}
+          color="success"
+        />
+        <PercentageStat
+          big={percent(otherTotal, stats.instanceTotal)}
+          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+            value: otherTotal,
+            total: stats.instanceTotal,
+          })}
+          label={t('provisioning.stats.legend-other', 'Managed by other providers')}
+          dotClass={styles.legendDotInfo}
+          color="info"
+        />
+        <PercentageStat
+          big={percent(stats.unmanagedTotal, stats.instanceTotal)}
+          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+            value: stats.unmanagedTotal,
+            total: stats.instanceTotal,
+          })}
+          label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
+          dotClass={styles.legendDotWarning}
+          color="warning"
+        />
       </Stack>
-      <StackedBar
-        gitSync={stats.gitSync?.totals.total ?? 0}
-        other={stats.otherProviders.reduce((acc, p) => acc + p.totals.total, 0)}
-        unmanaged={stats.unmanagedTotal}
-      />
-      <LegendRow />
-    </Stack>
+    </div>
   );
 }
 
-function LegendRow() {
+function PercentageStat({
+  big,
+  subLabel,
+  label,
+  dotClass,
+  color,
+}: {
+  big: string;
+  subLabel?: string;
+  label: string;
+  dotClass: string | undefined;
+  color?: 'success' | 'info' | 'warning';
+}) {
   const styles = useStyles2(getStyles);
   return (
-    <Stack direction="row" gap={2} wrap>
-      <Stack direction="row" gap={1} alignItems="center">
-        <span className={styles.legendDotSuccess} />
+    <div className={styles.percentStat}>
+      <Text variant="h1" color={color}>
+        {big}
+      </Text>
+      {subLabel && (
         <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.legend-git-sync">Managed by Git Sync</Trans>
+          {subLabel}
+        </Text>
+      )}
+      <Stack direction="row" gap={1} alignItems="center">
+        {dotClass && <span className={dotClass} />}
+        <Text color="secondary" variant="bodySmall">
+          {label}
         </Text>
       </Stack>
-      <Stack direction="row" gap={1} alignItems="center">
-        <span className={styles.legendDotInfo} />
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.legend-other">Managed by other providers</Trans>
-        </Text>
-      </Stack>
-      <Stack direction="row" gap={1} alignItems="center">
-        <span className={styles.legendDotWarning} />
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.legend-unmanaged">Unmanaged</Trans>
-        </Text>
-      </Stack>
-    </Stack>
+    </div>
   );
 }
 
@@ -322,6 +414,8 @@ function MigrationReadinessSection({ breakdowns }: { breakdowns: GroupBreakdown[
 
 function ResourceBreakdownCard({ breakdown }: { breakdown: GroupBreakdown }) {
   const styles = useStyles2(getStyles);
+  const nOfM = (value: number) =>
+    t('provisioning.stats.n-of-m', '{{value}} of {{total}}', { value, total: breakdown.total });
   return (
     <Card noMargin>
       <Card.Heading>
@@ -333,62 +427,41 @@ function ResourceBreakdownCard({ breakdown }: { breakdown: GroupBreakdown }) {
         </Stack>
       </Card.Heading>
       <Card.Description>
-        <Stack direction="column" gap={1.5}>
-          <StackedBar
+        <Stack direction="row" gap={3} alignItems="center" wrap>
+          <Donut
             gitSync={breakdown.gitSyncCount}
             other={breakdown.otherManagedCount}
             unmanaged={breakdown.unmanagedCount}
+            size={88}
+            strokeWidth={14}
+            centerLabel={percent(breakdown.gitSyncCount + breakdown.otherManagedCount, breakdown.total)}
           />
-          <Stack direction="row" gap={4} wrap>
-            <BreakdownStat
-              dotClass={styles.legendDotSuccess}
+          <Stack direction="row" gap={3} wrap flex={1}>
+            <PercentageStat
+              big={percent(breakdown.gitSyncCount, breakdown.total)}
+              subLabel={nOfM(breakdown.gitSyncCount)}
               label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
-              value={breakdown.gitSyncCount}
-              total={breakdown.total}
+              dotClass={styles.legendDotSuccess}
+              color="success"
             />
-            <BreakdownStat
-              dotClass={styles.legendDotInfo}
+            <PercentageStat
+              big={percent(breakdown.otherManagedCount, breakdown.total)}
+              subLabel={nOfM(breakdown.otherManagedCount)}
               label={t('provisioning.stats.legend-other', 'Managed by other providers')}
-              value={breakdown.otherManagedCount}
-              total={breakdown.total}
+              dotClass={styles.legendDotInfo}
+              color="info"
             />
-            <BreakdownStat
-              dotClass={styles.legendDotWarning}
+            <PercentageStat
+              big={percent(breakdown.unmanagedCount, breakdown.total)}
+              subLabel={nOfM(breakdown.unmanagedCount)}
               label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-              value={breakdown.unmanagedCount}
-              total={breakdown.total}
+              dotClass={styles.legendDotWarning}
+              color="warning"
             />
           </Stack>
         </Stack>
       </Card.Description>
     </Card>
-  );
-}
-
-function BreakdownStat({
-  dotClass,
-  label,
-  value,
-  total,
-}: {
-  dotClass: string;
-  label: string;
-  value: number;
-  total: number;
-}) {
-  return (
-    <Stack direction="column" gap={0}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <span className={dotClass} />
-        <Text variant="h5">{value.toLocaleString()}</Text>
-        <Text variant="bodySmall" color="secondary">
-          {percent(value, total)}
-        </Text>
-      </Stack>
-      <Text color="secondary" variant="bodySmall">
-        {label}
-      </Text>
-    </Stack>
   );
 }
 
@@ -568,24 +641,26 @@ export function StatsTabContent() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  summaryCard: css({
-    flex: '1 1 0',
-    minWidth: 160,
-    padding: theme.spacing(2),
+  summaryPanel: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: theme.spacing(3),
+    padding: theme.spacing(3),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.secondary,
+  }),
+  summaryDonut: css({
+    flex: '0 0 auto',
+  }),
+  percentStat: css({
+    flex: '1 1 140px',
+    minWidth: 120,
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(0.5),
-  }),
-  bar: css({
-    display: 'flex',
-    width: '100%',
-    height: theme.spacing(1),
-    borderRadius: theme.shape.radius.default,
-    overflow: 'hidden',
-    background: theme.colors.background.secondary,
+    gap: theme.spacing(0.25),
   }),
   legendDotSuccess: css({
     display: 'inline-block',
