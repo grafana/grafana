@@ -169,8 +169,10 @@ describe('Migrate', () => {
     expect(screen.getByText('Dashboards')).toBeInTheDocument();
     expect(screen.queryByText('alertrules')).not.toBeInTheDocument();
     expect(screen.queryByText('user-storage')).not.toBeInTheDocument();
-    // Total card reflects the folders+dashboards count only.
-    expect(screen.getByText('5')).toBeInTheDocument();
+    // Total card reflects the folders+dashboards count only. The same value
+    // can also surface as the center label of one of the donuts, so allow
+    // multiple matches.
+    expect(screen.getAllByText('5').length).toBeGreaterThan(0);
   });
 
   it('renders the Recommended next steps panel with dynamic state', () => {
@@ -256,6 +258,34 @@ describe('Migrate', () => {
     // New empty-state copy replaces the plain "Nothing is managed yet" line.
     expect(screen.getByText(/an empty donut\. for now\./i)).toBeInTheDocument();
     expect(screen.getByText(/connect git sync/i)).toBeInTheDocument();
+  });
+
+  it('renders Managed by type and Unmanaged by type donut panels alongside the others', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 16 },
+        ],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [
+              { group: 'folder.grafana.app', resource: 'folders', count: 1 },
+              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
+            ],
+          },
+        ],
+      },
+    });
+    render(<Migrate />);
+    expect(screen.getByText(/^managed by type$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^unmanaged by type$/i)).toBeInTheDocument();
+    // Folders + Dashboards legend entries should appear in both panels.
+    expect(screen.getAllByText(/folders: \d+/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/dashboards: \d+/i).length).toBeGreaterThan(0);
   });
 
   it('renders the Migration progress and Managed by tool donut panels', () => {

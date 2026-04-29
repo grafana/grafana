@@ -13815,6 +13815,8 @@
       "managed-by-tool-empty-body": "Connect Git Sync (or any other tool) and slices will appear here as folders and dashboards come under management.",
       "managed-by-tool-empty-title": "An empty donut. For now.",
       "managed-by-tool-heading": "Managed resources by tool",
+      "managed-by-type-empty": "No folders or dashboards are managed yet.",
+      "managed-by-type-heading": "Managed by type",
       "manager-kind-classic-fp": "Files (Classic)",
       "manager-kind-kubectl": "kubectl",
       "manager-kind-plugin": "Plugin",
@@ -13855,7 +13857,9 @@
       "tooling-managed-count_other": "{{count}} managed",
       "tooling-support-compare": "Compare tools",
       "tooling-support-description": "Folders and dashboards can be managed by any of these tools. Git Sync is the recommended starting point.",
-      "tooling-support-heading": "Tooling support"
+      "tooling-support-heading": "Tooling support",
+      "unmanaged-by-type-empty": "Everything is under management.",
+      "unmanaged-by-type-heading": "Unmanaged by type"
     },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",

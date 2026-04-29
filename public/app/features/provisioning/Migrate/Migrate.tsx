@@ -353,6 +353,16 @@ function Donut({
   );
 }
 
+function colorForGroup(theme: GrafanaTheme2, group: string): string {
+  if (FOLDER_GROUPS.includes(group)) {
+    return theme.visualization.getColorByName('yellow');
+  }
+  if (DASHBOARD_GROUPS.includes(group)) {
+    return theme.visualization.getColorByName('blue');
+  }
+  return theme.colors.text.secondary;
+}
+
 function colorForKind(theme: GrafanaTheme2, kind: string): string {
   switch (kind) {
     case ManagerKind.Repo:
@@ -492,6 +502,64 @@ function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
       ) : (
         <Stack direction="row" gap={2} alignItems="center">
           <Donut segments={segments} centerLabel={total.toLocaleString()} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
+          <Stack direction="column" gap={1} flex={1}>
+            {segments.map((s) => (
+              <Stack key={s.key} direction="row" gap={1} alignItems="center">
+                <span className={styles.legendDot} style={{ background: s.color }} aria-hidden />
+                <Text variant="bodySmall" color="secondary">
+                  {`${s.label}: ${s.value}`}
+                </Text>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      )}
+    </div>
+  );
+}
+
+function ResourceBreakdownPanel({
+  breakdowns,
+  variant,
+}: {
+  breakdowns: GroupBreakdown[];
+  variant: 'managed' | 'unmanaged';
+}) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const segments: DonutSegment[] = useMemo(
+    () =>
+      breakdowns
+        .map((b) => ({
+          key: b.group,
+          value: variant === 'managed' ? b.gitSyncCount + b.otherManagedCount : b.unmanagedCount,
+          color: colorForGroup(theme, b.group),
+          label: b.label,
+        }))
+        .filter((s) => s.value > 0),
+    [breakdowns, theme, variant]
+  );
+
+  const total = segments.reduce((acc, s) => acc + s.value, 0);
+  const heading =
+    variant === 'managed'
+      ? t('provisioning.stats.managed-by-type-heading', 'Managed by type')
+      : t('provisioning.stats.unmanaged-by-type-heading', 'Unmanaged by type');
+  const emptyText =
+    variant === 'managed'
+      ? t('provisioning.stats.managed-by-type-empty', 'No folders or dashboards are managed yet.')
+      : t('provisioning.stats.unmanaged-by-type-empty', 'Everything is under management.');
+
+  return (
+    <div className={styles.chartPanel}>
+      <Text variant="h5">{heading}</Text>
+      {total === 0 ? (
+        <Text variant="bodySmall" color="secondary">
+          {emptyText}
+        </Text>
+      ) : (
+        <Stack direction="row" gap={2} alignItems="center">
+          <Donut segments={segments} centerLabel={total.toLocaleString()} />
           <Stack direction="column" gap={1} flex={1}>
             {segments.map((s) => (
               <Stack key={s.key} direction="row" gap={1} alignItems="center">
@@ -966,6 +1034,8 @@ export function Migrate() {
           <div className={styles.chartsRow}>
             <MigrationProgressPanel totals={totals} />
             <ManagedByToolPanel breakdowns={breakdowns} />
+            <ResourceBreakdownPanel breakdowns={breakdowns} variant="managed" />
+            <ResourceBreakdownPanel breakdowns={breakdowns} variant="unmanaged" />
           </div>
         </div>
         <div className={styles.sideColumn}>
