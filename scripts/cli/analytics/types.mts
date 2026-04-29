@@ -6,13 +6,6 @@ type DataType = string | number | boolean | null | undefined;
 
 export type EventProperty = Record<string, DataType | DataType[]>;
 
-// Extracts only the declared literal keys, stripping any string index signature
-type KnownKeys<T> = keyof { [K in keyof T as string extends K ? never : K]: T[K] };
-
-export type Exact<Base extends EventProperty, Arg extends Base> = {
-  [K in keyof Arg]: K extends KnownKeys<Base> ? Arg[K] : never;
-};
-
 export interface EventPropertySchema {
   name: string;
   type: string;
@@ -31,8 +24,8 @@ export interface EventNamespace {
   factoryName: string;
   eventPrefixProject: string;
   eventPrefixFeature: string;
-  // Properties that are merged into every event in this namespace via
-  // the third argument of defineFeatureEvents (e.g. { schema_version: 1 })
+  // Properties that are merged into every event in this namespace via the third
+  // argument of defineFeatureEvents (e.g. { schema_version: 1 })
   defaultProperties?: EventPropertySchema[];
 }
 
@@ -41,4 +34,9 @@ export interface EventData extends Omit<Event, 'properties'> {
   fullEventName: string;
   owner?: string;
   properties?: EventPropertySchema[];
+}
+
+export interface JSDocMetadata {
+  description?: string;
+  owner?: string;
 }
