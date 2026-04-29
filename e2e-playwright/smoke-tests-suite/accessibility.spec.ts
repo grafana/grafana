@@ -20,7 +20,7 @@ test.describe(
     (
       [
         // Misc
-        { url: '/?orgId=1' },
+        { url: '/' },
         { url: '/dashboards', ignoredRules: ['label'] },
         { url: '/explore' },
         { url: '/alerting/list', ignoredRules: ['button-name', 'aria-required-parent'] },
@@ -47,22 +47,32 @@ test.describe(
         // { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=4' }, // histogram
 
         // Dashboard settings
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=settings' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=versions' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=permissions' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=dashboard_json' },
 
         // - Annotations
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations' },
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations&editIndex=0' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=annotations' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=annotations&editIndex=0' },
 
         // - Variables
-        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables' },
+        { url: '/d/O6f11TZWk/panel-tests-bar-gauge?editview=variables' },
+        { url: '/d/-Y-tnEDWk/templating-nested-template-variables?editview=variables&editIndex=0' }, // query
+        { url: '/d/e7c29343-6d1e-4167-9c13-803fe5be8c46/templating-macros?editview=variables&editIndex=0' }, // custom
+        { url: '/d/spVR9LSMk/templating-textbox-and-data-links?editview=variables&editIndex=0' }, // textbox
+        // TODO find dashboards with examples of these variable types
+        // { url: '' }, // constant
+        // { url: '' }, // datasource
+        { url: '/d/000000002/datasource-tests-influxdb-templated?editview=variables&editIndex=2' }, // interval
+        // TODO find dashboards with examples of these variable types
+        // { url: '' }, // filter
+        // { url: '' }, // switch
 
         // - Links
-        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links' },
-        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links&editIndex=0' }, // Link
-        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?orgId=1&editview=links&editIndex=1' }, // Dashboard link
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?editview=links' },
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?editview=links&editIndex=0' }, // Link
+        { url: '/d/yBCC3aKGk/templating-dashboard-links-and-variables?editview=links&editIndex=1' }, // Dashboard link
 
         // Connections
         { url: '/connections' },
