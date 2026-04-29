@@ -67,6 +67,7 @@ export const availableIconsIndex = {
   check: true,
   'check-circle': true,
   'check-square': true,
+  'checkbox-multiple': true,
   circle: true,
   'circle-mono': true,
   'clipboard-alt': true,

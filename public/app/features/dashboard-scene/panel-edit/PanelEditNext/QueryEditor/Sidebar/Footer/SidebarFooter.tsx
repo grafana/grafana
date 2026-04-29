@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FOOTER_HEIGHT, QueryEditorType } from '../../../constants';
+import { trackSelectButtonClick } from '../../../tracking';
 import {
   useAlertingContext,
   usePanelContext,
@@ -16,7 +17,7 @@ export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { alertRules } = useAlertingContext();
-  const { cardType } = useQueryEditorUIContext();
+  const { cardType, setMultiSelectMode } = useQueryEditorUIContext();
   const styles = useStyles2(getStyles);
 
   const isAlertView = cardType === QueryEditorType.Alert;
@@ -30,13 +31,32 @@ export function SidebarFooter() {
     ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
     : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
 
+  const handleSelectClick = () => {
+    setMultiSelectMode(true);
+    trackSelectButtonClick();
+  };
+
   return (
     <div className={styles.footer}>
-      <Text weight="medium" variant="bodySmall">
-        {suffixText}
-      </Text>
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        <Text weight="medium" variant="bodySmall">
+          {suffixText}
+        </Text>
+        {!isAlertView && (
+          <Button
+            fill="text"
+            size="sm"
+            variant="secondary"
+            icon="checkbox-multiple"
+            onClick={handleSelectClick}
+            aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
+          >
+            {t('query-editor-next.sidebar.footer-select', 'Select...')}
+          </Button>
+        )}
+      </Stack>
       {!isAlertView && (
-        <Stack direction="row" alignItems="center" gap={2}>
+        <Stack direction="row" alignItems="center" gap={1}>
           <Stack direction="row" alignItems="center" gap={0.5}>
             <Icon name="eye" size="sm" className={styles.icon} />
             <Text weight="medium" variant="bodySmall">
