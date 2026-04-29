@@ -518,7 +518,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 				"key", key.String(),
 				"error", err,
 			)
-			return nil, fmt.Errorf("kv Get failed after %d attempts: %w", attempt, errors.Unwrap(err))
+			return nil, fmt.Errorf("kv Get failed after %d attempts: %w", attempt, err)
 		}
 		return nil, err
 	}
