@@ -73,8 +73,8 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 
 	if ds.IsDefault {
 		ds.Ordinal = 1
-	}
-	if ds.Ordinal > 0 {
+		obj.Spec.Set("ordinal", int64(1))
+	} else if ds.Ordinal > 0 {
 		obj.Spec.Set("ordinal", ds.Ordinal)
 	}
 
