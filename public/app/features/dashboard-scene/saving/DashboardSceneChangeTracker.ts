@@ -201,7 +201,7 @@ export class DashboardSceneChangeTracker {
     this._changesWorker = createWorker();
   }
 
-  private checkForChangesImmediately() {
+  public checkForChangesImmediately() {
     const changedDashboard = this._dashboard.getSaveModel?.();
     const initialDashboard = this._dashboard.getInitialSaveModel?.();
     if (typeof changedDashboard !== 'object' || typeof initialDashboard !== 'object') {
@@ -226,8 +226,6 @@ export class DashboardSceneChangeTracker {
 
       this.updateIsDirty(!!e.data.hasChanges);
     };
-
-    this.checkForChangesImmediately();
 
     const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
 

@@ -65,7 +65,7 @@ describe('DashboardSceneChangeTracker', () => {
     });
   });
 
-  it('should set isDirty immediately when changes are detected on startTrackingChanges', () => {
+  it('should set isDirty when changes are detected on checkForChangesImmediately', () => {
     const scene = new DashboardScene({});
 
     jest
@@ -74,12 +74,12 @@ describe('DashboardSceneChangeTracker', () => {
     jest.spyOn(scene, 'getInitialSaveModel').mockReturnValue({ title: 'initial dashboard' } as unknown as Dashboard);
 
     const changeTracker = new DashboardSceneChangeTracker(scene);
-    changeTracker.startTrackingChanges();
+    changeTracker.checkForChangesImmediately();
 
     expect(scene.state.isDirty).toBe(true);
   });
 
-  it('should not set isDirty when no changes are detected on startTrackingChanges', () => {
+  it('should not set isDirty when no changes are detected on checkForChangesImmediately', () => {
     const scene = new DashboardScene({});
 
     jest
@@ -87,6 +87,20 @@ describe('DashboardSceneChangeTracker', () => {
       .mockImplementation(() => ({ postMessage: jest.fn() }) as unknown as CorsWorker);
     // matches what transformSceneToSaveModel returns after JSON stripping (functions removed)
     jest.spyOn(scene, 'getInitialSaveModel').mockReturnValue({ title: 'updated dashboard' } as unknown as Dashboard);
+
+    const changeTracker = new DashboardSceneChangeTracker(scene);
+    changeTracker.checkForChangesImmediately();
+
+    expect(scene.state.isDirty).toBeFalsy();
+  });
+
+  it('should not set isDirty on startTrackingChanges alone, even when changes exist', () => {
+    const scene = new DashboardScene({});
+
+    jest
+      .spyOn(createDetectChangesWorker, 'createWorker')
+      .mockImplementation(() => ({ postMessage: jest.fn() }) as unknown as CorsWorker);
+    jest.spyOn(scene, 'getInitialSaveModel').mockReturnValue({ title: 'initial dashboard' } as unknown as Dashboard);
 
     const changeTracker = new DashboardSceneChangeTracker(scene);
     changeTracker.startTrackingChanges();
