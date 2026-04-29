@@ -273,11 +273,11 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   pageSize?: number;
-  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
-  instanceDrawerEmbed?: boolean;
+  /** True when this list is rendered inside the alert instance contact-point drawer: single-row compact layout + headers use new-tab full edit; multi-row passes the flag through to each `ContactPoint`. */
+  contactPointFromInstanceDrawer?: boolean;
   /**
    * If the search string matches nothing (e.g. stale title after rename) but receivers exist,
-   * list all rows and show an info banner instead of an empty state (instance drawer embed).
+   * list all rows and show an info banner instead of an empty state (when from the instance drawer list).
    */
   fallbackWhenSearchUnmatched?: boolean;
 }
@@ -286,7 +286,7 @@ export const ContactPointsList = ({
   contactPoints,
   search,
   pageSize = DEFAULT_PAGE_SIZE,
-  instanceDrawerEmbed,
+  contactPointFromInstanceDrawer,
   fallbackWhenSearchUnmatched,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
@@ -313,11 +313,17 @@ export const ContactPointsList = ({
       )}
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        const singleInstanceDrawer = Boolean(instanceDrawerEmbed && pageItems.length === 1);
+        const singleInstanceDrawer = Boolean(contactPointFromInstanceDrawer && pageItems.length === 1);
         if (singleInstanceDrawer) {
           return <ContactPointInstanceDrawerDetails key={key} contactPoint={contactPoint} />;
         }
-        return <ContactPoint key={key} contactPoint={contactPoint} instanceDrawerEmbed={instanceDrawerEmbed} />;
+        return (
+          <ContactPoint
+            key={key}
+            contactPoint={contactPoint}
+            contactPointFromInstanceDrawer={contactPointFromInstanceDrawer}
+          />
+        );
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>

@@ -28,11 +28,11 @@ import {
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
-  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
-  instanceDrawerEmbed?: boolean;
+  /** When true, this card is shown from the alert instance contact-point drawer: header opens full edit in a new tab (“Open configuration” / “View details”) instead of same-tab Edit/View. */
+  contactPointFromInstanceDrawer?: boolean;
 }
 
-export const ContactPoint = ({ contactPoint, instanceDrawerEmbed }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint, contactPointFromInstanceDrawer }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
@@ -53,7 +53,7 @@ export const ContactPoint = ({ contactPoint, instanceDrawerEmbed }: ContactPoint
               resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
           }
-          instanceDrawerEmbed={instanceDrawerEmbed}
+          contactPointFromInstanceDrawer={contactPointFromInstanceDrawer}
         />
 
         {showFullMetadata ? (

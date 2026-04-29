@@ -30,11 +30,15 @@ import { type ContactPointWithMetadata, showManageContactPointPermissions } from
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
-  /** Marks contact-point UI as shown inside the alert instance drawer, so the list can use the compact details layout and the header uses new-tab "Open configuration" / "View details" instead of same-tab Edit/View. */
-  instanceDrawerEmbed?: boolean;
+  /** True when rendered from the alert instance contact-point drawer: primary action opens full edit in a new tab (“Open configuration” / “View details”) instead of same-tab Edit/View. */
+  contactPointFromInstanceDrawer?: boolean;
 }
 
-export const ContactPointHeader = ({ contactPoint, onDelete, instanceDrawerEmbed }: ContactPointHeaderProps) => {
+export const ContactPointHeader = ({
+  contactPoint,
+  onDelete,
+  contactPointFromInstanceDrawer,
+}: ContactPointHeaderProps) => {
   const { name, id, provenance, policies = [], grafana_managed_receiver_configs: integrations } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
@@ -187,7 +191,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete, instanceDrawerEmbed
   // existing types so its clearer where the ID has come from
   const urlId = id || name;
 
-  const openConfigurationButton = instanceDrawerEmbed ? (
+  const openConfigurationButton = contactPointFromInstanceDrawer ? (
     <LinkButton
       variant="secondary"
       size="sm"
