@@ -289,6 +289,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				if IsFolderDepthExceededAPIError(err) {
 					return NewFolderDepthExceededError(folder.Path, err)
 				}
+				// A managed folder ending up with a UID longer than 40 chars
+				// (typically via _folder.json metadata) cannot be repaired by
+				// a retry; surface it as a typed warning instead.
+				if IsFolderUIDTooLongAPIError(err) {
+					return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+				}
 				return fmt.Errorf("update folder: %w", err)
 			}
 		}
@@ -373,6 +379,13 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// keep going for the rest of the tree.
 		if IsFolderDepthExceededAPIError(err) {
 			return NewFolderDepthExceededError(folder.Path, err)
+		}
+		// Same reasoning as depth above: a UID longer than the folder
+		// API's 40-character limit (typically a _folder.json stable UID
+		// or a path segment that overflowed) is a permanent rejection.
+		// Surface it as a typed warning so the sync moves on.
+		if IsFolderUIDTooLongAPIError(err) {
+			return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
 		}
 
 		return fmt.Errorf("failed to create folder: %w", err)

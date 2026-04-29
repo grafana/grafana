@@ -468,3 +468,99 @@ func TestIsFolderDepthExceededAPIError(t *testing.T) {
 		require.False(t, IsFolderDepthExceededAPIError(apierrors.NewBadRequest("title cannot be empty")))
 	})
 }
+
+func TestFolderUIDTooLongError(t *testing.T) {
+	t.Run("Error includes path, uid, and underlying message", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", underlying)
+
+		require.Contains(t, err.Error(), "GMPO/bare-metal-services-engineering/")
+		require.Contains(t, err.Error(), "a0123456789012345678901234567890123456789")
+		require.Contains(t, err.Error(), "40-character")
+	})
+
+	t.Run("Unwrap exposes both sentinel and underlying error", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewFolderUIDTooLongError("a/b/", "uid", underlying)
+
+		require.True(t, errors.Is(err, ErrFolderUIDTooLong), "should match sentinel via errors.Is")
+		require.True(t, errors.Is(err, underlying), "should preserve underlying error in chain")
+	})
+
+	t.Run("errors.As extracts FolderUIDTooLongError through wrapping", func(t *testing.T) {
+		underlying := errors.New("uid too long, max 40 characters")
+		err := NewFolderUIDTooLongError("a/b/", "uid", underlying)
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+
+		var uidErr *FolderUIDTooLongError
+		require.True(t, errors.As(wrapped, &uidErr))
+		require.Equal(t, "a/b/", uidErr.Path)
+		require.Equal(t, "uid", uidErr.UID)
+	})
+}
+
+func TestIsFolderUIDTooLongAPIError(t *testing.T) {
+	t.Run("nil returns false", func(t *testing.T) {
+		require.False(t, IsFolderUIDTooLongAPIError(nil))
+	})
+
+	t.Run("matches the legacy 500-form substring (pre-fix grafana)", func(t *testing.T) {
+		// Older Grafanas surface the dashboards.ErrDashboardUidTooLong
+		// sentinel as the body of a 500 because the validator returned a
+		// bare DashboardErr. Provisioning still needs to recognise it.
+		err := errors.New("failed to create folder: uid too long, max 40 characters")
+		require.True(t, IsFolderUIDTooLongAPIError(err))
+	})
+
+	t.Run("matches BadRequest with the legacy public message", func(t *testing.T) {
+		// Post-fix Grafanas surface ErrAPIUIDTooLong's PublicMessage
+		// in the StatusError body.
+		err := apierrors.NewBadRequest("uid too long, max 40 characters")
+		require.True(t, IsFolderUIDTooLongAPIError(err))
+	})
+
+	t.Run("matches the structured message ID substring", func(t *testing.T) {
+		// errutil.Error.Error() embeds "[folder.uid-too-long] ...", and any
+		// fmt.Errorf chain wrapping the in-process error preserves it.
+		err := errors.New("[folder.uid-too-long] uid too long, max 40 characters")
+		require.True(t, IsFolderUIDTooLongAPIError(err))
+	})
+
+	t.Run("matches when status details carry the structured message ID", func(t *testing.T) {
+		// Simulates a StatusError that survived a round-trip through the
+		// K8s API: the message is generic but the message ID is preserved
+		// in Status.Details.UID.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "Bad Request",
+				Details: &metav1.StatusDetails{
+					UID: "folder.uid-too-long",
+				},
+			},
+		}
+		require.True(t, IsFolderUIDTooLongAPIError(statusErr))
+	})
+
+	t.Run("matches sentinel error via errors.Is", func(t *testing.T) {
+		require.True(t, IsFolderUIDTooLongAPIError(ErrFolderUIDTooLong))
+	})
+
+	t.Run("matches sentinel through wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("create folder: %w", ErrFolderUIDTooLong)
+		require.True(t, IsFolderUIDTooLongAPIError(wrapped))
+	})
+
+	t.Run("does not match unrelated errors", func(t *testing.T) {
+		require.False(t, IsFolderUIDTooLongAPIError(errors.New("something else")))
+	})
+
+	t.Run("does not match unrelated bad-request status errors", func(t *testing.T) {
+		require.False(t, IsFolderUIDTooLongAPIError(apierrors.NewBadRequest("title cannot be empty")))
+	})
+
+	t.Run("does not match the depth-exceeded error", func(t *testing.T) {
+		require.False(t, IsFolderUIDTooLongAPIError(ErrFolderDepthExceeded))
+	})
+}

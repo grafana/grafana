@@ -404,6 +404,29 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		assert.Nil(t, result.Error(), "depth-exceeded should be a warning even when wrapped through PathCreationError")
 		assert.NotNil(t, result.Warning())
 	})
+
+	t.Run("FolderUIDTooLongError classifies as ReasonFolderUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", errors.New("uid too long, max 40 characters"))
+		result := NewResourceResult().WithError(uidErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Nil(t, result.Error(), "uid-too-long should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "uid-too-long should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderUIDTooLongError classifies as ReasonFolderUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", errors.New("uid too long, max 40 characters"))
+		pathErr := &resources.PathCreationError{
+			Path: "GMPO/bare-metal-services-engineering/",
+			Err:  fmt.Errorf("ensure folder exists: %w", uidErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "GMPO/bare-metal-services-engineering/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Nil(t, result.Error(), "uid-too-long should be a warning even when wrapped through PathCreationError")
+		assert.NotNil(t, result.Warning())
+	})
 }
 
 func TestIsNonFailingWarning(t *testing.T) {

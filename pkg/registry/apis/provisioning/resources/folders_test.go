@@ -472,6 +472,69 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Equal(t, "deep/path/that/exceeds/limit/", depthErr.Path)
 		require.NotEmpty(t, client.updateCalls)
 	})
+
+	t.Run("wraps folder UID-too-long API error as FolderUIDTooLongError", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				// Pre-fix Grafanas surface this as a 500 with "uid too long, max 40 characters"
+				// in the body. Post-fix Grafanas surface it as a structured 400 with the same
+				// public message; either form should classify as UID-too-long.
+				return nil, apierrors.NewBadRequest("uid too long, max 40 characters")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "a0123456789012345678901234567890123456789",
+			Title: "Bare metal services engineering",
+			Path:  "GMPO/bare-metal-services-engineering/",
+		}, "")
+
+		require.Error(t, err)
+		var uidErr *FolderUIDTooLongError
+		require.True(t, errors.As(err, &uidErr), "should return FolderUIDTooLongError")
+		require.Equal(t, "GMPO/bare-metal-services-engineering/", uidErr.Path)
+		require.Equal(t, "a0123456789012345678901234567890123456789", uidErr.UID)
+		require.NotEmpty(t, client.createCalls)
+	})
+
+	t.Run("wraps folder UID-too-long API error from Update (move) as FolderUIDTooLongError", func(t *testing.T) {
+		// Symmetric with the depth-exceeded Update case above: a managed
+		// folder being moved into a path whose derived UID overflows must
+		// also be classified as UID-too-long so the sync surfaces it as a
+		// warning instead of looping retries.
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("uid too long, max 40 characters")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "a0123456789012345678901234567890123456789",
+			Title: "New Title",
+			Path:  "GMPO/bare-metal-services-engineering/",
+		}, "")
+
+		require.Error(t, err)
+		var uidErr *FolderUIDTooLongError
+		require.True(t, errors.As(err, &uidErr), "Update path should also return FolderUIDTooLongError")
+		require.Equal(t, "GMPO/bare-metal-services-engineering/", uidErr.Path)
+		require.Equal(t, "a0123456789012345678901234567890123456789", uidErr.UID)
+		require.NotEmpty(t, client.updateCalls)
+	})
 }
 
 type fakeDynamicResourceClient struct {

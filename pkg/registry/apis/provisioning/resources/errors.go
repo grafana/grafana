@@ -218,3 +218,87 @@ func IsFolderDepthExceededAPIError(err error) bool {
 		strings.Contains(msg, folderDepthExceededUpdateMsg) ||
 		strings.Contains(msg, folderDepthExceededMessageID)
 }
+
+// ErrFolderUIDTooLong is a sentinel for folder-API rejections caused by a
+// UID exceeding the 40-character limit. Triggered by the typed error below
+// or by the legacy "uid too long, max 40 characters" message form, which
+// older Grafanas surface as a 500 (the structured 400 response was added in
+// pkg/registry/apis/folders/errors.go, but provisioning may run against a
+// Grafana that hasn't picked it up yet).
+var ErrFolderUIDTooLong = errors.New("folder uid too long")
+
+const (
+	// folderUIDTooLongLegacyMsg is the message the dashboards.ErrDashboardUidTooLong
+	// sentinel returns. Pre-fix grafanas surface it as the body of a 500;
+	// post-fix grafanas surface it as the public message of a structured 400.
+	folderUIDTooLongLegacyMsg = "uid too long, max 40 characters"
+
+	// folderUIDTooLongMessageID is the errutil message ID set on
+	// pkg/registry/apis/folders.ErrAPIUIDTooLong. It survives the round-trip
+	// through the K8s API inside Status.Details.UID and through any fmt.Errorf
+	// chain that retains err.Error().
+	folderUIDTooLongMessageID = "folder.uid-too-long"
+)
+
+// FolderUIDTooLongError wraps a folder-API "uid too long" rejection. The
+// repository owner must shorten the offending path or _folder.json UID;
+// provisioning cannot recover automatically and must not retry the write.
+type FolderUIDTooLongError struct {
+	Path string
+	UID  string
+	Err  error
+}
+
+func (e *FolderUIDTooLongError) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("folder UID %q at %q exceeds the 40-character limit enforced by the folder API", e.UID, e.Path)
+	}
+	return fmt.Sprintf("folder UID %q at %q exceeds the 40-character limit enforced by the folder API: %v", e.UID, e.Path, e.Err)
+}
+
+// Unwrap exposes both the sentinel and the underlying API error so callers
+// can match either via errors.Is/errors.As.
+func (e *FolderUIDTooLongError) Unwrap() []error {
+	if e.Err == nil {
+		return []error{ErrFolderUIDTooLong}
+	}
+	return []error{ErrFolderUIDTooLong, e.Err}
+}
+
+// NewFolderUIDTooLongError wraps the original folder-API error so callers
+// can detect the UID-length violation via errors.As.
+func NewFolderUIDTooLongError(path, uid string, err error) *FolderUIDTooLongError {
+	return &FolderUIDTooLongError{Path: path, UID: uid, Err: err}
+}
+
+// IsFolderUIDTooLongAPIError reports whether err originates from the folder
+// API rejecting a write because the UID exceeded the 40-character limit.
+func IsFolderUIDTooLongAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// In-process: the sentinel is still in the chain.
+	if errors.Is(err, ErrFolderUIDTooLong) {
+		return true
+	}
+
+	// Through the K8s API the structured message ID is propagated in
+	// Status.Details.UID, which is the most reliable signal we get on
+	// the client side once pkg/registry/apis/folders.ErrAPIUIDTooLong has
+	// rolled out.
+	var statusErr apierrors.APIStatus
+	if errors.As(err, &statusErr) {
+		if details := statusErr.Status().Details; details != nil && string(details.UID) == folderUIDTooLongMessageID {
+			return true
+		}
+	}
+
+	// Fallback: substring match on the legacy human-readable form (which
+	// appears in pre-fix 500 responses and in dashboards.ErrDashboardUidTooLong)
+	// and on the structured message ID, which appears in errutil.Error.Error()
+	// output and therefore in any fmt.Errorf chain wrapping the in-process error.
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, folderUIDTooLongLegacyMsg) ||
+		strings.Contains(msg, folderUIDTooLongMessageID)
+}
