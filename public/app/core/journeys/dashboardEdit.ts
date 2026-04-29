@@ -9,6 +9,8 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *
  * Start triggers:
  *   - dashboards_edit_button_clicked — user clicks the Edit button on a dashboard
+ *   - dashboards_new_dashboard_init — user lands on /dashboard/new (auto edit mode);
+ *     silent interaction emitted from DashboardScene's activation handler
  *
  * End conditions:
  *   - success: grafana_dashboard_saved — dashboard saved (update of existing)
@@ -16,16 +18,37 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *   - discarded: dashboards_edit_discarded — user discards all changes and exits edit mode
  *   - abandoned: SPA route change to a different pathname (user navigates away mid-edit)
  *   - timeout: 30 min — no end condition fires
+ *
+ * Silent interactions added by this journey:
+ *   - dashboards_new_dashboard_init — emitted in DashboardScene.tsx when /dashboard/new activates
  */
 
 registerJourneyTriggers('dashboard_edit', (tracker) => {
-  return onInteraction('dashboards_edit_button_clicked', (props) => {
-    tracker.startJourney('dashboard_edit', {
-      attributes: {
-        dashboardUID: str(props.dashboardUid),
-      },
-    });
-  });
+  const { add, cleanup } = collectUnsubs();
+
+  add(
+    onInteraction('dashboards_edit_button_clicked', (props) => {
+      tracker.startJourney('dashboard_edit', {
+        attributes: {
+          dashboardUID: str(props.dashboardUid),
+          source: 'edit_button',
+        },
+      });
+    })
+  );
+
+  add(
+    onInteraction('dashboards_new_dashboard_init', () => {
+      tracker.startJourney('dashboard_edit', {
+        attributes: {
+          dashboardUID: '',
+          source: 'new_dashboard',
+        },
+      });
+    })
+  );
+
+  return cleanup;
 });
 
 onJourneyInstance('dashboard_edit', (handle) => {

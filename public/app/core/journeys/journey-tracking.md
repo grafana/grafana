@@ -229,12 +229,13 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 
 | Event           | Trigger                                                                  | Action                                                      |
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Start           | `dashboards_edit_button_clicked`                                         | Journey starts                                              |
+| Start           | `dashboards_edit_button_clicked` (existing dashboard)                    | Journey starts with `source: edit_button`                   |
+| Start           | `dashboards_new_dashboard_init` (auto edit mode for `/dashboard/new`)    | Journey starts with `source: new_dashboard`                 |
 | End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created`                 | Journey ends                                                |
 | End (discarded) | `dashboards_edit_discarded`                                              | Journey ends                                                |
 | End (abandoned) | SPA route change to a different pathname (`/explore`, another dashboard) | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; any change abandons the journey, except `/dashboard/new` → `/d/<new-uid>` which is allowed (the `_created` interaction races with the route change).
+**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; any change abandons the journey, except `/dashboard/new` → `/d/<new-uid>` which is allowed (the `_created` interaction races with the route change). Two start triggers because `/dashboard/new` auto-enters edit mode and bypasses the Edit button — the `dashboards_new_dashboard_init` silent interaction is emitted from `DashboardScene`'s activation handler in that case.
 
 ### panel_edit
 
