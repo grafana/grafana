@@ -232,13 +232,7 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				runningBuildVersion: running,
 			}
 			picked, ok := be.pickBestSnapshot(metas, now)
-			if !ok {
-				// Empty input or everything dropped by hard filters — invariant
-				// vacuously holds. We still call cleanup to make sure it doesn't
-				// blow up.
-				_ = selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
-				return
-			}
+			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
 			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
 			for _, k := range deleted {
@@ -259,11 +253,10 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 // versa).
 //
 // The test drives the full runCleanup path (which reads b.runningBuildVersion
-// indirectly through the snapshot wiring) rather than calling
-// selectSnapshotsToDelete directly. selectSnapshotsToDelete takes no version
-// parameter, so a unit test on it would be a tautology; the regression we
-// want to catch is "someone introduces tier logic into the cleanup path",
-// which only the end-to-end form notices.
+// indirectly through the snapshot wiring) instead of calling
+// selectSnapshotsToDelete directly since it takes no version
+// parameter; the regression we want to catch is "someone introduces
+// tier logic into the cleanup path", which only the end-to-end form notices.
 func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 	now := time.Now()
 	ns := newTestNsResource()
