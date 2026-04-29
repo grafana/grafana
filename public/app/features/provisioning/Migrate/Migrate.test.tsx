@@ -74,6 +74,64 @@ describe('Migrate', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
+  it('shows a Migrate everything button in the header when unmanaged folders exist', () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 6 },
+          { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({ uid: 'a', title: 'A', dashboardCount: 3, unmanagedDashboardCount: 3 }),
+        makeFolder({ uid: 'b', title: 'B', dashboardCount: 3, unmanagedDashboardCount: 3 }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    const link = screen.getByRole('link', { name: /migrate everything \(2 folders\)/i });
+    expect(link).toHaveAttribute('href', '/admin/provisioning/my-repo');
+  });
+
+  it('hides the Migrate everything button when nothing is unmanaged', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({
+          uid: 'a',
+          title: 'A',
+          dashboardCount: 5,
+          managedDashboardCount: 5,
+          unmanagedDashboardCount: 0,
+        }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    expect(screen.queryByRole('link', { name: /migrate everything/i })).not.toBeInTheDocument();
+  });
+
   it('marks the page header with an Experimental feature badge', () => {
     mockQuery({
       data: {
@@ -150,7 +208,9 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    expect(screen.getByText(/quick wins/i)).toBeInTheDocument();
+    // "Quick wins" appears in the panel heading and is also referenced from
+    // the Recommended next steps copy, so accept multiple matches.
+    expect(screen.getAllByText(/quick wins/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Payments').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Infrastructure').length).toBeGreaterThan(0);
   });

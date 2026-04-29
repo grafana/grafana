@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Checkbox, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
@@ -94,7 +94,6 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
       <div className={styles.cards}>
         {topFolders.map((folder) => {
           const isSelected = selected.has(folder.uid);
-          const isClean = folder.managedDashboardCount === 0;
           return (
             <button
               key={folder.uid}
@@ -111,15 +110,16 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
                     {folder.title}
                   </Text>
                   <Text variant="bodySmall" color="secondary">
-                    {t('provisioning.stats.quick-wins-dashboard-count', '{{count}} dashboards', {
-                      count: folder.dashboardCount,
-                    })}
+                    {t(
+                      'provisioning.stats.quick-wins-dashboard-count',
+                      '{{count}} dashboards · {{unmanaged}} unmanaged',
+                      {
+                        count: folder.dashboardCount,
+                        unmanaged: folder.unmanagedDashboardCount,
+                      }
+                    )}
                   </Text>
                 </Stack>
-                <div className={styles.spacer} />
-                {isClean && (
-                  <Badge color="green" text={t('provisioning.stats.quick-wins-clean-badge', 'Clean')} />
-                )}
               </Stack>
             </button>
           );

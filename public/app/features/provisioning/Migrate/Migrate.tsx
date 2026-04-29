@@ -32,7 +32,7 @@ import gitSvg from '../img/git.svg';
 
 import { FoldersToMigrate } from './FoldersToMigrate';
 import { QuickWinsPanel } from './QuickWinsPanel';
-import { useFolderLeaderboard } from './hooks/useFolderLeaderboard';
+import { type FolderRow, useFolderLeaderboard } from './hooks/useFolderLeaderboard';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
@@ -209,21 +209,37 @@ function migrateTarget(repos: Repository[]): string {
   return PROVISIONING_URL;
 }
 
-function MigrateToGitopsHeader() {
+function MigrateToGitopsHeader({
+  unmanagedFolders,
+  repos,
+}: {
+  unmanagedFolders: number;
+  repos: Repository[];
+}) {
+  const target = migrateTarget(repos);
   return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Text element="h2" variant="h2">
-          <Trans i18nKey="provisioning.stats.header-title">Migrate to GitOps</Trans>
+    <Stack direction="row" gap={2} alignItems="flex-start" justifyContent="space-between" wrap>
+      <Stack direction="column" gap={1} flex={1}>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Text element="h2" variant="h2">
+            <Trans i18nKey="provisioning.stats.header-title">Migrate to GitOps</Trans>
+          </Text>
+          <FeatureBadge featureState={FeatureState.experimental} />
+        </Stack>
+        <Text color="secondary">
+          <Trans i18nKey="provisioning.stats.header-subtitle">
+            Manage your dashboards and folders like code — every change tracked, every update reviewed, every
+            environment reproducible. Connect a Git repository to get started.
+          </Trans>
         </Text>
-        <FeatureBadge featureState={FeatureState.experimental} />
       </Stack>
-      <Text color="secondary">
-        <Trans i18nKey="provisioning.stats.header-subtitle">
-          Manage your dashboards and folders like code — every change tracked, every update reviewed, every
-          environment reproducible. Connect a Git repository to get started.
-        </Trans>
-      </Text>
+      {unmanagedFolders > 0 && (
+        <LinkButton variant="primary" icon="upload" href={target}>
+          {t('provisioning.stats.header-migrate-all', 'Migrate everything ({{count}} folders)', {
+            count: unmanagedFolders,
+          })}
+        </LinkButton>
+      )}
     </Stack>
   );
 }
@@ -359,15 +375,21 @@ interface NextStep {
 }
 
 function NextStepsPanel({
-  totals,
+  folders,
   repos,
 }: {
-  totals: ReturnType<typeof aggregateTotals>;
+  folders: FolderRow[];
   repos: Repository[];
 }) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
-  const repoTarget = migrateTarget(repos);
+
+  const folderTotal = folders.length;
+  const fullyManagedFolders = folders.filter(
+    (f) => f.dashboardCount > 0 && f.unmanagedDashboardCount === 0
+  ).length;
+  const unmanagedFolders = folders.filter((f) => f.unmanagedDashboardCount > 0).length;
+  const hasStartedMigrating = fullyManagedFolders > 0;
 
   const steps: NextStep[] = [
     {
@@ -386,37 +408,32 @@ function NextStepsPanel({
       primary: !hasRepo,
     },
     {
-      key: 'review',
-      done: totals.instanceTotal > 0 && totals.unmanaged === 0,
-      title: t('provisioning.stats.next-step-review-title', 'Review unmanaged resources'),
+      key: 'pick-folder',
+      done: hasStartedMigrating || unmanagedFolders === 0,
+      title: t('provisioning.stats.next-step-pick-folder-title', 'Pick a folder to migrate first'),
       description:
-        totals.instanceTotal === 0
-          ? t('provisioning.stats.next-step-review-empty', 'No folders or dashboards yet — nothing to review.')
+        unmanagedFolders === 0
+          ? t(
+              'provisioning.stats.next-step-pick-folder-empty',
+              'No unmanaged folders left. New ones will appear here as your instance grows.'
+            )
           : t(
-              'provisioning.stats.next-step-review-pending',
-              '{{count}} of {{total}} folders and dashboards are still unmanaged.',
-              { count: totals.unmanaged, total: totals.instanceTotal }
+              'provisioning.stats.next-step-pick-folder-pending',
+              'Use Quick wins above for high-leverage targets, or pick anything from the folder list.'
             ),
     },
     {
-      key: 'migrate',
-      done: totals.gitSync > 0,
-      title: t('provisioning.stats.next-step-migrate-title', 'Migrate your first resource'),
+      key: 'track',
+      done: folderTotal > 0 && fullyManagedFolders === folderTotal,
+      title: t('provisioning.stats.next-step-track-title', 'Migrate folder by folder'),
       description:
-        totals.gitSync > 0
-          ? t(
-              'provisioning.stats.next-step-migrate-done',
-              '{{count}} folders and dashboards are managed by Git Sync.',
-              { count: totals.gitSync }
-            )
+        folderTotal === 0
+          ? t('provisioning.stats.next-step-track-empty', 'No folders yet — nothing to track.')
           : t(
-              'provisioning.stats.next-step-migrate-pending',
-              'Bring an existing folder or dashboard under Git Sync to start the journey.'
+              'provisioning.stats.next-step-track-progress',
+              '{{count}} of {{total}} folders fully managed.',
+              { count: fullyManagedFolders, total: folderTotal }
             ),
-      action:
-        hasRepo && totals.gitSync === 0 && totals.unmanaged > 0
-          ? { label: t('provisioning.stats.next-step-migrate-cta', 'Open repository'), href: repoTarget }
-          : undefined,
     },
   ];
 
@@ -558,6 +575,11 @@ export function Migrate() {
     );
   }, [folders]);
 
+  const unmanagedFolderCount = useMemo(
+    () => folders.filter((f) => f.unmanagedDashboardCount > 0).length,
+    [folders]
+  );
+
   if (isLoading) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
@@ -578,7 +600,7 @@ export function Migrate() {
   if (totals.instanceTotal === 0) {
     return (
       <Stack direction="column" gap={3}>
-        <MigrateToGitopsHeader />
+        <MigrateToGitopsHeader unmanagedFolders={unmanagedFolderCount} repos={repoList} />
         <EmptyState variant="not-found" message={t('provisioning.stats.empty', 'No provisioned resources yet')} />
       </Stack>
     );
@@ -586,7 +608,7 @@ export function Migrate() {
 
   return (
     <Stack direction="column" gap={3}>
-      <MigrateToGitopsHeader />
+      <MigrateToGitopsHeader unmanagedFolders={unmanagedFolderCount} repos={repoList} />
       <OverviewStatCards totals={totals} lastScannedAt={lastScannedAt} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
@@ -605,7 +627,7 @@ export function Migrate() {
           />
         </div>
         <div className={styles.sideColumn}>
-          <NextStepsPanel totals={totals} repos={repoList} />
+          <NextStepsPanel folders={folders} repos={repoList} />
           <ToolingSupportPanel breakdowns={breakdowns} />
         </div>
       </div>
