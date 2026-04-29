@@ -30,10 +30,21 @@ type mimirConfigResponse struct {
 // External AM sync failure reasons used as the `reason` label on
 // ExternalAMConfigSyncFailures.
 const (
-	syncReasonDatasourceLookup = "datasource_lookup"
-	syncReasonMimirFetch       = "mimir_fetch"
-	syncReasonSave             = "save"
+	syncReasonDatasourceLookup   = "datasource_lookup"
+	syncReasonMimirFetch         = "mimir_fetch"
+	syncReasonSave               = "save"
+	syncReasonIdentifierMismatch = "identifier_mismatch"
 )
+
+// classifySyncError maps a SaveAndApplyExtraConfiguration error to a stable reason
+// label. ErrAlertmanagerMultipleExtraConfigsUnsupported is split out as
+// "identifier_mismatch" so operators can distinguish it from generic save errors.
+func classifySyncError(err error) string {
+	if errors.Is(err, ErrAlertmanagerMultipleExtraConfigsUnsupported.Base) {
+		return syncReasonIdentifierMismatch
+	}
+	return syncReasonSave
+}
 
 // syncExternalAMs fetches the alertmanager configuration from an external Mimir/Cortex datasource
 // for each org that has one configured and persists it to the database. The main sync loop then
@@ -114,11 +125,13 @@ func (moa *MultiOrgAlertmanager) syncExternalAMs(ctx context.Context, orgIDs []i
 		// API, so a malformed Mimir/Cortex config is rejected before it lands in the
 		// database. Calling with replace=false also enforces single-identifier ownership:
 		// when an existing ExtraConfig has a different identifier, it returns
-		// ErrAlertmanagerMultipleExtraConfigsUnsupported and the sync surfaces a
-		// failure instead of silently overwriting.
+		// ErrAlertmanagerMultipleExtraConfigsUnsupported, which we classify separately
+		// so operators can see the collision in admin_config rather than as a generic
+		// "save" failure.
 		if _, err = moa.SaveAndApplyExtraConfiguration(ctx, orgID, ec, false /*replace*/, false /*dryRun*/); err != nil {
-			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "error", err)
-			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonSave).Inc()
+			reason := classifySyncError(err)
+			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}

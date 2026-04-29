@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -423,6 +424,43 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncSkipped.WithLabelValues("1")))
+}
+
+func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
+	const amConfig = "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
+	mimirSrv := startMimirServer(t, amConfig)
+
+	// Datasource UID "different-uid" — sync will try to save an ExtraConfig with this
+	// identifier, but the org already has an ExtraConfig with "existing-uid", so
+	// SaveAndApplyExtraConfiguration with replace=false rejects it.
+	ds := makeMimirDS("different-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
+		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("different-uid")},
+	}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+
+	// Seed an existing ExtraConfig with a different identifier so the sync collides.
+	_, err := moa.SaveAndApplyExtraConfiguration(context.Background(), 1, apimodels.ExtraConfiguration{
+		Identifier:         "existing-uid",
+		AlertmanagerConfig: amConfig,
+	}, false, false)
+	require.NoError(t, err)
+	rowsBefore := len(cs.historicConfigs[1])
+
+	moa.syncExternalAMs(context.Background(), []int64{1})
+
+	// No new history row — the save was rejected.
+	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "identifier collision must not write history")
+
+	// Failure metric tagged with the dedicated reason so operators can alert on it
+	// separately from generic save errors.
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "identifier_mismatch")))
+	// Generic save reason should NOT be incremented.
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "save")))
 }
 
 // rejectingValidator is a DataSourceRequestValidator that always errors.
