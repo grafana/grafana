@@ -3077,6 +3077,15 @@ var (
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "grafana.meticulousAIRecorder",
+			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{React: true, Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

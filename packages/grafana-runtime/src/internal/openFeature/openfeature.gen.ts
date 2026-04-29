@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enable Meticulous AI session recorder for automated UI test generation */
+  GrafanaMeticulousAIRecorder: "grafana.meticulousAIRecorder",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -190,6 +192,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+/**
+ * Enable Meticulous AI session recorder for automated UI test generation
+ *
+ * **Details:**
+ * - flag key: `grafana.meticulousAIRecorder`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMeticulousAIRecorder = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.meticulousAIRecorder", false, options).value;
 };
 
 /**

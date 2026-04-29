@@ -2570,6 +2570,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.meticulousAIRecorder",
+        "resourceVersion": "1777401759422",
+        "creationTimestamp": "2026-04-28T17:20:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-28 18:42:39.422606 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable Meticulous AI session recorder for automated UI test generation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1775304981849",
         "creationTimestamp": "2026-04-04T12:16:21Z"
