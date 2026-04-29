@@ -40,6 +40,8 @@ export type InlineSecureValues = Record<string, InlineSecureValue>;
 interface ObjectMeta {
   name: string;
   namespace: string;
+  uid: string;
+  resourceVersion: string;
 }
 
 export interface SettingsSpec<T extends KeyValue = {}> {

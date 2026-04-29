@@ -1,4 +1,4 @@
-import { compare } from 'fast-json-patch';
+import { compare, type Operation } from 'fast-json-patch';
 
 import { PluginType, type PluginMeta } from '@grafana/data';
 
@@ -78,12 +78,18 @@ async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMet
   };
 
   const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false);
-  const patch = compare(stored, update);
+  const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
+  const patch = [test, ...compare(stored, update)];
 
   const updated = await getBackendSrv().patch<v0alpha1Settings>(
     `/apis/${pluginId}.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/settings/${pluginId}`,
     patch,
-    { validatePath: true }
+    {
+      validatePath: true,
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+      },
+    }
   );
 
   return updated;
