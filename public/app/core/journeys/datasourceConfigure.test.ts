@@ -195,4 +195,80 @@ describe('datasourceConfigure journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
     expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
+
+  it('should start journey from the datasource list page', () => {
+    loadWiring();
+
+    simulateInteraction('connections_datasource_list_add_datasource_clicked', {});
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'datasource_configure',
+      expect.objectContaining({
+        attributes: expect.objectContaining({ source: 'datasource_list' }),
+      })
+    );
+  });
+
+  it('should start journey on direct nav to the new datasource page when no journey is active', () => {
+    loadWiring();
+
+    simulateInteraction('connections_new_datasource_page_view', {});
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'datasource_configure',
+      expect.objectContaining({
+        attributes: expect.objectContaining({ source: 'datasource_picker' }),
+      })
+    );
+  });
+
+  it('should not start a second journey on new_datasource_page_view when one is already active', () => {
+    loadWiring();
+
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    expect(mockTracker.startJourney).toHaveBeenCalledTimes(1);
+
+    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+    simulateInteraction('connections_new_datasource_page_view', {});
+
+    expect(mockTracker.startJourney).toHaveBeenCalledTimes(1);
+  });
+
+  it('should end journey with discarded when the new datasource page is cancelled', () => {
+    loadWiring();
+
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    simulateInteraction('connections_new_datasource_cancelled', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded');
+  });
+
+  it('should end journey with discarded when the datasource is deleted before testing', () => {
+    loadWiring();
+
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    simulateInteraction('connections_datasource_deleted', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded');
+  });
+
+  it('should end journey with abandoned when the user leaves the config page without testing', () => {
+    loadWiring();
+
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    simulateInteraction('connections_datasource_config_page_left', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned');
+  });
+
+  it('should ignore unrelated interactions', () => {
+    loadWiring();
+
+    simulateInteraction('grafana_ds_add_datasource_clicked', { plugin_id: 'prometheus' });
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('dashboards_init_dashboard_completed', { uid: 'dash-1' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
+  });
 });

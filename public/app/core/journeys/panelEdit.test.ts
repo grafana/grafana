@@ -168,4 +168,45 @@ describe('panelEdit journey wiring', () => {
 
     expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
+
+  it('should also start journey when item is "configure"', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_panel_action_clicked', {
+      item: 'configure',
+      id: 7,
+      source: 'panel',
+      panelType: 'timeseries',
+    });
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'panel_edit',
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          panelId: '7',
+          'grafana.panel.type': 'timeseries',
+        }),
+      })
+    );
+  });
+
+  it('should capture grafana.panel.type from panelType property at start', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_panel_action_clicked', {
+      item: 'edit',
+      id: 9,
+      source: 'panel',
+      panelType: 'table',
+    });
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'panel_edit',
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          'grafana.panel.type': 'table',
+        }),
+      })
+    );
+  });
 });
