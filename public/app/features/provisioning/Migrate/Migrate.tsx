@@ -527,7 +527,7 @@ function MigrateToGitopsHeader() {
   );
 }
 
-type StatTone = 'neutral' | 'success' | 'info' | 'warning';
+type StatTone = 'neutral' | 'success' | 'info' | 'warning' | 'primary';
 
 function StatCard({
   icon,
@@ -535,33 +535,28 @@ function StatCard({
   big,
   subLabel,
   label,
+  emphasized,
 }: {
   icon: IconName;
   tone: StatTone;
   big: string;
   subLabel?: string;
   label: string;
+  emphasized?: boolean;
 }) {
   const styles = useStyles2(getStyles);
-  const textColor = tone === 'neutral' ? undefined : tone;
   return (
-    <div className={cx(styles.statCard, styles[`statCardTone_${tone}` as const])}>
-      <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
-        <Icon name={icon} />
+    <div className={cx(styles.statCard, emphasized && styles.statCardEmphasized)}>
+      <div className={cx(styles.statCardHeader, styles[`statCardTone_${tone}` as const])}>
+        <Icon name={icon} size="sm" />
+        <span className={styles.statCardLabel}>{label}</span>
       </div>
-      <Stack direction="column" gap={0}>
-        <Text variant="h1" color={textColor}>
-          {big}
-        </Text>
-        {subLabel && (
-          <Text color="secondary" variant="bodySmall">
-            {subLabel}
-          </Text>
-        )}
+      <Text variant="h2">{big}</Text>
+      {subLabel && (
         <Text color="secondary" variant="bodySmall">
-          {label}
+          {subLabel}
         </Text>
-      </Stack>
+      )}
     </div>
   );
 }
@@ -594,45 +589,51 @@ function OverviewStatCards({
   lastScannedAt?: number;
 }) {
   const styles = useStyles2(getStyles);
+  const progressSubLabel =
+    totals.gitSync > 0
+      ? t('provisioning.stats.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })
+      : t('provisioning.stats.progress-gitops-sub-empty', 'Start your migration');
+  const resourcesOf = (value: number) =>
+    t('provisioning.stats.n-of-m-resources', '{{value}} of {{total}} resources', {
+      value,
+      total: totals.instanceTotal,
+    });
   return (
     <div className={styles.statCardsRow}>
       <StatCard
-        icon="apps"
+        icon="cube"
         tone="info"
         big={totals.instanceTotal.toLocaleString()}
+        subLabel={t('provisioning.stats.summary-total-sub', 'Across all providers')}
         label={t('provisioning.stats.summary-total', 'Total resources')}
       />
       <StatCard
         icon="check-circle"
         tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.managed,
-          total: totals.instanceTotal,
-        })}
+        subLabel={resourcesOf(totals.managed)}
         label={t('provisioning.stats.managed', 'Managed')}
       />
       <StatCard
-        icon="exclamation-circle"
+        icon="exclamation-triangle"
         tone="warning"
+        emphasized={totals.unmanaged > 0}
         big={percent(totals.unmanaged, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.unmanaged,
-          total: totals.instanceTotal,
-        })}
+        subLabel={resourcesOf(totals.unmanaged)}
         label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
       />
       <StatCard
-        icon="code-branch"
-        tone="info"
+        icon="chart-line"
+        tone="primary"
         big={percent(totals.gitSync, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })}
+        subLabel={progressSubLabel}
         label={t('provisioning.stats.progress-gitops', 'Progress to GitOps')}
       />
       <StatCard
         icon="clock-nine"
         tone="neutral"
         big={lastScanLabel(lastScannedAt)}
+        subLabel={t('provisioning.stats.last-scan-sub', 'Auto-scan enabled')}
         label={t('provisioning.stats.last-scan-label', 'Last scan')}
       />
     </div>
@@ -964,52 +965,39 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   statCard: css({
     display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1.5),
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
-    alignItems: 'flex-start',
-  }),
-  statCardTone_neutral: css({
     background: theme.colors.background.secondary,
   }),
-  statCardTone_success: css({
-    background: theme.colors.success.transparent,
-    borderColor: theme.colors.success.borderTransparent,
+  statCardEmphasized: css({
+    borderColor: theme.colors.warning.border,
   }),
-  statCardTone_info: css({
-    background: theme.colors.info.transparent,
-    borderColor: theme.colors.info.borderTransparent,
-  }),
-  statCardTone_warning: css({
-    background: theme.colors.warning.transparent,
-    borderColor: theme.colors.warning.borderTransparent,
-  }),
-  statCardIcon: css({
-    flex: '0 0 auto',
-    width: theme.spacing(4),
-    height: theme.spacing(4),
-    borderRadius: theme.shape.radius.circle,
+  statCardHeader: css({
     display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: theme.spacing(1),
   }),
-  statIconTone_neutral: css({
-    background: theme.colors.background.canvas,
-    color: theme.colors.text.secondary,
+  statCardLabel: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
-  statIconTone_success: css({
-    background: theme.colors.success.main,
-    color: theme.colors.success.contrastText,
+  statCardTone_neutral: css({
+    color: theme.colors.text.primary,
   }),
-  statIconTone_info: css({
-    background: theme.colors.info.main,
-    color: theme.colors.info.contrastText,
+  statCardTone_success: css({
+    color: theme.colors.success.text,
   }),
-  statIconTone_warning: css({
-    background: theme.colors.warning.main,
-    color: theme.colors.warning.contrastText,
+  statCardTone_info: css({
+    color: theme.colors.info.text,
+  }),
+  statCardTone_warning: css({
+    color: theme.colors.warning.text,
+  }),
+  statCardTone_primary: css({
+    color: theme.visualization.getColorByName('purple'),
   }),
   coverageTrack: css({
     position: 'relative',
