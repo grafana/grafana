@@ -714,9 +714,6 @@ replace (
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-1
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-1
 
-	// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap (used by cog)
-	// github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
-
 	// lock for mysql tsdb compat
 	github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
@@ -725,8 +722,6 @@ replace (
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86
-	github.com/oasdiff/yaml => github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037
-	github.com/oasdiff/yaml3 => github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
