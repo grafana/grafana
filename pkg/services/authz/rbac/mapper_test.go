@@ -215,3 +215,35 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 		})
 	}
 }
+
+func TestMapperRegistry_PlaylistActionMapping(t *testing.T) {
+	mapper := NewMapperRegistry()
+	mapping, ok := mapper.Get("playlist.grafana.app", "playlists", "")
+	require.True(t, ok)
+
+	tests := map[string]string{
+		utils.VerbGet:              "playlists:read",
+		utils.VerbList:             "playlists:read",
+		utils.VerbWatch:            "playlists:read",
+		utils.VerbCreate:           "playlists:write",
+		utils.VerbUpdate:           "playlists:write",
+		utils.VerbPatch:            "playlists:write",
+		utils.VerbDelete:           "playlists:write",
+		utils.VerbDeleteCollection: "playlists:write",
+	}
+
+	for verb, expectedAction := range tests {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb=%s", verb)
+		assert.Equal(t, expectedAction, action, "verb=%s", verb)
+	}
+	assert.Empty(t, mapping.ActionSets(utils.VerbList))
+	assert.Empty(t, mapping.ActionSets(utils.VerbCreate))
+	assert.False(t, mapping.SkipScope(utils.VerbCreate))
+
+	// Explicit playlist mapping avoids fallback to k8s-native actions.
+	getAction, ok := mapping.Action(utils.VerbGet)
+	require.True(t, ok)
+	assert.NotEqual(t, "playlist.grafana.app/playlists:get", getAction)
+	assert.Equal(t, "playlists:uid:", mapping.Prefix())
+}

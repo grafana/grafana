@@ -15,6 +15,7 @@ var _ authorizer.Authorizer = &roleAuthorizer{}
 
 var orgRoleNoneAsViewerAPIGroups = []string{
 	"productactivation.ext.grafana.com",
+	"playlist.grafana.app",
 }
 
 type roleAuthorizer struct{}

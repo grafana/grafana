@@ -43,7 +43,7 @@ func TestDeclareFixedRoles(t *testing.T) {
 		assert.Equal(t, "Playlists", reader.Role.Group)
 		require.Len(t, reader.Role.Permissions, 1)
 		assert.Equal(t, ActionPlaylistsRead, reader.Role.Permissions[0].Action)
-		assert.Empty(t, reader.Role.Permissions[0].Scope)
+		assert.Equal(t, "playlists:*", reader.Role.Permissions[0].Scope)
 		assert.Contains(t, reader.Grants, string(org.RoleViewer))
 		assert.Contains(t, reader.Grants, string(org.RoleEditor))
 		assert.Contains(t, reader.Grants, string(org.RoleAdmin))
@@ -60,6 +60,9 @@ func TestDeclareFixedRoles(t *testing.T) {
 		}
 		assert.Contains(t, actions, ActionPlaylistsRead, "writer role should include read permission")
 		assert.Contains(t, actions, ActionPlaylistsWrite, "writer role should include write permission")
+		for _, p := range writer.Role.Permissions {
+			assert.Equal(t, "playlists:*", p.Scope)
+		}
 
 		assert.NotContains(t, writer.Grants, string(org.RoleViewer))
 		assert.Contains(t, writer.Grants, string(org.RoleEditor))

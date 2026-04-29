@@ -203,12 +203,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		})
 
 		// When a None-role user is explicitly granted playlists:read via RBAC, they can
-		// read playlists — this is the proper fix for the customer use case described in
-		// https://github.com/grafana/grafana/issues/115712.
-		//
-		// Note: we create a fresh user and use a managed: role name so the permission is
-		// visible to GetUserPermissions (which filters by OSSRolesPrefixes = ["managed:", "extsvc:"]).
-		// AddUserPermissionToDB uses "test:role" which is silently filtered out.
+		// read playlists but still cannot write.
 		t.Run("None role with explicit playlists:read can read but not write", func(t *testing.T) {
 			noneWithRead := helper.CreateUser("none-with-read", apis.Org1, org.RoleNone, nil)
 			noneUserID, err := noneWithRead.Identity.GetInternalID()

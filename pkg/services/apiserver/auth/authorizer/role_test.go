@@ -15,11 +15,12 @@ type roleAttributes struct {
 	authorizer.Attributes
 	verb              string
 	isResourceRequest bool
+	apiGroup          string
 }
 
 func (a roleAttributes) GetVerb() string         { return a.verb }
 func (a roleAttributes) IsResourceRequest() bool { return a.isResourceRequest }
-func (a roleAttributes) GetAPIGroup() string     { return "" }
+func (a roleAttributes) GetAPIGroup() string     { return a.apiGroup }
 func (a roleAttributes) GetResource() string     { return "" }
 func (a roleAttributes) GetPath() string         { return "" }
 
@@ -48,6 +49,30 @@ func TestRoleAuthorizer_NoneRole_DiscoveryEndpoints(t *testing.T) {
 
 	t.Run("resource request is denied for RoleNone", func(t *testing.T) {
 		attrs := &roleAttributes{verb: "get", isResourceRequest: true}
+		decision, _, err := auth.Authorize(ctxWithRole(org.RoleNone), attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
+	t.Run("playlist API group grants viewer-like reads for RoleNone hotfix", func(t *testing.T) {
+		for _, verb := range []string{"get", "list", "watch"} {
+			attrs := &roleAttributes{
+				verb:              verb,
+				isResourceRequest: true,
+				apiGroup:          "playlist.grafana.app",
+			}
+			decision, _, err := auth.Authorize(ctxWithRole(org.RoleNone), attrs)
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision, "verb=%s", verb)
+		}
+	})
+
+	t.Run("playlist API group write is denied for RoleNone hotfix", func(t *testing.T) {
+		attrs := &roleAttributes{
+			verb:              "create",
+			isResourceRequest: true,
+			apiGroup:          "playlist.grafana.app",
+		}
 		decision, _, err := auth.Authorize(ctxWithRole(org.RoleNone), attrs)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)

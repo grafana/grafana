@@ -87,6 +87,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"plugins":                        "plugins:id:",
 		"plugins.plugins":                "plugins.plugins:uid:",
 		"plugins.metas":                  "plugins.metas:uid:",
+		"playlists":                      "playlists:uid:",
 		"advisor.checks":                 "advisor.checks:uid:",
 		"advisor.checktypes":             "advisor.checktypes:uid:",
 		"advisor.register":               "advisor.register:uid:",

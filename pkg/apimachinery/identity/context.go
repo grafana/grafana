@@ -211,6 +211,8 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Allow access to apps.grafana.app resources (e.g. AppManifest)
 	"apps.grafana.app:*",
+
+	"playlist.grafana.app:*",
 }
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
