@@ -2,15 +2,14 @@ import type { UPlotComparePayload } from './types.ts';
 
 /**
  * Narrow the payload type
- * @param value
+ * @param payload
  */
-export function isUPlotComparePayload(value: unknown): value is UPlotComparePayload {
-  if (!value || typeof value !== 'object') {
+export function isUPlotComparePayload(payload: unknown): payload is UPlotComparePayload {
+  if (!payload || typeof payload !== 'object' || !('testName' in payload)) {
     return false;
   }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const o = value as Record<string, unknown>;
-  return typeof o.testName === 'string' && 'expected' in o && 'actual' in o;
+
+  return typeof payload.testName === 'string' && 'expected' in payload && 'actual' in payload;
 }
 
 /** Reads `snapshotAssertionPassed` from parsed payload JSON when present. */
