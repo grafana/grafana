@@ -176,6 +176,8 @@ handle.end('success', { dashboardUid })
 
 ## Journeys
 
+> **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+
 ### search_to_resource
 
 **File:** `public/app/core/journeys/searchToResource.ts`
@@ -300,7 +302,7 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 
 ## Adding a New Journey
 
-> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
+> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. Use `--dry-run` to preview without writing. Run `yarn cuj:new --help` for the full flag list. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
 
 This section walks through instrumenting a new CUJ end-to-end. Worked example at the bottom.
 
@@ -879,10 +881,12 @@ Each journey creates an OTel trace with the following structure:
 
 **Child spans:** `step:<name>` (e.g., `step:navigate_folder`)
 
-| Attribute         | Description                                                           |
-| ----------------- | --------------------------------------------------------------------- |
-| `step.name`       | Step name                                                             |
-| Custom attributes | Attributes passed to `recordEvent` / `startStep` and `stepHandle.end` |
+| Attribute                      | Description                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `step.name`                    | Step name                                                                                                                                |
+| `step.outcome`                 | Only set to `unended` when the journey ends with the step still open (timeout / cancel / abandon). Normal `step.end()` doesn't set this. |
+| `step.unended_journey_outcome` | Companion to `step.outcome=unended`: the journey outcome that closed the step.                                                           |
+| Custom attributes              | Attributes passed to `recordEvent` / `startStep` and `stepHandle.end`.                                                                   |
 
 **Span links:** Links to concurrent journey root spans (non-parent journeys only — a structural parent is captured by nesting, not links).
 
