@@ -386,7 +386,7 @@ function NextStepsPanel({
 
   const folderTotal = folders.length;
   const managedFolders = folders.filter((f) => Boolean(f.managedBy)).length;
-  const unmanagedFolders = folders.filter((f) => !f.managedBy && f.dashboardCount > 0).length;
+  const unmanagedFolders = folders.filter((f) => !f.managedBy).length;
   const hasStartedMigrating = managedFolders > 0;
 
   const steps: NextStep[] = [
@@ -568,13 +568,11 @@ export function Migrate() {
   }, []);
 
   const selectAllFolders = useCallback(() => {
-    setSelectedFolderUids(
-      new Set(folders.filter((f) => !f.managedBy && f.dashboardCount > 0).map((f) => f.uid))
-    );
+    setSelectedFolderUids(new Set(folders.filter((f) => !f.managedBy).map((f) => f.uid)));
   }, [folders]);
 
   const unmanagedFolderCount = useMemo(
-    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0).length,
+    () => folders.filter((f) => !f.managedBy).length,
     [folders]
   );
 

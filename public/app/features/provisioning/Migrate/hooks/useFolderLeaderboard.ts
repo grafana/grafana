@@ -98,21 +98,21 @@ function aggregate(
 
   // Sort: unmanaged folders first (the migration targets), then by dashboard
   // count desc so the highest-leverage targets surface at the top, then title.
-  return rows
-    .filter((row) => row.dashboardCount > 0)
-    .sort((a, b) => {
-      const aIsUnmanaged = a.managedBy ? 0 : 1;
-      const bIsUnmanaged = b.managedBy ? 0 : 1;
-      if (aIsUnmanaged !== bIsUnmanaged) {
-        return bIsUnmanaged - aIsUnmanaged;
-      }
-      if (b.dashboardCount !== a.dashboardCount) {
-        return b.dashboardCount - a.dashboardCount;
-      }
-      // Folder lists are O(folders) — small enough to use localeCompare directly.
-      // eslint-disable-next-line @grafana/no-locale-compare
-      return a.title.localeCompare(b.title);
-    });
+  // Empty folders are kept — they're still valid migration targets even though
+  // they have lower leverage.
+  return rows.sort((a, b) => {
+    const aIsUnmanaged = a.managedBy ? 0 : 1;
+    const bIsUnmanaged = b.managedBy ? 0 : 1;
+    if (aIsUnmanaged !== bIsUnmanaged) {
+      return bIsUnmanaged - aIsUnmanaged;
+    }
+    if (b.dashboardCount !== a.dashboardCount) {
+      return b.dashboardCount - a.dashboardCount;
+    }
+    // Folder lists are O(folders) — small enough to use localeCompare directly.
+    // eslint-disable-next-line @grafana/no-locale-compare
+    return a.title.localeCompare(b.title);
+  });
 }
 
 /**
