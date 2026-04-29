@@ -13841,6 +13841,8 @@
       "progress-gitops-sub_one": "{{count}} via Git Sync",
       "progress-gitops-sub_other": "{{count}} via Git Sync",
       "progress-gitops-sub-empty": "Start your migration",
+      "provisioning-tools-description": "Grafana supports multiple GitOps and provisioning tools. Choose the best fit for your workflow.",
+      "provisioning-tools-heading": "Provisioning tools",
       "resource-types-footer_one": "Showing {{count}} of {{total}} resource types",
       "resource-types-footer_other": "Showing {{count}} of {{total}} resource types",
       "resource-types-heading": "Resource types",
@@ -13853,8 +13855,6 @@
       "tool-tile-managed-count_other": "{{count}} managed",
       "tool-tile-recommended": "Recommended",
       "tooling-support-compare": "Compare tools",
-      "tooling-support-description": "Grafana supports multiple GitOps and provisioning tools. Choose the best fit for your workflow.",
-      "tooling-support-heading": "Tooling support",
       "unmanaged-by-type-empty": "Everything is under management.",
       "unmanaged-by-type-heading": "Unmanaged by type"
     },

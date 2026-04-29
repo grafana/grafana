@@ -208,7 +208,7 @@ describe('Migrate', () => {
     expect(screen.getByRole('link', { name: /open repository/i })).toBeInTheDocument();
   });
 
-  it('renders the Tooling support panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
+  it('renders the Provisioning tools panel as tiles ordered Git Sync, Terraform, GCX, File System', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -225,7 +225,9 @@ describe('Migrate', () => {
 
     render(<Migrate />);
 
-    expect(screen.getByText(/tooling support/i)).toBeInTheDocument();
+    // Heading uses Title Case while the description uses lowercase, so an
+    // exact-string match isolates the heading.
+    expect(screen.getByText('Provisioning tools')).toBeInTheDocument();
     // The four supported-tool tiles appear, each by its label.
     expect(screen.getAllByText(/^git sync$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^terraform$/i).length).toBeGreaterThan(0);

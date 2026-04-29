@@ -932,6 +932,15 @@ function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.toolTile}>
+      <Tooltip content={tool.description} placement="top">
+        <Icon
+          name="info-circle"
+          size="xs"
+          className={styles.toolTileInfo}
+          tabIndex={0}
+          aria-label={t('provisioning.stats.tool-tile-info-aria', 'About {{tool}}', { tool: tool.label })}
+        />
+      </Tooltip>
       <div className={styles.toolTileBadge}>
         {tool.image ? (
           <img src={tool.image} alt="" className={styles.toolTileImage} />
@@ -941,20 +950,9 @@ function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
           <span className={styles.toolTileInitial}>{tool.initial}</span>
         )}
       </div>
-      <Stack direction="row" gap={0.5} alignItems="center" wrap>
-        <Text variant="bodySmall" weight="medium">
-          {tool.label}
-        </Text>
-        <Tooltip content={tool.description} placement="top">
-          <Icon
-            name="info-circle"
-            size="xs"
-            className={styles.toolTileInfo}
-            tabIndex={0}
-            aria-label={t('provisioning.stats.tool-tile-info-aria', 'About {{tool}}', { tool: tool.label })}
-          />
-        </Tooltip>
-      </Stack>
+      <Text variant="bodySmall" weight="medium">
+        {tool.label}
+      </Text>
       {tool.recommended ? (
         <Text variant="bodySmall" color="success">
           <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
@@ -984,10 +982,10 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   return (
     <div className={styles.sidePanel}>
       <Text variant="h5">
-        <Trans i18nKey="provisioning.stats.tooling-support-heading">Tooling support</Trans>
+        <Trans i18nKey="provisioning.stats.provisioning-tools-heading">Provisioning tools</Trans>
       </Text>
       <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="provisioning.stats.tooling-support-description">
+        <Trans i18nKey="provisioning.stats.provisioning-tools-description">
           Grafana supports multiple GitOps and provisioning tools. Choose the best fit for your workflow.
         </Trans>
       </Text>
@@ -1279,6 +1277,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   toolTile: css({
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -1304,6 +1303,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     objectFit: 'contain',
   }),
   toolTileInfo: css({
+    position: 'absolute',
+    top: theme.spacing(0.75),
+    right: theme.spacing(0.75),
     color: theme.colors.text.secondary,
     cursor: 'help',
     '&:hover, &:focus-visible': {
