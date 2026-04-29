@@ -408,3 +408,53 @@ func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
 		require.Equal(t, "db-uid", got.ExternalAlertmanagerUID)
 	})
 }
+
+func TestExternalAlertmanagerUID_PostRejectedWhenIniSet(t *testing.T) {
+	// When the operator-level ini value is set, the API must refuse to mutate
+	// ExternalAlertmanagerUID — the ini value is authoritative for sync.
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAlertingSyncExternalAlertmanager: {
+			Key: featuremgmt.FlagAlertingSyncExternalAlertmanager, DefaultVariant: "on",
+			Variants: map[string]any{"on": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	ctx := createRequestCtxInOrg(1)
+	ctx.OrgRole = org.RoleAdmin
+
+	cases := []struct {
+		name string
+		body definitions.PostableNGalertConfig
+	}{
+		{
+			name: "set non-empty UID with ini set",
+			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: ptrTo("user-uid")},
+		},
+		{
+			name: "clear UID with ini set",
+			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: ptrTo("")},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := store.NewFakeAdminConfigStore(t)
+			sut := ConfigSrv{
+				store: s,
+				cfg:   &setting.UnifiedAlertingSettings{ExternalAlertmanagerUID: "ini-uid"},
+				datasourceService: &fakeDatasources.FakeDataSourceService{
+					DataSources: []*datasources.DataSource{},
+				},
+			}
+
+			resp := sut.RoutePostNGalertConfig(ctx, tc.body)
+			require.Equal(t, http.StatusConflict, resp.Status())
+
+			// DB unchanged — fake store returns (nil, nil) when no row exists.
+			cfg, err := s.GetAdminConfiguration(1)
+			require.NoError(t, err)
+			require.Nil(t, cfg)
+		})
+	}
+}

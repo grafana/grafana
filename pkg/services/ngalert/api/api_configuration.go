@@ -136,6 +136,15 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 	}
 
 	if body.ExternalAlertmanagerUID != nil && ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+		// When the operator-level ini value is set it is authoritative for all orgs,
+		// so the API must not let users overwrite or clear it via admin_config writes.
+		// Reject any UID write attempt up front (regardless of whether the body value
+		// matches the ini) — the request is meaningless because the ini wins on read
+		// and the sync worker uses the ini value.
+		if srv.cfg != nil && srv.cfg.ExternalAlertmanagerUID != "" {
+			return response.Error(http.StatusConflict, "external alertmanager UID is managed by the operator (ini); cannot be changed via API", nil)
+		}
+
 		// Validate the datasource only when the value actually changes, so unrelated
 		// updates (e.g. AlertmanagersChoice only) don't fail because the previously
 		// stored UID is no longer valid.
