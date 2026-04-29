@@ -30,6 +30,8 @@ interface GroupBreakdown {
   total: number;
   gitSyncCount: number;
   otherManagedCount: number;
+  /** Counts of resources managed by each non-Git-Sync manager kind. */
+  managedByKind: Record<string, number>;
   unmanagedCount: number;
   isGitSyncSupported: boolean;
 }
@@ -84,6 +86,7 @@ function computeGroupBreakdowns(data?: ResourceStats): GroupBreakdown[] {
         total: 0,
         gitSyncCount: 0,
         otherManagedCount: 0,
+        managedByKind: {},
         unmanagedCount: 0,
         isGitSyncSupported: GIT_SYNC_SUPPORTED_GROUPS.includes(group),
       };
@@ -103,13 +106,15 @@ function computeGroupBreakdowns(data?: ResourceStats): GroupBreakdown[] {
   });
 
   data?.managed?.forEach((m) => {
-    const isGitSync = (m.kind ?? '') === ManagerKind.Repo;
+    const kind = m.kind ?? '';
+    const isGitSync = kind === ManagerKind.Repo;
     m.stats.forEach((s) => {
       const entry = ensure(s.group, s.resource);
       if (isGitSync) {
         entry.gitSyncCount += s.count;
       } else {
         entry.otherManagedCount += s.count;
+        entry.managedByKind[kind] = (entry.managedByKind[kind] ?? 0) + s.count;
       }
     });
   });
@@ -319,7 +324,7 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
             value: otherTotal,
             total: stats.instanceTotal,
           })}
-          label={t('provisioning.stats.legend-other', 'Managed by other providers')}
+          label={t('provisioning.stats.legend-other', 'Managed by other tools')}
           dotClass={styles.legendDotInfo}
           color="info"
         />
@@ -372,7 +377,7 @@ function PercentageStat({
   );
 }
 
-function MigrationReadinessSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+function FoldersAndDashboardsSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const supported = breakdowns.filter((b) => b.isGitSyncSupported);
   if (supported.length === 0) {
     return null;
@@ -383,23 +388,25 @@ function MigrationReadinessSection({ breakdowns }: { breakdowns: GroupBreakdown[
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="row" gap={1} alignItems="center">
-        <Icon name="code-branch" />
+        <Icon name="apps" />
         <Text variant="h3">
-          <Trans i18nKey="provisioning.stats.migration-heading">Git Sync migration readiness</Trans>
+          <Trans i18nKey="provisioning.stats.folders-dashboards-heading">Folders and dashboards</Trans>
         </Text>
       </Stack>
       <Text color="secondary">
-        <Trans i18nKey="provisioning.stats.migration-description">
-          Git Sync only supports folders and dashboards. Below is where each currently lives.
+        <Trans i18nKey="provisioning.stats.folders-dashboards-description">
+          How folders and dashboards are currently managed. Git Sync supports these types; other tools (Terraform,
+          kubectl, plugins, etc.) can also manage them.
         </Trans>
       </Text>
       {totalEligible > 0 && (
         <Alert
           severity="info"
-          title={t('provisioning.stats.migration-eligible-title', 'Resources eligible to migrate to Git Sync')}
+          title={t('provisioning.stats.unmanaged-callout-title', 'Some folders or dashboards aren’t managed yet')}
         >
-          <Trans i18nKey="provisioning.stats.migration-eligible-description" count={totalEligible}>
-            {{ count: totalEligible }} unmanaged resource of a Git-Sync-supported type could be moved into a repository.
+          <Trans i18nKey="provisioning.stats.unmanaged-callout-description" count={totalEligible}>
+            {{ count: totalEligible }} folder or dashboard isn’t managed by any provider. You can bring them under Git
+            Sync, Terraform, or another tool.
           </Trans>
         </Alert>
       )}
@@ -416,6 +423,7 @@ function ResourceBreakdownCard({ breakdown }: { breakdown: GroupBreakdown }) {
   const styles = useStyles2(getStyles);
   const nOfM = (value: number) =>
     t('provisioning.stats.n-of-m', '{{value}} of {{total}}', { value, total: breakdown.total });
+  const otherEntries = Object.entries(breakdown.managedByKind).filter(([, count]) => count > 0);
   return (
     <Card noMargin>
       <Card.Heading>
@@ -427,38 +435,54 @@ function ResourceBreakdownCard({ breakdown }: { breakdown: GroupBreakdown }) {
         </Stack>
       </Card.Heading>
       <Card.Description>
-        <Stack direction="row" gap={3} alignItems="center" wrap>
-          <Donut
-            gitSync={breakdown.gitSyncCount}
-            other={breakdown.otherManagedCount}
-            unmanaged={breakdown.unmanagedCount}
-            size={88}
-            strokeWidth={14}
-            centerLabel={percent(breakdown.gitSyncCount + breakdown.otherManagedCount, breakdown.total)}
-          />
-          <Stack direction="row" gap={3} wrap flex={1}>
-            <PercentageStat
-              big={percent(breakdown.gitSyncCount, breakdown.total)}
-              subLabel={nOfM(breakdown.gitSyncCount)}
-              label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
-              dotClass={styles.legendDotSuccess}
-              color="success"
+        <Stack direction="column" gap={2}>
+          <Stack direction="row" gap={3} alignItems="center" wrap>
+            <Donut
+              gitSync={breakdown.gitSyncCount}
+              other={breakdown.otherManagedCount}
+              unmanaged={breakdown.unmanagedCount}
+              size={88}
+              strokeWidth={14}
+              centerLabel={percent(breakdown.gitSyncCount + breakdown.otherManagedCount, breakdown.total)}
             />
-            <PercentageStat
-              big={percent(breakdown.otherManagedCount, breakdown.total)}
-              subLabel={nOfM(breakdown.otherManagedCount)}
-              label={t('provisioning.stats.legend-other', 'Managed by other providers')}
-              dotClass={styles.legendDotInfo}
-              color="info"
-            />
-            <PercentageStat
-              big={percent(breakdown.unmanagedCount, breakdown.total)}
-              subLabel={nOfM(breakdown.unmanagedCount)}
-              label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-              dotClass={styles.legendDotWarning}
-              color="warning"
-            />
+            <Stack direction="row" gap={3} wrap flex={1}>
+              <PercentageStat
+                big={percent(breakdown.gitSyncCount, breakdown.total)}
+                subLabel={nOfM(breakdown.gitSyncCount)}
+                label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
+                dotClass={styles.legendDotSuccess}
+                color="success"
+              />
+              <PercentageStat
+                big={percent(breakdown.otherManagedCount, breakdown.total)}
+                subLabel={nOfM(breakdown.otherManagedCount)}
+                label={t('provisioning.stats.legend-other', 'Managed by other tools')}
+                dotClass={styles.legendDotInfo}
+                color="info"
+              />
+              <PercentageStat
+                big={percent(breakdown.unmanagedCount, breakdown.total)}
+                subLabel={nOfM(breakdown.unmanagedCount)}
+                label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
+                dotClass={styles.legendDotWarning}
+                color="warning"
+              />
+            </Stack>
           </Stack>
+          {otherEntries.length > 0 && (
+            <Stack direction="row" gap={1} alignItems="center" wrap>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="provisioning.stats.managed-by-prefix">Managed by:</Trans>
+              </Text>
+              {otherEntries.map(([kind, count]) => (
+                <span key={kind} className={styles.kindChip}>
+                  <Text variant="bodySmall">
+                    {kindLabel(kind)} · {count}
+                  </Text>
+                </span>
+              ))}
+            </Stack>
+          )}
         </Stack>
       </Card.Description>
     </Card>
@@ -502,38 +526,71 @@ function OtherProvidersSection({ providers }: { providers: BreakdownByKind[] }) 
     <Stack direction="column" gap={2}>
       <Stack direction="row" gap={1} alignItems="center">
         <Icon name="cog" />
-        <Text variant="h4" color="secondary">
+        <Text variant="h4">
           <Trans i18nKey="provisioning.stats.other-providers-heading">Other providers</Trans>
         </Text>
       </Stack>
       <Text color="secondary" variant="bodySmall">
         <Trans i18nKey="provisioning.stats.other-providers-description">
-          Resources managed by providers other than Git Sync.
+          Resources managed by tools other than Git Sync. Some of these (Terraform, kubectl, etc.) may already be the
+          source of truth for your team — Git Sync isn’t a requirement.
         </Trans>
       </Text>
       <Stack direction="column" gap={1}>
         {providers.map((p) => (
           <Card noMargin key={p.kind}>
             <Card.Heading>
-              <Text variant="h5">{kindLabel(p.kind)}</Text>
-            </Card.Heading>
-            <Card.Description>
-              <Stack direction="row" gap={3} wrap>
-                <Text color="secondary" variant="bodySmall">
+              <Stack direction="row" gap={2} alignItems="baseline">
+                <Text variant="h5">{kindLabel(p.kind)}</Text>
+                <Text variant="bodySmall" color="secondary">
                   {t('provisioning.stats.other-provider-resource-count', '{{count}} resource', {
                     count: p.totals.total,
                   })}
-                  {' • '}
-                  {t('provisioning.stats.other-provider-manager-count', '{{count}} manager', {
-                    count: p.managers.length,
-                  })}
                 </Text>
               </Stack>
+            </Card.Heading>
+            <Card.Description>
+              <ManagerIdentityList managers={p.managers} />
             </Card.Description>
           </Card>
         ))}
       </Stack>
     </Stack>
+  );
+}
+
+function ManagerIdentityList({
+  managers,
+}: {
+  managers: Array<{ id: string; total: number; folders: number; dashboards: number }>;
+}) {
+  const styles = useStyles2(getStyles);
+  if (managers.length === 0) {
+    return null;
+  }
+  return (
+    <div className={styles.managerList}>
+      {managers.map((m, index) => (
+        <div key={m.id || `manager-${index}`} className={styles.managerRow}>
+          <Text>{m.id || t('provisioning.stats.manager-fallback-name', 'Unnamed manager')}</Text>
+          <Stack direction="row" gap={2} wrap>
+            {m.folders > 0 && (
+              <Text color="secondary" variant="bodySmall">
+                {t('provisioning.stats.folders-count', '{{count}} folder', { count: m.folders })}
+              </Text>
+            )}
+            {m.dashboards > 0 && (
+              <Text color="secondary" variant="bodySmall">
+                {t('provisioning.stats.dashboards-count', '{{count}} dashboard', { count: m.dashboards })}
+              </Text>
+            )}
+            <Text color="secondary" variant="bodySmall">
+              {t('provisioning.stats.resource-total', '{{count}} total', { count: m.total })}
+            </Text>
+          </Stack>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -632,7 +689,7 @@ export function StatsTabContent() {
   return (
     <Stack direction="column" gap={4}>
       <SummarySection stats={computed} />
-      <MigrationReadinessSection breakdowns={computed.groupBreakdowns} />
+      <FoldersAndDashboardsSection breakdowns={computed.groupBreakdowns} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
       <AllResourcesSection breakdowns={computed.groupBreakdowns} />
@@ -661,6 +718,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
+  }),
+  kindChip: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: theme.spacing(0.25, 1),
+    borderRadius: theme.shape.radius.pill,
+    background: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+  }),
+  managerList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
+  managerRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(2),
+    paddingTop: theme.spacing(0.5),
+    paddingBottom: theme.spacing(0.5),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    '&:first-child': {
+      borderTop: 'none',
+    },
   }),
   legendDotSuccess: css({
     display: 'inline-block',

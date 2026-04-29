@@ -69,7 +69,7 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    expect(screen.getByText('Git Sync migration readiness')).toBeInTheDocument();
+    expect(screen.getByText('Folders and dashboards')).toBeInTheDocument();
     expect(screen.getByText('By repository')).toBeInTheDocument();
     expect(screen.getByText('my-github-repo')).toBeInTheDocument();
     // Folders breakdown card should expose the 7-managed and the 3-unmanaged figures.
@@ -111,14 +111,14 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    // 30 unmanaged across folders + dashboards is highlighted as eligible.
-    expect(screen.getByText(/eligible to migrate/i)).toBeInTheDocument();
+    // 30 unmanaged folders + dashboards triggers the unmanaged callout.
+    expect(screen.getAllByText(/aren’t managed yet|isn’t managed by any provider/i).length).toBeGreaterThan(0);
     // The Folders / Dashboards breakdown rows include their totals.
     expect(screen.getAllByText('Folders').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Dashboards').length).toBeGreaterThan(0);
   });
 
-  it('groups other manager kinds into the Other providers section', () => {
+  it('groups other manager kinds into the Other providers section and lists identities', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 50 }],
@@ -143,6 +143,38 @@ describe('StatsTabContent', () => {
     expect(screen.getByText('Other providers')).toBeInTheDocument();
     expect(screen.getByText('Terraform')).toBeInTheDocument();
     expect(screen.getByText('Plugin')).toBeInTheDocument();
+    // Specific manager identities are surfaced.
+    expect(screen.getByText('tf-1')).toBeInTheDocument();
+    expect(screen.getByText('cool-plugin')).toBeInTheDocument();
+  });
+
+  it('lists per-manager-kind chips on each Folders/Dashboards card', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'terraform',
+            id: 'tf-prod',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
+          },
+          {
+            kind: 'plugin',
+            id: 'cool-plugin',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // The per-resource breakdown card for Dashboards should show "Managed by:"
+    // chips for each non-Git-Sync manager kind with its count.
+    expect(screen.getByText(/managed by:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Terraform · 3/)).toBeInTheDocument();
+    expect(screen.getByText(/Plugin · 2/)).toBeInTheDocument();
   });
 
   it('buckets managers with no kind under Unknown rather than Git Sync', () => {
