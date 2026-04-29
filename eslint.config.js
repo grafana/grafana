@@ -506,6 +506,19 @@ module.exports = [
     },
   },
 
+  // dataviz panels and components which should get our default set of restrictions
+  {
+    files: ['public/app/plugins/panel/**/*.{ts,tsx}', 'packages/grafana-ui/src/components/RadialGauge/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [...datavizDefaultImportsRestrictions],
+        }),
+      ],
+    },
+  },
+
   {
     // custom rule for Table to avoid performance regressions
     files: ['packages/grafana-ui/src/components/Table/TableNG/**/*.{ts,tsx}'],
@@ -549,19 +562,6 @@ module.exports = [
                 'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
             },
           ],
-        }),
-      ],
-    },
-  },
-
-  // other dataviz panels which should just get our default set of restrictions
-  {
-    files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        withBaseRestrictedImportsConfig({
-          patterns: [...datavizDefaultImportsRestrictions],
         }),
       ],
     },
