@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
-import { type ScopesSelectorServiceState } from 'app/features/scopes/selector/types';
+import { type ScopesSelectorServiceState } from 'app/features/scopes/selector/ScopesSelectorService';
 import { useRecentScopes } from 'app/features/scopes/selector/useRecentScopes';
 
 import { type CommandPaletteAction } from '../types';
