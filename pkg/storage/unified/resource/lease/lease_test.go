@@ -15,7 +15,6 @@ import (
 )
 
 func TestLease(t *testing.T) {
-	t.Skip("not implemented yet")
 	test.RunLeaseTest(t, func(ctx context.Context) kv.KV {
 		return newMapKV()
 	})
