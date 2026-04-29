@@ -80,7 +80,7 @@ export function ContactPointDrawer({ listSearchQuery }: ContactPointDrawerProps)
         contactPoints={listContactPoints}
         search={searchForList}
         pageSize={DEFAULT_PAGE_SIZE}
-        instanceDrawerEmbed
+        contactPointFromInstanceDrawer
         fallbackWhenSearchUnmatched={!resolvedUniqueContactPoint}
       />
     </Stack>

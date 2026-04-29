@@ -29,7 +29,7 @@ describe('ContactPoint', () => {
     ]);
   });
 
-  it('instance drawer embed: Open configuration link uses receiver URL in a new tab when user can edit', async () => {
+  it('contact point from instance drawer: Open configuration link uses receiver URL in a new tab when user can edit', async () => {
     const contactPoint: ContactPointWithMetadata = {
       id: 'bmV3LWNvbnRhY3QtcG9pbnQ',
       name: 'new-contact-point',
@@ -44,7 +44,7 @@ describe('ContactPoint', () => {
       },
     };
 
-    renderWithProvider(<ContactPoint contactPoint={contactPoint} instanceDrawerEmbed />);
+    renderWithProvider(<ContactPoint contactPoint={contactPoint} contactPointFromInstanceDrawer />);
 
     const link = await screen.findByTestId('open-configuration-action');
     expect(link).toHaveAttribute('target', '_blank');
@@ -53,7 +53,7 @@ describe('ContactPoint', () => {
     expect(link).toHaveTextContent('Open configuration');
   });
 
-  it('instance drawer embed: View details when contact point is not editable', async () => {
+  it('contact point from instance drawer: View details when contact point is not editable', async () => {
     const contactPoint: ContactPointWithMetadata = {
       id: 'provisioned-cp',
       name: 'provisioned-cp',
@@ -62,7 +62,7 @@ describe('ContactPoint', () => {
       provenance: KnownProvenance.File,
     };
 
-    renderWithProvider(<ContactPoint contactPoint={contactPoint} instanceDrawerEmbed />);
+    renderWithProvider(<ContactPoint contactPoint={contactPoint} contactPointFromInstanceDrawer />);
 
     const link = await screen.findByTestId('view-details-action');
     expect(link).toHaveTextContent('View details');
