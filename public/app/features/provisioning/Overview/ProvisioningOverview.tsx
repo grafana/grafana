@@ -379,7 +379,7 @@ function CoverageBar({
     return bar;
   }
   return (
-    <Stack direction="row" gap={1} alignItems="center">
+    <div className={styles.coverageRow}>
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="provisioning.stats.coverage-bar-start">0%</Trans>
       </Text>
@@ -387,7 +387,7 @@ function CoverageBar({
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="provisioning.stats.coverage-bar-end">100%</Trans>
       </Text>
-    </Stack>
+    </div>
   );
 }
 
@@ -1025,12 +1025,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     width: '100%',
     height: theme.spacing(1.25),
+    minHeight: 8,
     borderRadius: theme.shape.radius.pill,
     overflow: 'hidden',
-    background: theme.colors.warning.transparent,
+    // A subtle warning tint for the empty state — visible enough on both
+    // dark and light themes that the journey from 0 → 100% is obvious.
+    background: `color-mix(in srgb, ${theme.colors.warning.main} 25%, transparent)`,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.warning.borderTransparent}`,
   }),
   coverageTrackCompact: css({
     height: theme.spacing(0.75),
+    minHeight: 6,
+  }),
+  coverageRow: css({
+    display: 'flex',
+    width: '100%',
+    alignItems: 'center',
+    gap: theme.spacing(1),
   }),
   coverageBarFlex: css({
     flex: '1 1 auto',
