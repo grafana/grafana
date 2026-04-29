@@ -13801,8 +13801,6 @@
       "git-sync-banner-body": "Git Sync is the simplest way to manage folders and dashboards as code — connect a repository and every change gets versioned automatically. Other tools like Terraform or kubectl work too.",
       "git-sync-banner-title": "{{covered}} of {{total}} folders and dashboards are managed by Git Sync",
       "git-sync-repos-heading": "By repository",
-      "legend-git-sync": "Managed by Git Sync",
-      "legend-other": "Managed by other tools",
       "legend-unmanaged": "Unmanaged",
       "loading": "Loading stats...",
       "manager-fallback-name": "Unnamed manager",

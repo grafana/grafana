@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -257,38 +257,91 @@ function percent(part: number, total: number): string {
   return `${Math.round((part / total) * 100)}%`;
 }
 
+interface ProviderSegment {
+  key: string;
+  label: string;
+  value: number;
+  color: string;
+}
+
+function colorForKind(theme: GrafanaTheme2, kind: string): string {
+  switch (kind) {
+    case ManagerKind.Repo:
+      return theme.colors.success.main;
+    case ManagerKind.Terraform:
+      return theme.visualization.getColorByName('blue');
+    case ManagerKind.Kubectl:
+      return theme.visualization.getColorByName('purple');
+    case ManagerKind.Plugin:
+      return theme.visualization.getColorByName('yellow');
+    case CLASSIC_FILE_PROVISIONING:
+      return theme.visualization.getColorByName('red');
+    case GRAFANA_INTERNAL:
+      return theme.colors.text.disabled;
+    default:
+      return theme.colors.text.secondary;
+  }
+}
+
+function buildSegments(stats: ComputedStats, theme: GrafanaTheme2): ProviderSegment[] {
+  const segments: ProviderSegment[] = [];
+  if (stats.gitSync && stats.gitSync.totals.total > 0) {
+    segments.push({
+      key: ManagerKind.Repo,
+      label: kindLabel(ManagerKind.Repo),
+      value: stats.gitSync.totals.total,
+      color: theme.colors.success.main,
+    });
+  }
+  for (const p of stats.otherProviders) {
+    if (p.totals.total === 0) {
+      continue;
+    }
+    segments.push({
+      key: p.kind,
+      label: kindLabel(p.kind),
+      value: p.totals.total,
+      color: colorForKind(theme, p.kind),
+    });
+  }
+  if (stats.unmanagedTotal > 0) {
+    segments.push({
+      key: 'unmanaged',
+      label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
+      value: stats.unmanagedTotal,
+      color: theme.colors.warning.main,
+    });
+  }
+  return segments;
+}
+
 function Donut({
-  gitSync,
-  other,
-  unmanaged,
-  size = 96,
-  strokeWidth = 14,
+  segments,
+  size = 140,
+  strokeWidth = 18,
   centerLabel,
   centerSubLabel,
+  hoveredKey,
+  onHover,
 }: {
-  gitSync: number;
-  other: number;
-  unmanaged: number;
+  segments: ProviderSegment[];
   size?: number;
   strokeWidth?: number;
   centerLabel?: string;
   centerSubLabel?: string;
+  hoveredKey: string | null;
+  onHover: (key: string | null) => void;
 }) {
   const theme = useTheme2();
-  const total = gitSync + other + unmanaged;
+  const styles = useStyles2(getStyles);
+  const total = segments.reduce((acc, s) => acc + s.value, 0);
   const radius = 50 - strokeWidth / 2;
   const circumference = 2 * Math.PI * radius;
-
-  const segments = [
-    { value: gitSync, color: theme.colors.success.main },
-    { value: other, color: theme.colors.info.main },
-    { value: unmanaged, color: theme.colors.warning.main },
-  ].filter((s) => s.value > 0);
 
   let cumulative = 0;
 
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img">
       <circle
         cx="50"
         cy="50"
@@ -298,25 +351,33 @@ function Donut({
         strokeWidth={strokeWidth}
       />
       {total > 0 &&
-        segments.map((seg, idx) => {
+        segments.map((seg) => {
           const pct = seg.value / total;
           const dashLen = pct * circumference;
           const offset = -cumulative * circumference;
           cumulative += pct;
+          const isHovered = hoveredKey === seg.key;
+          const isOtherHovered = hoveredKey !== null && hoveredKey !== seg.key;
           return (
             <circle
-              key={idx}
+              key={seg.key}
               cx="50"
               cy="50"
               r={radius}
               fill="none"
               stroke={seg.color}
-              strokeWidth={strokeWidth}
+              strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
               strokeDasharray={`${dashLen} ${circumference - dashLen}`}
               strokeDashoffset={offset}
               transform="rotate(-90 50 50)"
               strokeLinecap="butt"
-            />
+              onMouseEnter={() => onHover(seg.key)}
+              onMouseLeave={() => onHover(null)}
+              className={styles.donutSegment}
+              style={{ opacity: isOtherHovered ? 0.35 : 1 }}
+            >
+              <title>{`${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)`}</title>
+            </circle>
           );
         })}
       {centerLabel !== undefined && (
@@ -349,10 +410,12 @@ function Donut({
 }
 
 function SummarySection({ stats }: { stats: ComputedStats }) {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const gitSyncTotal = stats.gitSync?.totals.total ?? 0;
-  const otherTotal = stats.otherProviders.reduce((acc, p) => acc + p.totals.total, 0);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const segments = useMemo(() => buildSegments(stats, theme), [stats, theme]);
   const managedPct = percent(stats.managedTotal, stats.instanceTotal);
+
   return (
     <Stack direction="column" gap={1}>
       <Text variant="h5">
@@ -368,83 +431,80 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
       <div className={styles.summaryPanel}>
         <div className={styles.summaryDonut}>
           <Donut
-            gitSync={gitSyncTotal}
-            other={otherTotal}
-            unmanaged={stats.unmanagedTotal}
+            segments={segments}
             size={140}
             strokeWidth={18}
             centerLabel={managedPct}
             centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'as code')}
+            hoveredKey={hoveredKey}
+            onHover={setHoveredKey}
           />
         </div>
-        <Stack direction="row" gap={2} wrap flex={1}>
-          <PercentageStat
+        <Stack direction="row" gap={1.5} wrap flex={1}>
+          <ProviderStat
+            segmentKey="total"
             big={stats.instanceTotal.toLocaleString()}
             label={t('provisioning.stats.summary-total', 'Total resources')}
-            dotClass={undefined}
+            hoveredKey={hoveredKey}
+            onHover={setHoveredKey}
           />
-          <PercentageStat
-            big={percent(gitSyncTotal, stats.instanceTotal)}
-            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-              value: gitSyncTotal,
-              total: stats.instanceTotal,
-            })}
-            label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
-            dotClass={styles.legendDotSuccess}
-            color="success"
-          />
-          <PercentageStat
-            big={percent(otherTotal, stats.instanceTotal)}
-            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-              value: otherTotal,
-              total: stats.instanceTotal,
-            })}
-            label={t('provisioning.stats.legend-other', 'Managed by other tools')}
-            dotClass={styles.legendDotInfo}
-            color="info"
-          />
-          <PercentageStat
-            big={percent(stats.unmanagedTotal, stats.instanceTotal)}
-            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-              value: stats.unmanagedTotal,
-              total: stats.instanceTotal,
-            })}
-            label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-            dotClass={styles.legendDotWarning}
-            color="warning"
-          />
+          {segments.map((seg) => (
+            <ProviderStat
+              key={seg.key}
+              segmentKey={seg.key}
+              big={percent(seg.value, stats.instanceTotal)}
+              subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+                value: seg.value,
+                total: stats.instanceTotal,
+              })}
+              label={seg.label}
+              colorHex={seg.color}
+              hoveredKey={hoveredKey}
+              onHover={setHoveredKey}
+            />
+          ))}
         </Stack>
       </div>
     </Stack>
   );
 }
 
-function PercentageStat({
+function ProviderStat({
+  segmentKey,
   big,
   subLabel,
   label,
-  dotClass,
-  color,
+  colorHex,
+  hoveredKey,
+  onHover,
 }: {
+  segmentKey: string;
   big: string;
   subLabel?: string;
   label: string;
-  dotClass: string | undefined;
-  color?: 'success' | 'info' | 'warning';
+  colorHex?: string;
+  hoveredKey: string | null;
+  onHover: (key: string | null) => void;
 }) {
   const styles = useStyles2(getStyles);
+  const isHovered = hoveredKey === segmentKey;
+  const isDimmed = hoveredKey !== null && hoveredKey !== segmentKey;
   return (
-    <div className={styles.percentStat}>
-      <Text variant="h1" color={color}>
+    <div
+      className={cx(styles.providerStat, isHovered && styles.providerStatHover, isDimmed && styles.providerStatDim)}
+      onMouseEnter={() => onHover(segmentKey)}
+      onMouseLeave={() => onHover(null)}
+    >
+      <span className={styles.providerStatBig} style={colorHex ? { color: colorHex } : undefined}>
         {big}
-      </Text>
+      </span>
       {subLabel && (
         <Text color="secondary" variant="bodySmall">
           {subLabel}
         </Text>
       )}
       <Stack direction="row" gap={1} alignItems="center">
-        {dotClass && <span className={dotClass} />}
+        {colorHex && <span className={styles.providerStatDot} style={{ background: colorHex }} />}
         <Text color="secondary" variant="bodySmall">
           {label}
         </Text>
@@ -752,12 +812,43 @@ const getStyles = (theme: GrafanaTheme2) => ({
   summaryDonut: css({
     flex: '0 0 auto',
   }),
-  percentStat: css({
+  providerStat: css({
     flex: '1 1 140px',
     minWidth: 120,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
+    padding: theme.spacing(1, 1.5),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid transparent`,
+    cursor: 'default',
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'background 150ms ease, border-color 150ms ease, opacity 150ms ease',
+    },
+  }),
+  providerStatHover: css({
+    background: theme.colors.background.canvas,
+    borderColor: theme.colors.border.medium,
+  }),
+  providerStatDim: css({
+    opacity: 0.55,
+  }),
+  providerStatBig: css({
+    fontSize: theme.typography.h1.fontSize,
+    fontWeight: theme.typography.h1.fontWeight,
+    lineHeight: 1.1,
+  }),
+  providerStatDot: css({
+    display: 'inline-block',
+    width: 10,
+    height: 10,
+    borderRadius: theme.shape.radius.circle,
+  }),
+  donutSegment: css({
+    cursor: 'pointer',
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: 'opacity 150ms ease, stroke-width 150ms ease',
+    },
   }),
   kindChip: css({
     display: 'inline-flex',

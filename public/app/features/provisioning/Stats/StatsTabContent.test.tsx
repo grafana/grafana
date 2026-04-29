@@ -144,7 +144,9 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    // Unknown shows up in both the new Summary panel (per-provider stat card)
+    // and the Other providers section, so just assert it appears at all.
+    expect(screen.getAllByText('Unknown').length).toBeGreaterThan(0);
   });
 
   it('derives the Unmanaged summary from instance - managed so the totals balance', () => {
@@ -184,6 +186,40 @@ describe('StatsTabContent', () => {
     // The donut center reports the combined managed share (22/40 = 55%).
     expect(screen.getAllByText('55%').length).toBeGreaterThan(0);
     expect(screen.getAllByText('45%').length).toBeGreaterThan(0);
+  });
+
+  it('renders one Summary stat card per active provider, plus Total and Unmanaged', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
+          },
+          {
+            kind: 'terraform',
+            id: 'tf-1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Summary should show one stat per provider that has resources, alongside
+    // Total resources and Unmanaged. With Repo + Terraform + 3 unmanaged, the
+    // labels render in the Summary panel.
+    expect(screen.getByText('Total resources')).toBeInTheDocument();
+    // "Git Sync" appears as a Summary card label and as a chip in the table.
+    expect(screen.getAllByText('Git Sync').length).toBeGreaterThan(0);
+    // "Terraform" appears as a Summary card label, as a row in the Other
+    // providers section, and as a chip in the table.
+    expect(screen.getAllByText('Terraform').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
   });
 
   it('renders the Resource types section with supported-by chips per row', () => {
