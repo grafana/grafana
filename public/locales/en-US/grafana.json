@@ -15086,7 +15086,12 @@
     "name-line-width": "Line width",
     "name-merge-equal-consecutive-values": "Merge equal consecutive values",
     "name-page-size": "Page size (enable pagination)",
+    "name-position-options": {
+      "label-above-bars": "Above bars",
+      "label-left": "Left"
+    },
     "name-row-height": "Row height",
+    "name-series-name-position": "Series name position",
     "name-show-values": "Show values",
     "show-values-options": {
       "label-always": "Always",

@@ -284,4 +284,103 @@ describe('StateTimeline uPlot integration', () => {
       it.todo(`TODO: this helper currently returns true for many non-supported truthy values, but should not`);
     });
   });
+
+  describe('namePosition option', () => {
+    describe('drawSeriesLabels', () => {
+      it('is undefined when namePosition is not set', () => {
+        const config = getConfig(buildTestCoreOptions());
+        expect(config.drawSeriesLabels).toBeUndefined();
+      });
+
+      it('is undefined when namePosition is "left"', () => {
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'left' }));
+        expect(config.drawSeriesLabels).toBeUndefined();
+      });
+
+      it('is a function when namePosition is "top"', () => {
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'top' }));
+        expect(typeof config.drawSeriesLabels).toBe('function');
+      });
+
+      it('draws series labels above each row when called', () => {
+        const labelFn = jest.fn((idx: number) => `Series ${idx}`);
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: labelFn }));
+        const mockUplot = buildMockUplotInstance();
+
+        config.drawSeriesLabels!(mockUplot);
+
+        expect(mockUplot.ctx.save).toHaveBeenCalled();
+        expect(mockUplot.ctx.fillText).toHaveBeenCalled();
+        expect(mockUplot.ctx.restore).toHaveBeenCalled();
+        expect(mockUplot.ctx.textBaseline).toBe('top');
+        expect(mockUplot.ctx.textAlign).toBe('left');
+      });
+
+      it('truncates long labels with ellipsis', () => {
+        const longLabel = 'A very long series name that should be truncated';
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: () => longLabel }));
+        const mockUplot = buildMockUplotInstance();
+        // Make measureText return a width larger than bbox
+        mockUplot.ctx.measureText = jest.fn(() => ({ width: 200 })) as unknown as typeof mockUplot.ctx.measureText;
+
+        config.drawSeriesLabels!(mockUplot);
+
+        // fillText should have been called with a truncated string ending in ellipsis
+        const fillTextCall = jest.mocked(mockUplot.ctx.fillText).mock.calls[0];
+        expect(fillTextCall[0]).toContain('\u2026');
+      });
+    });
+
+    describe('namePosition validation', () => {
+      it('falls back to "left" behavior for invalid namePosition values', () => {
+        const config = getConfig(buildTestCoreOptions({ namePosition: 'invalid' as 'left' | 'top' }));
+        expect(config.drawSeriesLabels).toBeUndefined();
+      });
+    });
+
+    describe('bar offset with namePosition="top"', () => {
+      it('offsets bars down when namePosition is "top"', () => {
+        const { drawClear, drawPaths } = getConfig(
+          buildTestCoreOptions({
+            namePosition: 'top',
+            formatValue: () => 'foo',
+          })
+        );
+        const mockUplot = buildMockUplotInstance([[0], [1]]);
+
+        drawClear(mockUplot);
+        drawPaths(mockUplot, 1, 0, 0);
+
+        const { rect } = callOrientCallback(mockUplot);
+        // rect is called once for clip and once for the box
+        expect(rect).toHaveBeenCalledTimes(2);
+
+        // The box call (second) should have a top offset > 0 due to label height
+        const boxCall = rect.mock.calls[1] as unknown[];
+        const boxTop = boxCall[2] as number; // top parameter
+        expect(boxTop).toBeGreaterThan(0);
+      });
+
+      it('does not offset bars when namePosition is "left"', () => {
+        const { drawClear, drawPaths } = getConfig(
+          buildTestCoreOptions({
+            namePosition: 'left',
+            formatValue: () => 'foo',
+          })
+        );
+        const mockUplot = buildMockUplotInstance([[0], [1]]);
+
+        drawClear(mockUplot);
+        drawPaths(mockUplot, 1, 0, 0);
+
+        const { rect } = callOrientCallback(mockUplot);
+        expect(rect).toHaveBeenCalledTimes(2);
+
+        // The box call (second) should have top at 0 (yOff + y0 with no label offset)
+        const boxCall = rect.mock.calls[1] as unknown[];
+        const boxTop = boxCall[2] as number;
+        expect(boxTop).toBe(0);
+      });
+    });
+  });
 });
