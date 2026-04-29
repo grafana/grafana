@@ -4457,6 +4457,7 @@
       "add-readme": "Add README",
       "edit-tooltip": "Edit README",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
+      "hint": "Lots of dashboards and new to this folder? <2>See the README</2>",
       "parse-error": "Unable to display README content."
     },
     "recently-viewed": {
