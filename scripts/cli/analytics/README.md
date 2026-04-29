@@ -21,9 +21,11 @@ The framework ensures that:
 
 ## How to define events
 
+Create a `events.ts` file next to your feature. Ownership of events is resolved from `.github/CODEOWNERS`, so it's important this file has the same code owners as the feature itself.
+
 ### 1. Define the property interfaces
 
-Create a `types.ts` file next to your feature file (we encourage to create an 'analytics' folder within the feature one). Each interface must extend `EventProperty` from `@grafana/runtime/internal`, and every property must have a JSDoc comment:
+Each interface must extend `EventProperty` from `@grafana/runtime/internal`, and every property must have a JSDoc comment:
 
 ```ts
 import { type EventProperty } from '@grafana/runtime/internal';
@@ -155,10 +157,6 @@ Run the following command from the repo root:
 ```bash
 yarn analytics-report
 ```
-
-This runs `scripts/cli/analytics/main.mts` using `ts-morph` to statically analyse every `.ts` source file. It finds all calls to `defineFeatureEvents`, resolves every event and its TypeScript property types, and writes the result to `analytics-report.md` in the repo root.
-
-The script does not execute application code — it reads the TypeScript AST directly, so no build step is required.
 
 Example:
 
