@@ -7,23 +7,17 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 
-import { ChainPill } from './ChainPill';
+import { EvaluationChainLink } from './EvaluationChainLink';
 
 // Don't load the lazy V3 page's heavy children — we only need to verify the
-// chain pill -> drawer wiring at the page level.
+// chain link -> drawer wiring at the page level.
 jest.mock('./FlatRuleListView', () => {
-  const { ChainPill } = jest.requireActual('./ChainPill');
+  const { EvaluationChainLink } = jest.requireActual('./EvaluationChainLink');
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    FlatRuleListView: ({ onChainPillClick }: { onChainPillClick: (id: string, position: number) => void }) => (
+    FlatRuleListView: ({ onChainLinkClick }: { onChainLinkClick: (id: string, position: number) => void }) => (
       <div data-testid="flat-rule-list-view">
-        <ChainPill
-          chainId="usage-chain"
-          chainName="Usage Alerts Chain"
-          position={2}
-          total={4}
-          onClick={onChainPillClick}
-        />
+        <EvaluationChainLink chainId="usage-chain" position={2} total={4} onClick={onChainLinkClick} />
       </div>
     ),
   };
@@ -54,7 +48,7 @@ setupMswServer();
 
 const ui = {
   drawer: byRole('dialog'),
-  chainPill: byRole('button', { name: /Usage Alerts Chain/i }),
+  chainLink: byRole('button', { name: /Open evaluation chain/i }),
 };
 
 describe('RuleListV3 page', () => {
@@ -64,27 +58,27 @@ describe('RuleListV3 page', () => {
 
   testWithFeatureToggles({ enable: ['alertingListViewV2', 'alerting.rulesAPIV2'] });
 
-  it('opens the chain drawer when the chain pill is clicked', async () => {
+  it('opens the chain drawer when the chain link is clicked', async () => {
     const RuleListV3Page = (await import('./RuleList.v3')).default;
     const { user } = render(<RuleListV3Page />);
 
     // Flat view mock mounts — confirms V3 shell is what rendered.
-    await waitFor(() => expect(ui.chainPill.get()).toBeInTheDocument());
+    await waitFor(() => expect(ui.chainLink.get()).toBeInTheDocument());
 
     // No drawer open yet.
     expect(ui.drawer.query()).not.toBeInTheDocument();
 
-    await user.click(ui.chainPill.get());
+    await user.click(ui.chainLink.get());
 
     // Drawer opens and shows the chain name.
     await waitFor(() => expect(ui.drawer.get()).toBeInTheDocument());
-    expect(ui.drawer.get()).toHaveTextContent('Usage Alerts Chain');
+    expect(ui.drawer.get()).toHaveTextContent('Evaluation chain');
   });
 });
 
-// Sanity: ensure the helper ChainPill re-export works for the mock above.
-describe('ChainPill (import sanity)', () => {
+// Sanity: ensure the helper EvaluationChainLink re-export works for the mock above.
+describe('EvaluationChainLink (import sanity)', () => {
   it('is a function component', () => {
-    expect(typeof ChainPill).toBe('function');
+    expect(typeof EvaluationChainLink).toBe('function');
   });
 });

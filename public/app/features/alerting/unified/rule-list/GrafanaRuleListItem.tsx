@@ -23,7 +23,7 @@ interface GrafanaRuleListItemProps {
   namespaceName: string;
   operation?: 'creating' | 'deleting';
   showLocation?: boolean;
-  chainPill?: ReactNode;
+  chainLink?: ReactNode;
 }
 
 export function GrafanaRuleListItem({
@@ -32,7 +32,7 @@ export function GrafanaRuleListItem({
   namespaceName,
   operation,
   showLocation = true,
-  chainPill,
+  chainLink,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
@@ -72,13 +72,13 @@ export function GrafanaRuleListItem({
         instancesCount={instancesCount}
         operation={operation}
         showLocation={showLocation}
-        chainPill={chainPill}
+        chainLink={chainLink}
       />
     );
   }
 
   if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} chainPill={chainPill} />;
+    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} chainLink={chainLink} />;
   }
 
   return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;

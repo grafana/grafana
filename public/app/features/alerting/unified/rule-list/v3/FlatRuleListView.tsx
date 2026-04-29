@@ -14,7 +14,7 @@ import { type ChainMembership } from '../../api/chainsApi';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { FolderActionsButton } from '../../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../../components/rules/NoRulesCTA';
-import { DEMO_CHAIN_ID, DEMO_CHAIN_NAME, DEMO_CHAIN_SIZE } from '../../mocks/fixtures/chains';
+import { DEMO_CHAIN_ID, DEMO_CHAIN_SIZE } from '../../mocks/fixtures/chains';
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../../utils/datasource';
 import { makeFolderAlertsLink } from '../../utils/misc';
 import { GrafanaRuleListItem } from '../GrafanaRuleListItem';
@@ -31,27 +31,25 @@ import { type DataSourceLoadState, useDataSourceLoadingStates } from '../hooks/u
 import { useLazyLoadPrometheusGroups } from '../hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from '../paginationLimits';
 
-import { ChainPill } from './ChainPill';
+import { EvaluationChainLink } from './EvaluationChainLink';
 
 interface FlatRuleListViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
   chainFilter?: string;
-  onChainPillClick: (chainId: string, position: number) => void;
-  activeChainId?: string;
+  onChainLinkClick: (chainId: string, position: number) => void;
 }
 
 /**
  * V3 flattened variant of GroupedView: renders each folder's rules as direct
  * siblings of the folder row (no evaluation-group wrapper). Chain membership
- * is surfaced as an inline pill on each rule row.
+ * is surfaced as an inline meta item on each rule row.
  */
 export function FlatRuleListView({
   groupFilter,
   namespaceFilter,
   chainFilter,
-  onChainPillClick,
-  activeChainId,
+  onChainLinkClick,
 }: FlatRuleListViewProps) {
   const { updateState, loadingDataSources } = useDataSourceLoadingStates();
   const hasFilters = Boolean(groupFilter || namespaceFilter || chainFilter);
@@ -64,8 +62,7 @@ export function FlatRuleListView({
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           chainFilter={chainFilter}
-          onChainPillClick={onChainPillClick}
-          activeChainId={activeChainId}
+          onChainLinkClick={onChainLinkClick}
           onLoadingStateChange={updateState}
         />
       </DataSourceErrorBoundary>
@@ -78,8 +75,7 @@ interface FlatGrafanaLoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   chainFilter?: string;
-  onChainPillClick: (chainId: string, position: number) => void;
-  activeChainId?: string;
+  onChainLinkClick: (chainId: string, position: number) => void;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
@@ -87,8 +83,7 @@ function FlatGrafanaLoader({
   groupFilter,
   namespaceFilter,
   chainFilter,
-  onChainPillClick,
-  activeChainId,
+  onChainLinkClick,
   onLoadingStateChange,
 }: FlatGrafanaLoaderProps) {
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
@@ -195,8 +190,7 @@ function FlatGrafanaLoader({
                   info={info}
                   membership={info.membership}
                   folderName={folderName}
-                  activeChainId={activeChainId}
-                  onChainPillClick={onChainPillClick}
+                  onChainLinkClick={onChainLinkClick}
                 />
               ))}
             </ListSection>
@@ -236,7 +230,6 @@ function buildFolderRenderData(groupsByFolder: Record<string, GrafanaPromRuleGro
           ...info,
           membership: {
             id: DEMO_CHAIN_ID,
-            name: DEMO_CHAIN_NAME,
             position: chainCounter,
             total: DEMO_CHAIN_SIZE,
           },
@@ -266,27 +259,24 @@ function flattenRulesForFolder(groups: GrafanaPromRuleGroupDTO[]): FlatRuleInfo[
 
 interface FlatRuleRowProps {
   info: FlatRuleInfo;
-  membership?: { id: string; name: string; position: number; total: number };
+  membership?: ChainMembership;
   folderName: string;
-  activeChainId?: string;
-  onChainPillClick: (chainId: string, position: number) => void;
+  onChainLinkClick: (chainId: string, position: number) => void;
 }
 
-function FlatRuleRow({ info, membership, folderName, activeChainId, onChainPillClick }: FlatRuleRowProps) {
+function FlatRuleRow({ info, membership, folderName, onChainLinkClick }: FlatRuleRowProps) {
   const groupIdentifier = {
     groupName: info.groupName,
     namespace: { uid: info.folderUid },
     groupOrigin: 'grafana' as const,
   };
 
-  const chainPill = membership ? (
-    <ChainPill
+  const chainLink = membership ? (
+    <EvaluationChainLink
       chainId={membership.id}
-      chainName={membership.name}
       position={membership.position}
       total={membership.total}
-      active={activeChainId === membership.id}
-      onClick={onChainPillClick}
+      onClick={onChainLinkClick}
     />
   ) : undefined;
 
@@ -296,7 +286,7 @@ function FlatRuleRow({ info, membership, folderName, activeChainId, onChainPillC
       groupIdentifier={groupIdentifier}
       namespaceName={folderName}
       showLocation={false}
-      chainPill={chainPill}
+      chainLink={chainLink}
     />
   );
 }

@@ -3025,7 +3025,8 @@
       "import-to-gma-tool": "Import to Grafana Alerting"
     },
     "rule-list-v3": {
-      "chain-pill-label": "Chain: {{name}}, position {{position}} of {{total}}",
+      "chain-link-label": "Open evaluation chain (position {{position}} of {{total}})",
+      "chain-link-text": "Evaluation chain",
       "drawer": {
         "alert-rule": "Alert rule",
         "error": "Failed to load chain",

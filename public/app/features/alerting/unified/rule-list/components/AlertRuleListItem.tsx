@@ -60,9 +60,9 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
-  // V3 chain pill; when present, the per-rule evaluation interval chip is omitted
+  // V3 evaluation chain link; when present, the per-rule evaluation interval chip is omitted
   // because chained rules share a chain-level interval surfaced in the drawer.
-  chainPill?: ReactNode;
+  chainLink?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -90,7 +90,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
-    chainPill,
+    chainLink,
   } = props;
 
   const listItemAriaId = useId();
@@ -115,7 +115,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   }
 
   if (!isPaused) {
-    if (lastEvaluation && evaluationInterval && !chainPill) {
+    if (lastEvaluation && evaluationInterval && !chainLink) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
@@ -156,8 +156,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     );
   }
 
-  if (chainPill) {
-    metadata.push(chainPill);
+  if (chainLink) {
+    metadata.push(chainLink);
   }
 
   const ruleHealth = normalizeHealth(health);
@@ -209,7 +209,7 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
-  chainPill,
+  chainLink,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -230,8 +230,8 @@ export function RecordingRuleListItem({
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
-  if (chainPill) {
-    metadata.push(chainPill);
+  if (chainLink) {
+    metadata.push(chainLink);
   }
 
   const ruleHealth = normalizeHealth(health);
