@@ -8,7 +8,12 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TrashStateManager } from 'app/features/browse-dashboards/api/useRecentlyDeletedStateManager';
 
-import { SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_LAYOUT_DELETED, SEARCH_SELECTED_SORT } from '../constants';
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_LAYOUT_DELETED,
+  SEARCH_SELECTED_SORT,
+} from '../constants';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
@@ -121,15 +126,7 @@ describe('SearchStateManager', () => {
       });
 
       it('clears all recently-deleted vocabulary values from the main key', () => {
-        const recentlyDeletedValues = [
-          'alpha-asc',
-          'alpha-desc',
-          'deleted-asc',
-          'deleted-desc',
-          'deletedby-asc',
-          'deletedby-desc',
-        ];
-        for (const value of recentlyDeletedValues) {
+        for (const value of RECENTLY_DELETED_SORT_VALUES) {
           store.set(SEARCH_SELECTED_SORT, value);
           const stm = createSearchStateManager();
           stm.initStateFromUrl(undefined, false);
@@ -142,7 +139,7 @@ describe('SearchStateManager', () => {
       it('preserves valid main-page sort values', () => {
         store.set(SEARCH_SELECTED_SORT, 'name_sort');
         const stm = createSearchStateManager();
-        store.set('grafana.search.layout', 'list');
+        store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
         stm.initStateFromUrl(undefined, false);
 
         expect(stm.state.prevSort).toBe('name_sort');
@@ -152,7 +149,7 @@ describe('SearchStateManager', () => {
       it('preserves -name_sort as a valid main-page value', () => {
         store.set(SEARCH_SELECTED_SORT, '-name_sort');
         const stm = createSearchStateManager();
-        store.set('grafana.search.layout', 'list');
+        store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
         stm.initStateFromUrl(undefined, false);
 
         expect(stm.state.prevSort).toBe('-name_sort');
