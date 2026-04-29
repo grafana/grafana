@@ -204,12 +204,8 @@ export function enhanceContactPointsWithMetadata({
  */
 export function assignNotifierStatusesFromState(
   receivers: GrafanaManagedReceiverConfig[],
-  integrations: NotifierStatus[] | undefined
+  integrations: NotifierStatus[] = []
 ): Array<NotifierStatus | undefined> {
-  if (!integrations?.length) {
-    return receivers.map(() => undefined);
-  }
-
   const queues = new Map<string, NotifierStatus[]>();
   for (const item of integrations) {
     const key = item.name;
