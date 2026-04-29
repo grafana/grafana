@@ -86,7 +86,7 @@ type RemoteIndexStore interface {
 
 	// CleanupIncompleteUploads removes incomplete uploads older than minAge.
 	// Returns the number of cleaned prefixes.
-	// Caller should hold a namespace-level cleanup lock to avoid concurrent cleanup by diferent instances.
+	// Caller should hold a namespace-level cleanup lock to avoid concurrent cleanup by different instances.
 	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
