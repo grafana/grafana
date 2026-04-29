@@ -3927,6 +3927,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/llm@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@grafana/llm@npm:1.0.8"
+  dependencies:
+    "@modelcontextprotocol/sdk": "npm:^1.26.0"
+    publint: "npm:^0.3.12"
+    react-use: "npm:^17.6.0"
+    semver: "npm:^7.6.3"
+    uuid: "npm:^14.0.0"
+  peerDependencies:
+    "@grafana/data": ^10.4.0 ||^11 || ^12
+    "@grafana/runtime": ^10.4.0 || ^11 || ^12
+    react: ^18
+    rxjs: ^7.8.2
+  checksum: 10/48eeb37fadb3489831df3d498348c8aa95e37e435321ff3673dec61155dec203d96d2fb94b76401b7fa5b549c3a1517ebc7e49ef9c5d58e146ee316399050e24
+  languageName: node
+  linkType: hard
+
 "@grafana/monaco-logql@npm:^0.0.8":
   version: 0.0.8
   resolution: "@grafana/monaco-logql@npm:0.0.8"
@@ -20764,7 +20782,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.3"
+    "@grafana/llm": "npm:1.0.8"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.12"
@@ -35186,6 +35204,15 @@ __metadata:
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/2742b24d1e00257e60612572e4d28679423469998cafbaf1fe9f1482e3edf9c40754b31bfdb3d08d71b29239f227a304588f75210b3b48f2609f0673f1feccef
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "uuid@npm:14.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
   languageName: node
   linkType: hard
 
