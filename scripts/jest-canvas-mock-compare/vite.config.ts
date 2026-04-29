@@ -81,7 +81,6 @@ const buildJestCommand = (testName: string, updateSnapshot: boolean, testPath: s
     args.push('--updateSnapshot');
   }
   args.push(JSON.stringify(`--testNamePattern ${pattern} -- ${testPath}`));
-  args.push('--testNamePattern', pattern, '--', testPath);
   const jestCommand = `${args.join(' ')}`;
   return { args, jestCommand };
 };
@@ -90,9 +89,9 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
   const repoRoot = path.resolve(__dirname, '..', '..');
 
   return {
-    name: 'uplot-compare-accept-snapshot',
+    name: 'compare-accept-snapshot',
     configureServer(server: ViteDevServer) {
-      server.middlewares.use('/__uplot-compare/test', async (req, res) => {
+      server.middlewares.use('/compare/test', async (req, res) => {
         if (req.method !== 'POST') {
           throwErr(405, 'Method not allowed', res);
           return;

@@ -303,7 +303,7 @@ export const CompareCanvas = ({ defaultWidth = FALLBACK_CANVAS_WIDTH, defaultHei
       }
       setAcceptBaselineState({ kind: 'running', updateSnapshot });
       try {
-        const res = await fetch('/__uplot-compare/test', {
+        const res = await fetch('/compare/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

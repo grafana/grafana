@@ -1,8 +1,4 @@
-/**
- * Stable prefix for payload files: `jest-canvas-compare-<slug>.json`.
- * @todo move to package
- */
-export const CANVAS_COMPARE_PAYLOAD_FILE_PREFIX = 'jest-canvas-compare';
+const CANVAS_COMPARE_PAYLOAD_FILE_PREFIX = 'jest-canvas-compare';
 
 export const SLUG_MAX_LENGTH = 96;
 

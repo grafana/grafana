@@ -1,8 +1,7 @@
 import 'json-diff-kit/dist/viewer.css';
+import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { Viewer, Differ } from 'json-diff-kit';
 import { useEffect, useMemo, useRef } from 'react';
-
-import type { CanvasEventArray } from '../types.ts';
 
 import { ToggleCanvasContextButton } from './CanvasContextToggleButton.tsx';
 
@@ -15,8 +14,8 @@ interface DiffCanvasProps {
   onToggleOverlay: () => void;
   renderDiffSetupEvents: boolean;
   onToggleDiffSetupEvents: () => void;
-  expected?: CanvasEventArray;
-  actual?: CanvasEventArray;
+  expected?: CanvasRenderingContext2DEvent[];
+  actual?: CanvasRenderingContext2DEvent[];
 }
 
 export function CanvasDiff({
