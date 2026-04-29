@@ -24,6 +24,7 @@ import {
   useStyles2,
   type SeriesTableRowProps,
   DataLinksContextMenu,
+  type DataLinksMenuTriggerProps,
   SeriesTable,
   usePanelContext,
 } from '@grafana/ui';
@@ -138,125 +139,43 @@ export const PieChart = ({
                     ? (gradientFills.get(arc.data) ?? arc.data.display.color ?? FALLBACK_COLOR)
                     : getGradientColor(color);
 
-                  const links = arc.data.hasLinks && arc.data.getLinks ? arc.data.getLinks() : [];
-
-                  const sliceBody = (
-                    <PieSlice
-                      tooltip={tooltip}
-                      highlightState={highlightState}
-                      arc={arc}
-                      pie={pie}
-                      fill={fill}
-                      openMenu={undefined}
-                      tooltipOptions={tooltipOptions}
-                      gradientFills={gradientFills}
-                    />
-                  );
-
-                  // Calculate relative coordinates within SVG (for tooltip and menu positioning)
-                  const getSvgCoords = (element: Element) => {
-                    const svg = element.closest('svg');
-                    if (!svg) {
-                      return { x: 0, y: 0 };
-                    }
-                    const svgRect = svg.getBoundingClientRect();
-                    const elemRect = element.getBoundingClientRect();
-                    return {
-                      x: elemRect.left + elemRect.width / 2 - svgRect.left,
-                      y: elemRect.top + elemRect.height / 2 - svgRect.top,
-                    };
-                  };
-
-                  // Show tooltip and trigger highlight when the keyboard is focused
-                  const handleFocus = (e: React.FocusEvent<Element>) => {
-                    const coords = getSvgCoords(e.currentTarget);
-                    if (tooltipOptions.mode !== 'none') {
-                      eventBus?.publish({
-                        type: DataHoverEvent.type,
-                        payload: {
-                          x: coords.x,
-                          y: coords.y,
-                          dataId: arc.data.display.title,
-                        },
-                      });
-                      tooltip.showTooltip({
-                        tooltipLeft: coords.x,
-                        tooltipTop: coords.y,
-                        tooltipData: getTooltipData(pie, arc, tooltipOptions, gradientFills),
-                      });
-                    }
-                  };
-
-                  const handleBlur = () => {
-                    eventBus?.publish({
-                      type: DataHoverClearEvent.type,
-                      payload: {
-                        x: 0,
-                        y: 0,
-                        dataId: arc.data.display.title,
-                      },
-                    });
-                    tooltip.hideTooltip();
-                  };
-
-                  // 1. No link
-                  if (links.length === 0) {
-                    return <React.Fragment key={arc.index}>{sliceBody}</React.Fragment>;
-                  }
-
-                  // 2. Single Link
-                  if (links.length === 1) {
-                    const singleLink = links[0];
+                  // Slice with no data links — render plain, no keyboard interaction.
+                  if (!arc.data.hasLinks || !arc.data.getLinks) {
                     return (
-                      <a
+                      <PieSlice
                         key={arc.index}
-                        href={singleLink.href}
-                        target={singleLink.target}
-                        onClick={singleLink.onClick}
-                        title={singleLink.title}
-                        className={styles.svgLink}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
-                        data-testid={selectors.components.DataLinksContextMenu.singleLink}
-                      >
-                        {sliceBody}
-                      </a>
+                        highlightState={highlightState}
+                        tooltip={tooltip}
+                        arc={arc}
+                        pie={pie}
+                        fill={fill}
+                        tooltipOptions={tooltipOptions}
+                        gradientFills={gradientFills}
+                      />
                     );
                   }
 
-                  // 3. Multiple links
+                  // Slice with one or more data links — delegate the link semantics
+                  // (single-link `<a>` vs. multi-link context menu) entirely to the
+                  // shared `DataLinksContextMenu`. For the multi-link case, spread
+                  // `triggerProps` onto the slice `<g>` so the SVG element itself
+                  // is the keyboard-focusable trigger (Tab to focus, Enter/Space
+                  // to open the menu, ARIA semantics handled in one place).
                   return (
-                    <DataLinksContextMenu key={arc.index} links={arc.data.getLinks!}>
-                      {(api) => (
-                        // eslint-disable-next-line jsx-a11y/anchor-is-valid
-                        <a
-                          href="#"
-                          role="button"
-                          className={cx(styles.svgLink, api.targetClassName)}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            api.openMenu?.(e);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              const target = e.currentTarget;
-                              const rect = target.getBoundingClientRect();
-                              const mouseEvent = new MouseEvent('click', {
-                                bubbles: true,
-                                cancelable: true,
-                                clientX: rect.left + rect.width / 2,
-                                clientY: rect.top + rect.height / 2,
-                              });
-                              target.dispatchEvent(mouseEvent);
-                            }
-                          }}
-                          onFocus={handleFocus}
-                          onBlur={handleBlur}
-                          aria-label={arc.data.display.title}
-                        >
-                          {sliceBody}
-                        </a>
+                    <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
+                      {({ triggerProps, targetClassName }) => (
+                        <PieSlice
+                          highlightState={highlightState}
+                          tooltip={tooltip}
+                          arc={arc}
+                          pie={pie}
+                          fill={fill}
+                          tooltipOptions={tooltipOptions}
+                          gradientFills={gradientFills}
+                          triggerProps={triggerProps}
+                          triggerClassName={targetClassName}
+                          ariaLabel={arc.data.display.title}
+                        />
                       )}
                     </DataLinksContextMenu>
                   );
@@ -316,10 +235,34 @@ interface SliceProps {
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   gradientFills?: Map<FieldDisplay, string>;
-  openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+  /**
+   * When the slice represents a multi-link data-links menu, these props are
+   * spread on the SVG `<g>` so it becomes the keyboard-focusable trigger
+   * (`role="button"`, `tabIndex={0}`, Enter/Space → open menu).
+   *
+   * For the single-link case the wrapping HTML `<a>` rendered by
+   * `DataLinksContextMenu` already provides keyboard focus, so this is left
+   * undefined and the `<g>` stays a pure presentational element.
+   */
+  triggerProps?: DataLinksMenuTriggerProps;
+  /** Theme-aware focus-visible class supplied by `DataLinksContextMenu`. */
+  triggerClassName?: string;
+  /** Accessible name announced for the trigger (slice display title). */
+  ariaLabel?: string;
 }
 
-function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions, gradientFills }: SliceProps) {
+function PieSlice({
+  arc,
+  pie,
+  highlightState,
+  fill,
+  tooltip,
+  tooltipOptions,
+  gradientFills,
+  triggerProps,
+  triggerClassName,
+  ariaLabel,
+}: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
@@ -371,11 +314,15 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   return (
     <g
       key={arc.data.display.title}
-      className={pieStyle}
+      className={cx(pieStyle, triggerClassName)}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
-      onClick={openMenu}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
+      // `triggerProps` (when present) supplies role="button", tabIndex=0,
+      // onClick (open menu), onKeyDown (Enter/Space → open menu), and
+      // aria-haspopup. Spread last so consumers can override defaults.
+      aria-label={ariaLabel}
+      {...triggerProps}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
     </g>
