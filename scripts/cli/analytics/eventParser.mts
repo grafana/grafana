@@ -33,7 +33,7 @@ export const parseEvents = (file: SourceFile, eventNamespaces: Map<string, Event
   // Keyed by ObjectLiteralExpression, then by property name (e.g. 'itemClicked').
   // Built in the CallExpression scan; consumed by resolveGroupedEvents for spread resolution.
   const directEventsByObject = new Map<ObjectLiteralExpression, Map<string, EventData>>();
-  // CODEOWNERS matching requires a path relative to the repo root, not an absolute one.
+  // CODEOWNERS matching requires a path relative to the repo root
   const relativeFilePath = path.relative(process.cwd(), file.getFilePath());
 
   for (const callExpr of file.getDescendantsOfKind(SyntaxKind.CallExpression)) {
