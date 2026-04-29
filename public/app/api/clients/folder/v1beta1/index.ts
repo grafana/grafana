@@ -1,4 +1,9 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { dispatch } from 'app/store/store';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
@@ -24,6 +29,46 @@ export const folderAPIv1beta1 = generatedAPI
       },
       deleteFolder: {
         invalidatesTags: (_result, error) => (error ? [] : [folderListTag]),
+        onQueryStarted: async (arg, { queryFulfilled }) => {
+          try {
+            await queryFulfilled;
+            // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here,
+            //   we probably need to get the full folder somehow before deleting or changing the arg
+            // dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
+            dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+            invalidateQuotaUsage(dispatch);
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
+      },
+      updateFolder: {
+        onQueryStarted: async ({ patch }, { queryFulfilled }) => {
+          try {
+            if (
+              Array.isArray(patch) &&
+              patch.length &&
+              patch.some((part) => 'path' in part && part.path === '/metadata/ownerReferences')
+            ) {
+              await queryFulfilled;
+              dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+            }
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
+      },
+      createFolder: {
+        onQueryStarted: async ({ folder }, { queryFulfilled }) => {
+          try {
+            if (folder.metadata?.ownerReferences && folder.metadata?.ownerReferences.length) {
+              await queryFulfilled;
+              dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
+            }
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
       },
     },
   })

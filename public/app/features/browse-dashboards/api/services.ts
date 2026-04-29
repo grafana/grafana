@@ -146,7 +146,12 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
  * with team owner info attached to each folder.
  */
 export async function listTeamFolders(): Promise<DashboardViewItem[]> {
-  const teams = await dispatch(legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined)).unwrap();
+  // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need requests
+  // here not to be cached.
+
+  const teams = await dispatch(
+    legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined, { forceRefetch: true })
+  ).unwrap();
 
   if (!teams || teams.length === 0) {
     return [];
@@ -161,8 +166,6 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
         type: 'folder',
       },
       {
-        // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need this
-        // not to be cached.
         forceRefetch: true,
       }
     )
