@@ -9,20 +9,6 @@ import { config } from '../config';
 
 import { type LocationUpdate } from './LocationSrv';
 
-let orgIdGetter: (() => number) | undefined;
-
-/**
- * Registers a callback that returns the current organisation ID.
- * When set, locationService.push() and .replace() automatically append
- * ?orgId=<N> to every SPA navigation so URLs remain shareable across orgs.
- *
- * Must be called once at app startup after the user session is initialised.
- * @internal
- */
-export function setLocationServiceOrgIdGetter(fn: () => number): void {
-  orgIdGetter = fn;
-}
-
 /**
  * Appends `orgId=<N>` to a URL string, preserving the fragment ordering.
  * Returns the input unchanged if `orgId` is non-positive, non-finite, or
@@ -50,23 +36,6 @@ export function appendOrgIdToPath(path: string, orgId: number): string {
   return `${pathname}?${params.toString()}${fragment}`;
 }
 
-function withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H.LocationDescriptor<unknown> {
-  const orgId = orgIdGetter?.();
-  if (!orgId) {
-    return location;
-  }
-  if (typeof location === 'string') {
-    return appendOrgIdToPath(location, orgId);
-  }
-  const search = location.search ?? '';
-  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-  if (params.has('orgId')) {
-    return location;
-  }
-  params.set('orgId', String(Math.floor(orgId)));
-  return { ...location, search: `?${params.toString()}` };
-}
-
 /**
  * @public
  * A wrapper to help work with browser location and history
@@ -83,6 +52,15 @@ export interface LocationService {
   getLocationObservable: () => Observable<H.Location>;
 
   /**
+   * Registers a callback returning the current organisation ID. Once set,
+   * push() and replace() automatically append `?orgId=<N>` to every SPA
+   * navigation so URLs remain shareable across orgs. Call at app startup
+   * after the user session is initialised.
+   * @internal
+   */
+  setOrgIdGetter: (fn: () => number) => void;
+
+  /**
    * This is from the old LocationSrv interface
    * @deprecated use partial, push or replace instead */
   update: (update: LocationUpdate) => void;
@@ -92,6 +70,7 @@ export interface LocationService {
 export class HistoryWrapper implements LocationService {
   private readonly history: H.History;
   private locationObservable: BehaviorSubject<H.Location>;
+  private orgIdGetter?: () => number;
 
   constructor(history?: H.History) {
     // If no history passed create an in memory one if being called from test
@@ -113,6 +92,28 @@ export class HistoryWrapper implements LocationService {
     this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
     this.getLocation = this.getLocation.bind(this);
+    this.setOrgIdGetter = this.setOrgIdGetter.bind(this);
+  }
+
+  setOrgIdGetter(fn: () => number) {
+    this.orgIdGetter = fn;
+  }
+
+  private withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H.LocationDescriptor<unknown> {
+    const orgId = this.orgIdGetter?.();
+    if (!orgId) {
+      return location;
+    }
+    if (typeof location === 'string') {
+      return appendOrgIdToPath(location, orgId);
+    }
+    const search = location.search ?? '';
+    const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+    if (params.has('orgId')) {
+      return location;
+    }
+    params.set('orgId', String(Math.floor(orgId)));
+    return { ...location, search: `?${params.toString()}` };
   }
 
   getLocationObservable() {
@@ -150,11 +151,11 @@ export class HistoryWrapper implements LocationService {
   }
 
   push(location: H.Path | H.LocationDescriptor) {
-    this.history.push(withOrgId(location));
+    this.history.push(this.withOrgId(location));
   }
 
   replace(location: H.Path | H.LocationDescriptor) {
-    this.history.replace(withOrgId(location));
+    this.history.replace(this.withOrgId(location));
   }
 
   reload() {

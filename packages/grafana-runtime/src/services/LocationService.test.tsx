@@ -5,7 +5,6 @@ import {
   HistoryWrapper,
   useLocationService,
   LocationServiceProvider,
-  setLocationServiceOrgIdGetter,
   appendOrgIdToPath,
 } from './LocationService';
 
@@ -70,16 +69,16 @@ describe('LocationService', () => {
 
   describe('orgId injection on push/replace', () => {
     beforeEach(() => {
-      setLocationServiceOrgIdGetter(() => 7);
+      locationService.setOrgIdGetter(() => 7);
     });
 
     afterAll(() => {
       // disable the getter so other tests in this file aren't affected
-      setLocationServiceOrgIdGetter(() => 0);
+      locationService.setOrgIdGetter(() => 0);
     });
 
     it('does not append orgId when the getter returns 0', () => {
-      setLocationServiceOrgIdGetter(() => 0);
+      locationService.setOrgIdGetter(() => 0);
       locationService.push('/test');
       expect(locationService.getLocation().search).toBe('');
     });
