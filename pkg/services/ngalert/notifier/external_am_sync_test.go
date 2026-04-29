@@ -66,25 +66,21 @@ func (m *mockAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminCon
 }
 
 // buildSyncTestMOA builds a MultiOrgAlertmanager wired for testing syncExternalAMs.
-// It returns the MOA and its underlying config store so callers can assert on saved configs.
+// It bootstraps a default Alertmanager configuration and registers an Alertmanager
+// instance for each org in orgIDs (via LoadAndSyncAlertmanagersForOrgs) so that
+// syncExternalAMs can call SaveAndApplyExtraConfiguration without tripping on a
+// missing primary config. The feature flag is enabled (when requested) only after
+// bootstrap so the bootstrap call to syncExternalAMs is a no-op and does not
+// trigger admin-config-store mock expectations.
 func buildSyncTestMOA(
 	t *testing.T,
 	adminCfgStore store.AdminConfigurationStore,
 	dsService datasources.DataSourceService,
 	featureEnabled bool,
 	operatorUID string,
+	orgIDs []int64,
 ) (*MultiOrgAlertmanager, *fakeConfigStore) {
 	t.Helper()
-
-	if featureEnabled {
-		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-			featuremgmt.FlagAlertingSyncExternalAlertmanager: {
-				DefaultVariant: "on",
-				Variants:       map[string]any{"on": true},
-			},
-		})))
-		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
-	}
 
 	cs := NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
 	kvStore := ngfakes.NewFakeKVStore(t)
@@ -103,7 +99,7 @@ func buildSyncTestMOA(
 			},
 		},
 		cs,
-		&FakeOrgStore{},
+		NewFakeOrgStore(t, orgIDs),
 		kvStore,
 		provStore,
 		secretsService.GetDecryptedValue,
@@ -121,7 +117,35 @@ func buildSyncTestMOA(
 		httpclient.NewProvider(),
 	)
 	require.NoError(t, err)
+
+	// Bootstrap: seeds default Alertmanager configurations and registers Alertmanager
+	// instances for each org. The internal call to syncExternalAMs is a no-op here
+	// because the feature flag has not been enabled yet.
+	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+
+	if featureEnabled {
+		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAlertingSyncExternalAlertmanager: {
+				DefaultVariant: "on",
+				Variants:       map[string]any{"on": true},
+			},
+		})))
+		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+	}
+
 	return moa, cs
+}
+
+// assertNoExtraConfigSaved asserts that the saved Alertmanager configuration for
+// orgID has no ExtraConfigs — i.e. the sync did not write one (either because it
+// was skipped or because it failed).
+func assertNoExtraConfigSaved(t *testing.T, cs *fakeConfigStore, orgID int64) {
+	t.Helper()
+	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), orgID)
+	require.NoError(t, err)
+	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
+	require.NoError(t, err)
+	assert.Empty(t, cfg.ExtraConfigs, "no ExtraConfig should have been saved")
 }
 
 // makeMimirDS returns a minimal Alertmanager/Mimir datasource for testing.
@@ -160,12 +184,11 @@ func startMimirServer(t *testing.T, alertmanagerConfig string) *httptest.Server 
 func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1})
 	moa.syncExternalAMs(context.Background(), []int64{1})
 
 	adminCfg.AssertNotCalled(t, "GetAdminConfigurations")
-	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+	assertNoExtraConfigSaved(t, cs, 1)
 }
 
 func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
@@ -174,12 +197,11 @@ func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
 		{OrgID: 1, ExternalAlertmanagerUID: nil},
 	}, nil)
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
 	moa.syncExternalAMs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
-	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+	assertNoExtraConfigSaved(t, cs, 1)
 }
 
 func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
@@ -194,7 +216,7 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("db-uid")},
 	}, nil)
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid")
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid", []int64{1})
 	moa.syncExternalAMs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
@@ -210,12 +232,11 @@ func TestSyncExternalAMs_GetAdminConfigurationsError(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return(nil, fmt.Errorf("db error"))
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
 	moa.syncExternalAMs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
-	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+	assertNoExtraConfigSaved(t, cs, 1)
 }
 
 func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
@@ -243,14 +264,13 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 		{OrgID: 2, ExternalAlertmanagerUID: ptrTo("ds-2")},
 	}, nil)
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
 	moa.syncExternalAMs(context.Background(), []int64{1, 2})
 
 	adminCfg.AssertExpectations(t)
 
-	// Org 1 failed — no config saved.
-	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+	// Org 1 failed — no ExtraConfig saved (default config remains).
+	assertNoExtraConfigSaved(t, cs, 1)
 
 	// Org 2 succeeded — config saved with correct identifier.
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 2)
@@ -280,7 +300,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("slow-uid")},
 	}, nil)
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
 	// Bound the parent context so the request returns quickly via context cancellation
 	// rather than the HTTP client's hard 10s timeout.
@@ -293,8 +313,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 
 	assert.Less(t, elapsed, 5*time.Second)
 	adminCfg.AssertExpectations(t)
-	_, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	assert.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+	assertNoExtraConfigSaved(t, cs, 1)
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
 
@@ -311,7 +330,7 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
 	}, nil)
 
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 	moa.syncExternalAMs(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
@@ -324,35 +343,6 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	assert.NotEmpty(t, cfg.ExtraConfigs[0].AlertmanagerConfig)
 
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
-}
-
-func TestSyncExternalAMs_NoOpDoesNotPolluteHistory(t *testing.T) {
-	const amConfig = "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
-
-	mimirSrv := startMimirServer(t, amConfig)
-
-	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
-	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
-
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
-
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "")
-
-	// First tick: stores the config and writes one history row.
-	moa.syncExternalAMs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 1)
-
-	// Second tick on an identical Mimir config: the saved bytes hash to the
-	// same value as the stored config, so SaveExtraConfiguration short-circuits
-	// and no new history row is written.
-	moa.syncExternalAMs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 1, "no-op sync should not write a new history row")
-
-	// Both ticks should still be counted as successful syncs.
-	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 }
 
 func TestBuildMimirConfigURL(t *testing.T) {

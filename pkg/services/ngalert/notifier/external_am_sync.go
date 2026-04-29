@@ -91,7 +91,13 @@ func (moa *MultiOrgAlertmanager) syncExternalAMs(ctx context.Context, orgIDs []i
 			AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
 			TemplateFiles:      mimirCfg.TemplateFiles,
 		}
-		if err = moa.SaveExtraConfiguration(ctx, orgID, ec); err != nil {
+		// SaveAndApplyExtraConfiguration is the same entry point used by the convert
+		// API, so a malformed Mimir/Cortex config is rejected before it lands in the
+		// database. Calling with replace=false also enforces single-identifier ownership:
+		// when an existing ExtraConfig has a different identifier, it returns
+		// ErrAlertmanagerMultipleExtraConfigsUnsupported and the sync surfaces a
+		// failure instead of silently overwriting.
+		if _, err = moa.SaveAndApplyExtraConfiguration(ctx, orgID, ec, false /*replace*/, false /*dryRun*/); err != nil {
 			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "error", err)
 			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonSave).Inc()
 			moa.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
