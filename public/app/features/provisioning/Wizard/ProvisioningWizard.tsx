@@ -268,6 +268,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
     maxWidth: '900px',
     flexGrow: 1,
+    [theme.breakpoints.down('md')]: {
+      maxWidth: '100%',
+      minWidth: 0,
+    },
   }),
   stepperWrapper: css({
     [theme.breakpoints.down('md')]: {
@@ -288,5 +292,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     paddingBottom: theme.spacing(4),
     marginBottom: theme.spacing(4),
+    overflowX: 'auto',
   }),
 });
