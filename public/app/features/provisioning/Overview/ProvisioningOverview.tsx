@@ -346,31 +346,50 @@ function StackedProgressBar({ segments }: { segments: BarSegment[] }) {
   const styles = useStyles2(getStyles);
   const total = segments.reduce((acc, s) => acc + s.value, 0);
   return (
-    <div
-      className={styles.progressBar}
-      role="img"
-      aria-label={t('provisioning.stats.progress-aria', 'Provisioning breakdown')}
-    >
-      {total === 0
-        ? null
-        : segments
-            .filter((s) => s.value > 0)
-            .map((s) => {
-              const pct = Math.round((s.value / total) * 100);
-              return (
-                <div
-                  key={s.key}
-                  className={styles.progressSegment}
-                  style={{ flex: s.value, background: s.color }}
-                  title={t('provisioning.stats.progress-segment-tooltip', '{{label}}: {{value}} ({{pct}}%)', {
-                    label: s.label,
-                    value: s.value,
-                    pct,
-                  })}
-                />
-              );
-            })}
-    </div>
+    <Stack direction="column" gap={1}>
+      <div
+        className={styles.progressBar}
+        role="img"
+        aria-label={t('provisioning.stats.progress-aria', 'Provisioning breakdown')}
+      >
+        {total === 0
+          ? null
+          : segments
+              .filter((s) => s.value > 0)
+              .map((s) => {
+                const pct = Math.round((s.value / total) * 100);
+                return (
+                  <div
+                    key={s.key}
+                    className={styles.progressSegment}
+                    style={{ flex: s.value, background: s.color }}
+                    title={t('provisioning.stats.progress-segment-tooltip', '{{label}}: {{value}} ({{pct}}%)', {
+                      label: s.label,
+                      value: s.value,
+                      pct,
+                    })}
+                  />
+                );
+              })}
+      </div>
+      <Stack direction="row" gap={2} wrap justifyContent="center">
+        {segments.map((s) => {
+          const pct = total === 0 ? 0 : Math.round((s.value / total) * 100);
+          return (
+            <Stack key={s.key} direction="row" gap={1} alignItems="center">
+              <span className={styles.progressLegendDot} style={{ background: s.color }} aria-hidden />
+              <Text variant="bodySmall" color="secondary">
+                {t('provisioning.stats.progress-legend-entry', '{{label}} · {{value}} ({{pct}}%)', {
+                  label: s.label,
+                  value: s.value,
+                  pct,
+                })}
+              </Text>
+            </Stack>
+          );
+        })}
+      </Stack>
+    </Stack>
   );
 }
 
@@ -1052,6 +1071,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   progressSegment: css({
     height: '100%',
+  }),
+  progressLegendDot: css({
+    display: 'inline-block',
+    width: 10,
+    height: 10,
+    borderRadius: theme.shape.radius.circle,
+    flex: '0 0 auto',
   }),
   searchInput: css({
     flex: '1 1 220px',

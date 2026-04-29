@@ -13820,6 +13820,7 @@
       "other-providers-description": "Resources managed by tools other than Git Sync. Some of these (Terraform, kubectl, etc.) may already be the source of truth for your team — Git Sync isn’t a requirement.",
       "other-providers-heading": "Other providers",
       "progress-aria": "Provisioning breakdown",
+      "progress-legend-entry": "{{label}} · {{value}} ({{pct}}%)",
       "progress-segment-tooltip": "{{label}}: {{value}} ({{pct}}%)",
       "repository-fallback-name": "Repository",
       "resource-total_one": "{{count}} total",
