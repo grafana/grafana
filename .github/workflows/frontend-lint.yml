@@ -118,6 +118,31 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+  lint-frontend-typecheck-tsgo-enterprise:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    continue-on-error: true  # tsgo is in preview; we don't want to block PRs if it fails, but we want to gather data on how it performs in CI
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    name: Typecheck (TSGO/TS7)
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - run: yarn run typecheck:tsgo
   lint-frontend-api-clients:
     permissions:
       contents: read

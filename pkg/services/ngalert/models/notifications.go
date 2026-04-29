@@ -135,13 +135,22 @@ func (s *ContactPointRouting) NormalizedGroupBy() []string {
 		return nil
 	}
 
+	seen := make(map[string]struct{}, len(s.GroupBy))
+	deduped := make([]string, 0, len(s.GroupBy))
+	for _, lbl := range s.GroupBy {
+		if _, ok := seen[lbl]; !ok {
+			seen[lbl] = struct{}{}
+			deduped = append(deduped, lbl)
+		}
+	}
+
 	defaultGroupBySet := make(map[string]struct{}, len(DefaultNotificationSettingsGroupBy))
 	for _, lbl := range DefaultNotificationSettingsGroupBy {
 		defaultGroupBySet[lbl] = struct{}{}
 	}
 
 	var customLabels []string
-	for _, lbl := range s.GroupBy {
+	for _, lbl := range deduped {
 		if lbl == GroupByAll {
 			return []string{GroupByAll}
 		}
@@ -174,6 +183,13 @@ func (s *ContactPointRouting) Validate() error {
 	}
 	if s.RepeatInterval != nil && *s.RepeatInterval <= 0 {
 		return errors.New("repeat interval must be greater than zero")
+	}
+	seen := make(map[string]struct{}, len(s.GroupBy))
+	for _, g := range s.GroupBy {
+		if _, exists := seen[g]; exists {
+			return fmt.Errorf("duplicate value %q in group_by", g)
+		}
+		seen[g] = struct{}{}
 	}
 	return nil
 }

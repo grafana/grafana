@@ -21,6 +21,7 @@ policy:
             - Workflow .github/workflows/feature-toggles-ci.yml succeeded or skipped
             - Workflow .github/workflows/frontend-lint.yml succeeded or skipped
             - Workflow .github/workflows/go-lint.yml succeeded or skipped
+            - Workflow .github/workflows/govulncheck.yml succeeded or skipped
             - Workflow .github/workflows/i18n-verify.yml succeeded or skipped
             - Workflow .github/workflows/lint-build-docs.yml succeeded or skipped
             - Workflow .github/workflows/policybot.yml succeeded or skipped
@@ -292,6 +293,25 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/go-lint.yml
+  - name: Workflow .github/workflows/govulncheck.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.go$
+          - ^\.github\/workflows\/govulncheck\.yml$
+          - ^\.citools\/src\/govulncheck\/(?:(?:[^/]*(?:/|$))*)$
+          - ^go\.(?:[^/]*)$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/govulncheck\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/govulncheck.yml
   - name: Workflow .github/workflows/i18n-verify.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -694,23 +714,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/swagger-gen.yml
-  - name: Workflow .github/workflows/trivy-scan.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^go\.(?:[^/]*)$
-          - ^\.github\/workflows\/trivy-scan\.yml$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/trivy-scan\.yml$
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/trivy-scan.yml
   - name: Workflow .github/workflows/trufflehog.yml succeeded or skipped
     if:
       file_not_deleted:

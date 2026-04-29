@@ -2,12 +2,14 @@ package search
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,8 +29,11 @@ const (
 	DefaultSnapshotCleanupInterval = 6 * time.Hour
 	// DefaultSnapshotLockTTL is the TTL for the distributed lock used during upload/cleanup.
 	DefaultSnapshotLockTTL = 3 * time.Minute
-	// DefaultSnapshotMinKeep is the minimum number of snapshots retained regardless of age.
-	DefaultSnapshotMinKeep = 3
+	// DefaultSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
+	// have existed before its predecessor in the same Grafana-version group is
+	// considered eligible for cleanup. Gives in-flight downloads time to converge
+	// on the new snapshot before its predecessor disappears.
+	DefaultSnapshotCleanupGracePeriod = 30 * time.Minute
 )
 
 func NewSearchOptions(
@@ -103,15 +108,15 @@ func NewSearchOptions(
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 
-			IndexSnapshotEnabled:         cfg.IndexSnapshotEnabled,
-			IndexSnapshotBucketURL:       cfg.IndexSnapshotBucketURL,
-			IndexSnapshotThreshold:       cfg.IndexSnapshotThreshold,
-			IndexSnapshotMaxAge:          cfg.IndexSnapshotMaxAge,
-			IndexSnapshotMinDocChanges:   DefaultSnapshotMinDocChanges,
-			IndexSnapshotUploadInterval:  DefaultSnapshotUploadInterval,
-			IndexSnapshotLockTTL:         DefaultSnapshotLockTTL,
-			IndexSnapshotMinKeep:         DefaultSnapshotMinKeep,
-			IndexSnapshotCleanupInterval: DefaultSnapshotCleanupInterval,
+			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
+			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,
+			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,
+			IndexSnapshotMaxAge:             cfg.IndexSnapshotMaxAge,
+			IndexSnapshotMinDocChanges:      DefaultSnapshotMinDocChanges,
+			IndexSnapshotUploadInterval:     DefaultSnapshotUploadInterval,
+			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
+			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
+			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 		}, nil
 	}
 	return resource.SearchOptions{
@@ -120,6 +125,17 @@ func NewSearchOptions(
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 		MaxIndexAge:               cfg.MaxFileIndexAge,
 	}, nil
+}
+
+func snapshotLockHeartbeat(ttl time.Duration) time.Duration {
+	hb := ttl / 3
+	if hb <= 0 || hb*2 > ttl {
+		hb = ttl / 2
+	}
+	if hb <= 0 {
+		hb = time.Second
+	}
+	return hb
 }
 
 // buildSnapshotOptions opens the configured object-storage bucket and wraps it
@@ -135,10 +151,47 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
 	}
 
+	lockOpts, err := cdkLockOptionsFromBucket(bucket, cfg.IndexSnapshotBucketURL)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("snapshot lock backend options: %w", err)
+	}
+	lockBackend := newCDKLockBackend(bucket, lockOpts)
+
+	ownerBase := cfg.InstanceID
+	if ownerBase == "" {
+		ownerBase = cfg.InstanceName
+	}
+	if ownerBase == "" {
+		ownerBase = "unknown-instance"
+	}
+	lockOwnerSuffix, err := ulid.New(ulid.Now(), rand.Reader)
+	if err != nil {
+		return SnapshotOptions{}, fmt.Errorf("creating lock owner suffix: %w", err)
+	}
+	// Include a per-process ULID suffix to avoid owner collisions across instances
+	// that share the same configured instance_id/instance_name.
+	owner := fmt.Sprintf("%s/%s", ownerBase, lockOwnerSuffix.String())
+
+	lockTTL := DefaultSnapshotLockTTL
+	lockHeartbeat := snapshotLockHeartbeat(lockTTL)
+
 	return SnapshotOptions{
-		Store:           NewBucketRemoteIndexStore(bucket),
-		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
-		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
-		MinBuildVersion: minBuildVersion,
+		Store:              NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
+		MinDocCount:        int64(cfg.IndexSnapshotThreshold),
+		MaxIndexAge:        cfg.IndexSnapshotMaxAge,
+		MinBuildVersion:    minBuildVersion,
+		UploadInterval:     DefaultSnapshotUploadInterval,
+		MinDocChanges:      DefaultSnapshotMinDocChanges,
+		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 	}, nil
+}
+
+// cleanupGracePeriodOrDefault returns d if positive, otherwise the default.
+// Lets a zero value in setting.Cfg fall back to the documented default rather
+// than disabling the grace window entirely.
+func cleanupGracePeriodOrDefault(d time.Duration) time.Duration {
+	if d <= 0 {
+		return DefaultSnapshotCleanupGracePeriod
+	}
+	return d
 }

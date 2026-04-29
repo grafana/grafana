@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "No tienes permiso para acceder al incidente.",
         "instance-details": "Detalles de la instancia",
+        "section-silence": "",
         "silence-button": "Permanecer en silencio",
-        "silence-no-permission": "No tienes permiso para crear silenciamientos.",
-        "silence-title-with-name": ""
+        "silence-no-permission": "No tienes permiso para crear silenciamientos."
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alfabéticamente (A-Z)",
         "alphabetically-za": "Alfabéticamente (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Eliminados (el más nuevo primero)",
         "deleted-oldest": "Eliminados (el más antiguo primero)"
       }
@@ -5636,6 +5638,7 @@
         "panels": "Paneles",
         "row": "Fila",
         "rows": "Filas",
+        "section-filters-set": "",
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
@@ -6487,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Datos de entrada",
+      "loading": "",
       "output-data": "Datos de salida",
       "title-debug-transformation": "Depurar transformación"
     },
@@ -8268,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Buscar"
     },
     "resource-dimension-editor": {
@@ -10119,6 +10124,12 @@
     "cascader": {
       "clear-button": "Eliminar selección"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valor RGBA"
     },
@@ -10464,6 +10475,7 @@
     "sidebar": {
       "close": "Cerrar",
       "dock": "Acoplar",
+      "go-back": "",
       "hide": "Ocultar",
       "show": "Mostrar",
       "undock": "Desacoplar"
@@ -11220,6 +11232,7 @@
       "label-numbers": "Números",
       "label-signature": "Firma"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Muestra un componente para gestionar los campos mostrados de los logs.",
     "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
     "description-enable-logs-highlighting": "Utiliza un esquema de color predefinido para resaltar las partes relevantes de las líneas del log.",
@@ -11517,6 +11530,7 @@
         "common-labels": "Etiquetas comunes:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comunes",
     "name-deduplication": "Desduplicación",
     "name-details-mode": "Modo de panel de detalles de logs",
@@ -11905,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Todo",
-      "title-filtered": "Todo (filtrado)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Borrar todo"
@@ -13149,6 +13165,7 @@
       "token-user-description": "El nombre de usuario que se utilizará para acceder al repositorio con el token de API.",
       "token-user-required": "El nombre de usuario es obligatorio",
       "url-description": "La URL del repositorio de Bitbucket",
+      "url-pattern": "",
       "url-required": "La URL del repositorio es obligatoria"
     },
     "bootstrap-step": {
@@ -13562,6 +13579,7 @@
       "contact-admin": "Ponte en contacto con tu administrador de Grafana para convertir este recurso en local o eliminar todos los recursos del repositorio que falta.",
       "convert-to-local-button": "Convertir a local",
       "delete-button": "Eliminar",
+      "go-to-dashboards": "",
       "job-error": "Se ha producido un error al procesar los recursos huérfanos.",
       "job-success": "Recursos huérfanos procesados correctamente",
       "job-warning": "Algunos recursos se han procesado con advertencias. Revisa los resultados.",
@@ -14102,7 +14120,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ayuda de la fuente de datos",
       "hide-transformation-help": "Ocultar ayuda para la transformación",
-      "inspector": "Inspector de consultas",
       "more-actions": "Más acciones de {{type}}",
       "remove": "Eliminar {{type}}",
       "remove-transformation-filter": "Eliminar filtro",
@@ -14114,6 +14131,27 @@
     "alerts": {
       "no-alerts": "No hay reglas de alerta para este panel.",
       "no-alerts-description": "Crea una regla de alerta para recibir notificaciones cuando tus datos cumplan determinadas condiciones."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "¿Seguro que quieres eliminar esta consulta?",
@@ -14151,6 +14189,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Puntos de datos máximos",
@@ -14161,6 +14200,7 @@
       "placeholder": {
         "no-limit": "Sin límite"
       },
+      "query-inspector": "",
       "query-options": "Opciones de consulta"
     },
     "header": {
@@ -14247,6 +14287,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurar"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
@@ -14409,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Fuente de datos",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tiempo restante",
       "location-header": "Ubicación",
@@ -14763,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Panel de control de inicio",
       "home-dashboard-placeholder": "Panel de control por defecto",
@@ -15978,6 +16030,9 @@
         "grouping-to-matrix": "Agrupar en matriz"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcula un histograma a partir de los datos de entrada."
@@ -16312,6 +16367,9 @@
       "label-time-field": "Campo de tiempo",
       "tooltip-statistic-should-calculated-series": "La estadística que debe calcularse para esta serie temporal.",
       "tooltip-time-field": "El campo de tiempo que se utilizará para la serie temporal. Si no se selecciona, se utilizará el primero que se encuentre."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nombre del primer campo",

@@ -76,7 +76,6 @@ const BaseCombobox: StoryFn<PropsAndCustomArgs> = (args) => {
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
-        id="test-combobox"
         {...args}
         {...dynamicArgs}
         onChange={(value: ComboboxOption | null) => {
@@ -143,7 +142,6 @@ export const ControlledOpenState: Story = {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Combobox
-              id="controlled-open-combobox"
               {...args}
               {...dynamicArgs}
               isOpen={dropdownOpen}

@@ -3570,9 +3570,9 @@
         "declare-incident": "インシデントを宣言",
         "declare-incident-no-permission": "インシデントにアクセスする権限がありません",
         "instance-details": "インスタンスの詳細",
+        "section-silence": "",
         "silence-button": "サイレンス",
-        "silence-no-permission": "サイレンスを作成する権限がありません",
-        "silence-title-with-name": ""
+        "silence-no-permission": "サイレンスを作成する権限がありません"
       },
       "labels-column-title": "ラベル",
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
@@ -4461,6 +4461,8 @@
       "label": {
         "alphabetically-az": "アルファベット順（A-Z）",
         "alphabetically-za": "アルファベット順（Z-A）",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "削除済み（新しい順）",
         "deleted-oldest": "削除済み（古い順）"
       }
@@ -5606,6 +5608,7 @@
         "panels": "パネル",
         "row": "行",
         "rows": "行",
+        "section-filters-set": "",
         "tab": "タブ",
         "tabs": "タブ",
         "variable": "{{type}}変数",
@@ -6456,6 +6459,7 @@
     },
     "transformation-editor": {
       "input-data": "入力データ",
+      "loading": "",
       "output-data": "出力データ",
       "title-debug-transformation": "変換をデバッグ"
     },
@@ -8222,6 +8226,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "検索"
     },
     "resource-dimension-editor": {
@@ -10061,6 +10066,12 @@
     "cascader": {
       "clear-button": "選択をクリア"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA値"
     },
@@ -10406,6 +10417,7 @@
     "sidebar": {
       "close": "閉じる",
       "dock": "ドック",
+      "go-back": "",
       "hide": "非表示",
       "show": "表示",
       "undock": "ドック解除"
@@ -11157,6 +11169,7 @@
       "label-numbers": "数値",
       "label-signature": "署名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "実験的機能。ログから表示フィールドを管理するためのコンポーネントを表示します。",
     "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
     "description-enable-logs-highlighting": "事前定義された配色スキームを使い、ログ行の関連部分をハイライト表示します。",
@@ -11451,6 +11464,7 @@
         "common-labels": "共通ラベル:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "共通ラベル",
     "name-deduplication": "重複排除",
     "name-details-mode": "ログ詳細パネルの表示モード",
@@ -11839,8 +11853,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "すべて",
-      "title-filtered": "すべて（フィルタリング済み）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "すべてをクリア"
@@ -13080,6 +13096,7 @@
       "token-user-description": "APIトークンでリポジトリにアクセスする際のユーザー名",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "BitbucketリポジトリURL",
+      "url-pattern": "",
       "url-required": "リポジトリURLが必要です"
     },
     "bootstrap-step": {
@@ -13487,6 +13504,7 @@
       "contact-admin": "このリソースをローカルリソースに変換するか、存在しないリポジトリからすべてのリソースを削除するには、Grafana管理者にお問い合わせください。",
       "convert-to-local-button": "ローカルに変換",
       "delete-button": "削除",
+      "go-to-dashboards": "",
       "job-error": "孤立したリソースの処理中にエラーが発生しました",
       "job-success": "孤立したリソースが正常に処理されました",
       "job-warning": "一部のリソースが警告付きで処理されました。結果を確認してください。",
@@ -14018,7 +14036,6 @@
       "hide": "{{type}}を非表示",
       "hide-help": "データソースヘルプを非表示",
       "hide-transformation-help": "変換ヘルプを非表示",
-      "inspector": "クエリ検査ツール",
       "more-actions": "その他の{{type}}操作",
       "remove": "{{type}}を削除",
       "remove-transformation-filter": "フィルターを削除",
@@ -14030,6 +14047,25 @@
     "alerts": {
       "no-alerts": "このパネルのアラートルールはありません",
       "no-alerts-description": "データが特定の条件を満たしたときに通知を受け取るためのアラートルールを作成します。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "本当にこのクエリを削除してもよろしいですか？",
@@ -14067,6 +14103,7 @@
     },
     "footer": {
       "edit-option": "{{label}}を編集",
+      "inspect-queries": "",
       "label": {
         "interval": "間隔",
         "max-data-points": "最大データポイント数",
@@ -14077,6 +14114,7 @@
       "placeholder": {
         "no-limit": "制限なし"
       },
+      "query-inspector": "",
       "query-options": "クエリオプション"
     },
     "header": {
@@ -14160,6 +14198,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "復元"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "最近ダッシュボードを削除していません。",
@@ -14320,6 +14362,10 @@
     },
     "results-table": {
       "datasource-header": "データソース",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "1分以下",
       "deleted-remaining-header": "残り時間",
       "location-header": "場所",
@@ -14673,6 +14719,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "ホームのダッシュボード",
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
@@ -15887,6 +15937,9 @@
         "grouping-to-matrix": "マトリックス形式でグループ化"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "入力データからヒストグラムを計算します。"
@@ -16221,6 +16274,9 @@
       "label-time-field": "時間フィールド",
       "tooltip-statistic-should-calculated-series": "この時系列において計算すべき統計。",
       "tooltip-time-field": "時系列に使用される時間フィールド。選択されていない場合は、最初に見つかったものが使用されます。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "最初のフィールド名",

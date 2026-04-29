@@ -1797,3 +1797,130 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
+	t.Run("successful rotation returns status and secure patch ops", func(t *testing.T) {
+		mockGH := NewMockClient(t)
+		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook", Events: []string{"push"}}, nil)
+		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg WebhookConfig) bool {
+			return cfg.ID == 123 && cfg.Secret != ""
+		})).Return(nil)
+
+		repo := &githubWebhookRepository{
+			gh:    mockGH,
+			owner: "grafana",
+			repo:  "grafana",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"}},
+				Secure: provisioning.SecureValues{
+					WebhookSecret: common.InlineSecureValue{Name: "existing-webhook-secret"},
+				},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			},
+		}
+
+		ops, err := repo.RotateWebhookSecret(context.Background())
+		require.NoError(t, err)
+		require.Len(t, ops, 2)
+		require.Equal(t, "replace", ops[0]["op"])
+		require.Equal(t, "/status/webhook", ops[0]["path"])
+		require.Equal(t, "replace", ops[1]["op"])
+		require.Equal(t, "/secure/webhookSecret", ops[1]["path"])
+
+		webhookStatus := ops[0]["value"].(*provisioning.WebhookStatus)
+		require.True(t, webhookStatus.LastRotated > 0)
+	})
+
+	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
+		mockGH := NewMockClient(t)
+		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+			Return(WebhookConfig{}, repo.ErrFileNotFound)
+
+		r := &githubWebhookRepository{
+			gh:    mockGH,
+			owner: "grafana",
+			repo:  "grafana",
+			config: &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"}},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			},
+		}
+
+		ops, err := r.RotateWebhookSecret(context.Background())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found on remote")
+		require.Len(t, ops, 1)
+		require.Equal(t, "replace", ops[0]["op"])
+		require.Equal(t, "/status/webhook", ops[0]["path"])
+		require.Nil(t, ops[0]["value"])
+	})
+
+	t.Run("get webhook error returns error", func(t *testing.T) {
+		mockGH := NewMockClient(t)
+		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+			Return(WebhookConfig{}, fmt.Errorf("api error"))
+
+		repo := &githubWebhookRepository{
+			gh:    mockGH,
+			owner: "grafana",
+			repo:  "grafana",
+			config: &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"}},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			},
+		}
+
+		ops, err := repo.RotateWebhookSecret(context.Background())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "get webhook for rotation")
+		require.Nil(t, ops)
+	})
+
+	t.Run("edit webhook error returns error", func(t *testing.T) {
+		mockGH := NewMockClient(t)
+		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook"}, nil)
+		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+			Return(fmt.Errorf("edit failed"))
+
+		repo := &githubWebhookRepository{
+			gh:    mockGH,
+			owner: "grafana",
+			repo:  "grafana",
+			config: &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"}},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
+			},
+		}
+
+		ops, err := repo.RotateWebhookSecret(context.Background())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "edit webhook during rotation")
+		require.Nil(t, ops)
+	})
+
+	t.Run("skips when no webhook exists", func(t *testing.T) {
+		repo := &githubWebhookRepository{
+			config: &provisioning.Repository{},
+		}
+
+		ops, err := repo.RotateWebhookSecret(context.Background())
+		require.NoError(t, err)
+		require.Nil(t, ops)
+	})
+
+	t.Run("skips when webhook ID is zero", func(t *testing.T) {
+		repo := &githubWebhookRepository{
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{ID: 0},
+				},
+			},
+		}
+
+		ops, err := repo.RotateWebhookSecret(context.Background())
+		require.NoError(t, err)
+		require.Nil(t, ops)
+	})
+}

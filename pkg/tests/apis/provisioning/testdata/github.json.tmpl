@@ -19,7 +19,10 @@
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
-        "workflows": {{ .WorkflowsJSON }}
+        "workflows": {{ .WorkflowsJSON }}{{ if .WebhookBaseURL }},
+        "webhook": {
+            "baseUrl": "{{ .WebhookBaseURL }}"
+        }{{ end }}
     },
     "secure": {
         "token": { "create": "{{ or .Token "" }}" },
