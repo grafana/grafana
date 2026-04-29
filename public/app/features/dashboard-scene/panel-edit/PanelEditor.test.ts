@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -422,15 +421,7 @@ describe('PanelEditor', () => {
     });
   });
   describe('isVizPickerOpen', () => {
-    it('should not auto-open viz picker for new panels when newVizSuggestions=false', async () => {
-      config.featureToggles.newVizSuggestions = false;
-      const { panelEditor } = await setup({ isNewPanel: true });
-      const optionsPane = panelEditor.state.optionsPane;
-      expect(optionsPane?.state.isVizPickerOpen).toBe(false);
-    });
-
-    it('should auto-open viz picker for new panels when newVizSuggestions=true', async () => {
-      config.featureToggles.newVizSuggestions = true;
+    it('should auto-open viz picker for new unconfigured panels', async () => {
       const { panelEditor } = await setup({ isNewPanel: true, pluginId: UNCONFIGURED_PANEL_PLUGIN_ID });
       const optionsPane = panelEditor.state.optionsPane;
       expect(optionsPane?.state.isVizPickerOpen).toBe(true);
