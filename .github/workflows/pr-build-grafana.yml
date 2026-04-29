@@ -141,6 +141,10 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
       - name: Get vault secrets
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
