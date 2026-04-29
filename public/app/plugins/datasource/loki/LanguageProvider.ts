@@ -369,6 +369,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
           this.detectedLabelValuesPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
         if (queryOptions?.throwError) {
@@ -442,6 +445,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           this.labelsCache.set(cacheKey, labelValues);
           this.labelsPromisesCache.delete(cacheKey);
           resolve(labelValues);
+        } else {
+          this.labelsPromisesCache.delete(cacheKey);
+          resolve([]);
         }
       } catch (error) {
         console.error(error);
