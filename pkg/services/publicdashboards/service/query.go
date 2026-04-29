@@ -460,6 +460,7 @@ func sanitizeData(data *simplejson.Json) {
 			target.Del("expr")
 			target.Del("query")
 			target.Del("rawSql")
+			target.Del("rawQuery")
 		}
 	}
 }
@@ -476,6 +477,7 @@ func sanitizeDataV2(data *simplejson.Json) {
 			dataQuerySpec.Del("expr")
 			dataQuerySpec.Del("query")
 			dataQuerySpec.Del("rawSql")
+			dataQuerySpec.Del("rawQuery")
 		}
 	}
 }
