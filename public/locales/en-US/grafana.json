@@ -13812,6 +13812,7 @@
       "manager-kind-terraform": "Terraform",
       "manager-kind-unknown": "Unknown",
       "migrate-button": "Migrate",
+      "migrate-needs-repo": "Connect a Git Sync repository first",
       "n-of-m": "{{value}} of {{total}}",
       "other-provider-resource-count_one": "{{count}} resource",
       "other-provider-resource-count_other": "{{count}} resources",

@@ -23,12 +23,6 @@ jest.mock('../hooks/useRepositoryList', () => ({
   useRepositoryList: jest.fn(() => [[], false]),
 }));
 
-// MigrateRowButton uses useNavigate from react-router-dom-v5-compat; stub the
-// hook so we don't need to wrap each render in a Router.
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useNavigate: () => jest.fn(),
-}));
 
 const mockUseRepositoryList = useRepositoryList as jest.MockedFunction<typeof useRepositoryList>;
 
@@ -100,7 +94,7 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
-  it('shows a Migrate dropdown per row that still has unmanaged resources', async () => {
+  it('shows a Migrate link only for Git-Sync-supported rows that still have unmanaged resources', () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {
@@ -115,6 +109,9 @@ describe('ProvisioningOverview', () => {
         instance: [
           { group: 'folder.grafana.app', resource: 'folders', count: 3 },
           { group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 },
+          // alertrules is supported by Terraform/kubectl/etc but not Git Sync,
+          // so it should NOT get a Migrate link.
+          { group: 'alerting.grafana.app', resource: 'alertrules', count: 2 },
         ],
         unmanaged: [],
         managed: [],
@@ -123,20 +120,12 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Both folders and dashboards have unmanaged resources, so each row
-    // exposes a Migrate dropdown trigger.
-    const migrateButtons = screen.getAllByRole('button', { name: /migrate/i });
-    expect(migrateButtons.length).toBeGreaterThanOrEqual(2);
-
-    // Open one of the dropdowns and assert that the menu lists provider
-    // options. Both "Git Sync" and "Terraform" already render as badges in
-    // the Supported by column, so we just check the count goes up after the
-    // menu opens.
-    const gitSyncBefore = screen.getAllByText('Git Sync').length;
-    const terraformBefore = screen.getAllByText('Terraform').length;
-    await userEvent.click(migrateButtons[0]);
-    expect(screen.getAllByText('Git Sync').length).toBeGreaterThan(gitSyncBefore);
-    expect(screen.getAllByText('Terraform').length).toBeGreaterThan(terraformBefore);
+    // Folders and Dashboards both have unmanaged resources, so each row
+    // exposes a Migrate link to the existing Git Sync repository. alertrules
+    // shouldn't.
+    const migrateLinks = screen.getAllByRole('link', { name: /migrate/i });
+    expect(migrateLinks).toHaveLength(2);
+    expect(migrateLinks[0]).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
   it('hides the Git Sync banner when there are no folders or dashboards', () => {

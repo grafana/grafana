@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -8,15 +7,13 @@ import {
   Alert,
   Badge,
   type BadgeColor,
-  Button,
   Card,
   type Column,
-  Dropdown,
   EmptyState,
   FilterInput,
   Icon,
   InteractiveTable,
-  Menu,
+  LinkButton,
   Select,
   Spinner,
   Stack,
@@ -34,7 +31,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { CONFIGURE_GRAFANA_DOCS_URL, PROVISIONING_URL } from '../constants';
+import { PROVISIONING_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
@@ -566,46 +563,32 @@ function ProviderStat({
 }
 
 /**
- * Per-row action that lets the user pick the provider they want to manage
- * this resource type with. Mirrors the pattern of `ConnectRepositoryButton`'s
- * Configure dropdown: a primary trigger plus a Menu listing the providers
- * that support this resource. Picking Git Sync drops the user on the
- * existing repository (or the Repositories tab if there are zero or more
- * than one); the other providers open the provisioning docs in a new tab.
+ * Per-row action that points the user at the Git Sync repository where they
+ * can migrate the unmanaged folders or dashboards. We only render this for
+ * Git-Sync-supported rows (folders and dashboards) — Migrate from the Grafana
+ * UI only works against Git Sync; Terraform / kubectl migrations happen
+ * outside Grafana.
  */
-function MigrateRowButton({ supportedProviders, repos }: { supportedProviders: string[]; repos: Repository[] }) {
-  const navigate = useNavigate();
-
-  const handleClick = (kind: string) => {
-    if (kind === ManagerKind.Repo) {
-      const target =
-        repos.length === 1 && repos[0].metadata?.name
-          ? `${PROVISIONING_URL}/${repos[0].metadata.name}`
-          : PROVISIONING_URL;
-      navigate(target);
-      return;
-    }
-    window.open(CONFIGURE_GRAFANA_DOCS_URL, '_blank', 'noopener,noreferrer');
-  };
-
+function MigrateRowButton({ repos }: { repos: Repository[] }) {
+  if (repos.length === 0) {
+    return (
+      <LinkButton
+        variant="secondary"
+        size="sm"
+        icon="upload"
+        href={PROVISIONING_URL}
+        tooltip={t('provisioning.stats.migrate-needs-repo', 'Connect a Git Sync repository first')}
+      >
+        <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
+      </LinkButton>
+    );
+  }
+  const target =
+    repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
   return (
-    <Dropdown
-      overlay={
-        <Menu>
-          {supportedProviders.map((kind) => (
-            <Menu.Item key={kind} label={kindLabel(kind)} onClick={() => handleClick(kind)} />
-          ))}
-        </Menu>
-      }
-    >
-      <Button variant="secondary" size="sm">
-        <Stack alignItems="center" gap={0.5}>
-          <Icon name="upload" />
-          <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
-          <Icon name="angle-down" />
-        </Stack>
-      </Button>
-    </Dropdown>
+    <LinkButton variant="secondary" size="sm" icon="upload" href={target}>
+      <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
+    </LinkButton>
   );
 }
 
@@ -851,14 +834,13 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
         header: '',
         disableGrow: true,
         cell: ({ row }) => {
-          if (row.original.unmanagedCount === 0) {
+          // Migrate from the UI is Git-Sync-only, so only show the action on
+          // rows where Git Sync supports the resource type and there's still
+          // something to migrate.
+          if (!row.original.isGitSyncSupported || row.original.unmanagedCount === 0) {
             return null;
           }
-          const providers = providersThatSupport(row.original.group);
-          if (providers.length === 0) {
-            return null;
-          }
-          return <MigrateRowButton supportedProviders={providers} repos={gitSyncRepos} />;
+          return <MigrateRowButton repos={gitSyncRepos} />;
         },
       },
     ],
