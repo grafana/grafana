@@ -2,12 +2,19 @@ name: PR build Docker image
 
 on:
   pull_request:
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
-permissions: {}
+# for meticulous tests
+permissions:
+  actions: write
+  contents: read
+  issues: write
+  pull-requests: write
+  statuses: read
 
 jobs:
   detect-changes:
