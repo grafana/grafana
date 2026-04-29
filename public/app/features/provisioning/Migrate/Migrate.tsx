@@ -5,8 +5,6 @@ import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
-  Badge,
-  type BadgeColor,
   type Column,
   EmptyState,
   FeatureBadge,
@@ -32,29 +30,59 @@ import { ManagerKind } from 'app/features/apiserver/types';
 
 import { CONFIGURE_GRAFANA_DOCS_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
+import gitSvg from '../img/git.svg';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
 
 const CLASSIC_FILE_PROVISIONING = 'classic-file-provisioning';
 
+interface SupportedTool {
+  key: string;
+  /** Manager kind reported by the backend; what we group counts under. */
+  kind: string;
+  label: string;
+  /** Static SVG asset (e.g. the Git logo). Takes precedence over `icon`/`initial`. */
+  image?: string;
+  /** Grafana UI icon name. Takes precedence over `initial`. */
+  icon?: IconName;
+  /** Last-resort placeholder rendered as a big letter inside the tile. */
+  initial?: string;
+  recommended?: boolean;
+}
+
 /**
- * Providers that can manage folders or dashboards. The Overview page is
- * scoped to those two resource types, so this is the universe of tools we
- * surface in the supported-by chips, the Tooling support panel, etc.
- *
- * Sourced from the Grafana docs (`docs/sources/`) and the supported-resources
- * lists in `pkg/registry/apis/provisioning/resources/client.go`.
+ * Tools that can manage folders or dashboards. Order is the order tiles
+ * appear; Git Sync is intentionally first because it's the recommended
+ * starting point.
  */
-const FOLDERS_DASHBOARDS_TOOLS = [
-  // Order intentional: Git Sync is the recommended path, Terraform is the
-  // most common runner-up, then the rest.
-  ManagerKind.Repo,
-  ManagerKind.Terraform,
-  CLASSIC_FILE_PROVISIONING,
-  ManagerKind.Kubectl,
-  ManagerKind.Plugin,
-] as const;
+const SUPPORTED_TOOLS: SupportedTool[] = [
+  {
+    key: 'git-sync',
+    kind: ManagerKind.Repo,
+    label: 'Git Sync',
+    image: gitSvg,
+    recommended: true,
+  },
+  {
+    key: 'file-system',
+    kind: CLASSIC_FILE_PROVISIONING,
+    label: 'File System',
+    icon: 'file-alt',
+  },
+  {
+    key: 'terraform',
+    kind: ManagerKind.Terraform,
+    label: 'Terraform',
+    initial: 'T',
+  },
+  {
+    key: 'cli',
+    kind: ManagerKind.Kubectl,
+    label: 'CLI',
+    initial: 'C',
+  },
+];
 
 interface GroupBreakdown {
   group: string;
@@ -169,30 +197,13 @@ function kindLabel(kind: string): string {
     case ManagerKind.Terraform:
       return t('provisioning.stats.manager-kind-terraform', 'Terraform');
     case ManagerKind.Kubectl:
-      return t('provisioning.stats.manager-kind-kubectl', 'kubectl');
+      return t('provisioning.stats.manager-kind-cli', 'CLI');
     case ManagerKind.Plugin:
       return t('provisioning.stats.manager-kind-plugin', 'Plugin');
     case CLASSIC_FILE_PROVISIONING:
-      return t('provisioning.stats.manager-kind-classic-fp', 'Files (Classic)');
+      return t('provisioning.stats.manager-kind-file-system', 'File System');
     default:
       return kind || t('provisioning.stats.manager-kind-unknown', 'Unknown');
-  }
-}
-
-function badgeColorForKind(kind: string): BadgeColor {
-  switch (kind) {
-    case ManagerKind.Repo:
-      return 'green';
-    case ManagerKind.Terraform:
-      return 'blue';
-    case ManagerKind.Kubectl:
-      return 'purple';
-    case ManagerKind.Plugin:
-      return 'orange';
-    case CLASSIC_FILE_PROVISIONING:
-      return 'red';
-    default:
-      return 'darkgrey';
   }
 }
 
@@ -940,6 +951,35 @@ function NextStepsPanel({
   );
 }
 
+function ToolTile({ tool, count }: { tool: SupportedTool; count: number }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.toolTile}>
+      <div className={styles.toolTileBadge}>
+        {tool.image ? (
+          <img src={tool.image} alt="" className={styles.toolTileImage} />
+        ) : tool.icon ? (
+          <Icon name={tool.icon} size="xl" />
+        ) : (
+          <span className={styles.toolTileInitial}>{tool.initial}</span>
+        )}
+      </div>
+      <Text variant="bodySmall" weight="medium">
+        {tool.label}
+      </Text>
+      {tool.recommended ? (
+        <Text variant="bodySmall" color="success">
+          <Trans i18nKey="provisioning.stats.tool-tile-recommended">Recommended</Trans>
+        </Text>
+      ) : (
+        <Text variant="bodySmall" color="secondary">
+          {t('provisioning.stats.tool-tile-managed-count', '{{count}} managed', { count })}
+        </Text>
+      )}
+    </div>
+  );
+}
+
 function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
   const counts = useMemo(() => {
@@ -963,24 +1003,11 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
           <Trans i18nKey="provisioning.stats.tooling-support-compare">Compare tools</Trans>
         </TextLink>
       </Stack>
-      <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="provisioning.stats.tooling-support-description">
-          Folders and dashboards can be managed by any of these tools. Git Sync is the recommended starting point.
-        </Trans>
-      </Text>
-      <Stack direction="column" gap={1}>
-        {FOLDERS_DASHBOARDS_TOOLS.map((kind) => {
-          const count = counts.get(kind) ?? 0;
-          return (
-            <Stack key={kind} direction="row" gap={1} alignItems="center" justifyContent="space-between">
-              <Badge color={badgeColorForKind(kind)} text={kindLabel(kind)} />
-              <Text variant="bodySmall" color={count > 0 ? 'primary' : 'secondary'}>
-                {t('provisioning.stats.tooling-managed-count', '{{count}} managed', { count })}
-              </Text>
-            </Stack>
-          );
-        })}
-      </Stack>
+      <div className={styles.toolingGrid}>
+        {SUPPORTED_TOOLS.map((tool) => (
+          <ToolTile key={tool.key} tool={tool} count={counts.get(tool.kind) ?? 0} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -1255,6 +1282,43 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 auto',
     minWidth: 60,
     maxWidth: 120,
+  }),
+  toolingGrid: css({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+    gap: theme.spacing(1),
+  }),
+  toolTile: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    textAlign: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1.5, 1),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    background: theme.colors.background.primary,
+  }),
+  toolTileBadge: css({
+    width: theme.spacing(5),
+    height: theme.spacing(5),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.canvas,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.primary,
+  }),
+  toolTileImage: css({
+    width: theme.spacing(3.5),
+    height: theme.spacing(3.5),
+    objectFit: 'contain',
+  }),
+  toolTileInitial: css({
+    fontSize: theme.typography.h4.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
+    lineHeight: 1,
   }),
   resourceIcon: css({
     width: theme.spacing(3),

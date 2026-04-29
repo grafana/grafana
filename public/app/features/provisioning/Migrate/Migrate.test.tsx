@@ -208,7 +208,7 @@ describe('Migrate', () => {
     expect(screen.getByRole('link', { name: /open repository/i })).toBeInTheDocument();
   });
 
-  it('renders the Tooling support panel with Git Sync first', () => {
+  it('renders the Tooling support panel as tiles ordered Git Sync, File System, Terraform, CLI', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -226,21 +226,22 @@ describe('Migrate', () => {
     render(<Migrate />);
 
     expect(screen.getByText(/tooling support/i)).toBeInTheDocument();
-    // Git Sync should render before Terraform in document order, and
-    // Terraform before Files (Classic). Use first occurrences from
-    // `getAllByText` (which preserves DOM order) as a stable signal.
+    // The four supported-tool tiles appear, each by its label.
+    expect(screen.getAllByText(/^git sync$/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/^file system$/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^terraform$/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/^cli$/i)).toBeInTheDocument();
+    // Tile DOM order should match the supported-tools list.
     const firstIndex = (label: RegExp) => {
       const el = screen.getAllByText(label)[0];
       return Array.from(document.body.querySelectorAll('*')).indexOf(el as Element);
     };
-    expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^terraform$/i));
-    expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^files \(classic\)$/i));
-    // All five tool kinds appear at least once (Git Sync, Files (Classic),
-    // Terraform, kubectl, Plugin).
-    expect(screen.getAllByText(/git sync/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/files \(classic\)/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/terraform/i).length).toBeGreaterThan(0);
-    // Terraform managed count surfaces.
+    expect(firstIndex(/^git sync$/i)).toBeLessThan(firstIndex(/^file system$/i));
+    expect(firstIndex(/^file system$/i)).toBeLessThan(firstIndex(/^terraform$/i));
+    expect(firstIndex(/^terraform$/i)).toBeLessThan(firstIndex(/^cli$/i));
+    // Git Sync is flagged as recommended on its tile.
+    expect(screen.getByText(/^recommended$/i)).toBeInTheDocument();
+    // Terraform managed count surfaces on its tile.
     expect(screen.getByText(/2 managed/i)).toBeInTheDocument();
   });
 
