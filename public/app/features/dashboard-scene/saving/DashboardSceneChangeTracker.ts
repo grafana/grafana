@@ -168,25 +168,17 @@ export class DashboardSceneChangeTracker {
     return false;
   }
 
-  private getClonedSaveModels() {
-    const changedDashboard = this._dashboard.getSaveModel?.();
-    const initialDashboard = this._dashboard.getInitialSaveModel?.();
-    if (!changedDashboard || !initialDashboard) {
-      return null;
-    }
-    // Objects must be stringify to ensure they are clonable, so they don't contain functions
-    return {
-      changed: typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard,
-      initial: typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard,
-    };
-  }
-
   private detectSaveModelChanges() {
-    const models = this.getClonedSaveModels();
-    if (!models) {
-      return;
-    }
-    this._changesWorker?.postMessage({ initial: models.initial, changed: models.changed });
+    const changedDashboard = this._dashboard.getSaveModel();
+    const initialDashboard = this._dashboard.getInitialSaveModel();
+
+    // Objects must be stringify to ensure they are clonable, so they don't contain functions
+    const changed =
+      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
+    const initial =
+      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+
+    this._changesWorker?.postMessage({ initial, changed });
   }
 
   private hasMetadataChanges() {
@@ -210,11 +202,15 @@ export class DashboardSceneChangeTracker {
   }
 
   private checkForChangesImmediately() {
-    const models = this.getClonedSaveModels();
-    if (!models) {
+    const changedDashboard = this._dashboard.getSaveModel?.();
+    const initialDashboard = this._dashboard.getInitialSaveModel?.();
+    if (typeof changedDashboard !== 'object' || typeof initialDashboard !== 'object') {
       return;
     }
-    const ops = compare(models.initial, models.changed);
+    // Strip functions and other non-clonable properties before comparing
+    const changed = JSON.parse(JSON.stringify(changedDashboard));
+    const initial = JSON.parse(JSON.stringify(initialDashboard));
+    const ops = compare(initial, changed);
     this.updateIsDirty(ops.length > 0 || this.hasMetadataChanges());
   }
 
