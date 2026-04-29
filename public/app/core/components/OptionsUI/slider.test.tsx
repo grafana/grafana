@@ -18,7 +18,7 @@ describe('SliderValueEditor', () => {
 
     expect(screen.getByRole('slider')).toBeInTheDocument();
 
-    const input = screen.getByRole('spinbutton');
+    const input = screen.getByRole('textbox');
     expect(input).toHaveDisplayValue('10');
   });
 
@@ -36,7 +36,7 @@ describe('SliderValueEditor', () => {
       />
     );
 
-    const input = screen.getByRole('spinbutton');
+    const input = screen.getByRole('textbox');
     await user.clear(input);
     await user.type(input, '42');
     fireEvent.blur(input);
