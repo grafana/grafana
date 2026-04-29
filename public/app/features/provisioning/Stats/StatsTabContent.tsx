@@ -63,7 +63,6 @@ interface ComputedStats {
 
 function computeStats(data?: ResourceStats): ComputedStats {
   const instanceTotal = sumCounts(data?.instance);
-  const unmanagedTotal = sumCounts(data?.unmanaged);
 
   const byKind = new Map<string, BreakdownByKind>();
   data?.managed?.forEach((m: ManagerStats) => {
@@ -83,6 +82,10 @@ function computeStats(data?: ResourceStats): ComputedStats {
   const otherProviders = Array.from(byKind.values()).filter((b) => b.kind !== ManagerKind.Repo);
 
   const managedTotal = Array.from(byKind.values()).reduce((acc, b) => acc + b.totals.total, 0);
+  // Derive unmanaged from instance - managed so the summary always satisfies
+  // managed + unmanaged = total, regardless of how the API populates the
+  // unmanaged array.
+  const unmanagedTotal = Math.max(0, instanceTotal - managedTotal);
 
   return {
     instanceTotal,

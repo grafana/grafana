@@ -126,6 +126,42 @@ describe('StatsTabContent', () => {
     expect(screen.getByText(/no resources are managed by git sync/i)).toBeInTheDocument();
   });
 
+  it('derives the Unmanaged summary from instance - managed so the totals balance', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 10 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 30 },
+        ],
+        // unmanaged comes back empty: backend trusts that managed covers everything.
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [
+              { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 12 },
+            ],
+          },
+          {
+            kind: 'terraform',
+            id: 'tf-1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 6 }],
+          },
+        ],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // Total = 40, Managed = 22 (4 + 12 + 6), Unmanaged = 40 - 22 = 18.
+    // toLocaleString() in tests will not insert separators for these values.
+    expect(screen.getByText('40')).toBeInTheDocument();
+    expect(screen.getByText('22')).toBeInTheDocument();
+    expect(screen.getByText('18')).toBeInTheDocument();
+  });
+
   it('aggregates duplicate other-resource counts across managers of the same kind', () => {
     mockQuery({
       data: {
