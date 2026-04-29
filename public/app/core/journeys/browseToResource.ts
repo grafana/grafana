@@ -13,11 +13,10 @@ import { collectUnsubs, str } from './utils';
  * Steps:
  *   - navigate_folder — user clicks a folder item; ends when the folder view loads
  *   - select_resource — user clicks a non-folder item; ends when the dashboard loads
- *
- * Events (point-in-time):
- *   - folder_created — user created a folder mid-browse (the journey continues; the
- *     post-create redirect fires a new page_view that enriches `folderUID` on the journey).
- *     Carries `isSubfolder` and `folderDepth`.
+ *   - create_folder — user opens the new-folder drawer; ends when the folder is created
+ *     (carries `isSubfolder`, `folderDepth`). The journey continues; the post-create
+ *     page_view re-fires and enriches `folderUID`. If the user dismisses the drawer
+ *     without creating, the framework backstop closes the step as `unended` at journey end.
  *
  * End conditions:
  *   - success: dashboards_init_dashboard_completed — dashboard loaded after resource click
@@ -43,6 +42,7 @@ registerJourneyTriggers('browse_to_resource', (tracker) => {
 onJourneyInstance('browse_to_resource', (handle) => {
   let pendingFolderStep: StepHandle | null = null;
   let pendingSelectStep: StepHandle | null = null;
+  let pendingCreateFolderStep: StepHandle | null = null;
   const { add, cleanup } = collectUnsubs();
 
   // Folder click starts a navigate_folder duration step; non-folder click starts select_resource.
@@ -89,14 +89,29 @@ onJourneyInstance('browse_to_resource', (handle) => {
     })
   );
 
-  // Folder created mid-browse — the journey continues; the post-create page_view
-  // re-fires above and updates the active folderUID attribute.
+  // Drawer open -> create_folder step starts. Captures the user's intent and the
+  // time spent filling the form (not just the API latency).
+  add(
+    onInteraction('grafana_browse_dashboards_new_folder_drawer_opened', () => {
+      if (pendingCreateFolderStep) {
+        pendingCreateFolderStep.end({ outcome: 'superseded' });
+      }
+      pendingCreateFolderStep = handle.startStep('create_folder');
+    })
+  );
+
+  // Folder created -> step ends with the source attributes. Journey continues; the
+  // post-create page_view above will fire and update folderUID.
   add(
     onInteraction('grafana_manage_dashboards_folder_created', (props) => {
-      handle.recordEvent('folder_created', {
-        isSubfolder: str(props.is_subfolder),
-        folderDepth: str(props.folder_depth),
-      });
+      if (pendingCreateFolderStep) {
+        pendingCreateFolderStep.end({
+          outcome: 'success',
+          isSubfolder: str(props.is_subfolder),
+          folderDepth: str(props.folder_depth),
+        });
+        pendingCreateFolderStep = null;
+      }
     })
   );
 
