@@ -66,7 +66,7 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   }
 
   // Add team folders virtual item
-  if (!parentUID && config.featureToggles.teamFolders) {
+  if (page === 1 && !parentUID && config.featureToggles.teamFolders) {
     const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
     folders.splice(insertIndex, 0, {
       ...virtualFolderBase,
