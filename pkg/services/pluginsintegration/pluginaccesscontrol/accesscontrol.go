@@ -7,7 +7,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -95,7 +94,7 @@ func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 	return service.DeclareFixedRoles(FixedRoleRegistrations(cfg.PluginAdminEnabled)...)
 }
 

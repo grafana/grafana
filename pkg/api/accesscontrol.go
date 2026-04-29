@@ -39,7 +39,7 @@ const (
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
-	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg, hs.Features); err != nil {
+	if err := pluginaccesscontrol.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg); err != nil {
 		return err
 	}
 
