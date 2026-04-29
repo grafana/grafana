@@ -44,20 +44,19 @@ test.describe('Canvas Panel - Icon Mappings', () => {
     });
 
     await test.step('Verify at least 5 visible SVG icons are rendered (3 mapped + 2 fixed)', async () => {
-      const visibleSvgs = page.locator('svg:not([aria-hidden="true"])');
+      const visibleSvgs = page.locator('[data-testid="data-testid panel content"] svg:not([aria-hidden="true"])');
       const svgCount = await visibleSvgs.count();
       expect(svgCount).toBeGreaterThanOrEqual(5);
     });
 
     await test.step('Verify visible SVG icons have content', async () => {
-      const visibleSvgs = page.locator('svg:not([aria-hidden="true"])');
+      const visibleSvgs = page.locator('[data-testid="data-testid panel content"] svg:not([aria-hidden="true"])');
       const count = await visibleSvgs.count();
 
       for (let i = 0; i < Math.min(count, 5); i++) {
         const svg = visibleSvgs.nth(i);
         await expect(svg).toBeAttached();
         const svgContent = await svg.innerHTML();
-        // fail
         expect(svgContent.length).toBeGreaterThan(0);
       }
     });
