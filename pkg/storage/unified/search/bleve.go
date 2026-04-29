@@ -124,6 +124,12 @@ type SnapshotOptions struct {
 	// before its predecessor in the same Grafana-version group is eligible for
 	// cleanup. Consumed by the cleanup loop only; no effect on upload/download.
 	CleanupGracePeriod time.Duration
+
+	// CleanupInterval is how often the background cleanup pass runs. The first
+	// run after start is jittered uniformly in [0, CleanupInterval) to spread
+	// listings across replicas deployed together. Zero disables periodic cleanup
+	// (the loop is not started).
+	CleanupInterval time.Duration
 }
 
 type bleveBackend struct {
@@ -215,8 +221,19 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
 	if opts.Snapshot.Store != nil {
+		// Initialise snapshot metric label series only on instances where the
+		// feature is actually wired up; ProvideIndexMetrics deliberately skips
+		// this so disabled instances stay quiet. See InitSnapshotMetrics for the
+		// full rationale.
+		be.indexMetrics.InitSnapshotMetrics()
+
 		be.bgTasksWg.Add(1)
 		go be.uploadSnapshotsPeriodically(ctx)
+
+		if opts.Snapshot.CleanupInterval > 0 {
+			be.bgTasksWg.Add(1)
+			go be.cleanupSnapshotsPeriodically(ctx)
+		}
 	}
 
 	if be.indexMetrics != nil {
