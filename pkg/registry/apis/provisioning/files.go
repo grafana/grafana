@@ -23,11 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-const (
-	// Files endpoint max size for dashboards etc (5MB)
-	filesMaxBodySize = 5 * 1024 * 1024
-)
-
 type filesConnector struct {
 	getter                RepoGetter
 	access                auth.AccessChecker
@@ -35,9 +30,12 @@ type filesConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	folderAPIVersion      string
+	// maxFileSize caps the size in bytes of files read from or written to the
+	// repository through this connector. <=0 disables the check.
+	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -45,7 +43,22 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
+		maxFileSize:           maxFileSize,
 	}
+}
+
+// checkReadSize rejects file payloads larger than the configured cap. Returns
+// nil when the cap is disabled (<=0) or info is nil.
+func (c *filesConnector) checkReadSize(info *repository.FileInfo) error {
+	if c.maxFileSize <= 0 || info == nil {
+		return nil
+	}
+	if int64(len(info.Data)) > c.maxFileSize {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", info.Path, len(info.Data), c.maxFileSize),
+		)
+	}
+	return nil
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -264,6 +277,9 @@ func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWrite
 	if err != nil {
 		return nil, err
 	}
+	if err := c.checkReadSize(resource.Info); err != nil {
+		return nil, err
+	}
 	return resource.AsResourceWrapper(), nil
 }
 
@@ -284,6 +300,9 @@ func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.Du
 			return nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), opts.Path)
 		}
 		return nil, fmt.Errorf("read raw file: %w", err)
+	}
+	if err := c.checkReadSize(info); err != nil {
+		return nil, err
 	}
 
 	return &provisioning.ResourceWrapper{
@@ -310,7 +329,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 		return dualReadWriter.CreateFolder(ctx, opts)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +345,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	// For move operations, only read body for file moves (not directory moves)
 	if !isDir {
-		data, err := readBody(r, filesMaxBodySize)
+		data, err := readBody(r, c.maxFileSize)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +367,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +381,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 }
 
 func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}

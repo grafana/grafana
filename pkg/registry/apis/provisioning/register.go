@@ -140,6 +140,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxIncrementalChanges         int
+	maxFileSize                   int64
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 }
@@ -189,6 +190,7 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
 	maxIncrementalChanges int,
+	maxFileSize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -241,6 +243,7 @@ func NewAPIBuilder(
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
 		maxIncrementalChanges:               maxIncrementalChanges,
+		maxFileSize:                         maxFileSize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -316,6 +319,7 @@ func RegisterAPIService(
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
 	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
+	maxFileSize := cfg.ProvisioningMaxFileSize
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -348,6 +352,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		maxIncrementalChanges,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -386,6 +391,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		folderAPIVersion,
 		maxIncrementalChanges,
+		maxFileSize,
 	)
 	if err != nil {
 		return nil, err
@@ -793,7 +799,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
