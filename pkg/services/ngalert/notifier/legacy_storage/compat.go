@@ -33,6 +33,7 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 		UID:                   integration.UID,
 		Name:                  integration.Name,
 		Type:                  string(integration.Config.Type()),
+		Version:               string(integration.Config.Version),
 		DisableResolveMessage: integration.DisableResolveMessage,
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
@@ -154,9 +155,13 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 	if err != nil {
 		return nil, err
 	}
-	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+	v := schema.V1
+	if p.Version != "" {
+		v = schema.Version(p.Version)
+	}
+	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, v)
 	if !ok {
-		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, schema.V1)
+		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, v)
 	}
 	integration := &models.Integration{
 		UID:                   p.UID,
