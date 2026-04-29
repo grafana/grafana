@@ -13217,11 +13217,22 @@
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
+    "commit-message": {
+      "dashboard-create-default": "New dashboard: {{title}}",
+      "dashboard-delete-default": "Delete dashboard: {{title}}",
+      "dashboard-move-default": "Move dashboard: {{title}}",
+      "dashboard-rename-default": "Rename dashboard: {{title}}",
+      "dashboard-update-default": "Save dashboard: {{title}}",
+      "folder-create-default": "Create folder: {{title}}",
+      "folder-move-default": "Move folder: {{title}}",
+      "folder-update-default": "Save folder: {{title}}"
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13232,6 +13243,7 @@
       "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-commit-message-template": "Commit message template",
       "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
@@ -13240,6 +13252,7 @@
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
       "option-managed-folder": "Managed folder",
+      "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
     },

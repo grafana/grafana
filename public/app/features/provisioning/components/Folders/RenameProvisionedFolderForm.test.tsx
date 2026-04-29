@@ -187,6 +187,36 @@ describe('RenameProvisionedFolderForm', () => {
       });
     });
 
+    it('renders the message from the repo commit template when comment is empty', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...defaultHookData.repository!,
+            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+          },
+          initialValues: { ...mockFormData, workflow: 'branch' as const, ref: 'my-branch' },
+        }
+      );
+
+      await user.click(await screen.findByRole('button', { name: /^rename$/i }));
+
+      await waitFor(() => {
+        expect(capturedRequest).not.toBeNull();
+      });
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('message')).toBe('chore(folders): rename Test Folder');
+    });
+
     it('should clear ref for write workflow', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
