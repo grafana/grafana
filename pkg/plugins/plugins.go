@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -56,9 +55,8 @@ type Plugin struct {
 
 	ExternalService *auth.ExternalService
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	client backendplugin.Plugin
+	log    log.Logger
 
 	SkipHostEnvVars bool
 

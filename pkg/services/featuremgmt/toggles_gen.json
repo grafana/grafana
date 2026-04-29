@@ -5500,6 +5500,35 @@
     },
     {
       "metadata": {
+        "name": "stateTimeline.nameAboveBars",
+        "resourceVersion": "1776910622317",
+        "creationTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "stateTimelineNameAboveBars",
+        "resourceVersion": "1774329986283",
+        "creationTimestamp": "2026-03-24T05:26:26Z",
+        "deletionTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "storage",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-03-17T17:19:23Z",

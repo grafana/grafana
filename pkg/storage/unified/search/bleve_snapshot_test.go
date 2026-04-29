@@ -439,7 +439,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("skips when upload interval has not elapsed", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 		idx := newUploadTestIndex(t, be, key, 42)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 5))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
 		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -450,7 +450,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("skips when mutation count is below threshold", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 100})
 		idx := newUploadTestIndex(t, be, key, 150)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 50))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -461,7 +461,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("uploads when interval elapsed and mutation count is large enough", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 25})
 		idx := newUploadTestIndex(t, be, key, 150)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 30))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -475,7 +475,7 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	key := newTestNsResource()
 	idx := newUploadTestIndex(t, be, key, 42)
 
-	count, err := getSnapshotMutationCount(idx.index)
+	count, err := readSnapshotMutationCount(idx.index)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
@@ -505,7 +505,7 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	count, err = getSnapshotMutationCount(idx.index)
+	count, err = readSnapshotMutationCount(idx.index)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -590,7 +590,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	require.True(t, tracked)
 	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
 
-	mutationCount, err := getSnapshotMutationCount(bi.index)
+	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)
 	assert.Zero(t, mutationCount)
 }

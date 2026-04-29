@@ -13,6 +13,7 @@ declare module "@openfeature/core" {
     | "lokiShardSplitting"
     | "faroSessionReplay"
     | "provisioningFolderMetadata"
+    | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"

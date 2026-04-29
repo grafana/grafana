@@ -29,6 +29,8 @@ export interface DatasourceInstanceK8sSpec {
   jsonData: DataSourceJsonData;
   title: string;
   url: string;
+  user: string;
+  database: string;
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault?: boolean;
@@ -73,6 +75,8 @@ export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     basicAuth: dsSettings.basicAuth ? dsSettings.basicAuth : false,
     basicAuthUser: dsSettings.basicAuthUser ? dsSettings.basicAuthUser : '',
     isDefault: dsSettings.isDefault,
+    user: dsSettings.user ? dsSettings.user : '',
+    database: dsSettings.database ? dsSettings.database : '',
   };
   const dsK8sSettings: Partial<DataSourceSettingsK8s> = {
     spec: k8sSpec,
@@ -102,6 +106,8 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     basicAuthUser: dsSettings.basicAuthUser,
     isDefault: dsSettings.isDefault,
     readOnly: dsSettings.readOnly,
+    user: dsSettings.user ? dsSettings.user : '',
+    database: dsSettings.database ? dsSettings.database : '',
   };
   let dsK8sSettings: DataSourceSettingsK8s = {
     kind: 'DataSource',
@@ -138,8 +144,8 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     typeName: '',
     access: dsK8sSettings.spec.access,
     url: dsK8sSettings.spec.url,
-    user: '',
-    database: '',
+    user: dsK8sSettings.spec.user,
+    database: dsK8sSettings.spec.database,
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
     isDefault: dsK8sSettings.spec.isDefault ? true : false,

@@ -417,6 +417,39 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	recorder.mu.RUnlock()
 }
 
+func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Folder depth violations are surfaced as warnings instead of errors so
+	// the job is not retried in a loop. They must still populate
+	// failedCreations so that descendant resources are short-circuited
+	// instead of generating duplicate bad requests for the same offending
+	// path.
+	depthErr := resources.NewFolderDepthExceededError(
+		"too/deep/folder/",
+		errors.New("folder max depth exceeded, max depth is 4"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "too/deep/folder/",
+		Err:  depthErr,
+	}
+	recorder.Record(ctx, NewFolderResult("too/deep/folder/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "too/deep/folder/", "depth-exceeded warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "depth-exceeded warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "depth-exceeded warning should not increment error count")
+}
+
 func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 	ctx := context.Background()
 
