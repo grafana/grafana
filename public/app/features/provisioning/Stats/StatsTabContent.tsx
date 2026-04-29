@@ -3,10 +3,23 @@ import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Card, EmptyState, Icon, Select, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Alert,
+  Card,
+  EmptyState,
+  Icon,
+  LinkButton,
+  Select,
+  Spinner,
+  Stack,
+  Text,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
   type ManagerStats,
+  type Repository,
   type ResourceCount,
   type ResourceStats,
   useGetResourceStatsQuery,
@@ -14,6 +27,8 @@ import {
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
+import { PROVISIONING_URL } from '../constants';
+import { useRepositoryList } from '../hooks/useRepositoryList';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
@@ -514,6 +529,7 @@ function ProviderStat({
 }
 
 function GitSyncBanner({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+  const [repos] = useRepositoryList({ watch: false });
   const supported = breakdowns.filter((b) => b.isGitSyncSupported);
   const totalSupported = supported.reduce((acc, b) => acc + b.total, 0);
   if (totalSupported === 0) {
@@ -531,13 +547,31 @@ function GitSyncBanner({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
         '{{covered}} of {{total}} folders and dashboards are managed by Git Sync',
         { covered: gitSyncCovered, total: totalSupported }
       )}
-      action={<ConnectRepositoryButton />}
+      action={<GitSyncBannerCta repos={repos ?? []} />}
     >
       <Trans i18nKey="provisioning.stats.git-sync-banner-body">
         Git Sync is the simplest way to manage folders and dashboards as code — connect a repository and every change
         gets versioned automatically. Other tools like Terraform or kubectl work too.
       </Trans>
     </Alert>
+  );
+}
+
+function GitSyncBannerCta({ repos }: { repos: Repository[] }) {
+  // No repos yet → the user needs to set Git Sync up before they can do
+  // anything else, so surface the existing Configure dropdown.
+  if (repos.length === 0) {
+    return <ConnectRepositoryButton items={repos} />;
+  }
+  // Repos exist → the action that pushes more resources into the repo lives
+  // on the repository status page. Link there: directly when there's one
+  // repo, otherwise to the Repositories tab so the user can pick.
+  const target =
+    repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
+  return (
+    <LinkButton variant="primary" icon="upload" href={target}>
+      <Trans i18nKey="provisioning.stats.git-sync-banner-export">Export</Trans>
+    </LinkButton>
   );
 }
 

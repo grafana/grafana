@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useRepositoryList } from '../hooks/useRepositoryList';
+
 import { StatsTabContent } from './StatsTabContent';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
@@ -13,6 +15,14 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 jest.mock('../Shared/ConnectRepositoryButton', () => ({
   ConnectRepositoryButton: () => <button>Connect a repository</button>,
 }));
+
+// useRepositoryList wraps an RTK Query call; default to "no repos" so the
+// banner CTA falls back to the Configure dropdown unless a test overrides.
+jest.mock('../hooks/useRepositoryList', () => ({
+  useRepositoryList: jest.fn(() => [[], false]),
+}));
+
+const mockUseRepositoryList = useRepositoryList as jest.MockedFunction<typeof useRepositoryList>;
 
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 
@@ -32,6 +42,7 @@ function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) 
 describe('StatsTabContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseRepositoryList.mockReturnValue([[], false]);
   });
 
   it('renders a loading indicator while fetching', () => {
@@ -82,6 +93,49 @@ describe('StatsTabContent', () => {
     expect(screen.getByText(/5 of 20 folders and dashboards are managed by Git Sync/i)).toBeInTheDocument();
     expect(screen.getByText(/git sync is the simplest way/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
+  });
+
+  it('shows the Configure dropdown when no Git Sync repository is connected', () => {
+    mockUseRepositoryList.mockReturnValue([[], false]);
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^export$/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the Export button instead of Configure once a repository exists', () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    const exportLink = screen.getByRole('link', { name: /^export$/i });
+    expect(exportLink).toBeInTheDocument();
+    // Single repo → link goes straight to the repository's status page.
+    expect(exportLink).toHaveAttribute('href', '/admin/provisioning/my-repo');
+    expect(screen.queryByRole('button', { name: /connect a repository/i })).not.toBeInTheDocument();
   });
 
   it('hides the Git Sync banner when there are no folders or dashboards', () => {
