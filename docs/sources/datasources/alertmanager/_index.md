@@ -31,11 +31,11 @@ Grafana includes built-in support for Alertmanager implementations in Prometheus
 
 The data source supports the following Alertmanager implementations. You can specify the implementation on the data source's **Settings** page.
 
-| Implementation | Silences | Contact points | Notification policies | Templates |
-|----------------|----------|----------------|----------------------|-----------|
-| **Mimir** (default) | Read/write | Read/write | Read/write | Read/write |
-| **Cortex** | Read/write | Read/write | Read/write | Read/write |
-| **Prometheus** | Read/write | Read-only | Read-only | Read-only |
+| Implementation      | Silences   | Contact points | Notification policies | Templates  |
+| ------------------- | ---------- | -------------- | --------------------- | ---------- |
+| **Mimir** (default) | Read/write | Read/write     | Read/write            | Read/write |
+| **Cortex**          | Read/write | Read/write     | Read/write            | Read/write |
+| **Prometheus**      | Read/write | Read-only      | Read-only             | Read-only  |
 
 When using the Prometheus implementation, you can manage silences in the Grafana Alerting UI. Contact points, notification policies, and templates are read-only because the Prometheus Alertmanager API does not support write operations for these resources.
 
@@ -44,7 +44,9 @@ When using the Prometheus implementation, you can manage silences in the Grafana
 To add and configure the Alertmanager data source, complete the following steps:
 
 <!-- vale Grafana.WordList = NO -->
+
 {{< docs/shared lookup="alerts/add-alertmanager-ds.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 <!-- vale Grafana.WordList = YES -->
 
 ### Authentication
@@ -67,9 +69,9 @@ You can provision Alertmanager data sources using configuration files or Terrafo
 
 The `jsonData` fields used across both methods are:
 
-| Field | Description |
-|-------|-------------|
-| `implementation` | The Alertmanager implementation. Supported values: `mimir`, `cortex`, `prometheus`. Defaults to `mimir`. |
+| Field                        | Description                                                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `implementation`             | The Alertmanager implementation. Supported values: `mimir`, `cortex`, `prometheus`. Defaults to `mimir`.                                                      |
 | `handleGrafanaManagedAlerts` | When `true`, this Alertmanager receives Grafana-managed alerts. You must also enable alert forwarding in **Alerting** > **Administration** in the Grafana UI. |
 
 ### Configuration file
@@ -125,12 +127,12 @@ This section covers common issues when configuring or using the Alertmanager dat
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Incorrect URL | Verify the URL points to your Alertmanager instance and includes the correct protocol, host, and port (for example, `http://localhost:9093`). |
-| Network or firewall issue | Verify that the Grafana server can reach the Alertmanager endpoint. Check firewall rules and DNS resolution. |
-| Wrong implementation selected | If you changed the implementation type, re-test the connection. See the implementation mismatch errors below. |
-| Incorrect credentials | If basic auth is enabled, verify the username and password are correct. |
+| Cause                         | Solution                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Incorrect URL                 | Verify the URL points to your Alertmanager instance and includes the correct protocol, host, and port (for example, `http://localhost:9093`). |
+| Network or firewall issue     | Verify that the Grafana server can reach the Alertmanager endpoint. Check firewall rules and DNS resolution.                                  |
+| Wrong implementation selected | If you changed the implementation type, re-test the connection. See the implementation mismatch errors below.                                 |
+| Incorrect credentials         | If basic auth is enabled, verify the username and password are correct.                                                                       |
 
 ### "It looks like you have chosen Prometheus implementation, but detected a Mimir or Cortex endpoint."
 
