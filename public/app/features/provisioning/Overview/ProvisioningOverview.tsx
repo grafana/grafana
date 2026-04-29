@@ -283,33 +283,7 @@ function percent(part: number, total: number): string {
   return `${Math.round((part / total) * 100)}%`;
 }
 
-interface ProviderSegment {
-  key: string;
-  label: string;
-  value: number;
-  color: string;
-}
-
-function colorForKind(theme: GrafanaTheme2, kind: string): string {
-  switch (kind) {
-    case ManagerKind.Repo:
-      return theme.colors.success.main;
-    case ManagerKind.Terraform:
-      return theme.visualization.getColorByName('blue');
-    case ManagerKind.Kubectl:
-      return theme.visualization.getColorByName('purple');
-    case ManagerKind.Plugin:
-      return theme.visualization.getColorByName('yellow');
-    case CLASSIC_FILE_PROVISIONING:
-      return theme.visualization.getColorByName('red');
-    case GRAFANA_INTERNAL:
-      return theme.colors.text.disabled;
-    default:
-      return theme.colors.text.secondary;
-  }
-}
-
-/** Map a manager kind to a Badge color so chips line up with donut colors. */
+/** Map a manager kind to a Badge color for the supported-by chips. */
 function badgeColorForKind(kind: string): BadgeColor {
   switch (kind) {
     case ManagerKind.Repo:
@@ -327,101 +301,6 @@ function badgeColorForKind(kind: string): BadgeColor {
   }
 }
 
-
-function Donut({
-  segments,
-  size = 140,
-  strokeWidth = 18,
-  centerLabel,
-  centerSubLabel,
-  hoveredKey,
-  onHover,
-}: {
-  segments: ProviderSegment[];
-  size?: number;
-  strokeWidth?: number;
-  centerLabel?: string;
-  centerSubLabel?: string;
-  hoveredKey: string | null;
-  onHover: (key: string | null) => void;
-}) {
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles);
-  const total = segments.reduce((acc, s) => acc + s.value, 0);
-  const radius = 50 - strokeWidth / 2;
-  const circumference = 2 * Math.PI * radius;
-
-  let cumulative = 0;
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img">
-      <circle
-        cx="50"
-        cy="50"
-        r={radius}
-        fill="none"
-        stroke={theme.colors.background.secondary}
-        strokeWidth={strokeWidth}
-      />
-      {total > 0 &&
-        segments.map((seg) => {
-          const pct = seg.value / total;
-          const dashLen = pct * circumference;
-          const offset = -cumulative * circumference;
-          cumulative += pct;
-          const isHovered = hoveredKey === seg.key;
-          const isOtherHovered = hoveredKey !== null && hoveredKey !== seg.key;
-          return (
-            <circle
-              key={seg.key}
-              cx="50"
-              cy="50"
-              r={radius}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth={isHovered ? strokeWidth + 4 : strokeWidth}
-              strokeDasharray={`${dashLen} ${circumference - dashLen}`}
-              strokeDashoffset={offset}
-              transform="rotate(-90 50 50)"
-              strokeLinecap="butt"
-              onMouseEnter={() => onHover(seg.key)}
-              onMouseLeave={() => onHover(null)}
-              className={styles.donutSegment}
-              style={{ opacity: isOtherHovered ? 0.35 : 1 }}
-            >
-              <title>{`${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)`}</title>
-            </circle>
-          );
-        })}
-      {centerLabel !== undefined && (
-        <text
-          x="50"
-          y={centerSubLabel ? 46 : 50}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="20"
-          fontWeight={600}
-          fill={theme.colors.text.primary}
-        >
-          {centerLabel}
-        </text>
-      )}
-      {centerSubLabel && (
-        <text
-          x="50"
-          y="63"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="11"
-          fill={theme.colors.text.secondary}
-        >
-          {centerSubLabel}
-        </text>
-      )}
-    </svg>
-  );
-}
-
 function GitOpsExplainer() {
   return (
     <Alert severity="info" title={t('provisioning.stats.gitops-title', 'What is GitOps?')}>
@@ -437,95 +316,77 @@ function GitOpsExplainer() {
 }
 
 /**
- * Build per-provider donut segments from a list of resource breakdowns.
- * Used both at the top level (all data) and when the filters narrow the
- * set of resource types — so the donut and stat cards reflect exactly the
- * rows the user sees in the table.
+ * Aggregate the filtered breakdowns into the four numbers we surface in the
+ * Summary panel: total, Git Sync, other tools (sum of all non-Git-Sync
+ * managers), and unmanaged. Per-provider detail still lives in the donut /
+ * the resource table; the cards stay at four to keep the panel scannable
+ * regardless of how many tools the user has.
  */
-function buildSegmentsFromBreakdowns(breakdowns: GroupBreakdown[], theme: GrafanaTheme2): ProviderSegment[] {
+function aggregateTotals(breakdowns: GroupBreakdown[]) {
+  let instanceTotal = 0;
   let gitSync = 0;
+  let other = 0;
   let unmanaged = 0;
-  const otherByKind = new Map<string, number>();
   breakdowns.forEach((b) => {
+    instanceTotal += b.total;
     gitSync += b.gitSyncCount;
+    other += b.otherManagedCount;
     unmanaged += b.unmanagedCount;
-    Object.entries(b.managedByKind).forEach(([kind, count]) => {
-      otherByKind.set(kind, (otherByKind.get(kind) ?? 0) + count);
-    });
   });
-  const segments: ProviderSegment[] = [
-    {
-      key: ManagerKind.Repo,
-      label: kindLabel(ManagerKind.Repo),
-      value: gitSync,
-      color: theme.colors.success.main,
-    },
-  ];
-  for (const [kind, value] of otherByKind) {
-    if (value === 0) {
-      continue;
-    }
-    segments.push({ key: kind, label: kindLabel(kind), value, color: colorForKind(theme, kind) });
-  }
-  segments.push({
-    key: 'unmanaged',
-    label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
-    value: unmanaged,
-    color: theme.colors.warning.main,
-  });
-  return segments;
+  return { instanceTotal, gitSync, other, unmanaged };
 }
 
 function SummarySection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const segments = useMemo(() => buildSegmentsFromBreakdowns(breakdowns, theme), [breakdowns, theme]);
-  const instanceTotal = useMemo(() => breakdowns.reduce((acc, b) => acc + b.total, 0), [breakdowns]);
-  const managedTotal = useMemo(
-    () => segments.filter((s) => s.key !== 'unmanaged').reduce((acc, s) => acc + s.value, 0),
-    [segments]
-  );
-  const managedPct = percent(managedTotal, instanceTotal);
+  const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
 
   return (
-    <div className={styles.summaryPanel}>
-      <div className={styles.summaryDonut}>
-        <Donut
-          segments={segments}
-          size={140}
-          strokeWidth={18}
-          centerLabel={managedPct}
-          centerSubLabel={t('provisioning.stats.donut-center-sublabel', 'as code')}
-          hoveredKey={hoveredKey}
-          onHover={setHoveredKey}
-        />
-      </div>
-      <Stack direction="row" gap={1.5} wrap flex={1}>
-        <ProviderStat
-          segmentKey="total"
-          big={instanceTotal.toLocaleString()}
-          label={t('provisioning.stats.summary-total', 'Total resources')}
-          hoveredKey={hoveredKey}
-          onHover={setHoveredKey}
-        />
-        {segments.map((seg) => (
-          <ProviderStat
-            key={seg.key}
-            segmentKey={seg.key}
-            big={percent(seg.value, instanceTotal)}
-            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-              value: seg.value,
-              total: instanceTotal,
-            })}
-            label={seg.label}
-            colorHex={seg.color}
-            hoveredKey={hoveredKey}
-            onHover={setHoveredKey}
-          />
-        ))}
-      </Stack>
-    </div>
+    <Stack direction="row" gap={1.5} wrap justifyContent="center">
+      <ProviderStat
+        segmentKey="total"
+        big={totals.instanceTotal.toLocaleString()}
+        label={t('provisioning.stats.summary-total', 'Total resources')}
+        hoveredKey={hoveredKey}
+        onHover={setHoveredKey}
+      />
+      <ProviderStat
+        segmentKey={ManagerKind.Repo}
+        big={percent(totals.gitSync, totals.instanceTotal)}
+        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+          value: totals.gitSync,
+          total: totals.instanceTotal,
+        })}
+        label={kindLabel(ManagerKind.Repo)}
+        colorHex={theme.colors.success.main}
+        hoveredKey={hoveredKey}
+        onHover={setHoveredKey}
+      />
+      <ProviderStat
+        segmentKey="other"
+        big={percent(totals.other, totals.instanceTotal)}
+        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+          value: totals.other,
+          total: totals.instanceTotal,
+        })}
+        label={t('provisioning.stats.legend-other', 'Managed by other tools')}
+        colorHex={theme.colors.info.main}
+        hoveredKey={hoveredKey}
+        onHover={setHoveredKey}
+      />
+      <ProviderStat
+        segmentKey="unmanaged"
+        big={percent(totals.unmanaged, totals.instanceTotal)}
+        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+          value: totals.unmanaged,
+          total: totals.instanceTotal,
+        })}
+        label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
+        colorHex={theme.colors.warning.main}
+        hoveredKey={hoveredKey}
+        onHover={setHoveredKey}
+      />
+    </Stack>
   );
 }
 
@@ -755,13 +616,7 @@ interface FiltersValue {
   searchQuery: string;
 }
 
-function FiltersBar({
-  value,
-  onChange,
-}: {
-  value: FiltersValue;
-  onChange: (next: FiltersValue) => void;
-}) {
+function FiltersBar({ value, onChange }: { value: FiltersValue; onChange: (next: FiltersValue) => void }) {
   const styles = useStyles2(getStyles);
   const filterOptions: Array<SelectableValue<string>> = useMemo(
     () => [
@@ -811,13 +666,7 @@ function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): Grou
   return result;
 }
 
-function ResourceTypesSection({
-  rows,
-  hasUnfilteredRows,
-}: {
-  rows: GroupBreakdown[];
-  hasUnfilteredRows: boolean;
-}) {
+function ResourceTypesSection({ rows, hasUnfilteredRows }: { rows: GroupBreakdown[]; hasUnfilteredRows: boolean }) {
   const [repos] = useRepositoryList({ watch: false });
   const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
 
@@ -979,20 +828,6 @@ export function ProvisioningOverview() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  summaryPanel: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: theme.spacing(3),
-    padding: theme.spacing(3),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.secondary,
-  }),
-  summaryDonut: css({
-    flex: '0 0 auto',
-  }),
   providerStat: css({
     flex: '0 1 160px',
     minWidth: 140,
@@ -1024,12 +859,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 10,
     height: 10,
     borderRadius: theme.shape.radius.circle,
-  }),
-  donutSegment: css({
-    cursor: 'pointer',
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: 'opacity 150ms ease, stroke-width 150ms ease',
-    },
   }),
   managerList: css({
     display: 'flex',

@@ -251,12 +251,11 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText(/16 of 40/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/6 of 40/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/18 of 40/i).length).toBeGreaterThan(0);
-    // The donut center reports the combined managed share (22/40 = 55%).
-    expect(screen.getAllByText('55%').length).toBeGreaterThan(0);
+    // 18/40 = 45% appears as the Unmanaged card big number.
     expect(screen.getAllByText('45%').length).toBeGreaterThan(0);
   });
 
-  it('renders one Summary stat card per active provider, plus Total and Unmanaged', () => {
+  it('renders the four fixed Summary cards regardless of how many providers are active', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
@@ -278,15 +277,12 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Summary should show one stat per provider that has resources, alongside
-    // Total resources and Unmanaged. With Repo + Terraform + 3 unmanaged, the
-    // labels render in the Summary panel.
+    // Four cards: Total resources, Git Sync, Managed by other tools, Unmanaged.
     expect(screen.getByText('Total resources')).toBeInTheDocument();
-    // "Git Sync" appears as a Summary card label and as a chip in the table.
+    // Git Sync also appears as a chip in the table, so we just assert that
+    // its label shows up at least once in the Summary.
     expect(screen.getAllByText('Git Sync').length).toBeGreaterThan(0);
-    // "Terraform" appears as a Summary card label, as a row in the Other
-    // providers section, and as a chip in the table.
-    expect(screen.getAllByText('Terraform').length).toBeGreaterThan(0);
+    expect(screen.getByText('Managed by other tools')).toBeInTheDocument();
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
   });
 
