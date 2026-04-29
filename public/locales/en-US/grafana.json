@@ -977,8 +977,6 @@
       "receiver-summary": {
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
       },
-      "search-fallback-body": "No contact point matched \\\"{{term}}\\\" (for example the name may have changed). Showing all contact points.",
-      "search-fallback-title": "Filter had no matches",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
