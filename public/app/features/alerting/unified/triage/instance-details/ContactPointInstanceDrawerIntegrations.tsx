@@ -114,7 +114,7 @@ function InstanceDrawerIntegrationPanel({
   );
 }
 
-function DetailKV({ label, value }: { label: string; value: ReactNode }) {
+function DetailKV({ label, value }: { label: string; value: NonNullable<ReactNode> }) {
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="row" gap={2} alignItems="baseline" wrap>
