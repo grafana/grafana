@@ -1103,7 +1103,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listRV = listOptions.ResourceVersion
 	}
 
-	// Fetch the latest objects
+	// Fetch the latest objects.
+	// TODO: stream keys into BatchGet instead of materializing the whole list.
+	// For unbounded list calls (e.g. index build with req.Limit == 0) at 1M
+	// rows this allocates ~250 MB of DataKey before any reads start. Pipe
+	// ListResourceKeysAtRevision through a bounded channel into BatchGet so
+	// memory is O(chunk), not O(N).
 	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
 	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
 		if err != nil {
@@ -1116,7 +1121,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			break
 		}
 	}
-	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
+	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", k.retryPolicyFor(ctx))
 	defer iter.stop()
 
 	err := cb(iter)
@@ -1127,14 +1132,59 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-const (
-	// maxKvListIteratorConsecutiveFailures caps back-to-back retries with zero
-	// progress; the counter resets when an attempt yields a key.
-	maxKvListIteratorConsecutiveFailures = 3
-	// maxKvListIteratorTotalAttempts bounds total retryable failures to stop
-	// slow-drip loops (1 key per attempt, always fails) from hanging.
-	maxKvListIteratorTotalAttempts = 10
-)
+// BatchGetRetryPolicy bounds how many retryable BatchGet failures the
+// streaming list iterator absorbs before giving up.
+type BatchGetRetryPolicy struct {
+	// MaxConsecutiveFailures resets each time a key is yielded.
+	MaxConsecutiveFailures int
+	MaxTotalFailureRate    float64
+	// FailureBudgetFloor keeps tiny key sets from failing on the first hiccup.
+	FailureBudgetFloor int
+}
+
+func (p BatchGetRetryPolicy) totalBudget(numKeys int) int {
+	scaled := int(float64(numKeys) * p.MaxTotalFailureRate)
+	if scaled < p.FailureBudgetFloor {
+		return p.FailureBudgetFloor
+	}
+	return scaled
+}
+
+// defaultBatchGetRetryPolicy keeps a stuck KV from blocking sync requests
+// for more than ~5s under the 500ms minimum backoff.
+var defaultBatchGetRetryPolicy = BatchGetRetryPolicy{
+	MaxConsecutiveFailures: 3,
+	FailureBudgetFloor:     10,
+}
+
+// defaultRebuildBatchGetRetryPolicy absorbs a sustained ~5% failure rate on
+// million-key rebuilds with 2x headroom.
+var defaultRebuildBatchGetRetryPolicy = BatchGetRetryPolicy{
+	MaxConsecutiveFailures: 3,
+	MaxTotalFailureRate:    0.10,
+	FailureBudgetFloor:     20,
+}
+
+type indexBuildRetryBudgetCtxKey struct{}
+
+// WithIndexBuildRetryBudget opts the caller into the dataset-size-scaled
+// retry budget. Use only on long-running background reads — synchronous
+// API paths must not call it or transient KV issues turn into minutes-long
+// client waits.
+func WithIndexBuildRetryBudget(ctx context.Context) context.Context {
+	return context.WithValue(ctx, indexBuildRetryBudgetCtxKey{}, struct{}{})
+}
+
+func isIndexBuildRetryBudget(ctx context.Context) bool {
+	return ctx.Value(indexBuildRetryBudgetCtxKey{}) != nil
+}
+
+func (k *kvStorageBackend) retryPolicyFor(ctx context.Context) BatchGetRetryPolicy {
+	if isIndexBuildRetryBudget(ctx) {
+		return defaultRebuildBatchGetRetryPolicy
+	}
+	return defaultBatchGetRetryPolicy
+}
 
 // kvListIteratorBackoff is the default backoff config used between retry attempts.
 var kvListIteratorBackoff = backoff.Config{
@@ -1151,6 +1201,7 @@ type batchGetRetryPull struct {
 	nextIdx   int // next not-yet-yielded position in keys
 	stopFn    func()
 	retryBo   *backoff.Backoff
+	policy    BatchGetRetryPolicy
 
 	consecutiveFailures int
 	totalFailures       int
@@ -1160,12 +1211,13 @@ type batchGetRetryPull struct {
 
 // newBatchGetRetryPull builds a pull-style iterator over dataStore.BatchGet
 // that retries on kv.ErrRetryable failures.
-func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey) *batchGetRetryPull {
+func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey, policy BatchGetRetryPolicy) *batchGetRetryPull {
 	p := &batchGetRetryPull{
 		ctx:       ctx,
 		dataStore: ds,
 		keys:      keys,
 		retryBo:   backoff.New(ctx, kvListIteratorBackoff),
+		policy:    policy,
 	}
 	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, keys))
 	return p
@@ -1199,18 +1251,20 @@ func (p *batchGetRetryPull) tryRetry(err error) (bool, error) {
 	}
 	p.totalFailures++
 	p.consecutiveFailures++
+	totalBudget := p.policy.totalBudget(len(p.keys))
 	logArgs := []any{
 		"next_idx", p.nextIdx,
 		"remaining_keys", len(p.keys) - p.nextIdx,
 		"total_failures", p.totalFailures,
 		"consecutive_failures", p.consecutiveFailures,
+		"total_budget", totalBudget,
 		"error", err,
 	}
-	if p.totalFailures >= maxKvListIteratorTotalAttempts {
+	if p.totalFailures >= totalBudget {
 		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (total attempts)", logArgs...)
 		return false, nil
 	}
-	if p.consecutiveFailures >= maxKvListIteratorConsecutiveFailures {
+	if p.consecutiveFailures >= p.policy.MaxConsecutiveFailures {
 		batchGetRetryLogger.Warn("kv BatchGet retry budget exhausted (consecutive failures)", logArgs...)
 		return false, nil
 	}
@@ -1245,11 +1299,11 @@ func (p *batchGetRetryPull) stop() {
 }
 
 // newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
-func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool, policy BatchGetRetryPolicy) *kvListIterator {
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
-		pull:             newBatchGetRetryPull(ctx, ds, keys),
+		pull:             newBatchGetRetryPull(ctx, ds, keys, policy),
 	}
 }
 
@@ -1736,7 +1790,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false)
+	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false, k.retryPolicyFor(ctx))
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1816,7 +1870,7 @@ func (k *kvStorageBackend) processTrashEntries(
 	// Apply RV-based pagination: skip candidates already seen on previous pages.
 	candidates = applyPagination(candidates, lastSeenRV)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true)
+	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true, k.retryPolicyFor(ctx))
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1840,11 +1894,11 @@ func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 }
 
 // newKvHistoryIterator builds a kvHistoryIterator over dataStore.BatchGet(keys).
-func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool) *kvHistoryIterator {
+func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool, policy BatchGetRetryPolicy) *kvHistoryIterator {
 	return &kvHistoryIterator{
 		listRV:          listRV,
 		skipProvisioned: skipProvisioned,
-		pull:            newBatchGetRetryPull(ctx, ds, keys),
+		pull:            newBatchGetRetryPull(ctx, ds, keys, policy),
 	}
 }
 
