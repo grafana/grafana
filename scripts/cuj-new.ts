@@ -382,10 +382,18 @@ function escapeSingleQuoted(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+// Substring check, not regex, because the type is user-supplied and CodeQL
+// flags regex construction from user input (the validator at parseArgs
+// already restricts `args.type` to /^[a-z][a-z0-9_]*$/, but a textual check
+// avoids the warning entirely).
+function registryHasJourneyType(content: string, type: string): boolean {
+  return content.includes(`type: '${type}'`) || content.includes(`type: "${type}"`);
+}
+
 function modifyRegistry(args: Args): PlannedWrite {
   const original = readFile(REGISTRY_PATH);
 
-  if (new RegExp(`type:\\s*['"]${args.type}['"]`).test(original)) {
+  if (registryHasJourneyType(original, args.type)) {
     throw new Error(`journey type '${args.type}' already exists in journeyRegistry.ts`);
   }
 
@@ -511,7 +519,7 @@ function insertDriverEntry(src: string, type: string, driverConst: string): stri
 
 function checkJourneyDoesNotExist(args: Args, camel: string): void {
   const registry = readFile(REGISTRY_PATH);
-  if (new RegExp(`type:\\s*['"]${args.type}['"]`).test(registry)) {
+  if (registryHasJourneyType(registry, args.type)) {
     throw new Error(`journey type '${args.type}' already exists in journeyRegistry.ts`);
   }
   const wiringPath = path.join(JOURNEYS_DIR, `${camel}.ts`);
