@@ -98,9 +98,9 @@ var fastListIteratorBackoff = backoff.Config{MinBackoff: time.Microsecond, MaxBa
 
 func swapListBackoff(t *testing.T) {
 	t.Helper()
-	orig := kvListIteratorBackoff
-	kvListIteratorBackoff = fastListIteratorBackoff
-	t.Cleanup(func() { kvListIteratorBackoff = orig })
+	orig := datastoreRetryBackoff
+	datastoreRetryBackoff = fastListIteratorBackoff
+	t.Cleanup(func() { datastoreRetryBackoff = orig })
 }
 
 func makeTestDataKey(name string) DataKey {

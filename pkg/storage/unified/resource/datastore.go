@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/backoff"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -493,7 +494,33 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 	ctx, span := tracer.Start(ctx, "resource.dataStore.Get")
 	defer span.End()
 
-	return d.kv.Get(ctx, dataSection, key.String())
+	bo := backoff.New(ctx, datastoreRetryBackoff)
+	for attempt := 1; ; attempt++ {
+		raw, err := d.kv.Get(ctx, dataSection, key.String())
+		if err == nil {
+			return raw, nil
+		}
+		if errors.Is(err, kvpkg.ErrRetryable) && attempt < maxKvGetRetryAttempts {
+			getRetryLogger.Warn("kv Get retrying after retryable error",
+				"attempt", attempt,
+				"key", key.String(),
+				"error", err,
+			)
+			bo.Wait()
+			if boErr := bo.Err(); boErr != nil {
+				return nil, boErr
+			}
+			continue
+		}
+		if errors.Is(err, kvpkg.ErrRetryable) {
+			getRetryLogger.Warn("kv Get retry budget exhausted",
+				"attempts", attempt,
+				"key", key.String(),
+				"error", err,
+			)
+		}
+		return nil, err
+	}
 }
 
 // BatchGet retrieves multiple data objects in batches.
