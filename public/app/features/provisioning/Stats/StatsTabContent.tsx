@@ -453,157 +453,31 @@ function PercentageStat({
   );
 }
 
-function FoldersAndDashboardsSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+function GitSyncBanner({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const supported = breakdowns.filter((b) => b.isGitSyncSupported);
-  if (supported.length === 0) {
-    return null;
-  }
-
   const totalSupported = supported.reduce((acc, b) => acc + b.total, 0);
-  const gitSyncCovered = supported.reduce((acc, b) => acc + b.gitSyncCount, 0);
-  const totalEligible = supported.reduce((acc, b) => acc + b.unmanagedCount, 0);
-
-  return (
-    <Stack direction="column" gap={2}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Icon name="apps" />
-        <Text variant="h3">
-          <Trans i18nKey="provisioning.stats.folders-dashboards-heading">Folders and dashboards</Trans>
-        </Text>
-      </Stack>
-      <Text color="secondary">
-        <Trans i18nKey="provisioning.stats.folders-dashboards-description">
-          How folders and dashboards are currently managed. Git Sync supports these types; other tools (Terraform,
-          kubectl, plugins, etc.) can also manage them.
-        </Trans>
-      </Text>
-      <GitSyncCoverageCard gitSyncCovered={gitSyncCovered} totalSupported={totalSupported} />
-      {totalEligible > 0 && (
-        <Alert
-          severity="info"
-          title={t('provisioning.stats.unmanaged-callout-title', 'Some folders or dashboards aren’t managed yet')}
-        >
-          <Trans i18nKey="provisioning.stats.unmanaged-callout-description" count={totalEligible}>
-            {{ count: totalEligible }} folder or dashboard isn’t managed by any provider. You can bring them under Git
-            Sync, Terraform, or another tool.
-          </Trans>
-        </Alert>
-      )}
-      <Stack direction="column" gap={1}>
-        {supported.map((b) => (
-          <ResourceBreakdownCard key={`${b.group}/${b.resource}`} breakdown={b} />
-        ))}
-      </Stack>
-    </Stack>
-  );
-}
-
-function GitSyncCoverageCard({ gitSyncCovered, totalSupported }: { gitSyncCovered: number; totalSupported: number }) {
-  const styles = useStyles2(getStyles);
   if (totalSupported === 0) {
-    // Nothing to manage yet — avoid showing a 0 / 0 stat that reads like an error.
+    // No folders or dashboards to manage yet — skip the banner so we don't
+    // promote a CTA before the user has anything to point it at.
     return null;
   }
-  const coveragePct = percent(gitSyncCovered, totalSupported);
-  return (
-    <div className={styles.gitSyncCard}>
-      <Stack direction="row" gap={3} alignItems="center" wrap>
-        <div className={styles.gitSyncHeadline}>
-          <Text variant="h1" color="success">
-            {coveragePct}
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.git-sync-coverage-detail">
-              {{ covered: gitSyncCovered }} of {{ total: totalSupported }} via Git Sync
-            </Trans>
-          </Text>
-        </div>
-        <Stack direction="column" gap={0.5} flex={1}>
-          <Text variant="h5">
-            <Trans i18nKey="provisioning.stats.git-sync-encourage-title">
-              Git Sync is the simplest way to manage folders and dashboards as code
-            </Trans>
-          </Text>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="provisioning.stats.git-sync-encourage-description">
-              Connect a repository and your folders and dashboards stay versioned automatically — every save becomes a
-              commit.
-            </Trans>
-          </Text>
-        </Stack>
-        <ConnectRepositoryButton />
-      </Stack>
-    </div>
-  );
-}
+  const gitSyncCovered = supported.reduce((acc, b) => acc + b.gitSyncCount, 0);
 
-function ResourceBreakdownCard({ breakdown }: { breakdown: GroupBreakdown }) {
-  const styles = useStyles2(getStyles);
-  const nOfM = (value: number) =>
-    t('provisioning.stats.n-of-m', '{{value}} of {{total}}', { value, total: breakdown.total });
-  const otherEntries = Object.entries(breakdown.managedByKind).filter(([, count]) => count > 0);
   return (
-    <Card noMargin>
-      <Card.Heading>
-        <Stack direction="row" gap={2} alignItems="baseline">
-          <Text variant="h5">{breakdown.label}</Text>
-          <Text variant="bodySmall" color="secondary">
-            {t('provisioning.stats.resource-total', '{{count}} total', { count: breakdown.total })}
-          </Text>
-        </Stack>
-      </Card.Heading>
-      <Card.Description>
-        <Stack direction="column" gap={2}>
-          <Stack direction="row" gap={3} alignItems="center" wrap>
-            <Donut
-              gitSync={breakdown.gitSyncCount}
-              other={breakdown.otherManagedCount}
-              unmanaged={breakdown.unmanagedCount}
-              size={88}
-              strokeWidth={14}
-              centerLabel={percent(breakdown.gitSyncCount + breakdown.otherManagedCount, breakdown.total)}
-            />
-            <Stack direction="row" gap={3} wrap flex={1}>
-              <PercentageStat
-                big={percent(breakdown.gitSyncCount, breakdown.total)}
-                subLabel={nOfM(breakdown.gitSyncCount)}
-                label={t('provisioning.stats.legend-git-sync', 'Managed by Git Sync')}
-                dotClass={styles.legendDotSuccess}
-                color="success"
-              />
-              <PercentageStat
-                big={percent(breakdown.otherManagedCount, breakdown.total)}
-                subLabel={nOfM(breakdown.otherManagedCount)}
-                label={t('provisioning.stats.legend-other', 'Managed by other tools')}
-                dotClass={styles.legendDotInfo}
-                color="info"
-              />
-              <PercentageStat
-                big={percent(breakdown.unmanagedCount, breakdown.total)}
-                subLabel={nOfM(breakdown.unmanagedCount)}
-                label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-                dotClass={styles.legendDotWarning}
-                color="warning"
-              />
-            </Stack>
-          </Stack>
-          {otherEntries.length > 0 && (
-            <Stack direction="row" gap={1} alignItems="center" wrap>
-              <Text color="secondary" variant="bodySmall">
-                <Trans i18nKey="provisioning.stats.managed-by-prefix">Managed by:</Trans>
-              </Text>
-              {otherEntries.map(([kind, count]) => (
-                <span key={kind} className={styles.kindChip}>
-                  <Text variant="bodySmall">
-                    {kindLabel(kind)} · {count}
-                  </Text>
-                </span>
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      </Card.Description>
-    </Card>
+    <Alert
+      severity="info"
+      title={t(
+        'provisioning.stats.git-sync-banner-title',
+        '{{covered}} of {{total}} folders and dashboards are managed by Git Sync',
+        { covered: gitSyncCovered, total: totalSupported }
+      )}
+      action={<ConnectRepositoryButton />}
+    >
+      <Trans i18nKey="provisioning.stats.git-sync-banner-body">
+        Git Sync is the simplest way to manage folders and dashboards as code — connect a repository and every change
+        gets versioned automatically. Other tools like Terraform or kubectl work too.
+      </Trans>
+    </Alert>
   );
 }
 
@@ -712,13 +586,12 @@ function ManagerIdentityList({
   );
 }
 
-function OtherResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
   const [providerFilter, setProviderFilter] = useState<string>('all');
 
-  // Folders and dashboards live in their own section above; everything else
-  // ends up here. Drop seeded zero-count rows so we don't show empty types.
-  const baseRows = useMemo(() => breakdowns.filter((b) => !b.isGitSyncSupported && b.total > 0), [breakdowns]);
+  // Drop seeded zero-count rows so we don't list types nobody has any of.
+  const baseRows = useMemo(() => breakdowns.filter((b) => b.total > 0), [breakdowns]);
 
   const filterOptions: Array<SelectableValue<string>> = useMemo(
     () => [
@@ -744,13 +617,12 @@ function OtherResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[
       <Stack direction="row" gap={1} alignItems="center">
         <Icon name="list-ul" />
         <Text variant="h4">
-          <Trans i18nKey="provisioning.stats.other-resources-heading">Other resource types</Trans>
+          <Trans i18nKey="provisioning.stats.resource-types-heading">Resource types</Trans>
         </Text>
       </Stack>
       <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="provisioning.stats.other-resources-description">
-          Resources beyond folders and dashboards. Different provisioning tools support different types — pick one to
-          see only what it can manage.
+        <Trans i18nKey="provisioning.stats.resource-types-description">
+          Each provisioning tool supports a different set of resource types — pick one to see only what it can manage.
         </Trans>
       </Text>
       <Stack direction="row" gap={1} alignItems="center">
@@ -769,14 +641,14 @@ function OtherResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[
       {rows.length === 0 ? (
         <Alert
           severity="info"
-          title={t('provisioning.stats.filter-empty-title', '{{provider}} doesn’t manage any other resource types', {
-            provider: kindLabel(providerFilter),
-          })}
-        >
-          <Trans i18nKey="provisioning.stats.filter-empty-description">
-            For folders and dashboards see the section above.
-          </Trans>
-        </Alert>
+          title={t(
+            'provisioning.stats.filter-empty-title',
+            '{{provider}} doesn’t manage any of your current resources',
+            {
+              provider: kindLabel(providerFilter),
+            }
+          )}
+        />
       ) : (
         <div className={styles.otherResourcesGrid} role="table">
           <div className={styles.otherResourcesHeader} role="row">
@@ -857,10 +729,10 @@ export function StatsTabContent() {
   return (
     <Stack direction="column" gap={4}>
       <SummarySection stats={computed} />
-      <FoldersAndDashboardsSection breakdowns={computed.groupBreakdowns} />
+      <GitSyncBanner breakdowns={computed.groupBreakdowns} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
-      <OtherResourceTypesSection breakdowns={computed.groupBreakdowns} />
+      <ResourceTypesSection breakdowns={computed.groupBreakdowns} />
     </Stack>
   );
 }
@@ -886,23 +758,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
-  }),
-  gitSyncCard: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: theme.spacing(3),
-    padding: theme.spacing(2, 3),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.success.borderTransparent}`,
-    background: theme.colors.success.transparent,
-  }),
-  gitSyncHeadline: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.25),
-    minWidth: 110,
   }),
   kindChip: css({
     display: 'inline-flex',
