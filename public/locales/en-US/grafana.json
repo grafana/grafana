@@ -13817,7 +13817,7 @@
       "other-provider-resource-count_other": "{{count}} resources",
       "other-providers-description": "Resources managed by tools other than Git Sync. Some of these (Terraform, kubectl, etc.) may already be the source of truth for your team — Git Sync isn’t a requirement.",
       "other-providers-heading": "Other providers",
-      "overview-heading": "Provisioning overview",
+      "overview-heading": "Overview",
       "overview-subhead": "Manage your folders, dashboards, and other resources as code. Tools like Git Sync, Terraform, and kubectl let you store these definitions in a Git repository (or another source of truth) so every change is versioned, reviewable, and reproducible. This is what GitOps means in practice — the live state of the instance comes from your repository, not the other way around. The breakdown below shows how much of your instance is managed this way today, and which tools are involved.",
       "repository-fallback-name": "Repository",
       "resource-total_one": "{{count}} total",

@@ -461,7 +461,7 @@ function OverviewIntro() {
   return (
     <Stack direction="column" gap={1}>
       <Text variant="h3">
-        <Trans i18nKey="provisioning.stats.overview-heading">Provisioning overview</Trans>
+        <Trans i18nKey="provisioning.stats.overview-heading">Overview</Trans>
       </Text>
       <Text color="secondary">
         <Trans i18nKey="provisioning.stats.overview-subhead">
