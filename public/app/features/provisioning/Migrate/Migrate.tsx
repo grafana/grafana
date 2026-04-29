@@ -391,56 +391,6 @@ function colorForKind(theme: GrafanaTheme2, kind: string): string {
   }
 }
 
-function MigrationProgressPanel({
-  totals,
-}: {
-  totals: ReturnType<typeof aggregateTotals>;
-}) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-  const pct = totals.instanceTotal === 0 ? 0 : Math.round((totals.managed / totals.instanceTotal) * 100);
-  const hue = 30 + (pct / 100) * 90;
-  const fillColor = `hsl(${hue}, 70%, 45%)`;
-  const segments: DonutSegment[] = [
-    {
-      key: 'managed',
-      value: totals.managed,
-      color: fillColor,
-      label: t('provisioning.stats.summary-managed', 'Managed'),
-    },
-    {
-      key: 'unmanaged',
-      value: totals.unmanaged,
-      color: theme.colors.warning.main,
-      label: t('provisioning.stats.summary-unmanaged', 'Unmanaged'),
-    },
-  ];
-  return (
-    <div className={styles.chartPanel}>
-      <Text variant="h5">
-        <Trans i18nKey="provisioning.stats.migration-progress-heading">Migration progress</Trans>
-      </Text>
-      <Stack direction="row" gap={2} alignItems="center">
-        <Donut segments={segments} centerLabel={`${pct}%`} />
-        <Stack direction="column" gap={1} flex={1}>
-          <Stack direction="row" gap={1} alignItems="center">
-            <span className={styles.legendDot} style={{ background: fillColor }} aria-hidden />
-            <Text variant="bodySmall" color="secondary">
-              {t('provisioning.stats.legend-managed-count', 'Managed: {{count}}', { count: totals.managed })}
-            </Text>
-          </Stack>
-          <Stack direction="row" gap={1} alignItems="center">
-            <span className={styles.legendDot} style={{ background: theme.colors.warning.main }} aria-hidden />
-            <Text variant="bodySmall" color="secondary">
-              {t('provisioning.stats.legend-unmanaged-count', 'Unmanaged: {{count}}', { count: totals.unmanaged })}
-            </Text>
-          </Stack>
-        </Stack>
-      </Stack>
-    </div>
-  );
-}
-
 function EmptyDonut({ size = 140, strokeWidth = 18 }: { size?: number; strokeWidth?: number }) {
   const theme = useTheme2();
   const radius = 50 - strokeWidth / 2;
@@ -1060,7 +1010,6 @@ export function Migrate() {
         <div className={styles.tableColumn}>
           <ResourceTypesTable rows={tableRows} repos={repoList} />
           <div className={styles.chartsRow}>
-            <MigrationProgressPanel totals={totals} />
             <ManagedByToolPanel breakdowns={breakdowns} />
             <ResourceBreakdownPanel breakdowns={breakdowns} variant="managed" />
             <ResourceBreakdownPanel breakdowns={breakdowns} variant="unmanaged" />

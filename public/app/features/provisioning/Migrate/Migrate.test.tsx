@@ -289,31 +289,7 @@ describe('Migrate', () => {
     expect(screen.getAllByText(/dashboards: \d+/i).length).toBeGreaterThan(0);
   });
 
-  it('renders the Migration progress and Managed by tool donut panels', () => {
-    mockQuery({
-      data: {
-        instance: [
-          { group: 'folder.grafana.app', resource: 'folders', count: 4 },
-          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 16 },
-        ],
-        unmanaged: [],
-        managed: [
-          {
-            kind: 'repo',
-            id: 'r1',
-            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
-          },
-        ],
-      },
-    });
-    render(<Migrate />);
-    expect(screen.getByText(/migration progress/i)).toBeInTheDocument();
-    expect(screen.getByText(/managed resources by tool/i)).toBeInTheDocument();
-    // The donuts include a "managed" sublabel.
-    expect(screen.getAllByText(/^managed$/i).length).toBeGreaterThan(0);
-  });
-
-  it('renders a per-row coverage bar inside the % managed cell', () => {
+it('renders a per-row coverage bar inside the % managed cell', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
