@@ -305,16 +305,21 @@ function colorForKind(theme: GrafanaTheme2, kind: string): string {
   }
 }
 
+/**
+ * Builds segments for the donut and the stat cards. Donut shows only non-zero
+ * segments (drawing a 0-thickness arc is meaningless). Cards always include
+ * Git Sync and Unmanaged — even at zero — so the row keeps a stable shape and
+ * users can see "0 of N managed by Git Sync" rather than a missing card.
+ */
 function buildSegments(stats: ComputedStats, theme: GrafanaTheme2): ProviderSegment[] {
-  const segments: ProviderSegment[] = [];
-  if (stats.gitSync && stats.gitSync.totals.total > 0) {
-    segments.push({
+  const segments: ProviderSegment[] = [
+    {
       key: ManagerKind.Repo,
       label: kindLabel(ManagerKind.Repo),
-      value: stats.gitSync.totals.total,
+      value: stats.gitSync?.totals.total ?? 0,
       color: theme.colors.success.main,
-    });
-  }
+    },
+  ];
   for (const p of stats.otherProviders) {
     if (p.totals.total === 0) {
       continue;
@@ -326,14 +331,12 @@ function buildSegments(stats: ComputedStats, theme: GrafanaTheme2): ProviderSegm
       color: colorForKind(theme, p.kind),
     });
   }
-  if (stats.unmanagedTotal > 0) {
-    segments.push({
-      key: 'unmanaged',
-      label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
-      value: stats.unmanagedTotal,
-      color: theme.colors.warning.main,
-    });
-  }
+  segments.push({
+    key: 'unmanaged',
+    label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
+    value: stats.unmanagedTotal,
+    color: theme.colors.warning.main,
+  });
   return segments;
 }
 
@@ -418,10 +421,10 @@ function Donut({
       {centerSubLabel && (
         <text
           x="50"
-          y="62"
+          y="63"
           textAnchor="middle"
           dominantBaseline="central"
-          fontSize="9"
+          fontSize="11"
           fill={theme.colors.text.secondary}
         >
           {centerSubLabel}
@@ -854,8 +857,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '0 0 auto',
   }),
   providerStat: css({
-    flex: '1 1 140px',
-    minWidth: 120,
+    flex: '0 1 160px',
+    minWidth: 140,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
