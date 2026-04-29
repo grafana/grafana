@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"math/rand"
 	"regexp"
 	"time"
 
@@ -444,6 +445,31 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
+	// Retry the batch operation up to `maxAttempts` times in case of conflict, with a
+	// random delay between retries to increase the chances of success. Badger will
+	// fail the `Commit()` call on the transaction if a conflict is detected internally,
+	// which can happen if multiple callers are trying to apply a similar batch of
+	// operations at the same time.
+	const maxAttempts = 5
+	const maxRetryJitter = 100 * time.Millisecond
+	var lastConflict error
+	for attempt := range maxAttempts {
+		err := k.batchOnce(section, ops)
+		if errors.Is(err, badger.ErrConflict) {
+			lastConflict = err
+			if attempt < maxAttempts-1 {
+				if err := sleepWithJitter(ctx, maxRetryJitter); err != nil {
+					return err
+				}
+			}
+			continue
+		}
+		return err
+	}
+	return fmt.Errorf("after %d attempts: %w", maxAttempts, lastConflict)
+}
+
+func (k *badgerKV) batchOnce(section string, ops []BatchOp) error {
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
@@ -504,4 +530,17 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	}
 
 	return txn.Commit()
+}
+
+func sleepWithJitter(ctx context.Context, max time.Duration) error {
+	delay := time.Duration(rand.Int63n(int64(max) + 1))
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }

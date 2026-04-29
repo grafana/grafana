@@ -9,4 +9,6 @@ export interface UPlotComparePayload {
   /** uPlot `width` / `height` (CSS px) for the test canvas; used by uplot-compare to size replay canvases */
   width: number;
   height: number;
+  /** Present on payloads from newer matchers: whether the Jest snapshot assertion passed when this file was written. */
+  snapshotAssertionPassed?: boolean;
 }

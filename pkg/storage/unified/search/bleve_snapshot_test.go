@@ -96,6 +96,15 @@ func (f *fakeRemoteIndexStore) DeleteIndex(context.Context, resource.NamespacedR
 func (f *fakeRemoteIndexStore) CleanupIncompleteUploads(context.Context, resource.NamespacedResource, time.Duration) (int, error) {
 	panic("CleanupIncompleteUploads not implemented for fakeRemoteIndexStore")
 }
+func (f *fakeRemoteIndexStore) ListNamespaces(context.Context) ([]string, error) {
+	panic("ListNamespaces not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) ListNamespaceIndexes(context.Context, string) ([]resource.NamespacedResource, error) {
+	panic("ListNamespaceIndexes not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) LockNamespaceForCleanup(context.Context, string) (IndexStoreLock, error) {
+	panic("LockNamespaceForCleanup not implemented for fakeRemoteIndexStore")
+}
 
 // writeFakeSnapshot creates an empty bleve index at dir with RV and build info
 // matching meta. validateDownloadedIndex reads these back.
