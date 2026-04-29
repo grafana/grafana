@@ -23,16 +23,26 @@ export function jitter(n: number): number {
 
 export function pickTypingPattern(): TypingPattern {
   const r = Math.random();
-  if (r < 0.3) return 'burst';
-  if (r < 0.7) return 'normal';
-  if (r < 0.9) return 'thinking';
+  if (r < 0.3) {
+    return 'burst';
+  }
+  if (r < 0.7) {
+    return 'normal';
+  }
+  if (r < 0.9) {
+    return 'thinking';
+  }
   return 'hunting';
 }
 
 export function pickActivationStyle(): ActivationStyle {
   const r = Math.random();
-  if (r < 0.4) return 'mouse';
-  if (r < 0.7) return 'keyboard-immediate';
+  if (r < 0.4) {
+    return 'mouse';
+  }
+  if (r < 0.7) {
+    return 'keyboard-immediate';
+  }
   return 'keyboard-browse';
 }
 
