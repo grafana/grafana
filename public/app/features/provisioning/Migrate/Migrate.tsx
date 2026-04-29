@@ -1,16 +1,14 @@
-import { css, cx, keyframes } from '@emotion/css';
-import { type ReactNode, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useMemo, useState } from 'react';
 
 import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
-  type Column,
   EmptyState,
   FeatureBadge,
   Icon,
   type IconName,
-  InteractiveTable,
   LinkButton,
   Spinner,
   Stack,
@@ -18,7 +16,6 @@ import {
   TextLink,
   Tooltip,
   useStyles2,
-  useTheme2,
 } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import {
@@ -32,6 +29,10 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { CONFIGURE_GRAFANA_DOCS_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 import gitSvg from '../img/git.svg';
+
+import { FoldersToMigrate } from './FoldersToMigrate';
+import { QuickWinsPanel } from './QuickWinsPanel';
+import { useFolderLeaderboard } from './hooks/useFolderLeaderboard';
 
 const FOLDER_GROUPS = ['folder.grafana.app', 'folders'];
 const DASHBOARD_GROUPS = ['dashboard.grafana.app'];
@@ -117,16 +118,6 @@ function resourceLabel(group: string): string {
   return group;
 }
 
-function resourceIcon(group: string): IconName {
-  if (FOLDER_GROUPS.includes(group)) {
-    return 'folder';
-  }
-  if (DASHBOARD_GROUPS.includes(group)) {
-    return 'apps';
-  }
-  return 'database';
-}
-
 /**
  * Build per-type breakdowns for Folders and Dashboards from the API
  * response. Always emits one row per type even when the API doesn't
@@ -201,32 +192,11 @@ function aggregateTotals(breakdowns: GroupBreakdown[]) {
   return { instanceTotal, managed, unmanaged, gitSync };
 }
 
-function kindLabel(kind: string): string {
-  switch (kind) {
-    case ManagerKind.Repo:
-      return t('provisioning.stats.manager-kind-repo', 'Git Sync');
-    case ManagerKind.Terraform:
-      return t('provisioning.stats.manager-kind-terraform', 'Terraform');
-    case ManagerKind.Kubectl:
-      return t('provisioning.stats.manager-kind-gcx', 'GCX');
-    case ManagerKind.Plugin:
-      return t('provisioning.stats.manager-kind-plugin', 'Plugin');
-    case CLASSIC_FILE_PROVISIONING:
-      return t('provisioning.stats.manager-kind-file-system', 'File System');
-    default:
-      return kind || t('provisioning.stats.manager-kind-unknown', 'Unknown');
-  }
-}
-
 function percent(part: number, total: number): string {
   if (total === 0) {
     return '0%';
   }
   return `${Math.round((part / total) * 100)}%`;
-}
-
-function rowKey(b: GroupBreakdown): string {
-  return `${b.group}/${b.resource}`;
 }
 
 function migrateTarget(repos: Repository[]): string {
@@ -237,337 +207,6 @@ function migrateTarget(repos: Repository[]): string {
     return `${PROVISIONING_URL}/${repos[0].metadata.name}`;
   }
   return PROVISIONING_URL;
-}
-
-function CoverageBar({
-  covered,
-  total,
-  showRange = false,
-  compact = false,
-}: {
-  covered: number;
-  total: number;
-  showRange?: boolean;
-  compact?: boolean;
-}) {
-  const styles = useStyles2(getStyles);
-  const pct = total === 0 ? 0 : Math.max(0, Math.min(100, (covered / total) * 100));
-  const hue = 30 + (pct / 100) * 90;
-  const fillColor = `hsl(${hue}, 70%, 45%)`;
-  const tooltip = t('provisioning.stats.coverage-bar-tooltip', '{{covered}} of {{total}} ({{pct}}%)', {
-    covered,
-    total,
-    pct: Math.round(pct),
-  });
-  const bar = (
-    <div
-      className={cx(styles.coverageTrack, compact && styles.coverageTrackCompact)}
-      role="img"
-      aria-label={t('provisioning.stats.coverage-bar-aria', 'Coverage progress')}
-      title={tooltip}
-    >
-      <div className={styles.coverageFill} style={{ width: `${pct}%`, background: fillColor }} />
-    </div>
-  );
-  if (!showRange) {
-    return bar;
-  }
-  return (
-    <div className={styles.coverageRow}>
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="provisioning.stats.coverage-bar-start">0%</Trans>
-      </Text>
-      <div className={styles.coverageBarFlex}>{bar}</div>
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="provisioning.stats.coverage-bar-end">100%</Trans>
-      </Text>
-    </div>
-  );
-}
-
-interface DonutSegment {
-  key: string;
-  value: number;
-  color: string;
-  label: string;
-}
-
-function Donut({
-  segments,
-  size = 140,
-  strokeWidth = 18,
-  centerLabel,
-  centerSubLabel,
-}: {
-  segments: DonutSegment[];
-  size?: number;
-  strokeWidth?: number;
-  centerLabel?: string;
-  centerSubLabel?: string;
-}) {
-  const theme = useTheme2();
-  const total = segments.reduce((acc, s) => acc + s.value, 0);
-  const radius = 50 - strokeWidth / 2;
-  const circumference = 2 * Math.PI * radius;
-  let cumulative = 0;
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img">
-      <circle
-        cx="50"
-        cy="50"
-        r={radius}
-        fill="none"
-        stroke={theme.colors.background.canvas}
-        strokeWidth={strokeWidth}
-      />
-      {total > 0 &&
-        segments
-          .filter((s) => s.value > 0)
-          .map((seg) => {
-            const pct = seg.value / total;
-            const dashLen = pct * circumference;
-            const offset = -cumulative * circumference;
-            cumulative += pct;
-            return (
-              <circle
-                key={seg.key}
-                cx="50"
-                cy="50"
-                r={radius}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${dashLen} ${circumference - dashLen}`}
-                strokeDashoffset={offset}
-                transform="rotate(-90 50 50)"
-                strokeLinecap="butt"
-              >
-                <title>{`${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)`}</title>
-              </circle>
-            );
-          })}
-      {centerLabel !== undefined && (
-        <text
-          x="50"
-          y={centerSubLabel ? 46 : 50}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="20"
-          fontWeight={600}
-          fill={theme.colors.text.primary}
-        >
-          {centerLabel}
-        </text>
-      )}
-      {centerSubLabel && (
-        <text
-          x="50"
-          y="63"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="11"
-          fill={theme.colors.text.secondary}
-        >
-          {centerSubLabel}
-        </text>
-      )}
-    </svg>
-  );
-}
-
-function colorForGroup(theme: GrafanaTheme2, group: string): string {
-  if (FOLDER_GROUPS.includes(group)) {
-    return theme.visualization.getColorByName('yellow');
-  }
-  if (DASHBOARD_GROUPS.includes(group)) {
-    return theme.visualization.getColorByName('blue');
-  }
-  return theme.colors.text.secondary;
-}
-
-function colorForKind(theme: GrafanaTheme2, kind: string): string {
-  switch (kind) {
-    case ManagerKind.Repo:
-      return theme.colors.success.main;
-    case ManagerKind.Terraform:
-      return theme.visualization.getColorByName('blue');
-    case ManagerKind.Kubectl:
-      return theme.visualization.getColorByName('purple');
-    case ManagerKind.Plugin:
-      return theme.visualization.getColorByName('yellow');
-    case CLASSIC_FILE_PROVISIONING:
-      return theme.visualization.getColorByName('red');
-    default:
-      return theme.colors.text.secondary;
-  }
-}
-
-function EmptyDonutBlock({ title, body }: { title: NonNullable<ReactNode>; body: NonNullable<ReactNode> }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <Stack direction="row" gap={2} alignItems="center">
-      <div className={styles.emptyDonutWrap}>
-        <EmptyDonut />
-        <div className={styles.emptyDonutIcon}>
-          <Icon name="rocket" size="xl" />
-        </div>
-      </div>
-      <Stack direction="column" gap={0.5} flex={1}>
-        <Text weight="medium">{title}</Text>
-        <Text variant="bodySmall" color="secondary">
-          {body}
-        </Text>
-      </Stack>
-    </Stack>
-  );
-}
-
-function EmptyDonut({ size = 140, strokeWidth = 18 }: { size?: number; strokeWidth?: number }) {
-  const theme = useTheme2();
-  const radius = 50 - strokeWidth / 2;
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-hidden>
-      <circle
-        cx="50"
-        cy="50"
-        r={radius}
-        fill="none"
-        stroke={theme.colors.border.weak}
-        strokeWidth={strokeWidth}
-        strokeDasharray="2 3"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-  const segments: DonutSegment[] = useMemo(() => {
-    const counts = new Map<string, number>();
-    breakdowns.forEach((b) => {
-      counts.set(ManagerKind.Repo, (counts.get(ManagerKind.Repo) ?? 0) + b.gitSyncCount);
-      Object.entries(b.managedByKind).forEach(([kind, c]) => {
-        counts.set(kind, (counts.get(kind) ?? 0) + c);
-      });
-    });
-    return Array.from(counts.entries())
-      .filter(([, value]) => value > 0)
-      .map(([kind, value]) => ({
-        key: kind,
-        value,
-        label: kindLabel(kind),
-        color: colorForKind(theme, kind),
-      }));
-  }, [breakdowns, theme]);
-
-  const total = segments.reduce((acc, s) => acc + s.value, 0);
-
-  return (
-    <div className={styles.chartPanel}>
-      <Text variant="h5">
-        <Trans i18nKey="provisioning.stats.managed-by-tool-heading">Managed resources by tool</Trans>
-      </Text>
-      {total === 0 ? (
-        <EmptyDonutBlock
-          title={
-            <Trans i18nKey="provisioning.stats.managed-by-tool-empty-title">An empty donut. For now.</Trans>
-          }
-          body={
-            <Trans i18nKey="provisioning.stats.managed-by-tool-empty-body">
-              Connect Git Sync (or any other tool) and slices will appear here as folders and
-              dashboards come under management.
-            </Trans>
-          }
-        />
-      ) : (
-        <Stack direction="row" gap={2} alignItems="center">
-          <Donut segments={segments} centerLabel={total.toLocaleString()} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
-          <Stack direction="column" gap={1} flex={1}>
-            {segments.map((s) => (
-              <Stack key={s.key} direction="row" gap={1} alignItems="center">
-                <span className={styles.legendDot} style={{ background: s.color }} aria-hidden />
-                <Text variant="bodySmall" color="secondary">
-                  {`${s.label}: ${s.value}`}
-                </Text>
-              </Stack>
-            ))}
-          </Stack>
-        </Stack>
-      )}
-    </div>
-  );
-}
-
-function ResourceBreakdownPanel({
-  breakdowns,
-  variant,
-}: {
-  breakdowns: GroupBreakdown[];
-  variant: 'managed' | 'unmanaged';
-}) {
-  const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-  const segments: DonutSegment[] = useMemo(
-    () =>
-      breakdowns
-        .map((b) => ({
-          key: b.group,
-          value: variant === 'managed' ? b.gitSyncCount + b.otherManagedCount : b.unmanagedCount,
-          color: colorForGroup(theme, b.group),
-          label: b.label,
-        }))
-        .filter((s) => s.value > 0),
-    [breakdowns, theme, variant]
-  );
-
-  const total = segments.reduce((acc, s) => acc + s.value, 0);
-  const heading =
-    variant === 'managed'
-      ? t('provisioning.stats.managed-by-type-heading', 'Managed by type')
-      : t('provisioning.stats.unmanaged-by-type-heading', 'Unmanaged by type');
-
-  const renderEmpty = () =>
-    variant === 'managed' ? (
-      <EmptyDonutBlock
-        title={
-          <Trans i18nKey="provisioning.stats.managed-by-type-empty-title">An empty donut. For now.</Trans>
-        }
-        body={
-          <Trans i18nKey="provisioning.stats.managed-by-type-empty-body">
-            Once a tool starts managing folders or dashboards, you&apos;ll see the breakdown here.
-          </Trans>
-        }
-      />
-    ) : (
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="provisioning.stats.unmanaged-by-type-empty">Everything is under management.</Trans>
-      </Text>
-    );
-
-  return (
-    <div className={styles.chartPanel}>
-      <Text variant="h5">{heading}</Text>
-      {total === 0 ? (
-        renderEmpty()
-      ) : (
-        <Stack direction="row" gap={2} alignItems="center">
-          <Donut segments={segments} centerLabel={total.toLocaleString()} />
-          <Stack direction="column" gap={1} flex={1}>
-            {segments.map((s) => (
-              <Stack key={s.key} direction="row" gap={1} alignItems="center">
-                <span className={styles.legendDot} style={{ background: s.color }} aria-hidden />
-                <Text variant="bodySmall" color="secondary">
-                  {`${s.label}: ${s.value}`}
-                </Text>
-              </Stack>
-            ))}
-          </Stack>
-        </Stack>
-      )}
-    </div>
-  );
 }
 
 function MigrateToGitopsHeader() {
@@ -706,125 +345,6 @@ function OverviewStatCards({
         subLabel={t('provisioning.stats.last-scan-sub', 'Auto-scan enabled')}
         label={t('provisioning.stats.last-scan-label', 'Last scan')}
       />
-    </div>
-  );
-}
-
-function MigrateRowButton({ repos }: { repos: Repository[] }) {
-  const target = migrateTarget(repos);
-  return (
-    <LinkButton variant="secondary" size="sm" icon="upload" href={target}>
-      <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
-    </LinkButton>
-  );
-}
-
-function ResourceTypesTable({
-  rows,
-  repos,
-}: {
-  rows: GroupBreakdown[];
-  repos: Repository[];
-}) {
-  const styles = useStyles2(getStyles);
-
-  const columns: Array<Column<GroupBreakdown>> = useMemo(
-    () => [
-      {
-        id: 'label',
-        header: t('provisioning.stats.column-resource', 'Resource'),
-        sortType: 'string',
-        cell: ({ row }) => (
-          <Stack direction="row" gap={1} alignItems="center">
-            <span className={styles.resourceIcon} aria-hidden>
-              <Icon name={resourceIcon(row.original.group)} />
-            </span>
-            <Text>{row.original.label}</Text>
-          </Stack>
-        ),
-      },
-      {
-        id: 'total',
-        header: t('provisioning.stats.column-total', 'Total'),
-        sortType: 'number',
-        cell: ({ row }) => <Text>{row.original.total.toLocaleString()}</Text>,
-      },
-      {
-        id: 'unmanagedCount',
-        header: t('provisioning.stats.column-unmanaged', 'Unmanaged'),
-        sortType: 'number',
-        cell: ({ row }) => (
-          <Text color={row.original.unmanagedCount > 0 ? 'warning' : 'secondary'}>
-            {row.original.unmanagedCount.toLocaleString()}
-          </Text>
-        ),
-      },
-      {
-        id: 'managed',
-        header: t('provisioning.stats.column-managed', 'Managed'),
-        sortType: (a, b) => {
-          const av = a.original.gitSyncCount + a.original.otherManagedCount;
-          const bv = b.original.gitSyncCount + b.original.otherManagedCount;
-          return av - bv;
-        },
-        cell: ({ row }) => {
-          const value = row.original.gitSyncCount + row.original.otherManagedCount;
-          return <Text color={value > 0 ? 'info' : 'secondary'}>{value.toLocaleString()}</Text>;
-        },
-      },
-      {
-        id: 'managedPct',
-        header: t('provisioning.stats.column-managed-pct', '% managed'),
-        sortType: (a, b) => {
-          const av = a.original.total === 0 ? 0 : (a.original.gitSyncCount + a.original.otherManagedCount) / a.original.total;
-          const bv = b.original.total === 0 ? 0 : (b.original.gitSyncCount + b.original.otherManagedCount) / b.original.total;
-          return av - bv;
-        },
-        cell: ({ row }) => {
-          const value = row.original.gitSyncCount + row.original.otherManagedCount;
-          const pctText = percent(value, row.original.total);
-          const color = value === row.original.total && row.original.total > 0 ? 'success' : value === 0 ? 'warning' : 'info';
-          return (
-            <div className={styles.managedPctCell}>
-              <div className={styles.managedPctBar}>
-                <CoverageBar covered={value} total={row.original.total} compact />
-              </div>
-              <Text color={color}>{pctText}</Text>
-            </div>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        header: '',
-        disableGrow: true,
-        cell: ({ row }) =>
-          row.original.unmanagedCount === 0 ? null : <MigrateRowButton repos={repos} />,
-      },
-    ],
-    [repos, styles.managedPctCell, styles.managedPctBar, styles.resourceIcon]
-  );
-
-  return (
-    <div className={styles.tablePanel}>
-      <Stack direction="column" gap={0.5}>
-        <Text variant="h5">
-          <Trans i18nKey="provisioning.stats.resource-types-heading">Resource types</Trans>
-        </Text>
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.resource-types-subtitle">
-            Folders and dashboards on this instance, grouped by type. Migrate any unmanaged ones to a
-            provisioning tool to track and review their changes.
-          </Trans>
-        </Text>
-      </Stack>
-      <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />
-      <Text color="secondary" variant="bodySmall">
-        {t('provisioning.stats.resource-types-footer', 'Showing {{count}} of {{total}} resource types', {
-          count: rows.length,
-          total: rows.length,
-        })}
-      </Text>
     </div>
   );
 }
@@ -1015,8 +535,28 @@ export function Migrate() {
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
   const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
-  const tableRows = useMemo(() => breakdowns.filter((b) => b.total > 0), [breakdowns]);
   const styles = useStyles2(getStyles);
+
+  const { data: folders } = useFolderLeaderboard();
+  const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
+
+  const toggleFolder = useCallback((uid: string) => {
+    setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) {
+        next.delete(uid);
+      } else {
+        next.add(uid);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAllFolders = useCallback(() => {
+    setSelectedFolderUids(
+      new Set(folders.filter((f) => f.unmanagedDashboardCount > 0).map((f) => f.uid))
+    );
+  }, [folders]);
 
   if (isLoading) {
     return (
@@ -1050,12 +590,19 @@ export function Migrate() {
       <OverviewStatCards totals={totals} lastScannedAt={lastScannedAt} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
-          <ResourceTypesTable rows={tableRows} repos={repoList} />
-          <div className={styles.chartsRow}>
-            <ManagedByToolPanel breakdowns={breakdowns} />
-            <ResourceBreakdownPanel breakdowns={breakdowns} variant="managed" />
-            <ResourceBreakdownPanel breakdowns={breakdowns} variant="unmanaged" />
-          </div>
+          <QuickWinsPanel
+            folders={folders}
+            repos={repoList}
+            selected={selectedFolderUids}
+            onToggle={toggleFolder}
+            onSelectAll={selectAllFolders}
+          />
+          <FoldersToMigrate
+            folders={folders}
+            repos={repoList}
+            selectedFolders={selectedFolderUids}
+            onToggleFolder={toggleFolder}
+          />
         </div>
         <div className={styles.sideColumn}>
           <NextStepsPanel totals={totals} repos={repoList} />
@@ -1158,37 +705,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   statCardTone_primary: css({
     color: theme.visualization.getColorByName('purple'),
   }),
-  coverageTrack: css({
-    position: 'relative',
-    width: '100%',
-    height: theme.spacing(1.25),
-    minHeight: 8,
-    borderRadius: theme.shape.radius.pill,
-    overflow: 'hidden',
-    background: `color-mix(in srgb, ${theme.colors.warning.main} 25%, transparent)`,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.warning.borderTransparent}`,
-  }),
-  coverageTrackCompact: css({
-    height: theme.spacing(0.75),
-    minHeight: 6,
-  }),
-  coverageRow: css({
-    display: 'flex',
-    width: '100%',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  coverageBarFlex: css({
-    flex: '1 1 auto',
-    minWidth: 120,
-  }),
-  coverageFill: css({
-    height: '100%',
-    borderRadius: theme.shape.radius.pill,
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: 'width 200ms ease, background 200ms ease',
-    },
-  }),
   mainGrid: css({
     display: 'grid',
     gridTemplateColumns: '2fr minmax(280px, 1fr)',
@@ -1204,40 +720,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     minWidth: 0,
   }),
-  chartsRow: css({
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: theme.spacing(2),
-  }),
-  chartPanel: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(2),
-    padding: theme.spacing(2.5),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.secondary,
-  }),
-  legendDot: css({
-    display: 'inline-block',
-    width: 10,
-    height: 10,
-    borderRadius: theme.shape.radius.circle,
-  }),
   sideColumn: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
     minWidth: 0,
-  }),
-  tablePanel: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(2.5),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.secondary,
   }),
   sidePanel: css({
     display: 'flex',
@@ -1263,17 +750,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.success.transparent,
     borderColor: theme.colors.success.border,
     color: theme.colors.success.text,
-  }),
-  managedPctCell: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    minWidth: 0,
-  }),
-  managedPctBar: css({
-    flex: '1 1 auto',
-    minWidth: 60,
-    maxWidth: 120,
   }),
   toolingGrid: css({
     display: 'grid',
@@ -1321,36 +797,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightBold,
     lineHeight: 1,
   }),
-  resourceIcon: css({
-    width: theme.spacing(3),
-    height: theme.spacing(3),
-    color: theme.colors.text.secondary,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: '0 0 auto',
-  }),
-  emptyDonutWrap: css({
-    position: 'relative',
-    width: 140,
-    height: 140,
-    flex: '0 0 auto',
-  }),
-  emptyDonutIcon: css({
-    position: 'absolute',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: theme.colors.text.secondary,
-    transform: 'rotate(-12deg)',
-    [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${rocketBob} 3s ease-in-out infinite`,
-    },
-  }),
-});
-
-const rocketBob = keyframes({
-  '0%, 100%': { transform: 'translateY(0) rotate(-12deg)' },
-  '50%': { transform: 'translateY(-4px) rotate(-12deg)' },
 });
