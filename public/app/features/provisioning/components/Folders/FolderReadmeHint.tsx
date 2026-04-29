@@ -8,7 +8,7 @@ import { FOLDER_README_ANCHOR_ID } from './FolderReadmePanel';
 
 /** Show the hint only when the dashboards list is long enough that the user
  * is unlikely to scroll past it to discover the README on their own. */
-export const FOLDER_README_HINT_MIN_ITEMS = 15;
+export const FOLDER_README_HINT_MIN_ITEMS = 20;
 
 interface Props {
   folderUID: string;
