@@ -183,6 +183,7 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		UploadInterval:     DefaultSnapshotUploadInterval,
 		MinDocChanges:      DefaultSnapshotMinDocChanges,
 		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
+		CleanupInterval:    DefaultSnapshotCleanupInterval,
 	}, nil
 }
 

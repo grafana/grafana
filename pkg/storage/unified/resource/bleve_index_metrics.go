@@ -27,6 +27,8 @@ type BleveIndexMetrics struct {
 	IndexSnapshotDownloadDuration prometheus.Histogram
 	IndexSnapshotUploads          *prometheus.CounterVec
 	IndexSnapshotUploadDuration   prometheus.Histogram
+	IndexSnapshotCleanups         *prometheus.CounterVec
+	IndexSnapshotDeleted          *prometheus.CounterVec
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -123,14 +125,45 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
+		IndexSnapshotCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_cleanups_total",
+			Help: "Number of remote index snapshot cleanup attempts per namespace, by outcome.",
+		}, []string{"status"}), // status: success, error, skip_lock_held, skip_unowned
+		IndexSnapshotDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_deleted_total",
+			Help: "Number of remote index snapshot objects deleted by cleanup, by kind.",
+		}, []string{"kind"}), // kind: snapshot, incomplete
 	}
 
-	// Initialize labels.
+	// Always-on label series. Snapshot-specific series are initialised separately
+	// in InitSnapshotMetrics so they don't appear on instances where the feature
+	// is disabled — see InitSnapshotMetrics for rationale.
 	m.OpenIndexes.WithLabelValues("file").Set(0)
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	return m
+}
+
+// InitSnapshotMetrics zero-initialises the per-status label series of the
+// snapshot-related counters. Call once at startup only when the snapshot
+// feature is configured to run on this instance, so disabled instances don't
+// emit permanently-zero `index_server_snapshot_*` series. Registration of
+// the CounterVecs themselves stays unconditional in ProvideIndexMetrics.
+func (m *BleveIndexMetrics) InitSnapshotMetrics() {
+	if m == nil {
+		return
+	}
+	m.IndexSnapshotDownloads.WithLabelValues("success").Add(0)
+	m.IndexSnapshotDownloads.WithLabelValues("empty").Add(0)
+	m.IndexSnapshotDownloads.WithLabelValues("download_error").Add(0)
+	m.IndexSnapshotDownloads.WithLabelValues("validate_error").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
-	return m
+	m.IndexSnapshotCleanups.WithLabelValues("success").Add(0)
+	m.IndexSnapshotCleanups.WithLabelValues("error").Add(0)
+	m.IndexSnapshotCleanups.WithLabelValues("skip_lock_held").Add(0)
+	m.IndexSnapshotCleanups.WithLabelValues("skip_unowned").Add(0)
+	m.IndexSnapshotDeleted.WithLabelValues("snapshot").Add(0)
+	m.IndexSnapshotDeleted.WithLabelValues("incomplete").Add(0)
 }
