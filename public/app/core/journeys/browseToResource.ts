@@ -29,6 +29,14 @@ function pathInScope(pathname: string): boolean {
  *     page_view re-fires and enriches `folderUID`. If the user dismisses the drawer
  *     without creating, the framework backstop closes the step as `unended` at journey end.
  *
+ * Events (point-in-time):
+ *   - filter_changed — user changed a filter (sort, layout, tag, starred, datasource, panel_type,
+ *     created_by, owner_reference, include_panels). Carries `dimension` + `cleared`. Filter values
+ *     themselves aren't recorded (some are PII — tags, datasource UIDs, user names).
+ *
+ * Silent interactions added by this journey:
+ *   - grafana_browse_dashboards_filter_changed — emitted in BrowseFilters.tsx for every filter UI change
+ *
  * End conditions:
  *   - success: dashboards_init_dashboard_completed — dashboard loaded after resource click
  *   - abandoned: SPA route change to a path outside `/dashboards`, `/dashboard/`, `/d/`
@@ -131,6 +139,17 @@ onJourneyInstance('browse_to_resource', (handle) => {
   // journey as `abandoned`. (Framework beforeunload + visibility handlers only
   // catch tab-level signals.)
   add(abandonOnRouteChange(handle, pathInScope));
+
+  // Sort / filter / layout changes are pointwise events — they don't have a
+  // duration semantic and can fire many times per journey.
+  add(
+    onInteraction('grafana_browse_dashboards_filter_changed', (props) => {
+      handle.recordEvent('filter_changed', {
+        dimension: str(props.dimension),
+        cleared: str(props.cleared),
+      });
+    })
+  );
 
   // Dashboard loads -> end the select step and the journey.
   add(
