@@ -23,7 +23,7 @@ export function ChainFilterField({ value, onChange }: ChainFilterFieldProps) {
 
   const options = useMemo(() => {
     const allChains = { value: '', label: t('alerting.rule-list-v3.filter.all-chains', 'All chains') };
-    return [allChains, ...chains.map((chain) => ({ value: chain.id, label: chain.name }))];
+    return [allChains, ...chains.map((chain) => ({ value: chain.id, label: chain.id }))];
   }, [chains]);
 
   return (

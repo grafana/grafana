@@ -48,8 +48,7 @@ function RuleListV3() {
               groupFilter={filterState.groupName}
               namespaceFilter={filterState.namespace}
               chainFilter={chainFilter}
-              activeChainId={openChain?.chainId}
-              onChainPillClick={(chainId, position) => setOpenChain({ chainId, position })}
+              onChainLinkClick={(chainId, position) => setOpenChain({ chainId, position })}
             />
           </Box>
         </Stack>

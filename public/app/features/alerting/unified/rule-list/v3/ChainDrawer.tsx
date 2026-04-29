@@ -19,15 +19,13 @@ export function ChainDrawer({ chainId, currentPosition, onClose }: ChainDrawerPr
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon name="link" />
       <Text element="h3" variant="h4">
-        {chain?.name ?? <Trans i18nKey="alerting.rule-list-v3.drawer.title">Evaluation chain</Trans>}
+        <Trans i18nKey="alerting.rule-list-v3.drawer.title">Evaluation chain</Trans>
       </Text>
     </Stack>
   );
 
-  const subtitle = chain ? <Trans i18nKey="alerting.rule-list-v3.drawer.title">Evaluation chain</Trans> : null;
-
   return (
-    <Drawer size="sm" onClose={onClose} title={title} subtitle={subtitle}>
+    <Drawer size="sm" onClose={onClose} title={title}>
       {isLoading && <LoadingPlaceholder text={t('alerting.rule-list-v3.drawer.loading', 'Loading chain details...')} />}
       {Boolean(error) && (
         <Alert severity="error" title={t('alerting.rule-list-v3.drawer.error', 'Failed to load chain')} />
@@ -145,7 +143,7 @@ function getStyles(theme: GrafanaTheme2) {
       '&::before': {
         content: '""',
         position: 'absolute',
-        left: '11px',
+        left: '19px',
         top: '14px',
         bottom: '14px',
         width: '2px',

@@ -10,7 +10,6 @@ export type ChainMode = 'Sequential' | 'Parallel' | 'Conditional';
 
 export interface ChainMembership {
   id: string;
-  name: string;
   position: number;
   total: number;
 }
@@ -24,7 +23,6 @@ export interface ChainStep {
 
 export interface Chain {
   id: string;
-  name: string;
   mode: ChainMode;
   interval: string;
   steps: ChainStep[];
@@ -32,7 +30,6 @@ export interface Chain {
 
 export interface ChainSummary {
   id: string;
-  name: string;
 }
 
 export const chainsApi = alertingApi.injectEndpoints({
