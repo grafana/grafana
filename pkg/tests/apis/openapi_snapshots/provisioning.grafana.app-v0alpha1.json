@@ -4143,6 +4143,15 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.CommitOptions": {
+        "type": "object",
+        "properties": {
+          "singleResourceMessageTemplate": {
+            "description": "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: \u003ctitle\u003e\").",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection": {
         "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
         "type": "object",
@@ -4471,6 +4480,18 @@
           "path": {
             "description": "FIXME: we should validate this in admission hooks Prefix in target file system",
             "type": "string"
+          },
+          "resources": {
+            "description": "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
           }
         }
       },
@@ -5473,6 +5494,14 @@
               }
             ]
           },
+          "commit": {
+            "description": "Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.CommitOptions"
+              }
+            ]
+          },
           "connection": {
             "description": "The connection the repository references. This means the Repository is interacting with git via a Connection.",
             "allOf": [
@@ -5709,6 +5738,14 @@
           "branch": {
             "description": "For git, this is the target branch",
             "type": "string"
+          },
+          "commit": {
+            "description": "Commit message options. Mirrors the same-named field on the repository spec.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.CommitOptions"
+              }
+            ]
           },
           "name": {
             "description": "The k8s name for this repository",
@@ -6451,6 +6488,10 @@
             "format": "int64"
           },
           "lastEvent": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastRotated": {
             "type": "integer",
             "format": "int64"
           },

@@ -8,6 +8,8 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
+  sceneGraph,
+  type SceneObject,
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
@@ -25,6 +27,20 @@ import { createSceneVariableFromVariableModel as createSceneVariableFromVariable
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
+
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Excludes internal system variables (e.g. ScopesVariable)
+ */
+export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+}
+
+export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const { variables } = sceneGraph.getVariables(model).useState();
+  return variables.filter(keepOnlyUserDefinedVariables);
+}
 
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
   const variables = migrateGroupByVariablesV1(oldModel.templating.list);

@@ -52,7 +52,7 @@ func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {
 	b.ResetTimer()   // Reset timer before benchmarking
 	b.ReportAllocs() // Track memory allocations
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		start := time.Now() // Start timer
 		var memStatsBefore, memStatsAfter runtime.MemStats
 		runtime.ReadMemStats(&memStatsBefore)
@@ -96,7 +96,7 @@ func newTestWriter(size int, batchSize int) resource.BuildFn {
 		// Create a batch of items
 		batch := make([]*resource.BulkIndexItem, 0, batchSize)
 
-		for i := 0; i < size; i++ {
+		for i := range size {
 			name := fmt.Sprintf("name%d", i)
 			item := &resource.BulkIndexItem{
 				Action: resource.ActionIndex,

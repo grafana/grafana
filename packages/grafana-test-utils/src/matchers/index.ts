@@ -2,9 +2,11 @@ import type { Observable } from 'rxjs';
 
 import { toEmitValues } from './toEmitValues';
 import { toEmitValuesWith } from './toEmitValuesWith';
-import { type ObservableMatchers } from './types';
+import { toMatchUPlotSnapshot } from './toMatchUPlotSnapshot';
+import { type CustomSnapshotMatchers, type ObservableMatchers } from './types';
 
-export const matchers: ObservableMatchers<void, Observable<unknown>> = {
+export const matchers: ObservableMatchers<void, Observable<unknown>> | CustomSnapshotMatchers = {
   toEmitValues,
   toEmitValuesWith,
+  toMatchUPlotSnapshot,
 };

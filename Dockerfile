@@ -15,7 +15,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.23.4 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
-FROM golang:1.25.9-alpine AS go-builder-base
+FROM golang:1.26.2-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -36,6 +36,8 @@ COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
+# Yarn workspaces include scripts/uplot-compare; it must exist before install (scripts/ is copied later for cache layering).
+COPY scripts/uplot-compare scripts/uplot-compare
 
 #
 # Set the node env according to defaults or argument passed

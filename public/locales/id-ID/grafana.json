@@ -3570,9 +3570,9 @@
         "declare-incident": "Nyatakan insiden",
         "declare-incident-no-permission": "Anda tidak memiliki izin untuk mengakses Insiden",
         "instance-details": "Detail instance",
+        "section-silence": "",
         "silence-button": "Mode Senyap",
-        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap"
       },
       "labels-column-title": "Label",
       "no-firing-or-pending-instances": "Anda tidak memiliki instance peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
@@ -4461,6 +4461,8 @@
       "label": {
         "alphabetically-az": "Sesuai abjad (A-Z)",
         "alphabetically-za": "Sesuai abjad (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Dihapus (terbaru lebih dulu)",
         "deleted-oldest": "Dihapus (terlama lebih dulu)"
       }
@@ -5606,6 +5608,7 @@
         "panels": "Panel",
         "row": "Baris",
         "rows": "Baris",
+        "section-filters-set": "",
         "tab": "Tab",
         "tabs": "Tab",
         "variable": "variabel {{type}}",
@@ -6422,7 +6425,6 @@
         "save-library-panel": "Simpan panel pustaka",
         "share": {
           "arrow": "Bagikan",
-          "title": "Bagikan",
           "tooltip": "Salin tautan"
         },
         "unlink-library-panel": "Putus tautan panel pustaka"
@@ -6457,6 +6459,7 @@
     },
     "transformation-editor": {
       "input-data": "Data input",
+      "loading": "",
       "output-data": "Data output",
       "title-debug-transformation": "Debug transformasi"
     },
@@ -8223,6 +8226,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cari"
     },
     "resource-dimension-editor": {
@@ -8609,6 +8613,7 @@
         "copy-link": "Salin tautan ke baris log",
         "copy-to-clipboard": "Salin ke Papan Klip",
         "inspect-value": "Periksa nilai",
+        "show-details": "",
         "view-log-line": "Lihat baris log"
       }
     },
@@ -10061,6 +10066,12 @@
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Nilai RGBA"
     },
@@ -10406,6 +10417,7 @@
     "sidebar": {
       "close": "Tutup",
       "dock": "Gandeng",
+      "go-back": "",
       "hide": "Sembunyikan",
       "show": "Tampilkan",
       "undock": "Lepas gandengan"
@@ -11061,6 +11073,12 @@
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
       "num-affected_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11151,6 +11169,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
@@ -11257,6 +11276,8 @@
       "fields-section": "Bidang",
       "hide-log-line": "Sembunyikan baris log",
       "inline-mode": "Tampilkan sebaris",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Nilai tautan",
       "links-section": "Tautan",
       "log-attributes-field": "Atribut log",
@@ -11443,6 +11464,7 @@
         "common-labels": "Label umum:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
     "name-details-mode": "Mode panel detail log",
@@ -11505,13 +11527,13 @@
   "logstable": {
     "category-table": "Tabel Log",
     "description-show-controls": "Tampilkan kontrol tabel",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Mengaktifkan/menonaktifkan tombol tautan baris log di kolom pertama setiap baris",
       "name": "Tampilkan tombol salin tautan log"
-    },
-    "show-inspect-button": {
-      "description": "Mengaktifkan/menonaktifkan tombol periksa baris log di kolom pertama setiap baris",
-      "name": "Tampilkan tombol periksa"
     }
   },
   "manage-dashbaords": {
@@ -11831,8 +11853,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Semua",
-      "title-filtered": "Semua (difilter)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Hapus semua"
@@ -12924,9 +12948,7 @@
       "update-available": "Pembaruan tersedia!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Penggunaan plugin memerlukan indeks pencarian baru untuk menemukan penggunaan di seluruh dasbor. Aktifkan tombol fitur",
       "num-usages": "{{pluginName}} digunakan <2>{{numUsages}}</2> kali.",
-      "title-missing-feature-toggle-panel-title-search": "Tombol fitur tidak ada: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} belum digunakan di dasbor apa pun"
     },
     "plugins-errors-info": {
@@ -13074,6 +13096,7 @@
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token API",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
+      "url-pattern": "",
       "url-required": "URL repositori wajib diisi"
     },
     "bootstrap-step": {
@@ -13481,6 +13504,7 @@
       "contact-admin": "Hubungi administrator Grafana Anda untuk mengonversi sumber daya ini menjadi lokal atau menghapus semua sumber daya dari repositori yang tidak ditemukan.",
       "convert-to-local-button": "Konversi ke lokal",
       "delete-button": "Hapus",
+      "go-to-dashboards": "",
       "job-error": "Terjadi kesalahan saat memproses sumber daya yang terabaikan",
       "job-success": "Sumber daya terabaikan berhasil diproses",
       "job-warning": "Beberapa sumber daya diproses dengan peringatan. Silakan tinjau hasilnya.",
@@ -14012,7 +14036,6 @@
       "hide": "Sembunyikan {{type}}",
       "hide-help": "Sembunyikan bantuan sumber data",
       "hide-transformation-help": "Sembunyikan bantuan transformasi",
-      "inspector": "Pemeriksa kueri",
       "more-actions": "Tindakan {{type}} lainnya",
       "remove": "Hapus {{type}}",
       "remove-transformation-filter": "Hapus filter",
@@ -14024,6 +14047,25 @@
     "alerts": {
       "no-alerts": "Tidak ada aturan peringatan untuk panel ini",
       "no-alerts-description": "Buat aturan peringatan untuk mendapatkan notifikasi saat data Anda memenuhi kondisi tertentu."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Yakin ingin menghapus kueri ini?",
@@ -14061,6 +14103,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Titik data maksimum",
@@ -14071,6 +14114,7 @@
       "placeholder": {
         "no-limit": "Tanpa batas"
       },
+      "query-inspector": "",
       "query-options": "Opsi Kueri"
     },
     "header": {
@@ -14154,6 +14198,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Pulihkan"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
@@ -14314,6 +14362,10 @@
     },
     "results-table": {
       "datasource-header": "Sumber data",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 menit",
       "deleted-remaining-header": "Waktu yang tersisa",
       "location-header": "Lokasi",
@@ -14667,6 +14719,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",
@@ -15835,6 +15891,7 @@
           "group-by": "Kelompokkan berdasarkan"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Diabaikan",
       "placeholder-select-stats": "Pilih statistik"
     },
@@ -15846,6 +15903,16 @@
         "group-by": "Kelompokkan berdasarkan"
       },
       "title-calc-alert": "Perhitungan tidak akan berpengaruh jika tidak ada bidang yang dikelompokkan"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15869,6 +15936,9 @@
       "name": {
         "grouping-to-matrix": "Pengelompokan ke matriks"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16204,6 +16274,9 @@
       "label-time-field": "Bidang waktu",
       "tooltip-statistic-should-calculated-series": "Statistik yang harus dihitung untuk deret waktu ini.",
       "tooltip-time-field": "Bidang waktu yang akan digunakan untuk deret waktu. Jika tidak dipilih, yang pertama ditemukan akan digunakan."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nama bidang pertama",
