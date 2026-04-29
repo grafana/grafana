@@ -7,7 +7,7 @@ import type { ComparePlotsProps } from '../types.ts';
 import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { CanvasStack } from './CanvasStack.tsx';
 import { DiffCanvas } from './DiffCanvas.tsx';
-import { JestActions } from './JestActions.tsx';
+import { JestActionsButtons, JestOutputModal } from './JestActions.tsx';
 import { PlotHeader } from './PlotHeader.tsx';
 
 export function ComparePlots({
@@ -29,6 +29,7 @@ export function ComparePlots({
   const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = useState(true);
   const [renderActualSetupEvents, setRenderActualSetupEvents] = useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = useState(true);
+  const [jestModalDismissed, setJestModalDismissed] = useState(false);
 
   useCanvasEventsEffect(actualUPlotRef, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
   useCanvasEventsEffect(expectedUPlotRef, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
@@ -87,6 +88,14 @@ export function ComparePlots({
   const jestStderr =
     acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error' ? acceptBaselineState.stderr : '';
 
+  useEffect(() => {
+    if (acceptBaselineState.kind === 'running') {
+      setJestModalDismissed(false);
+    }
+  }, [acceptBaselineState.kind]);
+
+  const jestModalOpen = acceptBaselineState.kind !== 'idle' && !jestModalDismissed;
+
   return (
     <>
       <div className="compare-title-row">
@@ -94,6 +103,20 @@ export function ComparePlots({
         {payload.snapshotAssertionPassed !== undefined ? (
           <AssertionStatusBadge passed={payload.snapshotAssertionPassed} />
         ) : null}
+        <div className="compare-title-actions">
+          {payload.testPath && jestModalDismissed && (jestKind === 'success' || jestKind === 'error') ? (
+            <button type="button" className="jest-view-output-btn" onClick={() => setJestModalDismissed(false)}>
+              View jest output
+            </button>
+          ) : null}
+          <JestActionsButtons
+            passed={payload.snapshotAssertionPassed ?? false}
+            kind={jestKind}
+            onRerunTest={onRerunTest}
+            updateSnapshot={jestUpdateSnapshot}
+            onAcceptBaseline={onAcceptBaseline}
+          />
+        </div>
       </div>
       <div className={`wrap${showActualOnly ? ' wrap--actual-only' : ''}`}>
         {!showActualOnly ? (
@@ -105,6 +128,7 @@ export function ComparePlots({
               mixBlendMode={blendMode}
               onChangeBlendMode={setBlendMode}
               showBlend={showOverlay && hasDiff}
+              hasAxesEvents={!!payload.uPlotCanvasEvents.length}
             />
             <CanvasStack
               uPlotRef={expectedUPlotRef}
@@ -126,6 +150,7 @@ export function ComparePlots({
             mixBlendMode={blendMode}
             onChangeBlendMode={setBlendMode}
             showBlend={showOverlay && hasDiff}
+            hasAxesEvents={!!payload.uPlotCanvasEvents.length}
           />
           <CanvasStack
             uPlotRef={actualUPlotRef}
@@ -151,20 +176,19 @@ export function ComparePlots({
               expected={payload.expected}
               actual={payload.actual}
             />
-            <JestActions
-              testPath={payload.testPath}
-              kind={jestKind}
-              onRerunTest={onRerunTest}
-              updateSnapshot={jestUpdateSnapshot}
-              onAcceptBaseline={onAcceptBaseline}
-              message={jestMessage}
-              command={jestCommand}
-              stdout={jestStdout}
-              stderr={jestStderr}
-            />
           </div>
         ) : null}
       </div>
+      <JestOutputModal
+        open={jestModalOpen}
+        onClose={() => setJestModalDismissed(true)}
+        kind={jestKind}
+        updateSnapshot={jestUpdateSnapshot}
+        message={jestMessage}
+        command={jestCommand}
+        stdout={jestStdout}
+        stderr={jestStderr}
+      />
     </>
   );
 }

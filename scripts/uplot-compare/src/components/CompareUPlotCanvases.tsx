@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import * as React from 'react';
 
 import { isUPlotComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
@@ -127,12 +128,13 @@ export const CompareUPlotCanvases = ({
       }
       setView({
         kind: 'ready',
-
         payload: {
           testName: raw.testName,
           testPath: typeof raw.testPath === 'string' ? raw.testPath : undefined,
-          expected: raw.expected,
-          actual: raw.actual,
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          expected: raw.expected as CanvasRenderingContext2DEvent[],
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          actual: raw.actual as CanvasRenderingContext2DEvent[],
           uPlotCanvasEvents: Array.isArray(raw.uPlotCanvasEvents) ? raw.uPlotCanvasEvents : [],
           ...readPayloadDimensions(raw),
           snapshotAssertionPassed: raw.snapshotAssertionPassed,

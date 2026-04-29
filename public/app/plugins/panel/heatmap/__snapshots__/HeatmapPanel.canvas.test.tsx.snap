@@ -1494,7 +1494,7 @@ exports[`HeatmapPanel (canvas) Annotations renders points 1`] = `
   },
   {
     "props": {
-      "value": "#b43b02",
+      "value": "#ccc",
     },
     "type": "fillStyle",
   },
@@ -1630,7 +1630,7 @@ exports[`HeatmapPanel (canvas) Annotations renders points 1`] = `
   },
   {
     "props": {
-      "value": "#e25609",
+      "value": "#ccc",
     },
     "type": "fillStyle",
   },
@@ -29880,7 +29880,7 @@ exports[`HeatmapPanel (canvas) Sparse renders 1`] = `
   },
   {
     "props": {
-      "value": "#fdb97e",
+      "value": "#asd",
     },
     "type": "fillStyle",
   },
@@ -29890,7 +29890,7 @@ exports[`HeatmapPanel (canvas) Sparse renders 1`] = `
       "path": [
         {
           "props": {
-            "height": 173.5,
+            "height": 123.5,
             "width": 615,
             "x": 24.5,
             "y": 183,
@@ -29955,7 +29955,7 @@ exports[`HeatmapPanel (canvas) Sparse renders 1`] = `
   },
   {
     "props": {
-      "value": "#fdcd9f",
+      "value": "#ccc",
     },
     "type": "fillStyle",
   },
@@ -30059,7 +30059,7 @@ exports[`HeatmapPanel (canvas) Sparse renders 1`] = `
   },
   {
     "props": {
-      "value": "#fee5cb",
+      "value": "#ccc",
     },
     "type": "fillStyle",
   },

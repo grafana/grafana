@@ -1327,7 +1327,7 @@ exports[`drawMarkers options Color strategy: OpenClose events 1`] = `
   },
   {
     "props": {
-      "value": "red",
+      "value": "#888888",
     },
     "type": "fillStyle",
   },
