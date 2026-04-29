@@ -67,11 +67,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		reqs, selectable := options.LabelSelector.Requirements()
 
 		if !selectable {
-			return nil, fmt.Errorf("Label not selectable")
+			return nil, fmt.Errorf("label not selectable")
 		}
 
 		for _, r := range reqs {
-
 			if r.Key() == "correlations.grafana.app/sourceDS-ref" {
 				if r.Operator() == selection.Equals || r.Operator() == selection.In {
 					for _, item := range r.Values().List() {
@@ -239,7 +238,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
 		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceData[1], TargetType: datasourceData[0], OrgId: orgID})
 	}
-	return nil, fmt.Errorf("DeleteCollection key not implemented for passthrough to legacy")
+	return nil, fmt.Errorf("deleteCollection key not implemented for passthrough to legacy")
 }
 
 type continueToken struct {

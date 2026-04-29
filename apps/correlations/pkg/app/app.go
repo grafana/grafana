@@ -80,7 +80,7 @@ func DataSourceMutator() *simple.Mutator {
 				c.Labels = make(map[string]string)
 			}
 
-			managedBy := c.ObjectMeta.Annotations["grafana.app/managedBy"]
+			managedBy := c.Annotations["grafana.app/managedBy"]
 			isManaged := managedBy != ""
 
 			// Derive source label: "group.name" format
