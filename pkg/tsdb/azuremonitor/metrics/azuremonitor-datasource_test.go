@@ -602,100 +602,28 @@ func TestAzureMonitorParseResponseGrafanaSqlMultiResource(t *testing.T) {
 	avg2 := 5.0
 
 	azData := types.AzureMonitorResponse{
-		Value: []struct {
-			ID   string `json:"id"`
-			Type string `json:"type"`
-			Name struct {
-				Value          string `json:"value"`
-				LocalizedValue string `json:"localizedValue"`
-			} `json:"name"`
-			Unit       string `json:"unit"`
-			Timeseries []struct {
-				Metadatavalues []struct {
-					Name struct {
-						Value          string `json:"value"`
-						LocalizedValue string `json:"localizedValue"`
-					} `json:"name"`
-					Value string `json:"value"`
-				} `json:"metadatavalues"`
-				Data []struct {
-					TimeStamp time.Time `json:"timeStamp"`
-					Average   *float64  `json:"average,omitempty"`
-					Total     *float64  `json:"total,omitempty"`
-					Count     *float64  `json:"count,omitempty"`
-					Maximum   *float64  `json:"maximum,omitempty"`
-					Minimum   *float64  `json:"minimum,omitempty"`
-				} `json:"data"`
-			} `json:"timeseries"`
-		}{
+		Value: []types.AzureMetricValue{
 			{
-				Name: struct {
-					Value          string `json:"value"`
-					LocalizedValue string `json:"localizedValue"`
-				}{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+				Name: types.AzureMetricName{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
 				Unit: "Percent",
-				Timeseries: []struct {
-					Metadatavalues []struct {
-						Name struct {
-							Value          string `json:"value"`
-							LocalizedValue string `json:"localizedValue"`
-						} `json:"name"`
-						Value string `json:"value"`
-					} `json:"metadatavalues"`
-					Data []struct {
-						TimeStamp time.Time `json:"timeStamp"`
-						Average   *float64  `json:"average,omitempty"`
-						Total     *float64  `json:"total,omitempty"`
-						Count     *float64  `json:"count,omitempty"`
-						Maximum   *float64  `json:"maximum,omitempty"`
-						Minimum   *float64  `json:"minimum,omitempty"`
-					} `json:"data"`
-				}{
+				Timeseries: []types.AzureMetricTimeseries{
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg1}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg1}},
 					},
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg2}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg2}},
 					},
 				},
 			},
@@ -906,6 +834,99 @@ func TestExtractResourceNameFromMetricsURL(t *testing.T) {
 		url := "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/Grafana-Test.VM/providers/microsoft.insights/nope-this-part-does-not-match"
 		expected := ""
 		require.Equal(t, expected, extractResourceNameFromMetricsURL((url)))
+	})
+}
+
+func TestBuildQueriesForBatch(t *testing.T) {
+	ds := &AzureMonitorDatasource{}
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-sub"},
+	}
+
+	makeBackendQuery := func(sub, region string, resources []dataquery.AzureMonitorResource) backend.DataQuery {
+		model := dataquery.AzureMonitorQuery{
+			Subscription: &sub,
+			AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+				MetricName:      strPtr("Percentage CPU"),
+				Aggregation:     strPtr("Average"),
+				TimeGrain:       strPtr("PT1M"),
+				Region:          &region,
+				Resources:       resources,
+			},
+		}
+		raw, _ := json.Marshal(model)
+		return backend.DataQuery{RefID: "A", JSON: raw, TimeRange: backend.TimeRange{From: time.Now(), To: time.Now().Add(time.Hour)}}
+	}
+
+	t.Run("single resource produces one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+	})
+
+	t.Run("multiple resources with same subscription and region produce one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+		assert.Len(t, queries[0].Resources, 2)
+	})
+
+	t.Run("resources across different subscriptions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
+	})
+
+	t.Run("resources across different regions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "eastus", queries[0].Params.Get("region"))
+		assert.Equal(t, "westus", queries[1].Params.Get("region"))
+	})
+
+	t.Run("resources grouped by subscription and region preserve all resources", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm3"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		// sub1/eastus group has 2 resources, sub2/westus has 1
+		assert.Len(t, queries[0].Resources, 2)
+		assert.Len(t, queries[1].Resources, 1)
+	})
+
+	t.Run("resources without explicit subscription fall back to query-level subscription", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
 	})
 }
 

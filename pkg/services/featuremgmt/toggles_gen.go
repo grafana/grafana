@@ -578,6 +578,10 @@ const (
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
+	// FlagAzureMonitorBatchAPI
+	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
+
 	// FlagLocaleFormatPreference
 	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
@@ -957,8 +961,4 @@ const (
 	// FlagAlertingRulesAPIV2
 	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
 	FlagAlertingRulesAPIV2 = "alerting.rulesAPIV2"
-
-	// FlagGrafanaCorrelationsSkipLegacy
-	// Route any calls to legacy correlations endpoints to call through to app platform
-	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 )

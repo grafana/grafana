@@ -1771,6 +1771,13 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "azureMonitorBatchAPI",
+			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
+		},
+		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
 			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
@@ -3068,14 +3075,6 @@ var (
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
-		},
-		{
-			Name:        "grafana.correlationsSkipLegacy",
-			Description: "Route any calls to legacy correlations endpoints to call through to app platform",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
