@@ -1,3 +1,5 @@
+import { BehaviorSubject } from 'rxjs';
+
 import type { JourneyHandle, JourneyTracker } from '@grafana/runtime';
 
 import type { JourneyRegistryImpl } from '../services/JourneyRegistryImpl';
@@ -9,6 +11,8 @@ import {
   createMockTracker,
   setupJourneyTest,
 } from './__test-utils__/journeyTestHarness';
+
+const locationSubject = new BehaviorSubject<{ pathname: string }>({ pathname: '/d/abc' });
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -28,8 +32,16 @@ jest.mock('@grafana/runtime', () => {
         }
       };
     },
+    locationService: {
+      getLocationObservable: () => locationSubject.asObservable(),
+    },
   };
 });
+
+function setLocation(pathname: string) {
+  Object.defineProperty(window, 'location', { value: { pathname }, writable: true });
+  locationSubject.next({ pathname });
+}
 
 describe('dashboardEdit journey wiring', () => {
   let mockTracker: jest.Mocked<JourneyTracker>;
@@ -130,5 +142,27 @@ describe('dashboardEdit journey wiring', () => {
     simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
 
     expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('should end as abandoned when navigating to a different pathname mid-edit', () => {
+    setLocation('/d/abc/my-dash');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc' });
+    locationSubject.next({ pathname: '/explore' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/explore' });
+  });
+
+  it('should not abandon when /dashboard/new transitions to /d/<uid> after a save', () => {
+    setLocation('/dashboard/new');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: '' });
+    locationSubject.next({ pathname: '/d/new-uid/new-slug' });
+
+    expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
   });
 });
