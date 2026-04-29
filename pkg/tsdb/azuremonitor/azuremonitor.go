@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	schemas "github.com/grafana/schemads"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
@@ -167,7 +168,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			return nil, err
 		}
 
-		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
+		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
 			return nil, backend.DownstreamError(errors.New("current user authentication is not enabled for azure monitor"))
 		}
 

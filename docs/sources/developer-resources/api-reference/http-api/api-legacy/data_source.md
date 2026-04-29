@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/data_source/ # /docs/grafana/next/http_api/data_source/
-  - ../../../http_api/datasource/ # /docs/grafana/next/http_api/datasource/
-  - ../../../developers/http_api/data_source/ # /docs/grafana/next/developers/http_api/data_source/
+  - ../../../../http_api/data_source/ # /docs/grafana/next/http_api/data_source/
+  - ../../../../http_api/datasource/ # /docs/grafana/next/http_api/datasource/
+  - ../../../../developers/http_api/data_source/ # /docs/grafana/next/developers/http_api/data_source/
   - ../../../../developer-resources/api-reference/http-api/data_source/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/data_source/
 description: Grafana Data source HTTP API

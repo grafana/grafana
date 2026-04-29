@@ -4,7 +4,7 @@ import { type MouseEvent } from 'react';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 
 import { type TutorialCardType } from '../types';
 
@@ -30,7 +30,11 @@ export const TutorialCard = ({ card }: Props) => {
         <div className={styles.heading}>
           {card.done ? t('gettingstarted.tutorial-card.complete', 'complete') : card.heading}
         </div>
-        <h4 className={styles.cardTitle}>{card.title}</h4>
+        <div className={styles.cardTitle}>
+          <Text variant="h4" element="h3">
+            {card.title}
+          </Text>
+        </div>
         <div className={styles.info}>{card.info}</div>
       </div>
     </a>

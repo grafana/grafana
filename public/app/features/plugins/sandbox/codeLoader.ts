@@ -1,6 +1,6 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetas, getPanelPluginMetas } from '@grafana/runtime/internal';
+import { getAppPluginMetas, getDatasourcePluginMeta, getPanelPluginMetas } from '@grafana/runtime/internal';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
@@ -124,10 +124,9 @@ export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvi
 
 export async function getPluginLoadData(pluginId: string): Promise<SandboxPluginMeta> {
   // find it in datasources
-  for (const datasource of Object.values(config.datasources)) {
-    if (datasource.type === pluginId) {
-      return datasource.meta;
-    }
+  const dsMeta = await getDatasourcePluginMeta(pluginId);
+  if (dsMeta) {
+    return dsMeta;
   }
 
   //find it in panels

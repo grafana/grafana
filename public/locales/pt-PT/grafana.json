@@ -3589,9 +3589,9 @@
         "declare-incident": "Declarar incidente",
         "declare-incident-no-permission": "Não tem permissão para aceder ao incidente",
         "instance-details": "Detalhes da instância",
+        "section-silence": "",
         "silence-button": "Silêncio",
-        "silence-no-permission": "Não tem permissão para criar silêncios",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Não tem permissão para criar silêncios"
       },
       "labels-column-title": "Etiquetas",
       "no-firing-or-pending-instances": "Não tem instâncias de alerta num estado de disparo ou pendente para o intervalo de tempo selecionado.",
@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Por ordem alfabética (A–Z)",
         "alphabetically-za": "Por ordem alfabética (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Eliminados (mais recente primeiro)",
         "deleted-oldest": "Eliminados (mais antigo primeiro)"
       }
@@ -5636,6 +5638,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-filters-set": "",
         "tab": "Separador",
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
@@ -6453,7 +6456,6 @@
         "save-library-panel": "Guardar painel de biblioteca",
         "share": {
           "arrow": "Partilhar",
-          "title": "Partilhar",
           "tooltip": "Copiar link"
         },
         "unlink-library-panel": "Desassociar painel de biblioteca"
@@ -6488,6 +6490,7 @@
     },
     "transformation-editor": {
       "input-data": "Dados de entrada",
+      "loading": "",
       "output-data": "Dados de saída",
       "title-debug-transformation": "Depurar transformação"
     },
@@ -8269,6 +8272,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Pesquisar"
     },
     "resource-dimension-editor": {
@@ -8655,6 +8659,7 @@
         "copy-link": "Copiar link para a linha de registo",
         "copy-to-clipboard": "Copiar para a área de transferência",
         "inspect-value": "Inspecionar valor",
+        "show-details": "",
         "view-log-line": "Ver linha de registo"
       }
     },
@@ -10119,6 +10124,12 @@
     "cascader": {
       "clear-button": "Limpar a seleção"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valor RGBA"
     },
@@ -10464,6 +10475,7 @@
     "sidebar": {
       "close": "Fechar",
       "dock": "Ancorar",
+      "go-back": "",
       "hide": "Ocultar",
       "show": "Mostrar",
       "undock": "Desancorar"
@@ -11220,6 +11232,7 @@
       "label-numbers": "Números",
       "label-signature": "Assinatura"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimental. Mostrar um componente para gerir os campos exibidos dos registos.",
     "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
     "description-enable-logs-highlighting": "Utilizar um esquema de cores predefinido para destacar as partes relevantes das linhas de registo.",
@@ -11329,6 +11342,8 @@
       "fields-section": "Campos",
       "hide-log-line": "Ocultar linha de registo",
       "inline-mode": "Mostrar em linha",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Valor do link",
       "links-section": "Links",
       "log-attributes-field": "Atributos de registo",
@@ -11515,6 +11530,7 @@
         "common-labels": "Etiquetas comuns:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Etiquetas comuns",
     "name-deduplication": "Desduplicação",
     "name-details-mode": "Modo de painel de detalhes de registo",
@@ -11577,13 +11593,13 @@
   "logstable": {
     "category-table": "Tabela de registos",
     "description-show-controls": "Mostrar controlos da tabela",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de ligação à linha de registo na primeira coluna de cada linha",
       "name": "Mostrar botão de cópia do link do registo"
-    },
-    "show-inspect-button": {
-      "description": "Ativa/desativa o botão de inspeção da linha de registo na primeira coluna de cada linha",
-      "name": "Mostrar botão de inspeção"
     }
   },
   "manage-dashbaords": {
@@ -11903,8 +11919,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Todos",
-      "title-filtered": "Todos (filtrados)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Limpar tudo"
@@ -13147,6 +13165,7 @@
       "token-user-description": "O nome de utilizador que será utilizado para aceder ao repositório com o token de API",
       "token-user-required": "O utilizador é obrigatório",
       "url-description": "O URL do repositório Bitbucket",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "bootstrap-step": {
@@ -13560,6 +13579,7 @@
       "contact-admin": "Contacte o seu administrador da Grafana para converter este recurso em local ou para eliminar todos os recursos do repositório em falta.",
       "convert-to-local-button": "Converter para local",
       "delete-button": "Eliminar",
+      "go-to-dashboards": "",
       "job-error": "Ocorreu um erro ao processar recursos órfãos",
       "job-success": "Recursos órfãos processados com sucesso",
       "job-warning": "Alguns recursos foram processados com avisos. Reveja os resultados.",
@@ -14100,7 +14120,6 @@
       "hide": "Ocultar {{type}}",
       "hide-help": "Ocultar ajuda da origem de dados",
       "hide-transformation-help": "Ocultar ajuda para a transformação",
-      "inspector": "Inspetor de consultas",
       "more-actions": "Mais ações de {{type}}",
       "remove": "Remover {{type}}",
       "remove-transformation-filter": "Remover filtro",
@@ -14112,6 +14131,27 @@
     "alerts": {
       "no-alerts": "Nenhuma regra de alertas para este painel",
       "no-alerts-description": "Criar uma regra de alertas para receber notificações quando os seus dados cumprirem determinadas condições."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Tem a certeza de que pretende eliminar esta consulta?",
@@ -14149,6 +14189,7 @@
     },
     "footer": {
       "edit-option": "Editar {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervalo",
         "max-data-points": "Pontos de dados máximos",
@@ -14159,6 +14200,7 @@
       "placeholder": {
         "no-limit": "Sem limite"
       },
+      "query-inspector": "",
       "query-options": "Opções de consulta"
     },
     "header": {
@@ -14245,6 +14287,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Restaurar"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Não eliminou quaisquer painéis de controlo recentemente.",
@@ -14407,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Origem dos dados",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo restante",
       "location-header": "Localização",
@@ -14761,6 +14811,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Painel de controlo inicial",
       "home-dashboard-placeholder": "Painel de controlo predefinido",
@@ -15930,6 +15984,7 @@
           "group-by": "Agrupar por"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignorado",
       "placeholder-select-stats": "Selecionar estatísticas"
     },
@@ -15941,6 +15996,16 @@
         "group-by": "Agrupar por"
       },
       "title-calc-alert": "Os cálculos não terão efeito se nenhum campo for agrupado"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15964,6 +16029,9 @@
       "name": {
         "grouping-to-matrix": "Agrupar em matriz"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16299,6 +16367,9 @@
       "label-time-field": "Campo de hora",
       "tooltip-statistic-should-calculated-series": "A estatística que deve ser calculada para esta série temporal.",
       "tooltip-time-field": "O campo de hora que será utilizado para a série temporal. Se não for selecionado, será utilizado o primeiro resultado encontrado."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome do primeiro campo",
