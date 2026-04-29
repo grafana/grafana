@@ -69,7 +69,7 @@ describe('Migrate', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
-  it('shows a Migrate everything button in the header when unmanaged folders exist', () => {
+  it('shows a Migrate everything button at the bottom of Folders to migrate when unmanaged folders exist', () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {

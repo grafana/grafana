@@ -26,7 +26,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { CONFIGURE_GRAFANA_DOCS_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL, GETTING_STARTED_URL } from '../constants';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 import gitSvg from '../img/git.svg';
 
@@ -199,47 +199,21 @@ function percent(part: number, total: number): string {
   return `${Math.round((part / total) * 100)}%`;
 }
 
-function migrateTarget(repos: Repository[]): string {
-  if (repos.length === 0) {
-    return GETTING_STARTED_URL;
-  }
-  if (repos.length === 1 && repos[0].metadata?.name) {
-    return `${PROVISIONING_URL}/${repos[0].metadata.name}`;
-  }
-  return PROVISIONING_URL;
-}
-
-function MigrateToGitopsHeader({
-  unmanagedFolders,
-  repos,
-}: {
-  unmanagedFolders: number;
-  repos: Repository[];
-}) {
-  const target = migrateTarget(repos);
+function MigrateToGitopsHeader() {
   return (
-    <Stack direction="row" gap={2} alignItems="flex-start" justifyContent="space-between" wrap>
-      <Stack direction="column" gap={1} flex={1}>
-        <Stack direction="row" gap={1} alignItems="center">
-          <Text element="h2" variant="h2">
-            <Trans i18nKey="provisioning.stats.header-title">Migrate to GitOps</Trans>
-          </Text>
-          <FeatureBadge featureState={FeatureState.experimental} />
-        </Stack>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.stats.header-subtitle">
-            Manage your dashboards and folders like code — every change tracked, every update reviewed, every
-            environment reproducible. Connect a Git repository to get started.
-          </Trans>
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Text element="h2" variant="h2">
+          <Trans i18nKey="provisioning.stats.header-title">Migrate to GitOps</Trans>
         </Text>
+        <FeatureBadge featureState={FeatureState.experimental} />
       </Stack>
-      {unmanagedFolders > 0 && (
-        <LinkButton variant="primary" icon="upload" href={target}>
-          {t('provisioning.stats.header-migrate-all', 'Migrate everything ({{count}} folders)', {
-            count: unmanagedFolders,
-          })}
-        </LinkButton>
-      )}
+      <Text color="secondary">
+        <Trans i18nKey="provisioning.stats.header-subtitle">
+          Manage your dashboards and folders like code — every change tracked, every update reviewed, every
+          environment reproducible. Connect a Git repository to get started.
+        </Trans>
+      </Text>
     </Stack>
   );
 }
@@ -593,11 +567,6 @@ export function Migrate() {
     setSelectedFolderUids(new Set(folders.filter((f) => !f.managedBy).map((f) => f.uid)));
   }, [folders]);
 
-  const unmanagedFolderCount = useMemo(
-    () => folders.filter((f) => !f.managedBy).length,
-    [folders]
-  );
-
   if (isLoading) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
@@ -618,7 +587,7 @@ export function Migrate() {
   if (totals.instanceTotal === 0) {
     return (
       <Stack direction="column" gap={3}>
-        <MigrateToGitopsHeader unmanagedFolders={unmanagedFolderCount} repos={repoList} />
+        <MigrateToGitopsHeader />
         <EmptyState variant="not-found" message={t('provisioning.stats.empty', 'No provisioned resources yet')} />
       </Stack>
     );
@@ -626,7 +595,7 @@ export function Migrate() {
 
   return (
     <Stack direction="column" gap={3}>
-      <MigrateToGitopsHeader unmanagedFolders={unmanagedFolderCount} repos={repoList} />
+      <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} folders={folders} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>

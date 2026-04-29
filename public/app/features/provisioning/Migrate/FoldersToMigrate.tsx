@@ -159,12 +159,21 @@ export function FoldersToMigrate({ folders, repos }: Props) {
         <InteractiveTable columns={columns} data={filtered} getRowId={(row) => row.uid} pageSize={10} />
       )}
 
-      <Text variant="bodySmall" color="secondary">
-        {t('provisioning.stats.folders-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
-          count: filtered.length,
-          total: unmanagedFolders.length,
-        })}
-      </Text>
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
+        <Text variant="bodySmall" color="secondary">
+          {t('provisioning.stats.folders-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
+            count: filtered.length,
+            total: unmanagedFolders.length,
+          })}
+        </Text>
+        {unmanagedFolders.length > 0 && (
+          <LinkButton variant="primary" icon="upload" href={target}>
+            {t('provisioning.stats.folders-to-migrate-migrate-all', 'Migrate everything ({{count}} folders)', {
+              count: unmanagedFolders.length,
+            })}
+          </LinkButton>
+        )}
+      </Stack>
     </div>
   );
 }
