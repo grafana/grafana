@@ -1137,13 +1137,15 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 type BatchGetRetryPolicy struct {
 	// MaxConsecutiveFailures resets each time a key is yielded.
 	MaxConsecutiveFailures int
-	MaxTotalFailureRate    float64
+	// MaxTotalFailureRate scales the budget by the number of BatchGet chunks
+	MaxTotalFailureRate float64
 	// FailureBudgetFloor keeps tiny key sets from failing on the first hiccup.
 	FailureBudgetFloor int
 }
 
 func (p BatchGetRetryPolicy) totalBudget(numKeys int) int {
-	scaled := int(float64(numKeys) * p.MaxTotalFailureRate)
+	chunks := (numKeys + dataBatchSize - 1) / dataBatchSize
+	scaled := int(float64(chunks) * p.MaxTotalFailureRate)
 	if scaled < p.FailureBudgetFloor {
 		return p.FailureBudgetFloor
 	}

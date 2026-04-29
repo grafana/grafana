@@ -345,10 +345,12 @@ func TestKvIterator_Retry(t *testing.T) {
 		FailureBudgetFloor:     20,
 	}
 
-	t.Run("scaled budget tolerates spread-out failures across large key set", func(t *testing.T) {
-		// 500 keys with 5% failures. Scaled budget is max(20, 0.10*500) = 50.
+	t.Run("scaled budget tolerates failures up to the floor", func(t *testing.T) {
+		// 500 keys / 50-key chunks = 10 chunks. With rate 0.10 the
+		// scaled term is 1, so the floor (20) wins. 15 spread chunk
+		// failures fit comfortably under the budget.
 		const n = 500
-		const failures = n / 20
+		const failures = 15
 		it, keys, flaky := setupListRetryTest(t, n,
 			spreadFailures(n, failures, retryableErr(errors.New("noise"))),
 			scaledPolicy)
@@ -358,9 +360,9 @@ func TestKvIterator_Retry(t *testing.T) {
 		assert.Equal(t, failures, flaky.injected)
 	})
 
-	t.Run("scaled budget still trips on excessive failure rate", func(t *testing.T) {
-		// 200 keys with 25% failures (50 errors) exceeds the budget of
-		// max(20, 0.10*200) = 20.
+	t.Run("scaled budget trips when failures exceed the budget", func(t *testing.T) {
+		// 200 keys / 50-key chunks = 4 chunks. Budget = max(20, 4*0.10)
+		// = 20. 50 injected failures exhaust the budget at 20.
 		const n = 200
 		const failures = 50
 		it, _, flaky := setupListRetryTest(t, n,
@@ -433,16 +435,16 @@ func TestBatchGetRetryPolicy_TotalBudget(t *testing.T) {
 			"with rate=0, budget must be the floor regardless of key count")
 	})
 
-	t.Run("rate>0 scales above the floor", func(t *testing.T) {
+	t.Run("rate scales by BatchGet chunks, not raw keys", func(t *testing.T) {
 		p := BatchGetRetryPolicy{
 			MaxConsecutiveFailures: 3,
-			MaxTotalFailureRate:    0.05,
+			MaxTotalFailureRate:    0.10,
 			FailureBudgetFloor:     20,
 		}
-		assert.Equal(t, 20, p.totalBudget(100),
-			"100 keys × 5%% = 5 < floor 20 → budget is the floor")
-		assert.Equal(t, 5000, p.totalBudget(100_000),
-			"100k keys × 5%% = 5000 > floor 20 → budget is the rate")
+		// 100 keys = ceil(100/50) = 2 chunks; 2 * 0.10 = 0.2 → floor wins.
+		assert.Equal(t, 20, p.totalBudget(100))
+		// 1M keys = 20000 chunks; 20000 * 0.10 = 2000 → rate wins.
+		assert.Equal(t, 2000, p.totalBudget(1_000_000))
 	})
 }
 
