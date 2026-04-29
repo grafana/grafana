@@ -208,4 +208,38 @@ describe('browseToResource journey wiring', () => {
       expect(call[0]).not.toBe('select_resource');
     }
   });
+
+  it('should close a pending navigate_folder step when a second list item is clicked before the page navigates', () => {
+    loadWiring();
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    const firstStep = createMockStepHandle();
+    const secondStep = createMockStepHandle();
+    mockHandle.startStep.mockReturnValueOnce(firstStep).mockReturnValueOnce(secondStep);
+
+    simulateInteraction('grafana_browse_dashboards_page_click_list_item', { itemKind: 'folder', uid: 'folder-A' });
+    // User clicks another item before the page_view fires for folder-A
+    simulateInteraction('grafana_browse_dashboards_page_click_list_item', { itemKind: 'folder', uid: 'folder-B' });
+
+    // The first step must have been ended explicitly with outcome=superseded,
+    // not orphaned for the framework backstop to clean up.
+    expect(firstStep.end).toHaveBeenCalledWith({ outcome: 'superseded' });
+    expect(secondStep.end).not.toHaveBeenCalled();
+  });
+
+  it('should record a folder_created event when grafana_manage_dashboards_folder_created fires', () => {
+    loadWiring();
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    simulateInteraction('grafana_manage_dashboards_folder_created', {
+      is_subfolder: true,
+      folder_depth: 2,
+    });
+
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('folder_created', {
+      isSubfolder: 'true',
+      folderDepth: '2',
+    });
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
 });

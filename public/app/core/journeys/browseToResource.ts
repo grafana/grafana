@@ -14,6 +14,11 @@ import { collectUnsubs, str } from './utils';
  *   - navigate_folder — user clicks a folder item; ends when the folder view loads
  *   - select_resource — user clicks a non-folder item; ends when the dashboard loads
  *
+ * Events (point-in-time):
+ *   - folder_created — user created a folder mid-browse (the journey continues; the
+ *     post-create redirect fires a new page_view that enriches `folderUID` on the journey).
+ *     Carries `isSubfolder` and `folderDepth`.
+ *
  * End conditions:
  *   - success: dashboards_init_dashboard_completed — dashboard loaded after resource click
  *   - timeout: 60s — no end condition fires
@@ -41,8 +46,20 @@ onJourneyInstance('browse_to_resource', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   // Folder click starts a navigate_folder duration step; non-folder click starts select_resource.
+  // Each new click closes any still-open prior step so we don't orphan pending handles
+  // (otherwise the framework backstop closes them as `unended` at journey end, with the
+  // wall-clock time until journey end rather than until the user's next click).
   add(
     onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
+      if (pendingFolderStep) {
+        pendingFolderStep.end({ outcome: 'superseded' });
+        pendingFolderStep = null;
+      }
+      if (pendingSelectStep) {
+        pendingSelectStep.end({ outcome: 'superseded' });
+        pendingSelectStep = null;
+      }
+
       if (props.itemKind === 'folder') {
         pendingFolderStep = handle.startStep('navigate_folder', {
           folderUID: str(props.uid),
@@ -69,6 +86,17 @@ onJourneyInstance('browse_to_resource', (handle) => {
         pendingFolderStep = null;
       }
       handle.setAttributes({ folderUID });
+    })
+  );
+
+  // Folder created mid-browse — the journey continues; the post-create page_view
+  // re-fires above and updates the active folderUID attribute.
+  add(
+    onInteraction('grafana_manage_dashboards_folder_created', (props) => {
+      handle.recordEvent('folder_created', {
+        isSubfolder: str(props.is_subfolder),
+        folderDepth: str(props.folder_depth),
+      });
     })
   );
 
