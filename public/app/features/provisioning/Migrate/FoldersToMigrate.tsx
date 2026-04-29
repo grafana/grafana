@@ -69,7 +69,7 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return folders.filter((folder) => {
-      if (onlyUnmanaged && folder.unmanagedDashboardCount === 0) {
+      if (onlyUnmanaged && folder.managedBy) {
         return false;
       }
       if (q && !folder.title.toLowerCase().includes(q)) {
@@ -83,23 +83,27 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
   const ctaLabel = migrateButtonLabel(repos);
   const totalSelected = selectedFolders.size;
 
-  const allSelected = filtered.length > 0 && filtered.every((f) => selectedFolders.has(f.uid));
-  const someSelected = !allSelected && filtered.some((f) => selectedFolders.has(f.uid));
+  // Already-managed folders are skipped in select-all because the per-row
+  // checkboxes for them are disabled.
+  const selectableVisible = useMemo(() => filtered.filter((f) => !f.managedBy), [filtered]);
+  const allSelected =
+    selectableVisible.length > 0 && selectableVisible.every((f) => selectedFolders.has(f.uid));
+  const someSelected = !allSelected && selectableVisible.some((f) => selectedFolders.has(f.uid));
   const toggleAllVisible = useCallback(() => {
     if (allSelected) {
-      filtered.forEach((f) => {
+      selectableVisible.forEach((f) => {
         if (selectedFolders.has(f.uid)) {
           onToggleFolder(f.uid);
         }
       });
     } else {
-      filtered.forEach((f) => {
+      selectableVisible.forEach((f) => {
         if (!selectedFolders.has(f.uid)) {
           onToggleFolder(f.uid);
         }
       });
     }
-  }, [allSelected, filtered, selectedFolders, onToggleFolder]);
+  }, [allSelected, selectableVisible, selectedFolders, onToggleFolder]);
 
   const columns: Array<Column<FolderRow>> = useMemo(
     () => [
@@ -110,8 +114,8 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
             value={allSelected}
             indeterminate={someSelected}
             onChange={toggleAllVisible}
-            aria-label={t('provisioning.stats.folders-select-all-visible', 'Select all visible folders')}
-            disabled={filtered.length === 0}
+            aria-label={t('provisioning.stats.folders-select-all-visible', 'Select all unmanaged folders on this page')}
+            disabled={selectableVisible.length === 0}
           />
         ),
         disableGrow: true,
@@ -122,6 +126,7 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
             aria-label={t('provisioning.stats.folders-select', 'Select folder {{folder}}', {
               folder: row.original.title,
             })}
+            disabled={Boolean(row.original.managedBy)}
           />
         ),
       },
@@ -150,79 +155,35 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
         cell: ({ row }) => <Text>{row.original.dashboardCount.toLocaleString()}</Text>,
       },
       {
-        id: 'unmanagedDashboardCount',
-        header: t('provisioning.stats.folders-column-unmanaged', 'Unmanaged'),
-        sortType: 'number',
-        cell: ({ row }) => {
-          const n = row.original.unmanagedDashboardCount;
-          if (n === 0) {
-            return <Text color="secondary">{n}</Text>;
-          }
-          return (
+        id: 'status',
+        header: t('provisioning.stats.folders-column-status', 'Status'),
+        cell: ({ row }) =>
+          row.original.managedBy ? (
             <Badge
-              color="orange"
-              text={t('provisioning.stats.folders-unmanaged-badge', '{{count}}', { count: n })}
+              color="green"
+              text={t('provisioning.stats.folders-status-managed', 'Managed by {{kind}}', {
+                kind: row.original.managedBy,
+              })}
             />
-          );
-        },
-      },
-      {
-        id: 'provider',
-        header: t('provisioning.stats.folders-column-provider', 'Provider'),
-        cell: ({ row }) => {
-          if (row.original.managerKinds.length === 0) {
-            return (
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="provisioning.stats.folders-provider-none">None</Trans>
-              </Text>
-            );
-          }
-          return (
-            <Stack direction="row" gap={0.5} wrap>
-              {row.original.managerKinds.map((kind) => (
-                <Badge key={kind} color="blue" text={kind} />
-              ))}
-            </Stack>
-          );
-        },
+          ) : (
+            <Badge color="orange" text={t('provisioning.stats.folders-status-unmanaged', 'Unmanaged')} />
+          ),
       },
       {
         id: 'recommendation',
         header: t('provisioning.stats.folders-column-recommendation', 'Recommendation'),
-        cell: ({ row }) => {
-          if (row.original.unmanagedDashboardCount === 0 && row.original.managedDashboardCount > 0) {
-            return (
-              <Text color="success" variant="bodySmall">
-                <Trans i18nKey="provisioning.stats.folders-recommendation-managed">
-                  Already managed
-                </Trans>
-              </Text>
-            );
-          }
-          if (row.original.unmanagedDashboardCount === 0) {
-            return (
-              <Text color="secondary" variant="bodySmall">
-                <Trans i18nKey="provisioning.stats.folders-recommendation-empty">Nothing to do</Trans>
-              </Text>
-            );
-          }
-          if (row.original.managedDashboardCount === 0) {
-            return (
-              <Text variant="bodySmall">
-                <Trans i18nKey="provisioning.stats.folders-recommendation-clean">
-                  Migrate folder to Git Sync
-                </Trans>
-              </Text>
-            );
-          }
-          return (
+        cell: ({ row }) =>
+          row.original.managedBy ? (
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.folders-recommendation-managed">Nothing to do</Trans>
+            </Text>
+          ) : (
             <Text variant="bodySmall">
-              <Trans i18nKey="provisioning.stats.folders-recommendation-mixed">
-                Migrate the unmanaged dashboards
+              <Trans i18nKey="provisioning.stats.folders-recommendation-unmanaged">
+                Migrate folder
               </Trans>
             </Text>
-          );
-        },
+          ),
       },
       {
         id: 'actions',
@@ -230,9 +191,11 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
         disableGrow: true,
         cell: ({ row }) => (
           <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end">
-            <LinkButton variant="primary" size="sm" icon="upload" href={target}>
-              {ctaLabel}
-            </LinkButton>
+            {!row.original.managedBy && (
+              <LinkButton variant="primary" size="sm" icon="upload" href={target}>
+                {ctaLabel}
+              </LinkButton>
+            )}
             <LinkButton variant="secondary" size="sm" fill="text" href={folderBrowseUrl(row.original.uid)}>
               <Trans i18nKey="provisioning.stats.folders-browse">Browse</Trans>
             </LinkButton>
@@ -245,7 +208,7 @@ export function FoldersToMigrate({ folders, repos, selectedFolders, onToggleFold
     [
       allSelected,
       someSelected,
-      filtered,
+      selectableVisible,
       selectedFolders,
       onToggleFolder,
       target,

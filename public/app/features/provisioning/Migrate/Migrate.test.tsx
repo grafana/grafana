@@ -40,10 +40,6 @@ function mockQuery(value: Partial<ReturnType<typeof useGetResourceStatsQuery>>) 
 function makeFolder(partial: Partial<FolderRow> & { uid: string; title: string }): FolderRow {
   return {
     dashboardCount: 0,
-    unmanagedDashboardCount: 0,
-    managedDashboardCount: 0,
-    managerKinds: [],
-    dashboards: [],
     ...partial,
   };
 }
@@ -96,8 +92,8 @@ describe('Migrate', () => {
     });
     mockUseFolderLeaderboard.mockReturnValue({
       data: [
-        makeFolder({ uid: 'a', title: 'A', dashboardCount: 3, unmanagedDashboardCount: 3 }),
-        makeFolder({ uid: 'b', title: 'B', dashboardCount: 3, unmanagedDashboardCount: 3 }),
+        makeFolder({ uid: 'a', title: 'A', dashboardCount: 3 }),
+        makeFolder({ uid: 'b', title: 'B', dashboardCount: 3 }),
       ],
       isLoading: false,
       isError: false,
@@ -121,8 +117,7 @@ describe('Migrate', () => {
           uid: 'a',
           title: 'A',
           dashboardCount: 5,
-          managedDashboardCount: 5,
-          unmanagedDashboardCount: 0,
+          managedBy: 'repo',
         }),
       ],
       isLoading: false,
@@ -201,8 +196,8 @@ describe('Migrate', () => {
     });
     mockUseFolderLeaderboard.mockReturnValue({
       data: [
-        makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 12, unmanagedDashboardCount: 12 }),
-        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 8, unmanagedDashboardCount: 8 }),
+        makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 12 }),
+        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 8 }),
       ],
       isLoading: false,
       isError: false,
@@ -229,8 +224,7 @@ describe('Migrate', () => {
           uid: 'all',
           title: 'All managed',
           dashboardCount: 5,
-          managedDashboardCount: 5,
-          unmanagedDashboardCount: 0,
+          managedBy: 'repo',
         }),
       ],
       isLoading: false,
@@ -261,7 +255,7 @@ describe('Migrate', () => {
       },
     });
     mockUseFolderLeaderboard.mockReturnValue({
-      data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2, unmanagedDashboardCount: 2 })],
+      data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2 })],
       isLoading: false,
       isError: false,
     });
@@ -289,8 +283,8 @@ describe('Migrate', () => {
     });
     mockUseFolderLeaderboard.mockReturnValue({
       data: [
-        makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2, unmanagedDashboardCount: 2 }),
-        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 3, unmanagedDashboardCount: 3 }),
+        makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 2 }),
+        makeFolder({ uid: 'inf', title: 'Infrastructure', dashboardCount: 3 }),
       ],
       isLoading: false,
       isError: false,

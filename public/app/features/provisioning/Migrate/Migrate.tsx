@@ -385,11 +385,9 @@ function NextStepsPanel({
   const hasRepo = repos.length > 0;
 
   const folderTotal = folders.length;
-  const fullyManagedFolders = folders.filter(
-    (f) => f.dashboardCount > 0 && f.unmanagedDashboardCount === 0
-  ).length;
-  const unmanagedFolders = folders.filter((f) => f.unmanagedDashboardCount > 0).length;
-  const hasStartedMigrating = fullyManagedFolders > 0;
+  const managedFolders = folders.filter((f) => Boolean(f.managedBy)).length;
+  const unmanagedFolders = folders.filter((f) => !f.managedBy && f.dashboardCount > 0).length;
+  const hasStartedMigrating = managedFolders > 0;
 
   const steps: NextStep[] = [
     {
@@ -424,15 +422,15 @@ function NextStepsPanel({
     },
     {
       key: 'track',
-      done: folderTotal > 0 && fullyManagedFolders === folderTotal,
+      done: folderTotal > 0 && managedFolders === folderTotal,
       title: t('provisioning.stats.next-step-track-title', 'Migrate folder by folder'),
       description:
         folderTotal === 0
           ? t('provisioning.stats.next-step-track-empty', 'No folders yet — nothing to track.')
           : t(
               'provisioning.stats.next-step-track-progress',
-              '{{count}} of {{total}} folders fully managed.',
-              { count: fullyManagedFolders, total: folderTotal }
+              '{{count}} of {{total}} folders managed.',
+              { count: managedFolders, total: folderTotal }
             ),
     },
   ];
@@ -571,12 +569,12 @@ export function Migrate() {
 
   const selectAllFolders = useCallback(() => {
     setSelectedFolderUids(
-      new Set(folders.filter((f) => f.unmanagedDashboardCount > 0).map((f) => f.uid))
+      new Set(folders.filter((f) => !f.managedBy && f.dashboardCount > 0).map((f) => f.uid))
     );
   }, [folders]);
 
   const unmanagedFolderCount = useMemo(
-    () => folders.filter((f) => f.unmanagedDashboardCount > 0).length,
+    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0).length,
     [folders]
   );
 

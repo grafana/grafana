@@ -39,11 +39,11 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
   const styles = useStyles2(getStyles);
 
   const topFolders = useMemo(
-    () => folders.filter((f) => f.unmanagedDashboardCount > 0).slice(0, TOP_N),
+    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0).slice(0, TOP_N),
     [folders]
   );
   const totalUnmanagedFolders = useMemo(
-    () => folders.filter((f) => f.unmanagedDashboardCount > 0).length,
+    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0).length,
     [folders]
   );
   const selectedInTop = useMemo(
@@ -110,14 +110,9 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
                     {folder.title}
                   </Text>
                   <Text variant="bodySmall" color="secondary">
-                    {t(
-                      'provisioning.stats.quick-wins-dashboard-count',
-                      '{{count}} dashboards · {{unmanaged}} unmanaged',
-                      {
-                        count: folder.dashboardCount,
-                        unmanaged: folder.unmanagedDashboardCount,
-                      }
-                    )}
+                    {t('provisioning.stats.quick-wins-dashboard-count', '{{count}} dashboards', {
+                      count: folder.dashboardCount,
+                    })}
                   </Text>
                 </Stack>
               </Stack>

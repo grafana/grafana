@@ -8,24 +8,17 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 const PAGE_SIZE = 200;
 const MAX_PAGES = 25;
 
-export interface FolderDashboard {
-  uid: string;
-  title: string;
-  managedBy?: string;
-  url?: string;
-}
-
 export interface FolderRow {
   uid: string;
   title: string;
   parentTitle?: string;
+  /**
+   * The provisioning tool that manages this folder, if any. A folder is
+   * single-managed: when this is set, every dashboard inside the folder is
+   * managed by the same tool; when it's unset, every dashboard is unmanaged.
+   */
   managedBy?: string;
   dashboardCount: number;
-  unmanagedDashboardCount: number;
-  managedDashboardCount: number;
-  /** Distinct list of manager kinds active inside the folder, e.g. ['repo']. */
-  managerKinds: string[];
-  dashboards: FolderDashboard[];
 }
 
 interface State {
@@ -83,56 +76,35 @@ function aggregate(
   folders: Array<{ uid: string; title: string; managedBy?: string }>,
   dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
 ): FolderRow[] {
-  const byFolder = new Map<string, FolderRow>();
-  for (const folder of folders) {
-    byFolder.set(folder.uid, {
-      uid: folder.uid,
-      title: folder.title,
-      managedBy: folder.managedBy,
-      dashboardCount: 0,
-      unmanagedDashboardCount: 0,
-      managedDashboardCount: 0,
-      managerKinds: [],
-      dashboards: [],
-    });
-  }
+  // A folder is single-managed: its `managedBy` is the source of truth for
+  // every dashboard inside. We only use the dashboard list to count how many
+  // dashboards each folder holds.
+  const dashboardCountByFolder = new Map<string, number>();
   for (const dash of dashboards) {
     if (!dash.parentUid) {
-      // Skip dashboards in the General folder for now — they're a special case
-      // that doesn't map cleanly to a folder migration target.
+      // Dashboards in the General folder are a special case — they don't map
+      // to a folder migration target.
       continue;
     }
-    let entry = byFolder.get(dash.parentUid);
-    if (!entry) {
-      entry = {
-        uid: dash.parentUid,
-        title: dash.parentUid,
-        dashboardCount: 0,
-        unmanagedDashboardCount: 0,
-        managedDashboardCount: 0,
-        managerKinds: [],
-        dashboards: [],
-      };
-      byFolder.set(dash.parentUid, entry);
-    }
-    entry.dashboardCount += 1;
-    entry.dashboards.push({ uid: dash.uid, title: dash.title, managedBy: dash.managedBy, url: dash.url });
-    if (dash.managedBy) {
-      entry.managedDashboardCount += 1;
-      if (!entry.managerKinds.includes(dash.managedBy)) {
-        entry.managerKinds.push(dash.managedBy);
-      }
-    } else {
-      entry.unmanagedDashboardCount += 1;
-    }
+    dashboardCountByFolder.set(dash.parentUid, (dashboardCountByFolder.get(dash.parentUid) ?? 0) + 1);
   }
-  // Sort folder rows by unmanaged-dashboard count desc (then total desc, then title asc)
-  // so the highest-leverage migration targets surface first.
-  return Array.from(byFolder.values())
+
+  const rows: FolderRow[] = folders.map((folder) => ({
+    uid: folder.uid,
+    title: folder.title,
+    managedBy: folder.managedBy,
+    dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
+  }));
+
+  // Sort: unmanaged folders first (the migration targets), then by dashboard
+  // count desc so the highest-leverage targets surface at the top, then title.
+  return rows
     .filter((row) => row.dashboardCount > 0)
     .sort((a, b) => {
-      if (b.unmanagedDashboardCount !== a.unmanagedDashboardCount) {
-        return b.unmanagedDashboardCount - a.unmanagedDashboardCount;
+      const aIsUnmanaged = a.managedBy ? 0 : 1;
+      const bIsUnmanaged = b.managedBy ? 0 : 1;
+      if (aIsUnmanaged !== bIsUnmanaged) {
+        return bIsUnmanaged - aIsUnmanaged;
       }
       if (b.dashboardCount !== a.dashboardCount) {
         return b.dashboardCount - a.dashboardCount;
