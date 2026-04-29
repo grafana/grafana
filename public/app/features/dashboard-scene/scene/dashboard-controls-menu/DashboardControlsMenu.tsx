@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
-import { Box, Menu, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
+import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 
+import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
+import { DataLayerControlEditWrapper } from '../DashboardDataLayerControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
-import { DataLayerControl } from '../DataLayerControl';
+import { type DashboardScene } from '../DashboardScene';
 import { VariableValueSelectWrapper } from '../VariableControls';
 
 interface DashboardControlsMenuProps {
@@ -14,54 +17,73 @@ interface DashboardControlsMenuProps {
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
+  isEditing?: boolean;
+  dashboard: DashboardScene;
 }
 
-export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
+export function DashboardControlsMenu({
+  variables,
+  links,
+  annotations,
+  dashboardUID,
+  isEditing,
+  dashboard,
+}: DashboardControlsMenuProps) {
+  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const fullLinks = dashboard.state.links ?? [];
+  const styles = useStyles2(getStyles);
+
   return (
-    <Box
+    <ScrollContainer
       minWidth={32}
       borderColor={'weak'}
       borderStyle={'solid'}
       boxShadow={'z3'}
-      display={'flex'}
-      direction={'column'}
       borderRadius={'default'}
       backgroundColor={'primary'}
-      padding={1}
-      gap={0.5}
+      maxHeight={'calc(100vh - 80px)'}
+      overflowX={'hidden'}
       onClick={(e) => {
         // Normally, clicking the overlay closes the dropdown.
         // We stop event propagation here to keep it open while users interact with variable controls.
         e.stopPropagation();
       }}
     >
-      {/* Variables */}
-      {variables.map((variable, index) => (
-        <div key={variable.state.key}>
-          <VariableValueSelectWrapper variable={variable} inMenu />
-        </div>
-      ))}
-
-      {/* Annotation layers */}
-      {annotations.length > 0 &&
-        annotations.map((layer, index) => (
-          <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu />
+      <div className={styles.items}>
+        {/* Variables */}
+        {sortDefaultVarsFirst(variables).map((variable) => (
+          <div key={variable.state.key}>
+            <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
           </div>
         ))}
 
-      {/* Links */}
-      {links.length > 0 && dashboardUID && (
-        <>
-          {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
-          {links.map((link, index) => (
-            <div key={`${link.title}-${index}`}>
-              <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
+        {/* Annotation layers */}
+        {annotations.length > 0 &&
+          annotations.map((layer) => (
+            <div key={layer.state.key}>
+              <DataLayerControlEditWrapper layer={layer} inMenu />
             </div>
           ))}
-        </>
-      )}
-    </Box>
+
+        {/* Links */}
+        {links.length > 0 && (
+          <>
+            {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
+            {sortDefaultLinksFirst(links).map((link, index) => (
+              <div key={`${link.title}-${index}`}>
+                <DashboardLinkRenderer
+                  link={link}
+                  dashboardUID={dashboardUID}
+                  inMenu
+                  linkIndex={fullLinks.indexOf(link)}
+                  dashboard={dashboard}
+                />
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </ScrollContainer>
   );
 }
 
@@ -76,6 +98,12 @@ function MenuDivider() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  items: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1),
+  }),
   divider: css({
     marginTop: theme.spacing(1),
     padding: theme.spacing(0, 0.5),

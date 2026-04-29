@@ -1,19 +1,25 @@
-import { locationService } from '@grafana/runtime';
-import { InputType, DataSourceInput, DashboardInput } from 'app/features/manage-dashboards/state/reducers';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import {
+  InputType,
+  type DataSourceInput,
+  type DashboardInput,
+  type DashboardJson,
+} from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../interactions';
-import { GnetDashboard } from '../types';
+import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
+import { type GnetDashboard } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
 import {
   buildDashboardDetails,
   buildGrafanaComUrl,
   getLogoUrl,
   navigateToTemplate,
   onUseCommunityDashboard,
+  interpolateDashboardForCompatibilityCheck,
 } from './communityDashboardHelpers';
 
 jest.mock('../api/dashboardLibraryApi', () => ({
@@ -34,12 +40,20 @@ jest.mock('../interactions', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+  locationService: {
+    push: jest.fn(),
+  },
+}));
+
 // Mock function references
 const mockFetchCommunityDashboard = fetchCommunityDashboard as jest.MockedFunction<typeof fetchCommunityDashboard>;
 const mockTryAutoMapDatasources = tryAutoMapDatasources as jest.MockedFunction<typeof tryAutoMapDatasources>;
 const mockParseConstantInputs = parseConstantInputs as jest.MockedFunction<typeof parseConstantInputs>;
+const mockGetDataSourceSrv = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
 
-// Helper functions for creating mock objects
 const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
   id: 123,
   name: 'Test Dashboard',
@@ -137,13 +151,14 @@ describe('communityDashboardHelpers', () => {
       const gnetId = 123;
       const datasourceUid = 'test-datasource';
       const mappings: InputMapping[] = [];
-      const eventLocation = EVENT_LOCATIONS.EMPTY_DASHBOARD;
+      const sourceEntryPoint = SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON;
+      const eventLocation = EVENT_LOCATIONS.MODAL_VIEW;
       const contentKind = CONTENT_KINDS.COMMUNITY_DASHBOARD;
 
       const mockLocationServicePush = jest.fn();
       locationService.push = mockLocationServicePush;
 
-      navigateToTemplate(dashboardTitle, gnetId, datasourceUid, mappings, eventLocation, contentKind);
+      navigateToTemplate(dashboardTitle, gnetId, datasourceUid, mappings, sourceEntryPoint, eventLocation, contentKind);
 
       expect(mockLocationServicePush).toHaveBeenCalledWith({
         pathname: DASHBOARD_LIBRARY_ROUTES.Template,
@@ -156,10 +171,10 @@ describe('communityDashboardHelpers', () => {
       expect(searchParams.get('title')).toBe('Test Dashboard');
       expect(searchParams.get('gnetId')).toBe('123');
       expect(searchParams.get('datasource')).toBe('test-datasource');
-      expect(searchParams.get('sourceEntryPoint')).toBe(SOURCE_ENTRY_POINTS.DATASOURCE_PAGE);
+      expect(searchParams.get('sourceEntryPoint')).toBe(SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON);
       expect(searchParams.get('creationOrigin')).toBe(CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD);
       expect(searchParams.get('contentKind')).toBe(CONTENT_KINDS.COMMUNITY_DASHBOARD);
-      expect(searchParams.get('eventLocation')).toBe(EVENT_LOCATIONS.EMPTY_DASHBOARD);
+      expect(searchParams.get('eventLocation')).toBe(EVENT_LOCATIONS.MODAL_VIEW);
       expect(searchParams.get('mappings')).toBe('[]');
     });
   });
@@ -198,8 +213,8 @@ describe('communityDashboardHelpers', () => {
       await onUseCommunityDashboard({
         dashboard,
         datasourceUid: 'test-ds-uid',
-        datasourceType: 'prometheus',
-        eventLocation: 'empty_dashboard',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+        eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
         onShowMapping: options?.onShowMapping,
       });
     }
@@ -306,8 +321,8 @@ describe('communityDashboardHelpers', () => {
         onUseCommunityDashboard({
           dashboard: createMockGnetDashboard(),
           datasourceUid: 'test-ds-uid',
-          datasourceType: 'prometheus',
-          eventLocation: 'empty_dashboard',
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+          eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
         })
       ).rejects.toThrow('API failed');
 
@@ -608,6 +623,124 @@ describe('communityDashboardHelpers', () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboard:', expect.any(Error));
         expect(locationServicePushSpy).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('interpolateDashboardForCompatibilityCheck', () => {
+    const mockPromSettings = {
+      uid: 'prom-uid',
+      name: 'Prometheus',
+      type: 'prometheus',
+    } as DataSourceInstanceSettings;
+
+    beforeEach(() => {
+      mockGetDataSourceSrv.mockReturnValue({
+        getInstanceSettings: jest.fn((uid: string) => {
+          if (uid === 'prom-uid') {
+            return mockPromSettings;
+          }
+          return undefined;
+        }),
+      } as unknown as ReturnType<typeof getDataSourceSrv>);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should successfully interpolate dashboard in the frontend when auto-mapping succeeds', async () => {
+      const dashboardJson = createMockDashboardJson({
+        __inputs: [
+          {
+            name: 'DS_PROMETHEUS',
+            type: InputType.DataSource,
+            label: 'Prometheus',
+            value: '',
+            description: '',
+            pluginId: 'prometheus',
+            info: '',
+          } as DataSourceInput & { description: string },
+        ],
+        panels: [
+          {
+            type: 'graph',
+            datasource: { uid: '${DS_PROMETHEUS}', type: 'prometheus' },
+            targets: [{ datasource: { uid: '${DS_PROMETHEUS}', type: 'prometheus' }, refId: 'A' }],
+          },
+        ] as DashboardJson['panels'],
+      });
+
+      mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
+      mockTryAutoMapDatasources.mockReturnValue({
+        allMapped: true,
+        mappings: [{ name: 'DS_PROMETHEUS', type: 'datasource', value: 'prom-uid', pluginId: 'prometheus' }],
+        unmappedDsInputs: [],
+      });
+
+      const result = await interpolateDashboardForCompatibilityCheck(123, 'prom-uid');
+
+      expect(mockFetchCommunityDashboard).toHaveBeenCalledWith(123);
+      expect(mockTryAutoMapDatasources).toHaveBeenCalled();
+      // Verify interpolation happened in the frontend (no backend call)
+      expect(result.panels?.[0]).toEqual(
+        expect.objectContaining({
+          datasource: expect.objectContaining({ uid: 'prom-uid' }),
+        })
+      );
+    });
+
+    it('should throw error when auto-mapping fails', async () => {
+      const dashboardJson = createMockDashboardJson({
+        __inputs: [
+          {
+            name: 'DS_PROMETHEUS',
+            type: InputType.DataSource,
+            label: 'Prometheus',
+            value: '',
+            description: '',
+            pluginId: 'prometheus',
+            info: '',
+          } as DataSourceInput & { description: string },
+        ],
+      });
+
+      mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
+      mockTryAutoMapDatasources.mockReturnValue({
+        allMapped: false,
+        mappings: [],
+        unmappedDsInputs: [
+          {
+            name: 'DS_PROMETHEUS',
+            pluginId: 'prometheus',
+            type: InputType.DataSource,
+            value: '',
+            label: 'Prometheus',
+            description: '',
+            info: '',
+          },
+        ],
+      });
+
+      await expect(interpolateDashboardForCompatibilityCheck(123, 'prom-uid')).rejects.toThrow(
+        'Unable to automatically map all datasource inputs for this dashboard'
+      );
+    });
+
+    it('should handle dashboard with no __inputs', async () => {
+      const dashboardJson = createMockDashboardJson({ __inputs: undefined });
+
+      mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
+      mockTryAutoMapDatasources.mockReturnValue({
+        allMapped: true,
+        mappings: [],
+        unmappedDsInputs: [],
+      });
+
+      const result = await interpolateDashboardForCompatibilityCheck(123, 'prom-uid');
+
+      // Should return the dashboard as-is (no inputs to interpolate)
+      expect(result.title).toBe(dashboardJson.title);
+      expect(mockTryAutoMapDatasources).toHaveBeenCalledWith([], 'prom-uid');
     });
   });
 });

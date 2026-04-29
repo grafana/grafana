@@ -1,11 +1,11 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { SQLQuery } from '@grafana/sql';
+import { type SQLQuery } from '@grafana/sql';
 
 import { CheatSheet } from './CheatSheet';
 import { PostgresQueryEditor } from './PostgresQueryEditor';
 import { PostgresConfigEditor } from './configuration/ConfigurationEditor';
 import { PostgresDatasource } from './datasource';
-import { PostgresOptions, SecureJsonData } from './types';
+import { type PostgresOptions, type SecureJsonData } from './types';
 
 export const plugin = new DataSourcePlugin<PostgresDatasource, SQLQuery, PostgresOptions, SecureJsonData>(
   PostgresDatasource

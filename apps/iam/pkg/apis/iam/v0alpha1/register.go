@@ -10,40 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 )
 
 const (
 	GROUP      = "iam.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
-)
-
-var CoreRoleInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"coreroles", "corerole", "CoreRole",
-	func() runtime.Object { return &CoreRole{} },
-	func() runtime.Object { return &CoreRoleList{} },
-	utils.TableColumns{
-		Definition: []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Group", Type: "string", Format: "group", Description: "Core role group"},
-			{Name: "Title", Type: "string", Format: "string", Description: "Core role name"},
-			{Name: "Created At", Type: "date"},
-		},
-		Reader: func(obj any) ([]interface{}, error) {
-			core, ok := obj.(*CoreRole)
-			if ok {
-				if core != nil {
-					return []interface{}{
-						core.Name,
-						core.Spec.Group,
-						core.Spec.Title,
-						core.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
-			}
-			return nil, fmt.Errorf("expected core role")
-		},
-	},
 )
 
 var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
@@ -338,8 +311,6 @@ func init() {
 
 func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&CoreRole{},
-		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
 		&RoleBinding{},
@@ -368,6 +339,7 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
+		&PermissionsSearchResult{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
@@ -393,36 +365,42 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
-		&GetSearchTeams{},
+		&GetSearchTeamsResponse{},
 		&TeamBinding{},
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
-		&GetGroups{},
+		&GetTeamGroupsResponse{},
+		&GetTeamMembersResponse{},
+		&GetUserTeamsResponse{},
+		&ListServiceAccountTokensResponse{},
+		&GetServiceAccountTokenResponse{},
+		&CreateServiceAccountTokenResponse{},
+		&DeleteServiceAccountTokenResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
-		// &ServiceAccountTokenList{},
 		// &DisplayList{},
 		// &SSOSetting{},
 		// &SSOSettingList{},
-		// &TeamMemberList{},
 
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
 
 	// Enable field selectors for TeamBinding
-	err := scheme.AddFieldLabelConversionFunc(
-		TeamBindingResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
-			}
-		},
-	)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, TeamBindingKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for ExternalGroupMapping
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, ExternalGroupMappingKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for User
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, UserKind())
 	if err != nil {
 		return err
 	}

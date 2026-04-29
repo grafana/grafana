@@ -89,8 +89,6 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, &result)
 }
 
-// swagger:route GET /datasources/{id} datasources getDataSourceByID
-//
 // Get a single data source by Id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -136,8 +134,6 @@ func (hs *HTTPServer) GetDataSourceById(c *contextmodel.ReqContext) response.Res
 	return response.JSON(http.StatusOK, &dto)
 }
 
-// swagger:route DELETE /datasources/{id} datasources deleteDataSourceByID
-//
 // Delete an existing data source by id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -183,6 +179,10 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 	}
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
+
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
 
 	return response.Success("Data source deleted")
 }
@@ -270,6 +270,10 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), ds.UID)
 
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(ds.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
+
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      ds.ID,
@@ -311,13 +315,17 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.GetOrgID()}
+	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.GetOrgID(), UID: dataSource.UID}
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	hs.Live.HandleDatasourceDelete(c.GetOrgID(), dataSource.UID)
+
+	// Clear the scope resolution cache for the datasource name to prevent stale name-to-UID mappings
+	nameScope := datasources.ScopeProvider.GetResourceScopeName(dataSource.Name)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), nameScope)
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
@@ -430,8 +438,6 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	})
 }
 
-// swagger:route PUT /datasources/{id} datasources updateDataSourceByID
-//
 // Update an existing data source by its sequential ID.
 //
 // Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
@@ -659,10 +665,6 @@ func (hs *HTTPServer) GetDataSourceIdByName(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, &dtos)
 }
 
-// swagger:route GET /datasources/{id}/resources/{datasource_proxy_route} datasources callDatasourceResourceByID
-//
-// Fetch data source resources by Id.
-//
 // Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead
 //
 // Deprecated: true
@@ -807,8 +809,6 @@ func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *contextmodel.ReqContext) r
 	return hs.checkDatasourceHealth(c, ds)
 }
 
-// swagger:route GET /datasources/{id}/health datasources health checkDatasourceHealthByID
-//
 // Sends a health check request to the plugin datasource identified by the ID.
 //
 // Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead

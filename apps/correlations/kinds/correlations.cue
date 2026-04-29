@@ -1,8 +1,14 @@
 package kinds
 
 correlationsv0alpha1: {
-	kind:       "Correlation"  // note: must be uppercase
+	kind:       "Correlation" // note: must be uppercase
 	pluralName: "Correlations"
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: {
 			type:         CorrelationType
@@ -14,19 +20,18 @@ correlationsv0alpha1: {
 		}
 	}
 	selectableFields: [
-		"spec.datasource.name"
+		"spec.datasource.name",
 	]
 }
 
 DataSourceRef: {
-   group: string // same as pluginId
-   name: string // same as grafana uid
+	group: string // same as pluginId
+	name:  string // same as grafana uid
 }
-
 
 // there was a deprecated field here called type, we will need to move that for conversion and provisioning
 ConfigSpec: {
-	field: string
+	field:  string
 	target: TargetSpec
 	transformations?: [...TransformationSpec]
 }
@@ -36,10 +41,10 @@ TargetSpec: {
 }
 
 TransformationSpec: {
-	type: "regex" | "logfmt"
-	expression: string
-	field: string
-	mapValue: string
+	type:        "regex" | "logfmt"
+	expression?: string
+	field?:      string
+	mapValue?:   string
 }
 
 CorrelationType: "query" | "external"

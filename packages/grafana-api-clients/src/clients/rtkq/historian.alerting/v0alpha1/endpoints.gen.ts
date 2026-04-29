@@ -167,13 +167,23 @@ const injectedRtkApi = api
           body: queryArg.createNotificationqueryRequestBody,
         }),
       }),
+      createNotificationsqueryalerts: build.mutation<
+        CreateNotificationsqueryalertsApiResponse,
+        CreateNotificationsqueryalertsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/notifications/queryalerts`,
+          method: 'POST',
+          body: queryArg.createNotificationsqueryalertsRequestBody,
+        }),
+      }),
     }),
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistory;
+export type GetAlertstatehistoryApiResponse = /** status 200 OK */ GetAlertstatehistoryResponse;
 export type GetAlertstatehistoryApiArg = void;
 export type ListDummyApiResponse = /** status 200 OK */ DummyList;
 export type ListDummyApiArg = {
@@ -377,9 +387,13 @@ export type UpdateDummyStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationquery;
+export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryResponse;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
+};
+export type CreateNotificationsqueryalertsApiResponse = /** status 200 OK */ CreateNotificationsqueryalertsResponse;
+export type CreateNotificationsqueryalertsApiArg = {
+  createNotificationsqueryalertsRequestBody: CreateNotificationsqueryalertsRequestBody;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -413,11 +427,9 @@ export type ApiResourceList = {
   /** resources contains the name of the resources and if they are namespaced. */
   resources: ApiResource[];
 };
-export type GetAlertstatehistory = {
+export type GetAlertstatehistoryResponse = {
   body: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
 };
 export type Time = string;
@@ -510,9 +522,7 @@ export type DummyOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -523,9 +533,7 @@ export type DummyOperatorState = {
 export type DummyStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -605,17 +613,104 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type CreateNotificationquery = {
-  entries: any;
-};
-export type CreateNotificationqueryMatchers = any;
 export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
 export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationRangeValue = {
+  /** Count is the number of notification attempts at this point in time. */
+  count: number;
+  /** Timestamp is the Unix epoch in seconds for this data point. */
+  timestamp: number;
+};
+export type CreateNotificationqueryNotificationCount = {
+  /** Count is the number of notification attempts in the time period. Set for counts queries. */
+  count: number;
+  error?: string;
+  integration?: string;
+  integrationIndex?: number;
+  outcome?: CreateNotificationqueryNotificationOutcome;
+  receiver?: string;
+  ruleUID?: string;
+  status?: CreateNotificationqueryNotificationStatus;
+  /** Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries. */
+  values: CreateNotificationqueryNotificationRangeValue[];
+};
+export type CreateNotificationqueryNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
+};
+export type CreateNotificationqueryNotificationEntry = {
+  /** AlertCount is the total number of alerts included in the notification. */
+  alertCount: number;
+  /** Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed. */
+  alerts: CreateNotificationqueryNotificationEntryAlert[];
+  /** Duration is the length of time the notification attempt took in nanoseconds. */
+  duration: number;
+  /** Error is the message returned by the contact point if delivery failed. */
+  error?: string;
+  /** GroupKey uniquely idenifies the dispatcher alert group. */
+  groupKey: string;
+  /** GroupLabels are the labels uniquely identifying the alert group within a route. */
+  groupLabels: {
+    [key: string]: string;
+  };
+  /** Integration is the integration (contact point type) name. */
+  integration: string;
+  /** IntegrationIndex is the index of the integration within the receiver. */
+  integrationIndex: number;
+  /** Outcome indicaes if the notificaion attempt was successful or if it failed. */
+  outcome: CreateNotificationqueryNotificationOutcome;
+  /** PipelineTime is the time at which the flush began. */
+  pipelineTime: string;
+  /** Receiver is the receiver (contact point) title. */
+  receiver: string;
+  /** Retry indicates if the attempt was a retried attempt. */
+  retry: boolean;
+  /** RuleUIDs are the unique identifiers of the alert rules included in the notification. */
+  ruleUIDs: string[];
+  /** Status indicates if the notification contains one or more firing alerts. */
+  status: CreateNotificationqueryNotificationStatus;
+  /** Timestamp is the time at which the notification attempt completed. */
+  timestamp: string;
+  /** Uuid is a unique identifier for the notification attempt. */
+  uuid: string;
+};
+export type CreateNotificationqueryResponse = {
+  counts: CreateNotificationqueryNotificationCount[];
+  entries: CreateNotificationqueryNotificationEntry[];
+};
+export type CreateNotificationqueryMatcher = {
+  label: string;
+  type: '=' | '!=' | '=~' | '!~';
+  value: string;
+};
+export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;
+  /** GroupBy specifies how to aggregate counts queries. */
+  groupBy?: {
+    error: boolean;
+    integration: boolean;
+    integrationIndex: boolean;
+    outcome: boolean;
+    receiver: boolean;
+    ruleUID: boolean;
+    status: boolean;
+  };
   /** GroupLabels optionally filters the entries by matching group labels. */
   groupLabels?: CreateNotificationqueryMatchers;
+  /** Labels optionally filters the entries by matching alert labels. */
+  labels?: CreateNotificationqueryMatchers;
   /** Limit is the maximum number of entries to return. */
   limit?: number;
   /** Outcome optionally filters the entries to only either successful or failed attempts. */
@@ -626,8 +721,39 @@ export type CreateNotificationqueryRequestBody = {
   ruleUID?: string;
   /** Status optionally filters the entries to only either firing or resolved. */
   status?: CreateNotificationqueryNotificationStatus;
+  /** Step is the step interval in seconds for range_counts queries. */
+  step?: number;
   /** To is the starting timestamp for the query. */
   to?: string;
+  /** Type of query to perform (default: entries) */
+  type?: 'entries' | 'counts' | 'range_counts';
+};
+export type CreateNotificationsqueryalertsNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
+};
+export type CreateNotificationsqueryalertsResponse = {
+  alerts: CreateNotificationsqueryalertsNotificationEntryAlert[];
+};
+export type CreateNotificationsqueryalertsRequestBody = {
+  /** From is the starting timestamp for the query. */
+  from?: string;
+  /** Limit is the maximum number of entries to return. */
+  limit?: number;
+  /** To is the ending timestamp for the query. */
+  to?: string;
+  /** UUID filters the alerts to those belonging to a specific alert rule. */
+  uuid?: string;
 };
 export const {
   useGetApiResourcesQuery,
@@ -648,4 +774,5 @@ export const {
   useReplaceDummyStatusMutation,
   useUpdateDummyStatusMutation,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } = injectedRtkApi;

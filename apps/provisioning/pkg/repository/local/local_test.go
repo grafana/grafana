@@ -394,7 +394,7 @@ func TestLocalRepository_Delete(t *testing.T) {
 			path:        "non-existent-file.txt",
 			ref:         "",
 			comment:     "test delete non-existent",
-			expectedErr: os.ErrNotExist,
+			expectedErr: repository.ErrFileNotFound,
 		},
 		{
 			name: "delete with ref not supported",

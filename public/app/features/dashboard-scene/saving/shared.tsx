@@ -3,11 +3,11 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 
-import { Diffs } from '../settings/version-history/utils';
+import { type Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard | DashboardV2Spec;

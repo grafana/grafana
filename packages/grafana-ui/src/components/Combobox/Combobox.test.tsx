@@ -2,10 +2,12 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
+import { Modal } from '../Modal/Modal';
 
 import { Combobox } from './Combobox';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 // Mock data for the Combobox options
@@ -28,6 +30,12 @@ const numericOptions: Array<ComboboxOption<number>> = [
   { label: 'Option 1', value: 1 },
   { label: 'Option 2', value: 2 },
   { label: 'Option 3', value: 3 },
+];
+const iconOptions: Array<ComboboxOption<string>> = [
+  { label: 'Option 1', value: '1', icon: 'keyboard' },
+  { label: 'Option 2', value: '2', icon: 'text-fields' },
+  { label: 'Option 3', value: '3', description: 'This is option 3', icon: 'user' },
+  { label: 'Option 4', value: '4', icon: 'add-user' },
 ];
 
 describe('Combobox', () => {
@@ -90,6 +98,37 @@ describe('Combobox', () => {
     await userEvent.click(input);
 
     expect(input).toHaveAttribute('placeholder', 'Select an option');
+  });
+
+  it('renders icon for selected option', async () => {
+    render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-keyboard')).toBeVisible();
+  });
+
+  it('renders the option icon over the prefix icon', async () => {
+    render(
+      <Combobox
+        prefixIcon={'ai'}
+        options={iconOptions}
+        value={'1'}
+        onChange={onChangeHandler}
+        placeholder="Select an option"
+      />
+    );
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-keyboard')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-ai')).not.toBeInTheDocument();
+  });
+
+  it('icon renders in options', async () => {
+    render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByText('Option 2')).toBeVisible();
+    expect(screen.getByTestId('icon-text-fields')).toBeVisible();
+    await userEvent.click(screen.getByText('Option 2'));
+    expect(screen.getByDisplayValue('Option 2')).toBeInTheDocument();
+    expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
   });
 
   it('selects value by clicking that needs scrolling', async () => {
@@ -291,6 +330,16 @@ describe('Combobox', () => {
       const newWidth = getComputedStyle(inputWrapper).width;
 
       expect(initialWidth).toBe(newWidth);
+    });
+
+    it('should show "No options found" when filtering returns no results', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'zzz');
+
+      expect(screen.getByText('No options found.')).toBeInTheDocument();
     });
   });
 
@@ -634,6 +683,34 @@ describe('Combobox', () => {
     });
   });
 
+  describe('onBlur', () => {
+    it('calls onBlur when the input loses focus', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onBlur when tabbing away with the menu open', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      // Menu should be open
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('with RTL selectors', () => {
     it('can be selected by label with HTML <label>', () => {
       render(
@@ -669,6 +746,87 @@ describe('Combobox', () => {
 
       const inputByPlaceholderText = screen.getByPlaceholderText('Country');
       expect(inputByPlaceholderText).toBeInTheDocument();
+    });
+  });
+
+  describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
+      const { rerender } = render(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+
+      rerender(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen onIsOpenChange={jest.fn()} />
+      );
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('calls onIsOpenChange when the dropdown opens and closes', async () => {
+      const onIsOpenChange = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onIsOpenChange={onIsOpenChange} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('supports controlled isOpen with onIsOpenChange', async () => {
+      function Controlled() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={open} onIsOpenChange={setOpen} />
+        );
+      }
+      render(<Controlled />);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <Combobox options={options} value={null} onChange={jest.fn()} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <Combobox options={options} value={null} onChange={jest.fn()} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

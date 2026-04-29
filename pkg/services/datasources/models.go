@@ -250,7 +250,6 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
-	User            *user.SignedInUser
 }
 
 type GetAllDataSourcesQuery struct{}
@@ -275,6 +274,10 @@ type GetDataSourceQuery struct {
 
 	// Required
 	OrgID int64
+
+	// Type is the datasource plugin type (e.g. "prometheus", "loki").
+	// When set alongside UID, it scopes the lookup to that specific type.
+	Type string
 }
 
 type DatasourcesPermissionFilterQuery struct {

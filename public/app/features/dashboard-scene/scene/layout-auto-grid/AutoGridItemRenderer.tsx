@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, sceneGraph, SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
+import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
@@ -13,7 +13,7 @@ import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelConte
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
-import { AutoGridItem } from './AutoGridItem';
+import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
@@ -40,6 +40,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged,
           showDropTarget,
           isRepeat = false,
+          isSelected = false,
         }: {
           item: VizPanel;
           conditionalRendering?: ConditionalRenderingGroup;
@@ -47,6 +48,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           showDropTarget: boolean;
           isRepeat?: boolean;
+          isSelected?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
@@ -68,7 +70,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                       conditionalRenderingClass,
                       styles.wrapper,
                       isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                      isDragged && isRepeat && styles.draggedRepeatWrapper,
+                      isSelected && 'dashboard-selected-element'
                     )}
                   >
                     <item.Component model={item} />
@@ -80,7 +83,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                       conditionalRenderingClass,
                       styles.wrapper,
                       isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                      isDragged && isRepeat && styles.draggedRepeatWrapper,
+                      isSelected && 'dashboard-selected-element'
                     )}
                   >
                     <item.Component model={item} />
@@ -94,6 +98,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ),
     [model, isLazy, key, styles, isEditing]
   );
+
+  const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
 
   if (soloPanelContext) {
     // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
@@ -127,6 +133,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged={isDragged}
           showDropTarget={showDropTarget}
           isRepeat={true}
+          isSelected={isSourceSelected}
         />
       ))}
     </>

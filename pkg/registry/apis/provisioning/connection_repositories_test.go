@@ -225,8 +225,14 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		mockFactory.EXPECT().
 			New(mock.Anything, common.RawSecureValue("test-token")).
 			Return(mockClient)
+		mockFactory.EXPECT().
+			New(mock.Anything, common.RawSecureValue("someToken")).
+			Return(mockClient)
 		mockClient.EXPECT().
-			ListInstallationRepositories(mock.Anything, "789012").
+			CreateInstallationAccessToken(mock.Anything, "789012", "").
+			Return(github.InstallationToken{Token: "someToken"}, nil)
+		mockClient.EXPECT().
+			ListInstallationRepositories(mock.Anything).
 			Return(expectedRepos, nil)
 
 		// Create GitHub connection
@@ -306,8 +312,14 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		mockFactory.EXPECT().
 			New(mock.Anything, common.RawSecureValue("test-token")).
 			Return(mockClient)
+		mockFactory.EXPECT().
+			New(mock.Anything, common.RawSecureValue("someToken")).
+			Return(mockClient)
 		mockClient.EXPECT().
-			ListInstallationRepositories(mock.Anything, "789012").
+			CreateInstallationAccessToken(mock.Anything, "789012", "").
+			Return(github.InstallationToken{Token: "someToken"}, nil)
+		mockClient.EXPECT().
+			ListInstallationRepositories(mock.Anything).
 			Return(nil, errors.New("github API unavailable"))
 
 		// Create GitHub connection

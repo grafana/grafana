@@ -8,10 +8,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -35,6 +36,8 @@ var (
 )
 
 type folderStorage struct {
+	resourceInfo utils.ResourceInfo
+
 	// Wrapped storage
 	store          grafanarest.Storage
 	tableConverter rest.TableConvertor
@@ -46,7 +49,7 @@ type folderStorage struct {
 }
 
 func (s *folderStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *folderStorage) Destroy() {}
@@ -56,11 +59,11 @@ func (s *folderStorage) NamespaceScoped() bool {
 }
 
 func (s *folderStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *folderStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -84,6 +87,11 @@ func (s *folderStorage) Create(ctx context.Context,
 	if err != nil {
 		statusErr := apierrors.ToFolderStatusError(err)
 		return nil, &statusErr
+	}
+
+	// Skip permission side effects during dry-run
+	if dryrun.IsDryRun(options.DryRun) {
+		return obj, nil
 	}
 
 	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled
@@ -156,7 +164,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 
 	isNested := parentUID != ""
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+	if isNested {
 		// No permissions on nested folders when kubernetesDashboards is enabled
 		return nil
 	}

@@ -22,7 +22,7 @@ import (
 )
 
 var userNoRBACPerms = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserNoRBACPerms"}
-var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
 var userViewer = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser = &user.SignedInUser{IsAnonymous: true}
 
@@ -156,9 +156,9 @@ func TestAPIListPublicDashboard(t *testing.T) {
 func TestAPIDeletePublicDashboard(t *testing.T) {
 	dashboardUid := "abc1234"
 	publicDashboardUid := "1234asdfasdf"
-	userEditorAllPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
-	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
-	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
+	userEditorAllPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
+	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
 
 	testCases := []struct {
 		Name                    string
@@ -252,7 +252,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("Delete", mock.Anything, mock.Anything, mock.Anything).
+				service.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(test.ResponseErr)
 			}
 
@@ -481,8 +481,8 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 func TestAPIUpdatePublicDashboard(t *testing.T) {
 	dashboardUid := "abc1234"
 	publicDashboardUid := "1234asdfasdf"
-	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
-	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
+	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
+	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {publicdashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
 
 	testCases := []struct {
 		Name                 string

@@ -20,6 +20,11 @@ func NewSecureValuestatusOperatorState() *SecureValuestatusOperatorState {
 	return &SecureValuestatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for SecureValuestatusOperatorState.
+func (SecureValuestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValuestatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type SecureValueStatus struct {
 	// Version of the secure value. Cannot be set.
@@ -42,6 +47,11 @@ func NewSecureValueStatus() *SecureValueStatus {
 	return &SecureValueStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for SecureValueStatus.
+func (SecureValueStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueStatus"
+}
+
 // +k8s:openapi-gen=true
 type SecureValueStatusOperatorStateState string
 
@@ -50,3 +60,8 @@ const (
 	SecureValueStatusOperatorStateStateInProgress SecureValueStatusOperatorStateState = "in_progress"
 	SecureValueStatusOperatorStateStateFailed     SecureValueStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for SecureValueStatusOperatorStateState.
+func (SecureValueStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueStatusOperatorStateState"
+}

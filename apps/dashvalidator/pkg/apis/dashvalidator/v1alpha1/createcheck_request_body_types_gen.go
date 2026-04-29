@@ -15,6 +15,11 @@ func NewCreateCheckRequestBody() *CreateCheckRequestBody {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CreateCheckRequestBody.
+func (CreateCheckRequestBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckRequestBody"
+}
+
 type CreateCheckRequestV1alpha1BodyDatasourceMappings struct {
 	Uid  string  `json:"uid"`
 	Type string  `json:"type"`
@@ -24,4 +29,9 @@ type CreateCheckRequestV1alpha1BodyDatasourceMappings struct {
 // NewCreateCheckRequestV1alpha1BodyDatasourceMappings creates a new CreateCheckRequestV1alpha1BodyDatasourceMappings object.
 func NewCreateCheckRequestV1alpha1BodyDatasourceMappings() *CreateCheckRequestV1alpha1BodyDatasourceMappings {
 	return &CreateCheckRequestV1alpha1BodyDatasourceMappings{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateCheckRequestV1alpha1BodyDatasourceMappings.
+func (CreateCheckRequestV1alpha1BodyDatasourceMappings) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.CreateCheckRequestV1alpha1BodyDatasourceMappings"
 }

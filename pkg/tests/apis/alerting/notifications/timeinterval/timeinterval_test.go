@@ -18,11 +18,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -58,21 +57,21 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	newInterval := &v0alpha1.TimeInterval{
+	newInterval := &v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-newInterval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
 	}
 
 	t.Run("create should fail if object name is specified", func(t *testing.T) {
-		interval := newInterval.Copy().(*v0alpha1.TimeInterval)
+		interval := newInterval.Copy().(*v1beta1.TimeInterval)
 		interval.Name = "time-newInterval"
 		_, err := client.Create(ctx, interval, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
@@ -87,7 +86,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		resourceID = actual.GetStaticMetadata().Identifier()
 	})
 
-	var existingInterval *v0alpha1.TimeInterval
+	var existingInterval *v1beta1.TimeInterval
 	t.Run("resource should be available by the identifier", func(t *testing.T) {
 		actual, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
@@ -100,7 +99,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		if existingInterval == nil {
 			t.Skip()
 		}
-		updated := existingInterval.Copy().(*v0alpha1.TimeInterval)
+		updated := existingInterval.Copy().(*v1beta1.TimeInterval)
 		updated.Spec.Name = "another-newInterval"
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -191,18 +190,18 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client, err := v0alpha1.NewTimeIntervalClientFromGenerator(tc.user.GetClientRegistry())
+			client, err := v1beta1.NewTimeIntervalClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
-			var expected = &v0alpha1.TimeInterval{
+			expected := &v1beta1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.TimeIntervalSpec{
+				Spec: v1beta1.TimeIntervalSpec{
 					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 				},
@@ -270,7 +269,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 				})
 			}
 
-			updatedExpected := expected.Copy().(*v0alpha1.TimeInterval)
+			updatedExpected := expected.Copy().(*v1beta1.TimeInterval)
 			updatedExpected.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
 
 			d, err = json.Marshal(updatedExpected)
@@ -284,7 +283,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := updatedExpected.Copy().(*v0alpha1.TimeInterval)
+						up := updatedExpected.Copy().(*v1beta1.TimeInterval)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
@@ -296,7 +295,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := updatedExpected.Copy().(*v0alpha1.TimeInterval)
+						up := updatedExpected.Copy().(*v1beta1.TimeInterval)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{
 							ResourceVersion: up.ResourceVersion,
@@ -348,51 +347,166 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	created, err := adminClient.Create(ctx, &v0alpha1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v0alpha1.TimeIntervalSpec{
-			Name:          "time-interval-1",
-			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
-		},
-	}, resource.CreateOptions{})
-	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
-
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
-			MuteTimeInterval: config.MuteTimeInterval{
-				Name: created.Spec.Name,
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("IntervalsWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
 			},
-		}, admin.Identity.GetOrgID(), "API"))
+		},
+	})
+	writerClient, err := v1beta1.NewTimeIntervalClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("IntervalsProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewTimeIntervalClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	newInterval := func(name string) *v1beta1.TimeInterval {
+		return &v1beta1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.TimeIntervalSpec{
+				Name:          name,
+				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
+			},
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			interval := newInterval("writer-create-no-prov")
+			created, err := writerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			interval := newInterval("writer-create-with-prov")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			interval := newInterval("provisioner-create-with-prov")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newInterval("update-unprov"), resource.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TimeInterval)
-		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		provInterval := newInterval("update-prov")
+		provInterval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provInterval, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newInterval("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			interval := newInterval("delete-prov-forbidden")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			interval := newInterval("delete-prov-ok")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -402,15 +516,15 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	oldClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
 
-	interval := v0alpha1.TimeInterval{
+	interval := v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -422,14 +536,14 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	require.NotEmpty(t, created.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TimeInterval)
+		updated := created.Copy().(*v1beta1.TimeInterval)
 		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
 			ResourceVersion: "test",
 		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TimeInterval)
+		updated := created.Copy().(*v1beta1.TimeInterval)
 		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
 		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -437,7 +551,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should update if version is empty", func(t *testing.T) {
-		updated := created.Copy().(*v0alpha1.TimeInterval)
+		updated := created.Copy().(*v1beta1.TimeInterval)
 		updated.ResourceVersion = ""
 		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
 
@@ -487,15 +601,15 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	oldClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
 
-	interval := v0alpha1.TimeInterval{
+	interval := v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -532,9 +646,9 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 
 		result, err := adminClient.Patch(ctx, current.GetStaticMetadata().Identifier(), resource.PatchRequest{Operations: patch}, resource.PatchOptions{})
 		require.NoError(t, err)
-		expectedSpec := v0alpha1.TimeIntervalSpec{
+		expectedSpec := v1beta1.TimeIntervalSpec{
 			Name: current.Spec.Name,
-			TimeIntervals: []v0alpha1.TimeIntervalInterval{
+			TimeIntervals: []v1beta1.TimeIntervalInterval{
 				expected,
 			},
 		}
@@ -549,14 +663,14 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	interval1 := &v0alpha1.TimeInterval{
+	interval1 := &v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "test1",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -564,11 +678,11 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	interval1, err = adminClient.Create(ctx, interval1, resource.CreateOptions{})
 	require.NoError(t, err)
 
-	interval2 := &v0alpha1.TimeInterval{
+	interval2 := &v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "test2",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -650,14 +764,14 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	mtis := []definitions.MuteTimeInterval{}
+	mtis := make([]definitions.MuteTimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range amConfig.AlertmanagerConfig.MuteTimeIntervals {
 		mtis = append(mtis, definitions.MuteTimeInterval{
 			MuteTimeInterval: interval,
 		})
 	}
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	v1intervals, err := timeinterval.ConvertToK8sResources(orgID, mtis, func(int64) string { return "default" }, nil)
 	require.NoError(t, err)
@@ -666,12 +780,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
-	require.NoError(t, err)
-	_, err = routeClient.Update(ctx, v1route, resource.UpdateOptions{})
-	require.NoError(t, err)
+	common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -690,7 +799,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	intervals, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, intervals.Items, 3)
-	intervalIdx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
+	intervalIdx := slices.IndexFunc(intervals.Items, func(interval v1beta1.TimeInterval) bool {
 		return interval.Spec.Name == "test-interval"
 	})
 	interval := intervals.Items[intervalIdx]
@@ -709,8 +818,10 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should rename all references if name changes", func(t *testing.T) {
-			renamed := interval.Copy().(*v0alpha1.TimeInterval)
-			renamed.Spec.Name += "-new"
+			renamed := interval.Copy().(*v1beta1.TimeInterval)
+			// Use a unique suffix so the target name cannot collide with any
+			// leftover state in the stored Alertmanager configuration.
+			renamed.Spec.Name += "-" + util.GenerateShortUID()
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)
@@ -736,7 +847,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
 			require.NoError(t, err)
-			renamed := interval.Copy().(*v0alpha1.TimeInterval)
+			renamed := interval.Copy().(*v1beta1.TimeInterval)
 			renamed.Spec.Name += util.GenerateShortUID()
 
 			t.Run("provisioned route", func(t *testing.T) {
@@ -780,7 +891,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 		})
 
 		t.Run("should fail to delete if time interval is used in route as an active time interval", func(t *testing.T) {
-			idx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
+			idx := slices.IndexFunc(intervals.Items, func(interval v1beta1.TimeInterval) bool {
 				return interval.Spec.Name == "test-interval-for-active-time-interval"
 			})
 			intervalToDelete := intervals.Items[idx]
@@ -797,25 +908,25 @@ func TestIntegrationTimeIntervalValidation(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	testCases := []struct {
 		name     string
-		interval v0alpha1.TimeIntervalSpec
+		interval v1beta1.TimeIntervalSpec
 	}{
 		{
 			name: "missing name",
-			interval: v0alpha1.TimeIntervalSpec{
+			interval: v1beta1.TimeIntervalSpec{
 				Name:          "",
 				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
 			},
 		},
 		{
 			name: "invalid interval",
-			interval: v0alpha1.TimeIntervalSpec{
+			interval: v1beta1.TimeIntervalSpec{
 				Name: "test",
-				TimeIntervals: []v0alpha1.TimeIntervalInterval{
+				TimeIntervals: []v1beta1.TimeIntervalInterval{
 					{
 						DaysOfMonth: []string{"1-31"},
 					},
@@ -826,7 +937,7 @@ func TestIntegrationTimeIntervalValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			i := &v0alpha1.TimeInterval{
+			i := &v1beta1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},

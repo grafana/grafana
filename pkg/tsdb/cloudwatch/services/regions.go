@@ -36,7 +36,7 @@ func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions [
 func (r *RegionsService) GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error) {
 	regions := constants.Regions()
 
-	result := make([]resources.ResourceResponse[resources.Region], 0)
+	result := make([]resources.ResourceResponse[resources.Region], 0) //nolint:prealloc
 
 	ec2Regions, err := r.DescribeRegions(ctx, &ec2.DescribeRegionsInput{})
 	// we ignore this error and always send default regions

@@ -1,20 +1,30 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
-import { COMMON_FNS, DB, FuncParameter, MACRO_FUNCTIONS, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
+import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
+import {
+  COMMON_FNS,
+  type DB,
+  type FuncParameter,
+  MACRO_FUNCTIONS,
+  type SQLQuery,
+  SQLVariableSupport,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
-import { MySQLOptions } from './types';
+import { type MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
+    this.variables = new SQLVariableSupport(this);
   }
 
   getQueryModel() {

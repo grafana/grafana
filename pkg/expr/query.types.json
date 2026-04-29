@@ -1,6 +1,6 @@
 {
   "kind": "QueryTypeDefinitionList",
-  "apiVersion": "query.grafana.app/v0alpha1",
+  "apiVersion": "datasource.grafana.app/v0alpha1",
   "metadata": {
     "resourceVersion": "1709168280033"
   },
@@ -36,21 +36,7 @@
             "expression"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "constant addition",
-            "saveModel": {
-              "expression": "$A + 10"
-            }
-          },
-          {
-            "name": "math with two queries",
-            "saveModel": {
-              "expression": "$A - $B"
-            }
-          }
-        ]
+        }
       }
     },
     {
@@ -124,19 +110,7 @@
             "reducer"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "get max value",
-            "saveModel": {
-              "expression": "$A",
-              "reducer": "max",
-              "settings": {
-                "mode": "dropNN"
-              }
-            }
-          }
-        ]
+        }
       }
     },
     {
@@ -211,18 +185,7 @@
             "upsampler"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "resample at a every day",
-            "saveModel": {
-              "downsampler": "last",
-              "expression": "$A",
-              "upsampler": "pad",
-              "window": "1d"
-            }
-          }
-        ]
+        }
       }
     },
     {
@@ -328,35 +291,7 @@
             "conditions"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "Where query A \u003e 5",
-            "saveModel": {
-              "conditions": [
-                {
-                  "evaluator": {
-                    "params": [
-                      5
-                    ],
-                    "type": "gt"
-                  },
-                  "operator": {
-                    "type": "and"
-                  },
-                  "query": {
-                    "params": [
-                      "A"
-                    ]
-                  },
-                  "reducer": {
-                    "type": "max"
-                  }
-                }
-              ]
-            }
-          }
-        ]
+        }
       }
     },
     {
@@ -474,79 +409,7 @@
             "conditions"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "Where query A \u003e 5",
-            "saveModel": {
-              "conditions": [
-                {
-                  "evaluator": {
-                    "params": [
-                      5
-                    ],
-                    "type": "gt"
-                  }
-                }
-              ],
-              "expression": "A"
-            }
-          },
-          {
-            "name": "With loaded+unloaded evaluators",
-            "saveModel": {
-              "conditions": [
-                {
-                  "evaluator": {
-                    "params": [
-                      100
-                    ],
-                    "type": "gt"
-                  },
-                  "loadedDimensions": {
-                    "data": {
-                      "values": [
-                        [
-                          18446744073709552000,
-                          2,
-                          3,
-                          4,
-                          5
-                        ]
-                      ]
-                    },
-                    "schema": {
-                      "fields": [
-                        {
-                          "name": "fingerprints",
-                          "type": "number",
-                          "typeInfo": {
-                            "frame": "uint64"
-                          }
-                        }
-                      ],
-                      "meta": {
-                        "type": "fingerprints",
-                        "typeVersion": [
-                          1,
-                          0
-                        ]
-                      },
-                      "name": "test"
-                    }
-                  },
-                  "unloadEvaluator": {
-                    "params": [
-                      31
-                    ],
-                    "type": "lt"
-                  }
-                }
-              ],
-              "expression": "B"
-            }
-          }
-        ]
+        }
       }
     },
     {
@@ -583,16 +446,7 @@
             "format"
           ],
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "Select the first row from A",
-            "saveModel": {
-              "expression": "SELECT * FROM A limit 1",
-              "format": ""
-            }
-          }
-        ]
+        }
       }
     }
   ]

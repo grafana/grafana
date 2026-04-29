@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import i18n from 'i18next';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';

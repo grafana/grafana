@@ -1,2 +1,5 @@
+import { DataSourcePlugin } from '@grafana/data';
+
 import { MixedDatasource } from './MixedDataSource';
-export { MixedDatasource, MixedDatasource as Datasource };
+
+export const plugin = new DataSourcePlugin(MixedDatasource);

@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
-import { IconName } from './icon';
-import { PanelData } from './panel';
-import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type DataSourcePluginMeta, type DataSourceSettings } from './datasource';
+import { type IconName } from './icon';
+import { type PanelData } from './panel';
+import { type AbsoluteTimeRange, type RawTimeRange, type TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -29,7 +29,9 @@ export type PluginExtensionLink = PluginExtensionBase & {
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
+  /** @deprecated in favor of group property */
   category?: string;
+  group?: { name: string; icon?: IconName };
   openInNewTab?: boolean;
 };
 
@@ -107,7 +109,9 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
-      category: string;
+      /** @deprecated in favor of group property */
+      category?: string;
+      group: { name: string; icon?: IconName };
       openInNewTab: boolean;
     }>
   | undefined;
@@ -138,8 +142,11 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
 
-  // (Optional) A category to be used when grouping the options in the ui
+  /** @deprecated in favor of group property */
   category?: string;
+
+  // (Optional) A group to be used when grouping the options in the ui.
+  group?: { name: string; icon?: IconName };
 
   // (Optional) If true, opens the link in a new tab (renders with target="_blank")
   // (Important: this is not guaranteed, depends on the extension point if it implements it.)
@@ -227,6 +234,10 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
   SingleTopBarAction = 'grafana/singletopbar/action',
+  AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
+  AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
+  AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+  NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
 }
 
 // Don't use directly in a plugin!
@@ -245,6 +256,7 @@ export enum PluginExtensionPointPatterns {
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
 }
@@ -307,6 +319,9 @@ export type PluginExtensionResourceAttributesContext = {
     type: string;
     uid: string;
   };
+  traceID?: string;
+  spanID?: string;
+  spanStartTime?: number;
 };
 
 export type DataSourceConfigErrorStatusContext = {

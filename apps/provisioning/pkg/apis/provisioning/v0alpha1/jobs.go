@@ -19,6 +19,10 @@ type Job struct {
 	Status JobStatus `json:"status,omitempty"`
 }
 
+func (Job) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Job"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type JobList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -27,8 +31,16 @@ type JobList struct {
 	Items []Job `json:"items"`
 }
 
+func (JobList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "JobList"
+}
+
 // +enum
 type JobAction string
+
+func (JobAction) OpenAPIModelName() string {
+	return OpenAPIPrefix + "JobAction"
+}
 
 const (
 	// JobActionPull replicates the remote branch in the local copy of the repository.
@@ -48,6 +60,23 @@ const (
 
 	// JobActionMove moves files in the remote repository
 	JobActionMove JobAction = "move"
+
+	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
+	// Currently a no-op to unblock frontend development.
+	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
+
+	// JobActionReleaseResources removes ownership annotations from all resources
+	// managed by a repository that no longer exists or is stuck in Terminating state.
+	// Resources remain in Grafana but become unmanaged.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionReleaseResources JobAction = "releaseResources"
+
+	// JobActionDeleteResources deletes all resources managed by a repository
+	// that no longer exists or is stuck in Terminating state.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionDeleteResources JobAction = "deleteResources"
 )
 
 // +enum
@@ -75,7 +104,7 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action,omitempty"`
+	Action JobAction `json:"action"`
 
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
@@ -98,6 +127,13 @@ type JobSpec struct {
 
 	// Move when the action is `move`
 	Move *MoveJobOptions `json:"move,omitempty"`
+
+	// Options when the action is `fix-folder-metadata`
+	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
+}
+
+func (JobSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "JobSpec"
 }
 
 type PullRequestJobOptions struct {
@@ -114,9 +150,17 @@ type PullRequestJobOptions struct {
 	URL string `json:"url,omitempty"`
 }
 
+func (PullRequestJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestJobOptions"
+}
+
 type SyncJobOptions struct {
 	// Incremental synchronization for versioned repositories
 	Incremental bool `json:"incremental"`
+}
+
+func (SyncJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SyncJobOptions"
 }
 
 type ExportJobOptions struct {
@@ -133,11 +177,25 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
+}
+
+func (ExportJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ExportJobOptions"
 }
 
 type MigrateJobOptions struct {
 	// Message to use when committing the changes in a single commit
 	Message string `json:"message,omitempty"`
+}
+
+func (MigrateJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "MigrateJobOptions"
 }
 
 type DeleteJobOptions struct {
@@ -157,6 +215,10 @@ type DeleteJobOptions struct {
 	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
+func (DeleteJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeleteJobOptions"
+}
+
 type ResourceRef struct {
 	// Name is the name of the resource, such as a dashboard UID.
 	Name string `json:"name,omitempty"`
@@ -166,6 +228,10 @@ type ResourceRef struct {
 
 	// Group is the group of the resource, such as "dashboard.grafana.app".
 	Group string `json:"group,omitempty"`
+}
+
+func (ResourceRef) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceRef"
 }
 
 type MoveJobOptions struct {
@@ -188,6 +254,19 @@ type MoveJobOptions struct {
 	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
+func (MoveJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "MoveJobOptions"
+}
+
+type FixFolderMetadataJobOptions struct {
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
+	Ref string `json:"ref,omitempty"`
+}
+
+func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
@@ -207,15 +286,26 @@ type JobStatus struct {
 	URLs *RepositoryURLs `json:"url,omitempty"`
 }
 
-// Convert a JOB to a
+func (JobStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "JobStatus"
+}
+
+// ToSyncStatus converts a job status to a sync status, which will be put in the repository status.
 func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
-	return SyncStatus{
+	s := SyncStatus{
 		JobID:    jobId,
 		State:    in.State,
 		Started:  in.Started,
 		Finished: in.Finished,
-		Message:  in.Errors,
 	}
+
+	if len(in.Errors) > 0 {
+		s.Message = in.Errors
+	} else if len(in.Warnings) > 0 {
+		s.Message = in.Warnings
+	}
+
+	return s
 }
 
 type JobResourceSummary struct {
@@ -239,6 +329,10 @@ type JobResourceSummary struct {
 	Warnings []string `json:"warnings,omitempty"`
 }
 
+func (JobResourceSummary) OpenAPIModelName() string {
+	return OpenAPIPrefix + "JobResourceSummary"
+}
+
 // HistoricJob is an append only log, saving all jobs that have been processed.
 //
 // NOTE: This should not be used directly by any external consumer.
@@ -256,10 +350,18 @@ type HistoricJob struct {
 	Status JobStatus `json:"status,omitempty"`
 }
 
+func (HistoricJob) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HistoricJob"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HistoricJobList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []HistoricJob `json:"items,omitempty"`
+}
+
+func (HistoricJobList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HistoricJobList"
 }

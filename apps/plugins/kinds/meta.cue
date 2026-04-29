@@ -1,19 +1,19 @@
 package plugins
 
 metaV0Alpha1: {
-	kind: "Meta"
+	kind:  "Meta"
 	scope: "Namespaced"
 	schema: {
 		spec: {
 			pluginJson: #JSONData
-			class: "core" | "external"
-			module?: {
-				path:             string
-				hash?:            string
-				loadingStrategy?: "fetch" | "script"
+			class:      "core" | "external"
+			module: {
+				path:            string
+				hash?:           string
+				loadingStrategy: "fetch" | "script"
 			}
-			baseURL?: string
-			signature?: {
+			baseURL: string
+			signature: {
 				status: "internal" | "valid" | "invalid" | "modified" | "unsigned"
 				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
 				org?:   string
@@ -21,6 +21,8 @@ metaV0Alpha1: {
 			translations?: [string]: string
 			// +listType=atomic
 			children?: [...string]
+			// +listType=atomic
+			aliasIds?: [...string]
 		}
 	}
 }
@@ -50,7 +52,7 @@ metaV0Alpha1: {
 	backend?:            bool
 	buildMode?:          string
 	builtIn?:            bool
-	category?:           "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+	category?:           string
 	enterpriseFeatures?: #EnterpriseFeatures
 	executable?:         string
 	hideFromList?:       bool
@@ -65,7 +67,7 @@ metaV0Alpha1: {
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	state?:         "alpha" | "beta"
+	state?:         "alpha" | "beta" | "stable" | "deprecated"
 	streaming?:     bool
 	suggestions?:   bool
 	tracing?:       bool
@@ -73,6 +75,8 @@ metaV0Alpha1: {
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions
+	// +listType=atomic
+	languages?: [...string]
 }
 
 #Info: {
@@ -92,10 +96,20 @@ metaV0Alpha1: {
 		url?:   string
 	}
 	description?: string
+	build?: {
+		time?:     number
+		repo?:     string
+		branch?:   string
+		hash?:     string
+		"number"?: number // Quoted to avoid conflict with CUE 'number' type
+		pr?:       number
+		build?:    number
+	}
 	// +listType=atomic
 	links?: [...{
-		name?: string
-		url?:  string
+		name?:   string
+		url?:    string
+		target?: "_blank" | "_self" | "_parent" | "_top"
 	}]
 	// +listType=atomic
 	screenshots?: [...{
@@ -165,13 +179,26 @@ metaV0Alpha1: {
 		url?: string
 		// +listType=set
 		scopes?: [...string]
-		params?: [string]: _
+		params?: {
+			grant_type?:    string
+			client_id?:     string
+			client_secret?: string
+			resource?:      string
+			// Allow additional properties
+			[string]: _
+		}
 	}
 	jwtTokenAuth?: {
 		url?: string
 		// +listType=set
 		scopes?: [...string]
-		params?: [string]: _
+		params?: {
+			token_uri?:    string
+			client_email?: string
+			private_key?:  string
+			// Allow additional properties
+			[string]: _
+		}
 	}
 	// +listType=atomic
 	urlParams?: [...{

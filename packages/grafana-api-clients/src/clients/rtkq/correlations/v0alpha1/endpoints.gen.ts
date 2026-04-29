@@ -411,9 +411,9 @@ export type CorrelationTargetSpec = {
   [key: string]: any;
 };
 export type CorrelationTransformationSpec = {
-  expression: string;
-  field: string;
-  mapValue: string;
+  expression?: string;
+  field?: string;
+  mapValue?: string;
   type: 'regex' | 'logfmt';
 };
 export type CorrelationConfigSpec = {

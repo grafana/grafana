@@ -1,23 +1,23 @@
 import { css } from '@emotion/css';
-import { useCallback, useContext, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-import { SidebarContext } from './useSidebar';
+import { useSidebarContext } from './useSidebar';
 
 export function SidebarResizer() {
   const styles = useStyles2(getStyles);
-  const context = useContext(SidebarContext);
+  const sidebarContext = useSidebarContext();
   const resizerRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
 
-  if (!context) {
+  if (!sidebarContext) {
     throw new Error('Sidebar.Resizer must be used within a Sidebar component');
   }
 
-  const { onResize, position } = context;
+  const { onResize, position } = sidebarContext;
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -61,7 +61,7 @@ export function SidebarResizer() {
   return (
     <div
       ref={resizerRef}
-      className={styles[context.position]}
+      className={styles[sidebarContext.position]}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

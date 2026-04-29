@@ -40,14 +40,18 @@ type SignedInUser struct {
 	IsDisabled       bool
 	HelpFlags1       HelpFlags1
 	LastSeenAt       time.Time
-	Teams            []int64
+	// Deprecated: use TeamUIDs instead
+	TeamIDs  []int64
+	TeamUIDs []string
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 
-	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	IDToken           string                                       `json:"-" xorm:"-"`
-	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]     `json:"-" xorm:"-"`
+	// AccessToken is the access token that went into authenticating this identity. Empty for legacy auth and in-process identities.
+	AccessToken       string                                       `json:"-" xorm:"-"`
 	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims] `json:"-" xorm:"-"`
+	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
+	IDToken       string                                   `json:"-" xorm:"-"`
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
@@ -139,11 +143,7 @@ func (u *SignedInUser) GetExtra() map[string][]string {
 }
 
 func (u *SignedInUser) GetGroups() []string {
-	groups := []string{}
-	for _, t := range u.Teams {
-		groups = append(groups, strconv.FormatInt(t, 10))
-	}
-	return groups
+	return u.TeamUIDs
 }
 
 func (u *SignedInUser) GetTokenPermissions() []string {
@@ -276,7 +276,7 @@ func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
 // DEPRECATED: GetTeams returns the teams the entity is a member of
 // Retrieve the teams from the team service instead of using this method.
 func (u *SignedInUser) GetTeams() []int64 {
-	return u.Teams
+	return u.TeamIDs
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
@@ -325,4 +325,9 @@ func (u *SignedInUser) IsNil() bool {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
+}
+
+// GetAccessToken implements identity.Requester. Returns the access token used to authenticate; empty for legacy auth and in-process identities.
+func (u *SignedInUser) GetAccessToken() string {
+	return u.AccessToken
 }

@@ -1,73 +1,47 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
-import { ungroupLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
 }
 
 export function CanvasGridAddActions({ layoutManager }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getLayoutControlsStyles);
+  const localStyles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
-
-  const { disableGrouping, disableTabs } = useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return { disableGrouping: false, disableTabs: false };
-    }
-
-    let parent = layoutManager.parent;
-    const layouts = [];
-
-    while (parent) {
-      if (isDashboardLayoutManager(parent)) {
-        layouts.push(parent.descriptor.id);
-      }
-
-      if (layouts.length === 2) {
-        parent = undefined;
-        break;
-      }
-
-      parent = parent.parent;
-    }
-
-    if (layouts.length === 2) {
-      return { disableGrouping: true, disableTabs: true };
-    }
-
-    if (layouts.length === 1 && layouts[0] === TabsLayoutManager.descriptor.id) {
-      return { disableGrouping: false, disableTabs: true };
-    }
-
-    return { disableGrouping: false, disableTabs: false };
-  }, [layoutManager]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { disableGrouping, disableTabs } = useNestingRestrictions(layoutManager);
 
   return (
     <div
-      className={cx(styles.addAction, 'dashboard-canvas-add-button')}
+      className={cx(
+        styles.controls,
+        localStyles.addAction,
+        'dashboard-canvas-controls',
+        isMenuOpen && localStyles.menuOpen
+      )}
       onPointerUp={(evt) => evt.stopPropagation()}
       onPointerDown={(evt) => evt.stopPropagation()}
     >
       <Button
-        variant="primary"
-        fill="text"
+        variant="secondary"
         icon="plus"
+        size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={() => {
           layoutManager.addPanel(getDefaultVizPanel());
@@ -77,6 +51,8 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
       </Button>
       <Dropdown
+        placement="bottom-start"
+        onVisibleChange={setIsMenuOpen}
         overlay={
           <Menu>
             <Menu.Item
@@ -93,6 +69,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               testId={selectors.components.CanvasGridAddActions.addTab}
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
               disabled={disableTabs}
+              className={disableTabs ? localStyles.disabledMenuItem : undefined}
               description={
                 disableTabs
                   ? t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs')
@@ -107,27 +84,26 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         }
       >
         <Button
-          variant="primary"
-          fill="text"
+          variant="secondary"
           icon="layers"
+          size="sm"
           data-testid={selectors.components.CanvasGridAddActions.groupPanels}
           disabled={disableGrouping}
           tooltip={
             disableGrouping
-              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 2 levels')
+              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 3 levels')
               : undefined
           }
         >
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>
-      {renderUngroupAction(layoutManager)}
       {hasCopiedPanel && layoutManager.pastePanel && (
         <Button
           data-testid={selectors.components.CanvasGridAddActions.pastePanel}
-          variant="primary"
-          fill="text"
+          variant="secondary"
           icon="clipboard-alt"
+          size="sm"
           onClick={() => {
             layoutManager.pastePanel?.();
             DashboardInteractions.trackPastePanelClick();
@@ -140,50 +116,34 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   );
 }
 
-function renderUngroupAction(layoutManager: DashboardLayoutManager) {
-  const parent = layoutManager.parent;
+const MAX_NESTING_DEPTH = 3;
 
-  if (parent instanceof DashboardScene) {
-    return null;
-  }
+export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
+  return useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return { disableGrouping: false, disableTabs: false };
+    }
 
-  const parentLayout = dashboardSceneGraph.getLayoutManagerFor(layoutManager.parent!);
+    const layouts: string[] = [];
+    let parent = layoutManager.parent;
 
-  const onUngroup = () => {
-    DashboardInteractions.trackUngroupClick();
-    ungroupLayout(parentLayout, layoutManager);
-  };
+    while (parent) {
+      if (isDashboardLayoutManager(parent)) {
+        layouts.push(parent.descriptor.id);
+      }
 
-  if (parentLayout instanceof TabsLayoutManager) {
-    return <UngroupButtonTabs parentLayout={parentLayout} onClick={onUngroup} />;
-  }
+      if (layouts.length === MAX_NESTING_DEPTH) {
+        break;
+      }
 
-  return null;
-}
+      parent = parent.parent;
+    }
 
-interface UngroupButtonProps<T> {
-  parentLayout: T;
-  onClick: () => void;
-}
+    const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
+    const disableTabs = disableGrouping || layouts.includes(TabsLayoutManager.descriptor.id);
 
-function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLayoutManager>) {
-  const { tabs } = parentLayout.useState();
-
-  if (tabs.length > 1) {
-    return null;
-  }
-
-  return (
-    <Button
-      variant="primary"
-      fill="text"
-      icon="layers-slash"
-      onClick={onClick}
-      data-testid={selectors.components.CanvasGridAddActions.ungroup}
-    >
-      <Trans i18nKey="dashboard.canvas-actions.un-group-panels">Ungroup</Trans>
-    </Button>
-  );
+    return { disableGrouping, disableTabs };
+  }, [layoutManager]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -196,6 +156,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
+    },
+  }),
+  menuOpen: css({
+    '&.dashboard-canvas-controls': {
+      opacity: 1,
+    },
+  }),
+  disabledMenuItem: css({
+    // Make the label inherit the disabled text color from the parent
+    '& > div > span': {
+      color: 'inherit',
     },
   }),
 });

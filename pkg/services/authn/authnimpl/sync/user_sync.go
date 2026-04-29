@@ -9,10 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
-	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -341,7 +343,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	syncUserToIdentity(usr, id)
+	syncUserToIdentity(ctx, usr, id)
 	return nil
 }
 
@@ -375,7 +377,8 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.Teams = nil
+		usr.TeamIDs = nil // nolint:staticcheck
+		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
@@ -439,7 +442,7 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
-func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
+func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, identity *authn.Identity, createConnection bool) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.upsertAuthConnection")
 	defer span.End()
 
@@ -452,7 +455,8 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	// changing to new auth client
 	if createConnection {
 		setAuthInfoCmd := &login.SetAuthInfoCommand{
-			UserId:     userID,
+			UserId:     usr.ID,
+			UserUID:    usr.UID,
 			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
 		}
@@ -465,7 +469,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	}
 
 	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
-		UserId:     userID,
+		UserId:     usr.ID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
 	}
@@ -594,7 +598,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
+	return s.upsertAuthConnection(ctx, usr, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
@@ -631,7 +635,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		return nil, err
 	}
 
-	if err := s.upsertAuthConnection(ctx, usr.ID, id, true); err != nil {
+	if err := s.upsertAuthConnection(ctx, usr, id, true); err != nil {
 		return nil, err
 	}
 
@@ -677,9 +681,9 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
-	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthenticatedBy == login.GenericOAuthModule {
+	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
+	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
@@ -722,7 +726,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity) {
 	id.ID = strconv.FormatInt(usr.ID, 10)
 	id.UID = usr.UID
 	id.Type = claims.TypeUser
@@ -731,9 +735,18 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+
+	featureClient := openfeature.NewDefaultClient()
+	if featureClient.Boolean(ctx, featuremgmt.FlagRememberUserOrgForSso, true, openfeature.TransactionContext(ctx)) {
+		if id.OrgID == 0 {
+			id.OrgID = usr.OrgID
+		}
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
+// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
+// which is needed for role mapping in the case of SAML or for team sync.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -743,7 +756,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.Teams = usr.Teams
+	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin

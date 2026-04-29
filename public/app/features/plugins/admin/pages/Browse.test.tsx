@@ -1,4 +1,4 @@
-import { render, RenderResult, waitFor, within } from '@testing-library/react';
+import { render, type RenderResult, waitFor, within } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
@@ -7,7 +7,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
-import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
+import { type CatalogPlugin, type ReducerState, RequestStatus } from '../types';
 
 import BrowsePage from './Browse';
 

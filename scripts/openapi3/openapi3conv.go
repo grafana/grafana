@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi2conv"
@@ -22,6 +23,14 @@ func main() {
 	// first parameter as the input
 	if len(args) > 0 && args[0] != "" {
 		inFile = args[0]
+	}
+
+	// Post process the swagger files
+	if inFile == "cleanup" {
+		for _, f := range os.Args[2:] {
+			postProcessSwaggerFile(f)
+		}
+		return
 	}
 
 	// second parameter as output
@@ -58,4 +67,37 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("OpenAPI specs generated in file %s\n", outFile)
+}
+
+func postProcessSwaggerFile(inFile string) {
+	fmt.Printf("Reading swagger file %s\n", inFile)
+	byt, err := os.ReadFile(inFile)
+	if err != nil {
+		panic(err)
+	}
+	jj := string(byt)
+	var processed string
+
+	// Replace the URL property
+	idx := strings.Index(jj, `    "URL": {`)
+	if idx > 0 {
+		after := jj[idx:]
+		edx := strings.Index(after, `"Unstructured": {`)
+		if edx > 0 {
+			processed = jj[0:idx] + `    "URL": { 
+			"type": "string", 
+			"format": "url" 
+		},
+		` + after[edx:]
+		}
+	}
+
+	if len(processed) > 0 {
+		if err = os.WriteFile(inFile, []byte(processed), 0644); err != nil {
+			panic(err)
+		}
+		fmt.Printf("Processed file %s\n", inFile)
+		return
+	}
+	fmt.Printf("Nothing found in file %s\n", inFile)
 }

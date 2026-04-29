@@ -228,6 +228,10 @@ func (o *Receiver) DeepCopyInto(dst *Receiver) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Receiver) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Receiver"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Receiver{}
 
@@ -279,6 +283,10 @@ func (o *ReceiverList) DeepCopy() *ReceiverList {
 
 func (o *ReceiverList) DeepCopyInto(dst *ReceiverList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ReceiverList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.ReceiverList"
 }
 
 // Interface compliance compile-time check

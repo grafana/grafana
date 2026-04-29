@@ -81,17 +81,41 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+// ListRuleStringFilter provides filtering options for string fields in rules such as group and namespace (folder) uid
+type ListRuleStringFilter struct {
+	Exists  *bool
+	Include []string
+	Exclude []string
+}
+
+type ListRuleBoolFilter struct {
+	Value *bool
+}
+
 type ListAlertRulesOptions struct {
 	RuleType      models.RuleTypeFilter
 	Limit         int64
 	ContinueToken string
-	// TODO: plumb more options
+	GroupFilter   ListRuleStringFilter
+	FolderFilter  ListRuleStringFilter
+	// TODO: add the following filters
+	// title filter - string
+	// paused filter - bool
+	// dashboard filter - string
+	// panel filter - string
+	// receiver filter - string
+	// metric filter - string
+	// targetDatasourceUID filter - string
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID: user.GetOrgID(),
+			OrgID:                user.GetOrgID(),
+			RuleGroups:           opts.GroupFilter.Include,
+			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
+			RuleGroupExists:      opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
@@ -122,13 +146,31 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 				folderUIDs = append(folderUIDs, f.UID)
 			}
 		}
-		q.NamespaceUIDs = folderUIDs
+		// Intersect accessible folders with any requested folder filter
+		if len(opts.FolderFilter.Include) > 0 {
+			requestedSet := make(map[string]struct{}, len(opts.FolderFilter.Include))
+			for _, uid := range opts.FolderFilter.Include {
+				requestedSet[uid] = struct{}{}
+			}
+			filtered := folderUIDs[:0]
+			for _, uid := range folderUIDs {
+				if _, ok := requestedSet[uid]; ok {
+					filtered = append(filtered, uid)
+				}
+			}
+			q.NamespaceUIDs = filtered
+		} else {
+			q.NamespaceUIDs = folderUIDs
+		}
+	} else if len(opts.FolderFilter.Include) > 0 {
+		q.NamespaceUIDs = opts.FolderFilter.Include
 	}
 
 	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
 	if err != nil {
 		return nil, nil, "", err
 	}
+
 	provenances = make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
@@ -292,15 +334,13 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
-	if len(rule.NotificationSettings) > 0 {
+	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		for _, setting := range rule.NotificationSettings {
-			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
-			}
+		if err := validator.Validate(*rule.NotificationSettings); err != nil {
+			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -765,15 +805,13 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
-	if len(rule.NotificationSettings) > 0 {
+	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
 		}
-		for _, setting := range rule.NotificationSettings {
-			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
-			}
+		if err := validator.Validate(*rule.NotificationSettings); err != nil {
+			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
 	rule.Updated = time.Now()
@@ -819,7 +857,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return err
 	}
-	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+	if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 		return errProvenanceMismatch.Build(errutil.TemplateData{
 			Public: map[string]interface{}{
 				"ProvidedProvenance": provenance,

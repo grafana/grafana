@@ -25,12 +25,11 @@ type BuildOpts struct {
 	Platform dagger.Platform
 }
 
-func Builder(d *dagger.Client, socket *dagger.Socket, targz *dagger.File) *dagger.Container {
+func WithMounts(d *dagger.Client, builder *dagger.Container, socket *dagger.Socket, targz *dagger.File) *dagger.Container {
 	extracted := containers.ExtractedArchive(d, targz)
 
 	// Instead of supplying the Platform argument here, we need to tell the host docker socket that it needs to build with the given platform.
-	return d.Container().From("docker").
-		WithUnixSocket("/var/run/docker.sock", socket).
+	return builder.WithUnixSocket("/var/run/docker.sock", socket).
 		WithWorkdir("/src").
 		WithMountedFile("/src/Dockerfile", extracted.File("Dockerfile")).
 		WithMountedFile("/src/packaging/docker/run.sh", extracted.File("packaging/docker/run.sh")).

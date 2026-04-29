@@ -1,22 +1,26 @@
-import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
-export function serializeRowsLayout(layoutManager: RowsLayoutManager): DashboardV2Spec['layout'] {
+export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.filter((row) => !row.state.repeatSourceKey).map(serializeRow),
+      rows: layoutManager.state.rows
+        .filter((row) => !row.state.repeatSourceKey)
+        .map((row) => serializeRow(row, isSnapshot)),
     },
   };
 }
 
-export function serializeRow(row: RowItem): RowsLayoutRowKind {
-  const layout = row.state.layout.serialize();
+export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowKind {
+  const layout = row.state.layout.serialize(isSnapshot);
 
   // Normalize Y coordinates to be relative within the row
   // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
@@ -51,6 +55,11 @@ export function serializeRow(row: RowItem): RowsLayoutRowKind {
     },
   };
 
+  const sectionVariables = serializeSectionVariables(row.state.$variables);
+  if (sectionVariables) {
+    rowKind.spec.variables = sectionVariables;
+  }
+
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -64,7 +73,7 @@ export function deserializeRowsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowsLayoutManager {
   if (layout.kind !== 'RowsLayout') {
     throw new Error('Invalid layout kind');
@@ -77,7 +86,7 @@ export function deserializeRow(
   row: RowsLayoutRowKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowItem {
   const layout = row.spec.layout;
 
@@ -87,6 +96,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
+    $variables: deserializeSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });

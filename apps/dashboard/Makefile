@@ -1,17 +1,16 @@
 include ../sdk.mk
 
+MIGRATION_PKG = ./pkg/migration/
+CONVERSION_PKG = ./pkg/migration/conversion/
+MIGRATION_TESTS = TestMigrate$$|TestMigrateSingleVersion|TestMigrateDevDashboards
+GOLDEN_TESTS = TestDashboardConversionToAllVersions|TestMigratedDashboardsConversion
+
 .PHONY: generate
 generate: do-generate post-generate-cleanup ## Run Grafana App SDK code generation
 
 .PHONY: do-generate
 do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
-	@$(APP_SDK_BIN) generate \
-		--source=./kinds/ \
-		--gogenpath=./pkg/apis \
-		--tsgenpath=../../packages/grafana-schema/src/schema \
-		--grouping=group \
-		--defencoding=none \
-		--genoperatorstate=false
+	@$(APP_SDK_BIN) generate --source=./kinds/
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Clean up the generated code
@@ -35,6 +34,12 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
 	@mv ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
 
+	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v1 (alias to common.Unstructured).
+	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v1/dashboard_object_gen.go > ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp
+	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp2
+	@rm ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp
+	@mv ./pkg/apis/dashboard/v1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1/dashboard_object_gen.go
+
 	# Copy dashboard/v2alpha1 spec so we can use it for schema validation
 	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
 	@echo "// Source: apps/dashboard/kinds/v2alpha1/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
@@ -48,3 +53,29 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@echo "" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@cat ./kinds/v2beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
+
+	# Copy dashboard/v2 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@cat ./kinds/v2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+
+	@# Remove generated files for v1beta1 since it's a thin wrapper around v1
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_schema_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_status_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/zz_generated.openapi.go
+	@echo "Removed generated v1beta1 files (v1beta1 is a thin wrapper around v1)"
+
+.PHONY: generate-golden-files
+generate-golden-files: ## Generate golden output files (migration first, then conversion)
+	go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1
+	go test -run '$(GOLDEN_TESTS)' $(CONVERSION_PKG) -count=1
+
+.PHONY: regenerate-golden-checksums
+regenerate-golden-checksums: ## Regenerate golden_checksums.json after migration/conversion changes
+	REGENERATE_CHECKSUMS=true go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1
+	REGENERATE_CHECKSUMS=true go test -run '$(GOLDEN_TESTS)' $(CONVERSION_PKG) -count=1

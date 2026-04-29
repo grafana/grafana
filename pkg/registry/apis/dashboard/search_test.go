@@ -3,7 +3,6 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -11,115 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestSearchFallback(t *testing.T) {
-	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
+func TestSearch(t *testing.T) {
+	t.Run("should hit unified storage search handler", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -130,155 +40,6 @@ func TestSearchFallback(t *testing.T) {
 
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-}
-
-func TestSearchHandlerPagination(t *testing.T) {
-	t.Run("should calculate offset and page parameters", func(t *testing.T) {
-		limit := 50
-		for i, tt := range []struct {
-			offset         int
-			page           int
-			expectedOffset int
-			expectedPage   int
-		}{
-			{
-				offset:         0,
-				page:           0,
-				expectedOffset: 0,
-				expectedPage:   1,
-			},
-			{
-				offset:         0,
-				page:           1,
-				expectedOffset: 0,
-				expectedPage:   1,
-			},
-			{
-				offset:         0,
-				page:           2,
-				expectedOffset: 50,
-				expectedPage:   2,
-			},
-			{
-				offset:         0,
-				page:           3,
-				expectedOffset: 100,
-				expectedPage:   3,
-			},
-			{
-				offset:         50,
-				page:           0,
-				expectedOffset: 50,
-				expectedPage:   2,
-			},
-			{
-				offset:         100,
-				page:           0,
-				expectedOffset: 100,
-				expectedPage:   3,
-			},
-			{
-				offset:         149,
-				page:           0,
-				expectedOffset: 149,
-				expectedPage:   3,
-			},
-			{
-				offset:         150,
-				page:           0,
-				expectedOffset: 150,
-				expectedPage:   4,
-			},
-		} {
-			mockClient := &MockClient{}
-
-			cfg := &setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-				},
-			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
-
-			rr := httptest.NewRecorder()
-			endpoint := fmt.Sprintf("/search?limit=%d", limit)
-			if tt.offset > 0 {
-				endpoint = fmt.Sprintf("%s&offset=%d", endpoint, tt.offset)
-			}
-			if tt.page > 0 {
-				endpoint = fmt.Sprintf("%s&page=%d", endpoint, tt.page)
-			}
-			req := httptest.NewRequest("GET", endpoint, nil)
-			req.Header.Add("content-type", "application/json")
-			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-			searchHandler.DoSearch(rr, req)
-
-			if mockClient.LastSearchRequest == nil {
-				t.Fatalf("expected Search to be called, but it was not")
-			}
-
-			require.Equal(t, int(mockClient.LastSearchRequest.Offset), tt.expectedOffset, fmt.Sprintf("mismatch offset in test %d", i))
-			require.Equal(t, int(mockClient.LastSearchRequest.Page), tt.expectedPage, fmt.Sprintf("mismatch page in test %d", i))
 		}
 	})
 }
@@ -344,6 +105,43 @@ func TestSearchHandler(t *testing.T) {
 		assert.Equal(t, len(mockResults), len(p.Hits))
 		assert.Equal(t, mockResults[2].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
+	})
+
+	t.Run("filters k6 technical folder from results for non-service accounts", func(t *testing.T) {
+		mockResponse := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE},
+				},
+				Rows: []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse},
+		}
+
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		assert.Equal(t, string(selection.NotIn), mockClient.MockCalls[0].Options.Fields[0].Operator)
+		assert.Equal(t, []string{"k6-app"}, mockClient.MockCalls[0].Options.Fields[0].Values)
 	})
 }
 
@@ -589,7 +387,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -600,7 +398,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"}, firstCall.Options.Fields[0].Values)
 		// verify federated field is set to include folders
 		assert.NotNil(t, firstCall.Federated)
 		assert.Equal(t, 1, len(firstCall.Federated))
@@ -608,11 +406,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
-		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
 		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinprivatefolder", "sharedfolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -722,7 +520,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
 		allPermissions[1] = permissions
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
@@ -740,7 +538,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
-		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -758,8 +556,9 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 	testUser := &user.SignedInUser{
-		Namespace: "test-namespace",
-		OrgID:     1,
+		Namespace:        "test-namespace",
+		OrgID:            1,
+		IsServiceAccount: true,
 	}
 
 	dashboardKey := &resourcepb.ResourceKey{
@@ -772,7 +571,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 
 	tests := map[string]struct {
 		queryString           string
@@ -1162,6 +961,22 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"createdBy filter": {
+			queryString: "createdBy=user:abc123",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "createdBy", Operator: "=", Values: []string{"user:abc123"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -1194,6 +1009,42 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	t.Run("adds k6 exclusion for non-service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace: "test-namespace",
+			OrgID:     1,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result.Options.Fields, 1)
+		assert.Equal(t, resource.SEARCH_FIELD_NAME, result.Options.Fields[0].Key)
+		assert.Equal(t, string(selection.NotIn), result.Options.Fields[0].Operator)
+		assert.Equal(t, []string{accesscontrol.K6FolderUID}, result.Options.Fields[0].Values)
+	})
+
+	t.Run("keeps k6 folder visible for service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace:        "test-namespace",
+			OrgID:            1,
+			IsServiceAccount: true,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Empty(t, result.Options.Fields)
+	})
 }
 
 // MockClient implements the ResourceIndexClient interface for testing

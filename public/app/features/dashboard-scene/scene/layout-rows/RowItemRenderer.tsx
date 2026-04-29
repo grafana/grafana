@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -13,20 +14,30 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, collapse, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const {
+    layout,
+    collapse,
+    fillScreen,
+    hideHeader: isHeaderHidden,
+    isDropTarget,
+    key,
+    repeatSourceKey,
+  } = model.useState();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     model.state.conditionalRendering
   );
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
@@ -34,6 +45,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const rowVariablesSet = model.state.$variables;
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -63,6 +76,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         !isTopLevel && styles.rowTitleNested,
         isCollapsed && styles.rowTitleCollapsed
       )}
+      data-testid={selectors.components.DashboardRow.title(title)}
     >
       {!model.hasUniqueTitle() && (
         <Tooltip content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}>
@@ -89,13 +103,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
           className={cx(
             styles.wrapper,
+            'dashboard-row-wrapper',
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
-            !isClone && isSelected && 'dashboard-selected-element',
-            !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
+            !isSelected && !isSourceSelected && selectableHighlight && 'dashboard-selectable-element',
+            (isSelected || isSourceSelected) && 'dashboard-selected-element',
             isDropTarget && 'dashboard-drop-target'
           )}
           onPointerDown={(evt) => {
@@ -104,7 +119,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           }}
           onPointerUp={(evt) => {
             // If we selected and are clicking a button inside row header then don't de-select row
-            if (isSelected && evt.target instanceof Element && evt.target.closest('button')) {
+            if (evt.target instanceof Element && evt.target.closest('button')) {
               // Stop propagation otherwise dashboaed level onPointerDown will de-select row
               evt.stopPropagation();
               return;
@@ -127,14 +142,17 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {...dragProvided.dragHandleProps}
             >
               <button
-                onClick={() => model.onCollapseToggle()}
+                onClick={(evt) => {
+                  model.onCollapseToggle();
+                  onClearSelection?.();
+                }}
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
-                    ? t('dashboard.rows-layout.row.expand', 'Expand row')
-                    : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
                 }
-                data-testid={selectors.components.DashboardRow.title(title!)}
+                data-testid={selectors.components.DashboardRow.toggle(title)}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
                 {!isEditing && titleElement}
@@ -143,7 +161,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
-          {!isCollapsed && <layout.Component model={layout} />}
+          {!isCollapsed && (
+            <div>
+              {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              <layout.Component model={layout} />
+            </div>
+          )}
           {conditionalRenderingOverlay}
         </div>
       )}
@@ -215,10 +238,23 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      // Without this min height, the custom grid (SceneGridLayout) wont render
+      // Without this min height, the custom grid (SceneGridLayout) wont render
       // should be 1px more than row header + padding + margin
       // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
       minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
+
+      // Show grid controls when hovering anywhere on the row
+      '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+      // But hide controls inside nested rows (they'll show when that row is hovered)
+      '&:hover .dashboard-row-wrapper .dashboard-canvas-controls': {
+        opacity: 0,
+      },
+      // Re-enable for the specific nested row being hovered
+      '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {

@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 
 export interface ModalsContextState {
@@ -23,34 +23,23 @@ interface ModalsProviderProps {
  * @deprecated.
  * Not the real implementation used by core.
  */
-export class ModalsProvider extends Component<ModalsProviderProps, ModalsContextState> {
-  constructor(props: ModalsProviderProps) {
-    super(props);
-    this.state = {
-      component: null,
-      props: {},
-      showModal: this.showModal,
-      hideModal: this.hideModal,
-    };
-  }
+export function ModalsProvider({ children }: ModalsProviderProps) {
+  const [component, setComponent] = useState<ModalsContextState['component']>(null);
+  const [props, setProps] = useState<ModalsContextState['props']>({});
 
-  showModal = <T,>(component: React.ComponentType<T>, props: T) => {
-    this.setState({
-      component,
-      props,
-    });
-  };
+  const showModal = useCallback(<T,>(component: React.ComponentType<T>, props: T) => {
+    setComponent(() => component);
+    setProps(props);
+  }, []);
 
-  hideModal = () => {
-    this.setState({
-      component: null,
-      props: {},
-    });
-  };
+  const hideModal = useCallback(() => {
+    setComponent(null);
+    setProps({});
+  }, []);
 
-  render() {
-    return <ModalsContext.Provider value={this.state}>{this.props.children}</ModalsContext.Provider>;
-  }
+  const value = useMemo(() => ({ component, props, showModal, hideModal }), [component, props, showModal, hideModal]);
+
+  return <ModalsContext.Provider value={value}>{children}</ModalsContext.Provider>;
 }
 
 export const ModalRoot = () => (

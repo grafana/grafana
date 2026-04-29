@@ -311,7 +311,7 @@ The following errors occur when provisioning the data source via YAML.
 1. Verify the database name is **not** included in the URL.
 1. Use the correct format for the URL: `hostname:port`.
 1. Check that string values are properly quoted in the YAML file.
-1. Refer to the [provisioning example](../configure/#provision-the-data-source) for the correct format.
+1. Refer to the [provisioning example](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/#provision-the-data-source) for the correct format.
 
 Example correct configuration:
 

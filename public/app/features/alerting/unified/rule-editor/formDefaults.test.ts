@@ -571,4 +571,15 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).not.toHaveProperty('expression');
     expect(query.model).not.toHaveProperty('queryType');
   });
+
+  it('should preserve missingSeriesEvalsToResolve when duplicating a rule', () => {
+    const prefillData = {
+      type: RuleFormType.grafana,
+      missingSeriesEvalsToResolve: 5,
+    };
+
+    const result = formValuesFromPrefill(prefillData);
+
+    expect(result.missingSeriesEvalsToResolve).toBe(5);
+  });
 });

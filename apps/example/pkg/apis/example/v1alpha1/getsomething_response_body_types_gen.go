@@ -12,3 +12,8 @@ type GetSomethingBody struct {
 func NewGetSomethingBody() *GetSomethingBody {
 	return &GetSomethingBody{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetSomethingBody.
+func (GetSomethingBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomethingBody"
+}

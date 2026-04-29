@@ -19,6 +19,7 @@ describe('ExtensionToolbarItemButton', () => {
     const button = screen.getByTestId('extension-toolbar-button-open');
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-label', 'Open AI assistants and sidebar apps');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders open button with custom tooltip when title is provided', () => {
@@ -27,6 +28,7 @@ describe('ExtensionToolbarItemButton', () => {
     const button = screen.getByTestId('extension-toolbar-button-open');
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-label', 'Open Test App');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders close button with custom tooltip when isOpen is true', () => {
@@ -35,6 +37,7 @@ describe('ExtensionToolbarItemButton', () => {
     const button = screen.getByTestId('extension-toolbar-button-close');
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-label', 'Close Test App');
+    expect(button).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('calls onClick handler when button is clicked', () => {

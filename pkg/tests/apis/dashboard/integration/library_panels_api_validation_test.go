@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"testing"
 
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -19,70 +20,63 @@ import (
 )
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections
-// as in modes 3+, the connections are found via searching dashboards for the reference of the library panel
+// as in modes 4+, the connections are found via searching dashboards for the reference of the library panel
 //
 // it also ensures we create the connection in modes 0-2 if a dashboard v1 is created with a reference
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
-				EnableFeatureToggles: []string{
-					"kubernetesLibraryPanels",
-				},
-				UnifiedStorageEnableSearch: true,
-			})
-			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			"kubernetesLibraryPanels",
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
-			// create the library element first
-			libraryElement := map[string]interface{}{
-				"kind": 1,
-				"name": "Test Library Panel",
-				"model": map[string]interface{}{
-					"type":  "timeseries",
-					"title": "Test Library Panel",
-				},
-			}
-			libraryElementURL := "/api/library-elements"
-			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, libraryElementData)
-			data := libraryElementData["result"].(map[string]interface{})
-			uid := data["uid"].(string)
-			require.NotEmpty(t, uid)
-
-			// then reference the library element in the dashboard
-			dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
-			dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-				map[string]interface{}{
-					"id":    1,
-					"title": "Library Panel",
-					"type":  "library-panel-ref",
-					"libraryPanel": map[string]interface{}{
-						"uid":  uid,
-						"name": "Test Library Panel",
-					},
-				},
-			}
-
-			createdDash, err := adminClient.Resource.Create(context.Background(), dashboard, v1.CreateOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, createdDash)
-
-			// should have created a library panel connection
-			connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
-			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, connectionsData)
-			connections := connectionsData["result"].([]interface{})
-			require.Len(t, connections, 1)
-		})
+	// create the library element first
+	libraryElement := map[string]interface{}{
+		"kind": 1,
+		"name": "Test Library Panel",
+		"model": map[string]interface{}{
+			"type":  "timeseries",
+			"title": "Test Library Panel",
+		},
 	}
+	libraryElementURL := "/api/library-elements"
+	libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
+	require.NoError(t, err)
+	require.NotNil(t, libraryElementData)
+	data := libraryElementData["result"].(map[string]interface{})
+	uid := data["uid"].(string)
+	require.NotEmpty(t, uid)
+
+	// then reference the library element in the dashboard
+	dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
+	dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+		map[string]interface{}{
+			"id":    1,
+			"title": "Library Panel",
+			"type":  "library-panel-ref",
+			"libraryPanel": map[string]interface{}{
+				"uid":  uid,
+				"name": "Test Library Panel",
+			},
+		},
+	}
+
+	createdDash, err := adminClient.Resource.Create(context.Background(), dashboard, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, createdDash)
+
+	// should have created a library panel connection
+	connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
+	connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
+	require.NoError(t, err)
+	require.NotNil(t, connectionsData)
+	connections := connectionsData["result"].([]interface{})
+	require.Len(t, connections, 1)
 }
 
 // this tests the /apis path to ensure authorization is being enforced. /api integration tests are within the service package
@@ -90,30 +84,23 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
-				EnableFeatureToggles: []string{
-					"kubernetesLibraryPanels",
-					"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
-				},
-				UnifiedStorageEnableSearch: true,
-			})
-			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			"kubernetesLibraryPanels",
+			"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
 
-			t.Run("Library element authorization tests", func(t *testing.T) {
-				runLibraryElementAuthorizationTests(t, ctx)
-			})
+	t.Run("Library element authorization tests", func(t *testing.T) {
+		runLibraryElementAuthorizationTests(t, ctx)
+	})
 
-			t.Run("Library element cross-organization tests", func(t *testing.T) {
-				org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
-				runLibraryElementCrossOrgTests(t, ctx, org2Ctx)
-			})
-		})
-	}
+	t.Run("Library element cross-organization tests", func(t *testing.T) {
+		org2Ctx := createTestContext(t, helper, helper.OrgB)
+		runLibraryElementCrossOrgTests(t, ctx, org2Ctx)
+	})
 }
 
 func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
@@ -134,7 +121,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 			}
 
 			t.Run("library element viewing", func(t *testing.T) {
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to view", "", nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to view", "")
 				require.NoError(t, err)
 
 				viewedLibElement, err := client.Resource.Get(context.Background(), uid, v1.GetOptions{})
@@ -146,7 +133,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 			})
 
 			t.Run("library element listing", func(t *testing.T) {
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to list", "", nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to list", "")
 				require.NoError(t, err)
 
 				listOpts := v1.ListOptions{}
@@ -164,7 +151,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 				restrictedFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "Restricted Folder for "+role)
 				require.NoError(t, err)
 				require.NotNil(t, restrictedFolder)
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in restricted folder", restrictedFolder.UID, nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in restricted folder", restrictedFolder.UID)
 				require.NoError(t, err)
 				setResourceUserPermission(t, ctx, ctx.AdminUser, false, restrictedFolder.UID, []ResourcePermissionSetting{})
 
@@ -209,10 +196,10 @@ func runLibraryElementCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) 
 	})
 
 	t.Run("Cross-organization access", func(t *testing.T) {
-		org1LibElementUID, err := createLibraryElement(t, org1Ctx, org1Ctx.AdminUser, "Org1 Library Element", "", nil)
+		org1LibElementUID, err := createLibraryElement(t, org1Ctx, org1Ctx.AdminUser, "Org1 Library Element", "")
 		require.NoError(t, err)
 
-		org2LibElementUID, err := createLibraryElement(t, org2Ctx, org2Ctx.AdminUser, "Org2 Library Element", "", nil)
+		org2LibElementUID, err := createLibraryElement(t, org2Ctx, org2Ctx.AdminUser, "Org2 Library Element", "")
 		require.NoError(t, err)
 
 		defer func() {
@@ -247,7 +234,7 @@ func getLibraryElementGVR() schema.GroupVersionResource {
 }
 
 // currently through /api
-func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string, uid *string) (string, error) {
+func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string) (string, error) {
 	t.Helper()
 	libraryElement := map[string]interface{}{
 		"kind": 1,
@@ -294,143 +281,293 @@ func deleteLibraryElement(t *testing.T, ctx TestContext, user apis.User, uid str
 }
 
 func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
-				EnableFeatureToggles: []string{
-					"kubernetesLibraryPanels",
-				},
-				UnifiedStorageEnableSearch: true,
-			})
-			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			"kubernetesLibraryPanels",
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
 
-			accessibleFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "AccessibleFolder")
-			require.NoError(t, err)
-			require.NotNil(t, accessibleFolder)
+	accessibleFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "AccessibleFolder")
+	require.NoError(t, err)
+	require.NotNil(t, accessibleFolder)
 
-			inaccessibleFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "InAccessibleFolder")
-			require.NoError(t, err)
-			require.NotNil(t, inaccessibleFolder)
+	inaccessibleFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "InAccessibleFolder")
+	require.NoError(t, err)
+	require.NotNil(t, inaccessibleFolder)
 
-			setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelView))
-			setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelView))
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
 
-			libraryElement := map[string]interface{}{
-				"kind":      1,
-				"name":      "Accessible Library Panel",
-				"folderUid": accessibleFolder.UID,
-				"model": map[string]interface{}{
-					"type":  "text",
-					"title": "Accessible Library Panel",
-				},
-			}
-			libraryElementURL := "/api/library-elements"
-			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, libraryElementData)
-			data := libraryElementData["result"].(map[string]interface{})
-			uid := data["uid"].(string)
-			require.NotEmpty(t, uid)
-
-			dashInGeneral := createDashboardObject(t, "Dashboard in General", "", 1)
-			dashInGeneral.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-				map[string]interface{}{
-					"id":    1,
-					"title": "Library Panel",
-					"type":  "library-panel-ref",
-					"libraryPanel": map[string]interface{}{
-						"uid":  uid,
-						"name": "Accessible Library Panel",
-					},
-				},
-			}
-			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-			createdDashInGeneral, err := adminClient.Resource.Create(context.Background(), dashInGeneral, v1.CreateOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, createdDashInGeneral)
-
-			dashInAccessibleFolder := createDashboardObject(t, "Dashboard in Accessible Folder", accessibleFolder.UID, 1)
-			dashInAccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-				map[string]interface{}{
-					"id":    1,
-					"title": "Library Panel",
-					"type":  "library-panel-ref",
-					"libraryPanel": map[string]interface{}{
-						"uid":  uid,
-						"name": "Accessible Library Panel",
-					},
-				},
-			}
-			createdDashInAccessible, err := adminClient.Resource.Create(context.Background(), dashInAccessibleFolder, v1.CreateOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, createdDashInAccessible)
-
-			dashInInaccessibleFolder := createDashboardObject(t, "Dashboard in Inaccessible Folder", inaccessibleFolder.UID, 1)
-			dashInInaccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-				map[string]interface{}{
-					"id":    1,
-					"title": "Library Panel",
-					"type":  "library-panel-ref",
-					"libraryPanel": map[string]interface{}{
-						"uid":  uid,
-						"name": "Accessible Library Panel",
-					},
-				},
-			}
-			createdDashInInaccessible, err := adminClient.Resource.Create(context.Background(), dashInInaccessibleFolder, v1.CreateOptions{})
-			require.NoError(t, err)
-			require.NotNil(t, createdDashInInaccessible)
-
-			connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
-			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
-			require.NoError(t, err)
-			require.NotNil(t, connectionsData)
-			connections := connectionsData["result"].([]interface{})
-			require.Len(t, connections, 3, "Admin should see all connections")
-			connectionUIDs := make([]string, 0, len(connections))
-			for _, conn := range connections {
-				connMap := conn.(map[string]interface{})
-				if connectionUID, ok := connMap["connectionUid"].(string); ok {
-					connectionUIDs = append(connectionUIDs, connectionUID)
-				}
-			}
-			generalDashUID := createdDashInGeneral.GetName()
-			accessibleDashUID := createdDashInAccessible.GetName()
-			inaccessibleDashUID := createdDashInInaccessible.GetName()
-			require.Contains(t, connectionUIDs, generalDashUID, "Admin should see dashboard in general folder")
-			require.Contains(t, connectionUIDs, accessibleDashUID, "Admin should see dashboard in accessible folder")
-			require.Contains(t, connectionUIDs, inaccessibleDashUID, "Admin should see dashboard in inaccessible folder")
-
-			limitedUser := ctx.Helper.CreateUser("limited-user", "Org1", org.RoleViewer, nil)
-			// can access accessibleFolder but not inaccessibleFolder
-			setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, limitedUser, ResourcePermissionLevelView))
-			setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
-			connectionsDataLimited, err := getDashboardViaHTTP(t, &ctx, connectionsURL, limitedUser)
-			require.NoError(t, err)
-			require.NotNil(t, connectionsDataLimited)
-			connectionsLimited := connectionsDataLimited["result"].([]interface{})
-			require.Len(t, connectionsLimited, 2, "Limited user should only see connections to accessible dashboards")
-
-			connectionUIDsLimited := make([]string, 0, len(connectionsLimited))
-			for _, conn := range connectionsLimited {
-				connMap := conn.(map[string]interface{})
-				if connectionUID, ok := connMap["connectionUid"].(string); ok {
-					connectionUIDsLimited = append(connectionUIDsLimited, connectionUID)
-				}
-			}
-			require.Contains(t, connectionUIDsLimited, generalDashUID, "Limited user should see dashboard in general folder")
-			require.Contains(t, connectionUIDsLimited, accessibleDashUID, "Limited user should see dashboard in accessible folder")
-			require.NotContains(t, connectionUIDsLimited, inaccessibleDashUID, "Limited user should NOT see dashboard in inaccessible folder")
-
-			err = adminClient.Resource.Delete(context.Background(), createdDashInGeneral.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-			err = adminClient.Resource.Delete(context.Background(), createdDashInAccessible.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-			err = adminClient.Resource.Delete(context.Background(), createdDashInInaccessible.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-		})
+	libraryElement := map[string]interface{}{
+		"kind":      1,
+		"name":      "Accessible Library Panel",
+		"folderUid": accessibleFolder.UID,
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Accessible Library Panel",
+		},
 	}
+	libraryElementURL := "/api/library-elements"
+	libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
+	require.NoError(t, err)
+	require.NotNil(t, libraryElementData)
+	data := libraryElementData["result"].(map[string]interface{})
+	uid := data["uid"].(string)
+	require.NotEmpty(t, uid)
+
+	dashInGeneral := createDashboardObject(t, "Dashboard in General", "", 1)
+	dashInGeneral.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+		map[string]interface{}{
+			"id":    1,
+			"title": "Library Panel",
+			"type":  "library-panel-ref",
+			"libraryPanel": map[string]interface{}{
+				"uid":  uid,
+				"name": "Accessible Library Panel",
+			},
+		},
+	}
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+	createdDashInGeneral, err := adminClient.Resource.Create(context.Background(), dashInGeneral, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, createdDashInGeneral)
+
+	dashInAccessibleFolder := createDashboardObject(t, "Dashboard in Accessible Folder", accessibleFolder.UID, 1)
+	dashInAccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+		map[string]interface{}{
+			"id":    1,
+			"title": "Library Panel",
+			"type":  "library-panel-ref",
+			"libraryPanel": map[string]interface{}{
+				"uid":  uid,
+				"name": "Accessible Library Panel",
+			},
+		},
+	}
+	createdDashInAccessible, err := adminClient.Resource.Create(context.Background(), dashInAccessibleFolder, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, createdDashInAccessible)
+
+	dashInInaccessibleFolder := createDashboardObject(t, "Dashboard in Inaccessible Folder", inaccessibleFolder.UID, 1)
+	dashInInaccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+		map[string]interface{}{
+			"id":    1,
+			"title": "Library Panel",
+			"type":  "library-panel-ref",
+			"libraryPanel": map[string]interface{}{
+				"uid":  uid,
+				"name": "Accessible Library Panel",
+			},
+		},
+	}
+	createdDashInInaccessible, err := adminClient.Resource.Create(context.Background(), dashInInaccessibleFolder, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, createdDashInInaccessible)
+
+	connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
+	connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
+	require.NoError(t, err)
+	require.NotNil(t, connectionsData)
+	connections := connectionsData["result"].([]interface{})
+	require.Len(t, connections, 3, "Admin should see all connections")
+	connectionUIDs := make([]string, 0, len(connections))
+	for _, conn := range connections {
+		connMap := conn.(map[string]interface{})
+		if connectionUID, ok := connMap["connectionUid"].(string); ok {
+			connectionUIDs = append(connectionUIDs, connectionUID)
+		}
+	}
+	generalDashUID := createdDashInGeneral.GetName()
+	accessibleDashUID := createdDashInAccessible.GetName()
+	inaccessibleDashUID := createdDashInInaccessible.GetName()
+	require.Contains(t, connectionUIDs, generalDashUID, "Admin should see dashboard in general folder")
+	require.Contains(t, connectionUIDs, accessibleDashUID, "Admin should see dashboard in accessible folder")
+	require.Contains(t, connectionUIDs, inaccessibleDashUID, "Admin should see dashboard in inaccessible folder")
+
+	limitedUser := ctx.Helper.CreateUser("limited-user", "Org1", org.RoleViewer, nil)
+	// can access accessibleFolder but not inaccessibleFolder
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, limitedUser, ResourcePermissionLevelView))
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
+	connectionsDataLimited, err := getDashboardViaHTTP(t, &ctx, connectionsURL, limitedUser)
+	require.NoError(t, err)
+	require.NotNil(t, connectionsDataLimited)
+	connectionsLimited := connectionsDataLimited["result"].([]interface{})
+	require.Len(t, connectionsLimited, 2, "Limited user should only see connections to accessible dashboards")
+
+	connectionUIDsLimited := make([]string, 0, len(connectionsLimited))
+	for _, conn := range connectionsLimited {
+		connMap := conn.(map[string]interface{})
+		if connectionUID, ok := connMap["connectionUid"].(string); ok {
+			connectionUIDsLimited = append(connectionUIDsLimited, connectionUID)
+		}
+	}
+	require.Contains(t, connectionUIDsLimited, generalDashUID, "Limited user should see dashboard in general folder")
+	require.Contains(t, connectionUIDsLimited, accessibleDashUID, "Limited user should see dashboard in accessible folder")
+	require.NotContains(t, connectionUIDsLimited, inaccessibleDashUID, "Limited user should NOT see dashboard in inaccessible folder")
+
+	err = adminClient.Resource.Delete(context.Background(), createdDashInGeneral.GetName(), v1.DeleteOptions{})
+	require.NoError(t, err)
+	err = adminClient.Resource.Delete(context.Background(), createdDashInAccessible.GetName(), v1.DeleteOptions{})
+	require.NoError(t, err)
+	err = adminClient.Resource.Delete(context.Background(), createdDashInInaccessible.GetName(), v1.DeleteOptions{})
+	require.NoError(t, err)
+}
+
+// folderHierarchySetup holds the common test data for folder hierarchy tests.
+type folderHierarchySetup struct {
+	ctx              TestContext
+	parentFolder     *folder.Folder
+	childFolder      *folder.Folder
+	grandchildFolder *folder.Folder
+	libraryElements  []string
+	testUser         apis.User
+}
+
+// setupFolderHierarchy creates a nested folder structure with library elements and a test user.
+func setupFolderHierarchy(t *testing.T, helper *apis.K8sTestHelper) folderHierarchySetup {
+	t.Helper()
+
+	ctx := createTestContext(t, helper, helper.Org1)
+
+	// Create a nested folder structure: parentFolder -> childFolder -> grandchildFolder
+	parentFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "ParentFolder")
+	require.NoError(t, err)
+	require.NotNil(t, parentFolder)
+
+	childFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "ChildFolder", parentFolder.UID)
+	require.NoError(t, err)
+	require.NotNil(t, childFolder)
+
+	grandchildFolder, err := createSubFolder(t, ctx.Helper, ctx.AdminUser, "GrandchildFolder", childFolder.UID)
+	require.NoError(t, err)
+	require.NotNil(t, grandchildFolder)
+
+	libraryElements := make([]string, 0, 3)
+	for _, f := range []*folder.Folder{parentFolder, childFolder, grandchildFolder} {
+		libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID)
+		require.NoError(t, err)
+		libraryElements = append(libraryElements, libraryElement)
+	}
+	t.Cleanup(func() {
+		for _, uid := range libraryElements {
+			err := deleteLibraryElement(t, ctx, ctx.AdminUser, uid)
+			require.NoError(t, err)
+		}
+	})
+
+	testUser := ctx.Helper.CreateUser("hierarchy-test-user", "Org1", org.RoleViewer, nil)
+
+	return folderHierarchySetup{
+		ctx:              ctx,
+		parentFolder:     parentFolder,
+		childFolder:      childFolder,
+		grandchildFolder: grandchildFolder,
+		libraryElements:  libraryElements,
+		testUser:         testUser,
+	}
+}
+
+// getVisibleLibraryElementUIDs returns the UIDs and total count of library elements visible to the user.
+func getVisibleLibraryElementUIDs(t *testing.T, ctx *TestContext, user apis.User) ([]string, int) {
+	t.Helper()
+	listData, err := getDashboardViaHTTP(t, ctx, "/api/library-elements", user)
+	require.NoError(t, err)
+	require.NotNil(t, listData)
+
+	result := listData["result"].(map[string]interface{})
+	elements := result["elements"].([]interface{})
+	totalCount := int(result["totalCount"].(float64))
+
+	visibleUIDs := make([]string, 0, len(elements))
+	for _, elem := range elements {
+		elemMap := elem.(map[string]interface{})
+		if uid, ok := elemMap["uid"].(string); ok {
+			visibleUIDs = append(visibleUIDs, uid)
+		}
+	}
+	return visibleUIDs, totalCount
+}
+
+// TestIntegrationLibraryElementFolderHierarchy tests that permissions are correctly propagated in a folder hierarchy.
+// Each sub-test uses its own K8sTestHelper to ensure independent folder tree caches.
+func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	opts := testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			"kubernetesLibraryPanels",
+		},
+		DisableAuthZClientCache: true,
+	}
+	// Test 1: Parent folder access grants access to child folder library elements (inherited permissions)
+	t.Run("parent access grants child access", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, opts)
+		t.Cleanup(helper.Shutdown)
+		s := setupFolderHierarchy(t, helper)
+
+		// Give user access to the parent folder
+		setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.parentFolder.UID, addUserPermission(t, nil, s.testUser, ResourcePermissionLevelView))
+
+		visibleUIDs, totalCount := getVisibleLibraryElementUIDs(t, &s.ctx, s.testUser)
+
+		// User with parent folder access should see ALL library elements
+		require.Contains(t, visibleUIDs, s.libraryElements[0])
+		require.Contains(t, visibleUIDs, s.libraryElements[1])
+		require.Contains(t, visibleUIDs, s.libraryElements[2])
+		require.Len(t, visibleUIDs, 3)
+		require.Equal(t, 3, totalCount)
+	})
+
+	// Test 2: Child folder access does NOT grant access to parent folder library elements (no reverse inheritance)
+	t.Run("child access does not grant parent access", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, opts)
+		t.Cleanup(helper.Shutdown)
+		s := setupFolderHierarchy(t, helper)
+
+		// Remove default viewer access to parent folder so only explicit permissions apply
+		setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.parentFolder.UID, []ResourcePermissionSetting{})
+
+		// Give user access to ONLY the grandchild folder
+		setResourceUserPermission(t, s.ctx, s.ctx.AdminUser, false, s.grandchildFolder.UID, addUserPermission(t, nil, s.testUser, ResourcePermissionLevelView))
+
+		visibleUIDs, totalCount := getVisibleLibraryElementUIDs(t, &s.ctx, s.testUser)
+
+		// User should ONLY see the library element in the grandchild folder
+		require.Contains(t, visibleUIDs, s.libraryElements[2])
+		require.NotContains(t, visibleUIDs, s.libraryElements[1])
+		require.NotContains(t, visibleUIDs, s.libraryElements[0])
+		require.Len(t, visibleUIDs, 1)
+		require.Equal(t, 1, totalCount)
+	})
+}
+
+// createSubFolder creates a folder with a parent folder
+func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, title string, parentUID string) (*folder.Folder, error) {
+	t.Helper()
+
+	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      user,
+		Namespace: helper.Namespacer(user.Identity.GetOrgID()),
+		GVR:       getFolderGVR(),
+	})
+
+	folderObj := createFolderObject(t, title, helper.Namespacer(user.Identity.GetOrgID()), parentUID)
+
+	createdFolder, err := folderClient.Resource.Create(context.Background(), folderObj, v1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	meta, _ := utils.MetaAccessor(createdFolder)
+
+	return &folder.Folder{
+		UID:       createdFolder.GetName(),
+		Title:     meta.FindTitle(""),
+		ParentUID: parentUID,
+	}, nil
 }

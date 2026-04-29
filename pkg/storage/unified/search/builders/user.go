@@ -1,12 +1,9 @@
 package builders
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -82,19 +79,11 @@ type userDocumentBuilder struct{}
 
 func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	user := &iamv0.User{}
-	err := json.NewDecoder(bytes.NewReader(value)).Decode(user)
+	doc, err := NewIndexableDocumentFromValue(key, rv, value, user, iamv0.UserKind())
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := utils.MetaAccessor(user)
-	if err != nil {
-		return nil, err
-	}
-
-	doc := resource.NewIndexableDocument(key, rv, obj)
-
-	doc.Fields = make(map[string]any)
 	if user.Spec.Email != "" {
 		doc.Fields[USER_EMAIL] = user.Spec.Email
 	}

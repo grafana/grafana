@@ -18,3 +18,8 @@ func NewChannelSpec() *ChannelSpec {
 		Data: map[string]interface{}{},
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for ChannelSpec.
+func (ChannelSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.live.pkg.apis.live.v1alpha1.ChannelSpec"
+}

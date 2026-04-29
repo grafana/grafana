@@ -1,7 +1,7 @@
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  KeyValue,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type KeyValue,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
@@ -23,6 +23,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
     <>
       {showKeyPair ? (
         <Field
+          noMargin
           label={
             <Label>
               <Stack gap={0.5}>
@@ -61,6 +62,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
       ) : null}
       {showCACert ? (
         <Field
+          noMargin
           label={
             <Label>
               <Stack gap={0.5}>
@@ -99,6 +101,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
       ) : null}
       {showKeyPair ? (
         <Field
+          noMargin
           label={
             <Label>
               <Stack gap={0.5}>

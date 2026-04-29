@@ -382,6 +382,9 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		if colType == "DOUBLE UNSIGNED" {
 			colType = "DOUBLE"
 		}
+		if colType == "BIGINT UNSIGNED" {
+			colType = "BIGINT"
+		}
 		col.Length = len1
 		col.Length2 = len2
 		if _, ok := core.SqlTypes[colType]; ok {

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -189,7 +190,9 @@ func TestTracingConfig(t *testing.T) {
 			err := cfg.Raw.Append([]byte(test.Cfg))
 			assert.NoError(t, err)
 			// create tracingConfig
-			tracingConfig, err := ProvideTracingConfig(cfg)
+			cfgProvider, err := configprovider.ProvideService(cfg)
+			assert.NoError(t, err)
+			tracingConfig, err := ProvideTracingConfig(cfgProvider)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
 			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)

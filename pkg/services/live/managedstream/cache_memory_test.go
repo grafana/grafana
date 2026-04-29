@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func testFrameCache(t *testing.T, c FrameCache) {
@@ -15,19 +16,19 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	frameJsonCache, err := data.FrameToJSONCache(frame)
 	require.NoError(t, err)
 
-	updated, err := c.Update(context.Background(), 1, "test", frameJsonCache)
+	updated, err := c.Update(context.Background(), "default", "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
 	// Make sure channel is active.
-	channels, err := c.GetActiveChannels(1)
+	channels, err := c.GetActiveChannels("default")
 	require.NoError(t, err)
 	schema, ok := channels["test"]
 	require.True(t, ok)
 	require.NotZero(t, schema)
 
 	// Make sure the same frame does not update schema.
-	updated, err = c.Update(context.Background(), 1, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), "default", "test", frameJsonCache)
 	require.NoError(t, err)
 	require.False(t, updated)
 
@@ -37,17 +38,17 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	require.NoError(t, err)
 
 	// Make sure schema updated.
-	updated, err = c.Update(context.Background(), 1, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), "default", "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
 	// Add the same with another orgID and make sure schema updated.
-	updated, err = c.Update(context.Background(), 2, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), "org-2", "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
 	// Make sure that the last frame successfully saved in cache.
-	frameJSON, ok, err := c.GetFrame(context.Background(), 1, "test")
+	frameJSON, ok, err := c.GetFrame(context.Background(), "default", "test")
 	require.NoError(t, err)
 	require.True(t, ok)
 
@@ -57,7 +58,7 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	require.Equal(t, "new_field", f.Fields[0].Name)
 
 	// Make sure channel has updated schema.
-	channels, err = c.GetActiveChannels(1)
+	channels, err = c.GetActiveChannels("default")
 	require.NoError(t, err)
 	require.NotEqual(t, string(channels["test"]), string(schema))
 }

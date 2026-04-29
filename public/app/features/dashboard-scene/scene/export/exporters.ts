@@ -1,31 +1,36 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
-  PanelKind,
-  PanelQueryKind,
-  AnnotationQueryKind,
-  QueryVariableKind,
-  LibraryPanelRef,
-  LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+  type Spec as DashboardV2Spec,
+  type PanelKind,
+  type LibraryPanelRef,
+  type LibraryPanelKind,
+  type DataQueryKind,
+  type AdhocVariableKind,
+  type GroupByVariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel, type GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegexExec } from 'app/features/variables/utils';
 import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
+
+// This label is used to store the export label for a datasource when exporting a V2 dashboard for external sharing.
+// E.g. if a dashboard has two datasources with the same type, the export label will be used to distinguish them.
+export const ExportLabel = 'grafana.app/export-label';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
@@ -95,7 +100,6 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   dashboard.cleanUpRepeats();
 
   const saveModel = dashboard.getSaveModelCloneOld();
-  saveModel.id = null;
 
   // undo repeat cleanup
   dashboard.processRepeats();
@@ -199,7 +203,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         }
       }
 
-      const panelDef: PanelPluginMeta = config.panels[panel.type];
+      const panelDef = await getPanelPluginMeta(panel.type);
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',
@@ -415,36 +419,81 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
 }
 
 export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
-  const variableLookup: { [key: string]: any } = {};
+  const dataQueryLabels: { [key: string]: Map<string, number> } = {};
 
   // get all datasource variables
   const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
 
-  for (const variable of dashboard.variables) {
-    variableLookup[variable.spec.name] = variable.spec;
-  }
-
-  const removeDataSourceRefs = (
-    obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
-  ) => {
-    const datasourceUid = obj.query?.datasource?.name;
-
-    if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
-      const varName = datasourceUid.slice(2, -1);
-      // if there's a match we don't want to remove the datasource ref
-      const match = datasourceVariables.find((v) => v.spec.name === varName);
-      if (match) {
-        return;
-      }
+  const processDataQueryKind = (dataQueryKind: DataQueryKind) => {
+    if (!dataQueryKind.datasource?.name) {
+      return;
     }
 
-    obj.query && (obj.query.datasource = undefined);
+    const datasourceUid = dataQueryKind.datasource.name;
+
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
+    }
+
+    dataQueryKind.labels = {
+      ...(dataQueryKind.labels ?? {}),
+      [ExportLabel]: getLabel(dataQueryKind.group, datasourceUid),
+    };
+
+    dataQueryKind.datasource = undefined;
+  };
+
+  const processAdHocAndGroupByVariables = (variable: AdhocVariableKind | GroupByVariableKind) => {
+    const datasourceUid = variable.datasource?.name;
+
+    if (!datasourceUid) {
+      return;
+    }
+
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
+    }
+
+    variable.labels = {
+      ...(variable.labels ?? {}),
+      [ExportLabel]: getLabel(variable.group, datasourceUid),
+    };
+    variable.datasource = undefined;
+  };
+
+  const isReferencingDsTemplateVariable = (datasourceUid: string) => {
+    if (datasourceUid.startsWith('$')) {
+      const varName =
+        datasourceUid.startsWith('${') && datasourceUid.endsWith('}')
+          ? datasourceUid.slice(2, -1)
+          : datasourceUid.slice(1);
+
+      return !!datasourceVariables.find((v) => v.spec.name === varName);
+    }
+
+    return false;
+  };
+
+  const getLabel = (datasourceGroup: string, datasourceUid: string) => {
+    let group = dataQueryLabels[datasourceGroup];
+
+    if (!group) {
+      group = new Map<string, number>();
+      dataQueryLabels[datasourceGroup] = group;
+    }
+
+    if (!group.has(datasourceUid)) {
+      group.set(datasourceUid, group.size + 1);
+    }
+
+    const index = group.get(datasourceUid);
+    return `${datasourceGroup}-${index}`;
   };
 
   const processPanel = (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
-        removeDataSourceRefs(query.spec);
+        processDataQueryKind(query.spec.query);
       }
     }
   };
@@ -472,7 +521,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // process template variables
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        removeDataSourceRefs(variable.spec);
+        processDataQueryKind(variable.spec.query);
         variable.spec.options = [];
         variable.spec.current = {
           text: '',
@@ -483,12 +532,14 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
           text: '',
           value: '',
         };
+      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+        processAdHocAndGroupByVariables(variable);
       }
     }
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
-      removeDataSourceRefs(annotation.spec);
+      processDataQueryKind(annotation.spec.query);
     }
 
     return dashboard;

@@ -18,9 +18,9 @@ type compactQuery struct {
 // AlertRuleConvertOptions controls which fields to parse during conversion from alertRule to models.AlertRule.
 // By default all fields are included. Set Exclude* to true to skip parsing expensive fields.
 type AlertRuleConvertOptions struct {
-	ExcludeAlertQueries         bool // Only parse datasource UIDs from queries
-	ExcludeNotificationSettings bool
-	ExcludeMetadata             bool
+	ExcludeAlertQueries        bool // Only parse datasource UIDs from queries
+	ExcludeContactPointRouting bool
+	ExcludeMetadata            bool
 }
 
 func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
@@ -57,6 +57,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		Version:                     ar.Version,
 		UID:                         ar.UID,
 		NamespaceUID:                ar.NamespaceUID,
+		FolderFullpath:              ar.FolderFullpath,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
 		RuleGroupIndex:              ar.RuleGroupIndex,
@@ -119,12 +120,25 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		}
 	}
 
-	if !opts.ExcludeNotificationSettings && ar.NotificationSettings != "" {
+	if ar.NotificationSettings != "" && ar.AlertRoutingPolicy != nil {
+		l.Warn("Both policy routing and contact point routing exist on rule", append(result.GetKey().LogContext(), "policy", *ar.AlertRoutingPolicy)...)
+	}
+
+	if !opts.ExcludeContactPointRouting && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)
 		}
-		result.NotificationSettings = ns
+		if ns != nil {
+			result.NotificationSettings = util.Pointer(models.NotificationSettingsFromContact(*ns))
+		}
+	}
+
+	if ar.AlertRoutingPolicy != nil {
+		if result.NotificationSettings == nil {
+			result.NotificationSettings = &models.NotificationSettings{}
+		}
+		result.NotificationSettings.PolicyRouting = &models.PolicyRouting{Policy: *ar.AlertRoutingPolicy}
 	}
 
 	if !opts.ExcludeMetadata && ar.Metadata != "" {
@@ -137,12 +151,17 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 	return result, nil
 }
 
-func parseNotificationSettings(s string) ([]models.NotificationSettings, error) {
-	var result []models.NotificationSettings
+func parseNotificationSettings(s string) (*models.ContactPointRouting, error) {
+	var result []models.ContactPointRouting
 	if err := json.Unmarshal([]byte(s), &result); err != nil {
 		return nil, err
 	}
-	return result, nil
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	return &result[0], nil
 }
 
 func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
@@ -157,6 +176,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		Version:                     ar.Version,
 		UID:                         ar.UID,
 		NamespaceUID:                ar.NamespaceUID,
+		FolderFullpath:              ar.FolderFullpath,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
 		RuleGroupIndex:              ar.RuleGroupIndex,
@@ -209,12 +229,17 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		result.Labels = string(labelsData)
 	}
 
-	if len(ar.NotificationSettings) > 0 {
-		notificationSettingsData, err := json.Marshal(ar.NotificationSettings)
+	if cpr := ar.ContactPointRouting(); cpr != nil {
+		// We store as a slice for legacy backwards compatibility reasons. This can be simplified with a db migration.
+		notificationSettingsData, err := json.Marshal([]models.ContactPointRouting{*cpr})
 		if err != nil {
 			return alertRule{}, fmt.Errorf("failed to marshal notification settings: %w", err)
 		}
 		result.NotificationSettings = string(notificationSettingsData)
+	}
+
+	if pr := ar.PolicyRouting(); pr != nil && !pr.IsDefault() {
+		result.AlertRoutingPolicy = &pr.Policy
 	}
 
 	metadata, err := json.Marshal(ar.Metadata)
@@ -253,6 +278,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Labels:                      rule.Labels,
 		IsPaused:                    rule.IsPaused,
 		NotificationSettings:        rule.NotificationSettings,
+		AlertRoutingPolicy:          rule.AlertRoutingPolicy,
 		Metadata:                    rule.Metadata,
 		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 	}
@@ -287,6 +313,7 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		Labels:                      version.Labels,
 		IsPaused:                    version.IsPaused,
 		NotificationSettings:        version.NotificationSettings,
+		AlertRoutingPolicy:          version.AlertRoutingPolicy,
 		Metadata:                    version.Metadata,
 		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}

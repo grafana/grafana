@@ -65,6 +65,9 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		if !s.cfg.AWSAssumeRoleEnabled {
 			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
+		if s.cfg.AWSPerDatasourceHTTPProxyEnabled {
+			m[awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName] = "true"
+		}
 		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
 		}

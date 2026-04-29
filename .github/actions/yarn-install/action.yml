@@ -1,0 +1,125 @@
+# From https://gist.github.com/belgattitude/042f9caf10d029badbde6cf9d43e400a
+
+########################################################################################
+# "yarn install" composite action for yarn 3/4+ and "nodeLinker: node-modules"         #
+#--------------------------------------------------------------------------------------#
+# Requirement: ./.github/actions/setup-node should be run before                       #
+#                                                                                      #
+# Usage in workflows steps:                                                            #
+#                                                                                      #
+#      - name: Monorepo install                                                        #
+#        uses: ./.github/actions/yarn-nm-install                                       #
+#        with:                                                                         #
+#          enable-corepack: false                   # (default = 'false')              #
+#          cwd: ${{ github.workspace }}/apps/my-app # (default = '.')                  #
+#          cache-prefix: add cache key prefix       # (default = 'default')            #
+#          cache-node-modules: false                # (default = 'false')              #
+#          cache-install-state: false               # (default = 'false')              #
+#                                                                                      #
+# Reference:                                                                           #
+#   - latest: https://gist.github.com/belgattitude/042f9caf10d029badbde6cf9d43e400a    #
+########################################################################################
+
+name: 'Monorepo install (yarn)'
+description: 'Run yarn install with node_modules linker and cache enabled'
+inputs:
+  cwd:
+    description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
+    required: false
+    default: '.'
+  cache-prefix:
+    description: 'Add a specific cache-prefix'
+    required: false
+    default: 'default'
+  cache-npm-cache:
+    description: 'Cache npm global cache folder often used by node-gyp, prebuild binaries (invalidated on lock/os/node-version)'
+    required: false
+    default: 'true'
+  cache-node-modules:
+    description: 'Cache node_modules, might speed up link step (invalidated lock/os/node-version/branch)'
+    required: false
+    default: 'false'
+  cache-install-state:
+    description: 'Cache yarn install state, might speed up resolution step when node-modules cache is activated (invalidated lock/os/node-version/branch)'
+    required: false
+    default: 'false'
+  enable-corepack:
+    description: 'Enable corepack'
+    required: false
+    default: 'true'
+  hardened-mode:
+    description: "Enable yarn hardened mode. 'auto' disables it for internal PRs, 'true' always enables it. Fork PRs always use hardened mode regardless."
+    required: false
+    default: 'auto'
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: ⚙️ Enable Corepack
+      if: inputs.enable-corepack == 'true'
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: corepack enable
+
+    - name: ⚙️ Expose yarn config as "$GITHUB_OUTPUT"
+      id: yarn-config
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      env:
+        YARN_ENABLE_GLOBAL_CACHE: 'false'
+      run: |
+        echo "CACHE_FOLDER=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        echo "CURRENT_NODE_VERSION="node-$(node --version)"" >> $GITHUB_OUTPUT
+        echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's,/,-,g')" >> $GITHUB_OUTPUT
+        echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT
+
+    - name: Restore yarn cache
+      uses: actions/cache@v5
+      id: yarn-download-cache
+      with:
+        path: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
+        key: yarn-download-cache-${{ inputs.cache-prefix }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+        restore-keys: |
+          yarn-download-cache-${{ inputs.cache-prefix }}-
+
+    - name: Restore node_modules
+      if: inputs.cache-node-modules == 'true'
+      id: yarn-nm-cache
+      uses: actions/cache@v5
+      with:
+        path: |
+          ${{ inputs.cwd }}/**/node_modules
+          !${{ inputs.cwd }}/**/node_modules/.cache
+        key: yarn-nm-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Restore global npm cache folder
+      if: inputs.cache-npm-cache == 'true'
+      id: npm-global-cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.yarn-config.outputs.NPM_GLOBAL_CACHE_FOLDER }}
+        key: yarn-npm-global-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Restore yarn install state
+      if: inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true'
+      id: yarn-install-state-cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ inputs.cwd }}/.yarn/install-state.gz
+        key: yarn-install-state-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: yarn install --immutable --inline-builds
+      env:
+        # Overrides/align yarnrc.yml options (v3, v4) for a CI context
+        YARN_ENABLE_GLOBAL_CACHE: 'false' # Use local cache folder to keep downloaded archives
+        YARN_ENABLE_MIRROR: 'false' # Prevent populating global cache for caches misses (local cache only)
+        YARN_NM_MODE: 'hardlinks-local' # Reduce node_modules size
+        YARN_INSTALL_STATE_PATH: '.yarn/install-state.gz' # Might speed up resolution step when node_modules present
+        YARN_ENABLE_HARDENED_MODE: ${{ (github.event.pull_request.head.repo.fork == true || inputs.hardened-mode == 'true') && '1' || '0' }} # Always enabled for forks; for internal PRs, enabled when hardened-mode is 'true'
+        # Skip big post-install dependencies
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0

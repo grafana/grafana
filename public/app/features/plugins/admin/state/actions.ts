@@ -1,10 +1,11 @@
-import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { PanelPlugin, PluginError } from '@grafana/data';
+import { type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { StoreState, ThunkResult } from 'app/types/store';
+import { type StoreState, type ThunkResult } from 'app/types/store';
 
 import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
 import {
@@ -20,7 +21,14 @@ import {
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin, PluginStatus } from '../types';
+import {
+  type CatalogPlugin,
+  type RemotePlugin,
+  type LocalPlugin,
+  type InstancePlugin,
+  type ProvisionedPlugin,
+  PluginStatus,
+} from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -219,7 +227,7 @@ export const install = createAsyncThunk<
 
   try {
     await installPlugin(id, version);
-    await updatePanels();
+    await refetchPanelPluginMetas();
 
     if (installType !== PluginStatus.INSTALL) {
       clearPluginInfoInCache(id);
@@ -245,7 +253,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
-      await updatePanels();
+      await refetchPanelPluginMetas();
 
       clearPluginInfoInCache(id);
 
@@ -296,11 +304,3 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
     return plugin;
   };
 };
-
-function updatePanels() {
-  return getBackendSrv()
-    .get('/api/frontend/settings')
-    .then((settings) => {
-      config.panels = settings.panels;
-    });
-}

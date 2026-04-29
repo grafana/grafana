@@ -33,7 +33,6 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
-	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
 }
 
@@ -78,8 +77,9 @@ type FrontendSettingsAzureDTO struct {
 }
 
 type FrontendSettingsCachingDTO struct {
-	Enabled           bool `json:"enabled"`
-	CleanCacheEnabled bool `json:"cleanCacheEnabled"`
+	Enabled           bool  `json:"enabled"`
+	CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
+	DefaultTTLMs      int64 `json:"defaultTTLMs"`
 }
 
 type FrontendSettingsRecordedQueriesDTO struct {
@@ -152,6 +152,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	AppTitle           *string                                   `json:"appTitle,omitempty"`
 	LoginLogo          *string                                   `json:"loginLogo,omitempty"`
 	MenuLogo           *string                                   `json:"menuLogo,omitempty"`
+	FavIcon            *string                                   `json:"favIcon,omitempty"`
 	LoginBackground    *string                                   `json:"loginBackground,omitempty"`
 	LoginSubtitle      *string                                   `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
@@ -181,6 +182,7 @@ type FrontendSettingsDTO struct {
 	JwtUrlLogin          bool                             `json:"jwtUrlLogin"`
 	LiveEnabled          bool                             `json:"liveEnabled"`
 	LiveMessageSizeLimit int                              `json:"liveMessageSizeLimit"`
+	LiveNamespaced       bool                             `json:"liveNamespaced"`
 	AutoAssignOrg        bool                             `json:"autoAssignOrg"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
@@ -259,6 +261,7 @@ type FrontendSettingsDTO struct {
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders             []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled                bool                           `json:"awsAssumeRoleEnabled"`
+	AwsPerDatasourceHTTPProxyEnabled    bool                           `json:"awsPerDatasourceHTTPProxyEnabled"`
 	SupportBundlesEnabled               bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                     bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled           bool                           `json:"secureSocksDSProxyEnabled"`
@@ -281,7 +284,6 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
-	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

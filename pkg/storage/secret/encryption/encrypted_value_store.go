@@ -141,6 +141,65 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace xkube.Namesp
 	return nil
 }
 
+const defaultUpdateBulkChunkSize = 100
+
+func (s *encryptedValStorage) UpdateBulk(ctx context.Context, namespace xkube.Namespace, updates []contracts.BulkUpdateRow, chunkSize int) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	if chunkSize <= 0 {
+		chunkSize = defaultUpdateBulkChunkSize
+	}
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.UpdateBulk", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.Int("updates", len(updates)),
+		attribute.Int("chunk_size", chunkSize),
+	))
+	defer span.End()
+
+	now := time.Now().Unix()
+	nsStr := namespace.String()
+
+	for start := 0; start < len(updates); start += chunkSize {
+		end := start + chunkSize
+		if end > len(updates) {
+			end = len(updates)
+		}
+		chunk := updates[start:end]
+		rows := make([]bulkUpdateRow, len(chunk))
+		for i, u := range chunk {
+			rows[i] = bulkUpdateRow{
+				Name:          u.Name,
+				Version:       u.Version,
+				EncryptedData: u.Payload.EncryptedData,
+				DataKeyID:     u.Payload.DataKeyID,
+				Updated:       now,
+			}
+		}
+		req := updateBulkEncryptedValue{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			Namespace:   nsStr,
+			Rows:        rows,
+		}
+		query, err := sqltemplate.Execute(sqlEncryptedValueUpdateBulk, req)
+		if err != nil {
+			return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdateBulk.Name(), err)
+		}
+		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("updating bulk chunk at %d: %w", start, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+		if affected != int64(len(chunk)) {
+			return fmt.Errorf("expected %d rows affected, got %d: %w", len(chunk), affected, ErrUnexpectedNumberOfRowsAffected)
+		}
+	}
+	return nil
+}
+
 func (s *encryptedValStorage) Get(ctx context.Context, namespace xkube.Namespace, name string, version int64) (*contracts.EncryptedValue, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Get", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -236,9 +295,17 @@ func ProvideGlobalEncryptedValueStorage(
 }
 
 func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts, untilTime *int64) ([]*contracts.EncryptedValue, error) {
+	if opts.OrderBy == "" {
+		opts.OrderBy = "created"
+	}
+	if opts.OrderDirection == "" {
+		opts.OrderDirection = contracts.OrderDirectionAsc
+	}
 	attrs := []attribute.KeyValue{
 		attribute.Int64("limit", opts.Limit),
 		attribute.Int64("offset", opts.Offset),
+		attribute.String("orderBy", opts.OrderBy),
+		attribute.String("orderDirection", string(opts.OrderDirection)),
 	}
 	if untilTime != nil {
 		attrs = append(attrs, attribute.Int64("untilTime", *untilTime))
@@ -247,9 +314,11 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 	defer span.End()
 
 	req := listAllEncryptedValues{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Limit:       opts.Limit,
-		Offset:      opts.Offset,
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		Limit:          opts.Limit,
+		Offset:         opts.Offset,
+		OrderBy:        opts.OrderBy,
+		OrderDirection: string(opts.OrderDirection),
 	}
 	if untilTime != nil {
 		req.HasUntilTime = true

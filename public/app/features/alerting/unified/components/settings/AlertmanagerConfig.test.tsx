@@ -40,6 +40,11 @@ const ui = {
   cancelButton: byRole('button', { name: /Cancel/ }),
 };
 
+const waitForEditableConfig = async () => {
+  await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
+  expect(ui.resetButton.get()).toBeEnabled();
+};
+
 describe('Alerting Settings', () => {
   setupMswServer();
 
@@ -90,6 +95,7 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
+    await waitForEditableConfig();
   });
 
   it('should be able to reset non-Grafana alertmanager config', async () => {
@@ -99,6 +105,7 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
+    await waitForEditableConfig();
 
     await userEvent.click(ui.resetButton.get());
 

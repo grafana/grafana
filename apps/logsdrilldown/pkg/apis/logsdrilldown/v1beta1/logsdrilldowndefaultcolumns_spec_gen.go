@@ -18,6 +18,11 @@ func NewLogsDrilldownDefaultColumnsLogsDefaultColumnsRecord() *LogsDrilldownDefa
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord.
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord"
+}
+
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels []LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel
 
@@ -32,6 +37,11 @@ func NewLogsDrilldownDefaultColumnsLogsDefaultColumnsLabel() *LogsDrilldownDefau
 	return &LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel.
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel"
+}
+
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultColumnsSpec struct {
 	Records LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords `json:"records"`
@@ -40,4 +50,9 @@ type LogsDrilldownDefaultColumnsSpec struct {
 // NewLogsDrilldownDefaultColumnsSpec creates a new LogsDrilldownDefaultColumnsSpec object.
 func NewLogsDrilldownDefaultColumnsSpec() *LogsDrilldownDefaultColumnsSpec {
 	return &LogsDrilldownDefaultColumnsSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsSpec.
+func (LogsDrilldownDefaultColumnsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsSpec"
 }

@@ -228,6 +228,10 @@ func (o *TimeInterval) DeepCopyInto(dst *TimeInterval) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (TimeInterval) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeInterval"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &TimeInterval{}
 
@@ -279,6 +283,10 @@ func (o *TimeIntervalList) DeepCopy() *TimeIntervalList {
 
 func (o *TimeIntervalList) DeepCopyInto(dst *TimeIntervalList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (TimeIntervalList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.TimeIntervalList"
 }
 
 // Interface compliance compile-time check

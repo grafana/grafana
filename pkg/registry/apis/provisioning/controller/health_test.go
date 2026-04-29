@@ -21,7 +21,7 @@ func TestNewRepositoryHealthChecker(t *testing.T) {
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := repository.NewValidator(30*time.Second, true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -50,9 +50,12 @@ func TestShouldCheckHealth(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should not check when hook error exists",
+			name: "should not check when hook error is recent and webhook still required",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -63,6 +66,49 @@ func TestShouldCheckHealth(t *testing.T) {
 				},
 			},
 			expected: false,
+		},
+		{
+			name: "should check when hook error cooldown expired even if webhook still required",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Error:   provisioning.HealthFailureHook,
+						// Older than recentUnhealthyDuration (1 minute) so the cooldown
+						// no longer suppresses the check — otherwise the repository
+						// would stay stuck unhealthy forever.
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "should check when hook error is recent but webhook is no longer required",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec: provisioning.RepositorySpec{
+					// Workflows removed by the user — no webhook is needed anymore,
+					// so the cooldown must not block recovery. The general timing
+					// rule still applies (recent unhealthy check is preserved for
+					// up to recentUnhealthyDuration), but here Checked is older.
+					Workflows: nil,
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Error:   provisioning.HealthFailureHook,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			expected: true,
 		},
 		{
 			name: "should not check when health check is recent and healthy",
@@ -142,7 +188,7 @@ func TestShouldCheckHealth(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -233,7 +279,7 @@ func TestHasRecentFailure(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -279,7 +325,7 @@ func TestRecordFailure(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -328,7 +374,7 @@ func TestRecordFailureFunction(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := repository.NewValidator(30*time.Second, true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -495,6 +541,9 @@ func TestRefreshHealth(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{repository.CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,
@@ -509,7 +558,7 @@ func TestRefreshHealth(t *testing.T) {
 
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
@@ -644,6 +693,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				config: &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Generation: 1,
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
@@ -661,55 +711,37 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			// Create health checker with validator and tester
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
 
 			// Call RefreshHealthWithPatchOps
-			testResults, healthStatus, patchOps, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
+			result, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
 
 			// Verify error
 			if tt.expectError {
 				assert.Error(t, err)
-				assert.Nil(t, testResults)
+				assert.Nil(t, result.TestResults)
 				return
 			}
 			assert.NoError(t, err)
+			testResults := result.TestResults
+			healthStatus := result.HealthStatus
+			patchOps := result.PatchOps
 
 			// Verify health status
 			assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
 
-			// Verify patch operations
+			// Verify patch operations — RefreshHealthWithPatchOps only returns /status/health patches;
+			// condition patches are built separately by the caller.
 			if tt.expectPatchOps {
 				assert.NotEmpty(t, patchOps, "expected patch operations to be returned")
-				// Should have 2 patches: health and condition
-				assert.Len(t, patchOps, 2)
+				assert.Len(t, patchOps, 1, "should have exactly one patch (health)")
 
-				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, tt.expectedPatchPath, patchOps[0]["path"])
 				assert.Equal(t, healthStatus, patchOps[0]["value"])
-
-				// Second patch should be conditions with Ready condition
-				assert.Equal(t, "replace", patchOps[1]["op"])
-				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
-
-				// Verify Ready condition is set correctly
-				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
-				assert.True(t, ok, "conditions should be of type []metav1.Condition")
-				assert.Len(t, conditions, 1, "should have exactly one condition")
-
-				readyCondition := conditions[0]
-				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
-
-				if tt.expectedHealth {
-					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
-				} else {
-					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason)
-				}
 			} else {
 				assert.Empty(t, patchOps, "expected no patch operations to be returned")
 			}
@@ -718,6 +750,80 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			if tt.testResult != nil {
 				assert.Equal(t, tt.testResult, testResults)
 			}
+		})
+	}
+}
+
+func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
+	tests := []struct {
+		name            string
+		healthStatus    provisioning.HealthStatus
+		expectedStatus  metav1.ConditionStatus
+		expectedReason  string
+		expectedMessage string
+	}{
+		{
+			name: "healthy status returns ready condition",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().UnixMilli(),
+			},
+			expectedStatus:  metav1.ConditionTrue,
+			expectedReason:  provisioning.ReasonAvailable,
+			expectedMessage: "Resource is available",
+		},
+		{
+			name: "unhealthy status with messages uses first message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection refused", "timeout"},
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "connection refused",
+		},
+		{
+			name: "unhealthy status without messages uses default message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "Resource is unavailable",
+		},
+		{
+			name: "unhealthy status with single message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"webhook delivery failed"},
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "webhook delivery failed",
+		},
+		{
+			name:            "zero-value health status returns not ready",
+			healthStatus:    provisioning.HealthStatus{},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "Resource is unavailable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := buildReadyConditionWithReason(tt.healthStatus, provisioning.ReasonInvalidSpec)
+
+			assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
+			assert.Equal(t, tt.expectedStatus, condition.Status)
+			assert.Equal(t, tt.expectedReason, condition.Reason)
+			assert.Equal(t, tt.expectedMessage, condition.Message)
 		})
 	}
 }
@@ -796,7 +902,7 @@ func TestHasHealthStatusChanged(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 

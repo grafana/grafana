@@ -13,7 +13,7 @@ import { DashboardRow, UnthemedDashboardRow } from './DashboardRow';
 // mock DashboardInteractions
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
-    trackRemoveRowClick: jest.fn(),
+    trackDeleteDashboardElement: jest.fn(),
   },
 }));
 
@@ -104,10 +104,10 @@ describe('DashboardRow', () => {
     expect(dashboardRow.getWarning()).not.toBeDefined();
   });
 
-  it('should call DashboardInteractions.trackRemoveRowClick when clicking on delete row button', async () => {
+  it('should call DashboardInteractions.trackDeleteDashboardElement when clicking on delete row button', async () => {
     const user = userEvent.setup();
     render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     await user.click(screen.getByRole('button', { name: 'Delete row' }));
-    expect(DashboardInteractions.trackRemoveRowClick).toHaveBeenCalled();
+    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('row');
   });
 });

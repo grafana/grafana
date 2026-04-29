@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
 )
@@ -49,7 +49,7 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			}
 
 			if found[item.Parent] {
-				return nil, fmt.Errorf("cyclic folder references found: %s", item.Parent)
+				return nil, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent)
 			}
 
 			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { DOCS_URL_GROUP_ALERT_NOTIFICATIONS } from 'app/features/alerting/unified/utils/docs';
 
 import { NeedHelpInfo } from '../../NeedHelpInfo';
@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.secondary.main,
   }),
   alertManagerName: css({
-    with: 'fit-content',
+    width: 'fit-content',
   }),
   secondAlertManagerLine: css({
     height: '1px',

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -163,7 +164,7 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 	}
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met, ac)
+	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met, ac, 500)
 }
 
 func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -178,7 +179,7 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac, 500)
 }
 
 func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -192,7 +193,7 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac, 500)
 }
 
 func createAnnotation() annotations.Item {
@@ -208,12 +209,13 @@ func createAnnotation() annotations.Item {
 
 func TestBuildAnnotations(t *testing.T) {
 	t.Run("data wraps nil values when values are nil", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = nil
 
-		items := buildAnnotations(rule, states, logger)
+		items := backend.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
@@ -221,12 +223,13 @@ func TestBuildAnnotations(t *testing.T) {
 	})
 
 	t.Run("data approximately contains expected values", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = map[string]float64{"a": 1.0, "b": 2.0}
 
-		items := buildAnnotations(rule, states, logger)
+		items := backend.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		assertValidJSON(t, items[0].Data)
@@ -239,16 +242,72 @@ func TestBuildAnnotations(t *testing.T) {
 	})
 
 	t.Run("data handles special float values", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
 
-		items := buildAnnotations(rule, states, logger)
+		items := backend.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
 		require.JSONEq(t, `{"values": {"nan": "NaN", "inf": "+Inf", "ninf": "-Inf"}}`, j)
+	})
+
+	t.Run("tags are populated from alert labels", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		logger := log.NewNopLogger()
+		rule := history_model.RuleMeta{}
+		states := []state.StateTransition{makeStateTransition()}
+		states[0].Labels = data.Labels{
+			"severity": "critical",
+			"team":     "backend",
+			"env":      "production",
+		}
+
+		items := backend.buildAnnotations(rule, states, logger)
+
+		require.Len(t, items, 1)
+		require.Len(t, items[0].Tags, 3)
+		// Tags should be sorted alphabetically by key
+		require.Equal(t, "env:production", items[0].Tags[0])
+		require.Equal(t, "severity:critical", items[0].Tags[1])
+		require.Equal(t, "team:backend", items[0].Tags[2])
+	})
+
+	t.Run("tags filter out private labels", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		logger := log.NewNopLogger()
+		rule := history_model.RuleMeta{}
+		states := []state.StateTransition{makeStateTransition()}
+		states[0].Labels = data.Labels{
+			"severity":      "critical",
+			"__rule_uid__":  "abc123",
+			"__alertname__": "MyAlert",
+			"team":          "backend",
+		}
+
+		items := backend.buildAnnotations(rule, states, logger)
+
+		require.Len(t, items, 1)
+		require.Len(t, items[0].Tags, 2)
+		// Only public labels should be in tags
+		require.Equal(t, "severity:critical", items[0].Tags[0])
+		require.Equal(t, "team:backend", items[0].Tags[1])
+	})
+
+	t.Run("tags are empty when no labels present", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		logger := log.NewNopLogger()
+		rule := history_model.RuleMeta{}
+		states := []state.StateTransition{makeStateTransition()}
+		states[0].Labels = data.Labels{}
+
+		items := backend.buildAnnotations(rule, states, logger)
+
+		require.Len(t, items, 1)
+		require.Nil(t, items[0].Tags)
 	})
 }
 
@@ -272,6 +331,140 @@ func assertValidJSON(t *testing.T, j *simplejson.Json) string {
 	ser, err := json.Marshal(j)
 	require.NoError(t, err)
 	return string(ser)
+}
+
+func TestConvertLabelsToTags(t *testing.T) {
+	t.Run("converts labels to key:value format", func(t *testing.T) {
+		labels := data.Labels{
+			"severity": "critical",
+			"team":     "backend",
+		}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Len(t, tags, 2)
+		require.Contains(t, tags, "severity:critical")
+		require.Contains(t, tags, "team:backend")
+	})
+
+	t.Run("sorts tags alphabetically", func(t *testing.T) {
+		labels := data.Labels{
+			"z_label": "value1",
+			"a_label": "value2",
+			"m_label": "value3",
+		}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Len(t, tags, 3)
+		require.Equal(t, "a_label:value2", tags[0])
+		require.Equal(t, "m_label:value3", tags[1])
+		require.Equal(t, "z_label:value1", tags[2])
+	})
+
+	t.Run("returns nil for empty labels", func(t *testing.T) {
+		labels := data.Labels{}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Nil(t, tags)
+	})
+
+	t.Run("returns nil for nil labels", func(t *testing.T) {
+		var labels data.Labels
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Nil(t, tags)
+	})
+
+	t.Run("escapes colons in label keys", func(t *testing.T) {
+		labels := data.Labels{
+			"app:name":    "myapp",
+			"service:env": "prod",
+		}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Len(t, tags, 2)
+		require.Contains(t, tags, "app_name:myapp")
+		require.Contains(t, tags, "service_env:prod")
+	})
+
+	t.Run("escapes colons in label values", func(t *testing.T) {
+		labels := data.Labels{
+			"url":  "http://example.com:8080",
+			"time": "10:30:00",
+		}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Len(t, tags, 2)
+		require.Contains(t, tags, "time:10_30_00")
+		require.Contains(t, tags, "url:http_//example.com_8080")
+	})
+
+	t.Run("escapes colons in both keys and values", func(t *testing.T) {
+		labels := data.Labels{
+			"app:name": "service:api",
+		}
+
+		tags := convertLabelsToTags(labels, 500)
+
+		require.Len(t, tags, 1)
+		require.Equal(t, "app_name:service_api", tags[0])
+	})
+
+	t.Run("truncates tags when exceeding maxLength", func(t *testing.T) {
+		labels := data.Labels{
+			"label1": "value1",
+			"label2": "value2",
+			"label3": "value3",
+			"label4": "value4",
+		}
+		// Calculate: ["label1:value1","label2:value2"] = [" + 14 + " + , + " + 14 + "] = 2+14+1+1+14+1 = 33
+		tags := convertLabelsToTags(labels, 35)
+
+		require.LessOrEqual(t, len(tags), 2)
+		if len(tags) > 0 {
+			require.Equal(t, "label1:value1", tags[0])
+		}
+	})
+
+	t.Run("returns nil when no tags fit within maxLength", func(t *testing.T) {
+		labels := data.Labels{
+			"verylonglabel": "verylongvalue",
+		}
+
+		tags := convertLabelsToTags(labels, 10)
+
+		require.Nil(t, tags)
+	})
+
+	t.Run("tags are parseable by tag.ParseTagPairs", func(t *testing.T) {
+		labels := data.Labels{
+			"severity":    "critical",
+			"app:name":    "myapp",
+			"url":         "http://example.com:8080",
+			"team":        "backend",
+			"__private__": "hidden",
+		}
+
+		// Remove private labels first (as done in BuildAnnotationTextAndData)
+		publicLabels := removePrivateLabels(labels)
+		tags := convertLabelsToTags(publicLabels, 500)
+
+		// Verify tags can be parsed
+		parsed := tag.ParseTagPairs(tags)
+		require.Len(t, parsed, 4)
+
+		// Verify structure
+		for _, p := range parsed {
+			require.NotEmpty(t, p.Key)
+			// All our tags should have values since we use key:value format
+			require.NotEmpty(t, p.Value)
+		}
+	})
 }
 
 type interceptingAnnotationStore struct {

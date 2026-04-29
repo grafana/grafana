@@ -20,6 +20,11 @@ func NewLogsDrilldownDefaultsstatusOperatorState() *LogsDrilldownDefaultsstatusO
 	return &LogsDrilldownDefaultsstatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultsstatusOperatorState.
+func (LogsDrilldownDefaultsstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultsstatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultsStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewLogsDrilldownDefaultsStatus() *LogsDrilldownDefaultsStatus {
 	return &LogsDrilldownDefaultsStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultsStatus.
+func (LogsDrilldownDefaultsStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultsStatus"
+}
+
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultsStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	LogsDrilldownDefaultsStatusOperatorStateStateInProgress LogsDrilldownDefaultsStatusOperatorStateState = "in_progress"
 	LogsDrilldownDefaultsStatusOperatorStateStateFailed     LogsDrilldownDefaultsStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultsStatusOperatorStateState.
+func (LogsDrilldownDefaultsStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownDefaultsStatusOperatorStateState"
+}

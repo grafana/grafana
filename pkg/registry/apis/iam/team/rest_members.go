@@ -2,142 +2,166 @@ package team
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
-	_ rest.Storage         = (*LegacyTeamMemberREST)(nil)
-	_ rest.Scoper          = (*LegacyTeamMemberREST)(nil)
-	_ rest.StorageMetadata = (*LegacyTeamMemberREST)(nil)
-	_ rest.Connecter       = (*LegacyTeamMemberREST)(nil)
+	_ rest.Storage         = (*TeamMembersREST)(nil)
+	_ rest.Scoper          = (*TeamMembersREST)(nil)
+	_ rest.StorageMetadata = (*TeamMembersREST)(nil)
+	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewLegacyTeamMemberREST(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyTeamMemberREST {
-	return &LegacyTeamMemberREST{store: store, ac: ac}
+func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
+	return &TeamMembersREST{getter: getter, tracer: tracer, features: features}
 }
 
-type LegacyTeamMemberREST struct {
-	store legacy.LegacyIdentityStore
-	ac    claims.AccessClient
+type TeamMembersREST struct {
+	getter   rest.Getter
+	tracer   trace.Tracer
+	features featuremgmt.FeatureToggles
 }
 
 // New implements rest.Storage.
-func (s *LegacyTeamMemberREST) New() runtime.Object {
+func (s *TeamMembersREST) New() runtime.Object {
 	return &iamv0.TeamMemberList{}
 }
 
 // Destroy implements rest.Storage.
-func (s *LegacyTeamMemberREST) Destroy() {}
+func (s *TeamMembersREST) Destroy() {}
 
 // NamespaceScoped implements rest.Scoper.
-func (s *LegacyTeamMemberREST) NamespaceScoped() bool {
+func (s *TeamMembersREST) NamespaceScoped() bool {
 	return true
 }
 
 // ProducesMIMETypes implements rest.StorageMetadata.
-func (s *LegacyTeamMemberREST) ProducesMIMETypes(verb string) []string {
+func (s *TeamMembersREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *LegacyTeamMemberREST) ProducesObject(verb string) interface{} {
+func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 	return s.New()
 }
 
 // Connect implements rest.Connecter.
-func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ident, err := identity.GetRequester(ctx)
+		//nolint:staticcheck // not migrated to OpenFeature
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
+			return
+		}
+
+		ctx, span := s.tracer.Start(r.Context(), "team.members")
+		defer span.End()
+
+		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		checkResp, err := s.ac.Check(ctx, ident, claims.CheckRequest{
-			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
-			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-			Name:      name,
-			Namespace: ns.Value,
-			Verb:      utils.VerbGetPermissions,
-		}, "")
+		limit := common.DefaultListLimit
+		offset := 0
+		page := 1
+		if queryParams.Has("limit") {
+			limit, _ = strconv.Atoi(queryParams.Get("limit"))
+		}
+		if queryParams.Has("offset") {
+			offset, _ = strconv.Atoi(queryParams.Get("offset"))
+			if offset > 0 {
+				page = (offset / limit) + 1
+			}
+		} else if queryParams.Has("page") {
+			page, _ = strconv.Atoi(queryParams.Get("page"))
+			offset = (page - 1) * limit
+		}
 
+		if limit > common.MaxListLimit {
+			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+			return
+		}
+
+		if limit < 1 {
+			limit = common.DefaultListLimit
+		}
+
+		span.SetAttributes(attribute.Int("limit", limit),
+			attribute.Int("page", page),
+			attribute.Int("offset", offset),
+			attribute.String("team.name", name))
+
+		// Subresource handlers receive a ctx without the namespace value set;
+		// inject it so the downstream Getter can resolve orgID.
+		teamObj, err := s.getter.Get(common.WithSubresourceNamespace(ctx), name, &metav1.GetOptions{})
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-
-		if !checkResp.Allowed {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(), name, fmt.Errorf("permission denied")))
+		t, ok := teamObj.(*iamv0alpha1.Team)
+		if !ok {
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("unexpected team object type %T", teamObj)))
 			return
 		}
 
-		res, err := s.store.ListTeamMembers(ctx, ns, legacy.ListTeamMembersQuery{
-			UID:        name,
-			Pagination: common.PaginationFromListQuery(r.URL.Query()),
+		// Slice spec.members before mapping to skip work outside the requested page.
+		// Page stability depends on the storage ordering of spec.members — we don't
+		// sort here, so two consecutive page reads racing a concurrent write can
+		// overlap or skip entries. Callers needing a stable view should re-list.
+		total := len(t.Spec.Members)
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > total {
+			offset = total
+		}
+		end := offset + limit
+		if end > total {
+			end = total
+		}
+		window := t.Spec.Members[offset:end]
+
+		items := make([]iamv0alpha1.GetTeamMembersTeamUser, len(window))
+		for i, m := range window {
+			items[i] = iamv0alpha1.GetTeamMembersTeamUser{
+				User:       m.Name,
+				Team:       name,
+				Permission: string(m.Permission),
+				External:   m.External,
+			}
+		}
+
+		responder.Object(http.StatusOK, &iamv0alpha1.GetTeamMembersResponse{
+			GetTeamMembersBody: iamv0alpha1.GetTeamMembersBody{Items: items},
 		})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		list := &iamv0.TeamMemberList{Items: make([]iamv0.TeamMember, 0, len(res.Members))}
-
-		for _, m := range res.Members {
-			list.Items = append(list.Items, mapToTeamMember(m))
-		}
-
-		list.Continue = common.OptionalFormatInt(res.Continue)
-
-		responder.Object(http.StatusOK, list)
 	}), nil
 }
 
 // NewConnectOptions implements rest.Connecter.
-func (s *LegacyTeamMemberREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *TeamMembersREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ConnectMethods implements rest.Connecter.
-func (s *LegacyTeamMemberREST) ConnectMethods() []string {
+func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
-}
-
-var cfg = &setting.Cfg{}
-
-func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
-	return iamv0.TeamMember{
-		Display: iamv0.Display{
-			Identity: iamv0.IdentityRef{
-				Type: claims.TypeUser,
-				Name: m.UserUID,
-			},
-			DisplayName: m.Name,
-			AvatarURL:   dtos.GetGravatarUrlWithDefault(cfg, m.Email, m.Name),
-			InternalID:  m.UserID,
-		},
-		External:   m.External,
-		Permission: common.MapUserTeamPermission(m.Permission),
-	}
 }

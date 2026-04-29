@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, FormEvent } from 'react';
+import { type ChangeEvent, type FormEvent } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
@@ -56,7 +56,7 @@ export function IntervalVariableForm({
         placeholder="1m,10m,1h,6h,1d,7d"
         onBlur={onIntervalsChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
-        width={32}
+        grow={inline}
         required
       />
 

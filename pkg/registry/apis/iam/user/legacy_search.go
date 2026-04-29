@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"log/slog"
 	"math"
 	"regexp"
-	"sort"
 
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -24,7 +25,7 @@ import (
 
 const (
 	UserResource      = "users"
-	UserResourceGroup = "iam.grafana.com"
+	UserResourceGroup = "iam.grafana.app"
 )
 
 var (
@@ -34,13 +35,20 @@ var (
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
+
+	userSortFieldMapping = map[string]string{
+		fieldLastSeenAt:             "lastSeenAtAge",
+		resource.SEARCH_FIELD_TITLE: "name",
+		fieldLogin:                  "login",
+		fieldEmail:                  "email",
+	}
 )
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	orgService org.Service
-	log        *slog.Logger
+	log        log.Logger
 	tracer     trace.Tracer
 	cfg        *setting.Cfg
 }
@@ -49,7 +57,7 @@ type UserLegacySearchClient struct {
 func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg *setting.Cfg) *UserLegacySearchClient {
 	return &UserLegacySearchClient{
 		orgService: orgService,
-		log:        slog.Default().With("logger", "legacy-user-search-client"),
+		log:        log.New("grafana-apiserver.users.legacy-search"),
 		tracer:     tracer,
 		cfg:        cfg,
 	}
@@ -58,19 +66,21 @@ func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg 
 // Search searches for users in the legacy search engine.
 // It only supports exact matching for title, login, or email.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := c.tracer.Start(ctx, "user.Search")
+	ctx, span := c.tracer.Start(ctx, "user.legacysearch")
 	defer span.End()
+
+	logger := c.log.FromContext(ctx)
 
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if req.Limit > maxLimit {
-		req.Limit = maxLimit
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 30
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {
@@ -81,7 +91,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Page = 1
 	}
 
-	legacySortOptions := convertToSortOptions(req.SortBy)
+	legacySortOptions := legacysort.ConvertToSortOptions(req.SortBy, userSortFieldMapping, sortopts.SortOptionsByQueryParam)
 
 	query := &org.SearchOrgUsersQuery{
 		OrgID:    signedInUser.GetOrgID(),
@@ -96,7 +106,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	for _, field := range req.Options.Fields {
 		vals := field.GetValues()
 		if len(vals) != 1 {
-			c.log.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
+			logger.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
 		}
 		switch field.Key {
 		case resource.SEARCH_FIELD_TITLE:
@@ -138,6 +148,8 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 
 	res, err := c.orgService.SearchOrgUsers(ctx, query)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user legacy search failed")
 		return nil, err
 	}
 
@@ -217,36 +229,4 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 		}
 	}
 	return cells
-}
-
-func convertToSortOptions(sortBy []*resourcepb.ResourceSearchRequest_Sort) []model.SortOption {
-	opts := []model.SortOption{}
-	for _, s := range sortBy {
-		field := s.Field
-		// Handle mapping if necessary
-		switch field {
-		case fieldLastSeenAt:
-			field = "lastSeenAtAge"
-		case resource.SEARCH_FIELD_TITLE:
-			field = "name"
-		case fieldLogin:
-			field = "login"
-		case fieldEmail:
-			field = "email"
-		}
-
-		suffix := "asc"
-		if s.Desc {
-			suffix = "desc"
-		}
-		key := fmt.Sprintf("%s-%s", field, suffix)
-
-		if opt, ok := sortopts.SortOptionsByQueryParam[key]; ok {
-			opts = append(opts, opt)
-		}
-	}
-	sort.Slice(opts, func(i, j int) bool {
-		return opts[i].Index < opts[j].Index || (opts[i].Index == opts[j].Index && opts[i].Name < opts[j].Name)
-	})
-	return opts
 }

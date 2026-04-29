@@ -4,13 +4,13 @@ import { Subscription } from 'rxjs';
 
 import {
   AnnotationChangeEvent,
-  AnnotationEvent,
+  type AnnotationEvent,
   AppEvents,
   dateTime,
   dateMath,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   locationUtil,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
@@ -20,7 +20,7 @@ import { appEvents } from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 interface UserInfo {
   id?: number;

@@ -2,12 +2,15 @@ package resources
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 func TestResourceValidationError(t *testing.T) {
@@ -141,6 +144,84 @@ func TestResourceValidationError(t *testing.T) {
 
 		// When Err is nil, there's no BadRequest in the chain, so IsBadRequest should return false
 		require.False(t, apierrors.IsBadRequest(validationErr), "validation error should not be recognized as BadRequest when Err is nil")
+	})
+}
+
+func TestResourceUnmanagedConflictError(t *testing.T) {
+	t.Run("Error method returns formatted message with resource and manager details", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-dashboard", requestingManager)
+
+		require.Contains(t, conflictErr.Error(), "test-dashboard")
+		require.Contains(t, conflictErr.Error(), "already exists and is not managed")
+		require.Contains(t, conflictErr.Error(), "repo")
+		require.Contains(t, conflictErr.Error(), "repo-1")
+		require.Contains(t, conflictErr.Error(), "cannot take over without an explicit migration")
+	})
+
+	t.Run("Error method returns default message when Err is nil", func(t *testing.T) {
+		conflictErr := &ResourceUnmanagedConflictError{Err: nil}
+		require.Equal(t, "resource unmanaged conflict", conflictErr.Error())
+	})
+
+	t.Run("Unwrap returns underlying error", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(conflictErr, &extracted))
+		unwrapped := extracted.Unwrap()
+		require.NotNil(t, unwrapped)
+		require.True(t, apierrors.IsBadRequest(unwrapped))
+	})
+
+	t.Run("errors.As extracts ResourceUnmanagedConflictError", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(conflictErr, &extracted))
+		require.NotNil(t, extracted)
+		require.NotNil(t, extracted.Err)
+		require.True(t, apierrors.IsBadRequest(extracted.Err))
+	})
+
+	t.Run("errors.As returns false for non-ResourceUnmanagedConflictError", func(t *testing.T) {
+		regularErr := errors.New("regular error")
+
+		var extracted *ResourceUnmanagedConflictError
+		require.False(t, errors.As(regularErr, &extracted))
+		require.Nil(t, extracted)
+	})
+
+	t.Run("apierrors.IsBadRequest works on the conflict error", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+		require.True(t, apierrors.IsBadRequest(conflictErr))
+	})
+
+	t.Run("wrapped error is still detectable via errors.As", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+		wrapped := errors.Join(errors.New("context"), conflictErr)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(wrapped, &extracted))
 	})
 }
 
@@ -288,5 +369,102 @@ func TestResourceOwnershipConflictError(t *testing.T) {
 		require.Contains(t, errMsg, "plugin")
 		require.Contains(t, errMsg, "plugin-instance-1")
 		require.Contains(t, errMsg, "cannot be modified")
+	})
+}
+
+func TestFolderDepthExceededError(t *testing.T) {
+	t.Run("Error includes path and underlying message", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/c/d/e/", underlying)
+
+		require.Contains(t, err.Error(), "a/b/c/d/e/")
+		require.Contains(t, err.Error(), "max depth")
+	})
+
+	t.Run("Unwrap exposes both sentinel and underlying error", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/", underlying)
+
+		require.True(t, errors.Is(err, ErrFolderDepthExceeded), "should match sentinel via errors.Is")
+		require.True(t, errors.Is(err, underlying), "should preserve underlying error in chain")
+	})
+
+	t.Run("errors.As extracts FolderDepthExceededError through wrapping", func(t *testing.T) {
+		underlying := errors.New("folder max depth exceeded, max depth is 4")
+		err := NewFolderDepthExceededError("a/b/", underlying)
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(wrapped, &depthErr))
+		require.Equal(t, "a/b/", depthErr.Path)
+	})
+}
+
+func TestIsFolderDepthExceededAPIError(t *testing.T) {
+	t.Run("nil returns false", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(nil))
+	})
+
+	t.Run("matches the create-path substring", func(t *testing.T) {
+		err := errors.New("folder max depth exceeded, max depth is 4")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches the update/move public message substring", func(t *testing.T) {
+		// This is the PublicMessage on folder.ErrMaximumDepthReached, which
+		// is what surfaces to the dynamic client when validateOnUpdate
+		// rejects a move.
+		err := apierrors.NewBadRequest("Maximum nested folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches the update/move log message substring (case-insensitive)", func(t *testing.T) {
+		err := errors.New("[folder.maximum-depth-reached] maximum folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches BadRequest status error from create path", func(t *testing.T) {
+		err := apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches the structured errutil error via errors.Is", func(t *testing.T) {
+		// The in-process error returned by validateOnUpdate.
+		err := foldermodel.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
+		require.True(t, IsFolderDepthExceededAPIError(err))
+	})
+
+	t.Run("matches when status details carry the structured message ID", func(t *testing.T) {
+		// Simulates a StatusError that survived a round-trip through the
+		// K8s API: the human-readable message is generic but the structured
+		// message ID is preserved in Status.Details.UID.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "Bad Request",
+				Details: &metav1.StatusDetails{
+					UID: "folder.maximum-depth-reached",
+				},
+			},
+		}
+		require.True(t, IsFolderDepthExceededAPIError(statusErr))
+	})
+
+	t.Run("matches sentinel error via errors.Is", func(t *testing.T) {
+		require.True(t, IsFolderDepthExceededAPIError(ErrFolderDepthExceeded))
+	})
+
+	t.Run("matches sentinel through wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("update folder: %w", ErrFolderDepthExceeded)
+		require.True(t, IsFolderDepthExceededAPIError(wrapped))
+	})
+
+	t.Run("does not match unrelated errors", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(errors.New("something else")))
+	})
+
+	t.Run("does not match unrelated bad-request status errors", func(t *testing.T) {
+		require.False(t, IsFolderDepthExceededAPIError(apierrors.NewBadRequest("title cannot be empty")))
 	})
 }

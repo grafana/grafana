@@ -1,11 +1,11 @@
-import { Location } from 'history';
+import { type Location } from 'history';
 
 import { textUtil } from '../text/sanitize';
-import { ScopedVars } from '../types/ScopedVars';
-import { GrafanaConfig } from '../types/config';
-import { RawTimeRange } from '../types/time';
+import { type ScopedVars } from '../types/ScopedVars';
+import { type GrafanaConfig } from '../types/config';
+import { type RawTimeRange } from '../types/time';
 
-import { UrlQueryMap, urlUtil } from './url';
+import { type UrlQueryMap, urlUtil } from './url';
 
 let grafanaConfig = { appSubUrl: '' } as GrafanaConfig;
 let getTimeRangeUrlParams: () => RawTimeRange;
@@ -146,5 +146,31 @@ export const locationUtil = {
   getUrlForPartial,
   processUrl: (url: string) => {
     return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
+  },
+  /**
+   * Process a redirect URI by merging its query parameters with current location's query parameters.
+   * Current query params are preserved, but redirect URI params take precedence.
+   *
+   * @param redirectUri - The redirect URI from the backend (may contain query params)
+   * @param currentLocation - Current location object to preserve query params
+   * @returns Final URL with merged query parameters
+   * @internal
+   */
+  processRedirectUri: (redirectUri: string, currentLocation: Location): string => {
+    try {
+      const redirectUrl = new URL(redirectUri, window.location.origin);
+      const redirectParams = new Set(redirectUrl.searchParams.keys());
+
+      const currentParams = new URLSearchParams(currentLocation.search);
+      currentParams.forEach((value, key) => {
+        if (!redirectParams.has(key)) {
+          redirectUrl.searchParams.append(key, value);
+        }
+      });
+
+      return stripBaseFromUrl(redirectUrl.href);
+    } catch {
+      return stripBaseFromUrl(redirectUri);
+    }
   },
 };

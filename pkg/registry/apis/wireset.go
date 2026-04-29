@@ -4,13 +4,16 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
+	inmemory "github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -27,12 +30,11 @@ import (
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
-	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	iam.ProvideNoopRoleApiInstaller,
-	iam.ProvideNoopGlobalRoleApiInstaller,
+	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
-	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
-	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	iam.ProvideNoopExternalGroupMappingApiInstaller,
+	iam.ProvideNoopRoleBindingApiInstaller,
 
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
@@ -48,10 +50,10 @@ var WireSetExts = wire.NewSet(
 var provisioningExtras = wire.NewSet(
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
-	extras.ProvideFactoryFromConfig,
 	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
+	extras.ProvideQuotaGetter,
 )
 
 var WireSet = wire.NewSet(
@@ -68,6 +70,9 @@ var WireSet = wire.NewSet(
 	provisioning.RegisterDependencies,
 	provisioningExtras,
 
+	// Resource Permission
+	resourcepermission.ProvideMappersRegistry,
+
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	datasource.RegisterAPIService,
@@ -80,4 +85,5 @@ var WireSet = wire.NewSet(
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
+	appplugin.RegisterAPIService,
 )

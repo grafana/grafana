@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 )
@@ -74,7 +74,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryV0.SQLSc
 			n = maxRows
 		}
 		sampleRows := make([][]any, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sampleRows = append(sampleRows, frame.RowCopy(i))
 		}
 

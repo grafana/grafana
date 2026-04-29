@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
 
 import { SetupStep } from './SetupStep';
 import { Sidebar } from './Sidebar';
-import { Step } from './types';
+import { type Step } from './types';
 
 export interface Props {
   title: string;

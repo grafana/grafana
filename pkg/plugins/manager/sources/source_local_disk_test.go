@@ -20,22 +20,22 @@ func TestDirAsLocalSources(t *testing.T) {
 	testdataDir := "../testdata"
 
 	tests := []struct {
-		name        string
-		pluginsPath string
-		cfg         *config.PluginManagementCfg
-		expected    []*LocalSource
-		err         error
+		name         string
+		pluginsPaths []string
+		cfg          *config.PluginManagementCfg
+		expected     []*LocalSource
+		err          error
 	}{
 		{
-			name:        "Empty path returns an error",
-			pluginsPath: "",
-			expected:    []*LocalSource{},
-			err:         errors.New("plugins path not configured"),
+			name:         "Empty path returns an error",
+			pluginsPaths: []string{},
+			expected:     []*LocalSource{},
+			err:          errors.New("plugins path not configured"),
 		},
 		{
-			name:        "Directory with subdirectories",
-			pluginsPath: filepath.Join(testdataDir, "pluginRootWithDist"),
-			cfg:         &config.PluginManagementCfg{},
+			name:         "Directory with subdirectories",
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist")},
+			cfg:          &config.PluginManagementCfg{},
 			expected: []*LocalSource{
 				{
 					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
@@ -59,7 +59,7 @@ func TestDirAsLocalSources(t *testing.T) {
 			cfg: &config.PluginManagementCfg{
 				DevMode: true,
 			},
-			pluginsPath: filepath.Join(testdataDir, "pluginRootWithDist"),
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist")},
 			expected: []*LocalSource{
 				{
 					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
@@ -79,15 +79,15 @@ func TestDirAsLocalSources(t *testing.T) {
 			},
 		},
 		{
-			name:        "Directory with no subdirectories",
-			cfg:         &config.PluginManagementCfg{},
-			pluginsPath: filepath.Join(testdataDir, "pluginRootWithDist", "datasource"),
-			expected:    []*LocalSource{},
+			name:         "Directory with no subdirectories",
+			cfg:          &config.PluginManagementCfg{},
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
+			expected:     []*LocalSource{},
 		},
 		{
-			name:        "Directory with a symlink to a directory",
-			pluginsPath: filepath.Join(testdataDir, "symbolic-plugin-dirs"),
-			cfg:         &config.PluginManagementCfg{},
+			name:         "Directory with a symlink to a directory",
+			pluginsPaths: []string{filepath.Join(testdataDir, "symbolic-plugin-dirs")},
+			cfg:          &config.PluginManagementCfg{},
 			expected: []*LocalSource{
 				{
 					paths:      []string{filepath.Join(testdataDir, "symbolic-plugin-dirs", "plugin")},
@@ -96,10 +96,43 @@ func TestDirAsLocalSources(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "Multiple paths",
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist"), filepath.Join(testdataDir, "symbolic-plugin-dirs")},
+			cfg:          &config.PluginManagementCfg{},
+			expected: []*LocalSource{
+				{
+					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
+					class:      plugins.ClassExternal,
+					strictMode: true,
+				},
+				{
+					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "dist")},
+					class:      plugins.ClassExternal,
+					strictMode: true,
+				},
+				{
+					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "panel")},
+					class:      plugins.ClassExternal,
+					strictMode: true,
+				},
+				{
+					paths:      []string{filepath.Join(testdataDir, "symbolic-plugin-dirs", "plugin")},
+					class:      plugins.ClassExternal,
+					strictMode: true,
+				},
+			},
+		},
+		{
+			name:         "Non existing directories are skipped",
+			cfg:          &config.PluginManagementCfg{},
+			pluginsPaths: []string{filepath.Join(testdataDir, "pluginRootWithDist", "nope")},
+			expected:     []*LocalSource{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := DirAsLocalSources(tt.cfg, tt.pluginsPath, plugins.ClassExternal)
+			got, err := DirAsLocalSources(tt.cfg, tt.pluginsPaths, plugins.ClassExternal)
 			if tt.err != nil {
 				require.Errorf(t, err, tt.err.Error())
 				return

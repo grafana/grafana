@@ -1,28 +1,28 @@
-import { AsyncIterableX, from } from 'ix/asynciterable';
+import { type AsyncIterableX, from } from 'ix/asynciterable';
 import { empty } from 'ix/asynciterable/empty';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 
 import {
-  DataSourceRuleGroupIdentifier,
-  DataSourceRulesSourceIdentifier,
-  GrafanaRuleGroupIdentifier,
+  type DataSourceRuleGroupIdentifier,
+  type DataSourceRulesSourceIdentifier,
+  type GrafanaRuleGroupIdentifier,
 } from 'app/types/unified-alerting';
 import {
-  GrafanaPromRuleDTO,
-  GrafanaPromRuleGroupDTO,
-  PromRuleDTO,
-  PromRuleGroupDTO,
+  type GrafanaPromRuleDTO,
+  type GrafanaPromRuleGroupDTO,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
+import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
-import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
+import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
 import { getGrafanaFilter } from './grafanaFilter';
 import {
-  FetchGroupsLimitOptions,
+  type FetchGroupsLimitOptions,
   useGrafanaGroupsGenerator,
   usePrometheusGroupsGenerator,
 } from './prometheusGroupsGenerator';

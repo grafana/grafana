@@ -10,16 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/dsquerierclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -28,12 +18,25 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	service "github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type queryREST struct {
@@ -130,45 +133,80 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
-		responder := newResponderWrapper(incomingResponder,
-			func(statusCode *int, obj runtime.Object) {
-				if *statusCode/100 == 4 {
-					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
-				}
+		connectLogger := b.log.New(
+			"traceId", traceId.String(),
+			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
+			"caller", getCaller(ctx),
+		)
+		responderOnObjectFn := func(statusCode *int, obj runtime.Object) {
+			if *statusCode/100 == 4 {
+				span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+			}
 
-				if *statusCode >= 500 {
-					o, ok := obj.(*query.QueryDataResponse)
-					if ok && o.Responses != nil {
-						for refId, response := range o.Responses {
-							if response.ErrorSource == backend.ErrorSourceDownstream {
-								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
-								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
-								span.SetAttributes(attribute.String("error.source", "downstream"))
-								break
-							} else if response.Error != nil {
-								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
-								span.SetStatus(codes.Error, "500 error without downstream error source")
-							} else {
-								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
-								span.SetAttributes(attribute.String("error.ref_id", refId))
-							}
+			if *statusCode >= 500 {
+				o, ok := obj.(*query.QueryDataResponse)
+				if ok && o.Responses != nil {
+					for refId, response := range o.Responses {
+						if response.ErrorSource == backend.ErrorSourceDownstream {
+							*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
+							span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+							span.SetAttributes(attribute.String("error.source", "downstream"))
+							break
+						} else if response.Error != nil {
+							connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
+							span.SetStatus(codes.Error, "500 error without downstream error source")
+						} else {
+							span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
+							span.SetAttributes(attribute.String("error.ref_id", refId))
 						}
 					}
 				}
-				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
-			},
+			}
+			connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+			b.reportStatus(ctx, *statusCode)
+		}
+		responderOnErrorFn := func(err error) {
+			connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
+			span.SetStatus(codes.Error, "query error")
 
-			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
-				span.SetStatus(codes.Error, "query error")
+			if err == nil {
+				return
+			}
 
-				if err == nil {
-					return
-				}
+			span.RecordError(err)
 
-				span.RecordError(err)
-			})
+			statusCode := 0
+			var k8sErr *errorsK8s.StatusError
+			switch {
+			case errors.As(err, &k8sErr):
+				statusCode = int(k8sErr.Status().Code)
+			case errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded):
+				statusCode = http.StatusGatewayTimeout
+			case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+				// 499 follows the widely used "client closed request" convention.
+				statusCode = 499
+			default:
+				// we do not know what kind of error it is,
+				// we do not know what status code will get assigned to it,
+				// so we use the zero to indicate the unknown.
+				connectLogger.Debug("Connect: unknown error returned", "error", err)
+			}
+			b.reportStatus(ctx, statusCode)
+		}
+
+		var responder rest.Responder
+		rawOutputMode := openfeature.NewDefaultClient().Boolean(
+			ctx,
+			featuremgmt.FlagDatasourcesQuerierRawOutput,
+			false,
+			openfeature.TransactionContext(ctx),
+		)
+		connectLogger.Debug("raw-mode-feature-flag evaluated", "result", rawOutputMode)
+		if rawOutputMode {
+			responder = newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
+		} else {
+			responder = newConnectResponderWrapper(incomingResponder, responderOnObjectFn, responderOnErrorFn)
+		}
 
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
@@ -184,9 +222,22 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
+		qdr, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
 
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				connectLogger.Warn(
+					"query-service request deadline exceeded",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+				connectLogger.Warn(
+					"query-service request cancelled",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			}
 			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			logEmptyRefids(raw.Queries, connectLogger)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
@@ -351,7 +402,7 @@ func handleQuery(
 	raw query.QueryDataRequest,
 	b QueryAPIBuilder,
 	httpreq *http.Request,
-	responder responderWrapper,
+	responder rest.Responder,
 	connectLogger log.Logger,
 ) (*backend.QueryDataResponse, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
@@ -362,21 +413,21 @@ func handleQuery(
 	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
 }
 
-type responderWrapper struct {
+type connectResponderWrapper struct {
 	wrapped    rest.Responder
 	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
 }
 
-func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
-	return &responderWrapper{
+func newConnectResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
+	return &connectResponderWrapper{
 		wrapped:    responder,
 		onObjectFn: onObjectFn,
 		onErrorFn:  onErrorFn,
 	}
 }
 
-func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
+func (r connectResponderWrapper) Object(statusCode int, obj runtime.Object) {
 	if r.onObjectFn != nil {
 		r.onObjectFn(&statusCode, obj)
 	}
@@ -384,12 +435,55 @@ func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
 	r.wrapped.Object(statusCode, obj)
 }
 
-func (r responderWrapper) Error(err error) {
+func (r connectResponderWrapper) Error(err error) {
 	if r.onErrorFn != nil {
 		r.onErrorFn(err)
 	}
 
 	r.wrapped.Error(err)
+}
+
+type rawResponderWrapper struct {
+	w          http.ResponseWriter
+	ctx        context.Context
+	onObjectFn func(statusCode *int, obj runtime.Object)
+	onErrorFn  func(err error)
+}
+
+func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
+	return &rawResponderWrapper{
+		w:          w,
+		ctx:        ctx,
+		onObjectFn: onObjectFn,
+		onErrorFn:  onErrorFn,
+	}
+}
+
+func (r rawResponderWrapper) Object(statusCode int, obj runtime.Object) {
+	if r.onObjectFn != nil {
+		r.onObjectFn(&statusCode, obj)
+	}
+
+	// a marker so we can see in the browser that this mode was chosen
+	r.w.Header().Set("X-Ds-Querier-Raw", "1")
+
+	// Write the value as JSON
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(statusCode)
+	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
+		http.Error(r.w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (r rawResponderWrapper) Error(err error) {
+	if r.onErrorFn != nil {
+		r.onErrorFn(err)
+	}
+
+	// a marker so we can see in the browser that this mode was chosen
+	r.w.Header().Set("X-Ds-Querier-Raw", "1")
+
+	errhttp.Write(r.ctx, err, r.w)
 }
 
 func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {

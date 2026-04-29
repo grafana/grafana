@@ -1,49 +1,44 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
-import * as React from 'react';
+import { createContext, type PropsWithChildren, useContext, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+
+// Tracks whether we're in a nested Portal.
+// A nested portal will render inside it's parent portal instead of the default portal container.
+// This prevents nested portals from being rendered in reverse order due to React's bottom-up commit phase.
+const PortalContext = createContext<HTMLDivElement | null>(null);
 
 interface Props {
   className?: string;
   root?: HTMLElement;
   // the zIndex of the node; defaults to theme.zIndex.portal
   zIndex?: number;
-  forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
 export function Portal(props: PropsWithChildren<Props>) {
-  const { children, className, root, forwardedRef } = props;
+  const { children, className, root, zIndex } = props;
   const theme = useTheme2();
-  const node = useRef<HTMLDivElement | null>(null);
-  const portalRoot = root ?? getPortalContainer();
+  const parentPortal = useContext(PortalContext);
+  const portalRef = useRef<HTMLDivElement | null>(null);
 
-  if (!node.current) {
-    node.current = document.createElement('div');
-    if (className) {
-      node.current.className = className;
-    }
-    node.current.style.position = 'relative';
-    node.current.style.zIndex = `${props.zIndex ?? theme.zIndex.portal}`;
-  }
+  const portalRoot = root ?? parentPortal ?? getPortalContainer();
 
-  useLayoutEffect(() => {
-    if (node.current) {
-      portalRoot.appendChild(node.current);
-    }
-
-    return () => {
-      if (node.current) {
-        portalRoot.removeChild(node.current);
-      }
-    };
-  }, [portalRoot]);
-
-  return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node.current);
+  return ReactDOM.createPortal(
+    <PortalContext.Provider value={portalRef.current}>
+      <div
+        className={className}
+        ref={portalRef}
+        style={{ position: 'relative', zIndex: zIndex ?? theme.zIndex.portal }}
+      >
+        {children}
+      </div>
+    </PortalContext.Provider>,
+    portalRoot
+  );
 }
 
 /** @internal */
@@ -73,9 +68,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
-  return <Portal {...props} forwardedRef={ref} />;
-});
-
-RefForwardingPortal.displayName = 'RefForwardingPortal';

@@ -1,8 +1,8 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 export interface XYZConfig {
@@ -45,9 +45,10 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           url: interpolatedUrl,
           attributions: interpolatedAttribution,
           wrapX: !noRepeat,
+          minZoom: cfg.minZoom,
+          maxZoom: cfg.maxZoom,
         }),
         minZoom: cfg.minZoom,
-        maxZoom: cfg.maxZoom,
       });
     },
     registerOptionsUI: (builder) => {
@@ -65,6 +66,26 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           name: 'Attribution',
           settings: {
             placeholder: defaultXYZConfig.attribution,
+          },
+        })
+        .addNumberInput({
+          path: 'config.minZoom',
+          name: 'Min zoom',
+          description: 'Minimum zoom level. Tiles are not loaded below this level.',
+          settings: {
+            placeholder: '0',
+            min: 0,
+            max: 30,
+          },
+        })
+        .addNumberInput({
+          path: 'config.maxZoom',
+          name: 'Max zoom',
+          description: 'Maximum zoom level provided by the server. Beyond this level, tiles are upscaled.',
+          settings: {
+            placeholder: '18',
+            min: 0,
+            max: 30,
           },
         });
     },

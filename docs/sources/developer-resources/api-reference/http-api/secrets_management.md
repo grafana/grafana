@@ -27,28 +27,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+weight: 100
 ---
 
 # Secrets Management API
 
-> If you are running Grafana Enterprise, you need to have specific permissions for some endpoints . Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
+{{< admonition type="note" >}}
+Available in Grafana 12 and later.
 
-> To view more about the new API structure, refer to [API overview](ref:api-overview).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+{{< /admonition >}}
+
+The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
 
 {{< admonition type="caution" >}}
 The API is currently in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview) and might be subject to changes.
 {{< /admonition >}}
 
-The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
+## Requirements
 
-### Decrypters
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
+
+## Decrypters
 
 The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
 
 Currently available decrypters:
 
-- `synthetic-monitoring` (for Synthetic Monitoring checks)
+- `k6-cloud` (for Grafana Cloud k6)
 - `provisioning.grafana.app` (for GitSync/Provisioning)
+- `synthetic-monitoring` (for Synthetic Monitoring checks)
 
 ## Create a secure value
 

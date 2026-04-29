@@ -13,8 +13,7 @@ type Event struct {
 	ObservedAt time.Time `json:"-"` // see MarshalJSON for why this is omitted
 
 	// Who/what performed the action.
-	SubjectName string `json:"subjectName"`
-	SubjectUID  string `json:"subjectUID"`
+	SubjectUID string `json:"subjectUID"`
 
 	// What was performed.
 	Verb string `json:"verb"`
@@ -23,9 +22,10 @@ type Event struct {
 	Object string `json:"object,omitempty"`
 
 	// API information.
-	APIGroup   string `json:"apiGroup,omitempty"`
-	APIVersion string `json:"apiVersion,omitempty"`
-	Kind       string `json:"kind,omitempty"`
+	APIGroup    string `json:"apiGroup,omitempty"`
+	APIVersion  string `json:"apiVersion,omitempty"`
+	Resource    string `json:"resource,omitempty"`
+	SubResource string `json:"subResource,omitempty"`
 
 	// Outcome of the action.
 	Outcome EventOutcome `json:"outcome"`
@@ -54,13 +54,13 @@ func (e Event) KVPairs() []any {
 		"audit", true,
 		"namespace", e.Namespace,
 		"observedAt", e.ObservedAt.UTC().Format(time.RFC3339Nano),
-		"subjectName", e.SubjectName,
 		"subjectUID", e.SubjectUID,
 		"verb", e.Verb,
 		"object", e.Object,
 		"apiGroup", e.APIGroup,
 		"apiVersion", e.APIVersion,
-		"kind", e.Kind,
+		"resource", e.Resource,
+		"subResource", e.SubResource,
 		"outcome", e.Outcome,
 	}
 

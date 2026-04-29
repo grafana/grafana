@@ -37,7 +37,9 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
+When running multiple instances of Grafana, all alert rules are evaluated on all instances by default. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting ensures that as long as at least one Grafana instance is working, alert rules are still evaluated and notifications for alerts are still sent.
+
+If you want to reduce this duplication, you can enable [single-node evaluation mode](#single-node-evaluation-mode) so that only one instance evaluates alert rules.
 
 You can find this duplication in state history and it is a good way to [verify your high availability setup](#verify-your-high-availability-setup).
 
@@ -159,9 +161,81 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
    ha_reconnect_timeout = 2m
    ```
 
+## Single-node evaluation mode
+
+{{< docs/public-preview product="Single-node evaluation mode" >}}
+
+By default, all Grafana instances in a high-availability cluster evaluate all alert rules. This means query load on data sources is multiplied by the number of Grafana instances. Single-node evaluation mode changes this so that only one instance evaluates alert rules, reducing query load from N times to 1.
+
+**To enable single-node evaluation mode**, add the following to your `[unified_alerting]` section:
+
+```ini
+[unified_alerting]
+ha_single_node_evaluation = true
+```
+
+This setting requires high availability clustering to be configured (either Memberlist or Redis).
+
+### How it works
+
+The Grafana cluster automatically chooses a primary instance that is responsible for evaluating all alert rules. Other instances skip evaluation entirely.
+
+- **Alert broadcasting:** The primary instance broadcasts fired alerts to all other instances through the cluster communication channel. This ensures that every instance's embedded Alertmanager has the current alerts, which is needed for failure recovery and for the Alertmanager API to return correct data on all instances.
+- **Automatic failure recovery:** When the primary instance becomes unavailable, the cluster reassigns positions and a new instance becomes responsible for evaluation. During failure recovery, there is a brief gap in evaluations. Existing alert states remain in the database.
+
+### Tradeoffs
+
+| Default HA (all instances evaluate)         | Single-node evaluation mode                  |
+| ------------------------------------------- | -------------------------------------------- |
+| Redundant evaluation on all nodes           | Only one node evaluates                      |
+| Higher query load on data sources (N times) | Reduced query load (1 time)                  |
+| No evaluation gap on instance failure       | Brief evaluation gap during failure recovery |
+
+### Monitor single-node evaluation mode
+
+You can verify that single-node evaluation mode is working correctly by monitoring the following metrics.
+
+| Metric                                                 | Description                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `grafana_alertmanager_peer_position`                   | The position of each instance in the cluster. The instance at position 0 is the primary and evaluates all alert rules.               |
+| `grafana_alerting_alerts_received_total`               | Total number of alerts received by each instance. Non-primary instances should receive alerts through the cluster broadcast channel. |
+| `grafana_alerting_alertmanager_alerts{state="active"}` | Number of active alerts on each instance. This value should be the same across all instances.                                        |
+
+The following metrics are specific to the HA backend you are using:
+
+**Memberlist (gossip)**
+
+| Metric                                                                                  | Description                                                                                                |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `grafana_alertmanager_oversized_gossip_message_dropped_total{key="alerts:broadcast"}`   | Number of broadcast messages dropped due to a full message queue. A non-zero value indicates message loss. |
+| `grafana_alertmanager_oversized_gossip_message_failure_total{key="alerts:broadcast"}`   | Number of broadcast messages that failed to send to a peer.                                                |
+| `grafana_alertmanager_oversized_gossip_message_sent_total{key="alerts:broadcast"}`      | Number of broadcast messages sent to peers.                                                                |
+| `grafana_alertmanager_oversize_gossip_message_duration_seconds{key="alerts:broadcast"}` | Duration of broadcast message sends. Useful for detecting network latency between peers.                   |
+
+**Redis**
+
+| Metric                                                                                                     | Description                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grafana_alertmanager_cluster_messages_publish_failures_total{msg_type="update",reason="buffer_overflow"}` | Number of state sync messages dropped due to a full message queue. A non-zero value indicates message loss. These metrics are shared across all HA state channels (alerts, silences, notification log), not only alert broadcasts. |
+| `grafana_alertmanager_cluster_messages_publish_failures_total{msg_type="update",reason="redis_issue"}`     | Number of state sync messages that failed due to a Redis error.                                                                                                                                                                    |
+| `grafana_alertmanager_cluster_messages_sent_total{msg_type="update"}`                                      | Total number of state sync messages sent to Redis. Includes all HA state channels, not only alert broadcasts.                                                                                                                      |
+
+### Tune alert broadcast queue size
+
+The primary instance uses a message queue to broadcast alerts to other instances. By default, the queue holds up to 200 messages. If you have a large number of alert rules, the queue may fill up, causing messages to be dropped. You can detect this by monitoring the drop metric for your HA backend (see metrics tables above).
+
+To increase the queue size, add the following to your `[unified_alerting]` section:
+
+```ini
+[unified_alerting]
+ha_single_evaluation_alert_broadcast_queue_size = 500
+```
+
+The default value is `200`. This setting applies to both Memberlist and Redis HA backends.
+
 ## Verify your high availability setup
 
-When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
+When running multiple Grafana instances, all alert rules are evaluated on every instance by default. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
 {{< admonition type="note" >}}
 
@@ -173,19 +247,23 @@ The HA settings (`ha_peers`, etc.) apply only to communication between alertmana
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 
-| Metric                                               | Description                                                                                                                                                |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                                                                    |
-| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                                                                 |
-| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                                                                   |
-| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                                                                     |
-| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                                                                 |
-| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                                                                      |
-| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                                                                  |
-| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                                                              |
-| alertmanager_peer_position                           | The position an Alertmanager instance believes it holds, which defines its role in the cluster. Peers should be numbered sequentially, starting from zero. |
+{{< admonition type="note" >}}
+Starting in Grafana v12.4, these metrics are prefixed with `grafana_` (for example, `grafana_alertmanager_cluster_members`). If you are upgrading from an earlier version, update your dashboards and alert rules accordingly.
+{{< /admonition >}}
 
-You can confirm the number of Grafana instances in your alerting high availability setup by querying the `alertmanager_cluster_members` and `alertmanager_peer_position` metrics.
+| Metric                                                         | Description                                                                                                                                                |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grafana_alertmanager_cluster_members`                         | Number indicating current number of members in cluster.                                                                                                    |
+| `grafana_alertmanager_cluster_messages_received_total`         | Total number of cluster messages received.                                                                                                                 |
+| `grafana_alertmanager_cluster_messages_received_size_total`    | Total size of cluster messages received.                                                                                                                   |
+| `grafana_alertmanager_cluster_messages_sent_total`             | Total number of cluster messages sent.                                                                                                                     |
+| `grafana_alertmanager_cluster_messages_sent_size_total`        | Total number of cluster messages received.                                                                                                                 |
+| `grafana_alertmanager_cluster_messages_publish_failures_total` | Total number of messages that failed to be published.                                                                                                      |
+| `grafana_alertmanager_cluster_pings_seconds`                   | Histogram of latencies for ping messages.                                                                                                                  |
+| `grafana_alertmanager_cluster_pings_failures_total`            | Total number of failed pings.                                                                                                                              |
+| `grafana_alertmanager_peer_position`                           | The position an Alertmanager instance believes it holds, which defines its role in the cluster. Peers should be numbered sequentially, starting from zero. |
+
+You can confirm the number of Grafana instances in your alerting high availability setup by querying the `grafana_alertmanager_cluster_members` and `grafana_alertmanager_peer_position` metrics.
 
 Note that these alerting high availability metrics are exposed via the `/metrics` endpoint in Grafana, and are not automatically collected or displayed. If you have a Prometheus instance connected to Grafana, add a `scrape_config` to scrape Grafana metrics and then query these metrics in Explore.
 
@@ -208,7 +286,7 @@ For more information on monitoring alerting metrics, refer to [Alerting meta-mon
 
 In high-availability mode, each Grafana instance runs its own pre-configured alertmanager to handle alert notifications.
 
-When multiple Grafana instances are running, all alert rules are evaluated on each instance. By default, each instance sends firing alerts to its respective alertmanager. This results in notification handling being duplicated across all running Grafana instances.
+When multiple Grafana instances are running, all alert rules are evaluated on each instance by default. Each instance sends firing alerts to its respective Alertmanager. This results in notification handling being duplicated across all running Grafana instances.
 
 Alertmanagers in HA mode communicate with each other to coordinate notification delivery. However, this setup can sometimes lead to duplicated or out-of-order notifications. By design, HA prioritizes sending duplicate notifications over the risk of missing notifications.
 

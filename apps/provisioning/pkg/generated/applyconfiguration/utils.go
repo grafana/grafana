@@ -38,6 +38,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ErrorDetailsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
 		return &provisioningv0alpha1.ExportJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("FixFolderMetadataJobOptions"):
+		return &provisioningv0alpha1.FixFolderMetadataJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubConnectionConfig"):
 		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
@@ -68,6 +70,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.MoveJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("PullRequestJobOptions"):
 		return &provisioningv0alpha1.PullRequestJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("QuotaStatus"):
+		return &provisioningv0alpha1.QuotaStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Repository"):
 		return &provisioningv0alpha1.RepositoryApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositorySpec"):
@@ -90,6 +94,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TokenStatus"):
 		return &provisioningv0alpha1.TokenStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("WebhookConfig"):
+		return &provisioningv0alpha1.WebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
 		return &provisioningv0alpha1.WebhookStatusApplyConfiguration{}
 

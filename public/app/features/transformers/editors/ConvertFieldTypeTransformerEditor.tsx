@@ -1,26 +1,19 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import {
-  DataTransformerID,
-  FieldNamePickerConfigSettings,
+  type FieldNamePickerConfigSettings,
   FieldType,
-  SelectableValue,
-  StandardEditorsRegistryItem,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
+  type SelectableValue,
+  type StandardEditorsRegistryItem,
+  type TransformerUIProps,
   getTimeZones,
 } from '@grafana/data';
-import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/convertFieldType.svg';
-import lightImage from '../images/light/convertFieldType.svg';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -268,20 +261,3 @@ export const ConvertFieldTypeTransformerEditor = ({
     </>
   );
 };
-
-export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistryItem<ConvertFieldTypeTransformerOptions> =
-  () => ({
-    id: DataTransformerID.convertFieldType,
-    editor: ConvertFieldTypeTransformerEditor,
-    transformation: standardTransformers.convertFieldTypeTransformer,
-    name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
-    description: t(
-      'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
-      'Convert a field to a specified field type.'
-    ),
-    categories: new Set([TransformerCategory.Reformat]),
-    help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
-    tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

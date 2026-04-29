@@ -17,27 +17,27 @@ import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
+  type AnnotationEvent,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
-  DateTime,
-  ScopedVars,
+  type DateTime,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
-import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
+import { type OpenTsdbFilter, type OpenTsdbOptions, type OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuery, OpenTsdbOptions> {
   type: 'opentsdb';
@@ -173,6 +173,10 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
         return { data: result };
       })
     );
+  }
+
+  applyTemplateVariables(query: OpenTsdbQuery, scopedVars: ScopedVars): OpenTsdbQuery {
+    return this.interpolateVariablesInQuery(query, scopedVars);
   }
 
   annotationEvent(options: DataQueryRequest, annotation: OpenTsdbQuery): Promise<AnnotationEvent[]> {
@@ -705,6 +709,30 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
           query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], scopedVars, 'pipe');
         }
       }
+    }
+
+    if (target.downsampleInterval) {
+      query.downsampleInterval = this.templateSrv.replace(target.downsampleInterval, scopedVars);
+    }
+
+    if (target.alias) {
+      query.alias = this.templateSrv.replace(target.alias, scopedVars);
+    }
+
+    if (target.downsampleAggregator) {
+      query.downsampleAggregator = this.templateSrv.replace(target.downsampleAggregator, scopedVars);
+    }
+
+    if (target.downsampleFillPolicy) {
+      query.downsampleFillPolicy = this.templateSrv.replace(target.downsampleFillPolicy, scopedVars);
+    }
+
+    if (target.counterMax) {
+      query.counterMax = this.templateSrv.replace(target.counterMax, scopedVars);
+    }
+
+    if (target.counterResetValue) {
+      query.counterResetValue = this.templateSrv.replace(target.counterResetValue, scopedVars);
     }
 
     return query;

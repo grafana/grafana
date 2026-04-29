@@ -1,41 +1,58 @@
-import { memo } from 'react';
+import { memo, useId } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, Threshold } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
-import { RadialGaugeDimensions } from './types';
-import { getFieldConfigMinMax, toCartesian } from './utils';
+import { type RadialGaugeDimensions } from './types';
+import { getFieldConfigMinMax, drawRadialArcPath } from './utils';
 
 interface RadialScaleLabelsProps {
   fieldDisplay: FieldDisplay;
   theme: GrafanaTheme2;
   thresholds: Threshold[];
+  thresholdsMode: ThresholdsMode;
   dimensions: RadialGaugeDimensions;
   startAngle: number;
-  endAngle: number;
   angleRange: number;
   neutral?: number;
 }
 
+interface RadialScaleLabel {
+  value: number;
+  labelValue?: string;
+  startOffset: number;
+  label: string;
+}
+
 const LINE_HEIGHT_FACTOR = 1.2;
+
+const resolvedThresholdValue = (value: number, mode: ThresholdsMode, min: number, max: number) => {
+  return mode === ThresholdsMode.Percentage ? (value / 100) * (max - min) + min : value;
+};
 
 export const RadialScaleLabels = memo(
   ({
     fieldDisplay,
     thresholds: rawThresholds,
+    thresholdsMode,
     theme,
     dimensions,
     startAngle,
-    endAngle,
     angleRange,
     neutral: rawNeutral,
   }: RadialScaleLabelsProps) => {
-    const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
+    const pathId = useId();
+
+    const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius, barWidth } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const thresholds = rawThresholds.filter((threshold) => threshold.value >= min && threshold.value <= max);
-    const allValues = thresholds.map((t) => t.value);
+    const thresholds = rawThresholds.filter(
+      (threshold) =>
+        resolvedThresholdValue(threshold.value, thresholdsMode, min, max) >= min &&
+        resolvedThresholdValue(threshold.value, thresholdsMode, min, max) <= max
+    );
+    const allValues = thresholds.map((t) => resolvedThresholdValue(t.value, thresholdsMode, min, max));
 
     // there are a couple cases where we will not show the neutral label even if neutral is set.
     // 1. if neutral is not between min and max
@@ -49,66 +66,85 @@ export const RadialScaleLabels = memo(
     const fontSize = scaleLabelsFontSize;
     const textLineHeight = scaleLabelsFontSize * LINE_HEIGHT_FACTOR;
     const radius = scaleLabelsRadius - textLineHeight;
+    const labelsPath = drawRadialArcPath(startAngle, angleRange, radius, centerX, centerY);
+    const pathLength = (angleRange / 360) * 2 * Math.PI * radius;
 
-    const minLabelValue = allValues.reduce((min, value) => (value < min ? value : min), allValues[0]);
-    const maxLabelValue = allValues.reduce((max, value) => (value > max ? value : max), allValues[0]);
+    const isFullCircle = angleRange >= 360;
 
-    function getTextPosition(text: string, value: number) {
+    const minLabelValue = allValues.reduce((min, value) => Math.min(value, min), allValues[0]);
+    const maxLabelValue = allValues.reduce((max, value) => Math.max(value, max), allValues[0]);
+
+    function getStartOffset(text: string, value: number): number {
       const isLast = value === maxLabelValue;
       const isFirst = value === minLabelValue;
 
-      let valueDeg = ((value - min) / (max - min)) * angleRange;
-      let finalAngle = startAngle + valueDeg;
+      const fraction = (value - min) / (max - min);
+      let offset = fraction * pathLength;
 
-      // Now adjust the final angle based on the label text width and the labels position on the arc
-      let measure = measureText(text, fontSize, theme.typography.fontWeightMedium);
-      let textWidthAngle = (measure.width / (2 * Math.PI * radius)) * angleRange;
+      const measure = measureText(text, fontSize, theme.typography.fontWeightMedium);
 
-      // the centering is different for gauge or circle shapes for some reason
-      finalAngle -= endAngle < 180 ? textWidthAngle : textWidthAngle / 2;
-
-      // For circle gauges we need to shift the first label more
-      if (isFirst) {
-        finalAngle += textWidthAngle;
+      // labels at the beginning and end of the path need to be adjusted to avoid clipping
+      if (isFullCircle) {
+        // For full circle: nudge labels near the top at the end of the circle
+        // counter-clockwise along the path to create extra space at 12 o'clock
+        const paddingFactor = 0.65; // needs to be >= 0.5 so that center-to-center gap (2x factor x width) >= label width
+        const padding = measure.width * paddingFactor;
+        if (isFirst) {
+          offset += padding;
+        } else if (isLast) {
+          offset -= padding;
+        }
+      } else {
+        const halfWidth = measure.width * 0.5;
+        // for non-circle, avoid clipping the bottom:
+        // keep first label's start at least halfWidth from path start
+        if (isFirst && offset - halfWidth < 0) {
+          offset += halfWidth;
+        }
+        // Keep last label's end at least halfWidth before path end
+        if (isLast && offset + halfWidth > pathLength) {
+          offset -= halfWidth;
+        }
       }
 
-      // For circle gauges we need to shift the last label more
-      if (isLast && endAngle === 360) {
-        finalAngle -= textWidthAngle;
-      }
-
-      const position = toCartesian(centerX, centerY, radius, finalAngle);
-
-      return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
+      return offset;
     }
 
-    const labels = thresholds.map((threshold) => ({
-      value: threshold.value,
-      pos: getTextPosition(String(threshold.value), threshold.value),
-      label: t(`gauge.threshold`, 'Threshold {{value}}', { value: threshold.value }),
-    }));
+    const labels: RadialScaleLabel[] = thresholds.map((threshold) => {
+      const resolvedValue = resolvedThresholdValue(threshold.value, thresholdsMode, min, max);
+      const labelText = thresholdsMode === ThresholdsMode.Percentage ? `${threshold.value}%` : String(threshold.value);
+      return {
+        value: resolvedValue,
+        labelValue: labelText,
+        startOffset: getStartOffset(labelText, resolvedValue),
+        label: t(`gauge.threshold`, 'Threshold {{value}}', { value: labelText }),
+      };
+    });
 
     if (neutral !== undefined) {
       labels.push({
         value: neutral,
-        pos: getTextPosition(String(neutral), neutral),
+        startOffset: getStartOffset(String(neutral), neutral),
         label: t(`gauge.neutral`, 'Neutral {{value}}', { value: neutral }),
       });
     }
 
     return (
       <g>
+        <defs>
+          <path id={pathId} d={labelsPath} fill="none" strokeWidth={barWidth} />
+        </defs>
         {labels.map((label) => (
           <text
             key={label.label}
-            x={label.pos.x}
-            y={label.pos.y}
             fontSize={fontSize}
             fill={theme.colors.text.primary}
-            transform={label.pos.transform}
+            textAnchor="middle"
             aria-label={label.label}
           >
-            {label.value}
+            <textPath href={`#${pathId}`} startOffset={label.startOffset}>
+              {label.labelValue ?? label.value}
+            </textPath>
           </text>
         ))}
       </g>

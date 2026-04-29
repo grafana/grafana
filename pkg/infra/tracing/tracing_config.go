@@ -1,12 +1,14 @@
 package tracing
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +29,11 @@ type TracingConfig struct {
 	Insecure             bool
 }
 
-func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
+func ProvideTracingConfig(cfgProvider configprovider.ConfigProvider) (*TracingConfig, error) {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
 	return ParseTracingConfig(cfg)
 }
 

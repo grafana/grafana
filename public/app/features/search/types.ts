@@ -1,10 +1,8 @@
-import { Action } from 'redux';
+import { type WithAccessControlMetadata } from '@grafana/data';
 
-import { WithAccessControlMetadata } from '@grafana/data';
+import { type ManagerKind } from '../apiserver/types';
 
-import { ManagerKind } from '../apiserver/types';
-
-import { QueryResponse } from './service/types';
+import { type QueryResponse } from './service/types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -83,10 +81,13 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
-}
 
-export interface SearchAction extends Action {
-  payload?: any;
+  ownerReference?: {
+    kind: string;
+    uid: string;
+    title: string;
+    avatarUrl?: string;
+  };
 }
 
 export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
@@ -94,10 +95,14 @@ export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
 export interface SearchState {
   query: string;
   tag: string[];
+  // Owner of the folder. Currently, there can be only teams, so the format of each ref
+  // is "iam.grafana.app/Team/{teamUID}"
+  ownerReference?: string[];
   starred: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;
+  createdBy?: string;
   sort?: string;
   prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
@@ -109,8 +114,6 @@ export interface SearchState {
   deleted: boolean;
 }
 
-export type OnToggleChecked = (item: DashboardViewItem) => void;
-
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
@@ -121,9 +124,8 @@ export interface SearchQueryParams {
   sort?: string | null;
   starred?: boolean | null;
   tag?: string[] | null;
+  ownerReference?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
+  createdBy?: string | null;
 }
-
-// new Search Types
-export type OnMoveOrDeleleSelectedItems = () => void;

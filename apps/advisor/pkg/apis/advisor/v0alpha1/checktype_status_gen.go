@@ -20,6 +20,11 @@ func NewCheckTypestatusOperatorState() *CheckTypestatusOperatorState {
 	return &CheckTypestatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CheckTypestatusOperatorState.
+func (CheckTypestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypestatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type CheckTypeStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewCheckTypeStatus() *CheckTypeStatus {
 	return &CheckTypeStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeStatus.
+func (CheckTypeStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatus"
+}
+
 // +k8s:openapi-gen=true
 type CheckTypeStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	CheckTypeStatusOperatorStateStateInProgress CheckTypeStatusOperatorStateState = "in_progress"
 	CheckTypeStatusOperatorStateStateFailed     CheckTypeStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeStatusOperatorStateState.
+func (CheckTypeStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStatusOperatorStateState"
+}

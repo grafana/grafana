@@ -79,6 +79,10 @@ func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return f
 }
 
+func (f FakeAccessControl) InvalidateResolverCache(orgID int64, scope string) {
+	// No-op for fake implementation
+}
+
 type FakeStore struct {
 	ExpectedUserPermissions       []accesscontrol.Permission
 	ExpectedBasicRolesPermissions []accesscontrol.Permission
@@ -121,6 +125,10 @@ func (f FakeStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontro
 }
 
 func (f FakeStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) CleanupPluginRBAC(_ context.Context, _ []string) error {
 	return f.ExpectedErr
 }
 

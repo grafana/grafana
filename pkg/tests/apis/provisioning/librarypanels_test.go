@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,12 +17,10 @@ import (
 
 // We currently block the creation of library panels in provisioned folders.
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            "test-repo",
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -45,7 +40,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.Error(t, err)
 		require.Equal(t, http.StatusConflict, code)
 		require.NotNil(t, libraryElementData)
@@ -85,12 +80,16 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
 
 		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 		helper.SetPermissions(helper.Org1.Admin, []resourcepermissions.SetResourcePermissionCommand{
 			{
 				Actions:           []string{"library.panels:write"},
@@ -107,7 +106,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			"folderUid": managedFolderName,
 		}
 		patchLibraryElementURL := fmt.Sprintf("/api/library-elements/%f", +res["id"].(float64))
-		newLibraryElement, code, err := patchHelper(t, *helper.K8sTestHelper, patchLibraryElementURL, updatedLibraryElement, helper.Org1.Admin)
+		newLibraryElement, code, err := common.PatchHelper(t, *helper.K8sTestHelper, patchLibraryElementURL, updatedLibraryElement, helper.Org1.Admin)
 		require.Error(t, err)
 		require.Equal(t, http.StatusConflict, code)
 		require.NotNil(t, newLibraryElement)
@@ -117,10 +116,10 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 
 func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -142,20 +141,8 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err, "can list values")
-			for _, v := range foundFolders.Items {
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
+		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
 
 		libraryElement := map[string]interface{}{
 			"kind":      1,
@@ -167,9 +154,15 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
+
+		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 	})
 }

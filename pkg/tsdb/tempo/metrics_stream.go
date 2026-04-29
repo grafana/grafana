@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
-	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -62,8 +62,6 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
 	qrr.End = uint64(backendQuery.TimeRange.To.UnixNano())
-
-	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
 		instantQuery := &tempopb.QueryInstantRequest{

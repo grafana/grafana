@@ -1,16 +1,16 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/state/reducers';
+import { type DataSourceInput, type DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
-import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, EventLocation } from './interactions';
-import { InputMapping } from './utils/autoMapDatasources';
+import { TrackingProvider } from './TrackingContext';
+import { CONTENT_KINDS, type ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface CommunityDashboardMappingFormProps {
   dashboardName: string;
   libraryItemId: string;
-  eventLocation: EventLocation;
   contentKind: ContentKind;
   datasourceTypes: string[];
   unmappedDsInputs: DataSourceInput[];
@@ -75,11 +75,15 @@ const createMockExistingMapping = (overrides: Partial<InputMapping> = {}): Input
   ...overrides,
 });
 
+const trackingValue = {
+  sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+  eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
+} as const;
+
 function setupForm(overrides: Partial<CommunityDashboardMappingFormProps> = {}) {
   const defaultProps: CommunityDashboardMappingFormProps = {
     dashboardName: 'Test Dashboard',
     libraryItemId: '123',
-    eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
     contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
     datasourceTypes: ['prometheus'],
     unmappedDsInputs: [],
@@ -90,7 +94,11 @@ function setupForm(overrides: Partial<CommunityDashboardMappingFormProps> = {}) 
     ...overrides,
   };
 
-  return render(<CommunityDashboardMappingForm {...defaultProps} />);
+  return render(
+    <TrackingProvider value={trackingValue}>
+      <CommunityDashboardMappingForm {...defaultProps} />
+    </TrackingProvider>
+  );
 }
 
 describe('CommunityDashboardMappingForm', () => {

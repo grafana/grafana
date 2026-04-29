@@ -843,6 +843,7 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type AlertRuleTemplateString = string;
+export type AlertRuleExecErrState = 'Error' | 'Ok' | 'Alerting' | 'KeepLast';
 export type AlertRuleDatasourceUid = string;
 export type AlertRulePromDurationWMillis = string;
 export type AlertRuleRelativeTimeRange = {
@@ -866,8 +867,29 @@ export type AlertRuleExpression = {
 export type AlertRuleExpressionMap = {
   [key: string]: AlertRuleExpression;
 };
+export type AlertRuleNoDataState = 'NoData' | 'Ok' | 'Alerting' | 'KeepLast';
 export type AlertRuleTimeIntervalRef = string;
 export type AlertRulePromDuration = string;
+export type AlertRuleNotificationSettingsType = 'SimplifiedRouting' | 'NamedRoutingTree';
+export type AlertRuleSimplifiedRouting = {
+  activeTimeIntervals?: AlertRuleTimeIntervalRef[];
+  groupBy?: string[];
+  groupInterval?: AlertRulePromDuration;
+  groupWait?: AlertRulePromDuration;
+  muteTimeIntervals?: AlertRuleTimeIntervalRef[];
+  receiver: string;
+  repeatInterval?: AlertRulePromDuration;
+  type: AlertRuleNotificationSettingsType;
+};
+export type AlertRuleNamedRoutingTree = {
+  routingTree: string;
+  type: AlertRuleNotificationSettingsType;
+};
+export type AlertRuleNotificationSettings = AlertRuleSimplifiedRouting | AlertRuleNamedRoutingTree;
+export type AlertRulePanelRef = {
+  dashboardUID: string;
+  panelID: number;
+};
 export type AlertRuleIntervalTrigger = {
   interval: AlertRulePromDuration;
 };
@@ -875,7 +897,7 @@ export type AlertRuleSpec = {
   annotations?: {
     [key: string]: AlertRuleTemplateString;
   };
-  execErrState: string;
+  execErrState: AlertRuleExecErrState;
   expressions: AlertRuleExpressionMap;
   for?: string;
   keepFiringFor?: string;
@@ -883,20 +905,9 @@ export type AlertRuleSpec = {
     [key: string]: AlertRuleTemplateString;
   };
   missingSeriesEvalsToResolve?: number;
-  noDataState: string;
-  notificationSettings?: {
-    activeTimeIntervals?: AlertRuleTimeIntervalRef[];
-    groupBy?: string[];
-    groupInterval?: AlertRulePromDuration;
-    groupWait?: AlertRulePromDuration;
-    muteTimeIntervals?: AlertRuleTimeIntervalRef[];
-    receiver: string;
-    repeatInterval?: AlertRulePromDuration;
-  };
-  panelRef?: {
-    dashboardUID: string;
-    panelID: number;
-  };
+  noDataState: AlertRuleNoDataState;
+  notificationSettings?: AlertRuleNotificationSettings;
+  panelRef?: AlertRulePanelRef;
   paused?: boolean;
   title: string;
   trigger: AlertRuleIntervalTrigger;
@@ -906,9 +917,7 @@ export type AlertRuleOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -919,9 +928,7 @@ export type AlertRuleOperatorState = {
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
@@ -1025,6 +1032,7 @@ export type RecordingRuleExpressionMap = {
   [key: string]: RecordingRuleExpression;
 };
 export type RecordingRuleTemplateString = string;
+export type RecordingRuleMetricName = string;
 export type RecordingRulePromDuration = string;
 export type RecordingRuleIntervalTrigger = {
   interval: RecordingRulePromDuration;
@@ -1034,9 +1042,9 @@ export type RecordingRuleSpec = {
   labels?: {
     [key: string]: RecordingRuleTemplateString;
   };
-  metric: string;
+  metric: RecordingRuleMetricName;
   paused?: boolean;
-  targetDatasourceUID: string;
+  targetDatasourceUID: RecordingRuleDatasourceUid;
   title: string;
   trigger: RecordingRuleIntervalTrigger;
 };
@@ -1045,9 +1053,7 @@ export type RecordingRuleOperatorState = {
   descriptiveState?: string;
   /** details contains any extra information that is operator-specific */
   details?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** lastEvaluation is the ResourceVersion last evaluated */
   lastEvaluation: string;
@@ -1058,9 +1064,7 @@ export type RecordingRuleOperatorState = {
 export type RecordingRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: {
-      [key: string]: any;
-    };
+    [key: string]: any;
   };
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */

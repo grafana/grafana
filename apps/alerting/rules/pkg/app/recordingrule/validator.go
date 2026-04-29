@@ -78,6 +78,14 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				}
 			}
 
+			expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
+			for _, expression := range r.Spec.Expressions {
+				expressions = append(expressions, &expression)
+			}
+			if err := util.ValidateExpressions(expressions); err != nil {
+				return err
+			}
+
 			if r.Spec.Metric == "" {
 				return fmt.Errorf("metric must be specified")
 			}

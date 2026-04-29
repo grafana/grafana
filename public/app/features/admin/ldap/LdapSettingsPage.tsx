@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
-import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
@@ -27,8 +27,8 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, MapKeyCertConfigured } from 'app/types/ldap';
-import { StoreState } from 'app/types/store';
+import { type LdapPayload, type MapKeyCertConfigured } from 'app/types/ldap';
+import { type StoreState } from 'app/types/store';
 
 import { LdapDrawerComponent } from './LdapDrawer';
 import { LdapTestDrawer } from './LdapTestDrawer';
@@ -149,19 +149,6 @@ export const LdapSettingsPage = () => {
     }
     init();
   }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /**
-   * Display warning if the feature flag is disabled
-   */
-  if (!config.featureToggles.ssoSettingsLDAP) {
-    return (
-      <Alert title={t('admin.ldap-settings-page.title-invalid-configuration', 'Invalid configuration')}>
-        <Trans i18nKey="ldap-settings-page.alert.feature-flag-disabled">
-          This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
-        </Trans>
-      </Alert>
-    );
-  }
 
   /**
    * Fetches the settings from the backend

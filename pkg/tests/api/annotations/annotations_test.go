@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,7 +33,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAuthZClientCache: true,
 		DisableAnonymous:        true,
-		EnableFeatureToggles:    []string{featuremgmt.FlagAnnotationPermissionUpdate},
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	noneUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

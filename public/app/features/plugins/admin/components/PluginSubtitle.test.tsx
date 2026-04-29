@@ -4,7 +4,7 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import * as runtime from '../state/hooks';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginSubtitle, registerPluginSubtitleExtension } from './PluginSubtitle';
 
@@ -35,7 +35,6 @@ describe('PluginSubtitle', () => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
     info: {
       logos: {
@@ -45,6 +44,7 @@ describe('PluginSubtitle', () => {
       keywords: ['test', 'plugin'],
     },
     popularity: 0,
+    managed: { enabled: false, strategy: undefined },
   };
 
   beforeEach(() => {});

@@ -4,6 +4,10 @@ package v0alpha1
 // +enum
 type HealthFailureType string
 
+func (HealthFailureType) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HealthFailureType"
+}
+
 const (
 	HealthFailureHook   HealthFailureType = "hook"
 	HealthFailureHealth HealthFailureType = "health"
@@ -15,10 +19,19 @@ const (
 	// For repositories and connections, this reflects whether the health check is passing.
 	ConditionTypeReady = "Ready"
 
-	// ConditionTypeQuota indicates whether the resource is within configured quota limits.
-	// This is an aggregated condition that can track multiple quota types (resources, storage, etc.).
+	// ConditionTypeNamespaceQuota indicates whether the resource's namespace is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., number of repositories in namespace).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
-	ConditionTypeQuota = "Quota"
+	ConditionTypeNamespaceQuota = "NamespaceQuota"
+
+	// ConditionTypeResourceQuota indicates whether the resource is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., dashboards synced by repository).
+	// True = within quota or no limits configured, False = quota reached or exceeded.
+	ConditionTypeResourceQuota = "ResourceQuota"
+
+	// ConditionTypePullStatus indicates the outcome of the last completed pull operation.
+	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
+	ConditionTypePullStatus = "PullStatus"
 )
 
 // Condition reasons for the Ready condition
@@ -46,16 +59,54 @@ const (
 	ReasonRateLimited = "RateLimited"
 )
 
+// Condition reasons for the PullStatus condition
+const (
+	// ReasonSuccess indicates the operation completed successfully.
+	ReasonSuccess = "Success"
+	// ReasonFailure indicates the operation failed due to an error.
+	ReasonFailure = "Failure"
+	// ReasonCompletedWithWarnings indicates the operation completed but with non-critical issues.
+	ReasonCompletedWithWarnings = "CompletedWithWarnings"
+	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
+	ReasonResourceInvalid = "ResourceInvalid"
+	// ReasonMissingFolderMetadata indicates the pull completed but some folders are missing
+	// _folder.json metadata files; their UIDs are unstable and may change on re-sync.
+	ReasonMissingFolderMetadata = "MissingFolderMetadata"
+	// ReasonFolderMetadataConflict indicates a conflict between folder metadata in the
+	// repository and the actual folder state in Grafana (e.g., ID mismatch, deleted folder).
+	ReasonFolderMetadataConflict = "FolderMetadataConflict"
+	// ReasonInvalidFolderMetadata indicates a _folder.json file exists but contains
+	// malformed or unparseable content; the folder falls back to hash-derived identity.
+	ReasonInvalidFolderMetadata = "InvalidFolderMetadata"
+	// ReasonFolderMetadataUpdated indicates the folder metadata UID changed,
+	// so the old folder was replaced with a new identity.
+	ReasonFolderMetadataUpdated = "FolderMetadataUpdated"
+	// ReasonFolderMetadataCreated indicates folder metadata was created where
+	// none existed, so the old hash-based folder was replaced.
+	ReasonFolderMetadataCreated = "FolderMetadataCreated"
+	// ReasonFolderMetadataDeleted indicates folder metadata was deleted,
+	// so the folder reverts to hash-based identity.
+	ReasonFolderMetadataDeleted = "FolderMetadataDeleted"
+	// ReasonFolderOrphaned indicates the folder exists in the cluster but
+	// no longer in the git repository.
+	ReasonFolderOrphaned = "FolderOrphaned"
+	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
+	// the maximum folder depth enforced by the folder API. The repository
+	// owner must shorten the offending path; provisioning cannot recover
+	// automatically and will not retry the failed write.
+	ReasonFolderDepthExceeded = "FolderDepthExceeded"
+)
+
 // Condition reasons for the Quota condition
 const (
 	// ReasonWithinQuota indicates all quota limits are satisfied.
 	ReasonWithinQuota = "WithinQuota"
 	// ReasonQuotaUnlimited indicates no quota limits are configured.
 	ReasonQuotaUnlimited = "QuotaUnlimited"
-	// ReasonResourceQuotaReached indicates the resource count is exactly at the limit.
-	ReasonResourceQuotaReached = "ResourceQuotaReached"
-	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
-	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+	// ReasonQuotaReached indicates the resource count is exactly at the limit.
+	ReasonQuotaReached = "QuotaReached"
+	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
+	ReasonQuotaExceeded = "QuotaExceeded"
 )
 
 type HealthStatus struct {
@@ -72,4 +123,8 @@ type HealthStatus struct {
 	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
+}
+
+func (HealthStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HealthStatus"
 }

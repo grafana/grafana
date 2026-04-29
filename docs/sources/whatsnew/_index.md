@@ -191,8 +191,13 @@ For example, to view the release notes for Grafana v8.5.13, go to https://grafan
 
 For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
+## Grafana 13
+
+- [What's new in 13.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v13-0)
+
 ## Grafana 12
 
+- [What's new in 12.4](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-4)
 - [What's new in 12.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-3)
 - [What's new in 12.2](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-2)
 - [What's new in 12.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v12-1)

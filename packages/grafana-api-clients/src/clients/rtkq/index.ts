@@ -10,15 +10,16 @@ import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerti
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
 import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alpha1';
 import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
-import { generatedAPI as migrateToCloudAPI } from './migrate-to-cloud';
 import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
-import { generatedAPI as playlistAPIv0alpha1 } from './playlist/v0alpha1';
-import { generatedAPI as preferencesUserAPI } from './preferences/user';
+import { generatedAPI as notificationsAlertingAPIv1beta1 } from './notifications.alerting/v1beta1';
+import { generatedAPI as playlistAPIv1 } from './playlist/v1';
+import { generatedAPI as orgPreferencesAPI } from './preferences/org';
+import { generatedAPI as teamPreferencesAPI } from './preferences/team';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
-import { generatedAPI as legacyUserAPI } from './user';
 // PLOP_INJECT_IMPORT
 
 /** RTK Query middleware for all API clients  */
@@ -27,20 +28,21 @@ export const allMiddleware = [
   dashboardAPIv0alpha1.middleware,
   folderAPIv1beta1.middleware,
   iamAPIv0alpha1.middleware,
-  migrateToCloudAPI.middleware,
-  playlistAPIv0alpha1.middleware,
+  playlistAPIv1.middleware,
   collectionsAPIv1alpha1.middleware, // stars
   preferencesAPIv1alpha1.middleware,
-  preferencesUserAPI.middleware, // legacy preferences
   provisioningAPIv0alpha1.middleware,
   shortURLAPIv1beta1.middleware,
   correlationsAPIv0alpha1.middleware,
-  legacyUserAPI.middleware,
   notificationsAlertingAPIv0alpha1.middleware,
   rulesAlertingAPIv0alpha1.middleware,
   historianAlertingAPIv0alpha1.middleware,
   logsdrilldownAPIv1beta1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
+  quotasAPIv0alpha1.middleware,
+  orgPreferencesAPI.middleware,
+  teamPreferencesAPI.middleware,
+  notificationsAlertingAPIv1beta1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -50,20 +52,21 @@ export const allReducers = {
   [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer,
   [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
   [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
-  [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
-  [playlistAPIv0alpha1.reducerPath]: playlistAPIv0alpha1.reducer,
+  [playlistAPIv1.reducerPath]: playlistAPIv1.reducer,
   [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
   [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
-  [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
   [shortURLAPIv1beta1.reducerPath]: shortURLAPIv1beta1.reducer,
   [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
-  [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   [notificationsAlertingAPIv0alpha1.reducerPath]: notificationsAlertingAPIv0alpha1.reducer,
   [rulesAlertingAPIv0alpha1.reducerPath]: rulesAlertingAPIv0alpha1.reducer,
   [historianAlertingAPIv0alpha1.reducerPath]: historianAlertingAPIv0alpha1.reducer,
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
   [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
+  [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
+  [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
+  [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
+  [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
   // PLOP_INJECT_REDUCER
 };
 

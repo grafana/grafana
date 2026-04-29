@@ -17,22 +17,6 @@ labels:
 menuTitle: Template variables
 title: CloudWatch template variables
 weight: 300
-refs:
-  variable-syntax:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
 ---
 
 # CloudWatch template variables
@@ -42,7 +26,7 @@ Grafana lists these variables in drop-down select boxes at the top of the dashbo
 
 <!-- Grafana refers to such variables as template variables. -->
 
-For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
+For an introduction to templating and template variables, refer to [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
 ## Use query variables
 
@@ -69,7 +53,7 @@ For details about the metrics CloudWatch provides, refer to the [CloudWatch docu
 ### Use variables in queries
 
 Use the Grafana variable syntax to include variables in queries. A query variable in dynamically retrieves values from your data source using a query.
-For details, refer to the [variable syntax documentation](ref:variable-syntax).
+For details, refer to the [variable syntax documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/).
 
 ## Use ec2_instance_attribute
 

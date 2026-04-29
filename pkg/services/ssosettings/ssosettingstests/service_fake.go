@@ -27,7 +27,7 @@ type FakeService struct {
 	GetForProviderWithRedactedSecretsFn func(ctx context.Context, provider string) (*models.SSOSettings, error)
 	UpsertFn                            func(ctx context.Context, settings *models.SSOSettings, requester identity.Requester) error
 	DeleteFn                            func(ctx context.Context, provider string) error
-	PatchFn                             func(ctx context.Context, provider string, data map[string]any) error
+	PatchFn                             func(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error
 	RegisterReloadableFn                func(provider string, reloadable ssosettings.Reloadable)
 	ReloadFn                            func(ctx context.Context, provider string)
 }
@@ -97,13 +97,14 @@ func (f *FakeService) Delete(ctx context.Context, provider string) error {
 	return f.ExpectedError
 }
 
-func (f *FakeService) Patch(ctx context.Context, provider string, data map[string]any) error {
+func (f *FakeService) Patch(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error {
 	if f.PatchFn != nil {
-		return f.PatchFn(ctx, provider, data)
+		return f.PatchFn(ctx, provider, data, requester)
 	}
 
 	f.ActualProvider = provider
 	f.ActualPatchData = data
+	f.ActualRequester = requester
 
 	return f.ExpectedError
 }

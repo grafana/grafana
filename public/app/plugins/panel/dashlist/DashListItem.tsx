@@ -1,9 +1,9 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
-import { LocationInfo } from 'app/features/search/service/types';
+import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
-import { Dashboard } from './DashList';
+import { type Dashboard } from './DashList';
 import { getStyles } from './styles';
 
 interface Props {
@@ -59,7 +59,7 @@ export function DashListItem({
         </div>
       ) : (
         <Card noMargin className={css.dashlistCardContainer}>
-          <Stack justifyContent="space-between" alignItems="start">
+          <Stack justifyContent="space-between" alignItems="start" height="100%">
             <Link
               className={css.dashlistCard}
               href={url}

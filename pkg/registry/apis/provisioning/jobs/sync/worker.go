@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -41,7 +42,6 @@ type SyncWorker struct {
 	tracer tracing.Tracer
 
 	maxSyncWorkers int
-	quotaLimits    quotas.QuotaLimits
 }
 
 func NewSyncWorker(
@@ -64,21 +64,14 @@ func NewSyncWorker(
 	}
 }
 
-// SetQuotaLimits sets the quota limits (including repository limits).
-// HACK: This is a workaround to avoid changing NewSyncWorker signature which would require
-// changes in the enterprise repository. This should be moved to NewSyncWorker parameters
-// once we can coordinate the change across repositories.
-func (r *SyncWorker) SetQuotaLimits(limits quotas.QuotaLimits) {
-	r.quotaLimits = limits
-}
-
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionPull
 }
 
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", job.Spec.Pull)
+	ctx = logging.Context(ctx, logger)
 	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
 		trace.WithAttributes(
 			attribute.String("job.name", job.GetName()),
@@ -86,6 +79,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			attribute.String("job.action", string(job.Spec.Action)),
 			attribute.String("repository.name", cfg.Name),
 			attribute.String("repository.namespace", cfg.Namespace),
+			attribute.Bool("sync.incremental", job.Spec.Pull != nil && job.Spec.Pull.Incremental),
 		),
 	)
 	defer span.End()
@@ -115,6 +109,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Ensure the sync state is set to 'working' if not already set or still pending.
 	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
 	syncStatus.State = provisioning.JobStateWorking
+
+	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
@@ -147,7 +144,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	statusSpan.End()
 
 	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
-	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw)
+	beforeCreateOptions := resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
+		if !quotaTracker.TryAcquire() {
+			return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
+		}
+		return nil
+	}))
+	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw, beforeCreateOptions)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
@@ -168,9 +171,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	syncCtx, syncSpan := r.tracer.Start(ctx, "provisioning.sync.execute")
 	progress.SetMessage(ctx, "execute sync job")
 	progress.StrictMaxErrors(20) // make it stop after 20 errors
-	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
+	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+	resultReasons := progress.ResultReasons()
+	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
+
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
 		_ = tracing.Error(syncSpan, syncError)
@@ -182,10 +188,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	if syncStatus.State != provisioning.JobStateError {
+	if syncStatus.State != provisioning.JobStateError && !isQuotaWarning {
 		syncStatus.LastRef = currentRef
 	} else {
-		// Preserve the original lastRef on error
+		if isQuotaWarning {
+			logger.Info("repository is over quota, preserving lastRef")
+		}
 		syncStatus.LastRef = lastRef
 	}
 
@@ -222,17 +230,19 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
 	}
 
-	// Update Quota condition based on stats and configured limits.
-	// Quotas are evaluated here in the sync worker (pull) rather than in the controller because:
+	// Update conditions based on sync outcome and quota evaluation.
+	// Both conditions are evaluated here in the sync worker (pull) because:
 	// 1. The sync worker performs reconciliation and eventually cleans up resources, so it has
 	//    the most up-to-date view of what resources actually exist.
 	// 2. The sync worker is responsible for updating stats after each sync operation, making it
 	//    the natural place to evaluate quotas against those stats.
-	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
+	// 3. This ensures conditions reflect the actual state after reconciliation,
 	//    not just what the controller thinks should exist.
-	quotaCondition := r.quotaLimits.EvaluateCondition(repoStats)
-	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
-		patchOperations = append(patchOperations, quotaConditionOps...)
+	quotaStatus := repo.Config().Status.Quota
+	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
+	syncCondition := EvaluatePullCondition(jobStatus.State, resultReasons)
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
 	}
 
 	// Only patch the specific fields we want to update, not the entire status

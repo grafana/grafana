@@ -1,15 +1,15 @@
-import { Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { flows } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
+    multiPropsVariables: false,
   },
 });
 
@@ -165,6 +165,7 @@ test.describe(
 
       // check that variable deletion works
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
       await expect(variableLabel).toBeHidden();
     });
 

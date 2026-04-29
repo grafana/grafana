@@ -1,20 +1,21 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  AnnotationQuery,
-  DataSourceInstanceSettings,
+  type AnnotationQuery,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
+import { type VizPanel } from '@grafana/scenes';
+import { type AnnotationPanelFilter } from '@grafana/schema';
 import {
   Button,
   Checkbox,
@@ -26,13 +27,14 @@ import {
   useStyles2,
   Stack,
   Alert,
-  ComboboxOption,
+  type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
 import { getPanelIdForVizPanel } from '../../utils/utils';
 
 type Props = {
@@ -45,7 +47,6 @@ type Props = {
 };
 
 const collator = Intl.Collator();
-export const newAnnotationName = 'New annotation';
 
 enum AnnotationControlsDisplay {
   Hidden,
@@ -55,6 +56,7 @@ enum AnnotationControlsDisplay {
 
 export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate, onBackToList, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
+  const showInId = useId();
 
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
@@ -216,7 +218,7 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     onBackToList();
   };
 
-  const isNewAnnotation = annotation.name === newAnnotationName;
+  const isNewAnnotation = annotation.name === NEW_ANNOTATION_NAME;
 
   const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
     if (a.label && b.label) {
@@ -226,21 +228,23 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     return -1;
   };
 
+  const { loading, value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
+
   const selectablePanels: Array<SelectableValue<number>> = useMemo(
     () =>
       panels
         // Filtering out rows at the moment, revisit to only include panels that support annotations
         // However the information to know if a panel supports annotations requires it to be already loaded
         // panel.plugin?.dataSupport?.annotations
-        .filter((panel) => config.panels[panel.state.pluginId])
+        .filter((panel) => panelPluginMetas?.[panel.state.pluginId])
         .map((panel) => ({
           value: getPanelIdForVizPanel(panel),
           label: panel.state.title ?? `Panel ${getPanelIdForVizPanel(panel)}`,
           description: panel.state.description,
-          imgUrl: config.panels[panel.state.pluginId].info.logos.small,
+          imgUrl: panelPluginMetas?.[panel.state.pluginId].info.logos.small,
         }))
         .sort(sortFn) ?? [],
-    [panels]
+    [panels, panelPluginMetas]
   );
 
   return (
@@ -335,28 +339,47 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           {/* Show in */}
           <Field
             noMargin
+            htmlFor={showInId}
             label={t('dashboard-scene.annotation-settings-edit.label-show-in', 'Show in')}
             data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}
           >
             <>
               <Select
+                inputId={showInId}
+                isLoading={loading}
                 options={getPanelFilters()}
                 value={panelFilter}
                 onChange={onFilterTypeChange}
                 data-testid={selectors.components.Annotations.annotationsTypeInput}
               />
               {panelFilter !== PanelFilterType.AllPanels && (
-                <MultiSelect
-                  options={selectablePanels}
-                  value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
-                  onChange={onAddFilterPanelID}
-                  isClearable={true}
-                  placeholder={t('dashboard-scene.annotation-settings-edit.placeholder-choose-panels', 'Choose panels')}
-                  width={100}
-                  closeMenuOnSelect={false}
-                  className={styles.select}
-                  data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
-                />
+                <>
+                  {panelPluginMetasError && (
+                    <Alert
+                      title={t(
+                        'dashboard-scene.annotation-settings-edit.error-loading-panels',
+                        'Failed to load panel plugins'
+                      )}
+                      severity="warning"
+                    >
+                      {panelPluginMetasError.message}
+                    </Alert>
+                  )}
+                  <MultiSelect
+                    options={selectablePanels}
+                    value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                    onChange={onAddFilterPanelID}
+                    isClearable={true}
+                    placeholder={t(
+                      'dashboard-scene.annotation-settings-edit.placeholder-choose-panels',
+                      'Choose panels'
+                    )}
+                    width={100}
+                    closeMenuOnSelect={false}
+                    className={styles.select}
+                    data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
+                  />
+                </>
               )}
             </>
           </Field>

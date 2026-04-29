@@ -19,22 +19,6 @@ labels:
 menuTitle: Query editor
 title: Graphite query editor
 weight: 300
-refs:
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  set-up-grafana-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
 ---
 
 # Graphite query editor
@@ -43,7 +27,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It supports a variety of Graphite queries, including complex nested queries, through the use of query references.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, see [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Query editor elements
 
@@ -138,7 +122,7 @@ This approach is more efficient than writing separate queries for each series, s
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can add annotation queries in the dashboard menu's **Annotations** view.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can add annotation queries in the dashboard menu's **Annotations** view.
 
 Graphite supports two ways to query annotations:
 

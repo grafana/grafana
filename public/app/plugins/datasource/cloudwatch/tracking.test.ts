@@ -1,10 +1,10 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data';
 let handler: (e: DashboardLoadedEvent<CloudWatchQuery>) => {};
 import { config, reportInteraction } from '@grafana/runtime';
 
 import './module';
 import { CloudWatchDashboardLoadedEvent } from './mocks/dashboardOnLoadedEvent';
-import { CloudWatchQuery } from './types';
+import { type CloudWatchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {

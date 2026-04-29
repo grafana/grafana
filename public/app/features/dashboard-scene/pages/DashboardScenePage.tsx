@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
@@ -8,18 +8,23 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
   DashboardBrandingFooterVariant,
 } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import {
+  type DashboardPageRouteParams,
+  type DashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
+import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
@@ -32,7 +37,8 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  // User by /admin/provisioning/:slug/dashboard/preview/* to load dashboards based on their file path in a remote repository
+  // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
+  // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
   const prevMatch = usePrevious({ params });
   const stateManager = getDashboardScenePageStateManager();
@@ -46,7 +52,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
-        uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
+        uid:
+          (route.routeName === DashboardRoutes.Provisioning || route.routeName === DashboardRoutes.AssistantPreview
+            ? path
+            : uid) ?? '',
         type,
         slug,
         route: route.routeName as DashboardRoutes,
@@ -63,8 +72,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
     // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference
     //  the same dashboard with no slug in url
+    // queryParams.path is used by template dashboards to identify the dashboard file; changing it means a new template was selected
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
+  }, [
+    stateManager,
+    uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    type,
+    queryParams.path,
+    queryParams.gnetId,
+  ]);
 
   useEffect(() => {
     // This use effect corrects URL without refresh when navigating to the same dashboard
@@ -87,19 +106,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
-    let errorElement;
-    if (loadError) {
-      errorElement = <DashboardPageError error={loadError} type={type} />;
-    }
-
-    return (
-      errorElement || (
-        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
-          <Box paddingY={4} display="flex" direction="column" alignItems="center">
-            {isLoading && <PageLoader />}
-          </Box>
-        </Page>
-      )
+    return loadError ? (
+      <DashboardPageError
+        error={loadError}
+        type={type}
+        isProvisioned={route.routeName === DashboardRoutes.Provisioning}
+      />
+    ) : (
+      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          {isLoading && <PageLoader />}
+        </Box>
+      </Page>
     );
   }
 
@@ -119,6 +137,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
+      <OrphanedDashboardBanner dashboard={dashboard} />
+      <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       <DashboardBrandingFooter

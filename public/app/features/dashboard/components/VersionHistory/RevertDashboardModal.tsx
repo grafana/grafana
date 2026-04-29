@@ -24,9 +24,8 @@ export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboard
     <ConfirmModal
       isOpen={true}
       title={t('dashboard.revert-dashboard-modal.title-restore-version', 'Restore version')}
-      icon="history"
       onDismiss={hideModal}
-      onConfirm={onRestoreDashboard}
+      onConfirm={() => void onRestoreDashboard()}
       body={
         <p>
           <Trans i18nKey="dashboard.revert-dashboard-modal.body-restore-version">

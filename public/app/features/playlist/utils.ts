@@ -1,8 +1,18 @@
-import { Playlist } from '../../api/clients/playlist/v0alpha1';
-import { getGrafanaSearcher } from '../search/service/searcher';
-import { SearchQuery } from '../search/service/types';
+import { config } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { PlaylistItemUI } from './types';
+import { type Playlist } from '../../api/clients/playlist/v1';
+import { contextSrv } from '../../core/services/context_srv';
+import { getGrafanaSearcher } from '../search/service/searcher';
+import { type SearchQuery } from '../search/service/types';
+
+import { type PlaylistItemUI } from './types';
+
+export function canWritePlaylists(): boolean {
+  return config.featureToggles.playlistsRBAC
+    ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
+    : contextSrv.isEditor;
+}
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
@@ -48,7 +58,7 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
 
 export function getDefaultPlaylist(): Playlist {
   return {
-    apiVersion: 'playlist.grafana.app/v0alpha1',
+    apiVersion: 'playlist.grafana.app/v1',
     kind: 'Playlist',
     spec: {
       items: [],

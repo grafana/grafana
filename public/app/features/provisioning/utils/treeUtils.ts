@@ -1,7 +1,9 @@
-import { IconName } from '@grafana/ui';
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type IconName } from '@grafana/ui';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FileDetails, FlatTreeItem, ItemType, SyncStatus, TreeItem } from '../types';
+import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
+
+import { getFolderMetadataPath } from './folderMetadata';
 
 const collator = new Intl.Collator();
 
@@ -132,6 +134,14 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
       hasFile: !!item.file,
     });
+  }
+
+  // Detect provisioned folders missing _folder.json metadata
+  for (const [path, node] of nodeMap) {
+    if (node.type === 'Folder' && node.resourceName) {
+      const metadataPath = getFolderMetadataPath(path);
+      node.missingFolderMetadata = !nodeMap.has(metadataPath);
+    }
   }
 
   // Build parent-child relationships

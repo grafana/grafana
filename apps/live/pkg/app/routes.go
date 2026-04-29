@@ -17,7 +17,7 @@ func GetSomethingHandler(ctx context.Context, writer app.CustomRouteResponseWrit
 	if request.URL.Query().Has("message") {
 		message = request.URL.Query().Get("message")
 	}
-	return json.NewEncoder(writer).Encode(v1alpha1.GetSomething{
+	return json.NewEncoder(writer).Encode(v1alpha1.GetSomethingResponse{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", v1alpha1.APIGroup, v1alpha1.APIVersion),
 		},

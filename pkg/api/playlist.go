@@ -9,21 +9,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	internalplaylist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
-	// TODO: remove kubernetesPlaylists feature flag
+	// Deprecated: use /apis/playlist.grafana.app/ instead
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 		// Use k8s client to implement legacy API
 		handler := newPlaylistK8sHandler(hs)
@@ -145,7 +144,7 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr:                  v0alpha1.PlaylistKind().GroupVersionResource(),
+		gvr:                  playlistv1.PlaylistKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}
@@ -155,11 +154,13 @@ func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 //
 // Get playlists.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: searchPlaylistsResponse
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -174,7 +175,7 @@ func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 	query := strings.ToUpper(c.Query("query"))
 	playlists := []playlist.Playlist{}
 	for _, item := range out.Items {
-		p := internalplaylist.UnstructuredToLegacyPlaylist(item)
+		p := playlist.UnstructuredToLegacyPlaylist(item)
 		if p == nil {
 			continue
 		}
@@ -190,14 +191,16 @@ func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 //
 // Get playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getPlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -209,12 +212,16 @@ func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 // swagger:route GET /playlists/{uid}/items playlists getPlaylistItems
 //
 // Get playlist items.
+//
+// Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getPlaylistItemsResponse
@@ -222,8 +229,6 @@ func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -235,12 +240,16 @@ func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out).Items)
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out).Items)
 }
 
 // swagger:route DELETE /playlists/{uid} playlists deletePlaylist
 //
 // Delete playlist.
+//
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -248,8 +257,6 @@ func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) deletePlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -268,14 +275,16 @@ func (pk8s *playlistK8sHandler) deletePlaylist(c *contextmodel.ReqContext) {
 //
 // Update playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: updatePlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -287,7 +296,7 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
+	obj := playlist.LegacyUpdateCommandToUnstructured(cmd)
 	obj.SetName(uid)
 	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
 	if err != nil {
@@ -300,12 +309,16 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 // swagger:route POST /playlists playlists createPlaylist
 //
 // Create playlist.
+//
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: createPlaylistResponse
@@ -313,8 +326,6 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -325,13 +336,13 @@ func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
+	obj := playlist.LegacyUpdateCommandToUnstructured(cmd)
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 //-----------------------------------------------------------------------------------------
@@ -339,6 +350,7 @@ func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 //-----------------------------------------------------------------------------------------
 
 func (pk8s *playlistK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientclientGenerator to get a typed client!
 	dyn, err := dynamic.NewForConfig(pk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)

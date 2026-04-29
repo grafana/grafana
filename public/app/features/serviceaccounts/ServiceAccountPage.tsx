@@ -1,19 +1,19 @@
 import { useEffect, useState, type JSX } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
+import { type ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem, getTimeZone } from '@grafana/data';
+import { type NavModelItem, getTimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ApiKey } from 'app/types/apiKeys';
-import { ServiceAccountDTO } from 'app/types/serviceaccount';
-import { StoreState } from 'app/types/store';
+import { type ApiKey } from 'app/types/apiKeys';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type StoreState } from 'app/types/store';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
-import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
+import { CreateTokenModal, type ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
 import { fetchACOptions } from './state/actions';

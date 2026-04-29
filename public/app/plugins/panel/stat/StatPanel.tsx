@@ -2,20 +2,20 @@ import { isNumber } from 'lodash';
 import { memo, useCallback, type JSX } from 'react';
 
 import {
-  DisplayValueAlignmentFactors,
-  FieldDisplay,
+  type DisplayValueAlignmentFactors,
+  type FieldDisplay,
   FieldType,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  NumericRange,
-  PanelProps,
+  type NumericRange,
+  type PanelProps,
 } from '@grafana/data';
 import { findNumericFieldMinMax } from '@grafana/data/internal';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
-import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { BigValue, DataLinksContextMenu, useTheme2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const StatPanel = memo(
   ({

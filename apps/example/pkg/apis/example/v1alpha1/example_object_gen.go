@@ -260,6 +260,10 @@ func (o *Example) DeepCopyInto(dst *Example) {
 	o.Custom.DeepCopyInto(&dst.Custom)
 }
 
+func (Example) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.Example"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Example{}
 
@@ -311,6 +315,10 @@ func (o *ExampleList) DeepCopy() *ExampleList {
 
 func (o *ExampleList) DeepCopyInto(dst *ExampleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ExampleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.ExampleList"
 }
 
 // Interface compliance compile-time check

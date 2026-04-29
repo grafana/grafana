@@ -16,6 +16,8 @@ type SnapshotSpec struct {
 	OriginalUrl *string `json:"originalUrl,omitempty"`
 	// Snapshot creation timestamp
 	Timestamp *string `json:"timestamp,omitempty"`
+	// Snapshot delete key
+	DeleteKey *string `json:"deleteKey,omitempty"`
 	// The raw dashboard (unstructured for now)
 	Dashboard map[string]interface{} `json:"dashboard,omitempty"`
 }
@@ -26,4 +28,9 @@ func NewSnapshotSpec() *SnapshotSpec {
 		Expires:  (func(input int64) *int64 { return &input })(0),
 		External: (func(input bool) *bool { return &input })(false),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for SnapshotSpec.
+func (SnapshotSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
 }

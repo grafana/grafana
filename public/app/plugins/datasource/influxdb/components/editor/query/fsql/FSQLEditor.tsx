@@ -1,11 +1,11 @@
 import { PureComponent } from 'react';
 
-import { SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
-import { InlineFormLabel, LinkButton, Themeable2, withTheme2, Stack, Space } from '@grafana/ui';
+import { type SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
+import { InlineFormLabel, LinkButton, type Themeable2, withTheme2, Stack, Space } from '@grafana/ui';
 
-import InfluxDatasource from '../../../../datasource';
+import type InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
-import { InfluxQuery } from '../../../../types';
+import { type InfluxQuery } from '../../../../types';
 
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;

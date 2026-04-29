@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import {
-  MuteTiming,
+  type MuteTiming,
   useCreateMuteTiming,
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { MuteTimingFields } from '../../types/mute-timing-form';
+import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
+import { ALERTING_PATHS } from '../../utils/navigation';
 import { ImportedTimeIntervalAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
@@ -72,7 +73,11 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
 
   const updating = formApi.formState.isSubmitting;
 
-  const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'time_intervals' });
+  // V2 nav has dedicated time intervals page, legacy nav uses tab parameter
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+  const returnLink = useV2Nav
+    ? makeAMLink(ALERTING_PATHS.TIME_INTERVALS, selectedAlertmanager!)
+    : makeAMLink(ALERTING_PATHS.ROUTES + '/', selectedAlertmanager!, { tab: 'time_intervals' });
 
   const onSubmit = async (values: MuteTimingFields) => {
     const interval = createMuteTiming(values);

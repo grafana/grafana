@@ -53,15 +53,23 @@ func CalculateLoadingStrategy(p *plugins.Plugin, cfg *config.PluginManagementCfg
 	return plugins.LoadingStrategyFetch
 }
 
+// ScriptLoadingCompatible determines script loading compatibility by checking if a createPluginVersion string is >= 4.15.0.
+func ScriptLoadingCompatible(createPluginVersion string) bool {
+	if createPluginVersion == "" {
+		return false
+	}
+	createPluginVer, err := semver.NewVersion(createPluginVersion)
+	if err != nil {
+		// Invalid semver, treat as incompatible
+		return false
+	}
+	return !createPluginVer.LessThan(scriptLoadingMinSupportedVersion)
+}
+
 // compatibleCreatePluginVersion checks if the create_plugin_version setting is >= 4.15.0
 func compatibleCreatePluginVersion(ps map[string]string) bool {
 	if cpv, ok := ps[CreatePluginVersionCfgKey]; ok {
-		createPluginVer, err := semver.NewVersion(cpv)
-		if err != nil {
-			// Invalid semver, treat as incompatible
-			return false
-		}
-		return !createPluginVer.LessThan(scriptLoadingMinSupportedVersion)
+		return ScriptLoadingCompatible(cpv)
 	}
 	return false
 }

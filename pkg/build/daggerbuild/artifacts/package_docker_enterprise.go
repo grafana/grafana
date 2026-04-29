@@ -141,6 +141,10 @@ func (d *EntDocker) VerifyDirectory(ctx context.Context, client *dagger.Client, 
 	panic("not implemented") // TODO: Implement
 }
 
+func (d *EntDocker) String() string {
+	return "enterprise-docker"
+}
+
 func NewEntDockerFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	options, err := pipeline.ParseFlags(artifact, DockerFlags)
 	if err != nil {

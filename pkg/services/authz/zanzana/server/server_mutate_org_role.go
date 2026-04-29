@@ -6,10 +6,11 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateOrgRoles(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateOrgRoles")
 	defer span.End()
 
@@ -19,23 +20,46 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operation
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_AddUserOrgRole:
-			basicRole := zanzana.TranslateBasicRole(op.AddUserOrgRole.GetRole())
+			basicRole := common.TranslateBasicRole(op.AddUserOrgRole.GetRole())
 			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewTupleEntry(zanzana.TypeUser, op.AddUserOrgRole.GetUser(), ""),
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, ""),
+				User:     common.NewTupleEntry(common.TypeUser, op.AddUserOrgRole.GetUser(), ""),
+				Relation: common.RelationAssignee,
+				Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteUserOrgRole:
-			basicRole := zanzana.TranslateBasicRole(op.DeleteUserOrgRole.GetRole())
+			basicRole := common.TranslateBasicRole(op.DeleteUserOrgRole.GetRole())
 			tuple := &openfgav1.TupleKeyWithoutCondition{
-				User:     zanzana.NewTupleEntry(zanzana.TypeUser, op.DeleteUserOrgRole.GetUser(), ""),
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, ""),
+				User:     common.NewTupleEntry(common.TypeUser, op.DeleteUserOrgRole.GetUser(), ""),
+				Relation: common.RelationAssignee,
+				Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 			}
 			deleteTuples = append(deleteTuples, tuple)
 		case *authzextv1.MutateOperation_UpdateUserOrgRole:
 			writeTuple, existingTuples, err := s.getUserOrgRoleUpdateTuples(ctx, store, op.UpdateUserOrgRole)
+			if err != nil {
+				return err
+			}
+			writeTuples = append(writeTuples, writeTuple)
+			deleteTuples = append(deleteTuples, existingTuples...)
+		case *authzextv1.MutateOperation_AddServiceAccountOrgRole:
+			basicRole := common.TranslateBasicRole(op.AddServiceAccountOrgRole.GetRole())
+			tuple := &openfgav1.TupleKey{
+				User:     common.NewTupleEntry(common.TypeServiceAccount, op.AddServiceAccountOrgRole.GetServiceAccount(), ""),
+				Relation: common.RelationAssignee,
+				Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+			}
+			writeTuples = append(writeTuples, tuple)
+		case *authzextv1.MutateOperation_DeleteServiceAccountOrgRole:
+			basicRole := common.TranslateBasicRole(op.DeleteServiceAccountOrgRole.GetRole())
+			tuple := &openfgav1.TupleKeyWithoutCondition{
+				User:     common.NewTupleEntry(common.TypeServiceAccount, op.DeleteServiceAccountOrgRole.GetServiceAccount(), ""),
+				Relation: common.RelationAssignee,
+				Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+			}
+			deleteTuples = append(deleteTuples, tuple)
+		case *authzextv1.MutateOperation_UpdateServiceAccountOrgRole:
+			writeTuple, existingTuples, err := s.getServiceAccountOrgRoleUpdateTuples(ctx, store, op.UpdateServiceAccountOrgRole)
 			if err != nil {
 				return err
 			}
@@ -59,24 +83,31 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *storeInfo, operation
 	return nil
 }
 
-func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *storeInfo, req *authzextv1.UpdateUserOrgRoleOperation) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
+func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.UpdateUserOrgRoleOperation) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
+	return s.getOrgRoleUpdateTuples(ctx, store, common.TypeUser, req.GetUser(), req.GetRole())
+}
+
+func (s *Server) getServiceAccountOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.UpdateServiceAccountOrgRoleOperation) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
+	return s.getOrgRoleUpdateTuples(ctx, store, common.TypeServiceAccount, req.GetServiceAccount(), req.GetRole())
+}
+
+func (s *Server) getOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, subjectType, subjectName, role string) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
 	readReq := &openfgav1.ReadRequest{
 		StoreId: store.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
-			User:     zanzana.NewTupleEntry(zanzana.TypeUser, req.GetUser(), ""),
-			Relation: zanzana.RelationAssignee,
-			// read tuples by object type ("role:")
-			Object: zanzana.NewTupleEntry(zanzana.TypeRole, "", ""),
+			User:     common.NewTupleEntry(subjectType, subjectName, ""),
+			Relation: common.RelationAssignee,
+			Object:   common.NewTupleEntry(common.TypeRole, "", ""),
 		},
 	}
-	res, err := s.openfga.Read(ctx, readReq)
+	res, err := s.openFGAClient.Read(ctx, readReq)
 	if err != nil {
 		return nil, nil, err
 	}
 	existingBasicRoleTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 	for _, tuple := range res.GetTuples() {
-		_, roleName, _ := zanzana.SplitTupleObject(tuple.GetKey().GetObject())
-		if zanzana.IsBasicRole(roleName) {
+		_, roleName, _ := common.SplitTupleObject(tuple.GetKey().GetObject())
+		if common.IsBasicRole(roleName) {
 			existingBasicRoleTuples = append(existingBasicRoleTuples, &openfgav1.TupleKeyWithoutCondition{
 				User:     tuple.GetKey().GetUser(),
 				Relation: tuple.GetKey().GetRelation(),
@@ -85,11 +116,11 @@ func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *storeInf
 		}
 	}
 
-	basicRole := zanzana.TranslateBasicRole(req.GetRole())
+	basicRole := common.TranslateBasicRole(role)
 	writeTuple := &openfgav1.TupleKey{
-		User:     zanzana.NewTupleEntry(zanzana.TypeUser, req.GetUser(), ""),
-		Relation: zanzana.RelationAssignee,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, ""),
+		User:     common.NewTupleEntry(subjectType, subjectName, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}
 
 	return writeTuple, existingBasicRoleTuples, nil

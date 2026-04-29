@@ -1,4 +1,4 @@
-import { DataFrame, Field } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data';
 
 export const findFirstFieldByMatcher = (
   input: DataFrame[],

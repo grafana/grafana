@@ -1,10 +1,15 @@
 import { css } from '@emotion/css';
-import { FeatureLike } from 'ol/Feature';
+import { type FeatureLike } from 'ol/Feature';
 import { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type SelectableValue,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
@@ -12,9 +17,9 @@ import { comparisonOperationOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
-import { defaultStyleConfig, StyleConfig } from '../style/types';
-import { FeatureStyleConfig } from '../types';
-import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
+import { defaultStyleConfig, type StyleConfig } from '../style/types';
+import { type FeatureStyleConfig } from '../types';
+import { getUniqueFeatureValues, type LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
 
 import { StyleEditor } from './StyleEditor';

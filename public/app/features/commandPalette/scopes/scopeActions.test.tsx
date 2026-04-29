@@ -2,10 +2,10 @@ import { waitFor, renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
 
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { NodesMap, TreeNode } from '../../scopes/selector/types';
+import { type NodesMap, type TreeNode } from '../../scopes/selector/types';
 
 import { useRegisterScopesActions } from './scopeActions';
 import { useScopeServicesState } from './scopesUtils';
@@ -187,7 +187,7 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('scopes1', jest.fn());
     });
 
-    // Wait for the async search to complete
+    // Wait for the async search to be initiated
     await waitFor(() => {
       expect(mockScopeServicesState.searchAllNodes).toHaveBeenCalledWith('scopes1', 10);
     });
@@ -205,7 +205,10 @@ describe('useRegisterScopesActions', () => {
       },
     ];
 
-    expect(useRegisterActions).toHaveBeenLastCalledWith(actions, [actions]);
+    // Wait for the async search to complete and actions to be registered
+    await waitFor(() => {
+      expect(useRegisterActions).toHaveBeenLastCalledWith(actions, [actions]);
+    });
   });
 
   it('should use global scope search when "scope" cmdk level', async () => {
@@ -217,7 +220,7 @@ describe('useRegisterScopesActions', () => {
       return useRegisterScopesActions('scopes1', jest.fn(), 'scopes');
     });
 
-    // Wait for the async search to complete
+    // Wait for the async search to be initiated
     await waitFor(() => {
       expect(mockScopeServicesState.searchAllNodes).toHaveBeenCalledWith('scopes1', 10);
     });
@@ -237,7 +240,10 @@ describe('useRegisterScopesActions', () => {
       },
     ];
 
-    expect(useRegisterActions).toHaveBeenLastCalledWith(actions, [actions]);
+    // Wait for the async search to complete and actions to be registered
+    await waitFor(() => {
+      expect(useRegisterActions).toHaveBeenLastCalledWith(actions, [actions]);
+    });
   });
 
   it('should filter non leaf nodes from global scope search', async () => {

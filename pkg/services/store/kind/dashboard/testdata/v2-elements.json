@@ -1,0 +1,40 @@
+{
+  "metadata": { "name": "v2-dash-uid" },
+  "spec": {
+    "title": "V2 dashboard with elements",
+    "tags": ["v2", "elements"],
+    "links": [],
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Timeseries panel",
+          "description": "A v2 panel",
+          "vizConfig": { "kind": "TimeseriesPanel", "spec": {} },
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                { "kind": "PanelQuery", "spec": { "datasource": { "uid": "default.uid", "type": "default.type" } } }
+              ],
+              "transformations": [
+                { "id": "merge", "kind": "MergeTransformer" },
+                { "id": "groupBy", "kind": "GroupByTransformer" }
+              ]
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "LibraryPanel",
+        "spec": {
+          "id": 2,
+          "title": "Library panel instance",
+          "libraryPanel": { "uid": "lib-uid-123", "name": "My Library Panel" }
+        }
+      }
+    },
+    "layout": { "kind": "GridLayout", "spec": {} }
+  }
+}

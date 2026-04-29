@@ -1,21 +1,22 @@
 import {
-  Subscription,
-  JoinContext,
-  LeaveContext,
-  PublicationContext,
-  SubscriptionErrorContext,
-  SubscribedContext,
+  type Subscription,
+  type JoinContext,
+  type LeaveContext,
+  type PublicationContext,
+  type SubscriptionErrorContext,
+  type SubscribedContext,
+  type UnsubscribedContext,
 } from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
 
 import {
-  LiveChannelStatusEvent,
-  LiveChannelEvent,
+  type LiveChannelStatusEvent,
+  type LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
-  LiveChannelPresenceStatus,
-  LiveChannelAddress,
-  DataFrameJSON,
+  type LiveChannelPresenceStatus,
+  type LiveChannelAddress,
+  type DataFrameJSON,
   isValidLiveChannelAddress,
 } from '@grafana/data';
 
@@ -101,9 +102,12 @@ export class CentrifugeLiveChannel<T = any> {
         }
         this.sendStatus(ctx.data);
       })
-      .on('unsubscribed', () => {
+      .on('unsubscribed', (ctx: UnsubscribedContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+        if (ctx.code >= 100) {
+          this.currentStatus.error = ctx.reason;
+        }
         this.sendStatus();
       })
       .on('subscribing', () => {

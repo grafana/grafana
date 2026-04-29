@@ -29,7 +29,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	store := historian.NewAnnotationStore(&as, nil, metrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &fakes.FakeRuleService{}
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac)
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac, 500)
 	cfg := state.ManagerCfg{
 		Historian: hist,
 		Tracer:    tracing.InitializeTracerForTest(),
@@ -45,7 +45,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	var ans []state.StateTransition
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}
 

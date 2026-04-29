@@ -44,6 +44,38 @@ var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status
 	Message: "file already exists",
 }}
 
+// ErrUnauthorized indicates that authentication credentials are invalid or missing.
+var ErrUnauthorized error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusUnauthorized,
+	Reason:  metav1.StatusReasonUnauthorized,
+	Message: "authentication failed",
+}}
+
+// ErrPermissionDenied indicates that the authenticated user lacks required permissions.
+var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusForbidden,
+	Reason:  metav1.StatusReasonForbidden,
+	Message: "permission denied",
+}}
+
+// ErrServerUnavailable indicates that the remote server is unavailable or returned a 5xx error.
+var ErrServerUnavailable error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusServiceUnavailable,
+	Reason:  metav1.StatusReasonServiceUnavailable,
+	Message: "server unavailable",
+}}
+
+// ErrTooManyItems indicates that pagination limits were exceeded.
+var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusBadRequest,
+	Reason:  metav1.StatusReasonBadRequest,
+	Message: "maximum number of items exceeded",
+}}
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -137,6 +169,13 @@ type Hooks interface {
 	OnDelete(ctx context.Context) error
 }
 
+// WebhookSecretRotator is implemented by repositories that support periodic
+// webhook secret rotation. The controller calls RotateWebhookSecret when the
+// secret is due for rotation based on the configured interval.
+type WebhookSecretRotator interface {
+	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
+}
+
 type FileAction string
 
 const (
@@ -168,4 +207,11 @@ type Versioned interface {
 	LatestRef(ctx context.Context) (string, error)
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+}
+
+// BranchHandler is a repository that supports making actions on branches.
+type BranchHandler interface {
+	GetDefaultBranch(ctx context.Context) (string, error)
+	GetCurrentBranch() string
+	SetBranch(branch string)
 }

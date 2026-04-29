@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"math"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
@@ -13,6 +13,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
+
+// serviceNamespaceAltKey is an alternative to the OTel semconv canonical service.namespace (e.g. used by some SDKs).
+const serviceNamespaceAltKey = "service.namespace.name"
 
 type KeyValue struct {
 	Value any    `json:"value"`
@@ -48,6 +51,7 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
+			data.NewField("serviceNamespace", nil, []string{}),
 			data.NewField("kind", nil, []string{}),
 			data.NewField("statusCode", nil, []int64{}),
 			data.NewField("statusMessage", nil, []string{}),
@@ -119,7 +123,6 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceId
 	traceIDHex := hex.EncodeToString(traceID[:])
-	traceIDHex = strings.TrimPrefix(traceIDHex, strings.Repeat("0", 16))
 
 	spanID := span.SpanId
 	spanIDHex := hex.EncodeToString(spanID[:])
@@ -128,7 +131,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
 
 	startTime := float64(span.StartTimeUnixNano) / 1_000_000
-	serviceName, serviceTags := resourceToProcess(resource)
+	serviceName, serviceNamespace, serviceTags := resourceToProcess(resource)
 
 	status := span.Status
 	statusCode := int64(status.Code)
@@ -171,6 +174,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 		parentSpanIDHex,
 		span.Name,
 		serviceName,
+		serviceNamespace,
 		getSpanKind(span.Kind),
 		statusCode,
 		statusMessage,
@@ -186,17 +190,24 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	}, nil
 }
 
-func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
+func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 	attrs := resource.Attributes
 	serviceName := ResourceNoServiceName
+	var serviceNamespace, serviceNamespaceAlt string
 	if len(attrs) == 0 {
-		return serviceName, nil
+		return serviceName, serviceNamespace, nil
 	}
 
 	tags := make([]*KeyValue, 0, len(attrs)-1)
 	for _, attr := range attrs {
 		if attribute.Key(attr.Key) == semconv.ServiceNameKey {
 			serviceName = attr.GetValue().GetStringValue()
+		}
+		if attribute.Key(attr.Key) == semconv.ServiceNamespaceKey {
+			serviceNamespace = attr.GetValue().GetStringValue()
+		}
+		if attribute.Key(attr.Key) == attribute.Key(serviceNamespaceAltKey) {
+			serviceNamespaceAlt = attr.GetValue().GetStringValue()
 		}
 		val, err := getAttributeVal(attr.Value)
 		if err != nil {
@@ -205,7 +216,11 @@ func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
 
-	return serviceName, tags
+	// Coalesce: prefer OTel semconv canonical service.namespace, fallback to service.namespace.name
+	if serviceNamespace == "" && serviceNamespaceAlt != "" {
+		serviceNamespace = serviceNamespaceAlt
+	}
+	return serviceName, serviceNamespace, tags
 }
 
 func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
@@ -217,7 +232,17 @@ func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
 	case *commonv11.AnyValue_BoolValue:
 		return attr.GetBoolValue(), nil
 	case *commonv11.AnyValue_DoubleValue:
-		return attr.GetDoubleValue(), nil
+		f := attr.GetDoubleValue()
+		switch {
+		case math.IsNaN(f):
+			return "NaN", nil
+		case math.IsInf(f, 1):
+			return "Inf", nil
+		case math.IsInf(f, -1):
+			return "-Inf", nil
+		default:
+			return f, nil
+		}
 	case *commonv11.AnyValue_KvlistValue:
 		return kvListAsString(attr.GetKvlistValue())
 	case *commonv11.AnyValue_ArrayValue:
@@ -348,7 +373,6 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 
 		traceID := link.TraceId
 		traceIDHex := hex.EncodeToString(traceID[:])
-		traceIDHex = strings.TrimLeft(traceIDHex, "0")
 
 		spanID := link.SpanId
 		spanIDHex := hex.EncodeToString(spanID[:])

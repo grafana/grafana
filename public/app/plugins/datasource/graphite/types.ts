@@ -1,8 +1,8 @@
-import { DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
-import { GraphiteDatasource } from './datasource';
+import { type GraphiteDatasource } from './datasource';
 
 export enum GraphiteQueryType {
   Default = 'Default',

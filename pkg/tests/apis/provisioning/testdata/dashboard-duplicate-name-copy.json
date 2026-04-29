@@ -1,0 +1,10 @@
+{
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "test-dashboard-duplicate"
+  },
+  "spec": {
+    "title": "Dashboard For Duplicate Name Test (Copy)"
+  }
+}

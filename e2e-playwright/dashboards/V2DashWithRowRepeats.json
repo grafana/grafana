@@ -1,6 +1,6 @@
 {
   "apiVersion": "dashboard.grafana.app/v2beta1",
-  "kind": "Dashboard",
+  "kind": "DashboardWithAccessInfo",
   "metadata": {
     "name": "ad8l8fz",
     "namespace": "default",
@@ -56,10 +56,16 @@
                   "spec": {
                     "hidden": false,
                     "query": {
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
+                      "datasource": {
+                        "name": "gdev-testdata"
+                      },
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -162,10 +168,16 @@
                   "spec": {
                     "hidden": false,
                     "query": {
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "gdev-testdata"
+                      },
                       "kind": "DataQuery",
                       "spec": {},
-                      "version": "v0"
+                      "version": "v0",
+                      "labels": {
+                        "grafana.app/export-label": "grafana-testdata-datasource-1"
+                      }
                     },
                     "refId": "A"
                   }
@@ -307,7 +319,23 @@
                 "mode": "variable",
                 "value": "c4"
               },
-              "title": "Repeated row $c4"
+              "title": "Row - $c4"
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "columnWidthMode": "standard",
+                  "items": [],
+                  "maxColumnCount": 3,
+                  "rowHeightMode": "standard"
+                }
+              },
+              "title": "single row"
             }
           }
         ]

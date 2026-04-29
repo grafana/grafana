@@ -1,7 +1,7 @@
-import { act, render, waitFor, screen } from '@testing-library/react';
+import { act, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { MetricFindValue, VariableSupportType } from '@grafana/data';
+import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -22,6 +22,11 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
+const mockGetGroupByKeys = jest.fn().mockReturnValue([
+  { text: 'job', value: 'job' },
+  { text: 'instance', value: 'instance' },
+]);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -32,15 +37,29 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
-      getTagKeys: () => [],
+      getGroupByKeys: mockGetGroupByKeys,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
-    getTagKeys: () => [],
   }),
 }));
 
 describe('GroupByVariableEditor', () => {
+  beforeAll(() => {
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 1000,
+        height: 1000,
+        x: 0,
+        y: 0,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      })),
+    });
+  });
+
   it('renders GroupByVariableForm with correct props', async () => {
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(
@@ -89,6 +108,57 @@ describe('GroupByVariableEditor', () => {
     expect(variable.state.defaultOptions).toEqual(undefined);
   });
 
+  it('should fetch group by keys from datasource', async () => {
+    await setup();
+
+    await waitFor(() => {
+      expect(mockGetGroupByKeys).toHaveBeenCalledWith({ filters: [] });
+    });
+  });
+
+  it('should render provided default values as pills', async () => {
+    const { renderer } = await setup(undefined, { value: ['job'], text: ['job'] });
+
+    const section = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
+    );
+    expect(within(section).getByText('job')).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+  });
+
+  it('should update variable defaultValue and call changeValueTo when selecting a value from dropdown', async () => {
+    const { renderer, variable, user } = await setup();
+    const changeValueToSpy = jest.spyOn(variable, 'changeValueTo');
+
+    await waitFor(() => {
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+      ).toBeInTheDocument();
+    });
+
+    const combobox = within(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+    ).getByRole('combobox');
+    await user.click(combobox);
+    await user.click(await screen.findByRole('option', { name: 'job' }));
+
+    expect(variable.state.defaultValue).toEqual({ value: ['job'], text: ['job'] });
+    expect(changeValueToSpy).toHaveBeenCalledWith(['job'], ['job']);
+  });
+
+  it('should clear defaultValue and call changeValueTo with empty arrays when removing all selections', async () => {
+    const { renderer, variable, user } = await setup(undefined, { value: ['job'], text: ['job'] });
+    const changeValueToSpy = jest.spyOn(variable, 'changeValueTo');
+
+    const section = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
+    );
+    await user.click(within(section).getByRole('button', { name: 'Remove' }));
+
+    expect(variable.state.defaultValue).toBeUndefined();
+    expect(changeValueToSpy).toHaveBeenCalledWith([], []);
+  });
+
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
     const variable = new GroupByVariable({
       name: 'test',
@@ -109,13 +179,14 @@ describe('GroupByVariableEditor', () => {
     render(descriptor.renderElement());
 
     await waitFor(() => {
-      // Check that some part of the component renders
-      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect)
+      ).toBeInTheDocument();
     });
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[]) {
+async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value: string[]; text: string[] }) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',
@@ -123,9 +194,22 @@ async function setup(defaultOptions?: MetricFindValue[]) {
     label: 'Group By',
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
     defaultOptions,
+    defaultValue,
   });
+  const renderer = render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+
+  // Flush first useAsync (datasource)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
+  // Flush second useAsync (groupByKeys, depends on datasource)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
   return {
-    renderer: await act(() => render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />)),
+    renderer,
     variable,
     user: userEvent.setup(),
     mocks: { onRunQuery },

@@ -1,22 +1,31 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { config } from '@grafana/runtime';
 import {
-  useSearchTeamsQuery as useLegacySearchTeamsQuery,
-  useCreateTeamMutation,
+  API_GROUP,
+  API_VERSION,
+  type GetTeamApiArg,
+  type Team,
+  useLazyGetSearchTeamsQuery as useLazyGetSearchTeamsQueryIam,
+  useLazyGetTeamQuery as useLazyGetTeamQueryIam,
+  useGetTeamQuery as useGetTeamQueryIam,
+} from 'app/api/clients/iam/v0alpha1';
+import {
+  type TeamDto,
+  type UpdateTeamCommand,
   useDeleteTeamByIdMutation,
-  useListTeamsRolesQuery,
-  CreateTeamCommand,
-  useSetTeamRolesMutation,
   useGetTeamByIdQuery,
+  useLazyGetTeamByIdQuery as useLazyGetTeamByIdQueryLegacy,
+  useLazySearchTeamsQuery as useLazySearchTeamsQueryLegacy,
+  useSearchTeamsQuery as useLegacySearchTeamsQuery,
+  useListTeamsRolesQuery,
   useUpdateTeamMutation,
-  UpdateTeamCommand,
 } from 'app/api/clients/legacy';
-import { addFilteredDisplayName } from 'app/core/components/RolePicker/utils';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { addFilteredDisplayName } from 'app/core/utils/roles';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
 
 import { buildNavModel } from './state/navModel';
@@ -24,7 +33,7 @@ import { buildNavModel } from './state/navModel';
 const rolesEnabled =
   contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
 
-const canUpdateRoles = () =>
+export const canUpdateRoles = () =>
   contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
   contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
@@ -123,42 +132,109 @@ export const useDeleteTeam = () => {
 };
 
 /**
- * Create a new team, and link any pending roles
+ * Transform a legacy TeamDto to the IAM Team (k8s) shape.
  */
-export const useCreateTeam = () => {
-  const [createTeam, response] = useCreateTeamMutation();
-  const [setTeamRoles] = useSetTeamRolesMutation();
-  const [createFolder] = useCreateFolder();
-
-  const trigger = async (team: CreateTeamCommand, pendingRoles?: Role[], createTeamFolder?: boolean) => {
-    const mutationResult = await createTeam({
-      createTeamCommand: team,
-    });
-
-    const { data } = mutationResult;
-
-    // Add any pending roles to the team
-    if (data && data.teamId && pendingRoles && pendingRoles.length) {
-      await contextSrv.fetchUserPermissions();
-      if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
-        await setTeamRoles({
-          teamId: data.teamId,
-          setTeamRolesCommand: {
-            roleUids: pendingRoles.map((role) => role.uid),
-          },
-        });
-      }
-    }
-
-    if (data && data.uid && createTeamFolder) {
-      await createFolder({
-        title: team.name,
-        teamOwnerReferences: [{ uid: data.uid, name: team.name }],
-      });
-    }
-
-    return mutationResult;
+export function teamDtoToTeam(dto: TeamDto): Team {
+  return {
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    kind: 'Team',
+    metadata: {
+      name: dto.uid,
+      creationTimestamp: '',
+    },
+    spec: {
+      title: dto.name,
+      email: dto.email ?? '',
+      externalUID: dto.externalUID ?? '',
+      provisioned: dto.isProvisioned,
+      // FIXME: Legacy API does not return team members, so this will always be an empty array. We should either update the legacy API to include members or make a separate call to fetch them.
+      members: [],
+    },
   };
+}
 
-  return [trigger, response] as const;
-};
+/**
+ * Transform legacy TeamDto[] to IAM search hit shape.
+ */
+export function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
+  return teams.map((t) => ({ title: t.name, name: t.uid }));
+}
+
+const appPlatformIamEnabled = () => Boolean(config.featureToggles.kubernetesTeamsApi);
+
+/**
+ * Facade hook: get a team by UID, using IAM or legacy endpoint based on feature toggle.
+ */
+export function useGetTeamByUidQuery(args: GetTeamApiArg | typeof skipToken) {
+  const enabled = appPlatformIamEnabled();
+
+  const iamResult = useGetTeamQueryIam(enabled ? args : skipToken);
+  const legacyResult = useGetTeamByIdQuery(!enabled && args !== skipToken ? { teamId: args.name } : skipToken);
+
+  if (enabled) {
+    return iamResult;
+  }
+
+  return {
+    ...legacyResult,
+    data: legacyResult.data ? teamDtoToTeam(legacyResult.data) : undefined,
+  };
+}
+
+/**
+ * Calls either the IAM or legacy get team by UID endpoint based on the feature toggle.
+ */
+export function useLazyGetTeamByUidQuery() {
+  const enabled = appPlatformIamEnabled();
+  const [iamTrigger, iamResult] = useLazyGetTeamQueryIam();
+  const [legacyTrigger, legacyResult] = useLazyGetTeamByIdQueryLegacy();
+
+  const iamTriggerer = useCallback(
+    (args: GetTeamApiArg, preferCacheValue?: boolean) => iamTrigger(args, preferCacheValue),
+    [iamTrigger]
+  );
+
+  const legacyTriggerer = useCallback(
+    (args: GetTeamApiArg, preferCacheValue?: boolean) =>
+      legacyTrigger({ teamId: args.name }, preferCacheValue).then((result) => ({
+        ...result,
+        data: result.data ? teamDtoToTeam(result.data) : undefined,
+      })),
+    [legacyTrigger]
+  );
+
+  if (enabled) {
+    return [iamTriggerer, iamResult] as const;
+  }
+
+  return [
+    legacyTriggerer,
+    {
+      ...legacyResult,
+      data: legacyResult.data ? teamDtoToTeam(legacyResult.data) : undefined,
+    },
+  ] as const;
+}
+
+/**
+ * Calls either the IAM or legacy search teams endpoint based on the feature toggle.
+ */
+export function useLazySearchTeamsQuery() {
+  const enabled = appPlatformIamEnabled();
+  const [iamTrigger, iamResult] = useLazyGetSearchTeamsQueryIam();
+  const [legacyTrigger, legacyResult] = useLazySearchTeamsQueryLegacy();
+
+  const legacyTriggerWrapped = (args: { query?: string }, preferCacheValue?: boolean) =>
+    legacyTrigger({ query: args.query }, preferCacheValue).then((result) => ({
+      ...result,
+      data: result.data
+        ? { hits: legacySearchToIamSearchHits(result.data.teams ?? []), totalHits: result.data.totalCount ?? 0 }
+        : undefined,
+    }));
+
+  if (enabled) {
+    return [iamTrigger, iamResult] as const;
+  }
+
+  return [legacyTriggerWrapped, legacyResult] as const;
+}

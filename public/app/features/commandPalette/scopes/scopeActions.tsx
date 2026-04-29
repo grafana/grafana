@@ -1,10 +1,10 @@
 import { useRegisterActions } from 'kbar';
 import { last } from 'lodash';
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 
 import { ScopesRow } from './ScopesRow';
 import { useRecentScopesActions } from './recentScopesActions';
@@ -139,7 +139,7 @@ function useScopesRow(onApply: () => void) {
 function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
   const { selectScope, searchAllNodes, getScopeNodes } = useScopeServicesState();
   const [actions, setActions] = useState<CommandPaletteAction[] | undefined>(undefined);
-  const searchQueryRef = useRef<string>();
+  const searchQueryRef = useRef<string>(undefined);
 
   useEffect(() => {
     if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {

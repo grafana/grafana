@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,7 +12,7 @@ import (
 
 func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 	if len(repo.Spec.Workflows) == 0 {
-		return apierrors.NewBadRequest("this repository is read only")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("write operations are not allowed for this repository"))
 	}
 
 	var supportsWrite, supportsBranch bool
@@ -36,39 +37,89 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 
 	switch {
 	case ref == "" && !supportsWrite:
-		return apierrors.NewBadRequest("this repository does not support the write workflow")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("write operations are not allowed for this repository"))
 	case ref != "" && !supportsBranch:
-		return apierrors.NewBadRequest("this repository does not support the branch workflow")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("branch workflow is not allowed for this repository"))
 	default:
 		return nil
 	}
 }
 
-// CanUseIncrementalSync checks if an incremental sync can be performed or if a full sync is needed,
-// given a list of deleted file paths. It will return true if a .keep file is deleted without
-// other files being deleted in the same directory. This is because the folder will not be a part of the
-// deleted files, and the .keep file is not a resource in grafana, so we can't get the folder uid.
-// A full sync will clean that up.
-func CanUseIncrementalSync(deletedPaths []string) bool {
-	dirsWithKeepDeletes := make(map[string]struct{})
+// CanUseIncrementalSyncInController determines if an incremental sync is permitted in the controller, based on the given file changes,
+// the folder metadata feature flag, and the maximum allowed changes. It returns false to require a full sync if:
+//   - The number of changes exceeds maxIncrementalChanges,
+//   - Any directory only has its folder-metadata file removed (.keep, or _folder.json if folderMetadataEnabled) without
+//     any Grafana resources in that directory being deleted. In such cases, a full sync is needed because the incremental
+//     sync cannot determine whether an entire folder (not just its metadata) was deleted, and these metadata files do not
+//     represent Grafana resources themselves. Returning false ensures deleted directories are properly cleaned up by a full sync.
+func CanUseIncrementalSyncInController(
+	changes []VersionedFileChange,
+	folderMetadataEnabled bool,
+	maxIncrementalChanges int,
+) bool {
+	if maxIncrementalChanges > 0 && len(changes) > maxIncrementalChanges {
+		return false
+	}
+
+	var deletedPaths []string
+	for _, change := range changes {
+		if change.Action == FileActionDeleted {
+			deletedPaths = append(deletedPaths, change.Path)
+		}
+	}
+
+	dirsWithMetadataDeletes := make(map[string]struct{})
 	dirsWithOtherDeletes := make(map[string]struct{})
 
 	for _, path := range deletedPaths {
 		dir := safepath.Dir(path)
-		if strings.HasSuffix(path, ".keep") {
-			dirsWithKeepDeletes[dir] = struct{}{}
+		if isFolderMetadataFile(path, folderMetadataEnabled) {
+			dirsWithMetadataDeletes[dir] = struct{}{}
 		} else {
 			dirsWithOtherDeletes[dir] = struct{}{}
 		}
 	}
 
-	// if there are any .keep files deleted that don't have other files deleted in the same folder,
-	// we need to do a full sync
-	for dir := range dirsWithKeepDeletes {
+	for dir := range dirsWithMetadataDeletes {
 		if _, exists := dirsWithOtherDeletes[dir]; !exists {
 			return false
 		}
 	}
 
 	return true
+}
+
+// CanUseIncrementalSyncInWebhook determines if an incremental sync is permitted in the webhook, based on the given deleted paths,
+// and the folder metadata feature flag. It returns false to require a full sync if:
+//   - Any directory only has its folder-metadata file removed (.keep, or _folder.json if folderMetadataEnabled) without
+//     any Grafana resources in that directory being deleted. In such cases, a full sync is needed because the incremental
+//     sync cannot determine whether an entire folder (not just its metadata) was deleted, and these metadata files do not
+//     represent Grafana resources themselves. Returning false ensures deleted directories are properly cleaned up by a full sync.
+func CanUseIncrementalSyncInWebhook(deletedPaths []string, folderMetadataEnabled bool) bool {
+	dirsWithMetadataDeletes := make(map[string]struct{})
+	dirsWithOtherDeletes := make(map[string]struct{})
+
+	for _, path := range deletedPaths {
+		dir := safepath.Dir(path)
+		if isFolderMetadataFile(path, folderMetadataEnabled) {
+			dirsWithMetadataDeletes[dir] = struct{}{}
+		} else {
+			dirsWithOtherDeletes[dir] = struct{}{}
+		}
+	}
+
+	for dir := range dirsWithMetadataDeletes {
+		if _, exists := dirsWithOtherDeletes[dir]; !exists {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isFolderMetadataFile(path string, folderMetadataEnabled bool) bool {
+	if strings.HasSuffix(path, ".keep") {
+		return true
+	}
+	return folderMetadataEnabled && safepath.Base(path) == "_folder.json"
 }

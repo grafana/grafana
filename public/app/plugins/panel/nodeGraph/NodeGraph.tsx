@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
@@ -13,16 +13,16 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
-import { Config, defaultConfig, useLayout, LayoutCache } from './layout';
-import { LayoutAlgorithm } from './panelcfg.gen';
-import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
+import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
+import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
+import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
+import { processNodes, type Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({

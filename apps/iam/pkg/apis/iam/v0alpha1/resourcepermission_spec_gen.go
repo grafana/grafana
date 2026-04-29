@@ -17,6 +17,11 @@ func NewResourcePermissionspecResource() *ResourcePermissionspecResource {
 	return &ResourcePermissionspecResource{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for ResourcePermissionspecResource.
+func (ResourcePermissionspecResource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecResource"
+}
+
 // +k8s:openapi-gen=true
 type ResourcePermissionspecPermission struct {
 	// kind of the identity getting the permission
@@ -30,6 +35,11 @@ type ResourcePermissionspecPermission struct {
 // NewResourcePermissionspecPermission creates a new ResourcePermissionspecPermission object.
 func NewResourcePermissionspecPermission() *ResourcePermissionspecPermission {
 	return &ResourcePermissionspecPermission{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ResourcePermissionspecPermission.
+func (ResourcePermissionspecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionspecPermission"
 }
 
 // +k8s:openapi-gen=true
@@ -46,6 +56,11 @@ func NewResourcePermissionSpec() *ResourcePermissionSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for ResourcePermissionSpec.
+func (ResourcePermissionSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionSpec"
+}
+
 // +k8s:openapi-gen=true
 type ResourcePermissionSpecPermissionKind string
 
@@ -55,3 +70,8 @@ const (
 	ResourcePermissionSpecPermissionKindTeam           ResourcePermissionSpecPermissionKind = "Team"
 	ResourcePermissionSpecPermissionKindBasicRole      ResourcePermissionSpecPermissionKind = "BasicRole"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for ResourcePermissionSpecPermissionKind.
+func (ResourcePermissionSpecPermissionKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ResourcePermissionSpecPermissionKind"
+}

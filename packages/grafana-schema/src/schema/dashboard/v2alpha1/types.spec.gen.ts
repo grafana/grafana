@@ -216,6 +216,8 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope;
 	// The matcher options. This is specific to the matcher implementation.
 	options?: any;
 }
@@ -223,6 +225,10 @@ export interface MatcherConfig {
 export const defaultMatcherConfig = (): MatcherConfig => ({
 	id: "",
 });
+
+export type MatcherScope = "series" | "nested" | "annotation" | "exemplar";
+
+export const defaultMatcherScope = (): MatcherScope => ("series");
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
@@ -309,7 +315,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -1152,6 +1158,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1160,8 +1168,8 @@ export const defaultVariableOption = (): VariableOption => ({
 });
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable";
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
 
 export const defaultVariableHide = (): VariableHide => ("dontHide");
 
@@ -1435,6 +1443,8 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1445,6 +1455,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
+	enableGroupBy: false,
 });
 
 // Define the AdHocFilterWithLabels type

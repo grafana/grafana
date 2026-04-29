@@ -3,14 +3,14 @@ import { pickBy } from 'lodash';
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { RuleNamespace } from '../../../types/unified-alerting';
-import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
+import { type RuleNamespace } from '../../../types/unified-alerting';
+import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
-import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
-import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { AdvancedFilters } from './rule-list/filter/types';
-import { RulesFilter } from './search/rulesSearchParser';
-import { RuleFormType } from './types/rule-form';
+import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
+import { type AdvancedFilters } from './rule-list/filter/types';
+import { type RulesFilter } from './search/rulesSearchParser';
+import { type RuleFormType } from './types/rule-form';
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -193,6 +193,22 @@ export const trackNewGrafanaAlertRuleFormError = () => {
   reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
 };
 
+export const trackCreateRuleFromPanelDrawerOpened = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_opened');
+};
+
+export const trackCreateRuleFromPanelDrawerRuleCreated = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_rule_created');
+};
+
+export const trackCreateRuleFromPanelDrawerContinueInAlertingClicked = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_continue_in_alerting_clicked');
+};
+
+export const trackCreateRuleFromPanelDrawerClosedWithoutSaving = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_closed_without_saving');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,
@@ -231,7 +247,8 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
-  importSource: 'yaml' | 'datasource';
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
   isRootFolder: boolean;
   namespace?: string;
   ruleGroup?: string;
@@ -241,9 +258,39 @@ export const trackImportToGMASuccess = async (payload: {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
-export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+export const trackImportToGMAError = async (payload: {
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
+}) => {
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
+
+export function trackImportToGMAWizardStarted() {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_started');
+}
+
+export function trackImportToGMAWizardCancelled(payload: { cancelledAtStep: string; formDirty: boolean }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_cancelled', payload);
+}
+
+export function trackImportToGMAWizardStepSkipped(payload: { step: 'notifications' | 'rules' }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_step_skipped', payload);
+}
+
+export function trackImportToGMADryrunSuccess() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_success');
+}
+
+export function trackImportToGMADryrunWarning(payload: {
+  renamedReceiversCount: number;
+  renamedTimeIntervalsCount: number;
+}) {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_warning', payload);
+}
+
+export function trackImportToGMADryrunError() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_error');
+}
 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
@@ -374,3 +421,69 @@ export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
 };
+
+// ============================================================================
+// Alerts Activity Banner & View Experience Telemetry
+// ============================================================================
+
+/**
+ * Track banner impression - fired once per session when banner is first shown.
+ * Note: user_id, org_id, grafana_version, and other common properties are automatically
+ * tracked by the analytics infrastructure.
+ */
+export function trackAlertsActivityBannerImpression() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
+}
+
+/**
+ * Track when user clicks "Open Alerts Activity" CTA
+ */
+export function trackAlertsActivityBannerClickTry() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_click');
+}
+
+/**
+ * Track when user dismisses the banner
+ */
+export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
+  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
+    dismissed_until: dismissedUntil,
+  });
+}
+
+// ============================================================================
+// View Experience Toggle Telemetry (persistent control near page title)
+// ============================================================================
+
+// Payload for view experience toggle telemetry.
+
+export interface ViewExperienceToggleEventPayload {
+  currentView: 'v1' | 'v2';
+  targetView: 'v1' | 'v2';
+}
+
+/**
+ * Track when user clicks the view experience toggle (either direction)
+ */
+export function trackViewExperienceToggleClick(
+  payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
+) {
+  reportInteraction('grafana_alerting_view_experience_toggle', { ...payload });
+}
+
+/**
+ * Track when view experience preference is persisted (or fails to persist)
+ */
+export function trackViewExperienceToggleConfirmed(
+  payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
+) {
+  reportInteraction('grafana_alerting_view_experience_confirmed', { ...payload });
+}
+
+/**
+ * Track which rule list version (V1 or V2) is displayed on page load.
+ * Fired once per mount in the RuleList router component.
+ */
+export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
+  reportInteraction('grafana_alerting_rule_list_page_view', payload);
+}

@@ -1,7 +1,7 @@
-import { QueryEditorProps } from '@grafana/data';
-import { SqlQueryEditorLazy, SQLOptions, SQLQuery, QueryHeaderProps } from '@grafana/sql';
+import { type QueryEditorProps } from '@grafana/data';
+import { SqlQueryEditorLazy, type SQLOptions, type SQLQuery, type QueryHeaderProps } from '@grafana/sql';
 
-import { PostgresDatasource } from './datasource';
+import { type PostgresDatasource } from './datasource';
 
 const queryHeaderProps: Pick<QueryHeaderProps, 'dialect'> = { dialect: 'postgres' };
 

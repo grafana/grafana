@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -199,12 +201,108 @@ func (m *scopedReceiverTestingPermissions) Exec(sess *xorm.Session, mg *migrator
 		rolesAffected[result.RoleID] = append(rolesAffected[result.RoleID], result.Identifier)
 	}
 	_, err := sess.InsertMulti(&permissionsToCreate)
-	for id, ids := range rolesAffected {
-		mg.Logger.Debug(fmt.Sprintf("Added permission '%s' to managed role", accesscontrol.ActionAlertingReceiversTestCreate), "roleID", id, "identifiers", ids)
+	if err == nil {
+		for id, ids := range rolesAffected {
+			mg.Logger.Debug(fmt.Sprintf("Added permission '%s' to managed role", accesscontrol.ActionAlertingReceiversTestCreate), "roleID", id, "identifiers", ids)
+		}
 	}
 	return err
 }
 
 func AddScopedReceiverTestingPermissions(mg *migrator.Migrator) {
 	mg.AddMigration("add 'alert.notifications.receivers.test:create' to managed roles", &scopedReceiverTestingPermissions{})
+}
+
+type managedRoutesPermissions struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = new(managedRoutesPermissions)
+
+func (m *managedRoutesPermissions) SQL(migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *managedRoutesPermissions) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Grant default route permissions to basic roles (Editor=Edit, Viewer=View).
+	// This mirrors routeDefaultPermissions() in ossaccesscontrol/routes.go.
+	// Only adds permissions to existing managed roles — does not create new ones.
+
+	scope := models.ScopeRoutesProvider.GetResourceScopeUID(models.DefaultRoutingTreeName)
+	viewerActions := []string{
+		accesscontrol.ActionAlertingManagedRoutesRead,
+	}
+	editorActions := []string{
+		accesscontrol.ActionAlertingManagedRoutesRead,
+		accesscontrol.ActionAlertingManagedRoutesWrite,
+		accesscontrol.ActionAlertingManagedRoutesDelete,
+	}
+	allActions := editorActions
+	editorRoleName := accesscontrol.ManagedBuiltInRoleName(string(org.RoleEditor))
+	viewerRoleName := accesscontrol.ManagedBuiltInRoleName(string(org.RoleViewer))
+
+	// Single query: fetch all editor and viewer managed roles across all orgs.
+	var roles []accesscontrol.Role
+	if err := sess.In("name", editorRoleName, viewerRoleName).Find(&roles); err != nil {
+		return fmt.Errorf("failed to find managed roles: %w", err)
+	}
+	if len(roles) == 0 {
+		mg.Logger.Info("No managed roles found for editor/viewer, skipping default notification policy permissions")
+		return nil
+	}
+
+	roleIDs := make([]int64, 0, len(roles))
+	for _, r := range roles {
+		roleIDs = append(roleIDs, r.ID)
+	}
+
+	// fetch all existing route permissions for these roles.
+	var existing []accesscontrol.Permission
+	if err := sess.Table("permission").In("role_id", roleIDs).In("action", allActions).Where("scope = ?", scope).Find(&existing); err != nil {
+		return fmt.Errorf("failed to check existing permissions: %w", err)
+	}
+
+	type roleAction struct {
+		roleID int64
+		action string
+	}
+	existingSet := make(map[roleAction]bool, len(existing))
+	for _, p := range existing {
+		existingSet[roleAction{roleID: p.RoleID, action: p.Action}] = true
+	}
+
+	// Build the list of permissions to insert.
+	now := time.Now()
+	var toInsert []accesscontrol.Permission
+	for _, role := range roles {
+		actions := editorActions
+		if role.Name == viewerRoleName {
+			actions = viewerActions
+		}
+		for _, action := range actions {
+			if existingSet[roleAction{roleID: role.ID, action: action}] {
+				continue
+			}
+			p := accesscontrol.Permission{
+				RoleID:  role.ID,
+				Action:  action,
+				Scope:   scope,
+				Updated: now,
+				Created: now,
+			}
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+			toInsert = append(toInsert, p)
+		}
+	}
+
+	if len(toInsert) > 0 {
+		if _, err := sess.InsertMulti(&toInsert); err != nil {
+			return fmt.Errorf("failed to insert permissions: %w", err)
+		}
+	}
+	return nil
+}
+
+func AddManagedRoutesPermissions(mg *migrator.Migrator) {
+	mg.AddMigration("grant basic roles access to default notification policy", &managedRoutesPermissions{})
 }

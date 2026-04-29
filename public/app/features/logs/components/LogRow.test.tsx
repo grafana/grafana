@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
-import { mockTimeRange } from '@grafana/plugin-ui';
+import { CoreApp, createTheme, LogLevel, type LogRowModel } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
 
 import { LogRow } from './LogRow';
 import { getLogRowStyles } from './getLogRowStyles';

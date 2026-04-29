@@ -23,6 +23,12 @@ type Correlation struct {
 	Spec CorrelationSpec `json:"spec" yaml:"spec"`
 }
 
+func NewCorrelation() *Correlation {
+	return &Correlation{
+		Spec: *NewCorrelationSpec(),
+	}
+}
+
 func (o *Correlation) GetSpec() any {
 	return o.Spec
 }
@@ -222,6 +228,10 @@ func (o *Correlation) DeepCopyInto(dst *Correlation) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (Correlation) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.Correlation"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Correlation{}
 
@@ -273,6 +283,10 @@ func (o *CorrelationList) DeepCopy() *CorrelationList {
 
 func (o *CorrelationList) DeepCopyInto(dst *CorrelationList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (CorrelationList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationList"
 }
 
 // Interface compliance compile-time check

@@ -1,12 +1,18 @@
+import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  SceneDataLayerProviderState,
-  SceneDataLayerProvider,
+  type SceneDataLayerProviderState,
+  type SceneDataLayerProvider,
   SceneDataLayerSetBase,
-  SceneComponentProps,
+  type SceneComponentProps,
 } from '@grafana/scenes';
 
-import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { type AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
+
+export const NEW_ANNOTATION_NAME = 'New annotation';
+export const NEW_ANNOTATION_COLOR = 'red';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;
@@ -50,6 +56,25 @@ export class DashboardDataLayerSet
     this.setState({ annotationLayers: [...this.state.annotationLayers, layer] });
   }
 
+  public createDefaultAnnotationLayer(): DashboardAnnotationsDataLayer {
+    const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
+    const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
+
+    const newAnnotationQuery: AnnotationQuery = {
+      enable: true,
+      datasource: datasourceRef,
+      name: NEW_ANNOTATION_NAME,
+      iconColor: NEW_ANNOTATION_COLOR,
+    };
+
+    return new DashboardAnnotationsDataLayer({
+      query: newAnnotationQuery,
+      name: newAnnotationQuery.name,
+      isEnabled: true,
+      isHidden: false,
+    });
+  }
+
   private getAllLayers() {
     const layers = [...this.state.annotationLayers];
 
@@ -79,4 +104,8 @@ export function isDashboardDataLayerSetState(data: unknown): data is DashboardDa
   }
 
   return false;
+}
+
+export function isDashboardDataLayerSet(obj: unknown): obj is DashboardDataLayerSet {
+  return obj instanceof DashboardDataLayerSet;
 }

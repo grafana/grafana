@@ -12,3 +12,8 @@ type CheckSpec struct {
 func NewCheckSpec() *CheckSpec {
 	return &CheckSpec{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for CheckSpec.
+func (CheckSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
+}

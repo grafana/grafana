@@ -1,26 +1,26 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../../scene/NavToolbarActions';
-import { PanelEditor } from '../PanelEditor';
+import { type PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { dashboard, optionsPane, containerRef, containerHeight, splitter } = usePanelEditorShell(model);
+  const { dashboard, optionsPane, splitter } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={styles.container}>
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
@@ -28,7 +28,7 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
-          <VizAndDataPaneNext model={model} containerHeight={containerHeight} />
+          <VizAndDataPaneNext model={model} />
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>

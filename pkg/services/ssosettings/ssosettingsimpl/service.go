@@ -64,12 +64,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	}
 
 	providersList := ssosettings.AllOAuthProviders
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
-		providersList = append(providersList, social.LDAPProviderName)
-		configurableProviders[social.LDAPProviderName] = true
-	}
+	providersList = append(providersList, social.LDAPProviderName)
+	configurableProviders[social.LDAPProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
@@ -258,8 +254,61 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	return nil
 }
 
-func (s *Service) Patch(ctx context.Context, provider string, data map[string]any) error {
-	panic("not implemented") // TODO: Implement
+func (s *Service) Patch(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error {
+	if !s.isProviderConfigurable(provider) {
+		return ssosettings.ErrNotConfigurable
+	}
+
+	reloadable, ok := s.reloadables[provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
+	}
+
+	storedSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		return err
+	}
+
+	newSettingsMap := make(map[string]any)
+	for k, v := range storedSettings.Settings {
+		newSettingsMap[k] = v
+	}
+	for k, v := range data {
+		newSettingsMap[k] = v
+	}
+
+	newSettings := &models.SSOSettings{
+		Provider: provider,
+		Settings: newSettingsMap,
+	}
+
+	settingsWithSecrets, err := mergeSecrets(newSettings.Settings, storedSettings.Settings)
+	if err != nil {
+		return err
+	}
+	newSettings.Settings = settingsWithSecrets
+
+	err = reloadable.Validate(ctx, *newSettings, *storedSettings, requester)
+	if err != nil {
+		return err
+	}
+
+	newSettings.Settings, err = s.encryptSecrets(ctx, newSettings.Settings)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.Upsert(ctx, newSettings)
+	if err != nil {
+		return err
+	}
+
+	reloadSettings := *newSettings
+	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
+
+	go s.reload(reloadable, provider, reloadSettings)
+
+	return nil
 }
 
 func (s *Service) Delete(ctx context.Context, provider string) error {

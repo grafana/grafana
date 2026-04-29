@@ -1,7 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import config from 'app/core/config';
-import { UsersState, OrgUser } from 'app/types/user';
+import { type UsersState, type OrgUser } from 'app/types/user';
 
 export const initialState: UsersState = {
   users: [],
@@ -9,9 +8,6 @@ export const initialState: UsersState = {
   page: 0,
   perPage: 30,
   totalPages: 1,
-  externalUserMngInfo: config.externalUserMngInfo,
-  externalUserMngLinkName: config.externalUserMngLinkName,
-  externalUserMngLinkUrl: config.externalUserMngLinkUrl,
   isLoading: false,
   rolesLoading: false,
 };

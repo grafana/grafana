@@ -1,7 +1,7 @@
-import { AdHocVariableModel, EventBusSrv, GroupByVariableModel, VariableModel } from '@grafana/data';
-import { BackendSrv, config, setBackendSrv } from '@grafana/runtime';
+import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
+import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { AdHocFilterItem, PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
@@ -38,17 +38,17 @@ describe('setDashboardPanelContext', () => {
 
   describe('canEditAnnotations', () => {
     it('Can edit global event when user has org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: true });
+      const { context } = buildTestScene({ canEdit: true });
       expect(context.canEditAnnotations!()).toBe(true);
     });
 
     it('Can not edit global event when has no org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: false });
+      const { context } = buildTestScene({ canEdit: false });
       expect(context.canEditAnnotations!()).toBe(false);
     });
 
     it('Can edit dashboard event when has dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: true });
+      const { context } = buildTestScene({ canEdit: true });
       expect(context.canEditAnnotations!('dash-uid')).toBe(true);
     });
 
@@ -325,7 +325,6 @@ interface SceneOptions {
   canAdd?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
-  orgCanEdit?: boolean;
   existingFilterVariable?: boolean;
   existingGroupByVariable?: boolean;
   groupByDatasourceUid?: string;
@@ -391,11 +390,6 @@ function buildTestScene(options: SceneOptions) {
         dashboard: {
           canAdd: options.canAdd ?? false,
           canEdit: options.canEdit ?? false,
-          canDelete: options.canDelete ?? false,
-        },
-        organization: {
-          canAdd: false,
-          canEdit: options.orgCanEdit ?? false,
           canDelete: options.canDelete ?? false,
         },
       },

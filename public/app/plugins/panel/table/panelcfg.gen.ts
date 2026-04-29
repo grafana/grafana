@@ -8,8 +8,13 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/table/panelcfg.cue file.
+
 import * as ui from '@grafana/schema';
 
+/**
+ * @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
+ */
 export interface Options {
   /**
    * Controls the height of the rows

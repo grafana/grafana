@@ -28,6 +28,7 @@ func DataPlaneService(name string) *DataPlaneServiceApplyConfiguration {
 	b.WithAPIVersion("aggregation.grafana.app/v0alpha1")
 	return b
 }
+
 func (b DataPlaneServiceApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

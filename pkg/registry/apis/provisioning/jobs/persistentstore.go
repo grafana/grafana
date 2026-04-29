@@ -431,7 +431,7 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
 	// Update the job in storage with the latest resource version
-	_, err = s.client.Jobs(job.GetNamespace()).Update(ctx, updatedJob, metav1.UpdateOptions{})
+	result, err := s.client.Jobs(job.GetNamespace()).Update(ctx, updatedJob, metav1.UpdateOptions{})
 	if apierrors.IsConflict(err) {
 		err := apifmt.Errorf("failed to renew lease for job '%s' in '%s': lease conflict", job.GetName(), job.GetNamespace())
 		span.RecordError(err)
@@ -447,9 +447,11 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		return apifmt.Errorf("failed to renew lease for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	// Update the job's claim timestamp and resource version in memory
-	job.Labels[LabelJobClaim] = updatedJob.Labels[LabelJobClaim]
-	job.ResourceVersion = updatedJob.ResourceVersion
+	// Use the server-returned object which has the updated ResourceVersion.
+	// Using the sent object would store a stale version, causing guaranteed
+	// conflicts on subsequent Updates (e.g., from onProgress).
+	job.Labels[LabelJobClaim] = result.Labels[LabelJobClaim]
+	job.ResourceVersion = result.ResourceVersion
 
 	logger.Debug("renew lease complete")
 	return nil

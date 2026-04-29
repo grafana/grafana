@@ -1,4 +1,4 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -9,19 +9,19 @@ import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { CanvasGridAddActions } from './CanvasGridAddActions';
+import { CanvasGridAddActions, useNestingRestrictions } from './CanvasGridAddActions';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     trackAddPanelClick: jest.fn(),
     trackGroupRowClick: jest.fn(),
     trackGroupTabClick: jest.fn(),
-    trackUngroupClick: jest.fn(),
     trackPastePanelClick: jest.fn(),
   },
 }));
@@ -47,47 +47,44 @@ jest.mock('./useClipboardState', () => ({
   }),
 }));
 
-// mock ungroupLayout
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-  groupLayout: jest.fn(),
-}));
-
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-function buildTestScene() {
-  const sceneWithNestedLayout = new DashboardScene({
+function buildTestScene(body?: DashboardScene['state']['body']) {
+  const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing: true,
-    body: new TabsLayoutManager({
-      tabs: [
-        new TabItem({
-          title: 'test tab',
-          layout: new RowsLayoutManager({
-            rows: [
-              new RowItem({
-                title: 'Test Title',
-                layout: new TabsLayoutManager({
-                  tabs: [new TabItem({ title: 'Subtab' })],
+    body:
+      body ??
+      new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'test tab',
+            layout: new RowsLayoutManager({
+              rows: [
+                new RowItem({
+                  title: 'Test Title',
+                  layout: new TabsLayoutManager({
+                    tabs: [new TabItem({ title: 'Subtab' })],
+                  }),
                 }),
-              }),
-            ],
+              ],
+            }),
           }),
-        }),
-      ],
-    }),
+        ],
+      }),
   });
-  activateFullSceneTree(sceneWithNestedLayout);
-  return sceneWithNestedLayout;
+  activateFullSceneTree(scene);
+  return scene;
 }
 
 describe('CanvasGridAddActions', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   describe('tracking scene actions', () => {
     it('should call DashboardInteractions.trackAddPanelClick when clicking on add panel button', async () => {
       const scene = buildTestScene();
@@ -122,28 +119,8 @@ describe('CanvasGridAddActions', () => {
       expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalled();
     });
 
-    it('should call DashboardInteractions.trackUngroupClick when clicking on ungroup panels in row layout', async () => {
-      const scene = buildTestScene();
-      const layoutManager = (scene.state.body as TabsLayoutManager).state.tabs[0].state.layout as RowsLayoutManager;
-      const user = userEvent.setup();
-      render(<CanvasGridAddActions layoutManager={layoutManager} />);
-
-      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.ungroup));
-      expect(DashboardInteractions.trackUngroupClick).toHaveBeenCalled();
-    });
-
-    it('should call DashboardInteractions.trackUngroupClick when clicking on ungroup panels in tab layout', async () => {
-      const scene = buildTestScene();
-      const layoutManager = (
-        ((scene.state.body as TabsLayoutManager).state.tabs[0].state.layout as RowsLayoutManager).state.rows[0].state
-          .layout as TabsLayoutManager
-      ).state.tabs[0].state.layout;
-      const user = userEvent.setup();
-      render(<CanvasGridAddActions layoutManager={layoutManager} />);
-
-      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.ungroup));
-      expect(DashboardInteractions.trackUngroupClick).toHaveBeenCalled();
-    });
+    // Note: Ungroup functionality has been moved to TabsLayoutManagerRenderer and RowsLayoutManagerRenderer
+    // Tests for ungroup tracking should be added to those components' test files
 
     it('should call DashboardInteractions.trackPastePanel when clicking on the paste panel button', async () => {
       const scene = buildTestScene();
@@ -154,6 +131,108 @@ describe('CanvasGridAddActions', () => {
 
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pastePanel));
       expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalled();
+    });
+  });
+
+  describe('useNestingRestrictions', () => {
+    it('should allow both grouping and tabs at the top level', () => {
+      const { body: layoutManager } = buildTestScene(AutoGridLayoutManager.createEmpty()).state;
+
+      const { result } = renderHook(() => useNestingRestrictions(layoutManager));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+    });
+
+    it('should allow both grouping and tabs when nested one level inside rows', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }));
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+    });
+
+    it('should disable tabs but allow grouping when nested one level inside tabs', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(new TabsLayoutManager({ tabs: [new TabItem({ layout: innerLayout })] }));
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    });
+
+    it('should allow both grouping and tabs when nested two levels deep (rows > rows)', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+    });
+
+    it('should allow grouping but disable tabs when nested two levels deep (tabs > rows)', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new TabsLayoutManager({
+          tabs: [
+            new TabItem({
+              layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    });
+
+    it('should allow grouping but disable tabs when nested two levels deep (rows > tabs)', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new TabsLayoutManager({ tabs: [new TabItem({ layout: innerLayout })] }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    });
+
+    it('should disable both grouping and tabs when nested three levels deep', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new RowsLayoutManager({
+                rows: [
+                  new RowItem({
+                    layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
+                  }),
+                ],
+              }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: true, disableTabs: true });
     });
   });
 });

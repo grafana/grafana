@@ -1,4 +1,4 @@
-import { Func, FuncParameter } from './types';
+import { type Func, type FuncParameter } from './types';
 
 export const COMMON_FNS: Func[] = [
   { name: 'AVG' },

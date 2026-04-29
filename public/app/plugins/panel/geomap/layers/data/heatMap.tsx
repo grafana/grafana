@@ -1,17 +1,17 @@
-import OpenLayersMap from 'ol/Map';
-import { Point } from 'ol/geom';
+import type OpenLayersMap from 'ol/Map';
+import { type Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 
 import {
-  EventBus,
+  type EventBus,
   FieldType,
   getFieldColorModeForField,
-  GrafanaTheme2,
-  MapLayerOptions,
-  MapLayerRegistryItem,
-  PanelData,
+  type GrafanaTheme2,
+  type MapLayerOptions,
+  type MapLayerRegistryItem,
+  type PanelData,
 } from '@grafana/data';
-import { ScaleDimensionConfig } from '@grafana/schema';
+import { type ScaleDimensionConfig } from '@grafana/schema';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
 import { getScaledDimension } from 'app/features/dimensions/scale';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';

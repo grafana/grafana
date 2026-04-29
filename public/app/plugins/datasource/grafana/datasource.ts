@@ -1,15 +1,15 @@
 import { isString } from 'lodash';
-import { from, merge, Observable, of } from 'rxjs';
+import { from, merge, type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  AnnotationQuery,
-  AnnotationQueryRequest,
+  type AnnotationQuery,
+  type AnnotationQueryRequest,
   DataFrameView,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  TestDataSourceResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type TestDataSourceResponse,
   isValidLiveChannelAddress,
   MutableDataFrame,
   parseLiveChannelAddress,
@@ -21,17 +21,18 @@ import {
   getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
-  StreamingFrameOptions,
+  type StreamingFrameOptions,
 } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { randomWalk } from './randomWalk';
 import { doTimeRegionQuery } from './timeRegions';
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
+import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, GrafanaQueryType } from './types';
 
 let counter = 100;
 
@@ -142,10 +143,14 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             buffer,
           })
         );
+      } else if (target.queryType === GrafanaQueryType.RandomWalk || !target.queryType) {
+        results.push(
+          of({
+            data: randomWalk(target, request),
+            state: LoadingState.Done,
+          })
+        );
       } else {
-        if (!target.queryType) {
-          target.queryType = GrafanaQueryType.RandomWalk;
-        }
         targets.push(target);
       }
     }

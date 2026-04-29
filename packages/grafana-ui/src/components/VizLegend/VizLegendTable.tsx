@@ -1,13 +1,16 @@
 import { css, cx } from '@emotion/css';
-import type { JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
+import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
-import { VizLegendItem, VizLegendTableProps } from './types';
+import { type VizLegendItem, type VizLegendTableProps } from './types';
 
 const nameSortKey = 'Name';
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
@@ -27,6 +30,8 @@ export const VizLegendTable = <T extends unknown>({
   onLabelMouseOut,
   readonly,
   isSortable,
+  limit = 0,
+  filterAction,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
   const header: Record<string, string> = {
@@ -55,12 +60,10 @@ export const VizLegendTable = <T extends unknown>({
     let sortMult = sortDesc ? -1 : 1;
 
     if (sortKey === nameSortKey) {
-      // string sort
       items.sort((a, b) => {
         return sortMult * naturalCompare(a.label, b.label);
       });
     } else {
-      // numeric sort
       items.sort((a, b) => {
         const aVal = itemVals.get(a) ?? 0;
         const bVal = itemVals.get(b) ?? 0;
@@ -69,6 +72,10 @@ export const VizLegendTable = <T extends unknown>({
       });
     }
   }
+
+  const [curLimit, setLimit] = useLimit(limit);
+
+  const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -104,13 +111,30 @@ export const VizLegendTable = <T extends unknown>({
                 }
               }}
             >
+              {columnTitle === nameSortKey && filterAction && (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
+                  {filterAction}
+                </span>
+              )}
               {columnTitle}
               {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
             </th>
           ))}
         </tr>
       </thead>
-      <tbody>{items.map(itemRenderer!)}</tbody>
+      <tbody>{limitedItems.map(itemRenderer!)}</tbody>
+      {curLimit > 0 && items.length > curLimit && (
+        <tfoot>
+          <tr>
+            <td colSpan={100} style={{ textAlign: 'right' }}>
+              <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
+                <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
+              </Button>
+            </td>
+          </tr>
+        </tfoot>
+      )}
     </table>
   );
 };
@@ -124,6 +148,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   header: css({
+    position: 'sticky',
+    top: 0,
+    backgroundColor: theme.colors.background.primary,
+    zIndex: 1,
     color: theme.colors.primary.text,
     fontWeight: theme.typography.fontWeightMedium,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -136,11 +164,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'left',
     paddingLeft: '30px',
   }),
-  // This needs to be padding-right - icon size(xs==12) to avoid jumping
   withIcon: css({
     paddingRight: '4px',
   }),
   headerSortable: css({
     cursor: 'pointer',
+  }),
+  filterAction: css({
+    marginLeft: theme.spacing(0.5),
+    display: 'inline-flex',
+    verticalAlign: 'middle',
   }),
 });

@@ -50,4 +50,33 @@ func addUserAuthMigrations(mg *Migrator) {
 	mg.AddMigration("Add user_unique_id to user_auth", NewAddColumnMigration(userAuthV1, &Column{
 		Name: "external_uid", Type: DB_Text, Nullable: true,
 	}))
+
+	mg.AddMigration("Add user_uid to user_auth", NewAddColumnMigration(userAuthV1, &Column{
+		Name: "user_uid", Type: DB_NVarchar, Length: 190, Nullable: true,
+	}))
+
+	mg.AddMigration("Populate user_uid in user_auth from user table", NewRawSQLMigration("").
+		SQLite(`
+			UPDATE user_auth
+			SET user_uid = (
+				SELECT uid
+				FROM user
+				WHERE user.id = user_auth.user_id
+			)
+			WHERE user_id IN (SELECT id FROM user)
+			AND user_uid IS NULL
+		`).
+		Postgres(`
+			UPDATE user_auth
+			SET user_uid = u.uid
+			FROM "user" u
+			WHERE u.id = user_auth.user_id
+			AND user_auth.user_uid IS NULL
+		`).
+		Mysql(`
+			UPDATE user_auth
+			INNER JOIN user ON user_auth.user_id = user.id
+			SET user_auth.user_uid = user.uid
+			WHERE user_auth.user_uid IS NULL
+		`))
 }

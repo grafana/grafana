@@ -3,14 +3,14 @@ import { PureComponent } from 'react';
 
 // Components
 import {
-  DataSourceInstanceSettings,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
   getDataSourceUID,
   isUnsignedPluginSignature,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
+import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -113,7 +113,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     if (ds) {
       return {
-        label: ds.name.slice(0, 37),
+        label: ds.name,
         value: ds.uid,
         imgUrl: ds.meta.info.logos.small,
         hideText: hideTextValue,

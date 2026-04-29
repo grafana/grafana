@@ -68,4 +68,38 @@ describe('<SecretTextArea />', () => {
     expect(onChange).toHaveBeenCalled();
     expect(textArea).toHaveValue('Foo');
   });
+
+  it('should show a visibility toggle button when not configured', () => {
+    render(
+      <SecretTextArea isConfigured={false} onChange={() => {}} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />
+    );
+
+    expect(screen.getByRole('button', { name: /show secret content/i })).toBeInTheDocument();
+  });
+
+  it('should not show a visibility toggle button when configured', () => {
+    render(
+      <SecretTextArea isConfigured={true} onChange={() => {}} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />
+    );
+
+    expect(screen.queryByRole('button', { name: /show secret content/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /hide secret content/i })).not.toBeInTheDocument();
+  });
+
+  it('should toggle content visibility when the toggle button is clicked', async () => {
+    render(
+      <SecretTextArea isConfigured={false} onChange={() => {}} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />
+    );
+
+    // Initially shows "Show" button
+    expect(screen.getByRole('button', { name: /show secret content/i })).toBeInTheDocument();
+
+    // Click to reveal
+    await userEvent.click(screen.getByRole('button', { name: /show secret content/i }));
+    expect(screen.getByRole('button', { name: /hide secret content/i })).toBeInTheDocument();
+
+    // Click to hide again
+    await userEvent.click(screen.getByRole('button', { name: /hide secret content/i }));
+    expect(screen.getByRole('button', { name: /show secret content/i })).toBeInTheDocument();
+  });
 });

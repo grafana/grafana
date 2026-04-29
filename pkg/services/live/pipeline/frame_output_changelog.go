@@ -31,7 +31,7 @@ func (out *ChangeLogFrameOutput) Type() string {
 }
 
 func (out *ChangeLogFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
-	previousFrame, previousFrameOK, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
+	previousFrame, previousFrameOK, err := out.frameStorage.Get(vars.NS, out.config.Channel)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (out *ChangeLogFrameOutput) OutputFrame(_ context.Context, vars Vars, frame
 
 	if fTime.Len() > 0 {
 		changeFrame := data.NewFrame("change", fTime, f1, f2)
-		err := out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
+		err := out.frameStorage.Set(vars.NS, out.config.Channel, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -94,5 +94,5 @@ func (out *ChangeLogFrameOutput) OutputFrame(_ context.Context, vars Vars, frame
 		}}, nil
 	}
 
-	return nil, out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
+	return nil, out.frameStorage.Set(vars.NS, out.config.Channel, frame)
 }

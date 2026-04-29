@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -51,11 +51,14 @@ type AlertsRouter struct {
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
 	featureManager    featuremgmt.FeatureToggles
+	broadcastAlerts   bool
+	senderMetrics     *metrics.Sender
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool, senderMetrics *metrics.Sender) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -75,6 +78,8 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		datasourceService: datasourceService,
 		secretService:     secretService,
 		featureManager:    featureManager,
+		broadcastAlerts:   broadcastAlerts,
+		senderMetrics:     senderMetrics,
 	}
 	return d
 }
@@ -102,20 +107,25 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 			continue
 		}
 
-		if disableExternal && cfg.SendAlertsTo != models.InternalAlertmanager {
-			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", cfg.SendAlertsTo)
-			cfg.SendAlertsTo = models.InternalAlertmanager
+		var sendAlertsTo models.AlertmanagersChoice
+		if cfg.SendAlertsTo != nil {
+			sendAlertsTo = *cfg.SendAlertsTo
+		}
+
+		if disableExternal && sendAlertsTo != models.InternalAlertmanager {
+			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", sendAlertsTo)
+			sendAlertsTo = models.InternalAlertmanager
 		}
 
 		// Update the Alertmanagers choice for the organization.
-		d.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
+		d.sendAlertsTo[cfg.OrgID] = sendAlertsTo
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagers we need to keep.
 
 		existing, ok := d.externalAlertmanagers[cfg.OrgID]
 
 		//  We have no running sender and alerts are handled internally, no-op.
-		if !ok && cfg.SendAlertsTo == models.InternalAlertmanager {
+		if !ok && sendAlertsTo == models.InternalAlertmanager {
 			d.logger.Debug("Grafana is configured to send alerts to the internal alertmanager only. Skipping synchronization with external alertmanager", "org", cfg.OrgID)
 			continue
 		}
@@ -168,7 +178,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
-		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
+		s, err := NewExternalAlertmanagerSender(senderLogger, d.senderMetrics.GetOrCreateOrgRegistry(cfg.OrgID))
 		if err != nil {
 			d.adminConfigMtx.Unlock()
 			return err
@@ -200,6 +210,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 	for orgID, s := range sendersToStop {
 		d.logger.Info("Stopping sender", "org", orgID)
 		s.Stop()
+		d.senderMetrics.RemoveOrgRegistry(orgID)
 		d.logger.Info("Stopped sender", "org", orgID)
 	}
 
@@ -303,6 +314,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 	}
 
 	return ExternalAMcfg{
+		DatasourceUID:      ds.UID,
 		URL:                amURL,
 		Headers:            headers,
 		InsecureSkipVerify: insecureSkipVerify,
@@ -368,6 +380,9 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
 			}
+			if d.broadcastAlerts {
+				d.multiOrgNotifier.BroadcastAlerts(key.OrgID, alerts)
+			}
 		} else {
 			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
 				logger.Debug("Local notifier was not found")
@@ -432,6 +447,7 @@ func (d *AlertsRouter) Run(ctx context.Context) error {
 			for orgID, s := range d.externalAlertmanagers {
 				delete(d.externalAlertmanagers, orgID) // delete before we stop to make sure we don't accept any more alerts.
 				s.Stop()
+				d.senderMetrics.RemoveOrgRegistry(orgID)
 			}
 			d.adminConfigMtx.Unlock()
 

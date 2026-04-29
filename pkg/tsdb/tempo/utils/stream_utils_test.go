@@ -4,137 +4,188 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 )
 
-func TestAppendHeadersToOutgoingContext_AppendsHeadersAndUserAgent(t *testing.T) {
-	ctx := context.TODO()
-	ua, err := useragent.New("10.0.0", "linux", "amd64")
-	require.NoError(t, err)
-	ctx = backend.WithUserAgent(ctx, ua)
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("Existing", "one"))
-
-	req := &backend.RunStreamRequest{
-		Headers: map[string]string{
-			"X-Test": "value",
-		},
-	}
-
-	out := AppendHeadersToOutgoingContext(ctx, req)
-	outgoingMD, ok := metadata.FromOutgoingContext(out)
-	require.True(t, ok)
-	assert.Equal(t, []string{"value"}, outgoingMD.Get("x-test"))
-	assert.Equal(t, []string{ua.String()}, outgoingMD.Get("user-agent"))
-	assert.Equal(t, []string{"one"}, outgoingMD.Get("existing"))
+func testLogger() log.Logger {
+	return backend.NewLoggerWith("stream_utils_test")
 }
 
-func TestSetHeadersFromIncomingContext_MergesTeamAndClientHeaders(t *testing.T) {
+func TestGetTeamHeaders_NoMetadata_ReturnsNil(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+}
+
+func TestGetTeamHeaders_FeatureToggleOff_ReturnsNil(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = metadata.AppendToOutgoingContext(ctx,
+		TeamHttpHeaderKeyLower, "policy-a", TeamHttpHeaderKeyLower, "policy-b",
+		"x-custom-forward", "extra",
+	)
+
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+}
+
+func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.AppendToOutgoingContext(ctx,
+		TeamHttpHeaderKeyLower, "policy-a,policy-b",
+		"x-custom-forward", "extra",
+	)
+
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx)
+	require.NotNil(t, got)
+	assert.Equal(t, "policy-a,policy-b", got[TeamHttpHeaderKeyCamel])
+	assert.Equal(t, "extra", got["x-custom-forward"])
+}
+
+func TestGetTeamHeaders_FallsBackToIncomingMetadata(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
+		TeamHttpHeaderKeyLower, "policy-a",
+		TeamHttpHeaderKeyLower, "policy-b",
+		"x-custom-forward", "extra",
+	))
+
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx)
+	require.NotNil(t, got)
+	assert.Equal(t, "policy-a,policy-b", got[TeamHttpHeaderKeyCamel])
+	assert.Equal(t, "extra", got["x-custom-forward"])
+}
+
+func TestGetHeadersFromIncomingContext_WithoutFeatureFlag_OnlyClientHeaders(t *testing.T) {
 	jsonData := []byte(`{
-		"teamHttpHeaders": {
-			"headers": {
-				"101": [
-					{"header": "X-Prom-Label-Policy", "value": "1:team-value"},
-					{"header": "X-Prom-Label-Policy", "value": "2:team-wins"}
-				]
-			}
-		},
 		"httpHeaderName1": "X-Client",
 		"httpHeaderName2": "X-Shared"
 	}`)
-
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			JSONData: jsonData,
 			DecryptedSecureJSONData: map[string]string{
 				"httpHeaderValue1": "client-value",
-				"httpHeaderValue2": "client-overridden",
+				"httpHeaderValue2": "shared-value",
 			},
 		},
 	}
-
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
-	headers, err := SetHeadersFromIncomingContext(ctx)
-	require.NoError(t, err)
+	ctx = metadata.AppendToOutgoingContext(ctx, TeamHttpHeaderKeyLower, "should-not-forward")
 
-	expected := map[string]string{
-		"X-Client":            "client-value",
-		"X-Prom-Label-Policy": "1:team-value,2:team-wins",
-		"X-Shared":            "client-overridden",
-	}
-	assert.Equal(t, expected, headers)
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
+	require.NoError(t, err)
+	assert.Equal(t, "client-value", headers["X-Client"])
+	assert.Equal(t, "shared-value", headers["X-Shared"])
+	_, ok := headers[TeamHttpHeaderKeyCamel]
+	assert.False(t, ok)
 }
 
-func TestGetTeamHTTPHeaders_NoTeamHeaders(t *testing.T) {
+func TestGetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *testing.T) {
+	jsonData := []byte(`{
+		"httpHeaderName1": "X-Client",
+		"httpHeaderName2": "X-Client"
+	}`)
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{"httpHeaderName1": "X-Client"}`),
-		},
-	}
-
-	headers, err := getTeamHTTPHeaders(pluginCtx)
-	require.NoError(t, err)
-	assert.Empty(t, headers)
-}
-
-func TestGetTeamHTTPHeaders_LabelPolicyValue(t *testing.T) {
-	pluginCtx := backend.PluginContext{
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{
-				"teamHttpHeaders": {
-					"headers": {
-						"101": [
-							{"header": "X-Prom-Label-Policy", "value": "1:team-value"},
-							{"header": "X-Prom-Label-Policy", "value": "2:team-wins"}
-						]
-					}
-				}
-			}`),
-		},
-	}
-
-	headers, err := getTeamHTTPHeaders(pluginCtx)
-	require.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"X-Prom-Label-Policy": "1:team-value,2:team-wins",
-	}, headers)
-}
-
-func TestGetLabelPolicyKeyValue_AppendsValues(t *testing.T) {
-	headerWithRules := map[string]interface{}{
-		"101": []interface{}{
-			map[string]interface{}{
-				"header": "X-Prom-Label-Policy",
-				"value":  "1:alpha",
-			},
-			map[string]interface{}{
-				"header": "X-Prom-Label-Policy",
-				"value":  "2:beta",
+			JSONData:         jsonData,
+			BasicAuthEnabled: true,
+			DecryptedSecureJSONData: map[string]string{
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
 			},
 		},
 	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.AppendToOutgoingContext(ctx,
+		TeamHttpHeaderKeyLower, "policy-a,policy-b",
+		"x-custom-forward", "extra",
+	)
 
-	key, value := getLabelPolicyKeyValue(headerWithRules)
-	assert.Equal(t, "X-Prom-Label-Policy", key)
-	assert.Equal(t, "1:alpha,2:beta", value)
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
+	require.NoError(t, err)
+
+	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
+	assert.Equal(t, "extra", headers["x-custom-forward"])
+	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
+}
+
+func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *testing.T) {
+	jsonData := []byte(`{
+		"httpHeaderName1": "X-Client",
+		"httpHeaderName2": "X-Client"
+	}`)
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			JSONData:         jsonData,
+			BasicAuthEnabled: true,
+			DecryptedSecureJSONData: map[string]string{
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
+			},
+		},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
+		TeamHttpHeaderKeyLower, "policy-a",
+		TeamHttpHeaderKeyLower, "policy-b",
+		"x-custom-forward", "extra",
+	))
+
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
+	require.NoError(t, err)
+
+	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
+	assert.Equal(t, "extra", headers["x-custom-forward"])
+	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
 }
 
 func TestGetClientOptionsHeaders_ParsesHeaders(t *testing.T) {
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{"httpHeaderName1": "X-Client"}`),
+			JSONData: []byte(`{"httpHeaderName1": "X-Client", "httpHeaderName2": "X-Client"}`),
 			DecryptedSecureJSONData: map[string]string{
-				"httpHeaderValue1": "client-value",
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
 			},
 		},
 	}
 
 	headers, err := getClientOptionsHeaders(context.Background(), pluginCtx)
 	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"X-Client": "client-value"}, headers)
+	assert.Equal(t, map[string]string{"X-Client": "client-value-a,client-value-b"}, headers)
 }
 
 func TestGetClientOptionsHeaders_InvalidJSON(t *testing.T) {

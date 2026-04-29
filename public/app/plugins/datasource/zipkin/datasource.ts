@@ -1,20 +1,20 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   FieldType,
   createDataFrame,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { createNodeGraphFrames, type NodeGraphOptions, type SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
-import { ZipkinQuery, ZipkinSpan } from './types';
+import { type ZipkinQuery, type ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
 

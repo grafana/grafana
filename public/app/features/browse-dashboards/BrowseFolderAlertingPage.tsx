@@ -13,7 +13,7 @@ import { GRAFANA_RULER_CONFIG } from '../alerting/unified/api/featureDiscoveryAp
 import { stringifyErrorLike } from '../alerting/unified/utils/misc';
 import { rulerRuleType } from '../alerting/unified/utils/rules';
 
-import { FolderActionsButton } from './components/FolderActionsButton';
+import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 
 const { useRulerNamespaceQuery } = alertRuleApi;
 
@@ -72,7 +72,7 @@ export function BrowseFolderAlertingPage() {
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={onEditTitle}
-      actions={<>{folderDTO && <FolderActionsButton folder={folderDTO} />}</>}
+      actions={folderDTO && <FolderDetailsActions folderDTO={folderDTO} />}
     >
       <Page.Contents isLoading={isLoading}>
         {!folderDTO && (

@@ -16,8 +16,6 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,19 +27,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
+func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	fStore := folderimpl.ProvideStore(db)
-	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	searchMock := resource.NewMockResourceClient(tb)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	return folderimpl.ProvideService(ac, nil,
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 }
 
-func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
+func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *dashboardservice.DashboardServiceImpl {
 	tb.Helper()
 
 	ac := acmock.New()
@@ -52,12 +53,9 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*da
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-	require.NoError(tb, err)
-
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg,
-		dashboardStore,
+		sqlStore,
 		features,
 		folderPermissions,
 		ac,
@@ -73,9 +71,13 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*da
 		dashclient.NewK8sClientWithFallback(
 			cfg,
 			client.MockTestRestConfig{},
-			dashboardStore,
 			nil,
-			nil,
+			func() resource.ResourceClient {
+				m := resource.NewMockResourceClient(tb)
+				m.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+				m.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+				return m
+			}(),
 			sort.ProvideService(),
 			dualwrite.ProvideTestService(),
 			nil,
@@ -85,7 +87,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*da
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 
-	return dashboardService, dashboardStore
+	return dashboardService
 }
 
 func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {

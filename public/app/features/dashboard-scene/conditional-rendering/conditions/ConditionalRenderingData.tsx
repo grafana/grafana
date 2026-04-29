@@ -1,24 +1,24 @@
-import { ReactElement, useMemo } from 'react';
+import { type ReactElement, useMemo } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  CancelActivationHandler,
-  SceneComponentProps,
-  SceneDataProvider,
+  type CancelActivationHandler,
+  type SceneComponentProps,
+  type SceneDataProvider,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { type ConditionalRenderingDataKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 interface ConditionalRenderingDataState extends SceneObjectState {
@@ -189,6 +189,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
       isObjectSupported={objectType === 'panel'}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.data.label', 'Query result')}
+      ruleId="data"
     >
       <Combobox
         options={enableConditionOptions}

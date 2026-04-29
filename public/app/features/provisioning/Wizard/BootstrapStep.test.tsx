@@ -1,14 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { type ReactNode } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { BootstrapStep, Props } from './BootstrapStep';
-import { StepStatusProvider } from './StepStatusContext';
+import { BootstrapStep, type Props } from './BootstrapStep';
+import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
-import { WizardFormData } from './types';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
+import { useResourceStats } from './hooks/useResourceStats';
+import { type WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
@@ -23,8 +25,44 @@ jest.mock('./hooks/useResourceStats', () => ({
   useResourceStats: jest.fn(),
 }));
 
+jest.mock('./hooks/useRepositoryStatus', () => ({
+  useRepositoryStatus: jest.fn(),
+}));
+
+const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
+  typeof useGetRepositoryFilesQuery
+>;
+const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
+const mockUseRepositoryStatus = useRepositoryStatus as jest.MockedFunction<typeof useRepositoryStatus>;
+const mockUseResourceStats = useResourceStats as jest.MockedFunction<typeof useResourceStats>;
+const mockUseModeOptions = useModeOptions as jest.MockedFunction<typeof useModeOptions>;
+
+type WizardFormDefaults = Omit<Partial<WizardFormData>, 'repository'> & {
+  repository?: Partial<WizardFormData['repository']>;
+};
+
+// Component to display step status errors for testing
+function StepStatusDisplay() {
+  const { stepStatusInfo } = useStepStatus();
+  if (stepStatusInfo.status === 'error' && 'error' in stepStatusInfo) {
+    const error = stepStatusInfo.error;
+    const title = typeof error === 'string' ? error : error.title;
+    const message = typeof error === 'string' ? error : error.message;
+    return (
+      <div>
+        <div>{title}</div>
+        <div>{typeof message === 'string' ? message : message}</div>
+        {stepStatusInfo.action && (
+          <button onClick={stepStatusInfo.action.onClick}>{stepStatusInfo.action.label}</button>
+        )}
+      </div>
+    );
+  }
+  return null;
+}
+
 // Wrapper component to provide form context
-function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: Partial<WizardFormData> }) {
+function FormWrapper({ children, defaultValues }: { children: ReactNode; defaultValues?: WizardFormDefaults }) {
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: {
@@ -47,12 +85,15 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
 
   return (
     <FormProvider {...methods}>
-      <StepStatusProvider>{children}</StepStatusProvider>
+      <StepStatusProvider>
+        {children}
+        <StepStatusDisplay />
+      </StepStatusProvider>
     </FormProvider>
   );
 }
 
-function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFormData>) {
+function setup(props: Partial<Props> = {}, formDefaultValues?: WizardFormDefaults) {
   const user = userEvent.setup();
 
   const defaultProps: Props = {
@@ -78,48 +119,71 @@ describe('BootstrapStep', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+    mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: { items: [] },
       isLoading: false,
-    });
+      refetch: jest.fn(),
+    } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-    (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
+    mockUseGetResourceStatsQuery.mockReturnValue({
       data: { instance: [] },
       isLoading: false,
+      refetch: jest.fn(),
+    } as ReturnType<typeof useGetResourceStatsQuery>);
+
+    mockUseRepositoryStatus.mockReturnValue({
+      isReady: true,
+      isLoading: false,
+      isFetching: false,
+      hasError: false,
+      isHealthy: true, // healthy AND reconciled
+      isUnhealthy: false,
+      isReconciled: true,
+      healthMessage: undefined,
+      healthStatusNotReady: false,
+      fieldErrors: undefined,
+      quota: undefined,
+      conditions: undefined,
+      refetch: jest.fn(),
     });
 
-    const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
     mockUseResourceStats.mockReturnValue({
-      fileCount: 0,
+      managedCount: 0,
+      unmanagedCount: 0,
       resourceCount: 0,
       resourceCountString: 'Empty',
+      fileCount: 0,
       fileCountString: 'Empty',
       isLoading: false,
       requiresMigration: false,
       shouldSkipSync: true,
     });
 
-    (useModeOptions as jest.Mock).mockReturnValue({
+    mockUseModeOptions.mockReturnValue({
       enabledOptions: [
         {
           target: 'folder',
           label: 'Sync external storage to a new Grafana folder',
           description: 'A new Grafana folder will be created',
           subtitle: 'Use this option to sync into a new folder',
+          disabled: false,
         },
       ],
+      disabledOptions: [],
     });
   });
 
   describe('rendering', () => {
     it('should render loading state when data is loading', () => {
-      (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: undefined,
         isLoading: true,
-      });
+        refetch: jest.fn(),
+      } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
         fileCount: 0,
         resourceCount: 0,
         resourceCountString: 'Empty',
@@ -141,7 +205,7 @@ describe('BootstrapStep', () => {
     });
 
     it('should render correct info for local file repository type', async () => {
-      (useGetRepositoryFilesQuery as jest.Mock).mockReturnValue({
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: {
           items: [
             { path: 'dashboard1.json' },
@@ -150,10 +214,12 @@ describe('BootstrapStep', () => {
           ],
         },
         isLoading: false,
-      });
+        refetch: jest.fn(),
+      } as ReturnType<typeof useGetRepositoryFilesQuery>);
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
         fileCount: 2,
         resourceCount: 0,
         resourceCountString: 'Empty',
@@ -171,7 +237,7 @@ describe('BootstrapStep', () => {
     it('should display resource counts when resources exist', async () => {
       // Note: Resource counts are only shown for instance sync, but instance sync is not available by default
       // This test is kept for when instance sync is explicitly enabled via settings
-      (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
+      mockUseGetResourceStatsQuery.mockReturnValue({
         data: {
           instance: [
             { group: 'dashboard.grafana.app', count: 5 },
@@ -179,10 +245,12 @@ describe('BootstrapStep', () => {
           ],
         },
         isLoading: false,
+        refetch: jest.fn(),
       });
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
       mockUseResourceStats.mockReturnValue({
+        managedCount: 7,
+        unmanagedCount: 0,
         fileCount: 0,
         resourceCount: 7,
         resourceCountString: '7 resources',
@@ -193,13 +261,14 @@ describe('BootstrapStep', () => {
       });
 
       // Mock settings to allow instance sync for this test
-      (useModeOptions as jest.Mock).mockReturnValue({
+      mockUseModeOptions.mockReturnValue({
         enabledOptions: [
           {
             target: 'instance',
             label: 'Sync all resources with external storage',
             description: 'Resources will be synced with external storage',
             subtitle: 'Use this option if you want to sync your entire instance',
+            disabled: false,
           },
         ],
         disabledOptions: [],
@@ -223,8 +292,10 @@ describe('BootstrapStep', () => {
     it('should use useResourceStats hook correctly', async () => {
       setup();
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
+      expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
+        isHealthy: true,
+        healthStatusNotReady: false,
+      });
     });
 
     it('should use useResourceStats hook with settings data', async () => {
@@ -238,8 +309,10 @@ describe('BootstrapStep', () => {
         },
       });
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
+      expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
+        isHealthy: true,
+        healthStatusNotReady: false,
+      });
     });
   });
 
@@ -251,14 +324,15 @@ describe('BootstrapStep', () => {
       expect(screen.queryByText('Sync all resources with external storage')).not.toBeInTheDocument();
     });
 
-    it('should only display instance option when legacy storage exists', async () => {
-      (useModeOptions as jest.Mock).mockReturnValue({
+    it('should only display instance option when legacy storage exists and hide disabled options', async () => {
+      mockUseModeOptions.mockReturnValue({
         enabledOptions: [
           {
             target: 'instance',
             label: 'Sync all resources with external storage',
             description: 'Resources will be synced with external storage',
             subtitle: 'Use this option if you want to sync your entire instance',
+            disabled: false,
           },
         ],
         disabledOptions: [
@@ -266,6 +340,7 @@ describe('BootstrapStep', () => {
             target: 'folder',
             label: 'Sync external storage to a new Grafana folder',
             description: 'A new Grafana folder will be created',
+            disabled: true,
             subtitle: 'Use this option to sync into a new folder',
           },
         ],
@@ -282,7 +357,8 @@ describe('BootstrapStep', () => {
       });
 
       expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
-      expect(await screen.findByText('Sync external storage to a new Grafana folder')).not.toBeChecked();
+      // Disabled options should not be rendered at all
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
     });
 
     it('should allow selecting different sync targets', async () => {
@@ -302,6 +378,359 @@ describe('BootstrapStep', () => {
 
       // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('quota exceeded', () => {
+    it('should use file count (not resource count) for quota check when file count exceeds limit', () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 10,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 10,
+        resourceCountString: '10 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
+
+    it('should not block when resource count exceeds quota but file count is within limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 10,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '10 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should not render content when resource count exceeds quota limit', () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
+
+    it('should render content when no quota is configured even with high resource count', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when resource count is within quota', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 15,
+        unmanagedCount: 0,
+        fileCount: 15,
+        resourceCount: 15,
+        resourceCountString: '15 resources',
+        fileCountString: '15 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when resource count equals quota limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 20,
+        unmanagedCount: 0,
+        fileCount: 20,
+        resourceCount: 20,
+        resourceCountString: '20 resources',
+        fileCountString: '20 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content when quota is unlimited (maxResourcesPerRepository = 0)', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 0 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 100,
+        unmanagedCount: 0,
+        fileCount: 100,
+        resourceCount: 100,
+        resourceCountString: '100 resources',
+        fileCountString: '100 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+  });
+
+  describe('repository health and reconciliation', () => {
+    it('should show loading state when repository is unhealthy but not yet reconciled', async () => {
+      // K8s may report unhealthy during reconciliation - we should wait, not show error
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: false, // not healthy yet
+        isUnhealthy: false, // but not confirmed unhealthy (not reconciled)
+        isReconciled: false, // Not yet reconciled
+        healthMessage: ['Some temporary error'],
+        healthStatusNotReady: true,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: true, // isLoading is true when healthStatusNotReady is true
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show loading/waiting state, not error
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+      expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+    });
+
+    it('should show error when repository is unhealthy and fully reconciled', async () => {
+      // When reconciliation is complete and still unhealthy, show the error
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: false, // not healthy
+        isUnhealthy: true, // confirmed unhealthy (reconciled)
+        isReconciled: true, // Fully reconciled
+        healthMessage: ['Connection failed'],
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show error state
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+      expect(screen.queryByText('Loading resource information...')).not.toBeInTheDocument();
+    });
+
+    it('should show content when repository is healthy and reconciled', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true, // healthy AND reconciled
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Should show normal content
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
     });
   });
 });

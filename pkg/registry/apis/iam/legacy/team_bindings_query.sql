@@ -9,13 +9,17 @@ WHERE
   {{ end }}
   {{ if .Query.TeamUID }}
     AND t.uid = {{ .Arg .Query.TeamUID }}
+  {{ else if .Query.TeamUIDs }}
+    AND t.uid IN ({{ .ArgList .Query.TeamUIDs }})
   {{ end }}
   {{ if .Query.UserUID }}
     AND u.uid = {{ .Arg .Query.UserUID }}
   {{ end }}
   {{- if .Query.Pagination.Continue }}
-    AND tm.id >= {{ .Arg .Query.Pagination.Continue }}
+    AND tm.id > {{ .Arg .Query.Pagination.Continue }}
   {{- end }}
-AND NOT tm.external
-ORDER BY t.id ASC
+  {{- if ne .Query.External nil }}
+    AND tm.external = {{ .Arg .ExternalValue }}
+  {{- end }}
+ORDER BY tm.id ASC
 LIMIT {{ .Arg .Query.Pagination.Limit }};

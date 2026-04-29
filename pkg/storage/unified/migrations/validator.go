@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupResource) *resourcepb.BulkResponse {
@@ -53,28 +54,25 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name        string
-	client      resourcepb.ResourceIndexClient
-	resource    schema.GroupResource
-	table       string
-	whereClause string
-	driverName  string
+	name       string
+	client     resourcepb.ResourceIndexClient
+	resource   schema.GroupResource
+	opts       CountValidationOptions
+	driverName string
 }
 
-func NewCountValidator(
+func newCountValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
-	table string,
-	whereClause string,
+	opts CountValidationOptions,
 	driverName string,
 ) Validator {
 	return &CountValidator{
-		name:        "CountValidator",
-		client:      client,
-		resource:    resource,
-		table:       table,
-		whereClause: whereClause,
-		driverName:  driverName,
+		name:       "CountValidator",
+		client:     client,
+		resource:   resource,
+		opts:       opts,
+		driverName: driverName,
 	}
 }
 
@@ -119,9 +117,13 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 		return fmt.Errorf("invalid namespace %s: %w", summary.Namespace, err)
 	}
 
-	legacyCount, err := sess.Table(v.table).Where(v.whereClause, orgID).Count()
+	counter := sess.Table(v.opts.Table).Where(v.opts.Where, orgID)
+	if v.opts.Distinct != "" {
+		counter = counter.Distinct(v.opts.Distinct)
+	}
+	legacyCount, err := counter.Count()
 	if err != nil {
-		return fmt.Errorf("failed to count %s: %w", v.table, err)
+		return fmt.Errorf("failed to count %s: %w", v.opts.Table, err)
 	}
 
 	var unifiedCount int64
@@ -182,7 +184,7 @@ type FolderTreeValidator struct {
 	driverName string
 }
 
-func NewFolderTreeValidator(
+func newFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	driverName string,
@@ -402,4 +404,27 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Sessi
 		"namespace", namespace)
 
 	return parentMap, nil
+}
+
+type CountValidationOptions struct {
+	Table string
+	// includes org_id
+	Where    string
+	Distinct string
+}
+
+// CountValidation creates a ValidatorFactory for count-based validation.
+// It compares the count of resources in the legacy table with unified storage.
+func CountValidation(resource schema.GroupResource, opts CountValidationOptions) ValidatorFactory {
+	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
+		return newCountValidator(client, resource, opts, driverName)
+	}
+}
+
+// FolderTreeValidation creates a ValidatorFactory for folder tree structure validation.
+// It validates that folder parent relationships are preserved after migration.
+func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
+	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
+		return newFolderTreeValidator(client, resource, driverName)
+	}
 }

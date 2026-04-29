@@ -106,6 +106,18 @@ func KeyRootFunc(gr schema.GroupResource) func(ctx context.Context) string {
 	}
 }
 
+// ClusterKeyRootFunc is used for cluster-scoped resources.
+// It does not include namespace in the key.
+func ClusterKeyRootFunc(gr schema.GroupResource) func(ctx context.Context) string {
+	return func(ctx context.Context) string {
+		key := &Key{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+		}
+		return key.String()
+	}
+}
+
 // NamespaceKeyFunc is the default function for constructing storage paths to
 // a resource relative to the given prefix enforcing namespace rules. If the
 // context does not contain a namespace, it errors.

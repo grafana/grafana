@@ -1,30 +1,30 @@
 import { config } from '@grafana/runtime';
 import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  MultiValueVariable,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  type MultiValueVariable,
   sceneGraph,
   SceneRefreshPicker,
 } from '@grafana/scenes';
-import { Dashboard, VariableModel } from '@grafana/schema';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultDataQueryKind,
   defaultPanelQueryKind,
   defaultPanelSpec,
-  GridLayoutKind,
-  PanelKind,
-  PanelSpec,
-  QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+  type GridLayoutKind,
+  type PanelKind,
+  type PanelSpec,
+  type QueryVariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
-import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 

@@ -3,11 +3,14 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
-import { DashboardViewItem } from 'app/features/search/types';
-import { FolderDTO } from 'app/types/folders';
+import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type FolderDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderDTO | DashboardViewItem;
@@ -21,7 +24,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
@@ -29,6 +32,20 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   if (skipRender) {
     return null;
   }
+
+  const isOrphaned = status === RepoViewStatus.Orphaned;
+
+  if (isOrphaned) {
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        tooltip={t('folder-repo.repository-not-found-tooltip', 'Repository not found')}
+      />
+    );
+  }
+
+  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
@@ -40,12 +57,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
           tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
         />
       )}
-      <Badge
-        title={t('folder-repo.provisioned-badge', 'Provisioned')}
-        color="purple"
-        icon="exchange-alt"
-        tooltip={t('folder-repo.provisioned-badge', 'Provisioned')}
-      />
+      <Badge color="purple" icon="exchange-alt" tooltip={repoTooltipText} />
     </Stack>
   );
 });

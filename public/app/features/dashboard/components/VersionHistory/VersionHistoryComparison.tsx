@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
-import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
+import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
-
-import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -15,7 +14,7 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: string; rhs: string };
+  diffData: { lhs: object; rhs: object };
 };
 
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
@@ -81,7 +80,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
           isOpen={false}
           label={t('dashboard.version-history-comparison.label-view-json-diff', 'View JSON diff')}
         >
-          <DiffViewer
+          <LazyDiffViewer
             oldValue={JSON.stringify(diffData.lhs, null, 2)}
             newValue={JSON.stringify(diffData.rhs, null, 2)}
           />

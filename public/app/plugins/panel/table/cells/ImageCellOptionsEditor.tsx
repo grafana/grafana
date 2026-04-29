@@ -1,10 +1,10 @@
-import { FormEvent, useId } from 'react';
+import { type FormEvent, useId } from 'react';
 
 import { t } from '@grafana/i18n';
-import { TableImageCellOptions } from '@grafana/schema';
+import { type TableImageCellOptions } from '@grafana/schema';
 import { Field, Input } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableImageCellOptions>) => {
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {
@@ -23,6 +23,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
   return (
     <>
       <Field
+        noMargin
         label={t('table.image-cell-options-editor.label-alt-text', 'Alt text')}
         description={t(
           'table.image-cell-options-editor.description-alt-text',
@@ -33,6 +34,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
       </Field>
 
       <Field
+        noMargin
         label={t('table.image-cell-options-editor.label-title-text', 'Title text')}
         description={t(
           'table.image-cell-options-editor.description-title-text',

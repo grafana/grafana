@@ -9,6 +9,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateResourcePermissions(t *testing.T, srv *Server) *Server {
@@ -24,7 +25,10 @@ func setupMutateResourcePermissions(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateResourcePermissions(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateResourcePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateResourcePermissions(t, srv)
 
 	t.Run("should create new resource permission", func(t *testing.T) {

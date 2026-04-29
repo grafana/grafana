@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 
-import { GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 
-import { TutorialCardType } from '../types';
+import { type TutorialCardType } from '../types';
 
 import { cardContent, cardStyle } from './sharedStyles';
 
@@ -30,7 +30,11 @@ export const TutorialCard = ({ card }: Props) => {
         <div className={styles.heading}>
           {card.done ? t('gettingstarted.tutorial-card.complete', 'complete') : card.heading}
         </div>
-        <h4 className={styles.cardTitle}>{card.title}</h4>
+        <div className={styles.cardTitle}>
+          <Text variant="h4" element="h3">
+            {card.title}
+          </Text>
+        </div>
         <div className={styles.info}>{card.info}</div>
       </div>
     </a>
@@ -51,6 +55,10 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
       ...cardStyle(theme, complete),
       width: '460px',
       minWidth: '460px',
+
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
 
       [theme.breakpoints.down('xl')]: {
         minWidth: '368px',

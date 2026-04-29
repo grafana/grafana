@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
+import { ValueMatcherID, type BasicValueMatcherOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
 
-import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 
 export function basicMatcherEditor(
   config: ValueMatcherEditorConfig

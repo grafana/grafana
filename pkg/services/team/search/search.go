@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.TeamSearchResults, error) {
+func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.GetSearchTeamsResponse, error) {
 	if result == nil {
-		return v0alpha1.TeamSearchResults{}, nil
+		return v0alpha1.GetSearchTeamsResponse{}, nil
 	} else if result.Error != nil {
-		return v0alpha1.TeamSearchResults{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return v0alpha1.GetSearchTeamsResponse{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	} else if result.Results == nil {
-		return v0alpha1.TeamSearchResults{}, nil
+		return v0alpha1.GetSearchTeamsResponse{}, nil
 	}
 
 	titleIDX := -1
@@ -40,20 +40,22 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		}
 	}
 
-	sr := v0alpha1.TeamSearchResults{
-		Offset:    offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]v0alpha1.TeamHit, len(result.Results.Rows)),
+	sr := v0alpha1.GetSearchTeamsResponse{
+		GetSearchTeamsBody: v0alpha1.GetSearchTeamsBody{
+			Offset:    offset,
+			TotalHits: result.TotalHits,
+			QueryCost: result.QueryCost,
+			MaxScore:  result.MaxScore,
+			Hits:      make([]v0alpha1.GetSearchTeamsTeamHit, len(result.Results.Rows)),
+		},
 	}
 
 	for i, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return v0alpha1.TeamSearchResults{}, fmt.Errorf("error parsing team search response: mismatch number of columns and cells")
+			return v0alpha1.GetSearchTeamsResponse{}, fmt.Errorf("error parsing team search response: mismatch number of columns and cells")
 		}
 
-		hit := &v0alpha1.TeamHit{
+		hit := &v0alpha1.GetSearchTeamsTeamHit{
 			Name: row.Key.Name,
 		}
 

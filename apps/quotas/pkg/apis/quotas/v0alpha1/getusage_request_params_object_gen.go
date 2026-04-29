@@ -30,4 +30,8 @@ func (o *GetUsageRequestParamsObject) DeepCopyInto(dst *GetUsageRequestParamsObj
 	_ = resource.CopyObjectInto(&dstGetUsageRequestParams, &o.GetUsageRequestParams)
 }
 
+func (GetUsageRequestParamsObject) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.quotas.pkg.apis.quotas.v0alpha1.GetUsageRequestParamsObject"
+}
+
 var _ runtime.Object = NewGetUsageRequestParamsObject()

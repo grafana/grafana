@@ -58,7 +58,7 @@ type Config struct {
 	KeepOriginalRuleDefinition *bool
 	RecordingRules             RulesConfig
 	AlertRules                 RulesConfig
-	NotificationSettings       []models.NotificationSettings
+	NotificationSettings       *models.NotificationSettings
 	// ExtraLabels are labels that will be added to all rules during conversion.
 	// These labels have the lowest precedence and can be overridden by group or rule labels.
 	ExtraLabels map[string]string

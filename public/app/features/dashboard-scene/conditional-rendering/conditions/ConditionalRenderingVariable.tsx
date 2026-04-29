@@ -1,27 +1,28 @@
-import { ReactElement, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   MultiValueVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import {
-  ConditionalRenderingVariableKind,
-  ConditionalRenderingVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
+  type ConditionalRenderingVariableKind,
+  type ConditionalRenderingVariableSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useUserDefinedVariables } from '../../utils/variables';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
@@ -92,7 +93,12 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
       return undefined;
     }
 
-    const variable = sceneGraph.getVariables(object).getByName(this.state.variable);
+    // sceneGraph.lookupVariable walks up the scene graph parent chain,
+    // respecting section-level $variables on rows/tabs before reaching
+    // the dashboard root. This correctly handles repeated panel clones
+    // whose local $variables only contains the repeat variable and would
+    // otherwise shadow dashboard-level variables. See: GitHub issue #120327
+    const variable = sceneGraph.lookupVariable(this.state.variable, object);
 
     if (!variable) {
       return undefined;
@@ -222,11 +228,11 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   useEffect(() => setNewValue(value), [value]);
 
-  const variables = sceneGraph.getVariables(getDashboardSceneFor(model));
+  const variables = useUserDefinedVariables(model);
 
   const variableNames: ComboboxOption[] = useMemo(
-    () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
-    [variables.state.variables]
+    () => variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
+    [variables]
   );
 
   const operatorOptions: Array<ComboboxOption<VariableConditionValueOperator>> = useMemo(
@@ -273,11 +279,13 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
       isObjectSupported={true}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable')}
+      ruleId="variable"
     >
       <Stack direction="column" gap={0.5}>
         <Stack direction="row" gap={0.5} grow={1}>
           <Box flex={1}>
             <Combobox
+              data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection}
               placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
               options={variableNames}
               value={variable}
@@ -318,6 +326,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
         <Field error={valueError} invalid={!!valueError} noMargin>
           <Input
+            data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput}
             placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
             value={newValue}
             onChange={(evt) => {

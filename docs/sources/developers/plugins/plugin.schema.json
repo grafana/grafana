@@ -177,7 +177,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?)?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?)?(\\s\\|\\|\\s(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?)?)*$"
         },
         "plugins": {
           "type": "array",
@@ -247,8 +247,11 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "profiling", "sql", "enterprise", "iot", "other"]
+      "description": "Plugin category used on the Add new connection page. Can be one from the list: \"tsdb\", \"logging\", \"cloud\", \"tracing\", \"profiling\", \"sql\", \"enterprise\", \"iot\", \"other\", empty string or custom string"
+    },
+    "docsPath": {
+      "type": "string",
+      "description": "Path to the directory containing plugin documentation."
     },
     "enterpriseFeatures": {
       "type": "object",
@@ -276,6 +279,7 @@
       "items": {
         "type": "object",
         "additionalItems": false,
+        "required": ["type"],
         "properties": {
           "uid": {
             "type": "string",
@@ -330,7 +334,7 @@
     },
     "multiValueFilterOperators": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports multi value operators in adhoc filters."
+      "description": "For data source plugins, if the plugin supports multi value operators in filters."
     },
     "pascalName": {
       "type": "string",

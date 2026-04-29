@@ -1,34 +1,45 @@
-import { from, merge, Observable, of, throwError } from 'rxjs';
+import { from, merge, type Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
+  type AnnotationEvent,
   ArrayDataFrame,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   DataTopic,
   LiveChannelScope,
   LoadingState,
-  TimeRange,
-  ScopedVars,
+  type TimeRange,
+  type ScopedVars,
   toDataFrame,
   MutableDataFrame,
-  AnnotationQuery,
+  type AnnotationQuery,
   getSearchFilterScopedVar,
   FieldType,
+  type DataSourceWithLogsLabelTypesSupport,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  type TemplateSrv,
+} from '@grafana/runtime';
 
-import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
+import { DATAPLANE_LABEL_TYPES_NAME } from './constants';
+import { type Scenario, type TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
 import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
-export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery> {
+export class TestDataDataSource
+  extends DataSourceWithBackend<TestDataDataQuery>
+  implements DataSourceWithLogsLabelTypesSupport
+{
   scenariosCache?: Promise<Scenario[]>;
 
   constructor(
@@ -55,6 +66,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
         };
       },
     };
+  }
+
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): string | null {
+    if (!frame) {
+      return null;
+    }
+
+    const typeField = frame.fields.find((field) => field.name === DATAPLANE_LABEL_TYPES_NAME);
+
+    if (!typeField) {
+      return null;
+    }
+
+    if (index === null) {
+      index = typeField.values.findIndex((typeFieldValue) => typeFieldValue[labelKey]);
+    }
+
+    return typeField?.values[index]?.[labelKey] ?? null;
   }
 
   getDefaultQuery(): Partial<TestDataDataQuery> {
@@ -486,7 +515,7 @@ function runGrafanaLiveQuery(
   return getGrafanaLiveSrv().getDataStream({
     addr: {
       scope: LiveChannelScope.Plugin,
-      namespace: 'testdata',
+      stream: 'testdata',
       path: target.channel,
     },
     key: `testStream.${liveQueryCounter++}`,

@@ -1,32 +1,32 @@
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
-import { HeaderGroup, Row } from 'react-table';
+import { type HeaderGroup, type Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
-  ActionModel,
-  DataFrame,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
-  Field,
-  FieldConfigSource,
+  type ActionModel,
+  type DataFrame,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  type Field,
+  type FieldConfigSource,
   fieldReducers,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
-  LinkModel,
+  type LinkModel,
   reduceField,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  TableAutoCellOptions,
+  type TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
 } from '@grafana/schema';
@@ -44,13 +44,13 @@ import { SparklineCell } from './Cells/SparklineCell';
 import { getFooterValue } from './TableRT/FooterRow';
 import { RowExpander } from './TableRT/RowExpander';
 import {
-  CellColors,
-  CellComponent,
-  FooterItem,
-  GrafanaTableColumn,
-  TableCellOptions,
-  TableFieldOptions,
-  TableFooterCalc,
+  type CellColors,
+  type CellComponent,
+  type FooterItem,
+  type GrafanaTableColumn,
+  type TableCellOptions,
+  type TableFieldOptions,
+  type TableFooterCalc,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -494,8 +494,9 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
         mode: mode,
       };
     default:
+      // @ts-ignore TSGO / TS7
       return {
-        // @ts-ignore
+        // @ts-ignore TS5 / TS6
         type: displayMode,
       };
   }

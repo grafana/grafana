@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -53,7 +55,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockOrgService := orgtest.NewMockService(t)
-			client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
+			client := NewUserLegacySearchClient(mockOrgService, tracing.InitializeTracerForTest(), &setting.Cfg{})
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 			req := &resourcepb.ResourceSearchRequest{
 				Limit: 10,
@@ -110,9 +112,27 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 		})
 	}
 
+	t.Run("returns error if limit exceeds common.MaxListLimit", func(t *testing.T) {
+		mockOrgService := orgtest.NewMockService(t)
+		client := NewUserLegacySearchClient(mockOrgService, tracing.InitializeTracerForTest(), &setting.Cfg{})
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
+		req := &resourcepb.ResourceSearchRequest{
+			Limit: common.MaxListLimit + 1,
+			Page:  1,
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: "default"},
+			},
+		}
+
+		resp, err := client.Search(ctx, req)
+		require.Error(t, err)
+		require.Nil(t, resp)
+		require.Equal(t, fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit), err.Error())
+	})
+
 	t.Run("title should have precedence over login and email", func(t *testing.T) {
 		mockOrgService := orgtest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
+		client := NewUserLegacySearchClient(mockOrgService, tracing.InitializeTracerForTest(), &setting.Cfg{})
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{

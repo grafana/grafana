@@ -10,21 +10,33 @@ import (
 )
 
 const (
-	ScopeReceiversRoot = "receivers"
-	AlertRolesGroup    = "Alerting"
+	ScopeReceiversRoot       = "receivers"
+	ScopeRoutesRoot          = accesscontrol.AlertingRoutesKind
+	ScopeInhibitionRulesRoot = "inhibition-rules"
+	AlertRolesGroup          = "Alerting"
 
 	PermissionView  ReceiverPermission = "View"
 	PermissionEdit  ReceiverPermission = "Edit"
 	PermissionAdmin ReceiverPermission = "Admin"
+
+	NewReceiverScopeID = "-"
 )
 
 var (
-	ScopeReceiversProvider = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
-	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeReceiversProvider       = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
+	ScopeReceiversAll            = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeRoutesProvider          = RouteScopeProvider{accesscontrol.NewScopeProvider(ScopeRoutesRoot)}
+	ScopeRoutesAll               = ScopeRoutesProvider.GetResourceAllScope()
+	ScopeInhibitionRulesProvider = accesscontrol.NewScopeProvider(ScopeInhibitionRulesRoot)
+	ScopeInhibitionRulesAll      = ScopeInhibitionRulesProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {
 	accesscontrol.ScopeProvider
+}
+
+func (p ReceiverScopeProvider) GetNewResourceScope() string {
+	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(NewReceiverScopeID))
 }
 
 func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {
@@ -41,4 +53,12 @@ func (p ReceiverScopeProvider) GetResourceIDFromUID(uid string) string {
 	h := sha1.New()
 	h.Write([]byte(uid))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+type RouteScopeProvider struct {
+	accesscontrol.ScopeProvider
+}
+
+func (p RouteScopeProvider) GetResourceScopeUID(uid string) string {
+	return p.ScopeProvider.GetResourceScopeUID(uid)
 }

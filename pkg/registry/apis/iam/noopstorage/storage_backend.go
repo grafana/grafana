@@ -5,6 +5,7 @@ import (
 	"errors"
 	"iter"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -37,7 +38,7 @@ func (c *StorageBackendImpl) ListIterator(context.Context, *resourcepb.ListReque
 	return 0, errNoopStorage
 }
 
-func (c *StorageBackendImpl) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (c *StorageBackendImpl) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}

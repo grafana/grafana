@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, Labels, DataFrame, Field, ReducerID } from '@grafana/data';
+import { toDataFrame, FieldType, type Labels, type DataFrame, type Field, ReducerID } from '@grafana/data';
 
 import { timeSeriesToTableTransform } from './timeSeriesTableTransformer';
 

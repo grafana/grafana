@@ -1,7 +1,7 @@
-import { TimeOption } from '@grafana/data';
+import { type TimeOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 
 export const getQuickOptions: () => TimeOption[] = () => [
   { from: 'now-5m', to: 'now', display: t('grafana-ui.date-time-pickers.quick-options.last-5-mins', 'Last 5 minutes') },

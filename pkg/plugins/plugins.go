@@ -17,12 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
-	ErrFileNotExist              = errors.New("file does not exist")
+	ErrFileNotExist              = fs.ErrNotExist
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
@@ -56,9 +55,8 @@ type Plugin struct {
 
 	ExternalService *auth.ExternalService
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	client backendplugin.Plugin
+	log    log.Logger
 
 	SkipHostEnvVars bool
 
@@ -68,13 +66,14 @@ type Plugin struct {
 }
 
 var (
-	_ = backend.CollectMetricsHandler(&Plugin{})
-	_ = backend.CheckHealthHandler(&Plugin{})
-	_ = backend.QueryDataHandler(&Plugin{})
-	_ = backend.CallResourceHandler(&Plugin{})
-	_ = backend.StreamHandler(&Plugin{})
-	_ = backend.AdmissionHandler(&Plugin{})
-	_ = backend.ConversionHandler(&Plugin{})
+	_ backend.CollectMetricsHandler   = (*Plugin)(nil)
+	_ backend.CheckHealthHandler      = (*Plugin)(nil)
+	_ backend.QueryDataHandler        = (*Plugin)(nil)
+	_ backend.QueryChunkedDataHandler = (*Plugin)(nil)
+	_ backend.CallResourceHandler     = (*Plugin)(nil)
+	_ backend.StreamHandler           = (*Plugin)(nil)
+	_ backend.AdmissionHandler        = (*Plugin)(nil)
+	_ backend.ConversionHandler       = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
@@ -337,6 +336,14 @@ func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 	return pluginClient.QueryData(ctx, req)
 }
 
+func (p *Plugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.QueryChunkedData(ctx, req, w)
+}
+
 func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -463,6 +470,7 @@ func (p *Plugin) executablePath(f string) string {
 
 type PluginClient interface {
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler

@@ -1,9 +1,9 @@
-import { PayloadAction } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
+import { type PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction } from 'redux';
 
-import { toStateKey } from '../utils';
+import { toStateKey } from '../toStateKey';
 
-import { getTemplatingReducers, TemplatingState } from './reducers';
+import { getTemplatingReducers, type TemplatingState } from './reducers';
 import { variablesInitTransaction } from './transactionReducer';
 
 export interface KeyedVariablesState {

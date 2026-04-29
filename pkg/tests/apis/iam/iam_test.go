@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,12 +28,6 @@ var gvrUsers = schema.GroupVersionResource{
 	Resource: "users",
 }
 
-var gvrTeamBindings = schema.GroupVersionResource{
-	Group:    "iam.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "teambindings",
-}
-
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -41,10 +36,15 @@ func TestIntegrationIdentity(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
+		AppModeProduction:      false, // required for experimental APIs
+		DisableAnonymous:       true,
+		RBACSingleOrganization: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesTeamsApi,
+			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagKubernetesServiceAccountsApi,
+			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 		},
 	})
 	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
@@ -58,6 +58,10 @@ func TestIntegrationIdentity(t *testing.T) {
 		})
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
+		// Members have randomly-generated UIDs; drop them from comparison.
+		for i := range rsp.Items {
+			unstructured.RemoveNestedField(rsp.Items[i].Object, "spec", "members")
+		}
 		found := teamClient.SanitizeJSONList(rsp, "name", "labels")
 		require.JSONEq(t, `{
       "items": [
@@ -103,7 +107,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "grafana-admin",
+				"email": "grafana-admin@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": true,
 				"login": "grafana-admin",
@@ -113,7 +117,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "editor",
+				"email": "editor@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "editor",
@@ -123,7 +127,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "viewer",
+				"email": "viewer@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "viewer",
@@ -133,7 +137,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "none",
+				"email": "none@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "none",
@@ -157,7 +161,7 @@ func TestIntegrationIdentity(t *testing.T) {
 		require.JSONEq(t, `[
 			{
 				"disabled": false,
-				"email": "grafana-admin",
+				"email": "grafana-admin@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": true,
 				"login": "grafana-admin",
@@ -167,7 +171,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "admin2-org-2",
+				"email": "admin2-org-2@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "admin2-org-2",
@@ -177,7 +181,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "editor-org-2",
+				"email": "editor-org-2@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "editor-org-2",
@@ -187,7 +191,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "viewer-org-2",
+				"email": "viewer-org-2@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "viewer-org-2",
@@ -197,7 +201,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			},
 			{
 				"disabled": false,
-				"email": "none-org-2",
+				"email": "none-org-2@example.com",
 				"emailVerified": false,
 				"grafanaAdmin": false,
 				"login": "none-org-2",

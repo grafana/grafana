@@ -1,21 +1,29 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, type ComponentSize, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { Folder } from '../../types/rule-form';
+import { type Folder } from '../../types/rule-form';
+
+export type ButtonFill = 'solid' | 'outline' | 'text';
+
+export interface CreateNewFolderProps {
+  onCreate: (folder: Folder) => void;
+  fill?: ButtonFill;
+  size?: ComponentSize;
+}
 
 /**
  * Provides a button and associated modal for creating a new folder
  */
-export const CreateNewFolder = ({ onCreate }: { onCreate: (folder: Folder) => void }) => {
+export const CreateNewFolder = ({ onCreate, fill = 'outline', size = 'md' }: CreateNewFolderProps) => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const handleCreate = (folder: Folder) => {
     onCreate(folder);
@@ -27,8 +35,9 @@ export const CreateNewFolder = ({ onCreate }: { onCreate: (folder: Folder) => vo
         onClick={() => setIsCreatingFolder(true)}
         type="button"
         icon="plus"
-        fill="outline"
         variant="secondary"
+        fill={fill}
+        size={size}
         disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
       >
         <Trans i18nKey="alerting.create-new-folder.new-folder">New folder</Trans>

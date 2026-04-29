@@ -1,116 +1,113 @@
 import { css, cx } from '@emotion/css';
+import { useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneComponentProps } from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui';
 
-import { PanelEditor } from '../PanelEditor';
-import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
+import { type PanelEditor } from '../PanelEditor';
+import { QueryEditorBanner } from '../QueryEditorBanner';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
-import { QueryEditorSidebar, SidebarSize } from './QueryEditor/QueryEditorSidebar';
-import { useVizAndDataPaneLayout } from './hooks';
+import { Sidebar } from './QueryEditor/Sidebar/Sidebar';
+import { SidebarSize } from './constants';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
-export function VizAndDataPaneNext({
-  model,
-  containerHeight = 800,
-}: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
-  const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
+export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { showBanner, dismissBanner } = useQueryEditorBanner();
+  const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
-  if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
-    return null;
-  }
-
-  const nextDataPane = scene.dataPane;
-
-  const vizSizeClass = css({
-    height: layout.vizResize.height,
-    maxHeight: containerHeight - 80,
-  });
-  const sidebarSizeClass = css({
-    height: layout.sidebarSize === SidebarSize.Mini ? layout.bottomPaneHeight : layout.expandedSidebarHeight,
-    width: layout.sidebarResize.width,
-  });
-  const dataPaneSizeClass = css({
-    height: layout.bottomPaneHeight,
-  });
+  const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
 
   return (
-    <div className={styles.pageContainer} style={grid.gridStyles}>
+    <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
       {scene.controls && (
         <div className={styles.controlsWrapper}>
           <scene.controls.Component model={scene.controls} />
         </div>
       )}
-      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout }, vizSizeClass)}>
+      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <scene.panelToShow.Component model={scene.panelToShow} />
-        <div className={styles.vizResizerWrapper}>
-          <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
-        </div>
-      </div>
-      <QueryEditorContextWrapper dataPane={nextDataPane}>
-        <div className={cx(styles.sidebar, sidebarSizeClass)}>
-          <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
+        {nextDataPane && (
+          <div className={styles.vizResizeHandle}>
             <div
-              style={{ height: '100%', width: 2 }}
-              ref={layout.sidebarResize.handleRef}
-              className={layout.sidebarResize.className}
-              data-testid="sidebar-resizer"
+              ref={layout.vizResizeHandle.ref}
+              className={layout.vizResizeHandle.className}
+              data-testid="viz-resizer"
             />
           </div>
-        </div>
-        <div className={cx(styles.dataPane, dataPaneSizeClass)}>
-          {grid.splitterState.collapsed ? (
-            <div className={styles.expandDataPane}>
-              <Button
-                tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-                icon={'arrow-to-right'}
-                onClick={actions.onToggleCollapse}
-                variant="secondary"
-                size="sm"
-                className={styles.openDataPaneButton}
-                aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+        )}
+      </div>
+      {nextDataPane && (
+        <QueryEditorContextWrapper
+          dataPane={nextDataPane}
+          onSwitchToClassic={model.onToggleQueryEditorVersion}
+          showVersionBanner={showBanner}
+        >
+          {showBanner && (
+            <QueryEditorBanner
+              useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+              onToggle={model.onToggleQueryEditorVersion}
+              onDismiss={dismissBanner}
+              className={styles.versionToggle}
+            />
+          )}
+          <div className={styles.sidebar}>
+            <div className={styles.sidebarContent}>
+              <Sidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
+            </div>
+            <div className={styles.sidebarResizeHandle}>
+              <div
+                ref={layout.sidebarResizeHandle.ref}
+                className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
+                data-testid="sidebar-resizer"
               />
             </div>
-          ) : (
+          </div>
+          <div className={styles.dataPane}>
             <nextDataPane.Component model={nextDataPane} />
-          )}
-        </div>
-      </QueryEditorContextWrapper>
+          </div>
+        </QueryEditorContextWrapper>
+      )}
     </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
-  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
       display: 'grid',
       gap: theme.spacing(2),
-      gridTemplateColumns: `auto 1fr`,
       overflow: 'hidden',
-      [scrollReflowMediaQuery]: {
-        gridTemplateColumns: `100%`,
-      },
+      paddingBottom: theme.spacing(2),
+    }),
+    versionToggle: css({
+      gridArea: 'version-toggle',
+      minWidth: 0,
+      overflow: 'hidden',
+      ...(sidebarSize === SidebarSize.Mini && {
+        marginLeft: theme.spacing(2),
+      }),
     }),
     sidebar: css({
       gridArea: 'sidebar',
-      overflow: 'visible',
       position: 'relative',
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
+      paddingLeft: theme.spacing(2),
+      minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    sidebarContent: css({
+      height: '100%',
     }),
     viz: css({
       gridArea: 'viz',
       overflow: 'visible',
-      height: '100%',
-      minHeight: 100,
       position: 'relative',
+      minHeight: 0,
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
@@ -118,6 +115,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     dataPane: css({
       gridArea: 'data-pane',
       overflow: 'hidden',
+      minHeight: 0,
     }),
     controlsWrapper: css({
       gridArea: 'controls',
@@ -127,35 +125,24 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
         paddingLeft: theme.spacing(2),
       }),
     }),
-    openDataPaneButton: css({
-      width: theme.spacing(8),
-      justifyContent: 'center',
-      svg: {
-        rotate: '-90deg',
-      },
-    }),
     fixedSizeViz: css({
       height: '100vh',
     }),
-    fullSizeEditor: css({
-      height: 'max-content',
-    }),
-    expandDataPane: css({
-      display: 'flex',
-      flexDirection: 'row',
-      padding: theme.spacing(1),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-      flexGrow: 1,
-      justifyContent: 'space-around',
-    }),
-    vizResizerWrapper: css({
+    vizResizeHandle: css({
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
-      width: '100%',
+    }),
+    sidebarResizeHandle: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+    }),
+    resizeHandlePill: css({
+      height: '100%',
+      width: 2,
     }),
   };
 }

@@ -1,13 +1,13 @@
 import {
-  CloudWatchAnnotationQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  LogGroup,
+  type CloudWatchAnnotationQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
+  type LogGroup,
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
 } from './dataquery.gen';
-import { VariableQuery, VariableQueryType } from './types';
+import { type VariableQuery, VariableQueryType } from './types';
 
 export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   queryMode: 'Metrics',
@@ -36,7 +36,7 @@ export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'>
 export const DEFAULT_CWLI_QUERY_STRING = 'fields @timestamp, @message |\nsort @timestamp desc |\nlimit 20';
 export const DEFAULT_PPL_QUERY_STRING = 'fields `@timestamp`, `@message`\n| sort - `@timestamp`\n| head 25s';
 export const DEFAULT_SQL_QUERY_STRING =
-  'SELECT `@timestamp`, `@message`\nFROM `log_group`\nORDER BY `@timestamp` DESC\nLIMIT 25;';
+  'SELECT `@timestamp`, `@message`\nFROM `$__logGroups`\nORDER BY `@timestamp` DESC\nLIMIT 25;';
 
 export const getDefaultLogsQuery = (
   defaultLogGroups?: LogGroup[],

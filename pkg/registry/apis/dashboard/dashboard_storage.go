@@ -36,7 +36,7 @@ func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInf
 	if err == nil && ns.OrgID > 0 && d.live != nil {
 		m, err := utils.MetaAccessor(obj)
 		if err == nil {
-			if err := d.live.DashboardSaved(ns.OrgID, name, m.GetResourceVersion()); err != nil {
+			if err := d.live.DashboardSaved(ns.Value, name, m.GetResourceVersion()); err != nil {
 				logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
 			}
 		}
@@ -54,7 +54,7 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 		return obj, async, err
 	}
 	if ns.OrgID > 0 && d.live != nil {
-		if err := d.live.DashboardDeleted(ns.OrgID, name); err != nil {
+		if err := d.live.DashboardDeleted(ns.Value, name); err != nil {
 			logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
 		}
 	}

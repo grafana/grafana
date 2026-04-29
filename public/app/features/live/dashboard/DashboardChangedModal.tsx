@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { dashboardWatcher } from './dashboardWatcher';
-import { DashboardEvent, DashboardEventAction } from './types';
+import { type DashboardEvent, DashboardEventAction } from './types';
 
 interface Props {
   event?: DashboardEvent;
@@ -30,7 +30,6 @@ export function DashboardChangedModal({ onDismiss, event }: Props) {
     <Modal
       isOpen={true}
       title={t('live.dashboard-changed-modal.title-dashboard-changed', 'Dashboard changed')}
-      icon="copy"
       onDismiss={onDismiss}
       onClickBackdrop={() => {}}
       className={styles.modal}

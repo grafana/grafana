@@ -4,13 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
 var (
@@ -27,19 +28,19 @@ var (
 type queryTypeStorage struct {
 	resourceInfo   *utils.ResourceInfo
 	tableConverter rest.TableConvertor
-	registry       query.QueryTypeDefinitionList
+	registry       dsV0.QueryTypeDefinitionList
 }
 
 type queryValidationREST struct {
 	qt *queryTypeStorage
 }
 
-func RegisterQueryTypes(queryTypes *query.QueryTypeDefinitionList, storage map[string]rest.Storage) error {
+func RegisterQueryTypes(queryTypes *dsV0.QueryTypeDefinitionList, storage map[string]rest.Storage) error {
 	if queryTypes == nil {
 		return nil // NO error
 	}
 
-	resourceInfo := query.QueryTypeDefinitionResourceInfo
+	resourceInfo := dsV0.QueryTypeDefinitionResourceInfo
 	store := &queryTypeStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
@@ -96,7 +97,7 @@ func (s *queryTypeStorage) Get(ctx context.Context, name string, options *metav1
 //----------------------------------------------------
 
 func (r *queryValidationREST) New() runtime.Object {
-	return &query.QueryDataRequest{}
+	return &dsV0.QueryDataRequest{}
 }
 
 func (r *queryValidationREST) Destroy() {
@@ -111,7 +112,7 @@ func (r *queryValidationREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *queryValidationREST) ProducesObject(verb string) interface{} {
-	return &query.QueryDataRequest{}
+	return &dsV0.QueryDataRequest{}
 }
 
 func (r *queryValidationREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -122,7 +123,7 @@ func (r *queryValidationREST) Connect(ctx context.Context, name string, opts run
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO -- validate/mutate the query
 		// should we return the DQR, or raw validation response?
-		qdr := &query.QueryDataRequest{
+		qdr := &dsV0.QueryDataRequest{
 			QueryDataRequest: v0alpha1.QueryDataRequest{
 				Debug: true,
 			},

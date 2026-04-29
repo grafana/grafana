@@ -11,10 +11,10 @@ import (
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
-type ChannelPublisher func(orgID int64, channel string, data []byte) error
+type ChannelPublisher func(ns string, channel string, data []byte) error
 
 // ChannelClientCount will return the number of clients for a channel
-type ChannelClientCount func(orgID int64, channel string) (int, error)
+type ChannelClientCount func(ns string, channel string) (int, error)
 
 // SubscribeEvent contains subscription data.
 type SubscribeEvent struct {

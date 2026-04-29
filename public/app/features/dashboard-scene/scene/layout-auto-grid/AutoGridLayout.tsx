@@ -1,6 +1,12 @@
-import { createRef, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import { createRef, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItemLike } from '@grafana/scenes';
+import {
+  type SceneLayout,
+  SceneObjectBase,
+  type SceneObjectState,
+  type VizPanel,
+  type SceneGridItemLike,
+} from '@grafana/scenes';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';

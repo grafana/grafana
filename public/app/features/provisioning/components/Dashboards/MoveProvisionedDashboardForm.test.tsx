@@ -9,11 +9,11 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 
-import { MoveProvisionedDashboardForm, Props } from './MoveProvisionedDashboardForm';
+import { MoveProvisionedDashboardForm, type Props } from './MoveProvisionedDashboardForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -84,10 +84,7 @@ function setup(props: Partial<Props> = {}) {
       workflows: ['branch', 'write'],
       target: 'folder',
     },
-    workflowOptions: [
-      { label: 'Write', value: 'write' },
-      { label: 'Branch', value: 'branch' },
-    ],
+    canPushToConfiguredBranch: true,
     targetFolderUID: 'target-folder-uid',
     targetFolderTitle: 'Target Folder',
     onDismiss: jest.fn(),

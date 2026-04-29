@@ -277,3 +277,8 @@ func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol
 func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
 	return m
 }
+
+// InvalidateResolverCache implements accesscontrol.AccessControl.
+func (m *Mock) InvalidateResolverCache(orgID int64, scope string) {
+	m.scopeResolvers.InvalidateCache(orgID, scope)
+}

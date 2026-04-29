@@ -3,8 +3,8 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -31,16 +31,20 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setTimestampResolution: () => {},
+  setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
   timestampResolution: 'ns',
+  unwrappedColumns: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: () => {},
@@ -74,12 +78,14 @@ export const defaultValue: LogListContextData = {
   setForceEscape: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
+  setShowLevel: jest.fn(),
   setShowTime: jest.fn(),
   setShowUniqueLabels: jest.fn(),
   setSortOrder: jest.fn(),
   setPrettifyJSON: jest.fn(),
   setSyntaxHighlighting: jest.fn(),
   setTimestampResolution: jest.fn(),
+  setUnwrappedColumns: jest.fn(),
   setWrapLogMessage: jest.fn(),
   downloadLogs: jest.fn(),
   filterLevels: [],
@@ -89,8 +95,10 @@ export const defaultValue: LogListContextData = {
   app: CoreApp.Explore,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
+  unwrappedColumns: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,
   openAssistantByLog: jest.fn(),
@@ -115,10 +123,12 @@ export const defaultProps: Props = {
   onUnpinLine: jest.fn(),
   pinnedLogs: [],
   showControls: true,
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   timestampResolution: 'ms',
+  unwrappedColumns: false,
   wrapLogMessage: true,
 };
 
@@ -139,10 +149,12 @@ export const LogListContextProvider = ({
   onUnpinLine = jest.fn(),
   permalinkedLogId,
   pinnedLogs = [],
+  showLevel = true,
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   timestampResolution = 'ms',
+  unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
@@ -181,10 +193,12 @@ export const LogListContextProvider = ({
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
         setWrapLogMessage: jest.fn(),
+        showLevel,
         showTime,
         sortOrder,
         syntaxHighlighting,
         timestampResolution,
+        unwrappedColumns,
         wrapLogMessage,
       }}
     >

@@ -109,7 +109,7 @@ To use AI to create your template, follow these steps:
 
 1. Go to **Alerting -> Contact points**.
 
-1. Click the Notification Templates tab then, click the **+ Add notification template group** button.
+1. Click the Notification Templates tab then, click the **+ New notification template** button.
 
 1. Name your template.
 

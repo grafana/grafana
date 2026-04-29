@@ -1,6 +1,6 @@
-import { BaseOptionType as RCCascaderOption, CascaderProps } from 'rc-cascader';
+import { type BaseOptionType as RCCascaderOption, type CascaderProps } from '@rc-component/cascader';
 
-import { CascaderOption } from './Cascader';
+import { type CascaderOption } from './Cascader';
 
 type onChangeType = ((values: string[], options: CascaderOption[]) => void) | undefined;
 

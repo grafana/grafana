@@ -18,6 +18,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
       changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
+      changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -43,9 +44,10 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - name: Setup Node
+    - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-prettier-enterprise:
@@ -61,13 +63,14 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - name: Setup Node
+    - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-typecheck:
@@ -80,13 +83,16 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - name: Setup Node
+    - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
@@ -97,6 +103,8 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -107,8 +115,34 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+  lint-frontend-typecheck-tsgo-enterprise:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    continue-on-error: true  # tsgo is in preview; we don't want to block PRs if it fails, but we want to gather data on how it performs in CI
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    name: Typecheck (TSGO/TS7)
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - run: yarn run typecheck:tsgo
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -124,7 +158,8 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
@@ -133,6 +168,41 @@ jobs:
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  lint-frontend-openapi:
+    # Run this workflow for OSS only
+    permissions:
+      contents: read
+      id-token: write
+    name: Verify OpenAPI specs
+    runs-on: ubuntu-x64-large
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/local/lib/android || true
+        sudo rm -rf /usr/share/dotnet || true
+        sudo rm -rf /opt/ghc || true
+        sudo rm -rf /usr/local/.ghcup || true
+    - name: Generate OpenAPI specs
+      run: |
+        extract_error_message='ERROR! OpenAPI generation failed!'
+        yarn generate:openapi || (echo "${extract_error_message}" && false)
+    - name: Verify generated specs
+      run: |
+        git add -N .
+        uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
+        file_diff="$(git diff --name-only ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -156,7 +226,8 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         github-app-name: 'grafana-ci-bot'
-    - run: yarn install --immutable --check-cache
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - name: Generate API clients
       run: |
         extract_error_message='ERROR! API client generation failed!'
@@ -185,11 +256,99 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
-    - name: Install dependencies
-      run: yarn install --immutable
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - name: Build and pack packages
       run: |
         yarn run packages:build
         yarn run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
+  lint-circular-dependencies:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.changed == 'true'
+    name: Check circular dependencies
+    runs-on: ubuntu-x64-small
+    steps:
+    - name: Checkout build commit
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+        path: './pr'
+    - name: Setup Node
+      uses: ./pr/.github/actions/setup-node
+      with:
+        cwd: './pr'
+    - name: Install yarn dependencies
+      uses: ./pr/.github/actions/yarn-install
+      with:
+        cwd: './pr'
+    - name: Check circular dependencies on PR
+      # the first sed command is used to clean the output
+      working-directory: ./pr
+      run: |
+        yarn lint:circular &> /tmp/pr-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
+        echo "Circular dependencies on PR:"
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "$pr_count"
+    - name: Checkout main branch
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+        repository: 'grafana/grafana'
+        ref: 'main'
+        path: './main'
+    - name: Setup Node
+      uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
+      with:
+        cwd: './main'
+    - name: Install yarn dependencies
+      uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+      with:
+        cwd: './main'
+    - name: Check circular dependencies on main
+      working-directory: ./main
+      # the first sed command is used to clean the output
+      run: |
+        yarn lint:circular &> /tmp/main-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
+        echo "Circular dependencies on main:"
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        echo "$main_count"
+    - name: Compare circular dependencies
+      run: |
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "Main branch circular dependencies: $main_count lines"
+        echo "PR branch circular dependencies: $pr_count lines"
+        if [ "$pr_count" -gt "$main_count" ]; then
+          echo "🚨 ERROR: PR introduces new circular dependencies!"
+          echo "Diff between main and PR:"
+          diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
+          exit 1
+        fi
+
+  yarn-install-validation:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
+    runs-on: ubuntu-x64-small
+    name: Validate yarn install
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+
+    # Deliberately not using the yarn-install action for exact control over the command for extra checks
+    - name: Install yarn dependencies
+      run: yarn install --immutable --check-cache
+      env:
+        YARN_ENABLE_HARDENED_MODE: 1

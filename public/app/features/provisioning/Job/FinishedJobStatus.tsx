@@ -4,18 +4,21 @@ import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { JobContent } from './JobContent';
+import { getJobMessages } from './getJobMessage';
 
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: JobType;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusChange, onRetry }: FinishedJobProps) {
   const hasRetried = useRef(false);
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
@@ -51,14 +54,26 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
     }
 
     if (finishedQuery.isSuccess && job?.status) {
-      const { state, message, errors } = job.status;
+      const { state } = job.status;
+      const messages = getJobMessages(job.status);
 
       if (state === 'error') {
+        const warningInfo = messages.warning
+          ? {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: messages.warning,
+            }
+          : undefined;
         onStatusChange?.({
           status: 'error',
           error: {
             title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
-            message: errors?.length ? errors : message,
+            message: messages.error,
+          },
+          warning: warningInfo,
+          action: onRetry && {
+            label: t('provisioning.job-status.retry-action', 'Retry'),
+            onClick: onRetry,
           },
         });
       } else if (state === 'success') {
@@ -73,7 +88,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
           status: 'warning',
           warning: {
             title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-            message: errors?.length ? errors : message,
+            message: messages.warning,
           },
         });
       }
@@ -84,7 +99,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange, retryFailed]);
+  }, [finishedQuery, job, onStatusChange, onRetry, retryFailed]);
 
   // If retry failed, return null - parent handles the error via onStatusChange
   if (retryFailed) {
@@ -102,5 +117,7 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
     );
   }
 
-  return <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} />;
+  return (
+    <JobContent job={job} isFinishedJob={true} onStatusChange={onStatusChange} jobType={jobType} onRetry={onRetry} />
+  );
 }

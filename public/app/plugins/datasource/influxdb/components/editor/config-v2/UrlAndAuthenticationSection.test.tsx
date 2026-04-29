@@ -10,7 +10,7 @@ jest.mock('@grafana/runtime', () => ({
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 
-import { BackendSrv } from '@grafana/runtime';
+import { type BackendSrv } from '@grafana/runtime';
 
 import { InfluxVersion } from '../../../types';
 

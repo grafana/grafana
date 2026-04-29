@@ -18,53 +18,17 @@ labels:
 menuTitle: Alerting
 title: Azure Monitor alerting
 weight: 500
-refs:
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-  alerting-fundamentals:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/
-  create-alert-rule:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
-  grafana-managed-recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-  configure-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/
-  troubleshoot:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/
 ---
 
 # Azure Monitor alerting
 
-The Azure Monitor data source supports [Grafana Alerting](ref:alerting) and [Grafana-managed recording rules](ref:grafana-managed-recording-rules), allowing you to create alert rules based on Azure metrics, logs, traces, and resource data. You can monitor your Azure environment and receive notifications when specific conditions are met.
+The Azure Monitor data source supports [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) and [Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/), allowing you to create alert rules based on Azure metrics, logs, traces, and resource data. You can monitor your Azure environment and receive notifications when specific conditions are met.
 
 ## Before you begin
 
 - Ensure you have the appropriate permissions to create alert rules in Grafana.
 - Verify your Azure Monitor data source is configured and working correctly.
-- Familiarize yourself with [Grafana Alerting concepts](ref:alerting-fundamentals).
+- Familiarize yourself with [Grafana Alerting concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/).
 - **Important**: Verify your data source uses a supported authentication method. Refer to [Authentication requirements](#authentication-requirements).
 
 ## Supported query types for alerting
@@ -94,7 +58,7 @@ Alerting and recording rules run as background processes without a user context.
 | Current User                     | ✓ (with fallback service credentials) |
 
 {{< admonition type="note" >}}
-If you use **Current User** authentication, you must configure **fallback service credentials** for alerting and recording rules to function. User credentials aren't available for background operations, so Grafana uses the fallback credentials instead. Refer to [configure the data source](ref:configure-azure-monitor) for details on setting up fallback credentials.
+If you use **Current User** authentication, you must configure **fallback service credentials** for alerting and recording rules to function. User credentials aren't available for background operations, so Grafana uses the fallback credentials instead. Refer to [configure the data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) for details on setting up fallback credentials.
 {{< /admonition >}}
 
 ## Create an alert rule
@@ -116,7 +80,7 @@ To create an alert rule using Azure Monitor data:
 1. Add labels and annotations to provide context for notifications.
 1. Click **Save rule**.
 
-For detailed instructions, refer to [Create a Grafana-managed alert rule](ref:create-alert-rule).
+For detailed instructions, refer to [Create a Grafana-managed alert rule](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
 
 ## Example: VM CPU usage alert
 
@@ -252,11 +216,11 @@ If you see authentication errors when alerts evaluate:
 - Reduce the time range in Log Analytics queries.
 - Add more specific filters to narrow result sets.
 
-For additional troubleshooting help, refer to [Troubleshoot Azure Monitor](ref:troubleshoot).
+For additional troubleshooting help, refer to [Troubleshoot Azure Monitor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/).
 
 ## Additional resources
 
-- [Grafana Alerting documentation](ref:alerting)
-- [Create alert rules](ref:create-alert-rule)
-- [Azure Monitor query editor](ref:query-editor)
-- [Grafana-managed recording rules](ref:grafana-managed-recording-rules)
+- [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- [Create alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
+- [Azure Monitor query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/query-editor/)
+- [Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/)

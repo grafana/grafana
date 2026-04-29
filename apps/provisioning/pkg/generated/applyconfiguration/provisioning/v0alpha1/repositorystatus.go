@@ -10,16 +10,32 @@ import (
 
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
+//
+// The status of a Repository.
+// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
+// As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatusApplyConfiguration struct {
-	ObservedGeneration *int64                            `json:"observedGeneration,omitempty"`
-	FieldErrors        []ErrorDetailsApplyConfiguration  `json:"fieldErrors,omitempty"`
-	Conditions         []v1.ConditionApplyConfiguration  `json:"conditions,omitempty"`
-	Health             *HealthStatusApplyConfiguration   `json:"health,omitempty"`
-	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
-	Stats              []ResourceCountApplyConfiguration `json:"stats,omitempty"`
-	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
-	Token              *TokenStatusApplyConfiguration    `json:"token,omitempty"`
-	DeleteError        *string                           `json:"deleteError,omitempty"`
+	// The generation of the spec last time reconciliation ran
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+	// FieldErrors are errors that occurred during validation of the repository spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	FieldErrors []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	// Conditions represent the latest available observations of the repository's state.
+	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	// This will get updated with the current health status (and updated periodically)
+	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
+	// Sync information with the last sync information
+	Sync *SyncStatusApplyConfiguration `json:"sync,omitempty"`
+	// The object count when sync last ran
+	Stats []ResourceCountApplyConfiguration `json:"stats,omitempty"`
+	// Webhook Information (if applicable)
+	Webhook *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
+	// Token will get updated with current token information
+	Token *TokenStatusApplyConfiguration `json:"token,omitempty"`
+	// Error information during repository deletion (if any)
+	DeleteError *string `json:"deleteError,omitempty"`
+	// Quota contains the configured quota limits for this repository
+	Quota *QuotaStatusApplyConfiguration `json:"quota,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -112,5 +128,13 @@ func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyCo
 // If called multiple times, the DeleteError field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *RepositoryStatusApplyConfiguration {
 	b.DeleteError = &value
+	return b
+}
+
+// WithQuota sets the Quota field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Quota field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithQuota(value *QuotaStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Quota = value
 	return b
 }

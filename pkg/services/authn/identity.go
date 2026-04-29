@@ -58,10 +58,9 @@ type Identity struct {
 	HelpFlags1 user.HelpFlags1
 	// LastSeenAt is the time when the entity was last seen.
 	LastSeenAt time.Time
-	// Teams is the list of teams the entity is a member of.
-	Teams []int64
-	// idP Groups that the entity is a member of. This is only populated if the
-	// identity provider supports groups.
+	// Deprecated: Teams is the list of teams the entity is a member of.
+	TeamIDs []int64
+	// Team UIDs (or groups)
 	Groups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
@@ -74,6 +73,8 @@ type Identity struct {
 	ClientParams ClientParams
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
+	// AccessToken is the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
+	AccessToken string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
 	// ExternalUID is the unique identifier for the entity in the external system.
@@ -199,6 +200,10 @@ func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
 
+func (i *Identity) GetAccessToken() string {
+	return i.AccessToken
+}
+
 func (i *Identity) GetIsGrafanaAdmin() bool {
 	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
 }
@@ -257,7 +262,7 @@ func (i *Identity) GetGlobalPermissions() map[string][]string {
 }
 
 func (i *Identity) GetTeams() []int64 {
-	return i.Teams
+	return i.TeamIDs
 }
 
 func (i *Identity) HasRole(role org.RoleType) bool {
@@ -303,11 +308,13 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsDisabled:        i.IsDisabled,
 		HelpFlags1:        i.HelpFlags1,
 		LastSeenAt:        i.LastSeenAt,
-		Teams:             i.Teams,
+		TeamIDs:           i.TeamIDs,
+		TeamUIDs:          i.Groups,
 		Permissions:       i.Permissions,
 		IDToken:           i.IDToken,
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
+		AccessToken:       i.AccessToken,
 		FallbackType:      i.Type,
 	}
 

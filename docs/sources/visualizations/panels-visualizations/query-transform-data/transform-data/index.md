@@ -1465,8 +1465,6 @@ For each generated **Trend** field value, a calculation function can be selected
 
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
-
 ### Transpose
 
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
@@ -1501,10 +1499,52 @@ There are two different models:
 
 > **Note:** This transformation was previously called regression analysis.
 
+### Smoothing
+
+Use this transformation to reduce noise in time series data through adaptive smoothing. This transformation creates smoother, cleaner visualizations while preserving all original time points and important trends and patterns in your data.
+
+The smoothing transformation uses the ASAP (Automatic Smoothing for Attention Prioritization) algorithm internally to generate a smoothed curve, which is then interpolated back onto all original time points. This ensures your visualization maintains continuous lines without gaps while reducing noise.
+
+#### Available options
+
+- **Resolution** - Controls smoothing intensity (1-1000). Lower values create more aggressive smoothing, while higher values preserve more detail. The output preserves all original time points.
+
+#### When to use smoothing
+
+This transformation is useful for:
+
+- Noisy time series data that obscures underlying trends
+- Clearer trend analysis and pattern recognition
+
+#### Example
+
+Consider noisy sensor data with thousands of points:
+
+**Before smoothing:**
+
+| Time                 | Temperature |
+| -------------------- | ----------- |
+| 2020-07-07 10:00:00  | 23.1        |
+| 2020-07-07 10:00:01  | 23.3        |
+| 2020-07-07 10:00:02  | 22.9        |
+| 2020-07-07 10:00:03  | 23.2        |
+| ... (thousands more) | ...         |
+
+**After smoothing (Resolution: 100):**
+
+| Time                | Temperature (smoothed) |
+| ------------------- | ---------------------- |
+| 2020-07-07 10:00:00 | 23.1                   |
+| 2020-07-07 10:00:01 | 23.1                   |
+| 2020-07-07 10:00:02 | 23.0                   |
+| 2020-07-07 10:00:03 | 23.0                   |
+| ... (same count)    | ...                    |
+
+The transformation preserves all original time points while reducing noise, resulting in smoother curves that maintain continuous lines without gaps.
+
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
 [sparkline cell type]: ref:sparkline-cell-type
-[configuration file]: ref:configuration-file
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle
 [dashboard variable]: ref:dashboard-variable

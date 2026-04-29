@@ -23,6 +23,11 @@ func Test_WithPathRewriters(t *testing.T) {
 			ReplaceFunc: func(matches []string) string {
 				return matches[1]
 			},
+		}, {
+			Pattern: regexp.MustCompile(`/apis/query.grafana.app/v0alpha1(.*$)`),
+			ReplaceFunc: func(matches []string) string {
+				return "/apis/datasource.grafana.app/v0alpha1" + matches[1]
+			},
 		},
 	}
 	handler := WithPathRewriters(mockHandler, rewriters)
@@ -34,6 +39,15 @@ func Test_WithPathRewriters(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.Equal(t, "/apis/scope.grafana.app/namespaces/stacks-1234/query", rr.Body.String())
+	})
+
+	t.Run("should rewrite query service", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/apis/query.grafana.app/v0alpha1/something", nil)
+		assert.NoError(t, err)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "/apis/datasource.grafana.app/v0alpha1/something", rr.Body.String())
 	})
 
 	t.Run("should ignore requests that don't match", func(t *testing.T) {

@@ -1,9 +1,9 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton';
+import { ClipboardButton as ClipboardButtonImpl, type Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
 const meta: Meta = {
@@ -41,7 +41,6 @@ export const AsInputFieldAddon: StoryFn<StoryProps> = (args) => {
     <div style={{ width: '100%', maxWidth: 500 }}>
       <Field label="Link URL">
         <Input
-          id="link-url-input"
           value={shareUrl}
           readOnly
           addonAfter={

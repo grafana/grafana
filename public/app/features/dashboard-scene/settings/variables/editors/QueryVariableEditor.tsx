@@ -1,12 +1,17 @@
-import { useState, FormEvent } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef, VariableRegexApplyTo } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  getDataSourceRef,
+  type SelectableValue,
+  type VariableRegexApplyTo,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
-import { VariableRefresh, VariableSort } from '@grafana/schema';
+import { QueryVariable, sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Box, Button, Field, Modal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
@@ -17,8 +22,8 @@ import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVa
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
 import {
   QueryVariableStaticOptions,
-  StaticOptionsOrderType,
-  StaticOptionsType,
+  type StaticOptionsOrderType,
+  type StaticOptionsType,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
@@ -43,6 +48,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     allValue,
     query,
     allowCustomValue,
+    options,
     staticOptions,
     staticOptionsOrder,
   } = variable.useState();
@@ -125,6 +131,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       staticOptionsOrder={staticOptionsOrder}
       onStaticOptionsChange={onStaticOptionsChange}
       onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      options={options}
     />
   );
 }
@@ -170,6 +177,8 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
         title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
       >
         <Editor variable={variable} />
         <Modal.ButtonRow>
@@ -203,6 +212,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
     query,
     regex,
     regexApplyTo,
+    options,
     staticOptions,
     staticOptionsOrder,
   } = variable.useState();
@@ -260,10 +270,10 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
   return (
     <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
-        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
@@ -298,16 +308,15 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         refresh={refresh}
       />
 
-      {onStaticOptionsChange && onStaticOptionsOrderChange && (
-        <QueryVariableStaticOptions
-          staticOptions={staticOptions}
-          staticOptionsOrder={staticOptionsOrder}
-          onStaticOptionsChange={onStaticOptionsChange}
-          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-        />
-      )}
+      <QueryVariableStaticOptions
+        options={options}
+        staticOptions={staticOptions}
+        staticOptionsOrder={staticOptionsOrder}
+        onStaticOptionsChange={onStaticOptionsChange}
+        onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      />
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />}
     </div>
   );
 }

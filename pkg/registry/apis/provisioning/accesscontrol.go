@@ -48,7 +48,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	repositoriesWriter := accesscontrol.RoleRegistration{
@@ -128,7 +128,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	jobsWriter := accesscontrol.RoleRegistration{
@@ -152,7 +152,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	// Historic Jobs

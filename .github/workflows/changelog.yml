@@ -96,10 +96,8 @@ jobs:
             .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
-      - name: Setup nodejs environment
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - name: "Configure git user"
         run: |
           git config --local user.name "github-actions[bot]"

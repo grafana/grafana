@@ -1,0 +1,34 @@
+apiVersion: 1
+policies:
+    - orgId: 1
+      receiver: slack-multi-channel
+      group_by:
+        - alertname
+      routes:
+        - object_matchers:
+            - - level
+              - =
+              - one
+          routes:
+            - object_matchers:
+                - - level
+                  - =
+                  - two
+              routes:
+                - object_matchers:
+                    - - level
+                      - =
+                      - three
+                  routes:
+                    - object_matchers:
+                        - - level
+                          - =
+                          - four
+                      routes:
+                        - object_matchers:
+                            - - level
+                              - =
+                              - five
+      group_wait: 3s
+      group_interval: 3m
+      repeat_interval: 3h

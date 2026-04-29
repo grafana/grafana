@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, dateTime } from '@grafana/data';
-import { BackendSrv, FetchResponse, TemplateSrv } from '@grafana/runtime';
+import { type DataQueryRequest, dateTime } from '@grafana/data';
+import { type BackendSrv, type FetchResponse, type TemplateSrv } from '@grafana/runtime';
 
 import OpenTsDatasource from '../datasource';
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
 
 export function createFetchResponse<T>(data: T): FetchResponse<T> {
   return {
@@ -233,6 +233,110 @@ describe('opentsdb', () => {
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', scopedVars, 'pipe');
 
       expect(templateSrv.replace).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('When applying template variables', () => {
+    it('should interpolate filter values so no raw template variables are sent', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        aggregator: 'avg',
+        filters: [
+          {
+            type: 'regexp',
+            tagk: 'host',
+            filter: '${host}',
+            groupBy: true,
+          },
+        ],
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.filters?.[0].filter).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate tags when filters are not used', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (value === '${host}') {
+          return String(scopedVars?.host?.value);
+        }
+        return value as string;
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: 'cpu.utilisation',
+        tags: {
+          host: '${host}',
+        },
+      };
+
+      const scopedVars = { host: { text: 'ABC', value: 'ABC' } };
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.tags?.host).toBe('ABC');
+      expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate additional query fields', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (typeof value !== 'string') {
+          return value as string;
+        }
+
+        return value.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(scopedVars?.[key]?.value ?? ''));
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: '${metric}',
+        alias: '${alias}',
+        downsampleInterval: '${interval}',
+        downsampleAggregator: '${downsampleAggregator}',
+        downsampleFillPolicy: '${downsampleFillPolicy}',
+        counterMax: '${counterMax}',
+        counterResetValue: '${counterResetValue}',
+      };
+
+      const scopedVars = {
+        metric: { text: 'cpu.usage', value: 'cpu.usage' },
+        aggregator: { text: 'sum', value: 'sum' },
+        alias: { text: 'CPU usage', value: 'CPU usage' },
+        interval: { text: '1m', value: '1m' },
+        downsampleAggregator: { text: 'avg', value: 'avg' },
+        downsampleFillPolicy: { text: 'zero', value: 'zero' },
+        counterMax: { text: '100', value: '100' },
+        counterResetValue: { text: '50', value: '50' },
+      };
+
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.metric).toBe('cpu.usage');
+      expect(interpolated.aggregator).toBe('avg');
+      expect(interpolated.alias).toBe('CPU usage');
+      expect(interpolated.downsampleInterval).toBe('1m');
+      expect(interpolated.downsampleAggregator).toBe('avg');
+      expect(interpolated.downsampleFillPolicy).toBe('zero');
+      expect(interpolated.counterMax).toBe('100');
+      expect(interpolated.counterResetValue).toBe('50');
+      expect(JSON.stringify(interpolated)).not.toContain('${');
     });
   });
 });

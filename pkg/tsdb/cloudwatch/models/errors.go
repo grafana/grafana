@@ -1,7 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
 
 // put misc expected user errors here
 
-var ErrMissingRegion = fmt.Errorf("missing default region")
+var ErrMissingRegion = backend.DownstreamErrorf("missing default region")

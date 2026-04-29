@@ -3,13 +3,13 @@ import { useState } from 'react';
 
 import {
   CoreApp,
-  DataSourceApi,
+  type DataSourceApi,
   formattedValueToString,
   getValueFormat,
-  PanelData,
-  PanelPlugin,
+  type PanelData,
+  type PanelPlugin,
   LoadingState,
-  DataQueryError,
+  type DataQueryError,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -22,9 +22,9 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 interface Props {
   dashboard: DashboardModel;

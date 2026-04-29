@@ -1,18 +1,18 @@
-import { map, Observable, defer, mergeMap } from 'rxjs';
+import { map, type Observable, defer, mergeMap } from 'rxjs';
 
 import {
-  DataFrameJSON,
-  DataQueryRequest,
-  DataQueryResponse,
-  LiveChannelEvent,
+  type DataFrameJSON,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type LiveChannelEvent,
   LiveChannelScope,
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, config } from '@grafana/runtime';
 
-import { LokiDatasource } from './datasource';
-import { LokiQuery } from './types';
+import { type LokiDatasource } from './datasource';
+import { type LokiQuery } from './types';
 
 /**
  * Calculate a unique key for the query.  The key is used to pick a channel and should
@@ -65,7 +65,7 @@ export function doLokiChannelStream(
       return getGrafanaLiveSrv()
         .getStream({
           scope: LiveChannelScope.DataSource,
-          namespace: ds.uid,
+          stream: ds.uid,
           path: `tail/${key}`,
           data: {
             ...query,

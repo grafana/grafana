@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { AnchorHTMLAttributes, forwardRef } from 'react';
+import { type AnchorHTMLAttributes, forwardRef } from 'react';
 
-import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, textUtil, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName, IconSize } from '../../types/icon';
+import { type IconName, type IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 
@@ -61,9 +61,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
     if (external) {
       return (
-        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
+        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles.wrapper}>
           {children}
-          <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
+          <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>
       );
     }
@@ -71,9 +71,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const strippedUrl = locationUtil.stripBaseFromUrl(validUrl);
 
     return (
-      <Link ref={ref} href={strippedUrl} {...rest} className={styles}>
+      <Link ref={ref} href={strippedUrl} {...rest} className={styles.wrapper}>
         {children}
-        {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
+        {icon && <Icon className={styles.icon} name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>
     );
   }
@@ -88,31 +88,34 @@ export const getLinkStyles = (
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color']
 ) => {
-  return css([
-    variant && {
-      ...theme.typography[variant],
-    },
-    weight && {
-      fontWeight: customWeight(weight, theme),
-    },
-    color && {
-      color: theme.colors.text[color],
-    },
-    {
-      alignItems: 'center',
-      gap: '0.25em',
-      display: 'inline-flex',
-      textDecoration: 'none',
-      '&:hover': {
-        textDecoration: 'underline',
-        color: theme.colors.text.link,
+  return {
+    icon: css({
+      marginLeft: '0.25em',
+      verticalAlign: 'text-bottom',
+    }),
+    wrapper: css([
+      variant && {
+        ...theme.typography[variant],
       },
-    },
-    inline && {
-      textDecoration: 'underline',
-      '&:hover': {
+      weight && {
+        fontWeight: customWeight(weight, theme),
+      },
+      color && {
+        color: theme.colors.text[color],
+      },
+      {
         textDecoration: 'none',
+        '&:hover': {
+          textDecoration: 'underline',
+          color: theme.colors.text.link,
+        },
       },
-    },
-  ]);
+      inline && {
+        textDecoration: 'underline',
+        '&:hover': {
+          textDecoration: 'none',
+        },
+      },
+    ]),
+  };
 };

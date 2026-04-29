@@ -1,25 +1,32 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
+import { type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
-import { GnetDashboard, Link } from '../types';
+import type { MappingContext } from '../SuggestedDashboardsModal';
+import { fetchCommunityDashboard, type GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import {
+  CONTENT_KINDS,
+  type ContentKind,
+  CREATION_ORIGINS,
+  type EventLocation,
+  type SourceEntryPoint,
+} from '../constants';
+import { type GnetDashboard, type Link } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import type { AssistantSource } from './templateDashboardHelpers';
 
-// Constants for community dashboard pagination and API params
-// We want to get the most 6 downloaded dashboards, but we first query 12
-// to be sure the next filters we apply to that list doesn not reduce it below 6
-export const COMMUNITY_PAGE_SIZE_QUERY = 12;
-export const COMMUNITY_RESULT_SIZE = 6;
+export const SEARCH_DEBOUNCE_MS = 500;
+export const DEFAULT_SORT_ORDER = 'downloads';
+export const DEFAULT_SORT_DIRECTION = 'desc';
+export const INCLUDE_LOGO = true;
+export const INCLUDE_SCREENSHOTS = true;
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -89,24 +96,31 @@ export function navigateToTemplate(
   gnetId: number,
   datasourceUid: string,
   mappings: InputMapping[],
+  sourceEntryPoint: SourceEntryPoint,
   eventLocation: EventLocation,
   contentKind: ContentKind,
-  datasourceTypes?: string[]
+  datasourceTypes?: string[],
+  assistantSource?: AssistantSource
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
     title: dashboardTitle,
     gnetId: String(gnetId),
-    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+    sourceEntryPoint,
     creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD,
     contentKind,
     eventLocation,
     mappings: JSON.stringify(mappings),
+    suggestedDashboardBanner: 'true',
   });
 
   // Add datasource types for tracking if available
   if (datasourceTypes && datasourceTypes.length > 0) {
     searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
+  }
+
+  if (assistantSource) {
+    searchParams.set('assistantSource', assistantSource);
   }
 
   locationService.push({
@@ -118,9 +132,10 @@ export function navigateToTemplate(
 interface UseCommunityDashboardParams {
   dashboard: GnetDashboard;
   datasourceUid: string;
-  datasourceType: string;
-  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
+  sourceEntryPoint: SourceEntryPoint;
+  eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
+  assistantSource?: AssistantSource;
 }
 
 /**
@@ -231,9 +246,10 @@ const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
 export async function onUseCommunityDashboard({
   dashboard,
   datasourceUid,
-  datasourceType,
+  sourceEntryPoint,
   eventLocation,
   onShowMapping,
+  assistantSource,
 }: UseCommunityDashboardParams): Promise<void> {
   // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
   // with the correct discoveryMethod before calling this function
@@ -273,9 +289,11 @@ export async function onUseCommunityDashboard({
         dashboard.id,
         datasourceUid,
         mappingResult.mappings,
+        sourceEntryPoint,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes
+        datasourceTypes,
+        assistantSource
       );
     } else {
       // Show mapping form for unmapped datasources and/or constants
@@ -286,7 +304,6 @@ export async function onUseCommunityDashboard({
           unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
-          eventLocation,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
             navigateToTemplate(
@@ -294,9 +311,11 @@ export async function onUseCommunityDashboard({
               dashboard.id,
               datasourceUid,
               mappings,
+              sourceEntryPoint,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
-              datasourceTypes
+              datasourceTypes,
+              assistantSource
             ),
         });
       }
@@ -310,4 +329,46 @@ export async function onUseCommunityDashboard({
     );
     throw err;
   }
+}
+
+/**
+ * Interpolate a community dashboard for compatibility checking.
+ *
+ * This function fetches the dashboard from Grafana.com, auto-maps datasource inputs,
+ * and returns the interpolated dashboard with template variables resolved.
+ *
+ * @throws Error if auto-mapping fails - compatibility check requires all datasource inputs to be resolved
+ * @param dashboardId - The Grafana.com dashboard ID
+ * @param datasourceUid - The UID of the datasource to map to
+ * @returns Promise<DashboardJson> - The interpolated dashboard with resolved template variables
+ */
+export async function interpolateDashboardForCompatibilityCheck(
+  dashboardId: number,
+  datasourceUid: string
+): Promise<DashboardJson> {
+  // 1. Fetch full dashboard JSON from Grafana.com
+  const gnetResponse = await fetchCommunityDashboard(dashboardId);
+  const dashboardJson = gnetResponse.json;
+
+  // 2. Extract datasource inputs from dashboard's __inputs array
+  const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
+
+  // 3. Auto-map datasources using existing utility
+  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+
+  // 4. Check if auto-mapping was successful
+  // Compatibility check requires all datasource variables to be resolved
+  if (!mappingResult.allMapped) {
+    throw new Error(
+      t(
+        'dashboard-library.compatibility-auto-map-failed',
+        'Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.'
+      )
+    );
+  }
+
+  // 5. Interpolate in the frontend — no backend round-trip needed
+  const inputs: InputMapping[] = mappingResult.mappings;
+
+  return interpolateV1Dashboard(dashboardJson, inputs);
 }

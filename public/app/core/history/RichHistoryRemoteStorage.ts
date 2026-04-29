@@ -1,13 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataQuery } from '@grafana/data';
+import { type DataQuery } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
+import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
-import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
+import { type default as RichHistoryStorage, type RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {

@@ -13,6 +13,11 @@ func NewPreferencesQueryHistoryPreference() *PreferencesQueryHistoryPreference {
 	return &PreferencesQueryHistoryPreference{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for PreferencesQueryHistoryPreference.
+func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
+}
+
 // +k8s:openapi-gen=true
 type PreferencesNavbarPreference struct {
 	BookmarkUrls []string `json:"bookmarkUrls"`
@@ -23,6 +28,11 @@ func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
 	return &PreferencesNavbarPreference{
 		BookmarkUrls: []string{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesNavbarPreference.
+func (PreferencesNavbarPreference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
 }
 
 // +k8s:openapi-gen=true
@@ -49,4 +59,9 @@ type PreferencesSpec struct {
 // NewPreferencesSpec creates a new PreferencesSpec object.
 func NewPreferencesSpec() *PreferencesSpec {
 	return &PreferencesSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PreferencesSpec.
+func (PreferencesSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
 }

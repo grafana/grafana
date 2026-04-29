@@ -2,31 +2,34 @@ import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
-import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import {
+  type Job,
+  type RepositoryView,
+  useDeleteRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { StatusInfo } from '../../types';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type StatusInfo } from '../../types';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getProvisionedRequestError } from '../utils/errors';
 
 export interface Props {
+  canPushToConfiguredBranch: boolean;
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
   isNew?: boolean;
-  workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   repository?: RepositoryView;
   onDismiss: () => void;
@@ -37,12 +40,12 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardForm({
+  canPushToConfiguredBranch,
   dashboard,
   defaultValues,
   loadedFromRef,
   readOnly,
   isNew,
-  workflowOptions,
   repository,
   onDismiss,
 }: Props) {
@@ -50,6 +53,7 @@ export function DeleteProvisionedDashboardForm({
   const [job, setJob] = useState<Job>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [jobError, setJobError] = useState<string | StatusInfo>();
+  const [submitError, setSubmitError] = useState<string | undefined>(undefined);
 
   // Hooks
   const navigate = useNavigate();
@@ -61,22 +65,25 @@ export function DeleteProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
 
-  // Helper function to show error messages
-  const showError = (error?: unknown) => {
-    const payload = [
-      t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'),
-      error,
-    ];
-
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload,
-    });
+  const showError = (error: unknown) => {
+    setSubmitError(
+      getProvisionedRequestError(
+        error,
+        'dashboard',
+        t('dashboard-scene.delete-provisioned-dashboard-form.delete-error', 'Failed to delete dashboard')
+      )
+    );
   };
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+    setSubmitError(undefined);
     if (!repo || !repository) {
-      console.error('Missing required repository for deletion:', { repo });
+      showError(
+        t(
+          'dashboard-scene.delete-provisioned-dashboard-form.no-repository-selected',
+          'Missing required repository for deletion'
+        )
+      );
       return;
     }
 
@@ -136,14 +143,14 @@ export function DeleteProvisionedDashboardForm({
     }
   };
 
-  // Branch success handler for /files API
-  const onBranchSuccess = (path: string, info: { repoType: string }, urls?: Record<string, string>) => {
+  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
+  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
-      paramName: 'pull_request_url',
+      paramName: 'new_pull_request_url',
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
+      action: 'delete',
     });
     navigate(url);
   };
@@ -206,10 +213,11 @@ export function DeleteProvisionedDashboardForm({
                 resourceType="dashboard"
                 isNew={isNew}
                 readOnly={readOnly}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
+
+              {submitError && <ProvisioningAlert error={submitError} />}
 
               <Stack gap={2}>
                 <Button variant="secondary" onClick={onDismiss} fill="outline">

@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
+	"github.com/fullstorydev/grpchan"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,9 +23,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -33,19 +33,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 type Options struct {
-	Cfg          *setting.Cfg
-	Features     featuremgmt.FeatureToggles
-	DB           infraDB.DB
-	Tracer       tracing.Tracer
-	Reg          prometheus.Registerer
-	Authzc       types.AccessClient
-	Docs         resource.DocumentBuilderSupplier
-	SecureValues secrets.InlineSecureValueSupport
+	Cfg           *setting.Cfg
+	Features      featuremgmt.FeatureToggles
+	DB            infraDB.DB
+	Tracer        tracing.Tracer
+	Reg           prometheus.Registerer
+	Authzc        types.AccessClient
+	Docs          resource.DocumentBuilderSupplier
+	SecureValues  secrets.InlineSecureValueSupport
+	VectorBackend vector.VectorBackend
 }
 
 type clientMetrics struct {
@@ -67,25 +69,16 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend)
 	if err == nil {
-		// Decide whether to disable SQL fallback stats per resource in Mode 5.
-		// Otherwise we would still try to query the legacy SQL database in Mode 5.
-		var disableDashboardsFallback, disableFoldersFallback bool
-		if opts.Cfg != nil {
-			// String are static here, so we don't need to import the packages.
-			foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-			disableFoldersFallback = foldersMode == grafanarest.Mode5
-			dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-			disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
-		}
-
 		// Used to get the folder stats
+		// Pass cfg directly so the federated client reads the current dual-writer mode
+		// at query time, not at creation time. This is important because auto-migration
+		// may set Mode5 after the client is created during startup.
 		client = federated.NewFederatedClient(
 			client, // The original
 			legacysql.NewDatabaseProvider(opts.DB),
-			disableDashboardsFallback,
-			disableFoldersFallback,
+			opts.Cfg,
 		)
 	}
 
@@ -103,27 +96,13 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
+	vectorBackend vector.VectorBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-		}
-
-		// Create BadgerDB instance
-		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
-			WithLogger(nil))
-		if err != nil {
-			return nil, err
-		}
-
-		kv := resource.NewBadgerKV(db)
-		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore: kv,
-			Log:     log.New(),
-		})
+		backend, err := sql.NewFileBackend(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -175,8 +154,20 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
+		if err != nil {
+			return nil, err
+		}
+
+		if backendService, ok := backend.(services.Service); ok {
+			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
+				return nil, fmt.Errorf("failed to start storage backend: %w", err)
+			}
+		}
+
 		serverOptions := sql.ServerOptions{
-			DB:             db,
+			Backend:        backend,
+			VectorBackend:  vectorBackend,
 			Cfg:            cfg,
 			Tracer:         tracer,
 			Reg:            reg,
@@ -232,6 +223,42 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	var searchClient resourcepb.ResourceIndexClient
+	var err error
+	if cfg.EnableSearchClient {
+		searchClient, err = NewSearchClient(cfg, features)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create search client: %w", err)
+		}
+	}
+	return searchClient, nil
+}
+
+func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
+	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0)
+
+	if searchServerAddress == "" {
+		return nil, fmt.Errorf("expecting search_server_address to be set for search client under grafana-apiserver section")
+	}
+
+	var (
+		conn    grpc.ClientConnInterface
+		err     error
+		metrics = newClientMetrics(prometheus.NewRegistry())
+	)
+
+	conn, err = newGrpcConn(searchServerAddress, metrics, features, grpcClientKeepaliveTime)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return resourcepb.NewResourceIndexClient(cc), nil
 }
 
 func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles, clientKeepaliveTime time.Duration) (grpc.ClientConnInterface, error) {

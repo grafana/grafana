@@ -1,9 +1,9 @@
 import { groupBy } from 'lodash';
 
-import { FieldType, DataFrame, DataLink, Field } from '@grafana/data';
+import { FieldType, type DataFrame, type DataLink, type Field } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { DerivedFieldConfig } from './types';
+import { type DerivedFieldConfig } from './types';
 
 export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: DerivedFieldConfig[]): Field[] {
   if (!derivedFieldConfigs.length) {

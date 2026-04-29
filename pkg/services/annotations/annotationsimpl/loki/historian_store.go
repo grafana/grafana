@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -173,11 +172,12 @@ func (r *LokiHistorianStore) annotationsFromStream(stream lokiclient.Stream, ac 
 			continue
 		}
 
-		annotationText, annotationData := historian.BuildAnnotationTextAndData(
+		annotationText, annotationData, _ := historian.BuildAnnotationTextAndData(
 			historymodel.RuleMeta{
 				Title: entry.RuleTitle,
 			},
 			transition.State,
+			0, // maxTagsLength not used for Loki store
 		)
 
 		items = append(items, &annotations.ItemDTO{
@@ -205,9 +205,6 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query annotations.Tags
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
 	dashFilter := func() bool {
-		if !resources.CanAccessDashAnnotations {
-			return false
-		}
 		_, canAccess := resources.Dashboards[entry.DashboardUID]
 		return canAccess
 	}
@@ -215,8 +212,9 @@ func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResource
 	return orgFilter || dashFilter()
 }
 
+// add more type as needed, for now only float64 is being used
 type number interface {
-	constraints.Integer | constraints.Float
+	float64
 }
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).

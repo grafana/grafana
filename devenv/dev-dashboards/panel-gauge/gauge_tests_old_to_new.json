@@ -544,9 +544,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 7,
+        "w": 3,
         "x": 10,
-        "y": 6
+        "y": 5
       },
       "id": 16,
       "options": {
@@ -620,10 +620,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 7,
-        "x": 10,
-        "y": 11
+        "h": 5,
+        "w": 4,
+        "x": 13,
+        "y": 5
       },
       "id": 17,
       "options": {
@@ -1114,6 +1114,61 @@
         }
       ],
       "title": "neutral value 47 (33 => 41)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "description": "should show a green gauge",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 10,
+        "y": 10
+      },
+      "id": 20,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_content",
+          "csvContent": "a\n0.95"
+        }
+      ],
+      "title": "Percentage w/ no min/max",
       "type": "gauge"
     }
   ],

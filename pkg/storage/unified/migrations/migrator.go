@@ -3,43 +3,50 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// MigrateOptions contains configuration for a resource migration operation.
+type MigrateOptions struct {
+	Namespace   string
+	Resources   []schema.GroupResource
+	WithHistory bool // only applies to dashboards
+	Progress    func(count int, msg string)
+}
+
 // Read from legacy and write into unified storage
-//
-//go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
-	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
+	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
+	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	legacy.MigrationDashboardAccessor
 	streamProvider streamProvider
+	client         resource.SearchClient
 	log            log.Logger
+	registry       *MigrationRegistry
 }
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
-	settings := resource.BulkSettings{
-		RebuildCollection: true,
-		SkipValidation:    true,
-	}
+func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res.Group, res.Resource, opts.Namespace)
+		key := buildResourceKey(res, opts.Namespace, registry)
 		if key != nil {
 			settings.Collection = append(settings.Collection, key)
 		}
@@ -51,61 +58,40 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts)
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
+	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
 
-// bulkStoreClientStreamProvider creates streams using resourcepb.BulkStoreClient
-type bulkStoreClientStreamProvider struct {
-	client resourcepb.BulkStoreClient
-}
-
-func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	return b.client.BulkProcess(ctx)
-}
-
-// This can migrate Folders, Dashboards and LibraryPanels
+// This can migrate Folders, Dashboards, LibraryPanels and Playlists
 func ProvideUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
 	client resource.ResourceClient,
+	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
-		dashboardAccess,
 		&resourceClientStreamProvider{client: client},
+		client,
 		log.New("storage.unified.migrator"),
-	)
-}
-
-func ProvideUnifiedMigratorParquet(
-	dashboardAccess legacy.MigrationDashboardAccessor,
-	client resourcepb.BulkStoreClient,
-) UnifiedMigrator {
-	return newUnifiedMigrator(
-		dashboardAccess,
-		&bulkStoreClientStreamProvider{client: client},
-		log.New("storage.unified.migrator.parquet"),
+		registry,
 	)
 }
 
 func newUnifiedMigrator(
-	dashboardAccess legacy.MigrationDashboardAccessor,
 	streamProvider streamProvider,
+	client resource.SearchClient,
 	log log.Logger,
+	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		MigrationDashboardAccessor: dashboardAccess,
-		streamProvider:             streamProvider,
-		log:                        log,
+		streamProvider: streamProvider,
+		client:         client,
+		log:            log,
+		registry:       registry,
 	}
 }
 
-type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-
-func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
+func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -118,18 +104,42 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	if opts.OnlyCount {
-		return m.CountResources(ctx, opts)
+	// Use a cancellable context for the stream so that if a migration function
+	// fails, the server-side handler is notified and releases its bulk lock.
+	streamCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	origResources := opts.Resources
+
+	// If a definition provides a dynamic group resolver, call it to discover
+	// which groups actually exist in this namespace. The resolver receives the
+	// SearchClient so it can also query unified storage for stale groups and
+	// merge them in — keeping all resource-specific logic in the resolver.
+	//
+	// If the result is empty (namespace has no data at all), keep
+	// opts.Resources unchanged so the stream can still open and close cleanly.
+	for _, res := range origResources {
+		resolveFn := m.registry.GetResourceGroupsFunc(res)
+		if resolveFn == nil {
+			continue
+		}
+		resolved, err := resolveFn(ctx, opts.Namespace, m.client)
+		if err != nil {
+			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
+		}
+		if len(resolved) > 0 {
+			opts.Resources = resolved
+		}
 	}
 
-	stream, err := m.streamProvider.createStream(ctx, opts)
+	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
 
-	migratorFuncs := []migratorFunc{}
-	for _, res := range opts.Resources {
-		fn := getMigratorFunc(m.MigrationDashboardAccessor, res.Group, res.Resource)
+	migratorFuncs := []MigratorFunc{}
+	for _, res := range origResources {
+		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
 		}
@@ -147,4 +157,115 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+// MergeGroupResources returns the union of a and b, deduplicated by Group.
+func MergeGroupResources(a, b []schema.GroupResource) []schema.GroupResource {
+	seen := make(map[string]bool, len(a)+len(b))
+	result := make([]schema.GroupResource, 0, len(a)+len(b))
+	for _, gr := range append(a, b...) {
+		if !seen[gr.Group] {
+			seen[gr.Group] = true
+			result = append(result, gr)
+		}
+	}
+	return result
+}
+
+type RebuildIndexOptions struct {
+	UsingDistributor    bool
+	NamespaceInfo       authlib.NamespaceInfo
+	Resources           []schema.GroupResource
+	MigrationFinishedAt time.Time
+}
+
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	m.log.Info("start rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+	defer m.log.Info("finished rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: 500 * time.Millisecond,
+		MaxBackoff: 3 * time.Second,
+		MaxRetries: 5,
+	})
+
+	var lastErr error
+	for boff.Ongoing() {
+		err := m.rebuildIndexes(ctx, opts)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		m.log.Error("retrying rebuild indexes", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", err, "attempt", boff.NumRetries())
+		boff.Wait()
+	}
+
+	if err := boff.ErrCause(); err != nil {
+		m.log.Error("failed to rebuild indexes after retries", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", lastErr)
+		return lastErr
+	}
+
+	return nil
+}
+
+func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	keys := []*resourcepb.ResourceKey{}
+	for _, res := range opts.Resources {
+		key := buildResourceKey(res, opts.NamespaceInfo.Value, m.registry)
+		if key != nil {
+			keys = append(keys, key)
+		}
+	}
+
+	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+		Namespace: opts.NamespaceInfo.Value,
+		Keys:      keys,
+	})
+	if err != nil {
+		return fmt.Errorf("error rebuilding index: %w", err)
+	}
+
+	if response.Error != nil {
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+	}
+
+	if opts.UsingDistributor {
+		if !response.ContactedAllInstances {
+			m.log.Error("distributor did not contact all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: distributor did not contact all instances")
+		}
+
+		m.log.Info("distributor contacted all instances", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+
+		buildTimeMap := make(map[string]int64)
+		for _, bt := range response.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			buildTimeMap[key] = bt.BuildTimeUnix
+		}
+
+		migrationFinishTime := opts.MigrationFinishedAt.Unix()
+
+		// Only validate resources that have a build time reported.
+		// Resources with no data (and therefore no index) won't have a build time,
+		// and that's fine - we skip validation for those.
+		for _, res := range opts.Resources {
+			key := res.Group + "/" + res.Resource
+			buildTime, found := buildTimeMap[key]
+			if !found {
+				m.log.Info("no build time reported for resource, skipping validation (index may not exist)", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				continue
+			}
+
+			if buildTime < migrationFinishTime {
+				m.log.Error("index build time is before migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
+			}
+
+			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+		}
+	}
+
+	return nil
 }

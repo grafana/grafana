@@ -157,6 +157,152 @@ func TestSSOSettingsAPI_Update(t *testing.T) {
 	}
 }
 
+func TestSSOSettingsAPI_Patch(t *testing.T) {
+	type TestCase struct {
+		desc                string
+		key                 string
+		body                string
+		action              string
+		scope               string
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:                "successfully patches SSO settings",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNoContent,
+		},
+		{
+			desc:                "fails when action doesn't match",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:read",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope doesn't match",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:read",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope contains another provider",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.okta:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails with not found when key is empty",
+			key:                 "",
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusNotFound,
+		},
+		{
+			desc:                "fails with bad request when body contains invalid json",
+			key:                 social.GitHubProviderName,
+			body:                `{ invalid json }`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with bad request when settings is empty",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with bad request when settings is null",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": null}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with bad request when key was not found",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       ssosettings.ErrInvalidProvider.Errorf("invalid provider"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with internal server error when service returns an error",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       errors.New("something went wrong"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var input struct {
+				Settings map[string]any `json:"settings"`
+			}
+			_ = json.Unmarshal([]byte(tt.body), &input)
+
+			signedInUser := &user.SignedInUser{
+				OrgRole:     org.RoleAdmin,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			}
+
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("Patch", mock.Anything, tt.key, input.Settings, signedInUser).Return(tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
+			req := server.NewRequest(http.MethodPatch, path, bytes.NewBufferString(tt.body))
+			webtest.RequestWithSignedInUser(req, signedInUser)
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 func TestSSOSettingsAPI_Delete(t *testing.T) {
 	type TestCase struct {
 		desc                string

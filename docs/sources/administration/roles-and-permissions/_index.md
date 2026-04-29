@@ -19,18 +19,16 @@ weight: 3100
 
 A _user_ is any individual who can log in to Grafana. Each user is associated with a _role_ that includes _permissions_. Permissions determine the tasks a user can perform in the system. For example, the **Admin** role includes permissions for an administrator to create and delete users.
 
-You can assign a user one of three types of permissions:
+You can assign a user one of three types of permission sets:
 
-- Grafana server administrator permissions: Manage Grafana server-wide settings and resources
-- Organization permissions: Manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
-- Dashboard and folder permission: Manage access to dashboards and folders
-
-{{< admonition type="note" >}}
-If you are running Grafana Enterprise, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
-{{< /admonition >}}
+- **Grafana server administrator permissions** to manage Grafana server-wide settings and resources.
+- **Organization permissions** to manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
+- **Dashboard and folder permissions** to manage access to dashboards and folders. For a detailed explanation of how folders work as the primary permission boundary, refer to [Folder access control]({{< relref "./folder-access-control" >}}).
 
 {{< admonition type="note" >}}
-For Grafana Cloud users, Grafana Support is not authorised to make org role changes. Instead, contact your org administrator.
+If you're using Grafana Enterprise or Grafana Cloud, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources.
+
+For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
 {{< /admonition >}}
 
 ## Grafana server administrators
@@ -61,21 +59,25 @@ All Grafana users belong to at least one organization. An organization is an ent
 
 Permissions assigned to a user within an organization control the extent to which the user has access to and can update the following organization resources:
 
-- dashboards and folders
-- alerts
-- playlists
-- users within that organization
-- data sources
-- teams
-- organization and team settings
-- plugins
-- annotations
-- library panels
-- service accounts
+- Dashboards and folders
+- Alerts
+- Playlists
+- Users within that organization
+- Data sources
+- Teams
+- Organization and team settings
+- Plugins
+- Annotations
+- Library panels
+- Service accounts
 
-For more information about managing organization users, see [User management](../user-management/manage-org-users/).
+For more information about managing organization users, refer to [User management](../user-management/manage-org-users/).
 
 ### Organization roles
+
+{{< admonition type="caution" >}}
+If you're using Grafana Cloud, Grafana Support is not authorised to make any organization role changes. Instead, contact your org administrator.
+{{< /admonition >}}
 
 Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions](../user-management/manage-dashboard-permissions/).
 
@@ -84,7 +86,7 @@ Grafana uses the following roles to control user access:
 - **Organization administrator**: Has access to all organization resources, including dashboards, users, and teams.
 - **Editor**: Can view and edit dashboards, folders, and playlists.
 - **Viewer**: Can view dashboards, playlists, and query data sources.
-- **No Basic Role**: Has no permissions. Permissions will be added with RBAC as needed.
+- **Basic Role**: Has no permissions. Add permissions with RBAC as needed.
 
 The following table lists permissions for each role.
 

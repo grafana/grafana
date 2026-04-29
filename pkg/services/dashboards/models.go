@@ -82,16 +82,6 @@ func NewDashboard(title string) *Dashboard {
 	return dash
 }
 
-// NewDashboardFolder creates a new dashboard folder
-func NewDashboardFolder(title string) *Dashboard {
-	folder := NewDashboard(title)
-	folder.IsFolder = true
-	folder.Data.Set("schemaVersion", 17)
-	folder.Data.Set("version", 0)
-	folder.IsFolder = true
-	return folder
-}
-
 // GetTags turns the tags in data json into go string array
 func (d *Dashboard) GetTags() []string {
 	return d.Data.Get("tags").MustStringArray()
@@ -356,6 +346,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
+	K8sGetAPIVersion string
 }
 
 type DashboardTagCloudItem struct {
@@ -399,6 +391,31 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
+func LooksLikeK8sResource(data map[string]any) bool {
+	if _, ok := data["apiVersion"]; ok {
+		return true
+	}
+	if _, ok := data["metadata"]; ok {
+		return true
+	}
+	if _, ok := data["spec"]; ok {
+		return true
+	}
+	return false
+}
+
+const LooksLikeV2SpecMessage = "dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
+
+func LooksLikeV2Spec(data map[string]any) bool {
+	if _, ok := data["elements"]; ok {
+		return true
+	}
+	if _, ok := data["layout"]; ok {
+		return true
+	}
+	return false
+}
+
 type DashboardSearchProjection struct {
 	ID          int64  `xorm:"id"`
 	UID         string `xorm:"uid"`
@@ -425,19 +442,6 @@ const (
 	QuotaTarget    quota.Target    = "dashboard"
 )
 
-type CountDashboardsInFolderQuery struct {
-	FolderUID string
-	OrgID     int64
-}
-
-// TODO: CountDashboardsInFolderRequest is the request passed from the service
-// to the store layer. The FolderID will be replaced with FolderUID when
-// dashboards are updated with parent folder UIDs.
-type CountDashboardsInFolderRequest struct {
-	FolderUIDs []string
-	OrgID      int64
-}
-
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	return &folder.Folder{
@@ -453,16 +457,6 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		Updated:   dash.Updated,
 		UpdatedBy: dash.UpdatedBy,
 	}
-}
-
-type DeleteDashboardsInFolderRequest struct {
-	FolderUIDs []string
-	OrgID      int64
-}
-
-type GetAllDashboardsInFolderRequest struct {
-	FolderUIDs []string
-	OrgID      int64
 }
 
 //
@@ -539,8 +533,6 @@ type FindPersistedDashboardsQuery struct {
 	ManagerIdentity      string
 	SourcePath           string
 	ManagerIdentityNotIn []string
-
-	Filters []any
 
 	// Skip access control checks. This field is used by OpenFGA search implementation.
 	// Should not be used anywhere else.

@@ -1,12 +1,16 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../settings/links/LinkAddEditableElement';
+import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
+import { SectionFiltersSet } from '../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -15,17 +19,24 @@ import { DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
-export interface Props {
-  editPane: DashboardEditPane;
-  isEditing: boolean | undefined;
+export class DashboardOutline extends SceneObjectBase {
+  public static Component = DashboardOutlineRenderer;
+  public getId() {
+    return 'outline' as const;
+  }
 }
 
-export function DashboardOutline({ editPane, isEditing }: Props) {
-  const dashboard = getDashboardSceneFor(editPane);
+export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane)!;
+  const dashboard = getDashboardSceneFor(model);
+  const { isEditing } = dashboard.useState();
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
+      <Sidebar.PaneHeader
+        title={t('dashboard.outline.pane-header', 'Content outline')}
+        onGoBack={editPane.getOnGetBackCallback()}
+      />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
           <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
@@ -65,13 +76,23 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Only select via clicking outline never deselect
     if (!isSelected) {
-      onSelect?.(e);
+      if (
+        sceneObject instanceof LinkEdit ||
+        sceneObject instanceof DashboardLinksSet ||
+        sceneObject instanceof DashboardFiltersSet ||
+        sceneObject instanceof SectionFiltersSet
+      ) {
+        // Select directly via editPane.selectObject because these objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject);
+      } else {
+        onSelect?.(e);
+      }
     }
 
     editableElement.scrollIntoView?.();
-    DashboardInteractions.outlineItemClicked({ index, depth });
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {

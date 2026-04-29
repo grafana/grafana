@@ -23,49 +23,33 @@ func (_m *MockConnectionHealthChecker) EXPECT() *MockConnectionHealthChecker_Exp
 }
 
 // RefreshHealthWithPatchOps provides a mock function with given fields: ctx, conn
-func (_m *MockConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, conn *v0alpha1.Connection) (*v0alpha1.TestResults, v0alpha1.HealthStatus, []map[string]interface{}, error) {
+func (_m *MockConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, conn *v0alpha1.Connection) (ConnectionHealthResultWithPatchOps, error) {
 	ret := _m.Called(ctx, conn)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshHealthWithPatchOps")
 	}
 
-	var r0 *v0alpha1.TestResults
-	var r1 v0alpha1.HealthStatus
-	var r2 []map[string]interface{}
-	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Connection) (*v0alpha1.TestResults, v0alpha1.HealthStatus, []map[string]interface{}, error)); ok {
+	var r0 ConnectionHealthResultWithPatchOps
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Connection) (ConnectionHealthResultWithPatchOps, error)); ok {
 		return rf(ctx, conn)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Connection) *v0alpha1.TestResults); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Connection) ConnectionHealthResultWithPatchOps); ok {
 		r0 = rf(ctx, conn)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.TestResults)
+			r0 = ret.Get(0).(ConnectionHealthResultWithPatchOps)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v0alpha1.Connection) v0alpha1.HealthStatus); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v0alpha1.Connection) error); ok {
 		r1 = rf(ctx, conn)
 	} else {
-		r1 = ret.Get(1).(v0alpha1.HealthStatus)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, *v0alpha1.Connection) []map[string]interface{}); ok {
-		r2 = rf(ctx, conn)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]map[string]interface{})
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func(context.Context, *v0alpha1.Connection) error); ok {
-		r3 = rf(ctx, conn)
-	} else {
-		r3 = ret.Error(3)
-	}
-
-	return r0, r1, r2, r3
+	return r0, r1
 }
 
 // MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefreshHealthWithPatchOps'
@@ -87,12 +71,12 @@ func (_c *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call) Return(_a0 *v0alpha1.TestResults, _a1 v0alpha1.HealthStatus, _a2 []map[string]interface{}, _a3 error) *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3)
+func (_c *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call) Return(_a0 ConnectionHealthResultWithPatchOps, _a1 error) *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call) RunAndReturn(run func(context.Context, *v0alpha1.Connection) (*v0alpha1.TestResults, v0alpha1.HealthStatus, []map[string]interface{}, error)) *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call {
+func (_c *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call) RunAndReturn(run func(context.Context, *v0alpha1.Connection) (ConnectionHealthResultWithPatchOps, error)) *MockConnectionHealthChecker_RefreshHealthWithPatchOps_Call {
 	_c.Call.Return(run)
 	return _c
 }

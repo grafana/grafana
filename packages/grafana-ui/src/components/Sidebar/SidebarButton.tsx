@@ -1,45 +1,41 @@
 import { css, cx } from '@emotion/css';
-import React, { ButtonHTMLAttributes, useContext } from 'react';
+import React, { type ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconSize } from '../../types/icon';
-import { getActiveButtonStyles } from '../Button/Button';
+import { type ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { SidebarContext } from './useSidebar';
+import { useSidebarContext } from './useSidebar';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: IconName;
   active?: boolean;
   tooltip?: string;
   title: string;
-  iconSize?: IconSize;
-  iconColor?: string;
+  variant?: ButtonVariant;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, iconSize, iconColor, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, variant, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
-    const context = useContext(SidebarContext);
+    const sidebarContext = useSidebarContext();
 
-    if (!context) {
+    if (!sidebarContext) {
       throw new Error('Sidebar.Button must be used within a Sidebar component');
     }
 
     const buttonClass = cx(
       styles.button,
-      context.compact && styles.compact,
-      active && styles.active,
-      context.position === 'left' && styles.leftButton,
-      iconColor
+      sidebarContext.compact && styles.compact,
+      sidebarContext.position === 'left' && styles.leftButton
     );
 
     return (
-      <Tooltip ref={ref} content={tooltip ?? title} placement={context.position === 'left' ? 'right' : 'left'}>
+      <Tooltip ref={ref} content={tooltip ?? title} placement={sidebarContext.position === 'left' ? 'right' : 'left'}>
         <button
           className={buttonClass}
           aria-label={title}
@@ -48,8 +44,8 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div>{renderIcon(icon, iconSize)}</div>
-          {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
+          <div className={cx(styles.iconWrapper, variant, active && styles.iconActive)}>{renderIcon(icon)}</div>
+          {!sidebarContext.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
     );
@@ -58,13 +54,13 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
 
 SidebarButton.displayName = 'SidebarButton';
 
-function renderIcon(icon: IconName | React.ReactNode, size?: IconSize) {
+function renderIcon(icon: IconName | React.ReactNode) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={size || 'lg'} />;
+    return <Icon name={icon} size="lg" />;
   }
 
   return icon;
@@ -77,29 +73,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: theme.spacing(theme.components.height.md),
+      minHeight: theme.spacing(theme.components.height.sm),
       padding: theme.spacing(0, 1),
       width: '100%',
       overflow: 'hidden',
-      // borderRadius: theme.shape.radius.sm,
-      lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
+      lineHeight: `${theme.components.height.sm * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-      '&.primary': css({
-        svg: {
-          backgroundColor: theme.colors.primary.main,
-          color: theme.colors.getContrastText(theme.colors.primary.main),
-          borderRadius: theme.shape.radius.sm,
-          padding: 2,
-        },
-      }),
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
 
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),
@@ -111,50 +93,57 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         opacity: theme.colors.action.disabledOpacity,
-        background: theme.colors.action.disabledBackground,
-        boxShadow: 'none',
-
-        '&:hover': {
-          color: theme.colors.text.disabled,
-          background: theme.colors.action.disabledBackground,
-          boxShadow: 'none',
-        },
-      },
-
-      '&:hover, &:focus-visible': {
-        color: theme.colors.text.primary,
-        background: theme.colors.action.hover,
-      },
-
-      '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
       },
     }),
     compact: css({
-      height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
       width: theme.spacing(5),
     }),
-    active: css({
+    iconWrapper: css({
+      padding: 3,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      position: 'relative',
+      borderRadius: theme.shape.radius.sm,
+      '&:hover, &:focus-visible': {
+        background: theme.colors.action.hover,
+      },
+      '&.primary': {
+        background: theme.colors.primary.main,
+        color: theme.colors.getContrastText(theme.colors.primary.main),
+        '&:hover': {
+          backgroundColor: theme.colors.primary.shade,
+        },
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        ...getIconTransitionStyles(theme),
+      },
+    }),
+    iconActive: css({
       color: theme.colors.text.primary,
-      background: theme.colors.action.selected,
+      background: theme.colors.secondary.main,
       '&::before': {
         display: 'block',
         content: '" "',
         position: 'absolute',
         right: 0,
-        top: 0,
-        height: '100%',
-        width: '2px',
-        borderRadius: theme.shape.radius.default,
-        backgroundImage: theme.colors.gradients.brandVertical,
+        bottom: 0,
+        width: '100%',
+        height: '2px',
+        borderBottomLeftRadius: theme.shape.radius.sm,
+        borderBottomRightRadius: theme.shape.radius.sm,
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
       },
-    }),
-    buttonWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      whiteSpace: 'nowrap',
+      svg: {
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
+      },
     }),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
@@ -177,3 +166,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getIconTransitionStyles(theme: GrafanaTheme2) {
+  return {
+    transition: theme.transitions.create(['background-color', 'color'], {
+      duration: theme.transitions.duration.short,
+    }),
+  };
+}

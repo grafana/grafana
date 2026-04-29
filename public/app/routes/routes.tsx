@@ -6,7 +6,6 @@ import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPag
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
@@ -22,7 +21,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
+import { type RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
@@ -60,13 +59,25 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/assistant-preview/*',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.AssistantPreview,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "DashboardScenePage" */ '../features/dashboard-scene/pages/DashboardScenePage')
+      ),
+    },
+    {
       path: '/dashboard/new-with-ds/:datasourceUid',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
-    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
+    (config.featureToggles.suggestedDashboards ||
+      config.featureToggles.dashboardLibrary ||
+      config.featureToggles.dashboardTemplates) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -98,10 +109,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/d-solo/:uid/:slug?',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
@@ -109,10 +118,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     {
@@ -296,7 +303,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/teams/new',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CreateTeam" */ '../features/teams/create-team/CreateTeam')
+      ),
     },
     {
       path: '/org/teams/edit/:uid/:page?',
@@ -318,11 +327,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: config.featureToggles.ssoSettingsLDAP
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
-          )
-        : LdapPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+      ),
     },
     {
       path: '/admin/authentication/:provider',
@@ -451,6 +458,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
+      roles: config.featureToggles.playlistsRBAC
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
@@ -536,7 +546,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.restoreDashboards && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),

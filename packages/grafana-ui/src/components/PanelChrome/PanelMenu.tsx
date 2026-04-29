@@ -1,12 +1,12 @@
 import { cx } from '@emotion/css';
-import { ReactElement, useCallback } from 'react';
+import { type ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { Button } from '../Button/Button';
 import { Dropdown } from '../Dropdown/Dropdown';
-import { TooltipPlacement } from '../Tooltip/types';
+import { type TooltipPlacement } from '../Tooltip/types';
 
 interface PanelMenuProps {
   menu: ReactElement | (() => ReactElement);
@@ -38,8 +38,13 @@ export function PanelMenu({
     [onOpenMenu]
   );
 
+  const overlay = () => {
+    const menuContent = typeof menu === 'function' ? menu() : menu;
+    return <div className={dragClassCancel}>{menuContent}</div>;
+  };
+
   return (
-    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
+    <Dropdown overlay={overlay} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
       <Button
         aria-label={t('grafana-ui.panel-menu.label', 'Menu for panel {{ title }}', { title: title ?? 'Untitled' })}
         title={t('grafana-ui.panel-menu.title', 'Menu')}

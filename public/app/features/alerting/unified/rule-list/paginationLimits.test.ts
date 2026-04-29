@@ -2,7 +2,7 @@ import { testWithFeatureToggles } from 'test/test-utils';
 
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { RuleHealth, RulesFilter } from '../search/rulesSearchParser';
+import { RuleHealth, type RulesFilter } from '../search/rulesSearchParser';
 import { getFilter } from '../utils/search';
 
 import {

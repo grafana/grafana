@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
@@ -76,30 +77,32 @@ func ProvidePermissionRegistry() PermissionRegistry {
 func newPermissionRegistry() *permissionRegistry {
 	// defaultKindScopes maps the most specific accepted scope prefix for a given kind (folders, dashboards, etc)
 	defaultKindScopes := map[string]string{
-		"teams":               "teams:id:",
-		"users":               "users:id:",
-		"datasources":         "datasources:uid:",
-		"dashboards":          "dashboards:uid:",
-		"folders":             "folders:uid:",
-		"annotations":         "annotations:type:",
-		"orgs":                "orgs:id:",
-		"plugins":             "plugins:id:",
-		"plugins.plugins":     "plugins.plugins:uid:",
-		"plugins.metas":       "plugins.metas:uid:",
-		"advisor.checks":      "advisor.checks:uid:",
-		"advisor.checktypes":  "advisor.checktypes:uid:",
-		"advisor.register":    "advisor.register:uid:",
-		"provisioners":        "provisioners:",
-		"reports":             "reports:id:",
-		"permissions":         "permissions:type:",
-		"serviceaccounts":     "serviceaccounts:id:",
-		"settings":            "settings:",
-		"global.users":        "global.users:id:",
-		"roles":               "roles:uid:",
-		"services":            "services:",
-		"receivers":           "receivers:uid:",
-		"secret.securevalues": "secret.securevalues:uid:",
-		"secret.keepers":      "secret.keepers:uid:",
+		"teams":                          "teams:id:",
+		"users":                          "users:id:",
+		"datasources":                    "datasources:uid:",
+		"dashboards":                     "dashboards:uid:",
+		"folders":                        "folders:uid:",
+		"annotations":                    "annotations:type:",
+		"orgs":                           "orgs:id:",
+		"plugins":                        "plugins:id:",
+		"plugins.plugins":                "plugins.plugins:uid:",
+		"plugins.metas":                  "plugins.metas:uid:",
+		"advisor.checks":                 "advisor.checks:uid:",
+		"advisor.checktypes":             "advisor.checktypes:uid:",
+		"advisor.register":               "advisor.register:uid:",
+		"provisioners":                   "provisioners:",
+		"reports":                        "reports:id:",
+		"permissions":                    "permissions:type:",
+		"serviceaccounts":                "serviceaccounts:id:",
+		"settings":                       "settings:",
+		"global.users":                   "global.users:id:",
+		"roles":                          "roles:uid:",
+		"services":                       "services:",
+		"receivers":                      "receivers:uid:",
+		"inhibition-rules":               "inhibition-rules:uid:",
+		"secret.securevalues":            "secret.securevalues:uid:",
+		"secret.keepers":                 "secret.keepers:uid:",
+		accesscontrol.AlertingRoutesKind: accesscontrol.AlertingRoutesKind + ":uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),

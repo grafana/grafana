@@ -7,10 +7,11 @@ import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
 import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
-import { AlertRuleRow as AlertRuleRowType } from '../types';
+import { type AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
-import { OpenDrawerIconButton } from './OpenDrawerIconButton';
+import { RowActions } from './InstanceCountBadges';
+import { OpenDrawerButton } from './OpenDrawerButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -18,15 +19,17 @@ interface AlertRuleRowProps {
   rowKey: React.Key;
   depth?: number;
   enableFolderMeta?: boolean;
+  groupLabels?: Record<string, string>;
 }
 
-export const AlertRuleRow = ({
+export function AlertRuleRow({
   row,
   leftColumnWidth,
   rowKey,
   depth = 0,
   enableFolderMeta = true,
-}: AlertRuleRowProps) => {
+  groupLabels,
+}: AlertRuleRowProps) {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -45,9 +48,15 @@ export const AlertRuleRow = ({
         width={leftColumnWidth}
         title={<Text variant="body">{title}</Text>}
         actions={
-          <OpenDrawerIconButton
-            aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
-            onClick={handleDrawerOpen}
+          <RowActions
+            counts={row.instanceCounts}
+            actionButton={
+              <OpenDrawerButton
+                aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
+                onClick={handleDrawerOpen}
+                text={t('alerting.open-drawer-icon-button.rule-details', 'Rule details')}
+              />
+            }
           />
         }
         metadata={
@@ -62,11 +71,13 @@ export const AlertRuleRow = ({
         }
         content={<AlertRuleSummary ruleUID={ruleUID} />}
         depth={depth}
+        showIndentBorder
+        expandable={false}
       >
-        <AlertRuleInstances ruleUID={ruleUID} depth={depth + 1} />
+        <AlertRuleInstances ruleUID={ruleUID} depth={depth} groupLabels={groupLabels} />
       </GenericRow>
 
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}
     </>
   );
-};
+}

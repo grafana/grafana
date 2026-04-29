@@ -2,107 +2,70 @@ package stream_utils
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"google.golang.org/grpc/metadata"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
-// Appends incoming request headers to the outgoing context to make sure none are lost when we make the request to tempo.
-func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamRequest) context.Context {
-	// append all incoming headers
-	for key, value := range req.Headers {
-		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
-	}
-	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
-	// changes or updates, so we have to get it from context.
-	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-	return ctx
-}
+const (
+	TeamHttpHeaderKeyLower = "x-prom-label-policy"
+	TeamHttpHeaderKeyCamel = "X-Prom-Label-Policy"
+)
 
-// When we receive a new query request we should make sure that all incoming HTTP headers are being forwarding to the grpc stream request
-// this is to make sure that no headers are lost when we make the actual call to Tempo later on.
-func SetHeadersFromIncomingContext(ctx context.Context) (map[string]string, error) {
-	// get the plugin from context
+// returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
+// It always includes datasource HTTP client option headers. When streamingForwardTeamHeadersTempo is enabled, it also merges
+// outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
+// metadata entry is copied under its existing key.
+func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
 	plugin := backend.PluginConfigFromContext(ctx)
-
-	// get the HTTP headers
-	teamHeaders, error := getTeamHTTPHeaders(plugin)
-	if error != nil {
-		return nil, error
-	}
-
-	// get the rest of the incoming headers
 	headers, err := getClientOptionsHeaders(ctx, plugin)
 	if err != nil {
 		return nil, err
 	}
 
-	for key, value := range teamHeaders {
-		headers[key] = value
+	// fetch team headers from outgoing context.
+	teamHeaders := getTeamHeaders(ctx, logger, plugin)
+	for k, v := range teamHeaders {
+		headers[k] = v
 	}
 	return headers, nil
 }
 
-func getTeamHTTPHeaders(plugin backend.PluginContext) (map[string]string, error) {
+// maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
+// x-prom-label-policy is exposed as X-Prom-Label-Policy.
+func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
+	cfg := config.GrafanaConfigFromContext(ctx)
+	if cfg == nil || !cfg.FeatureToggles().IsEnabled("streamingForwardTeamHeadersTempo") {
+		return nil
+	}
+
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		// if no metadata was found in the outgoing context, try to get it from incoming context
+		md, ok = metadata.FromIncomingContext(ctx)
+		if !ok {
+			if plugin.DataSourceInstanceSettings != nil {
+				logger.Debug("No outgoing gRPC metadata for team header forwarding", "datasource_uid", plugin.DataSourceInstanceSettings.UID)
+			}
+			return nil
+		}
+	}
+
 	headers := map[string]string{}
-	// Grab the JSON data from the datasource instance settings
-	jsonData := plugin.DataSourceInstanceSettings.JSONData
-	var data map[string]interface{}
-	err := json.Unmarshal(jsonData, &data)
-	if err != nil {
-		return nil, err
-	}
-
-	// fetch team http headers
-	if teamHttpHeaders, ok := data["teamHttpHeaders"]; ok {
-		// team headers have the following structure
-		// headers: [<team_id>: [{header: <header_name>, value: <header_value>}]]
-		// header_value is whatever the user has set under LBAC permissions for their given rule.
-		if lbacHeaders, ok := teamHttpHeaders.(map[string]interface{})["headers"]; ok {
-			headerMap := lbacHeaders.(map[string]interface{})
-			labelPolicyKey, labelPolicyValue := getLabelPolicyKeyValue(headerMap)
-
-			if labelPolicyKey != "" && labelPolicyValue != "" {
-				headers[labelPolicyKey] = labelPolicyValue
-			}
+	for headerKey, headerVals := range md {
+		joined := strings.Join(headerVals, ",")
+		if headerKey == TeamHttpHeaderKeyLower {
+			headers[TeamHttpHeaderKeyCamel] = joined
+			continue
 		}
+		headers[headerKey] = joined
 	}
-	return headers, nil
-}
-
-func getLabelPolicyKeyValue(headerWithRules map[string]interface{}) (string, string) {
-	labelPolicyKey := ""
-	labelPolicyValue := ""
-	// we go through each teams' rule and ignoring the team, go through their set rules and prepare them to be all appended for the X-Prom-Label-Policy header value
-	// the result will be a comma separated list of the rules:
-	// "<rule_num>:<rule_value>, <rule_num>:<rule_value>"
-	for _, accessRuleValue := range headerWithRules {
-		rules := accessRuleValue.([]interface{})
-		for _, accessRule := range rules {
-			header := accessRule.(map[string]interface{})
-			for key, value := range header {
-				// for now, team headers only contain a single header key value, but in case in the future more are introduced, we make sure we only set the one we care about.
-				if key == "header" && value == "X-Prom-Label-Policy" {
-					labelPolicyKey = value.(string)
-					continue
-				}
-				if key == "value" {
-					if valueStr, ok := value.(string); ok {
-						if labelPolicyValue == "" {
-							labelPolicyValue = valueStr
-						} else {
-							labelPolicyValue += "," + valueStr
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return labelPolicyKey, labelPolicyValue
+	return headers
 }
 
 func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) (map[string]string, error) {
@@ -113,9 +76,8 @@ func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) 
 	}
 
 	for name, values := range opts.Header {
-		for _, value := range values {
-			headers[name] = value
-		}
+		joined := strings.Join(values, ",")
+		headers[name] = joined
 	}
 	return headers, nil
 }

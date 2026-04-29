@@ -127,7 +127,7 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: tt.decrypt})
+			decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: tt.decrypt}, nil)
 			decrypted := decrypter(tt.config)
 
 			token, err := decrypted.Token(context.Background())

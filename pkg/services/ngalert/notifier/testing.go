@@ -18,6 +18,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingImages "github.com/grafana/alerting/images"
+	alertingModels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -27,8 +33,6 @@ import (
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-
-	alertingImages "github.com/grafana/alerting/images"
 )
 
 type fakeConfigStore struct {
@@ -38,26 +42,18 @@ type fakeConfigStore struct {
 	historicConfigs map[int64][]*models.HistoricAlertConfiguration
 
 	// notificationSettings stores notification settings by orgID.
-	notificationSettings map[int64]map[models.AlertRuleKey][]models.NotificationSettings
+	notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting
 }
 
-func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+func (f *fakeConfigStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	settings, ok := f.notificationSettings[q.OrgID]
 	if !ok {
 		return nil, nil
 	}
 	if q.ReceiverName != "" {
-		filteredSettings := make(map[models.AlertRuleKey][]models.NotificationSettings)
+		filteredSettings := make(map[models.AlertRuleKey]models.ContactPointRouting)
 		for key, notificationSettings := range settings {
-			// Current semantics is that we only key entries where any of the settings match the receiver name.
-			var found bool
-			for _, setting := range notificationSettings {
-				if q.ReceiverName == setting.Receiver {
-					found = true
-					break
-				}
-			}
-			if found {
+			if q.ReceiverName == notificationSettings.Receiver {
 				filteredSettings[key] = notificationSettings
 			}
 		}
@@ -103,6 +99,13 @@ func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfigurati
 	}
 }
 
+func NewFakeNotificationStore(t *testing.T, notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting) *fakeConfigStore {
+	t.Helper()
+	return &fakeConfigStore{
+		notificationSettings: notificationSettings,
+	}
+}
+
 func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
@@ -120,7 +123,7 @@ func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
+	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(models.AlertConfiguration) error { return nil })
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
@@ -139,7 +142,7 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
 	}
 
-	if err := callback(); err != nil {
+	if err := callback(cfg); err != nil {
 		return err
 	}
 
@@ -247,7 +250,7 @@ func (n NoValidation) Validate(_ models.NotificationSettings) error {
 type RejectingValidation struct{}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
-	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
+	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
 }
 
 var errInvalidState = fmt.Errorf("invalid state")
@@ -427,7 +430,7 @@ type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
 	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutingsFn             func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
@@ -445,19 +448,66 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 	return nil, nil, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	call := call{
-		Method: "ListNotificationSettings",
+		Method: "ListContactPointRoutings",
 		Args:   []interface{}{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
-	if f.ListNotificationSettingsFn != nil {
-		return f.ListNotificationSettingsFn(ctx, q)
+	if f.ListContactPointRoutingsFn != nil {
+		return f.ListContactPointRoutingsFn(ctx, q)
 	}
 
 	// Default values when no function hook is provided
 	return nil, nil
+}
+
+// MockBroadcastChannel captures broadcast messages for testing.
+type MockBroadcastChannel struct {
+	broadcasts [][]byte
+}
+
+func withPeer(peer alertingNotify.ClusterPeer) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.peer = peer
+		moa.initAlertBroadcast()
+	}
+}
+
+// ReliableDelivery implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) ReliableDelivery([]byte) bool { return true }
+
+// Broadcast implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) Broadcast(b []byte) {
+	m.broadcasts = append(m.broadcasts, b)
+}
+
+// Broadcasts returns all captured broadcast messages.
+func (m *MockBroadcastChannel) Broadcasts() [][]byte {
+	return m.broadcasts
+}
+
+// MockClusterPeer implements alertingNotify.ClusterPeer for testing.
+type MockClusterPeer struct {
+	Channel     *MockBroadcastChannel
+	LastOptions []alertingCluster.ChannelOption
+}
+
+// Position implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) Position() int {
+	return 0
+}
+
+// WaitReady implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) WaitReady(context.Context) error {
+	return nil
+}
+
+// AddState implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	m.LastOptions = opts
+	return m.Channel
 }
 
 type TestMultiOrgAlertmanagerOptions struct {
@@ -465,7 +515,12 @@ type TestMultiOrgAlertmanagerOptions struct {
 	configs        map[int64]*models.AlertConfiguration
 	disabledOrgs   map[int64]struct{}
 	featureToggles featuremgmt.FeatureToggles
+	peer           alertingNotify.ClusterPeer
 	waitReady      bool
+	secretService  *secretsManager.SecretsService
+	alertmanagers  map[int64]Alertmanager
+	cfgStore       AlertingStore
+	skipLoad       bool
 }
 
 type TestMultiOrgAlertmanagerOption func(*TestMultiOrgAlertmanagerOptions)
@@ -494,9 +549,39 @@ func WithFeatureToggles(ft featuremgmt.FeatureToggles) TestMultiOrgAlertmanagerO
 	}
 }
 
+func WithPeer(peer alertingNotify.ClusterPeer) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.peer = peer
+	}
+}
+
 func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	return func(opts *TestMultiOrgAlertmanagerOptions) {
 		opts.waitReady = true
+	}
+}
+
+func WithSecretService(secretService *secretsManager.SecretsService) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.secretService = secretService
+	}
+}
+
+func WithAlertmanagers(alertmanagers map[int64]Alertmanager) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.alertmanagers = alertmanagers
+	}
+}
+
+func WithConfigStore(cfgStore AlertingStore) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.cfgStore = cfgStore
+	}
+}
+
+func WithSkipLoad() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.skipLoad = true
 	}
 }
 
@@ -516,11 +601,19 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 
 	tmpDir := t.TempDir()
 	orgStore := NewFakeOrgStore(t, options.orgs)
-	cfgStore := NewFakeConfigStore(t, options.configs)
+	var cfgStore AlertingStore
+	if options.cfgStore != nil {
+		cfgStore = options.cfgStore
+	} else {
+		cfgStore = NewFakeConfigStore(t, options.configs)
+	}
 	kvStore := fakes.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	secretsService := options.secretService
+	if secretsService == nil {
+		secretsService = secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	}
 	decryptFn := secretsService.GetDecryptedValue
 
 	cfg := &setting.Cfg{
@@ -530,6 +623,11 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   options.disabledOrgs,
 		},
+	}
+
+	var moaOpts []Option
+	if options.peer != nil {
+		moaOpts = append(moaOpts, withPeer(options.peer))
 	}
 
 	moa, err := NewMultiOrgAlertmanager(
@@ -542,13 +640,24 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		fakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		options.featureToggles,
 		nil,
+		moaOpts...,
 	)
 	require.NoError(t, err)
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+
+	if options.alertmanagers != nil {
+		for orgID, am := range options.alertmanagers {
+			moa.alertmanagers[orgID] = am
+		}
+	}
+
+	if !options.skipLoad {
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+	}
 
 	if options.waitReady {
 		require.Eventually(t, func() bool {
@@ -563,4 +672,81 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 	}
 
 	return moa
+}
+
+type FakeAlertmanagerProvider struct {
+	Calls struct {
+		AlertmanagerFor []AlertmanagerForCall
+	}
+	AlertmanagerForFunc func(orgID int64) (Alertmanager, error)
+}
+
+type AlertmanagerForCall struct {
+	OrgID int64
+}
+
+func (f *FakeAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+	f.Calls.AlertmanagerFor = append(f.Calls.AlertmanagerFor, AlertmanagerForCall{OrgID: orgID})
+	if f.AlertmanagerForFunc != nil {
+		return f.AlertmanagerForFunc(orgID)
+	}
+	return nil, ErrNoAlertmanagerForOrg
+}
+
+type FakeReceiverService struct {
+	Calls struct {
+		GetReceiver []GetReceiverCall
+	}
+	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type FakeEmailValidator struct {
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+}
+
+func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
+	t.Helper()
+	return &FakeEmailValidator{
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+			return err
+		},
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+			return err
+		},
+	}
+}
+
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+	if f.ValidateIntegrationFunc != nil {
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
+	}
+	return nil
+}
+
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+	if f.ValidateIntegrationConfigFunc != nil {
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration, logger)
+	}
+	return nil
+}
+
+type GetReceiverCall struct {
+	Ctx     context.Context
+	UID     string
+	Decrypt bool
+	User    identity.Requester
+}
+
+func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	f.Calls.GetReceiver = append(f.Calls.GetReceiver, GetReceiverCall{
+		Ctx:     ctx,
+		UID:     uid,
+		Decrypt: decrypt,
+		User:    user,
+	})
+	if f.GetReceiverFunc != nil {
+		return f.GetReceiverFunc(ctx, uid, decrypt, user)
+	}
+	return nil, models.ErrReceiverNotFound.Errorf("")
 }

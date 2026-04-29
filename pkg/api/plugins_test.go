@@ -420,9 +420,10 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
-	require.NoError(t, err)
-
-	require.True(t, resp.Flushed, "response should be flushed after request is processed")
+	// Go 1.26's httptest.ResponseRecorder.Write returns http.ErrBodyNotAllowed
+	// for status codes that disallow a body (204, 304). The error is expected
+	// because HTTPResponseSender unconditionally calls Write on the response.
+	require.ErrorContains(t, err, "request method or response status code does not allow body")
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
@@ -567,22 +568,29 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
-	bytes, err := json.Marshal(map[string]any{
-		"message": "hello",
-	})
-	if err != nil {
-		return err
-	}
 
 	statusCode := http.StatusOK
 	if c.statusCode != 0 {
 		statusCode = c.statusCode
 	}
 
+	// Go 1.26.0 follows RFC 7230 more strictly:
+	// https://github.com/golang/go/blame/master/src/net/http/httptest/recorder.go#L113-L115
+	var body []byte
+	if statusCode != http.StatusNoContent && statusCode != http.StatusNotModified {
+		var err error
+		body, err = json.Marshal(map[string]any{
+			"message": "hello",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
 		Status:  statusCode,
 		Headers: c.headers,
-		Body:    bytes,
+		Body:    body,
 	})
 }
 
@@ -672,6 +680,121 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			}
 			assert.Equal(t, tc.expectedCode, res.StatusCode)
 			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func Test_PluginsList_EmbeddedFilter(t *testing.T) {
+	parentApp := createPlugin(plugins.JSONData{
+		ID: "parent-app", Type: plugins.TypeApp, Name: "Parent App",
+		Info: plugins.Info{Version: "1.0.0"},
+	}, plugins.ClassExternal, plugins.NewFakeFS())
+
+	embeddedDS := createPlugin(plugins.JSONData{
+		ID: "embedded-ds", Type: plugins.TypeDataSource, Name: "Embedded Datasource",
+		Info: plugins.Info{Version: "1.0.0"},
+	}, plugins.ClassExternal, plugins.NewFakeFS())
+	embeddedDS.IncludedInAppID = "parent-app"
+
+	embeddedPanel := createPlugin(plugins.JSONData{
+		ID: "embedded-panel", Type: plugins.TypePanel, Name: "Embedded Panel",
+		Info: plugins.Info{Version: "1.0.0"},
+	}, plugins.ClassExternal, plugins.NewFakeFS())
+	embeddedPanel.IncludedInAppID = "parent-app"
+
+	standaloneDS := createPlugin(plugins.JSONData{
+		ID: "standalone-ds", Type: plugins.TypeDataSource, Name: "Standalone Datasource",
+		Info: plugins.Info{Version: "1.0.0"},
+	}, plugins.ClassCore, plugins.NewFakeFS())
+
+	pluginRegistry := &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			parentApp.ID:     parentApp,
+			embeddedDS.ID:    embeddedDS,
+			embeddedPanel.ID: embeddedPanel,
+			standaloneDS.ID:  standaloneDS,
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		"parent-app":     {ID: 0, OrgID: 1, PluginID: "parent-app", PluginVersion: "1.0.0", Enabled: true},
+		"embedded-ds":    {ID: 0, OrgID: 1, PluginID: "embedded-ds", PluginVersion: "1.0.0", Enabled: true},
+		"embedded-panel": {ID: 0, OrgID: 1, PluginID: "embedded-panel", PluginVersion: "1.0.0", Enabled: true},
+		"standalone-ds":  {ID: 0, OrgID: 1, PluginID: "standalone-ds", PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	type testCase struct {
+		desc            string
+		embeddedParam   string
+		expectedPlugins []string
+	}
+	tcs := []testCase{
+		{
+			desc:            "no embedded filter returns all plugins",
+			embeddedParam:   "",
+			expectedPlugins: []string{"parent-app", "embedded-ds", "embedded-panel", "standalone-ds"},
+		},
+		{
+			desc:            "embedded=0 excludes all embedded plugins",
+			embeddedParam:   "0",
+			expectedPlugins: []string{"parent-app", "standalone-ds"},
+		},
+		{
+			desc:            "embedded=include-datasource includes embedded datasource but excludes embedded panel",
+			embeddedParam:   "include-datasource",
+			expectedPlugins: []string{"parent-app", "embedded-ds", "standalone-ds"},
+		},
+		{
+			desc:            "embedded=include-panel includes embedded panel but excludes embedded datasource",
+			embeddedParam:   "include-panel",
+			expectedPlugins: []string{"parent-app", "embedded-panel", "standalone-ds"},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+				require.NoError(t, err)
+
+				hs.Cfg = setting.NewCfg()
+				hs.PluginSettings = &pluginSettings
+				hs.pluginStore = store
+				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				hs.managedPluginsService = managedplugins.NewNoop()
+				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					nil,
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+				)
+				require.NoError(t, err)
+			})
+
+			url := "/api/plugins"
+			if tc.embeddedParam != "" {
+				url += "?embedded=" + tc.embeddedParam
+			}
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(url), userWithPermissions(1, []ac.Permission{
+				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:parent-app"},
+				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:embedded-ds"},
+				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:embedded-panel"},
+			})))
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			var result dtos.PluginList
+			require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+			require.NoError(t, res.Body.Close())
+
+			resultIDs := make([]string, 0, len(result))
+			for _, p := range result {
+				resultIDs = append(resultIDs, p.Id)
+			}
+			require.ElementsMatch(t, tc.expectedPlugins, resultIDs)
 		})
 	}
 }

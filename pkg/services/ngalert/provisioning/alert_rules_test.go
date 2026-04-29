@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -983,6 +984,20 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			})
 		})
 	})
+	t.Run("returns error when folder does not exist", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(orgID)).Generate()
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+		fs := foldertest.NewFakeService()
+		fs.ExpectedError = dashboards.ErrFolderNotFound
+		service.folderService = fs
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "folder does not exist")
+	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
 			rule := gen.With(gen.WithOrgID(orgID)).Generate()
@@ -1541,6 +1556,75 @@ func TestDeleteAlertRule(t *testing.T) {
 		uids := deletes[0].Params[3].([]string)
 		require.Contains(t, uids, r.UID)
 	})
+
+	t.Run("provenance validation", func(t *testing.T) {
+		testCases := []struct {
+			name              string
+			storedProvenance  models.Provenance
+			requestProvenance models.Provenance
+			expectError       bool
+		}{
+			{
+				name:              "can delete converted_prometheus rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceConvertedPrometheus,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "can delete api rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "cannot delete file rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceFile,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       true,
+			},
+			{
+				name:              "cannot delete api rule with converted_prometheus provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceConvertedPrometheus,
+				expectError:       true,
+			},
+			{
+				name:              "can delete rule with matching provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+			{
+				name:              "can delete none provenance rule with any provenance",
+				storedProvenance:  models.ProvenanceNone,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				service, ruleStore, provenanceStore, ac := initService(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return true, nil
+				}
+
+				rule := gen.With(gen.WithOrgID(orgID)).GenerateRef()
+				_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: *rule}})
+				require.NoError(t, err)
+				require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, tc.storedProvenance))
+
+				err = service.DeleteAlertRule(context.Background(), u, rule.UID, tc.requestProvenance)
+
+				if tc.expectError {
+					require.Error(t, err)
+					require.Truef(t, errProvenanceMismatch.Base.Is(err), "expected errProvenanceMismatch but got %s", err)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
 }
 
 func TestGetAlertRule(t *testing.T) {
@@ -1850,6 +1934,155 @@ func TestListAlertRules(t *testing.T) {
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
 			assert.Equal(t, "HasAccessInFolder", ac.Calls[1].Method)
 			assert.Equal(t, "HasAccessInFolder", ac.Calls[2].Method)
+		})
+	})
+
+	t.Run("GroupFilter", func(t *testing.T) {
+		t.Run("Include should return only rules in the specified groups", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Include: []string{groupKey1.RuleGroup}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules1))
+			for _, r := range rules1 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exclude should return rules not in the specified groups", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exclude: []string{groupKey1.RuleGroup}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exists true should return rules with a non-empty group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			trueVal := true
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exists: &trueVal},
+			})
+			require.NoError(t, err)
+			// all allRules have a non-empty group
+			require.Len(t, rules, len(allRules))
+		})
+
+		t.Run("Exists false should return rules without a group", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			falseVal := false
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				GroupFilter: ListRuleStringFilter{Exists: &falseVal},
+			})
+			require.NoError(t, err)
+			// all rules have a group, so none should be returned
+			require.Empty(t, rules)
+		})
+	})
+
+	t.Run("FolderFilter", func(t *testing.T) {
+		t.Run("Include when user can read all should filter to requested folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Include: []string{groupKey1.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules1))
+			for _, r := range rules1 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Include when user cannot read all should intersect with accessible folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			// User can only access groupKey2's folder
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
+			}
+
+			// Request both folders; intersection should yield only groupKey2
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Include: []string{groupKey1.NamespaceUID, groupKey2.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
+		})
+
+		t.Run("Exclude should return rules not in the specified folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				FolderFilter: ListRuleStringFilter{Exclude: []string{groupKey1.NamespaceUID}},
+			})
+			require.NoError(t, err)
+
+			expected := make([]string, 0, len(rules2))
+			for _, r := range rules2 {
+				expected = append(expected, r.UID)
+			}
+			got := make([]string, 0, len(rules))
+			for _, r := range rules {
+				got = append(got, r.UID)
+			}
+			require.ElementsMatch(t, expected, got)
 		})
 	})
 }
@@ -2537,7 +2770,9 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	quotas.EXPECT().LimitOK()
 
 	if folderService == nil {
-		folderService = foldertest.NewFakeService()
+		fs := foldertest.NewFakeService()
+		fs.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
+		folderService = fs
 	}
 
 	return AlertRuleService{
@@ -2652,6 +2887,7 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
 	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()

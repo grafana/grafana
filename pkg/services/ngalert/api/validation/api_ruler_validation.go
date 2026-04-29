@@ -187,19 +187,15 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
 
-	newRule.NoDataState = ""
-	newRule.ExecErrState = ""
-	newRule.Condition = ""
-	newRule.For = 0
-	newRule.KeepFiringFor = 0
-	newRule.NotificationSettings = nil
-	newRule.MissingSeriesEvalsToResolve = nil
-
+	ngmodels.ClearRecordingRuleIgnoredFields(&newRule)
 	return newRule, nil
 }
 
 func validateLabels(l map[string]string) error {
 	for key := range l {
+		if key == "" {
+			return fmt.Errorf("label key cannot be empty")
+		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
 		}
@@ -400,23 +396,16 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
-	s := ngmodels.NotificationSettings{
-		Receiver:            n.Receiver,
-		GroupBy:             n.GroupBy,
-		GroupWait:           n.GroupWait,
-		GroupInterval:       n.GroupInterval,
-		RepeatInterval:      n.RepeatInterval,
-		MuteTimeIntervals:   n.MuteTimeIntervals,
-		ActiveTimeIntervals: n.ActiveTimeIntervals,
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
+	if n.Policy == nil && n.Receiver == "" {
+		return nil, errors.New("notification policy or receiver must be specified")
 	}
 
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}
-	return []ngmodels.NotificationSettings{
-		s,
-	}, nil
+	return s, nil
 }
 
 func ValidateBacktestConfig(orgId int64, config apimodels.BacktestConfig, limits RuleLimits) (*ngmodels.AlertRule, error) {

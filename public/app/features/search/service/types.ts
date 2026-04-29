@@ -1,8 +1,9 @@
-import { DataFrameView, SelectableValue } from '@grafana/data';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevel } from 'app/types/acl';
+import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DataFrameView, type SelectableValue } from '@grafana/data';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type PermissionLevel } from 'app/types/acl';
 
-import { ManagerKind } from '../../apiserver/types';
+import { type ManagerKind } from '../../apiserver/types';
 
 export interface SortOption {
   description: string;
@@ -26,20 +27,30 @@ export interface SearchQuery {
   ds_uid?: string;
   ds_type?: string;
   tags?: string[];
+  // Owner of the folder only supported with unified search. Currently, there can be only teams, so the format of each
+  // ref is "iam.grafana.app/Team/{teamUID}"
+  ownerReference?: string[];
+  // Equates to resource type.
   kind?: string[];
   panel_type?: string;
+  createdBy?: string;
+
+  // Both name and UID translate to resource.name in k8s world
   name?: string[];
   uid?: string[];
+
   facet?: FacetField[];
   explain?: boolean;
   panelTitleSearch?: boolean;
   withAllowedActions?: boolean;
   accessInfo?: boolean;
   limit?: number;
+  // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
   permission?: PermissionLevel;
   deleted?: boolean;
+  // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
 }
 
@@ -58,7 +69,13 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
-  managedBy?: ManagerKind;
+  /**
+   * Who manages this resource (e.g. provisioning). From unified search this is
+   * the full object { kind, id }; from legacy or other paths it may be just the
+   * kind string (ManagerKind). Use typeof item.managedBy === 'string' or
+   * item.managedBy?.kind when normalizing.
+   */
+  managedBy?: ManagedBy | ManagerKind;
 
   // enterprise sends extra properties through for sorting (views, errors, etc)
   [key: string]: unknown;
@@ -81,7 +98,7 @@ export interface QueryResponse {
   view: DataFrameView<DashboardQueryResult>;
 
   /** Supports lazy loading.  This will mutate the `view` object above, adding rows as needed */
-  loadMoreItems: (startIndex: number, stopIndex: number) => Promise<void>;
+  loadMoreItems: (stopIndex: number) => Promise<void>;
 
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;
@@ -105,5 +122,11 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
-  managedBy?: ManagerKind;
+  /**
+   * Who manages this resource (e.g. provisioning). From unified search this is
+   * the full object { kind, id }; from legacy or other paths it may be just the
+   * kind string (ManagerKind). Use typeof item.managedBy === 'string' or
+   * item.managedBy?.kind when normalizing.
+   */
+  managedBy?: ManagedBy | ManagerKind;
 }

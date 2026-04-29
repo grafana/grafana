@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize } from 'lodash';
-import { MouseEvent, useCallback, useMemo } from 'react';
+import { type MouseEvent, useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
-  EventBus,
-  GrafanaTheme2,
+  type EventBus,
+  type GrafanaTheme2,
   LogLevel,
   LogsDedupDescription,
   LogsDedupStrategy,
@@ -16,7 +17,7 @@ import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { LogsVisualisationType } from '../../../explore/Logs/Logs';
+import { type LogsVisualisationType } from '../../../explore/Logs/constants';
 import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
@@ -48,8 +49,10 @@ const FILTER_LEVELS: LogLevel[] = [
 ];
 
 export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisationType = 'logs' }: Props) => {
+  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const {
     app,
+    allowDownload,
     controlsExpanded,
     dedupStrategy,
     downloadLogs,
@@ -69,11 +72,13 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
+    setUnwrappedColumns,
     setWrapLogMessage,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
@@ -167,6 +172,17 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     });
     setSyntaxHighlighting(!syntaxHighlighting);
   }, [setSyntaxHighlighting, syntaxHighlighting]);
+
+  const onSetUnwrappedColumnsClick = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      reportInteraction('logs_log_list_controls_unwrapped_columns_clicked', {
+        state: !unwrappedColumns,
+      });
+      setUnwrappedColumns(!unwrappedColumns);
+    },
+    [setUnwrappedColumns, unwrappedColumns]
+  );
 
   const onWrapLogMessageClick = useCallback(
     (e: MouseEvent) => {
@@ -313,7 +329,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
           {visualisationType === 'logs' && (
             <>
               <div className={styles.divider} />
-              {config.featureToggles.newLogsPanel && (
+              {newLogsPanelEnabled && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name={'search'}
@@ -356,7 +372,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                 />
               </Dropdown>
               <div className={styles.divider} />
-              {config.featureToggles.newLogsPanel ? (
+              {newLogsPanelEnabled ? (
                 <TimestampResolutionButton expanded={controlsExpanded} />
               ) : (
                 <LogListControlsOption
@@ -389,7 +405,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {config.featureToggles.newLogsPanel ? (
+              {newLogsPanelEnabled ? (
                 <WrapLogMessageButton expanded={controlsExpanded} />
               ) : (
                 <LogListControlsOption
@@ -406,7 +422,35 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {prettifyJSON !== undefined && !config.featureToggles.newLogsPanel && (
+              {newLogsPanelEnabled && (
+                <LogListControlsOption
+                  expanded={controlsExpanded}
+                  disabled={wrapLogMessage}
+                  name="columns"
+                  aria-pressed={unwrappedColumns}
+                  className={unwrappedColumns ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onSetUnwrappedColumnsClick}
+                  label={
+                    wrapLogMessage
+                      ? t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not supported')
+                      : unwrappedColumns
+                        ? t('logs.logs-controls.unwrapped-columns.disabled-text', 'Columns enabled')
+                        : t('logs.logs-controls.unwrapped-columns.enabled-text', 'Columns disabled')
+                  }
+                  tooltip={
+                    wrapLogMessage
+                      ? t(
+                          'logs.logs-controls.unwrapped-columns.not-supported',
+                          'Columns are not supported with line wrapping enabled'
+                        )
+                      : unwrappedColumns
+                        ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
+                        : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns')
+                  }
+                  size="lg"
+                />
+              )}
+              {prettifyJSON !== undefined && !newLogsPanelEnabled && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name="brackets-curly"
@@ -441,7 +485,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {config.featureToggles.newLogsPanel && (
+              {newLogsPanelEnabled && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
                   name="text-fields"
@@ -504,7 +548,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         </>
       ) : (
         <>
-          {config.featureToggles.newLogsPanel && (
+          {newLogsPanelEnabled && (
             <LogListControlsOption
               expanded={controlsExpanded}
               name={'search'}
@@ -555,6 +599,21 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
               }
               size="lg"
             />
+          )}
+          {allowDownload === true && (
+            <>
+              <div className={styles.divider} />
+              <Dropdown overlay={downloadMenu} placement="auto-end">
+                <LogListControlsOption
+                  expanded={controlsExpanded}
+                  name="download-alt"
+                  className={styles.controlButton}
+                  label={t('logs.logs-controls.download', 'Download logs')}
+                  tooltip={t('logs.logs-controls.tooltip.download', 'Download')}
+                  size="lg"
+                />
+              </Dropdown>
+            </>
           )}
         </>
       )}

@@ -13,14 +13,15 @@ manifest: {
 			routes: v0alpha1.routes
 		}
 	}
+	roles: {}
 }
 
 dummyv0alpha1: {
-    kind: "Dummy"
-    schema: {
-        // Spec is the schema of our resource. The spec should include all the user-editable information for the kind.
-        spec: {
-            dummyField: int
-        }
-    }
+	kind: "Dummy"
+	schema: {
+		// Spec is the schema of our resource. The spec should include all the user-editable information for the kind.
+		spec: {
+			dummyField: int
+		}
+	}
 }

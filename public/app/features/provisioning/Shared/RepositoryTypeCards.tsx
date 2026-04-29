@@ -1,16 +1,22 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
+import { QuotaLimitNote } from './QuotaLimitNote';
 import { RepoIcon } from './RepoIcon';
 
-export function RepositoryTypeCards() {
-  const styles = useStyles2(getStyles);
+interface RepositoryTypeCardsProps {
+  disabled?: boolean;
+}
+
+export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
+  const styles = useStyles2(getStyles, disabled);
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
 
   const availableTypes = frontendSettings?.availableRepositoryTypes ?? [];
@@ -26,7 +32,13 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {gitProviders.map((config) => (
-              <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
+              <Card
+                key={config.type}
+                href={disabled ? undefined : `${CONNECT_URL}/${config.type}`}
+                className={styles.card}
+                noMargin
+                disabled={disabled}
+              >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
                     <RepoIcon type={config.type} />
@@ -36,6 +48,15 @@ export function RepositoryTypeCards() {
                     >
                       Configure with {'{{ provider }}'}
                     </Trans>
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -54,7 +75,13 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {otherProviders.map((config) => (
-              <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
+              <Card
+                key={config.type}
+                href={disabled ? undefined : `${CONNECT_URL}/${config.type}`}
+                className={styles.card}
+                noMargin
+                disabled={disabled}
+              >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
                     <RepoIcon type={config.type} />
@@ -70,6 +97,15 @@ export function RepositoryTypeCards() {
                         Configure with {'{{ provider }}'}
                       </Trans>
                     )}
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -77,14 +113,26 @@ export function RepositoryTypeCards() {
           </Stack>
         </Stack>
       )}
+
+      {disabled && <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />}
     </Stack>
   );
 }
 
-function getStyles() {
+function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
   return {
     card: css({
       width: 220,
+      ...(disabled && {
+        cursor: 'not-allowed',
+        pointerEvents: 'unset',
+        '& h2': {
+          color: theme.colors.text.secondary,
+        },
+      }),
+    }),
+    infoIcon: css({
+      zIndex: 1,
     }),
   };
 }

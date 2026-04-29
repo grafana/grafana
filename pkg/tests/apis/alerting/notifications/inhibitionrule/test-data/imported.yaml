@@ -1,0 +1,20 @@
+alertmanager_config: |
+  route:
+    receiver: default
+    group_by:
+      - alertname
+  receivers:
+    - name: default
+  inhibit_rules:
+    - source_matchers:
+        - alertname=HighCPU
+      target_matchers:
+        - alertname=CPUWarning
+      equal:
+        - instance
+    - source_matchers:
+        - severity=critical
+      target_matchers:
+        - severity=warning
+      equal:
+        - cluster

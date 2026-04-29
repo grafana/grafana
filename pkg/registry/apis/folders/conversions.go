@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -80,14 +80,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
-
-	if v.Fullpath != "" {
-		meta.SetFullpath(v.Fullpath)
-	}
-
-	if v.FullpathUIDs != "" {
-		meta.SetFullpathUIDs(v.FullpathUIDs)
-	}
 
 	if v.CreatedBy != 0 {
 		meta.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.CreatedBy, 10)))

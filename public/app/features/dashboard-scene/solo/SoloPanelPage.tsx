@@ -1,20 +1,20 @@
 // Libraries
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
@@ -33,7 +33,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid, type, slug]);
+  }, [stateManager, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
@@ -54,7 +54,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   }
 
   return (
-    <UrlSyncContextProvider scene={dashboard}>
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true}>
       <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={queryParams.hideLogo} />
     </UrlSyncContextProvider>
   );
@@ -66,10 +66,12 @@ export function SoloPanelRenderer({
   dashboard,
   panelId,
   hideLogo,
+  children,
 }: {
   dashboard: DashboardScene;
   panelId: string;
   hideLogo?: UrlQueryValue;
+  children?: ReactNode;
 }) {
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
@@ -100,6 +102,7 @@ export function SoloPanelRenderer({
       <div className={styles.panelWrapper}>
         <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
           <body.Component model={body} />
+          {children}
         </SoloPanelContextProvider>
       </div>
     </div>

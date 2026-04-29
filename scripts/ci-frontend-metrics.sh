@@ -2,7 +2,6 @@
 set -e
 
 ERROR_COUNT="0"
-ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | grep -oP '\d+')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
@@ -12,9 +11,10 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 SCSS_FILES="$(find public packages -name '*.scss' | wc -l)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
+CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
+TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
 echo -e "Typescript errors: $ERROR_COUNT"
-echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
@@ -24,6 +24,7 @@ echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
 echo -e "Total SCSS files: $SCSS_FILES"
+echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
 yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
@@ -55,7 +56,6 @@ echo "Metrics: {
   $ESLINT_STATS
   $I18N_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
-  \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
@@ -63,5 +63,6 @@ echo "Metrics: {
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
-  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\"
+  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\",
+  \"grafana.ci-code.dependencies.circular\": \"${TOTAL_CIRCULAR_DEPENDENCIES}\"
 }"

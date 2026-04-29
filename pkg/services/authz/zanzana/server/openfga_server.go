@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -29,7 +30,7 @@ import (
 func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
 	logger := log.New("openfga.server")
 
-	opts := []server.OpenFGAServiceV1Option{
+	opts := []server.OpenFGAServiceV1Option{ //nolint:prealloc
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
 
@@ -133,6 +134,9 @@ func withOpenFGAOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServi
 	if cfg.OpenFgaServerSettings.AuthorizationModelCacheSize != 0 {
 		opts = append(opts, server.WithAuthorizationModelCacheSize(cfg.OpenFgaServerSettings.AuthorizationModelCacheSize))
 	}
+	if cfg.OpenFgaServerSettings.TypesystemCacheSize != 0 {
+		opts = append(opts, server.WithTypesystemCacheSize(cfg.OpenFgaServerSettings.TypesystemCacheSize))
+	}
 	if cfg.OpenFgaServerSettings.ChangelogHorizonOffset != 0 {
 		opts = append(opts, server.WithChangelogHorizonOffset(cfg.OpenFgaServerSettings.ChangelogHorizonOffset))
 	}
@@ -192,12 +196,12 @@ func withListOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServiceV
 	return opts
 }
 
-func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
+func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, grpcSrv grpcserver.Provider) (*http.Server, error) {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	addr := srv.GetAddress()
+	addr := grpcSrv.GetAddress()
 	// Wait until GRPC server is initialized
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -205,7 +209,7 @@ func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Prov
 	retries := 0
 	for addr == "" && retries < maxRetries {
 		<-ticker.C
-		addr = srv.GetAddress()
+		addr = grpcSrv.GetAddress()
 		retries++
 	}
 	if addr == "" {
@@ -230,6 +234,7 @@ func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Prov
 			return status.Convert(encodedErr)
 		}),
 		runtime.WithHealthzEndpoint(healthv1pb.NewHealthClient(conn)),
+		runtime.WithIncomingHeaderMatcher(openfgaGatewayIncomingHeaderMatcher),
 		runtime.WithOutgoingHeaderMatcher(func(s string) (string, bool) { return s, true }),
 	}
 	mux := runtime.NewServeMux(muxOpts...)
@@ -248,4 +253,19 @@ func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Prov
 		}).Handler(mux),
 		ReadHeaderTimeout: 30 * time.Second,
 	}, nil
+}
+
+// openfgaGatewayIncomingHeaderMatcher forwards Grafana auth headers into gRPC metadata.
+// grpc-gateway's DefaultHeaderMatcher only allows IANA permanent headers or names prefixed
+// with Grpc-Metadata-, so a plain X-Access-Token HTTP header would otherwise be dropped
+// and the Zanzana authenticator would see no token (ErrMissingRequiredToken).
+func openfgaGatewayIncomingHeaderMatcher(key string) (string, bool) {
+	switch textproto.CanonicalMIMEHeaderKey(key) {
+	case "X-Access-Token":
+		return "X-Access-Token", true
+	case "X-Grafana-Id":
+		// Matches authlib GRPCTokenProvider ID token metadata key.
+		return "X-Id-Token", true
+	}
+	return runtime.DefaultHeaderMatcher(key)
 }

@@ -7,6 +7,8 @@ keywords:
   - grafana
   - elasticsearch
   - lucene
+  - esql
+  - ES|QL
   - metrics
   - logs
   - queries
@@ -19,12 +21,6 @@ labels:
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
-refs:
-  query-and-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Elasticsearch query editor
@@ -38,7 +34,7 @@ When composing Lucene queries, ensure that you use uppercase boolean operators: 
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](ref:query-and-transform-data).
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Aggregation types
 
@@ -52,7 +48,7 @@ Elasticsearch groups aggregations into three categories:
 
 ## Select a query type
 
-There are three types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
+There are two types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
 
 ### Metrics query type
 
@@ -136,15 +132,130 @@ Logs queries analyze Elasticsearch log data. You can configure the following opt
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
 
-### Raw data query type
+## Raw query editor
 
-Run a raw data query to retrieve a table of all fields that are associated with each log line.
+{{< docs/experimental product="The raw query editor" featureFlag="elasticsearchRawDSLQuery" >}}
 
-- **Raw data size** - Number of raw data documents. You can specify a different amount. The default is `500`.
+The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
 
-{{< admonition type="note" >}}
-The option to run a **raw document query** is deprecated as of Grafana v10.1.
-{{< /admonition >}}
+### Switch between Builder and Code modes
+
+To access the raw query editor, click the **Code** toggle in the top-right corner of the query editor. You can switch between **Builder** and **Code** modes:
+
+- **Builder** - Visual query builder with dropdown menus and forms
+- **Code** - JSON editor for writing raw Elasticsearch DSL queries
+
+### Write raw DSL queries
+
+When in Code mode, you can write complete Elasticsearch query DSL in JSON format. The editor provides:
+
+- **Syntax highlighting** for JSON
+- **Auto-formatting** - Click the **Format** button or press `Shift+Alt+F` to format your query
+- **Keyboard shortcuts** - Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run the query
+- **Real-time validation** - Invalid JSON will be highlighted with error messages
+
+### Time range handling
+
+If you want to filter by time range in a dashboard, you need to use the `$__from` and `$__to` macros in your raw DSL.
+
+An example query applying dashboard time range using the `@timestamp` field:
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "$__from",
+              "lte": "$__to",
+              "format": "epoch_millis"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Supported query types
+
+The raw query editor supports all query types:
+
+- **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
+- **Logs queries** are used to query log data.
+
+## ES|QL query editor
+
+{{< docs/experimental product="The ES|QL query editor" featureFlag="elasticsearchESQLQuery" >}}
+
+Introduced in Grafana v13.0, the ES|QL query editor lets you query Elasticsearch using [ES|QL (Elasticsearch Query Language)](https://www.elastic.co/docs/reference/query-languages/esql), a pipe-based query language. Unlike Lucene queries that rely on aggregation configuration in the builder UI, ES|QL lets you express filtering, aggregation, and transformation in a single query string.
+
+For an introduction to ES|QL syntax and concepts, refer to [Get started with ES|QL queries](https://www.elastic.co/docs/reference/query-languages/esql/esql-getting-started) in the Elasticsearch documentation.
+
+### Index selection
+
+How the editor handles index selection depends on your data source configuration:
+
+- **No index name configured:** You specify which index to query using the `FROM` command directly in your ES|QL query. This lets you query any index without creating a separate data source for each one.
+- **Index name configured:** The editor automatically inserts ` FROM $__index` when the ES|QL field receives focus. You can override this and query a different index if needed.
+
+### Editor features
+
+The ES|QL code editor provides:
+
+- **Code suggestions** -- Auto-complete for ES|QL commands and functions
+- **Error highlighting** -- Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
+- **Syntax highlighting** -- ES|QL keywords, operators, and values are color-coded for readability
+
+### Example queries
+
+The following examples show common ES|QL query patterns.
+
+#### Basic aggregation
+
+Count documents grouped by a field:
+
+```esql
+FROM logs-*
+| STATS count = COUNT(*) BY host.name
+| SORT count DESC
+| LIMIT 10
+```
+
+#### Filter and aggregate over time
+
+Filter by a field value and compute an average over time intervals:
+
+```esql
+FROM metrics-*
+| WHERE service.name == "api-gateway"
+| STATS avg_duration = AVG(transaction.duration.us) BY @timestamp = BUCKET(@timestamp, 1 minute)
+| SORT @timestamp
+```
+
+#### Search log messages
+
+Search for specific patterns in log data:
+
+```esql
+FROM logs-*
+| WHERE message LIKE "*error*" AND log.level == "ERROR"
+| KEEP @timestamp, message, host.name, log.level
+| SORT @timestamp DESC
+| LIMIT 100
+```
+
+### Learn more about ES|QL
+
+For more information about ES|QL syntax, commands, and functions, refer to the following Elasticsearch documentation:
+
+- [ES|QL reference](https://www.elastic.co/docs/reference/query-languages/esql) -- Overview of the ES|QL query language
+- [ES|QL commands](https://www.elastic.co/docs/reference/query-languages/esql/commands) -- Source and processing commands (`FROM`, `WHERE`, `STATS`, `EVAL`, `KEEP`, `SORT`, `LIMIT`, and more)
+- [ES|QL functions and operators](https://www.elastic.co/docs/reference/query-languages/esql/functions-operators) -- Aggregation, math, string, date, and other functions
+- [ES|QL syntax](https://www.elastic.co/docs/reference/query-languages/esql/esql-syntax) -- Identifiers, literals, operators, and special characters
 
 ## Use template variables
 

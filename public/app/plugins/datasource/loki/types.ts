@@ -1,11 +1,14 @@
-import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { type DataQuery, type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
 
 import {
-  LokiDataQuery as LokiQueryFromSchema,
-  LokiQueryType,
-  SupportingQueryType,
-  LokiQueryDirection,
+  type LokiDataQuery as LokiQueryFromSchema,
+  type LokiQueryType,
+  type SupportingQueryType,
+  type LokiQueryDirection,
 } from './dataquery.gen';
+
+// @todo import from core
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
 
 export enum LokiResultType {
   Stream = 'streams',

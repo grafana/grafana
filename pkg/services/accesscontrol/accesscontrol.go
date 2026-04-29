@@ -29,6 +29,8 @@ type AccessControl interface {
 	// This is useful when we don't want to reuse any pre-configured resolvers
 	// for a authorization call.
 	WithoutResolvers() AccessControl
+	// InvalidateResolverCache removes a scope resolution from the cache
+	InvalidateResolverCache(orgID int64, scope string)
 }
 
 type Service interface {
@@ -73,6 +75,7 @@ type Store interface {
 	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+	CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error
 }
 
 type RoleRegistry interface {
@@ -143,6 +146,11 @@ type ReceiverPermissionsService interface {
 	PermissionsService
 	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
 	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
+}
+
+type RoutePermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error
 }
 
 type PermissionsService interface {

@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
-import { ShareModalTabProps } from './types';
+import { type ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl, getTrackingSource } from './utils';
 
 export interface Props extends ShareModalTabProps {}
@@ -49,7 +49,7 @@ export const ShareLink = memo(({ panel, dashboard }: Props) => {
 
   const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
   const selectors = e2eSelectors.pages.SharePanelModal;
-  const isDashboardSaved = Boolean(dashboard.id);
+  const isDashboardSaved = Boolean(dashboard.uid?.length !== 0);
 
   const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
 

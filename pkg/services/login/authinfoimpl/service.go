@@ -155,8 +155,8 @@ func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoC
 }
 
 func (s *Service) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	// Only set auth info if we have an (user id + auth module)
-	if cmd.UserId == 0 || cmd.AuthModule == "" {
+	// Only set auth info if we have an (user id + user uid + auth module)
+	if cmd.UserId == 0 || cmd.UserUID == "" || cmd.AuthModule == "" {
 		return errMissingParameters.Errorf("missing parameters for auth info %v", cmd)
 	}
 

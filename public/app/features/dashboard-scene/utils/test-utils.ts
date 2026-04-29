@@ -1,13 +1,13 @@
-import { VariableRefresh } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { type VariableRefresh } from '@grafana/data';
+import { type FetchError } from '@grafana/runtime';
 import {
-  DeepPartial,
+  type DeepPartial,
   EmbeddedScene,
-  SceneDeactivationHandler,
+  type SceneDeactivationHandler,
   sceneGraph,
   SceneGridLayout,
   SceneGridRow,
-  SceneObject,
+  type SceneObject,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
@@ -16,22 +16,22 @@ import {
 import {
   defaultTimeSettingsSpec,
   defaultPanelSpec,
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
-import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { type AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
+import { type DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 

@@ -110,7 +110,7 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
 			}
-			if !inRange {
+			if inRange != mysql.InRange {
 				return nil, fmt.Errorf("invalid JSON value detected at row %d, column %s: value required type coercion", ri.row, ri.ft.Frame.Fields[colIndex].Name)
 			}
 			val = doc

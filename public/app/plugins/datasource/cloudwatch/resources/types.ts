@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { Dimensions } from '../dataquery.gen';
+import { type Dimensions } from '../dataquery.gen';
 
 export interface ResourceResponse<T> {
   accountId?: string;

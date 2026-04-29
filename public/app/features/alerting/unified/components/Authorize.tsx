@@ -1,9 +1,9 @@
 import { chain, filter } from 'lodash';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
 import {
-  Abilities,
-  Action,
+  type Abilities,
+  type Action,
   AlertingAction,
   AlertmanagerAction,
   useAlertingAbilities,

@@ -12,6 +12,10 @@ import (
 
 // ConnectionApplyConfiguration represents a declarative configuration of the Connection type for use
 // with apply.
+//
+// When this code is changed, make sure to update the code generation.
+// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
+// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
 type ConnectionApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
@@ -30,6 +34,7 @@ func Connection(name, namespace string) *ConnectionApplyConfiguration {
 	b.WithAPIVersion("provisioning.grafana.app/v0alpha1")
 	return b
 }
+
 func (b ConnectionApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

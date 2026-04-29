@@ -57,7 +57,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	// We don't want to measure DB initialization
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		getDSPermissions(b, ac, dataSources)
 	}
 }
@@ -141,7 +141,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
@@ -150,7 +150,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		qs, supportbundlestest.NewFakeBundleService())
+		qs, supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

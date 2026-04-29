@@ -15,7 +15,7 @@ describe('transformTraceDataFrame()', () => {
       fields: fields.concat([...fields, { name: 'spanID', values: ['span1'] }]),
     });
     expect(transformTraceDataFrame(dummyDataFrame)).toEqual({
-      processes: { span1: { serviceName: undefined, tags: undefined } },
+      processes: { span1: { serviceName: undefined, serviceNamespace: undefined, tags: [] } },
       spans: [
         {
           dataFrameRowIndex: 0,
@@ -41,5 +41,26 @@ describe('transformTraceDataFrame()', () => {
       fields: fields,
     });
     expect(transformTraceDataFrame(dummyDataFrame)).toEqual(null);
+  });
+
+  it('should map serviceNamespace from DataFrame into process when present', () => {
+    const frameWithNamespace = createDataFrame({
+      fields: [
+        { name: 'traceID', values: ['trace1'] },
+        { name: 'spanID', values: ['span1'] },
+        { name: 'operationName', values: ['GET /api'] },
+        { name: 'serviceName', values: ['cart-service'] },
+        { name: 'serviceNamespace', values: ['production'] },
+        { name: 'kind', values: ['server'] },
+        { name: 'tags', values: [[]] },
+      ],
+    });
+    const result = transformTraceDataFrame(frameWithNamespace);
+    expect(result).not.toBeNull();
+    expect(result!.processes['span1']).toEqual({
+      serviceName: 'cart-service',
+      serviceNamespace: 'production',
+      tags: [],
+    });
   });
 });

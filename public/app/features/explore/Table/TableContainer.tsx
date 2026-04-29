@@ -1,27 +1,28 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import {
   applyFieldOverrides,
-  SplitOpen,
-  DataFrame,
+  type SplitOpen,
+  type DataFrame,
   LoadingState,
   FieldType,
   DataLinksContext,
-  EventBus,
+  type EventBus,
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { AdHocFilterItem, PanelChrome, withTheme2, Themeable2, PanelContextProvider } from '@grafana/ui';
+import { type TimeZone } from '@grafana/schema';
+import { type AdHocFilterItem, PanelChrome, withTheme2, type Themeable2, PanelContextProvider } from '@grafana/ui';
+import { TEMPO_STREAMING_PROGRESS_REF_ID } from 'app/plugins/datasource/tempo/streaming';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
 } from 'app/plugins/panel/table/migrations';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { MetaInfoText } from '../MetaInfoText';
@@ -46,7 +47,13 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const { tableResult, range } = item;
   const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, tableResult, range };
+  const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
+  return {
+    loading,
+    tableResult,
+    range,
+    queryStreaming: item.queryResponse.state === LoadingState.Streaming || Boolean(hasTempoStreamingProgressTable),
+  };
 }
 
 const connector = connect(mapStateToProps, {});
@@ -61,13 +68,19 @@ export class TableContainer extends PureComponent<Props, State> {
 
   hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
-  getTableHeight(rowCount: number, hasSubFrames: boolean) {
+  getTableHeight(rowCount: number, hasSubFrames: boolean, queryStreaming: boolean) {
     if (rowCount === 0) {
       return 200;
     }
     // tries to estimate table height, with a min of 300 and a max of 600
     // if there are multiple tables, there is no min
-    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+    const height = Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+
+    if (queryStreaming) {
+      return height;
+    }
+    // esure minimum height of 300
+    return Math.max(height, 300);
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
@@ -88,8 +101,18 @@ export class TableContainer extends PureComponent<Props, State> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, timeZone, theme, eventBus } =
-      this.props;
+    const {
+      loading,
+      onCellFilterAdded,
+      tableResult,
+      width,
+      splitOpenFn,
+      range,
+      timeZone,
+      theme,
+      eventBus,
+      queryStreaming = false,
+    } = this.props;
 
     const { showAll } = this.state;
 
@@ -103,9 +126,22 @@ export class TableContainer extends PureComponent<Props, State> {
     if (dataFrames?.length) {
       dataFrames = dataFrames.map((frame) => {
         frame.fields.forEach((field, index) => {
-          const hidden = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
-          field.config.custom = { hidden };
-          dataLimited = dataLimited || hidden;
+          const custom = field.config.custom ?? {};
+
+          const hiddenByColumnLimit = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
+          dataLimited = dataLimited || hiddenByColumnLimit;
+
+          const hiddenByDatasource = custom.hideFrom?.viz === true || custom.hidden === true;
+          const hidden = hiddenByDatasource || hiddenByColumnLimit;
+
+          field.config.custom = {
+            ...custom,
+            hidden,
+            hideFrom: {
+              ...custom.hideFrom,
+              viz: hidden,
+            },
+          };
         });
         return frame;
       });
@@ -158,7 +194,7 @@ export class TableContainer extends PureComponent<Props, State> {
                   ),
                 ]}
                 width={width}
-                height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+                height={this.getTableHeight(data.length, this.hasSubFrames(data), queryStreaming)}
                 loadingState={loading ? LoadingState.Loading : undefined}
               >
                 {(innerWidth, innerHeight) => (

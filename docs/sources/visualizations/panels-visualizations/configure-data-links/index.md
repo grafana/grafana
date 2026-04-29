@@ -237,6 +237,7 @@ Field-specific variables are available under `__field` namespace:
 | Variable                 | Description                                                                                         |
 | ------------------------ | --------------------------------------------------------------------------------------------------- |
 | `__field.name`           | The name of the field                                                                               |
+| `__field.displayName`    | The display name of the field. Use this for renamed field names.                                    |
 | `__field.labels.<LABEL>` | Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax. |
 
 ### Value variables
@@ -315,7 +316,8 @@ To add a data link, follow these steps:
    Only one data link can have **One click** enabled at a time. **One click** is only supported for some visualizations.
 
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
    {{< /tab-content >}}
@@ -347,7 +349,8 @@ To add a data link, follow these steps:
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
    {{< /tab-content >}}
    {{< /tabs >}}

@@ -121,7 +121,7 @@ To test this quickly, you can simulate the table using the [**TestData** data so
    {{< figure src="/media/docs/alerting/example-table-data-preview.png" max-width="750px" alt="Alert preview with tabular data using the TestData data source" >}}
 
    {{< admonition type="tip" >}}
-   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/eep7osljocvswa/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-tabular-data)**.
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/tabular-data/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-tabular-data)**.
 
    Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
    {{< /admonition >}}

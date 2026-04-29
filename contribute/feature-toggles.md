@@ -1,17 +1,46 @@
-# Feature toggle guide
+# Feature flags guide
 
 This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana.
 
 Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https://openfeature.dev/)
 
-## Steps to adding a feature toggle
+## Steps to adding a feature flag
 
-1. Define the feature toggle in [registry.go](../pkg/services/featuremgmt/registry.go). To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go). If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
-2. Run the Go tests mentioned at the top of [this file](../pkg/services/featuremgmt/toggles_gen.go). This generates all the additional files needed: `toggles_gen` for the backend, `grafana-data` for the frontend, and docs. To run the test, run `make gen-feature-toggles`.
+1. Define the feature flag in [registry.go](../pkg/services/featuremgmt/registry.go).
+   - New flags must by named with a component, seperated by a dot. e.g `grafana.newPreferencesPage`.
+   - Set the `Generate` field to control which clients are generated for your flag (see [Generation targets](#generation-targets) below).
+   - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go).
+   - If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
 
-## How to use the toggle in your code
+2. Run `make gen-feature-toggles` to regenerate all derived files: the backend constants, the legacy frontend types, the OpenFeature React client, and docs.
 
-Once your feature toggle is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance.
+## Generation targets
+
+The `Generate` field on a `FeatureFlag` controls which clients are generated. The available targets are:
+
+| Target                   | Description                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `GenerateLegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `GenerateGo` for new flags) |
+| `GenerateLegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `GenerateReact` for new flags)               |
+| `GenerateGo`             | Generates a Go constant in `toggles_gen.go`                                                                             |
+| `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                            |
+
+e.g.
+
+```go
+{
+    Name:        "grafana.newPreferencesPage",
+    Description: "Whether to use the new SharedPreferences functional component",
+    Stage:       FeatureStageExperimental,
+    Generate:    []GenerateTarget{GenerateGo, GenerateReact},
+    Owner:       grafanaFrontendPlatformSquad,
+    Expression:  "false",
+},
+```
+
+## How to use the flag in your code
+
+Once your feature flag is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance.
 
 Examples:
 
@@ -80,31 +109,99 @@ func TestFoo(t *testing.T) {
 
 ### Frontend
 
-Use the new OpenFeature-based feature flag client for all new feature flags. There are some differences compared to the legacy `config.featureToggles` system:
+Use the OpenFeature React hooks for all new feature flags. The React hooks automatically stay up to date with the latest flag values and integrate seamlessly with React components.
 
-- Feature flag initialisation is async, but will be finished by the time the UI is rendered. This means you cannot get the value of a feature flag at the 'top level' of a module/file
-- Call `evaluateBooleanFlag("flagName")` from `@grafana/runtime/internal` instead to get the value of a feature flag
-- Feature flag values _may_ change over the lifetime of the session. Do not store the value in a variable that is used for longer than a single render - always call `evaluateBooleanFlag` lazily when you use the value.
+#### Using generated typed hooks (recommended)
 
-e.g.
+For flags with `GenerateReact` set, a typed hook is generated into `packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts`. Import from `@grafana/runtime/internal`:
+
+```tsx
+import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
+
+function MyComponent() {
+  const isEnabled = useFlagGrafanaNewPreferencesPage();
+
+  if (isEnabled) {
+    return <NewPreferencesUI />;
+  }
+
+  return <LegacyPreferencesUI />;
+}
+```
+
+A `FlagKeys` constant object is also exported, useful for passing flag keys to non-hook APIs:
 
 ```ts
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 
-// BAD - Don't do this. The feature toggle will not evaluate correctly
-const isEnabled = evaluateBooleanFlag('newPreferences', false);
+client.getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false);
+```
 
-function makeAPICall() {
-  // GOOD - The feature toggle should be called after app initialisation
-  if (evaluateBooleanFlag('newPreferences', false)) {
+Flag values _may_ change over the lifetime of the session, so do not store the result elsewhere in a way it will not react to changes in the flag value.
+
+#### Using raw React SDK hooks
+
+If the generated hooks don't meet your needs (e.g. you need the flag evaluation details, or a different fallback value), you can use the `@openfeature/react-sdk` directly:
+
+```tsx
+import { useBooleanFlagDetails } from '@openfeature/react-sdk';
+import { FlagKeys } from '@grafana/runtime/internal';
+
+function MyComponent() {
+  const newPreferencesFlag = useBooleanFlagDetails(FlagKeys.GrafanaNewPreferencesPage, true);
+  ...
+}
+```
+
+If using non-boolean flags (a unique feature of the new feature flag system), explore the other exports from `@openfeature/react-sdk` to see how to use them.
+
+#### Using the client directly (non-React contexts)
+
+For advanced, non-React contexts (utilities, class methods, callbacks), you can use the OpenFeature client directly.
+
+However, because this is seperate from the React render loop there are important caveats you must be aware of:
+
+- Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialised until you call a flag otherwise you will only get the default value
+- Flag values can change over the lifetime of the session, so do not store or cache the result. Always evaluate flags just in time when you use them, preferably in the if statement, for example.
+
+It is strongly preferred to use the React hooks instead of getting the client.
+
+```ts
+import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
+
+// GOOD - The feature flag should be called after app initialisation
+function doThing() {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false)) {
     // do new things
+  }
+}
+
+// BAD - Don't do this. The feature flag must wait until app initialisation
+const isEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false);
+
+function doThing() {
+  if (isEnabled) {
+    // do new things
+  }
+}
+
+// BAD - Don't do this. The feature flag will not change in response to updates
+class FooSrv {
+  constructor() {
+    this.isEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false);
+  }
+
+  doThing() {
+    if (this.isEnabled) {
+      // do new things
+    }
   }
 }
 ```
 
 ## Enabling toggles in development
 
-Add the feature toggle to the feature_toggle section in your custom.ini, for example:
+Add the feature flag to the feature_toggle section in your custom.ini, for example:
 
 ```
 [feature_toggles]

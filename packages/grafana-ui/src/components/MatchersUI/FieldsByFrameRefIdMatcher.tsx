@@ -1,18 +1,18 @@
 import { useMemo, useState, useCallback } from 'react';
 
 import {
-  DataFrame,
+  type DataFrame,
   getFrameDisplayName,
   FieldMatcherID,
   fieldMatchers,
-  SelectableValue,
+  type SelectableValue,
   toOption,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { MultiSelect, Select } from '../Select/Select';
 
-import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
+import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 
 const recoverRefIdMissing = (
   newRefIds: SelectableValue[],
@@ -234,7 +234,7 @@ function getFramesDescription(frames: DataFrame[]): string {
 export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
   component: (props: MatcherUIProps<string>) => {
-    return <RefIDPicker value={props.options} data={props.data} onChange={props.onChange} />;
+    return <RefIDPicker id={props.id} value={props.options} data={props.data} onChange={props.onChange} />;
   },
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
   name: t('grafana-ui.matchers-ui.name-fields-by-query', 'Fields returned by query'),

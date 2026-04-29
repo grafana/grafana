@@ -1,4 +1,4 @@
-import { AppEvent } from './types';
+import { type AppEvent } from './types';
 
 const typeList: Set<string> = new Set();
 

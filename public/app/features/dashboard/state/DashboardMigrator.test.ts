@@ -1,16 +1,14 @@
 import { each, map } from 'lodash';
 
 import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
-import { FieldConfigSource } from '@grafana/schema';
+import { type FieldConfigSource } from '@grafana/schema';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { type PanelModel } from '../state/PanelModel';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 
@@ -47,11 +45,6 @@ describe('DashboardModel', () => {
     let graph: any;
     let table: any;
     const panelIdWithRepeatId = 500;
-
-    config.panels = {
-      stat: getPanelPlugin({ id: 'stat' }).meta,
-      gauge: getPanelPlugin({ id: 'gauge' }).meta,
-    };
 
     beforeEach(() => {
       model = new DashboardModel({

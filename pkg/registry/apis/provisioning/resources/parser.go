@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 
@@ -15,9 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -43,11 +42,12 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory ClientFactory
+	ClientFactory         ClientFactory
+	folderMetadataEnabled bool
 }
 
-func NewParserFactory(clientFactory ClientFactory) ParserFactory {
-	return &parserFactory{clientFactory}
+func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
+	return &parserFactory{clientFactory, folderMetadataEnabled}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -66,15 +66,20 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:    urls,
-		clients: clients,
-		config:  config,
+		reader:                repo,
+		urls:                  urls,
+		clients:               clients,
+		config:                config,
+		folderMetadataEnabled: f.folderMetadataEnabled,
 	}, nil
 }
 
 type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
+
+	// reader allows reading files from the repository (e.g. _folder.json for parent UID lookup)
+	reader repository.Reader
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
@@ -83,6 +88,8 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
+
+	folderMetadataEnabled bool
 }
 
 type ParsedResource struct {
@@ -128,7 +135,6 @@ type ParsedResource struct {
 }
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
-	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
 		Repo: r.repo,
@@ -139,13 +145,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	var gvk *schema.GroupVersionKind
-	parsed.Obj, gvk, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if err != nil || gvk == nil {
-		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
-		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
-		if err != nil || gvk == nil {
-			return nil, NewResourceValidationError(err)
-		}
+	parsed.Obj, gvk, parsed.Classic, err = ParseFileResource(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 
 	parsed.GVK = *gvk
@@ -154,6 +156,15 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
 		if err != nil {
 			return nil, fmt.Errorf("load resource URLs: %w", err)
+		}
+	}
+
+	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
+		// _folder.json is a system-managed folder manifest written by the provisioning
+		// layer when the provisioningFolderMetadata flag is on. It is the only folder-typed
+		// file allowed through the files endpoint (e.g. for GET requests).
+		if !r.folderMetadataEnabled || !IsFolderMetadataFile(info.Path) {
+			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 		}
 	}
 
@@ -187,7 +198,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if obj.GetName() == "" {
 		if obj.GetGenerateName() == "" {
-			return nil, ErrMissingName
+			return nil, NewResourceValidationError(ErrMissingName)
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
@@ -196,8 +207,20 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// Calculate folder identifier from the file path
 	if info.Path != "" {
 		dirPath := safepath.Dir(info.Path)
+		// _folder.json represents the directory it lives in, so its parent is one level above.
+		if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+			dirPath = safepath.Dir(dirPath)
+		}
 		if dirPath != "" {
-			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+			folderID := ParseFolder(dirPath, r.repo.Name).ID
+			// When folder metadata is enabled and the parent folder has a _folder.json,
+			// use the stable UID from that file instead of the hash-derived one.
+			if r.folderMetadataEnabled && r.reader != nil {
+				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
+					folderID = meta.Name
+				}
+			}
+			parsed.Meta.SetFolder(folderID)
 		} else {
 			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
@@ -217,6 +240,30 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	return parsed, nil
+}
+
+// SameIdentity reports whether f and other refer to the same Kubernetes
+// resource: same metadata.name, API group, and kind.
+func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
+	return f.Obj.GetName() == other.Obj.GetName() &&
+		f.GVK.Group == other.GVK.Group &&
+		f.GVK.Kind == other.GVK.Kind
+}
+
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(f.Existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
@@ -257,7 +304,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			Kind:     utils.ManagerKindRepo,
 			Identity: f.Repo.Name,
 		}
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			return err
 		}
 
@@ -278,7 +325,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	// Check for ownership conflicts after fetching existing resource
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -290,6 +337,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
+		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -350,7 +399,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		}
 
 		// Check ownership with the existing resource
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			deleteSpan.RecordError(err)
 			deleteSpan.End()
 			return err
@@ -380,7 +429,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Check ownership with the existing resource (if any)
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -404,6 +453,11 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
+
+	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+	if f.Existing != nil {
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
 	updateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))

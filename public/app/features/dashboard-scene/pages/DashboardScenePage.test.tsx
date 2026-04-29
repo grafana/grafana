@@ -2,31 +2,32 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import { useParams } from 'react-router-dom-v5-compat';
+import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,
-  config,
   locationSearchToObject,
   locationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
+import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
-import { DashboardScenePage, Props } from './DashboardScenePage';
+import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
   DashboardScenePageStateManager,
   DashboardScenePageStateManagerV2,
@@ -58,11 +59,8 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
 }));
 
-const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
-jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
-  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: () => getPluginExtensionsMock,
-}));
+const getObservablePluginLinks = jest.fn().mockReturnValue(of([]));
+setGetObservablePluginLinks(getObservablePluginLinks);
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
@@ -139,7 +137,13 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
-config.panels['custom-viz-panel'] = panelPlugin.meta;
+beforeEach(() => {
+  setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),
@@ -170,8 +174,8 @@ describe('DashboardScenePage', () => {
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginExtensionsMock.mockRestore();
-    getPluginExtensionsMock.mockReturnValue({ extensions: [] });
+    getObservablePluginLinks.mockRestore();
+    getObservablePluginLinks.mockReturnValue(of([]));
     store.delete(DASHBOARD_FROM_LS_KEY);
   });
 
@@ -350,7 +354,7 @@ describe('DashboardScenePage', () => {
 
       await waitForDashboardToRender();
 
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       // Hacking a bit, accessing private cache property to get access to the underlying DashboardScene object
       const dashboardScenesCache = getDashboardScenePageStateManager().getCache();
@@ -360,7 +364,7 @@ describe('DashboardScenePage', () => {
       act(() => {
         dashboard.removePanel(panels[0]);
       });
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
       act(() => {
         dashboard.removePanel(panels[1]);
@@ -372,7 +376,7 @@ describe('DashboardScenePage', () => {
       });
 
       expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
-      expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
     });
   });
 

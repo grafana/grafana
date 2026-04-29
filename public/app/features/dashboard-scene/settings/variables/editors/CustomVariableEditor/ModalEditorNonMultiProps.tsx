@@ -3,11 +3,14 @@ import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { type CustomVariable, type VariableValueOption, type VariableValueSingle } from '@grafana/scenes';
 import { Alert, Button, Modal, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
-import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
+import {
+  VariableStaticOptionsForm,
+  type VariableStaticOptionsFormRef,
+} from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
@@ -29,7 +32,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -44,7 +47,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
       )}
       <Stack direction="column" gap={2}>
         <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
-        <VariableValuesPreview options={options} />
+        <VariableValuesPreview options={options} staticOptions={[]} />
       </Stack>
       <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
         <Button
@@ -74,6 +77,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
 
   return {
+    variable,
     displayMultiPropsWarningBanner: valuesFormat === 'json',
     formRef,
     onCloseModal: onClose,

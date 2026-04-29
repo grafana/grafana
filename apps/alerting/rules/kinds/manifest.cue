@@ -15,4 +15,5 @@ manifest: {
 			]
 		}
 	}
+	roles: {}
 }

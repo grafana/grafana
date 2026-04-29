@@ -41,7 +41,7 @@ func TestIntegrationIndexView(t *testing.T) {
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr, nil)
-		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
+		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self' ;`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
 
@@ -171,13 +171,15 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore := authinfoimpl.ProvideStore(store, secretsService)
+			authInfoStore, err := authinfoimpl.ProvideStore(store, secretsService)
+			require.NoError(t, err)
 
 			// insert user_auth relationship
-			err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
+			err = authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
 				AuthModule: tc.authModule,
 				AuthId:     tc.setID,
 				UserId:     createdUser.ID,
+				UserUID:    createdUser.UID,
 			})
 			require.NoError(t, err)
 			if tc.secondModule != "" {
@@ -187,6 +189,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 					AuthModule: tc.secondModule,
 					AuthId:     tc.secondID,
 					UserId:     createdUser.ID,
+					UserUID:    createdUser.UID,
 				})
 				require.NoError(t, err)
 			}

@@ -2,7 +2,7 @@ import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
 import { AlertState } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import {
   grantUserPermissions,
   mockPromAlertingRule,
@@ -10,10 +10,10 @@ import {
   mockPromRuleNamespace,
 } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { type TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import * as store from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { PromAlertingRuleState, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, type PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../../core/services/backend_srv';
@@ -21,7 +21,7 @@ import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 
 import { createDashboardQueryRunner } from './DashboardQueryRunner';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
-import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
+import { type DashboardQueryRunner, type DashboardQueryRunnerResult } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -383,7 +383,7 @@ describe('DashboardQueryRunnerImpl', () => {
 function getExpectedForAllResult(): DashboardQueryRunnerResult {
   return {
     alertState: {
-      dashboardId: 1,
+      dashboardUID: '1',
       id: 0,
       panelId: 1,
       state: AlertState.Alerting,

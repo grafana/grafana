@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable } from '@grafana/scenes';
+import { type SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
-import { UsagesToNetwork, VariableUsageTree, getVariableUsages } from '../../variables/utils';
+import { type UsagesToNetwork, type VariableUsageTree, getVariableUsages } from '../../variables/utils';
 
 import { getDefinition } from './utils';
 
@@ -136,7 +136,15 @@ export function VariableEditorListRow({
               />
 
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
-                <Icon name="draggabledots" size="lg" />
+                <Icon
+                  name="draggabledots"
+                  size="lg"
+                  title={t(
+                    'dashboard-scene.variable-editor-list-row.drag-handle-label',
+                    'Reorder variable {{variableName}}',
+                    { variableName: variableState.name }
+                  )}
+                />
               </div>
             </div>
           </td>

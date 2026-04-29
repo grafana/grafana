@@ -149,7 +149,7 @@ For demo purposes, this example uses the **Advanced mode** with a **Reduce** exp
    {{< figure src="/media/docs/alerting/using-expressions-with-multiple-series.png" max-width="750px" caption="The alert condition evaluates the reduced value for each alert instance and shows whether each instance is Firing or Normal." alt="Alert preview using a Reduce expression and a threshold condition" >}}
 
    {{< admonition type="tip" >}}
-   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dep7osljedaf4a/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/multi-dimensional-alerts/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-multi-dimensional)**.
 
    Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
    {{< /admonition >}}

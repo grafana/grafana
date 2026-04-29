@@ -3,39 +3,68 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
+import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogList, Props } from './LogList';
+import { LogList, type Props } from './LogList';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
   }),
 }));
+
+const FIELDS_LABEL = 'TestLabelType';
+
+const tempoDS: TempoDatasource & {
+  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+} = createTempoDatasource(undefined, { uid: 'abc-123' });
+// Test-only override: Mocked data source does not expose getLabelDisplayTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
+tempoDS.getLabelDisplayTypeFromFrame = () => {
+  return FIELDS_LABEL;
+};
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     reportInteraction: jest.fn(),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(tempoDS),
+    }),
   };
 });
-
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),
@@ -43,17 +72,32 @@ jest.mock('../../utils', () => ({
   enablePopoverMenu: jest.fn(),
 }));
 
-const originalFlagValue = config.featureToggles.newLogsPanel;
-beforeAll(() => {
-  config.featureToggles.newLogsPanel = true;
-});
-afterAll(() => {
-  config.featureToggles.newLogsPanel = originalFlagValue;
+// Keep field selector sidebar visible in tests (otherwise flex layout collapses it to max-width: 0)
+jest.mock('re-resizable', () => {
+  const React = require('react');
+  return {
+    Resizable: ({ children, size }: { children: React.ReactNode; size?: { width?: number; height?: number } }) =>
+      React.createElement(
+        'div',
+        {
+          'data-testid': 'resizable-mock',
+          style: {
+            width: size?.width ?? 220,
+            minWidth: 220,
+            flexShrink: 0,
+            height: size?.height ?? 400,
+            position: 'relative',
+          },
+        },
+        children
+      ),
+  };
 });
 
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: true });
     logs = [
       createLogRow({ uid: '1', labels: { name_of_the_label: 'value of the label' } }),
       createLogRow({ uid: '2' }),
@@ -67,6 +111,7 @@ describe('LogList', () => {
       enableLogDetails: true,
       logs,
       showControls: false,
+      showLevel: true,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
       timeRange: getDefaultTimeRange(),
@@ -117,11 +162,60 @@ describe('LogList', () => {
     expect(screen.getByText('debug')).toBeInTheDocument();
   });
 
-  describe('OTel log lines', () => {
-    const originalState = config.featureToggles.otelLogsFormatting;
+  test('Allows to toggle between ms and ns precision timestamps', async () => {
+    logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
 
+    render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+    expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+    expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Hide timestamps'));
+
+    expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
+  });
+
+  test('Allows to toggle the display style of logs', async () => {
+    const { container } = render(
+      <LogList
+        {...defaultProps}
+        logs={[logs[0]]}
+        displayedFields={['name_of_the_label', LOG_LINE_BODY_FIELD_NAME, 'empty_field_without_value']}
+        showTime
+        showControls
+        wrapLogMessage
+        unwrappedColumns={false}
+      />
+    );
+
+    // 3 displayed fields - 1 empty field + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(4);
+    expect(screen.queryByLabelText('Enable columns')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Disable columns')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Set line wrap'));
+    await userEvent.click(screen.getByText('Disable line wrapping'));
+
+    // 3 displayed fields - 1 empty field + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(4);
+    expect(screen.getByLabelText('Enable columns')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Enable columns'));
+
+    // 3 displayed fields + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(5);
+    expect(screen.getByLabelText('Disable columns')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Enable columns')).not.toBeInTheDocument();
+  });
+
+  describe('OTel log lines', () => {
     test('Does not perform OTel-related actions when the flag is disabled', () => {
-      config.featureToggles.otelLogsFormatting = false;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: false });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -131,12 +225,10 @@ describe('LogList', () => {
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).not.toHaveBeenCalled();
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default displayed fields for non-OTel logs', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -148,12 +240,10 @@ describe('LogList', () => {
 
       // No fields to display, no call
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default OTel displayed fields', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -173,8 +263,6 @@ describe('LogList', () => {
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
       expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
   });
 
@@ -276,7 +364,7 @@ describe('LogList', () => {
         });
         await userEvent.click(screen.getByText('log message 1'));
         expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
-        expect(screen.getByText(/Fields/)).toBeInTheDocument();
+        expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
       });
     });
   });
@@ -334,24 +422,6 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
-    });
-
-    test('Allows to toggle between ms and ns precision timestamps', async () => {
-      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
-
-      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
-
-      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByLabelText('Log timestamps'));
-      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
-
-      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByLabelText('Log timestamps'));
-      await userEvent.click(screen.getByText('Hide timestamps'));
-
-      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
     });
   });
   describe('Interactions', () => {
@@ -436,8 +506,7 @@ describe('LogList', () => {
     });
 
     test('Applies OTel default displayed fields and suggested fields', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
 
       const logs = [
         createLogRow({
@@ -461,8 +530,63 @@ describe('LogList', () => {
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();
+    });
 
-      config.featureToggles.otelLogsFormatting = originalState;
+    test('Toggles show log level by clicking the Log Level checkbox in the field selector', async () => {
+      const logsWithLevel = [
+        createLogRow({
+          uid: '1',
+          logLevel: LogLevel.info,
+          entry: 'log 1',
+          labels: { service: 'frontend' },
+        }),
+        createLogRow({
+          uid: '2',
+          logLevel: LogLevel.debug,
+          entry: 'log 2',
+          labels: { service: 'backend' },
+        }),
+      ];
+
+      render(
+        <LogList
+          {...defaultProps}
+          {...extraProps}
+          logs={logsWithLevel}
+          displayedFields={['service']}
+          showFieldSelector
+          showControls={false}
+          showLevel={true}
+        />
+      );
+
+      await screen.findByText('frontend');
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      // Log level is shown in the list (real LogListContext)
+      expect(screen.getByText('info')).toBeInTheDocument();
+      expect(screen.getByText('debug')).toBeInTheDocument();
+
+      // Click the "Log Level" checkbox in the field selector to hide log level
+      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Show log level' });
+      expect(logLevelCheckbox).toBeChecked();
+      await userEvent.click(logLevelCheckbox);
+
+      // Level column is hidden
+      expect(screen.queryByText('info')).not.toBeInTheDocument();
+      expect(screen.queryByText('debug')).not.toBeInTheDocument();
+      expect(logLevelCheckbox).not.toBeChecked();
+      expect(screen.getByText('frontend')).toBeInTheDocument();
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      // Click again to show log level (checkbox is now in Suggested section)
+      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Show log level' });
+      await userEvent.click(logLevelCheckboxAfter);
+
+      // Level is shown again (wait for list to re-render)
+      expect(await screen.findByText('info')).toBeInTheDocument();
+      expect(screen.getByText('debug')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'Show log level' })).toBeChecked();
     });
   });
 
@@ -490,7 +614,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();
@@ -504,10 +628,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close log details sidebar'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
     });
 
     test('Supports showing inline log details', async () => {
@@ -533,7 +657,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();
@@ -547,10 +671,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close details for this log'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close details for this log')).not.toBeInTheDocument();
     });
 
     test('Allows people to select text without opening log details', async () => {
@@ -568,7 +692,7 @@ describe('LogList', () => {
       expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
       expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
 
       spy.mockRestore();
     });

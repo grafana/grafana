@@ -29,6 +29,8 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
+	// Status returns the status of a rule's last evaluation.
+	Status(ctx context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -46,11 +48,6 @@ type RulesStore interface {
 
 type RecordingWriter interface {
 	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
-}
-
-// EvaluationCoordinator determines whether alert rule evaluation should occur
-type EvaluationCoordinator interface {
-	ShouldEvaluate() bool
 }
 
 // AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.
@@ -89,7 +86,8 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore RulesStore
+	ruleStore      RulesStore
+	ruleChainStore RuleChainStore
 
 	stateManager *state.Manager
 
@@ -109,10 +107,9 @@ type schedule struct {
 	// last evaluated.
 	schedulableAlertRules alertRulesRegistry
 
-	tracer                tracing.Tracer
-	featureToggles        featuremgmt.FeatureToggles
-	recordingWriter       RecordingWriter
-	evaluationCoordinator EvaluationCoordinator
+	tracer          tracing.Tracer
+	featureToggles  featuremgmt.FeatureToggles
+	recordingWriter RecordingWriter
 }
 
 // RetryConfig configures the exponential backoff for alert rule and recording rule evaluations.
@@ -142,7 +139,6 @@ type SchedulerCfg struct {
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
 	FeatureToggles         featuremgmt.FeatureToggles
-	EvaluationCoordinator  EvaluationCoordinator
 }
 
 // NewScheduler returns a new scheduler.
@@ -161,6 +157,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		log:                    cfg.Log,
 		evaluatorFactory:       cfg.EvaluatorFactory,
 		ruleStore:              cfg.RuleStore,
+		ruleChainStore:         &NoopRuleChainStore{},
 		metrics:                cfg.Metrics,
 		appURL:                 cfg.AppURL,
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
@@ -174,7 +171,6 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
 		featureToggles:         cfg.FeatureToggles,
-		evaluationCoordinator:  cfg.EvaluationCoordinator,
 	}
 
 	return &sch
@@ -269,6 +265,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
+			sch.metrics.ResetOnStop()
 			return waitErr
 		}
 	}
@@ -282,11 +279,6 @@ type readyToRunItem struct {
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
 // Returns a slice of rules that were scheduled for evaluation, map of stopped rules, and a slice of updated rules
 func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []ngmodels.AlertRuleKeyWithVersion) {
-	if sch.evaluationCoordinator != nil && !sch.evaluationCoordinator.ShouldEvaluate() {
-		sch.log.Debug("Skipping rule evaluation on non-primary node")
-		return nil, nil, nil
-	}
-
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 	// update the local registry. If there was a difference between the previous state and the current new state, rulesDiff will contains keys of rules that were updated.

@@ -112,18 +112,18 @@ func (r *Runner) Run(ctx context.Context) error {
 
 	// If there are checks already created, run an initial cleanup
 	for _, namespace := range namespaces {
-		logger = logger.With("namespace", namespace)
+		nsLogger := logger.With("namespace", namespace)
 		lastCreated := lastCreatedMap[namespace]
 
 		if !lastCreated.IsZero() {
-			err = r.cleanupChecks(ctx, logger, namespace)
+			err = r.cleanupChecks(ctx, nsLogger, namespace)
 			if err != nil {
-				logger.Error("Error cleaning up old check reports", "error", err)
+				nsLogger.Error("Error cleaning up old check reports", "error", err)
 				return err
 			}
-			err = r.markUnprocessedChecks(ctx, logger, namespace)
+			err = r.markUnprocessedChecks(ctx, nsLogger, namespace)
 			if err != nil {
-				logger.Error("Error marking unprocessed checks", "error", err)
+				nsLogger.Error("Error marking unprocessed checks", "error", err)
 				return err
 			}
 		}
@@ -144,22 +144,22 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 
 			for _, namespace := range namespaces {
-				logger = logger.With("namespace", namespace)
+				nsLogger := logger.With("namespace", namespace)
 				lastCreated := lastCreatedMap[namespace]
 
 				// If there are checks already created and they are older than the evaluation interval
 				// then we can automatically create more
 				if !lastCreated.IsZero() && lastCreated.Before(time.Now().Add(-r.defaultEvalInterval)) {
-					err = r.createChecks(ctx, logger, namespace)
+					err = r.createChecks(ctx, nsLogger, namespace)
 					if err != nil {
-						logger.Error("Error creating new check reports", "error", err)
+						nsLogger.Error("Error creating new check reports", "error", err)
 						return err
 					}
 
 					// Clean up old checks to avoid going over the limit
-					err = r.cleanupChecks(ctx, logger, namespace)
+					err = r.cleanupChecks(ctx, nsLogger, namespace)
 					if err != nil {
-						logger.Error("Error cleaning up old check reports", "error", err)
+						nsLogger.Error("Error cleaning up old check reports", "error", err)
 						return err
 					}
 

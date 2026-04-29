@@ -4,17 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -27,6 +30,7 @@ type ReceiverService struct {
 	provisioningStore      provisoningStore
 	cfgStore               alertmanagerConfigStore
 	ruleNotificationsStore alertRuleNotificationSettingsStore
+	routeService           routeService
 	encryptionService      secretService
 	xact                   transactionManager
 	log                    log.Logger
@@ -34,11 +38,19 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+	allowedIntegrations    map[schema.IntegrationType]struct{}
+	emailValidator         EmailIntegrationValidator
+}
+
+type routeService interface {
+	ReceiverUseByName(ctx context.Context, rev *legacy_storage.ConfigRevision) map[string]int
+	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
+	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*definitions.Route]int
 }
 
 type alertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
 }
 
 type secretService interface {
@@ -85,26 +97,46 @@ func NewReceiverService(
 	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
 	ruleNotificationsStore alertRuleNotificationSettingsStore,
+	routeService routeService,
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
+	allowedIntegrations map[schema.IntegrationType]struct{},
+	emailValidator EmailIntegrationValidator,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
 		provisioningStore:      provisioningStore,
 		cfgStore:               cfgStore,
 		ruleNotificationsStore: ruleNotificationsStore,
+		routeService:           routeService,
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    provenanceValidator,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
+		allowedIntegrations:    allowedIntegrations,
+		emailValidator:         emailValidator,
 	}
+}
+
+func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
+	if rs.allowedIntegrations == nil {
+		return nil
+	}
+	for _, integration := range r.Integrations {
+		iType := integration.Config.Type()
+		if _, allowed := rs.allowedIntegrations[iType]; !allowed {
+			return fmt.Errorf("integration type %s is not allowed", iType)
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
@@ -296,11 +328,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
-	usedByRoutes := revision.ReceiverNameUsedByRoutes(existing.Name)
+	usedByRoutes := rs.routeService.ReceiverNameUsedByRoutes(ctx, revision, existing.Name)
 	usedByRules, err := rs.UsedByRules(ctx, orgID, existing.Name)
 	if err != nil {
 		return err
@@ -344,6 +376,15 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
+	}
+
+	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "integrations", r.GetIntegrationTypes())
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -357,7 +398,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, orgID, createdReceiver, logger); err != nil {
 		span.RecordError(err)
 		return nil, models.ErrReceiverInvalid(err)
 	}
@@ -386,7 +427,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
 	))
-	rs.log.FromContext(ctx).Info("Created a new receiver", "receiver", result.Name, "uid", result.UID, "fingerprint", result.Version, "integrations", result.GetIntegrationTypes())
+	logger.Info("Created a new receiver", "uid", result.UID, "fingerprint", result.Version)
 	return result, nil
 }
 
@@ -405,6 +446,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
+	}
+	if err := rs.checkAllowedIntegrations(r); err != nil {
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
@@ -454,7 +498,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
 
@@ -483,7 +527,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
 	}
 
-	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
+	if err := rs.validateReceiver(ctx, orgID, updatedReceiver, logger); err != nil {
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
@@ -531,12 +575,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
-	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+	keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, ReceiverName: name})
 	if err != nil {
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
@@ -583,21 +627,19 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	var importedUsesInRoutes map[string]int
 	receiverUsesInRules := map[string][]models.AlertRuleKey{}
 	if hasGrafanaOrigin {
-		receiverUsesInRoutes = revision.ReceiverUseByName()
-		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		receiverUsesInRoutes = rs.routeService.ReceiverUseByName(ctx, revision)
+		q := models.ListContactPointRoutingsQuery{OrgID: orgID}
 		if len(receivers) == 1 {
 			q.ReceiverName = receivers[0].Name
 		}
-		keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		keys, err := rs.ruleNotificationsStore.ListContactPointRoutings(ctx, q)
 		if err != nil {
 			return nil, err
 		}
 
 		for key, settings := range keys {
-			for _, s := range settings {
-				if s.Receiver != "" {
-					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
-				}
+			if settings.Receiver != "" {
+				receiverUsesInRules[settings.Receiver] = append(receiverUsesInRules[settings.Receiver], key)
 			}
 		}
 	}
@@ -768,14 +810,19 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
-	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
-		if err != nil {
-			return err
+	updatedRouteCnt := 0
+	if updatedRoutes := rs.routeService.RenameReceiverInRoutes(ctx, revision, oldName, newName); len(updatedRoutes) > 0 {
+		for route, updatedCnt := range updatedRoutes {
+			if updatedCnt > 0 {
+				updatedRouteCnt += updatedCnt
+				routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+				if err != nil {
+					return err
+				}
+				canUpdate = canUpdate && validate(routeProvenance)
+			}
 		}
-		canUpdate = validate(routeProvenance)
 	}
 	dryRun := !canUpdate
 	affected, invalidProvenance, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
@@ -783,17 +830,21 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		err := makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		err := makeErrReceiverDependentResourcesProvenance(updatedRouteCnt > 0, invalidProvenance)
 		span.RecordError(err, trace.WithAttributes(
 			attribute.Bool("invalid_route_provenance", canUpdate),
 			attribute.Int("invalid_rule_provenances", len(invalidProvenance)),
 		))
 		return err
 	}
-	if len(affected) > 0 || updatedRoutes > 0 {
-		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	if len(affected) > 0 || updatedRouteCnt > 0 {
+		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRouteCnt)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool {
+	return rs.routeService.ReceiverNameUsedByRoutes(ctx, rev, name)
 }
 
 func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
@@ -814,4 +865,19 @@ func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.
 		))
 	}
 	return result
+}
+
+func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, receiver models.Receiver, l log.Logger) error {
+	if err := receiver.Validate(rs.decryptor(ctx)); err != nil {
+		return err
+	}
+	for idx, integration := range receiver.Integrations {
+		if integration == nil || integration.Config.Type() != schema.EmailType {
+			continue
+		}
+		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, l); err != nil {
+			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
 }

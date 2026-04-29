@@ -73,24 +73,18 @@ func ProvideAuthZClient(
 		return zanzanaClient, nil
 	}
 
-	// Provisioning uses mode 4 (read+write only to unified storage)
-	// For G12 launch, we can disable caching for this and find a more scalable solution soon
-	// most likely this would involve passing the RV (timestamp!) in each check method
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		authCfg.cacheTTL = 0
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if err != nil {
+			return nil, err
 		}
-		return rbacClient, err
+		if zanzanaEnabled {
+			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
+		}
+		return rbacClient, nil
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
-
 		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
@@ -116,14 +110,30 @@ func ProvideAuthZClient(
 		)
 
 		channel := &inprocgrpc.Channel{}
-		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+
+		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
 				},
 			}))
 			return ctx, nil
-		}))
+		})
+
+		// Chain trace propagation with the auth interceptor.
+		// inprocgrpc.Channel wraps the server context with noValuesContext which
+		// strips all context values — including OpenTelemetry spans — to prevent
+		// leaking client state to the server. We recover the span context from
+		// the original client context so that server-side spans are properly
+		// linked to the calling trace.
+		channel.WithServerUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+				if sc := trace.SpanContextFromContext(clientCtx); sc.IsValid() {
+					ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
+				}
+			}
+			return authInterceptor(ctx, req, info, handler)
+		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
 		rbacClient := authzlib.NewClient(
 			channel,
@@ -132,7 +142,7 @@ func ProvideAuthZClient(
 		)
 
 		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
@@ -173,10 +183,34 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if zanzanaEnabled {
-		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+		return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
 	}
 
 	return remoteRBACClient, nil
+}
+
+// newZanzanaAwareClient returns the appropriate access client when Zanzana is
+// enabled. If a rollout map is configured it wraps rbacClient in a shadow
+// comparison client and routes per-resource tenants deterministically via the
+// rollout percentages; otherwise it delegates to newShadowClient.
+func newZanzanaAwareClient(cfg *setting.Cfg, rbacClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
+		shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+		if err != nil {
+			return nil, err
+		}
+		return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
+	}
+	return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
+}
+
+// newShadowClient returns either a ShadowClient (RBAC primary) or a
+// ShadowRBACClient (Zanzana primary) depending on the configured primary engine.
+func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if engine == setting.ZanzanaPrimaryEngineZanzana {
+		return zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+	}
+	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 }
 
 func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
@@ -286,7 +320,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
-		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
+		rbac.Settings{CacheTTL: cfg.CacheTTL, LocalFolderCacheTTL: cfg.LocalFolderCacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

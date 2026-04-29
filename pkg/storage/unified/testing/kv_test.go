@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -42,13 +43,10 @@ func TestSQLKV(t *testing.T) {
 		require.NoError(t, err)
 		dbConn, err := eDB.Init(ctx)
 		require.NoError(t, err)
-		kv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+		kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 		require.NoError(t, err)
 		return kv
 	}, &KVTestOptions{
 		NSPrefix: "sql-kv-test",
-		SkipTests: map[string]bool{
-			TestKVBatch: true, // Batch operations not yet implemented for sqlKV
-		},
 	})
 }

@@ -1,10 +1,10 @@
 package user
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,14 +13,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/authz"
+	authlib "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/kube-openapi/pkg/common"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,27 +38,47 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-const maxLimit = 100
-
-type SearchHandler struct {
-	log      *slog.Logger
-	client   resourcepb.ResourceIndexClient
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
-	cfg      *setting.Cfg
+// accessControlCheck maps a legacy RBAC action name to a K8s-style check.
+// The RBAC authz server translates Group/Resource/Verb through the mapper
+// to resolve the underlying RBAC action.
+type accessControlCheck struct {
+	action   string // legacy RBAC action name returned to callers
+	group    string
+	resource string
+	verb     string
+	name     string // user UID of the resource being checked
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg) *SearchHandler {
+var userAccessControlChecks = []accessControlCheck{
+	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
+	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
+	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
+	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
+	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
+	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
+}
+
+type SearchHandler struct {
+	log          log.Logger
+	client       resourcepb.ResourceIndexClient
+	tracer       trace.Tracer
+	features     featuremgmt.FeatureToggles
+	cfg          *setting.Cfg
+	accessClient authlib.AccessClient
+}
+
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
-		client:   searchClient,
-		log:      slog.Default().With("logger", "grafana-apiserver.user.search"),
-		tracer:   tracer,
-		features: features,
-		cfg:      cfg,
+		client:       searchClient,
+		log:          log.New("grafana-apiserver.users.search"),
+		tracer:       tracer,
+		features:     features,
+		cfg:          cfg,
+		accessClient: accessClient,
 	}
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -110,6 +137,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Example:     0,
 										Required:    false,
 										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "accesscontrol",
+										In:          "query",
+										Description: "when true, includes access control metadata in the response",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
 									},
 								},
 								{
@@ -220,7 +256,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := 30
+	limit := common.DefaultListLimit
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -234,6 +270,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 		offset = (page - 1) * limit
+	}
+
+	if limit > common.MaxListLimit {
+		http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
+		return
+	}
+
+	if limit < 1 {
+		limit = common.DefaultListLimit
 	}
 
 	// Escape characters that are used by bleve wildcard search to be literal strings.
@@ -252,10 +297,23 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		},
 		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole},
+		// The query is a wildcard (*...*), so only Name is used from each
+		// QueryField to specify which fields to search in (Type and Boost
+		// are ignored for wildcard queries).
+		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+			{Name: fieldEmail},
+			{Name: fieldLogin},
+		},
 		Limit:  int64(limit),
 		Page:   int64(page),
 		Offset: int64(offset),
 	}
+
+	span.SetAttributes(attribute.Int("limit", limit),
+		attribute.Int("page", page),
+		attribute.Int("offset", offset),
+		attribute.String("query", searchQuery))
 
 	if !requester.GetIsGrafanaAdmin() {
 		// FIXME: Use the new config service instead of the legacy one
@@ -297,16 +355,72 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := s.client.Search(ctx, request)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	result, err := ParseResults(resp)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user search parse results failed")
 		errhttp.Write(ctx, err, w)
 		return
 	}
+
+	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
+		if err := s.stampAccessControl(ctx, requester, result.Hits); err != nil {
+			span.RecordError(err)
+			s.log.Warn("failed to get access control metadata", "error", err)
+		}
+	}
+
 	s.write(w, result)
+}
+
+func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0.GetSearchUsersUserHit) error {
+	namespace := requester.GetNamespace()
+
+	items := func(yield func(accessControlCheck) bool) {
+		for _, hit := range hits {
+			for _, c := range userAccessControlChecks {
+				c.name = hit.Name
+				if !yield(c) {
+					return
+				}
+			}
+		}
+	}
+
+	extractFn := func(c accessControlCheck) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Verb:      c.verb,
+			Group:     c.group,
+			Resource:  c.resource,
+			Namespace: namespace,
+			Name:      c.name,
+			// Folder is omitted: users are not folder-scoped resources.
+			// TODO: set FreshnessTimestamp once we decide whether cached AC is acceptable here.
+		}
+	}
+
+	acMap := make(map[string]map[string]bool, len(hits))
+	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
+		if err != nil {
+			return fmt.Errorf("access control check failed: %w", err)
+		}
+		if acMap[c.name] == nil {
+			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))
+		}
+		acMap[c.name][c.action] = true
+	}
+
+	for i := range hits {
+		hits[i].AccessControl = acMap[hits[i].Name]
+	}
+
+	return nil
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
@@ -316,13 +430,13 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	}
 }
 
-func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsers, error) {
+func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
 	if result == nil {
-		return iamv0.NewGetSearchUsers(), nil
+		return iamv0.NewGetSearchUsersResponse(), nil
 	} else if result.Error != nil {
-		return iamv0.NewGetSearchUsers(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	} else if result.Results == nil {
-		return iamv0.NewGetSearchUsers(), nil
+		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 
 	titleIDX := -1
@@ -346,15 +460,15 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		}
 	}
 
-	sr := iamv0.NewGetSearchUsers()
+	sr := iamv0.NewGetSearchUsersResponse()
 	sr.TotalHits = result.TotalHits
 	sr.QueryCost = result.QueryCost
 	sr.MaxScore = result.MaxScore
-	sr.Hits = make([]iamv0.UserHit, 0, len(result.Results.Rows))
+	sr.Hits = make([]iamv0.GetSearchUsersUserHit, 0, len(result.Results.Rows))
 
 	for _, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0.NewGetSearchUsers(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
+			return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("error parsing user search response: mismatch number of columns and cells")
 		}
 
 		var login string
@@ -362,7 +476,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 			login = string(row.Cells[loginIDX])
 		}
 
-		hit := iamv0.UserHit{
+		hit := iamv0.GetSearchUsersUserHit{
 			Name:  row.Key.Name,
 			Login: login,
 		}

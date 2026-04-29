@@ -1,7 +1,8 @@
-import { Registry, RegistryItem } from '@grafana/data';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Registry, type RegistryItem } from '@grafana/data';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { deserializeAutoGridLayout } from './AutoGridLayoutSerializer';
 import { deserializeDefaultGridLayout } from './DefaultGridLayoutSerializer';
@@ -13,7 +14,7 @@ interface LayoutSerializerRegistryItem extends RegistryItem {
     layout: DashboardV2Spec['layout'],
     elements: DashboardV2Spec['elements'],
     preload: boolean,
-    panelIdGenerator?: () => number
+    panelIdGenerator?: PanelIdGenerator
   ) => DashboardLayoutManager;
 }
 

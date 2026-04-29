@@ -1,22 +1,23 @@
 import {
-  DataSourcePluginMeta,
-  DataSourceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceSettings,
   locationUtil,
-  TestDataSourceResponse,
+  type TestDataSourceResponse,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   config,
-  DataSourceSrv,
+  type DataSourceSrv,
   DataSourceWithBackend,
   HealthCheckError,
-  HealthCheckResultDetails,
+  type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -27,8 +28,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
-import { DataSourcePluginCategory } from 'app/types/datasources';
-import { ThunkDispatch, ThunkResult } from 'app/types/store';
+import { type DataSourcePluginCategory } from 'app/types/datasources';
+import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
@@ -162,7 +163,7 @@ export const testDataSource = (
 
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: true,
@@ -175,7 +176,7 @@ export const testDataSource = (
         dispatch(testDataSourceFailed({ ...formattedError }));
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: false,
@@ -250,8 +251,16 @@ export function addDataSource(
       access: 'proxy',
     };
 
-    const result = await api.createDataSource(newInstance);
-    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
+    let uid,
+      version = '';
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
+      const result = await api.createDataSourceWithK8sAPI(newInstance);
+      uid = result.metadata.name;
+    } else {
+      const result = await api.createDataSource(newInstance);
+      uid = result.datasource.uid;
+      version = result.meta?.info?.version;
+    }
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -259,12 +268,12 @@ export function addDataSource(
     trackDataSourceCreated({
       grafana_version: config.buildInfo.version,
       plugin_id: plugin.id,
-      datasource_uid: result.datasource.uid,
-      plugin_version: result.meta?.info?.version,
+      datasource_uid: uid,
+      plugin_version: version,
       path: window.location.pathname,
     });
 
-    locationService.push(editLink);
+    locationService.push(editRoute.replace(/:uid/gi, uid));
   };
 }
 

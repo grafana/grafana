@@ -1,22 +1,22 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
-  AlertManagerDataSourceJsonData,
+  type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import {
-  DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
-  GrafanaRulesSourceIdentifier,
+  type DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
+  type GrafanaRulesSourceIdentifier,
   GrafanaRulesSourceSymbol,
-  RuleIdentifier,
-  RulesSource,
-  RulesSourceIdentifier,
-  RulesSourceUid,
+  type RuleIdentifier,
+  type RulesSource,
+  type RulesSourceIdentifier,
+  type RulesSourceUid,
 } from 'app/types/unified-alerting';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
@@ -27,7 +27,6 @@ import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
-import { isExtraConfig } from './alertmanager/extraConfigs';
 import { getAllDataSources } from './config';
 import { isGrafanaRuleIdentifier } from './rules';
 
@@ -290,10 +289,6 @@ export function getRulesSourceByName(name: string): RulesSource | undefined {
 export function getDatasourceAPIUid(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
-  }
-
-  if (isExtraConfig(dataSourceName)) {
-    return dataSourceName;
   }
 
   const ds = getDataSourceByName(dataSourceName);

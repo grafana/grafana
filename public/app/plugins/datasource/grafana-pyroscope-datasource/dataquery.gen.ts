@@ -8,11 +8,15 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/grafana-pyroscope-datasource/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
+
+export type HeatmapQueryType = ('individual' | 'span');
 
 export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
   /**
@@ -24,9 +28,17 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    */
   groupBy: Array<string>;
   /**
+   * Specifies the type of heatmap query
+   */
+  heatmapType: (HeatmapQueryType | 'individual');
+  /**
    * If set to true, exemplars will be requested
    */
   includeExemplars: boolean;
+  /**
+   * If set to true, heatmap data will be requested
+   */
+  includeHeatmap: boolean;
   /**
    * Specifies the query label selectors.
    */
@@ -40,6 +52,10 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    */
   maxNodes?: number;
   /**
+   * Specifies the query profile id selectors.
+   */
+  profileIdSelector?: Array<string>;
+  /**
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
@@ -51,7 +67,10 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
+  heatmapType: 'individual',
   includeExemplars: false,
+  includeHeatmap: false,
   labelSelector: '{}',
+  profileIdSelector: [],
   spanSelector: [],
 };

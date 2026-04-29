@@ -1,11 +1,14 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
-import { trackDeleteDashboardElement } from 'app/features/dashboard-scene/utils/tracking';
 
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -14,7 +17,10 @@ interface EditPaneHeaderProps {
 
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
+  const { hasCopiedPanel } = useClipboardState();
 
+  // TODO this type check here is hacky and should be replaced with a more generic solid solution
+  const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -26,12 +32,12 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
     } else if (onDelete) {
       onDelete();
     }
-    trackDeleteDashboardElement(elementInfo);
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName}>
-      <Stack direction="row" gap={1}>
+    <Sidebar.PaneHeader title={elementInfo.typeName} onGoBack={editPane.getOnGetBackCallback()}>
+      <Stack direction="row" gap={1} grow={1} justifyContent={'flex-end'}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (
           <Dropdown
@@ -47,11 +53,19 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                     onClick={onDuplicate}
                   />
                 ) : null}
+                {canPaste && hasCopiedPanel ? (
+                  <Menu.Item
+                    icon="clipboard-alt"
+                    label={t('dashboard.layout.common.paste', 'Paste')}
+                    onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
+                    data-testid={selectors.components.EditPaneHeader.paste}
+                  />
+                ) : null}
               </Menu>
             }
           >
             <Button
-              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
+              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy/paste or duplicate')}
               tooltipPlacement="bottom"
               variant="secondary"
               size="sm"

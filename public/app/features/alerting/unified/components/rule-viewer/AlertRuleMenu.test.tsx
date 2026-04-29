@@ -73,7 +73,7 @@ const ui = {
     export: byRole('menuitem', { name: /Export/i }),
     delete: byRole('menuitem', { name: /Delete/i }),
     manageEnrichments: byRole('menuitem', { name: /Manage enrichments/i }),
-    declareIncident: byRole('link', { name: /Declare incident/i }),
+    declareIncident: byRole('menuitem', { name: /Declare incident/i }),
     analyzeRule: byRole('menuitem', { name: /Analyze rule/i }),
   },
 };
@@ -115,6 +115,7 @@ describe('AlertRuleMenu', () => {
     mockOpenAssistant.mockClear();
     // Default: assistant unavailable
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: mockOpenAssistant,
     } as unknown as ReturnType<typeof useAssistant>);
@@ -1229,6 +1230,7 @@ describe('AlertRuleMenu', () => {
         config.buildInfo.edition = GrafanaEdition.OpenSource;
         // Reset assistant mock to default (unavailable) for each test
         mockUseAssistant.mockReturnValue({
+          isLoading: false,
           isAvailable: false,
           openAssistant: mockOpenAssistant,
         } as unknown as ReturnType<typeof useAssistant>);
@@ -1237,6 +1239,7 @@ describe('AlertRuleMenu', () => {
       it('shows Analyze Rule when assistant is available for Grafana-managed rules', async () => {
         // Override mock to return available
         mockUseAssistant.mockReturnValue({
+          isLoading: false,
           isAvailable: true,
           openAssistant: mockOpenAssistant,
         } as unknown as ReturnType<typeof useAssistant>);
@@ -1274,6 +1277,7 @@ describe('AlertRuleMenu', () => {
       it('hides Analyze Rule when assistant is unavailable', async () => {
         // Mock already set to unavailable in beforeEach, but be explicit
         mockUseAssistant.mockReturnValue({
+          isLoading: false,
           isAvailable: false,
           openAssistant: mockOpenAssistant,
         } as unknown as ReturnType<typeof useAssistant>);
@@ -1298,6 +1302,7 @@ describe('AlertRuleMenu', () => {
 
       it('hides Analyze Rule for datasource-managed rules even when assistant is available', async () => {
         mockUseAssistant.mockReturnValue({
+          isLoading: false,
           isAvailable: true,
           openAssistant: mockOpenAssistant,
         } as unknown as ReturnType<typeof useAssistant>);

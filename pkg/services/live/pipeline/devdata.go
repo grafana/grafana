@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 
@@ -140,22 +141,22 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/influx/input",
+			Namespace: "default",
+			Pattern:   "stream/influx/input",
 			Converter: NewAutoInfluxConverter(AutoInfluxConverterConfig{
 				FrameFormat: "labels_column",
 			}),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/influx/input/:rest",
+			Namespace: "default",
+			Pattern:   "stream/influx/input/:rest",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/influx/input/cpu",
+			Namespace: "default",
+			Pattern:   "stream/influx/input/cpu",
 			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
 			// since there are cases when labels attached to a field, and cases where labels
 			// set in a first frame column (in Influx converter). For example, this will allow
@@ -176,19 +177,19 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			OrgId:           1,
+			Namespace:       "default",
 			Pattern:         "stream/influx/input/cpu/spikes",
 			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
-			OrgId:           1,
+			Namespace:       "default",
 			Pattern:         "stream/json/auto",
 			Converter:       NewAutoJsonConverter(AutoJsonConverterConfig{}),
 			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/json/tip",
+			Namespace: "default",
+			Pattern:   "stream/json/tip",
 			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{
 				FieldTips: map[string]Field{
 					"value3": {
@@ -211,8 +212,8 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/value3/changes",
+			Namespace: "default",
+			Pattern:   "stream/json/exact/value3/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(
@@ -226,22 +227,22 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/annotation/changes",
+			Namespace: "default",
+			Pattern:   "stream/json/exact/annotation/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/condition",
+			Namespace: "default",
+			Pattern:   "stream/json/exact/condition",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/value4/state",
+			Namespace: "default",
+			Pattern:   "stream/json/exact/value4/state",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},

@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
+  type FieldDisplay,
   toDataFrame,
   FieldType,
   VizOrientation,
@@ -14,7 +15,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import { type Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -166,8 +167,7 @@ describe('PieChartPanel', () => {
 });
 
 describe('comparePieChartItemsByValue', () => {
-  const makeFieldDisplay = (n: number) =>
-    ({ display: { numeric: n } }) as unknown as import('@grafana/data').FieldDisplay;
+  const makeFieldDisplay = (n: number) => ({ display: { numeric: n } }) as unknown as FieldDisplay;
 
   it.each([
     {

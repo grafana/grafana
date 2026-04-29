@@ -1,7 +1,7 @@
-import { ValidationRule } from 'react-hook-form';
+import { type ValidationRule } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { type SelectableValue } from '@grafana/data';
+import { type IconName } from '@grafana/ui';
 
 export interface AlertRuleDTO {
   id: number;
@@ -101,7 +101,7 @@ export interface NotifierDTO<T = NotifierType> {
   description: string;
   type: T;
   heading: string;
-  options: NotificationChannelOption[];
+  options?: NotificationChannelOption[];
   info?: string;
   secure?: boolean;
   /**

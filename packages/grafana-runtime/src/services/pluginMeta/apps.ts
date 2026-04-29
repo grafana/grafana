@@ -1,13 +1,14 @@
-import { cloneDeep } from 'lodash';
-
-import type { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
-import type { AppPluginMetas } from './types';
+import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
 
@@ -15,16 +16,33 @@ function initialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
+function setApps(input: AppPluginMetas) {
+  apps = input;
+}
+
+function setMetas(metas: PluginMetasResponse) {
+  if (!metas.items.length) {
+    // something failed while trying to fetch plugin meta
+    // fallback to config.panels from bootdata
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.app);
+    return;
+  }
+
+  const mapper = getAppPluginMapper();
+  setApps(mapper(metas));
+}
+
 async function initAppPluginMetas(): Promise<void> {
-  if (!evaluateBooleanFlag('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
-    apps = config.apps;
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getAppPluginMapper();
-  apps = mapper(metas);
+  setMetas(metas);
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
@@ -32,7 +50,7 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
     await initAppPluginMetas();
   }
 
-  return Object.values(cloneDeep(apps));
+  return Object.values(structuredClone(apps));
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
@@ -41,7 +59,7 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
   }
 
   const app = apps[pluginId];
-  return app ? cloneDeep(app) : null;
+  return app ? structuredClone(app) : null;
 }
 
 /**
@@ -69,5 +87,5 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
     throw new Error('setAppPluginMetas() function can only be called from tests.');
   }
 
-  apps = cloneDeep(override);
+  setApps(structuredClone(override));
 }

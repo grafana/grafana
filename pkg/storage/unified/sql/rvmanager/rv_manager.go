@@ -21,19 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type contextKey string
-
-const txKey contextKey = "rvmanager_db_tx"
-
-func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
-	return context.WithValue(ctx, txKey, tx)
-}
-
-func TxFromCtx(ctx context.Context) (db.Tx, bool) {
-	tx, ok := ctx.Value(txKey).(db.Tx)
-	return tx, ok
-}
-
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (
@@ -75,7 +62,11 @@ var (
 const (
 	defaultMaxBatchSize     = 25
 	defaultMaxBatchWaitTime = 100 * time.Millisecond
-	defaultBatchTimeout     = 5 * time.Second
+	// defaultBatchTimeout bounds one batched WithTx (all WriteEventFunc calls,
+	// resource_version lock, RV stamp updates). Override per manager via
+	// ResourceManagerOptions.BatchTransactionTimeout (wired from the
+	// [unified_storage] resource_version_batch_transaction_timeout ini key).
+	defaultBatchTimeout = 5 * time.Second
 )
 
 // ResourceVersionManager handles resource version operations
@@ -87,6 +78,7 @@ type ResourceVersionManager struct {
 
 	maxBatchSize     int           // The maximum number of operations to batch together
 	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
+	batchTxnTimeout  time.Duration // 0 = use defaultBatchTimeout for each batched WithTx
 }
 
 type writeOpResult struct {
@@ -106,13 +98,20 @@ type writeOp struct {
 // WriteEventFunc is a function that writes a resource to the database
 // It returns the GUID of the created resource
 // The GUID is used to update the resource version for the resource in the same transaction.
-type WriteEventFunc func(tx db.Tx) (guid string, err error)
+//
+// ctx is the context associated with the batch transaction (from WithTx). Callers must use
+// this ctx for ExecContext/QueryContext on tx — not the original request context — so that
+// cancellation of the request cannot abort the transaction mid-batch while leaving tx stale.
+type WriteEventFunc func(ctx context.Context, tx db.Tx) (guid string, err error)
 
 type ResourceManagerOptions struct {
 	Dialect          sqltemplate.Dialect // The dialect to use for the database
 	DB               db.DB               // The database to use
 	MaxBatchSize     int                 // The maximum number of operations to batch together
 	MaxBatchWaitTime time.Duration       // The maximum time to wait for a batch to be ready
+	// BatchTransactionTimeout is the maximum duration for one batched transaction
+	// (all writes, lock, RV updates). Zero selects defaultBatchTimeout.
+	BatchTransactionTimeout time.Duration
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -135,7 +134,21 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
+		batchTxnTimeout:  opts.BatchTransactionTimeout,
 	}, nil
+}
+
+func (m *ResourceVersionManager) batchTransactionTimeout() time.Duration {
+	if m.batchTxnTimeout > 0 {
+		return m.batchTxnTimeout
+	}
+	return defaultBatchTimeout
+}
+
+// DB returns the underlying db.DB for backwards compatibility queries.
+// TODO: remove when backwards compatibility is no longer needed.
+func (m *ResourceVersionManager) DB() db.DB {
+	return m.db
 }
 
 // ExecWithRV executes the given function with an incremented resource version
@@ -257,7 +270,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, cancel := context.WithTimeout(ctx, defaultBatchTimeout)
+	ctx, cancel := context.WithTimeout(ctx, m.batchTransactionTimeout())
 	defer cancel()
 
 	guidToRV := make(map[string]int64, len(batch))
@@ -272,7 +285,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
 		}))
 		for i := range batch {
-			guid, err := batch[i].fn(tx)
+			guid, err := batch[i].fn(ctx, tx)
 			if err != nil {
 				span.AddEvent("batch_operation_failed", trace.WithAttributes(
 					attribute.Int("operation_index", i),

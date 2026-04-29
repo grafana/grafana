@@ -1,13 +1,13 @@
 import { Observable } from 'rxjs';
 
-import { DataLinkTransformationConfig } from '@grafana/data';
-import { CorrelationData, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type DataLinkTransformationConfig } from '@grafana/data';
+import { type CorrelationData, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { CreateCorrelationParams } from 'app/features/correlations/types';
-import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
+import { type CreateCorrelationParams } from 'app/features/correlations/types';
+import { createCorrelation, generateDefaultLabel, getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import { saveCorrelationsAction } from './explorePane';
 import { splitClose } from './main';
@@ -40,11 +40,7 @@ function reloadCorrelations(exploreId: string): ThunkResult<Promise<void>> {
     const pane = getState().explore!.panes[exploreId]!;
 
     if (pane.datasourceInstance?.uid !== undefined) {
-      // TODO: Tie correlations with query refID for mixed datasource
-      let datasourceUIDs = pane.datasourceInstance.meta.mixed
-        ? pane.queries.map((query) => query.datasource?.uid).filter((x): x is string => x !== null)
-        : [pane.datasourceInstance.uid];
-      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      const correlations = await getCorrelationsFromStorage(dispatch, pane.queries, pane.datasourceInstance.uid);
       dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
     }
   };

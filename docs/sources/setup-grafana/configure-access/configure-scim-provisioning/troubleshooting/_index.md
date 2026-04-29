@@ -74,5 +74,5 @@ Where:
 ## Next steps
 
 - [Manage users and teams with SCIM provisioning](../manage-users-teams/)
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)

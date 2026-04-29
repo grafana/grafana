@@ -1,6 +1,6 @@
-import { PropsWithChildren, useMemo } from 'react';
+import { type PropsWithChildren, useId, useMemo } from 'react';
 
-import { VariableType, VariableHide } from '@grafana/data';
+import { type VariableType, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field } from '@grafana/ui';
@@ -9,10 +9,18 @@ interface Props {
   onChange: (option: VariableHide) => void;
   display: VariableHide;
   type: VariableType;
+  hideControlsMenuOption?: boolean;
   minWidth?: number;
 }
 
-export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }: PropsWithChildren<Props>) {
+export function VariableDisplaySelect({
+  onChange,
+  display,
+  type,
+  hideControlsMenuOption = false,
+  minWidth = 52,
+}: PropsWithChildren<Props>) {
+  const displayId = useId();
   const OPTIONS = useMemo(
     () => [
       {
@@ -27,14 +35,18 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
           'Above the dashboard, but without showing the name of variable'
         ),
       },
-      {
-        value: VariableHide.inControlsMenu,
-        label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
-        description: t(
-          'dashboard-scene.variable-display-select.options.controls-menu.description',
-          'Visible when the controls menu is open'
-        ),
-      },
+      ...(!hideControlsMenuOption
+        ? [
+            {
+              value: VariableHide.inControlsMenu,
+              label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
+              description: t(
+                'dashboard-scene.variable-display-select.options.controls-menu.description',
+                'Visible when the controls menu is open'
+              ),
+            },
+          ]
+        : []),
       {
         value: VariableHide.hideVariable,
         label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
@@ -44,7 +56,7 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
         ),
       },
     ],
-    []
+    [hideControlsMenuOption]
   );
   const value = useMemo(() => OPTIONS.find((o) => o.value === display)?.value ?? OPTIONS[0].value, [display, OPTIONS]);
 
@@ -54,9 +66,9 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
   }
 
   return (
-    // eslint-disable-next-line no-restricted-syntax
     <Field label={t('dashboard-scene.variable-display-select.label', 'Display')}>
       <Combobox
+        id={displayId}
         data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect}
         options={OPTIONS}
         onChange={(option) => option && onChange(option.value)}

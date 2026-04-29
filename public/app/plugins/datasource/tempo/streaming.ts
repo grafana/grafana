@@ -1,31 +1,33 @@
 import { capitalize } from 'lodash';
-import { map, Observable, scan, takeWhile } from 'rxjs';
+import { map, type Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataFrame,
+  type DataFrame,
   dataFrameFromJSON,
-  DataFrameJSON,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrameJSON,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   FieldCache,
   FieldType,
   LiveChannelScope,
   LoadingState,
-  MutableDataFrame,
+  type MutableDataFrame,
   sortDataFrame,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { MetricsQueryType, SearchStreamingState } from './dataquery.gen';
-import { DEFAULT_SPSS, TempoDatasource } from './datasource';
+import { DEFAULT_SPSS, type TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
-import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
+import { type SearchMetrics, type TempoJsonData, type TempoQuery } from './types';
 import { stepToNanos } from './utils';
+
+export const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 
 function getLiveStreamKey(): string {
   return uuidv4();
@@ -46,7 +48,7 @@ export function doTempoSearchStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `search/${getLiveStreamKey()}`,
       data: {
         ...query,
@@ -123,7 +125,7 @@ export function doTempoMetricsStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `metrics/${key}`,
       data: {
         ...query,
@@ -263,7 +265,7 @@ function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, e
   };
 
   const frame: DataFrame = {
-    refId: 'streaming-progress',
+    refId: TEMPO_STREAMING_PROGRESS_REF_ID,
     name: 'Streaming Progress',
     length: 1,
     fields: [

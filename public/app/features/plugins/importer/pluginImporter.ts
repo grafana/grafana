@@ -1,31 +1,26 @@
 import {
   AppPlugin,
-  AppPluginMeta,
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
+  type AppPluginMeta,
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataSourcePlugin,
-  DataSourcePluginMeta,
-  PanelPlugin,
-  PanelPluginMeta,
+  type DataSourcePluginMeta,
+  type PanelPlugin,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GenericDataSourcePlugin } from 'app/features/datasources/types';
+import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
-import {
-  addedComponentsRegistry,
-  addedFunctionsRegistry,
-  addedLinksRegistry,
-  exposedComponentsRegistry,
-} from '../extensions/registry/setup';
+import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
-import { PluginImporter, PostImportStrategy, PreImportStrategy } from './types';
+import { type PluginImporter, type PostImportStrategy, type PreImportStrategy } from './types';
 
 const defaultPreImport: PreImportStrategy = (plugin) => {
   throwIfAngular(plugin);
@@ -98,6 +93,8 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   plugin.meta = meta;
   plugin.setComponentsFromLegacyExports(pluginExports);
 
+  const { exposedComponentsRegistry, addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry } =
+    await getPluginExtensionRegistries();
   exposedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.exposedComponentConfigs || [] });
   addedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.addedComponentConfigs || [] });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });

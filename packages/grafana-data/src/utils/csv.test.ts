@@ -201,6 +201,32 @@ describe('DataFrame to CSV', () => {
     `);
   });
 
+  it('should flatten nested frame rows', () => {
+    const nestedFrame = {
+      fields: [
+        { name: 'Alarm Name', type: FieldType.string, values: ['ForwardPowerlow', 'PowerFoldback'], config: {} },
+        { name: 'dateRange1', type: FieldType.number, values: [1, 0], config: {} },
+        { name: 'dateRange2', type: FieldType.number, values: [3, 2], config: {} },
+        { name: 'dateRange3', type: FieldType.number, values: [4, 4], config: {} },
+      ],
+      length: 2,
+    };
+
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'Alarm Category', type: FieldType.string, values: ['Base Station Alarm'] },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: [[nestedFrame]] },
+      ],
+    });
+
+    const csv = toCSV([dataFrame]);
+    expect(csv).toMatchInlineSnapshot(`
+      ""Alarm Category","Alarm Name","dateRange1","dateRange2","dateRange3"
+      Base Station Alarm,ForwardPowerlow,1,3,4
+      Base Station Alarm,PowerFoldback,0,2,4"
+    `);
+  });
+
   it('should handle null values', () => {
     const dataFrame = new MutableDataFrame({
       fields: [

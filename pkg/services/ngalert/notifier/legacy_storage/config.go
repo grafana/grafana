@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -37,12 +38,13 @@ type ConfigRevision struct {
 	Version          string
 }
 type alertmanagerConfigStoreImpl struct {
-	store  amConfigStore
-	crypto crypto
+	store    amConfigStore
+	crypto   crypto
+	features featuremgmt.FeatureToggles
 }
 
-func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto}
+func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto, features featuremgmt.FeatureToggles) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto, features: features}
 }
 
 func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {

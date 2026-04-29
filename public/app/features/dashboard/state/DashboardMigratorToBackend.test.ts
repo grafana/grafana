@@ -68,6 +68,7 @@ describe('Backend / Frontend result comparison', () => {
       // Construct the backend output filename: v30.something.json -> v30.something.v41.json
       const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
       const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
+      delete backendMigrationResult.id; // Remove id to match frontend behavior
 
       expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 

@@ -1,21 +1,21 @@
 import {
-  DataSourceInstanceSettings,
-  LinkModel,
+  type DataSourceInstanceSettings,
+  type LinkModel,
   createDataFrame,
   SupportedTransformationType,
   DataLinkConfigOrigin,
   FieldType,
-  DataFrame,
+  type DataFrame,
 } from '@grafana/data';
-import { TraceToLogsOptionsV2, TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
+import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
 import { SpanLinkType } from './components/types/links';
-import { Trace, TraceSpan } from './components/types/trace';
+import { type Trace, type TraceSpan } from './components/types/trace';
 import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
@@ -200,7 +200,7 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__, __error_details__ | trace_id="7946b05c2e2e4e5a" | span_id="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" or trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" or span_id="6605c7b08e715d6c"',
                 refId: '',
                 datasource: { uid: 'loki1_uid' },
               },

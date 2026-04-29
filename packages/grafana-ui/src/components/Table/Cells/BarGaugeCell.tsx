@@ -1,14 +1,13 @@
-import { isFunction } from 'lodash';
 import { useState } from 'react';
 
-import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { type ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../BarGauge/BarGauge';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
-import { TableCellProps } from '../types';
+import { type TableCellProps } from '../types';
 import {
-  DataLinksActionsTooltipCoords,
+  type DataLinksActionsTooltipCoords,
   getAlignmentFactor,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
@@ -53,7 +52,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   }
 
   const getLinks = () => {
-    if (!isFunction(field.getLinks)) {
+    if (typeof field.getLinks !== 'function') {
       return [];
     }
 

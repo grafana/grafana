@@ -1,7 +1,7 @@
 import { scaleLinear } from 'd3';
 import color from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { ColorSchemeDiff } from '../types';
 

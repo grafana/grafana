@@ -33,6 +33,9 @@ type InlineSecureValue struct {
 	// +k8s:validation:maxLength=24576
 	Create RawSecureValue `json:"create,omitempty"`
 
+	// Optionally when creating a secure value, you can pass a custom description.
+	Description *string `json:"description,omitempty"`
+
 	// Name in the secret service (reference)
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=253
@@ -45,6 +48,10 @@ type InlineSecureValue struct {
 
 func (v InlineSecureValue) IsZero() bool {
 	return v.Create.IsZero() && v.Name == "" && !v.Remove
+}
+
+func (InlineSecureValue) OpenAPIModelName() string {
+	return OpenAPIPrefix + "InlineSecureValue"
 }
 
 // OpenAPIDefinition returns the JSONSchema that manually ensures oneOf(create | name | remove) is set.
@@ -74,6 +81,11 @@ func (InlineSecureValue) OpenAPIDefinition() openapi.OpenAPIDefinition {
 							Description: "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
 							Type:        []string{"boolean"},
 						}},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optionally when creating a secure value, you can pass a custom description.",
+							Type:        []string{"string"},
+							Format:      ""}},
 				},
 				OneOf: []spec.Schema{
 					{SchemaProps: spec.SchemaProps{

@@ -8,7 +8,7 @@ import (
 )
 
 // HostDir checks that the directory at 'path' exists and returns the dagger.Directory at 'path'.
-func HostDir(d *dagger.Client, path string) (*dagger.Directory, error) {
+func HostDir(d *dagger.Client, path string, opts ...dagger.HostDirectoryOpts) (*dagger.Directory, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -18,5 +18,5 @@ func HostDir(d *dagger.Client, path string) (*dagger.Directory, error) {
 		return nil, errors.New("given hostdir is not a directory")
 	}
 
-	return d.Host().Directory(path), nil
+	return d.Host().Directory(path, opts...), nil
 }

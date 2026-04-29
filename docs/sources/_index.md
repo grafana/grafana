@@ -46,15 +46,15 @@ cards:
       description: Manage data sources and how to configure or query the built-in data sources.
       height: 24
     - title: Dashboards
-      href: ./dashboards/
+      href: ./visualizations/dashboards/
       description: Query, transform, visualize, and understand your data no matter where it's stored.
       height: 24
     - title: Panels and Visualizations
-      href: ./panels-visualizations/
+      href: ./visualizations/panels-visualizations/
       description: Easily collect, correlate, and visualize data to make informed decisions in real-time.
       height: 24
     - title: Explore
-      href: ./explore/
+      href: ./visualizations/explore/
       description: Explore your data using a query instead of creating a dashboard.
       height: 24
     - title: Alerting

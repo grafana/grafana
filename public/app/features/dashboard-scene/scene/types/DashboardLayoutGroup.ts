@@ -1,6 +1,6 @@
-import { GridLayoutType } from '../layouts-shared/utils';
+import { type GridLayoutType } from '../layouts-shared/utils';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { type DashboardLayoutManager } from './DashboardLayoutManager';
 
 export interface DashboardLayoutGroup extends DashboardLayoutManager {
   /**

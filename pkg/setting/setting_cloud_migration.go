@@ -20,6 +20,7 @@ type CloudMigrationSettings struct {
 	GMSDomain                   string
 	AlertRulesState             string
 	ResourceStorageType         string
+	EncryptionAlgo              string
 	GMSStartSnapshotTimeout     time.Duration
 	GMSGetSnapshotStatusTimeout time.Duration
 	GMSCreateUploadUrlTimeout   time.Duration
@@ -50,6 +51,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("")
 	cfg.CloudMigration.AlertRulesState = cloudMigration.Key("alert_rules_state").In(GMSAlertRulesPaused, []string{GMSAlertRulesPaused, GMSAlertRulesUnchanged})
 	cfg.CloudMigration.ResourceStorageType = cloudMigration.Key("resource_storage_type").In("db", []string{"db", "fs"})
+	cfg.CloudMigration.EncryptionAlgo = cloudMigration.Key("encryption_algo").MustString("nacl")
 	cfg.CloudMigration.GMSValidateKeyTimeout = cloudMigration.Key("validate_key_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSStartSnapshotTimeout = cloudMigration.Key("start_snapshot_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.GMSGetSnapshotStatusTimeout = cloudMigration.Key("get_snapshot_status_timeout").MustDuration(5 * time.Second)

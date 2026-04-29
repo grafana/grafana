@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -32,44 +34,117 @@ func New(cfg config.NotificationConfig, reg prometheus.Registerer, logger loggin
 	}
 }
 
-func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func (n *Notification) QueryAlertsHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+	start := time.Now()
+
 	if n.loki == nil {
+		const msg = "Notification alerts query whilst disabled"
+		n.logger.Debug(msg)
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusUnprocessableEntity,
-				Message: "notification history disabled",
+				Message: msg,
+			}}
+	}
+
+	var body v0alpha1.CreateNotificationsqueryalertsRequestBody
+	err := json.NewDecoder(request.Body).Decode(&body)
+	if err != nil {
+		const msg = "Notification alerts query malformed"
+		n.logger.Debug(msg, "err", err)
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("%s: %s", msg, err.Error()),
+			}}
+	}
+
+	response, err := n.loki.QueryAlerts(ctx, body)
+	if err != nil {
+		if errors.Is(err, ErrInvalidQuery) {
+			const msg = "Notification alerts query invalid"
+			n.logger.Debug(msg, "err", err)
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusBadRequest,
+					Message: fmt.Sprintf("%s: %s", msg, err.Error()),
+				}}
+		}
+		const msg = "Notification alerts query failed"
+		n.logger.Error(msg, "err", err, "duration", time.Since(start))
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusInternalServerError,
+				Message: fmt.Sprintf("%s: %s", msg, err.Error()),
+			}}
+	}
+
+	n.logger.Debug("Notification alerts query success",
+		"alerts", len(response.Alerts),
+		"duration", time.Since(start))
+
+	writer.Header().Add("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	return json.NewEncoder(writer).Encode(response)
+}
+
+func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+	start := time.Now()
+
+	if n.loki == nil {
+		const msg = "Notification history query whilst disabled"
+		n.logger.Debug(msg)
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusUnprocessableEntity,
+				Message: msg,
 			}}
 	}
 
 	var body v0alpha1.CreateNotificationqueryRequestBody
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
+		const msg = "Notification history query malformed"
+		n.logger.Debug(msg, "err", err)
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusBadRequest,
-				Message: err.Error(),
+				Message: fmt.Sprintf("%s: %s", msg, err.Error()),
 			}}
 	}
 
 	response, err := n.loki.Query(ctx, body)
 	if err != nil {
 		if errors.Is(err, ErrInvalidQuery) {
+			const msg = "Notification history query invalid"
+			n.logger.Debug(msg, "err", err)
 			return &apierrors.StatusError{
 				ErrStatus: metav1.Status{
 					Status:  metav1.StatusFailure,
 					Code:    http.StatusBadRequest,
-					Message: err.Error(),
+					Message: fmt.Sprintf("%s: %s", msg, err.Error()),
 				}}
 		}
+		const msg = "Notification history query failed"
+		n.logger.Error(msg, "err", err, "duration", time.Since(start))
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
+				Message: fmt.Sprintf("%s: %s", msg, err.Error()),
 			}}
 	}
+
+	n.logger.Debug("Notification history query success",
+		"entries", len(response.Entries),
+		"counts", len(response.Counts),
+		"duration", time.Since(start))
 
 	writer.Header().Add("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusOK)

@@ -1,16 +1,19 @@
 import {
   DataFrameType,
   FieldType,
-  PanelDataSummary,
+  type PanelDataSummary,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { type GraphFieldConfig } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options, defaultOptions } from './types';
+import { type Options } from './panelcfg.gen';
+import { defaultOptions } from './types';
+
+const MAX_SUGGESTIONS_SERIES = 20;
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
@@ -58,7 +61,7 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
   // parse the frame into a heatmap structure to see if it's possible.
   const palette = quantizeScheme(defaultOptions.color, config.theme2);
   const info = prepareHeatmapData({
-    frames: dataSummary.rawFrames,
+    frames: dataSummary.rawFrames.slice(0, MAX_SUGGESTIONS_SERIES),
     options: defaultOptions,
     palette,
     theme: config.theme2,
@@ -72,6 +75,7 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
   return [
     {
       score: determineScore(dataSummary),
+      maxSeries: MAX_SUGGESTIONS_SERIES,
       cardOptions: {
         previewModifier: (s) => {
           s.options!.legend = { show: false };

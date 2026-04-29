@@ -1,7 +1,9 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { calculateTooltipPosition, getContentItems, getTooltipDisplayValue } from './utils';
+import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
+import { ColorIndicator } from './types';
+import { calculateTooltipPosition, getColorIndicatorClass, getContentItems, getTooltipDisplayValue } from './utils';
 
 describe('utils', () => {
   describe('calculateTooltipPosition', () => {
@@ -462,6 +464,42 @@ describe('utils', () => {
       const result = getTooltipDisplayValue(value, mockField);
       expect(result.text).toBe('[[1,2],[3,4]]');
       expect(result.numeric).toBeNaN();
+    });
+  });
+
+  describe('getColorIndicatorClass', () => {
+    const mockStyles = {
+      series: 'series-class',
+      value: 'value-class',
+      hexagon: 'hexagon-class',
+      pie_1_4: 'pie1-class',
+      pie_2_4: 'pie2-class',
+      pie_3_4: 'pie3-class',
+      marker_sm: 'sm-class',
+      marker_md: 'md-class',
+      marker_lg: 'lg-class',
+      leading: 'leading-class',
+      trailing: 'trailing-class',
+      seriesIndicator: 'series-indicator-class',
+    } satisfies ColorIndicatorStyles;
+
+    it.each([
+      ColorIndicator.series,
+      ColorIndicator.value,
+      ColorIndicator.hexagon,
+      ColorIndicator.pie_1_4,
+      ColorIndicator.pie_2_4,
+      ColorIndicator.pie_3_4,
+      ColorIndicator.marker_sm,
+      ColorIndicator.marker_md,
+      ColorIndicator.marker_lg,
+    ])('returns correct class for %s indicator', (indicator) => {
+      const expectedClass = mockStyles[indicator as keyof ColorIndicatorStyles];
+      expect(getColorIndicatorClass(indicator, mockStyles)).toBe(expectedClass);
+    });
+
+    it('returns value class as default for unknown indicator', () => {
+      expect(getColorIndicatorClass('unknown-indicator', mockStyles)).toBe('value-class');
     });
   });
 });

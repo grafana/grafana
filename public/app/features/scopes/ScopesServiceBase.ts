@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, pairwise, Subscription } from 'rxjs';
+import { BehaviorSubject, type Observable, pairwise, type Subscription } from 'rxjs';
 
 export abstract class ScopesServiceBase<T> {
   private _state: BehaviorSubject<T>;

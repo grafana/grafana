@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-func TestStarsQueries(t *testing.T) {
+func TestPreferencesQueries(t *testing.T) {
 	// prefix tables with grafana
 	nodb := &legacysql.LegacyDatabaseHelper{
 		Table: func(n string) string {
@@ -24,20 +24,33 @@ func TestStarsQueries(t *testing.T) {
 		return &v
 	}
 
-	getTeamQuery := func(orgId int64, user string, admin bool) sqltemplate.SQLTemplate {
-		v := newTeamsQueryReq(nodb, orgId, user, admin)
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlPreferencesQuery: {
 				{
+					Name:            "all-error",
+					Data:            getPreferencesQuery(1, func(q *preferencesQuery) {}),
+					ValidationError: "to list all preferences, explicitly set the .All flag",
+				},
+				{
+					Name:            "missing-org",
+					Data:            getPreferencesQuery(0, func(q *preferencesQuery) {}),
+					ValidationError: "must include an orgID",
+				},
+				{
+					Name: "missing-user",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.UserTeams = []string{"a"}
+					}),
+					ValidationError: "user required when filtering by a set of teams",
+				},
+				{
 					Name: "all",
-					Data: getPreferencesQuery(1, func(q *preferencesQuery) {}),
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.All = true
+					}),
 				},
 				{
 					Name: "user-no-teams",
@@ -65,21 +78,19 @@ func TestStarsQueries(t *testing.T) {
 						q.TeamUID = "ttt"
 					}),
 				},
+				{
+					Name: "namespace",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.Namespace = true
+					}),
+				},
 			},
 			sqlPreferencesRV: {
 				{
 					Name: "get",
-					Data: getPreferencesQuery(1, func(q *preferencesQuery) {}),
-				},
-			},
-			sqlTeams: {
-				{
-					Name: "members",
-					Data: getTeamQuery(1, "uuu", false),
-				},
-				{
-					Name: "admin",
-					Data: getTeamQuery(1, "uuu", true),
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.All = true // avoid validation error
+					}),
 				},
 			},
 		},

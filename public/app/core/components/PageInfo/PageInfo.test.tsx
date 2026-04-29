@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { PageInfoItem } from '../Page/types';
+import { type PageInfoItem } from '../Page/types';
 
 import { PageInfo } from './PageInfo';
 

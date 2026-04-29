@@ -2,21 +2,23 @@ import { useEffect } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
-import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { type Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
-import { getErrorMessage } from '../utils/httpUtils';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { FinishedJobStatus } from './FinishedJobStatus';
 import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: JobType;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -56,7 +58,15 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   }
 
   if (activeJob) {
-    return <JobContent job={activeJob} isFinishedJob={false} onStatusChange={onStatusChange} jobType={jobType} />;
+    return (
+      <JobContent
+        job={activeJob}
+        isFinishedJob={false}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+        onRetry={onRetry}
+      />
+    );
   }
 
   if (shouldCheckFinishedJobs) {
@@ -66,6 +76,7 @@ export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
         repositoryName={repoLabel}
         onStatusChange={onStatusChange}
         jobType={jobType}
+        onRetry={onRetry}
       />
     );
   }

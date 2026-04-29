@@ -50,5 +50,5 @@ func TestSearchBackendBenchmark(t *testing.T) {
 
 	t.Cleanup(backend.Stop)
 
-	unitest.BenchmarkSearchBackend(t, backend, opts)
+	unitest.RunSearchBackendBenchmark(t, backend, opts)
 }

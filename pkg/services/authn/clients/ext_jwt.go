@@ -27,6 +27,8 @@ var _ authn.Client = new(ExtendedJWT)
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"
 	ExtJWTAuthorizationHeaderName  = "X-Grafana-Id"
+
+	grafanaAppPrefix = "grafana.app"
 )
 
 var (
@@ -94,19 +96,27 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
-		return s.authenticateAsUser(*idTokenClaims, *accessTokenClaims)
+		return s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken)
 	}
 
-	return s.authenticateAsService(*accessTokenClaims)
+	// Access token without ID token: may be service-only or OBO (on-behalf-of).
+	// IsOnBehalfOfUser traverses the full actor chain and returns true only when
+	// the innermost actor is a User or ServiceAccount — correctly handles multi-hop chains.
+	if accessTokenClaims.Rest.IsOnBehalfOfUser() {
+		return s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken)
+	}
+
+	return s.authenticateAsService(*accessTokenClaims, jwtToken)
 }
 
 func (s *ExtendedJWT) IsEnabled() bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 
-func (s *ExtendedJWT) authenticateAsUser(
+func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
+	accessTokenInPlainText string,
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
@@ -123,6 +133,8 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
+	// this check is common between authenticateAsUserViaIDToken and authenticateAsUserViaOBO
+	// TypeAccessPolicy is the only current mechanism to authenticate as the user (whether through OBO token or separate ID token)
 	if !claims.IsIdentityType(accessType, claims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
@@ -136,21 +148,29 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
+	fetchPermissionsParams := authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}}
+	for _, perm := range accessTokenClaims.Rest.DelegatedPermissions {
+		if strings.Contains(perm, grafanaAppPrefix) {
+			fetchPermissionsParams.K8sRestrictedActions = append(fetchPermissionsParams.K8sRestrictedActions, perm)
+		} else {
+			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
+		}
+	}
+
 	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
-			},
-			FetchSyncedUser: true,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        true,
 		},
 	}
 
@@ -172,7 +192,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	return identity, nil
 }
 
-func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokenInPlainText string) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
@@ -197,7 +217,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
-			} else if strings.Contains(permissions[i], "grafana.app") {
+			} else if strings.Contains(permissions[i], grafanaAppPrefix) {
 				// Check for pattern <resource>.grafana.app/<resource>:<action>
 				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {
@@ -212,6 +232,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		Name:              id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
 		AuthID:            accessTokenClaims.Subject,
@@ -222,6 +243,88 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 			FetchSyncedUser:        false,
 		},
 	}, nil
+}
+
+// authenticateAsUserViaOBO handles access tokens that carry an Actor (on-behalf-of)
+// without a separate ID token. The effective identity is always the innermost actor
+// in the chain, which is guaranteed to be a User or ServiceAccount by
+// IsOnBehalfOfUser (authlib). DelegatedPermissions restrict the user's permissions
+// the same way as when an explicit ID token is present.
+func (s *ExtendedJWT) authenticateAsUserViaOBO(
+	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
+	accessTokenInPlainText string,
+) (*authn.Identity, error) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
+	}
+
+	accessType, _, err := claims.ParseTypeID(accessTokenClaims.Subject)
+	if err != nil {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
+	}
+	// this check is common between authenticateAsUserViaIDToken and authenticateAsUserViaOBO
+	// TypeAccessPolicy is the only current mechanism to authenticate as the user (whether through OBO token or separate ID token)
+	if !claims.IsIdentityType(accessType, claims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
+	}
+
+	// NewAccessTokenAuthInfo traverses the full actor chain to find the innermost
+	// identity actor — correctly handles multi-hop OBO.
+	authInfo := authlib.NewAccessTokenAuthInfo(accessTokenClaims)
+	subject := authInfo.GetSubject()
+	if subject == "" {
+		return nil, errExtJWTInvalid.Errorf("access token has no actor subject")
+	}
+
+	t, id, err := claims.ParseTypeID(subject)
+	if err != nil {
+		return nil, errExtJWTInvalid.Errorf("failed to parse actor subject: %w", err)
+	}
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected actor identity: %s", subject)
+	}
+
+	fetchPermissionsParams := authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}}
+	for _, perm := range accessTokenClaims.Rest.DelegatedPermissions {
+		if strings.Contains(perm, grafanaAppPrefix) {
+			fetchPermissionsParams.K8sRestrictedActions = append(fetchPermissionsParams.K8sRestrictedActions, perm)
+		} else {
+			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
+		}
+	}
+
+	identity := &authn.Identity{
+		ID:                id,
+		UID:               authInfo.GetIdentifier(),
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokenInPlainText,
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
+		ClientParams: authn.ClientParams{
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        true,
+		},
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {

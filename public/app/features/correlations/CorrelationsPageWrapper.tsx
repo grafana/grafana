@@ -5,7 +5,7 @@ import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlat
 import { config } from '@grafana/runtime';
 
 import CorrelationsPage from './CorrelationsPage';
-import { GetCorrelationsParams, RemoveCorrelationParams } from './types';
+import { type GetCorrelationsParams, type RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 
@@ -22,7 +22,7 @@ export function CorrelationsPageLegacy() {
   );
 }
 
-function CorrelationsPageAppPlatform() {
+export function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
   const limit = 100;
   const { currentData, isLoading, error, doesContinue } = useCorrelationsK8s(limit, page);

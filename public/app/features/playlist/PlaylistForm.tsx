@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -8,7 +8,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 
-import { Playlist, PlaylistSpec } from '../../api/clients/playlist/v0alpha1';
+import { type Playlist, type PlaylistSpec } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
@@ -21,6 +21,8 @@ interface Props {
 
 export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
   const [saving, setSaving] = useState(false);
+  const playlistNameId = useId();
+  const playlistIntervalId = useId();
   const { title: name, interval, items: propItems } = playlist.spec || {};
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
@@ -59,7 +61,8 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 {...register('title', { required: t('playlist-edit.form.name-required', 'Name is required') })}
                 placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
                 defaultValue={name}
-                aria-label={selectors.pages.PlaylistForm.name}
+                data-testid={selectors.pages.PlaylistForm.name}
+                id={playlistNameId}
               />
             </Field>
             <Field
@@ -74,7 +77,8 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 })}
                 placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
                 defaultValue={interval ?? '5m'}
-                aria-label={selectors.pages.PlaylistForm.interval}
+                data-testid={selectors.pages.PlaylistForm.interval}
+                id={playlistIntervalId}
               />
             </Field>
 

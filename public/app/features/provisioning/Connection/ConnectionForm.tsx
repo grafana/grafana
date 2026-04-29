@@ -1,18 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Combobox, Field, Stack } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
+import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
-import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { type ConnectionFormData } from '../types';
+import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -32,6 +33,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const formMethods = useForm<ConnectionFormData>({
     defaultValues: {
       type: data?.spec?.type || 'github',
+      title: data?.spec?.title || '',
+      description: data?.spec?.description || '',
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
       privateKey: '',
@@ -62,10 +65,24 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
+  useEffect(() => {
+    if (isEdit && data?.status?.fieldErrors?.length) {
+      const errors = getConnectionFormErrors(data.status.fieldErrors);
+      for (const [field, errorMessage] of errors) {
+        setError(field, errorMessage);
+      }
+    }
+  }, [isEdit, data?.status?.fieldErrors, setError]);
+
+  const [submitError, setSubmitError] = useState<string>();
+
   const onSubmit = async (form: ConnectionFormData) => {
+    setSubmitError(undefined);
     try {
       const spec = {
+        title: form.title,
         type: form.type,
+        ...(form.description && { description: form.description }),
         github: {
           appID: form.appID,
           installationID: form.installationID,
@@ -75,13 +92,27 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+        const errors = getConnectionFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (errors.length > 0) {
+          for (const [field, errorMessage] of errors) {
+            setError(field, errorMessage);
+          }
+          return;
+        }
+
+        // Show unmapped error details as a top-level form error
+        const allErrors = extractFormErrors(err.data);
+        const detail = allErrors.find((e) => e.detail)?.detail;
+        if (detail) {
+          setSubmitError(detail);
           return;
         }
       }
+
+      setSubmitError(
+        extractErrorMessage(err) || t('provisioning.connection-form.error-submit', 'Failed to save connection')
+      );
     }
   };
 
@@ -90,6 +121,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
+          {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin
             htmlFor="type"
@@ -111,7 +143,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          <GitHubAppCredentialFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+          <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>

@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -21,7 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -85,12 +88,12 @@ func badRequestError(err error) apimodels.RuleResponse {
 
 func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
-		log,
-		manager,
-		status,
-		store,
-		authz,
-		provenanceStore,
+		log:             log,
+		manager:         manager,
+		status:          status,
+		store:           store,
+		authz:           authz,
+		provenanceStore: provenanceStore,
 	}
 }
 
@@ -273,6 +276,7 @@ type RuleGroupStatusesOptions struct {
 	OrgID             int64
 	Query             url.Values
 	AllowedNamespaces map[string]string
+	SortByFullpath    bool
 }
 
 type ListAlertRulesStore interface {
@@ -337,6 +341,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			OrgID:             orgID,
 			Query:             c.Req.Form,
 			AllowedNamespaces: allowedNamespaces,
+			SortByFullpath:    openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingRuleGroupSortByFolderFullpath, false, openfeature.TransactionContext(c.Req.Context())),
 		},
 		RuleStatusMutatorGenerator(srv.status),
 		RuleAlertStateMutatorGenerator(srv.manager),
@@ -369,9 +374,47 @@ func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
 	}
 }
 
+// ComputeRuleState computes the rule state from alert instance states.
+// Priority: Alerting > Pending/Recovering > Normal.
+func ComputeRuleState(alertStates []*state.State) eval.State {
+	ruleState := eval.Normal
+	for _, alertState := range alertStates {
+		switch alertState.State {
+		case eval.Alerting:
+			return eval.Alerting
+		case eval.Pending:
+			if ruleState == eval.Normal {
+				ruleState = eval.Pending
+			}
+		case eval.Recovering:
+			if ruleState == eval.Normal {
+				ruleState = eval.Recovering
+			}
+		case eval.Normal, eval.NoData, eval.Error:
+			// These states don't change the rule state
+		}
+	}
+	return ruleState
+}
+
+// RuleStateToAPIString converts eval.State to API response string.
+func RuleStateToAPIString(s eval.State) string {
+	switch s {
+	case eval.Alerting:
+		return "firing"
+	case eval.Pending:
+		return "pending"
+	case eval.Recovering:
+		return "recovering"
+	default:
+		return "inactive"
+	}
+}
+
 func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
 	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
 		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
+		toMutate.State = RuleStateToAPIString(ComputeRuleState(states))
 		totals := make(map[string]int64)
 		totalsFiltered := make(map[string]int64)
 		for _, alertState := range states {
@@ -383,26 +426,11 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 				totals["error"] += 1
 			}
 
-			// Set the state of the rule based on the state of its alerts.
-			// Only update the rule state with 'pending' or 'recovering' if the current state is 'inactive'.
-			// This prevents overwriting a higher-severity 'firing' state in the case of a rule with multiple alerts.
-			switch alertState.State {
-			case eval.Normal:
-			case eval.Pending:
-				if toMutate.State == "inactive" {
-					toMutate.State = "pending"
-				}
-			case eval.Recovering:
-				if toMutate.State == "inactive" {
-					toMutate.State = "recovering"
-				}
-			case eval.Alerting:
+			// Track earliest ActiveAt for firing alerts
+			if alertState.State == eval.Alerting {
 				if toMutate.ActiveAt == nil || toMutate.ActiveAt.After(activeAt) {
 					toMutate.ActiveAt = &activeAt
 				}
-				toMutate.State = "firing"
-			case eval.Error:
-			case eval.NoData:
 			}
 
 			if len(stateFilterSet) > 0 {
@@ -515,6 +543,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		RuleLimit:          remainingRules,
 		ContinueToken:      token,
 		Compact:            ctx.compact,
+		SortByFullpath:     ctx.opts.SortByFullpath,
 	}
 
 	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
@@ -870,6 +899,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 
 	compact := getBoolWithDefault(opts.Query, "compact", false)
 	span.SetAttributes(attribute.Bool("compact", compact))
+
+	span.SetAttributes(attribute.Bool("order_by_full_path", opts.SortByFullpath))
+
 	pagCtx := &paginationContext{
 		opts:               opts,
 		provenanceRecords:  nil,
@@ -1263,8 +1295,8 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 		// mutate rule to apply status fields
 		ruleStatusMutator(ctx, rule, &alertingRule)
 
-		if len(rule.NotificationSettings) > 0 {
-			alertingRule.NotificationSettings = (*apimodels.AlertRuleNotificationSettings)(&rule.NotificationSettings[0])
+		if rule.NotificationSettings != nil {
+			alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
 		}
 
 		// mutate rule for alert states

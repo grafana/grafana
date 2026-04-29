@@ -1,14 +1,47 @@
-import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
-import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe } from 'app/features/browse-dashboards/utils/dashboards';
+import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
+import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
+import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
-import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
+import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
+import {
+  type DashboardSearchHit,
+  DashboardSearchItemType,
+  type DashboardViewItem,
+  type DashboardViewItemKind,
+} from '../types';
 
-import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
-import { SearchHit } from './unified';
+import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
+import { type SearchHit } from './unified';
+
+/**
+ * Marker stored in `field.deletedBy` when IAM lookup succeeded but the deleter UID had no
+ * display entry — typically because the account (user, service account, API key, ...) was
+ * deleted. Chosen with NUL delimiters so it cannot collide with any real display name.
+ */
+export const DELETED_BY_REMOVED = '\u0000__grafana_deleted_account__\u0000';
+
+/**
+ * Marker stored in `field.deletedBy` when the IAM batch containing the UID failed entirely
+ * (network/timeout/server error). We cannot distinguish "account deleted" from "lookup failed"
+ * for UIDs in a failed batch, so we surface the ambiguity in the UI with an icon + tooltip.
+ */
+export const DELETED_BY_UNKNOWN = '\u0000__grafana_unknown_account__\u0000';
+
+export function formatDeletedByDisplayValue(
+  rawValue: unknown,
+  t: (key: string, defaultValue: string) => string
+): string {
+  if (rawValue === DELETED_BY_REMOVED) {
+    return t('search.results-table.deleted-by-removed', 'Deleted account');
+  }
+  if (typeof rawValue === 'string' && rawValue) {
+    return rawValue;
+  }
+  return '-';
+}
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -61,10 +94,14 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
-  } else {
-    return getIconForKind(item.kind, isOpen);
+    return 'user-arrows';
   }
+
+  if (item && isVirtualTeamFolder(item.uid)) {
+    return 'users-alt';
+  }
+
+  return getIconForKind(item.kind, isOpen);
 }
 
 function parseKindString(kind: string): DashboardViewItemKind {
@@ -82,12 +119,18 @@ function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
   return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
 }
 
+export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): ManagerKind | undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
+  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -95,7 +138,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: item.managedBy,
+    managedBy: managedByStr,
   };
 
   // Set enterprise sort value property
@@ -122,11 +165,19 @@ export function queryResultToViewItem(
   return viewItem;
 }
 
-export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+export function resourceToSearchResult(
+  resource: ResourceList<DashboardDataDTO>,
+  deletedByDisplayMap?: Map<string, string>
+): SearchHit[] {
   return resource.items.map((item) => {
     const field: Record<string, string | number> = {};
     if (item.metadata.deletionTimestamp) {
       field.deletionTimestamp = item.metadata.deletionTimestamp;
+    }
+
+    const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+    if (deletedByUid) {
+      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
     }
 
     const hit = {
@@ -211,6 +262,30 @@ export function filterSearchResults(
         const timeB = Date.parse(timestampB);
         return mult * (timeA - timeB);
       });
+    } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
+      const collator = new Intl.Collator();
+      const mult = query.sort === 'deletedby-desc' ? -1 : 1;
+      const isSortable = (v: string | number | undefined): v is string =>
+        typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN;
+      filtered.sort((a, b) => {
+        const byA = a.field.deletedBy;
+        const byB = b.field.deletedBy;
+
+        // Missing or sentinel deleter values sort to the end regardless of direction.
+        const sortableA = isSortable(byA);
+        const sortableB = isSortable(byB);
+        if (!sortableA && !sortableB) {
+          return 0;
+        }
+        if (!sortableA) {
+          return 1;
+        }
+        if (!sortableB) {
+          return -1;
+        }
+
+        return mult * collator.compare(byA, byB);
+      });
     } else {
       // Alphabetical sorting
       const collator = new Intl.Collator();
@@ -220,4 +295,40 @@ export function filterSearchResults(
   }
 
   return filtered;
+}
+
+/**
+ * Appends rows from `frame` into `target`, aligning fields that may differ between frames.
+ * New fields are backfilled with null for existing rows; missing fields are padded with null for new rows.
+ */
+export function appendFrame(target: DataFrame, frame: DataFrame): void {
+  const existingLength = target.length;
+  const newLength = existingLength + frame.length;
+
+  // Add new fields from the incoming frame that don't exist in the target yet
+  for (const f of frame.fields) {
+    if (!target.fields.find((vf) => vf.name === f.name)) {
+      target.fields.push({
+        ...f,
+        values: new Array(existingLength).fill(null).concat(f.values),
+      });
+    }
+  }
+
+  // Append values from matching fields
+  for (const f of frame.fields) {
+    const field = target.fields.find((vf) => vf.name === f.name);
+    if (field && field.values.length === existingLength) {
+      field.values.push(...f.values);
+    }
+  }
+
+  // Pad fields that don't exist in the incoming frame with null
+  for (const field of target.fields) {
+    while (field.values.length < newLength) {
+      field.values.push(null);
+    }
+  }
+
+  target.length = newLength;
 }

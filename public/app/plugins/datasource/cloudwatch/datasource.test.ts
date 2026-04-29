@@ -1,11 +1,11 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { CoreApp, Field } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
 import {
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
@@ -16,11 +16,11 @@ import {
   logGroupNamesVariable,
   regionVariable,
   setupMockedDataSource,
+  accountIdVariable,
 } from './mocks/CloudWatchDataSource';
-import { setupForLogs } from './mocks/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
 import { TimeRangeMock } from './mocks/timeRange';
-import { CloudWatchQuery, CloudWatchLogsRequest, CloudWatchDefaultQuery } from './types';
+import { type CloudWatchQuery, type CloudWatchLogsRequest, type CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
 describe('datasource', () => {
@@ -303,52 +303,6 @@ describe('datasource', () => {
         region: 'templatedRegion',
       });
     });
-
-    it('should add links to log insights queries', async () => {
-      const { datasource } = setupForLogs();
-
-      const observable = datasource.query({
-        targets: [
-          {
-            id: '',
-            region: '',
-            queryMode: 'Logs',
-            logGroupNames: ['test'],
-            expression: 'some query',
-            refId: 'a',
-          },
-        ],
-        requestId: '',
-        interval: '',
-        intervalMs: 0,
-        range: TimeRangeMock,
-        scopedVars: {},
-        timezone: '',
-        app: '',
-        startTime: 0,
-      });
-
-      const emits = await lastValueFrom(observable.pipe(toArray()));
-      expect(emits).toHaveLength(1);
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '@xrayTraceId').config.links).toMatchObject([
-        {
-          title: 'Xray',
-          url: '',
-          internal: {
-            query: { query: '${__value.raw}', region: 'us-west-1', queryType: 'getTrace' },
-            datasourceUid: 'xray',
-            datasourceName: 'Xray',
-          },
-        },
-      ]);
-
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '').config.links).toMatchObject([
-        {
-          title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
-        },
-      ]);
-    });
   });
 
   describe('resource requests', () => {
@@ -424,12 +378,81 @@ describe('datasource', () => {
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(8);
+      expect(templateService.replace).toHaveBeenCalledTimes(10);
 
       expect(mockGetVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(mockGetVariableName).toHaveBeenCalledTimes(1);
+    });
+
+    it('should interpolate accountId variable in a CloudWatchMetricsQuery when called via interpolateVariablesInQueries', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '$accountId',
+      };
+
+      const result = datasource.interpolateVariablesInQueries([metricsQuery], {});
+
+      expect(result[0]).toMatchObject({
+        accountId: 'templatedaccountId',
+      });
+    });
+
+    it('should interpolate accountId variable in a CloudWatchMetricsQuery when called via applyTemplateVariables', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '$accountId',
+      };
+
+      const result = datasource.applyTemplateVariables(metricsQuery, {});
+
+      expect(result).toMatchObject({
+        accountId: 'templatedaccountId',
+      });
+    });
+
+    it('should not modify accountId if it is not a template variable', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '123456789012',
+      };
+
+      const result = datasource.applyTemplateVariables(metricsQuery, {});
+
+      expect(result).toMatchObject({
+        accountId: '123456789012',
+      });
     });
   });
 

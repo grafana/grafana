@@ -11,6 +11,7 @@ awsconfig
 /reports
 /e2e/tmp
 /scripts/grafana-server/tmp
+/scripts/uplot-compare/dist
 vendor/
 /docs/menu.yaml
 /requests
@@ -133,7 +134,6 @@ profile.cov
 
 # Enterprise operators
 /pkg/operators/enterprise_*
-/pkg/operators/**/enterprise_*
 
 debug.test
 /examples/*/dist
@@ -143,6 +143,7 @@ debug.test
 /packaging/**/*.tar.gz.sha256
 pkg/cmd/grafana-server/__debug_bin
 pkg/services/quota/quotaimpl/storage/storage.json
+pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -177,6 +178,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore frontend build manifest
 manifest.json
+manifest-react19.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
@@ -211,6 +213,7 @@ compilation-stats.json
 # a11y tests
 /pa11y-ci-results.json
 /pa11y-ci-report
+/axe-ci-report.json
 
 # report dumping the whole system env
 /report.*.json
@@ -264,3 +267,15 @@ public/mockServiceWorker.js
 .hippo
 
 coverage-summary.json
+
+# older path, but keeping to avoid surprises for devs who may have the earlier gitignored data
+devenv/blocks/auth/signer/keys/ec_private_key.pem
+
+devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
+
+# Spec-kit files shouldn't be committed without a major design process
+.specs
+.playwright-mcp/
+overrides.yaml
+
+.profiles

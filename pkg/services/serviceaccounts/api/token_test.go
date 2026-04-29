@@ -135,7 +135,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 		{
 			desc:                    "should not be able to create token for service account if token expiration day limit is configured and exceeds the limit",
 			id:                      1,
-			body:                    `{"name": "test", "secondsToLive": 340000}`, // 340000 seconds is > 3 days
+			body:                    `{"name": "test", "secondsToLive": 345600}`, // 345600 seconds is 4 days (> 3 day limit)
 			tokenTTL:                -1,
 			tokenExpirationDayLimit: 3,
 			permissions:             []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},

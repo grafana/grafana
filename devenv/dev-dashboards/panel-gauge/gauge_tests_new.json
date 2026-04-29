@@ -108,7 +108,7 @@
         }
       ],
       "title": "Plain",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -184,7 +184,7 @@
         }
       ],
       "title": "Center glow",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -260,7 +260,7 @@
         }
       ],
       "title": "Center and bar glow",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -336,7 +336,7 @@
         }
       ],
       "title": "Sparkline",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -412,7 +412,7 @@
         }
       ],
       "title": "Square butts",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -488,7 +488,7 @@
         }
       ],
       "title": "Square butts gauge",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -577,7 +577,7 @@
         }
       ],
       "title": "Bar width 0,1",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -653,7 +653,7 @@
         }
       ],
       "title": "Bar width 0,32",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -729,7 +729,7 @@
         }
       ],
       "title": "Bar width 0,57",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -805,7 +805,7 @@
         }
       ],
       "title": "Bar width 0,8",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -894,7 +894,7 @@
         }
       ],
       "title": "Plain thresholds",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -970,7 +970,7 @@
         }
       ],
       "title": "Thresholds segmented",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1046,7 +1046,7 @@
         }
       ],
       "title": "Segmented + gradient",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1122,7 +1122,7 @@
         }
       ],
       "title": "Plain thresholds",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1198,7 +1198,7 @@
         }
       ],
       "title": "Thresholds circle segmented",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1291,7 +1291,7 @@
         }
       ],
       "title": "Thresholds labels",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1371,7 +1371,7 @@
         }
       ],
       "title": "Thresholds labels only",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1451,7 +1451,7 @@
         }
       ],
       "title": "Thresholds labels + circle",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1498,7 +1498,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 18,
         "x": 0,
         "y": 33
       },
@@ -1545,7 +1545,88 @@
         }
       ],
       "title": "Auto gradient + classic palette",
-      "type": "radialbar"
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 18,
+        "y": 33
+      },
+      "id": 41,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidth": 12,
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": true,
+          "centerGlow": true,
+          "gradient": true
+        },
+        "endpointMarker": "glow",
+        "glow": "both",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": true
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 98,
+          "min": 5,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 2,
+          "spread": 12,
+          "startValue": 50
+        }
+      ],
+      "title": "Horizontal orientation",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1579,7 +1660,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 18,
         "x": 0,
         "y": 39
       },
@@ -1625,7 +1706,7 @@
         }
       ],
       "title": "Continuous color scheme ",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -1735,7 +1816,7 @@
         }
       ],
       "title": "Active gateways",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1832,7 +1913,7 @@
         }
       ],
       "title": "Active pods",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1912,7 +1993,7 @@
         }
       ],
       "title": "Backend",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1992,7 +2073,7 @@
         }
       ],
       "title": "Backend",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -2067,7 +2148,7 @@
         }
       ],
       "title": "Numeric, no series",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -2131,7 +2212,7 @@
         }
       ],
       "title": "Non-numeric",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "collapsed": false,
@@ -2226,7 +2307,7 @@
         }
       ],
       "title": "Single link",
-      "type": "radialbar"
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -2312,7 +2393,7 @@
         }
       ],
       "title": "Multiple links",
-      "type": "radialbar"
+      "type": "gauge"
     }
   ],
   "preload": false,

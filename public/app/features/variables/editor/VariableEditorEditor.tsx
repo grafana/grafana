@@ -1,14 +1,21 @@
 import { css, keyframes } from '@emotion/css';
-import { FormEvent, PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { type FormEvent, PureComponent } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableType } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  LoadingState,
+  type SelectableValue,
+  type VariableHide,
+  type VariableType,
+  type VariableWithOptions,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, Stack, Icon, Themeable2, withTheme2 } from '@grafana/ui';
-import { StoreState, ThunkDispatch } from 'app/types/store';
+import { Button, Stack, Icon, type Themeable2, withTheme2 } from '@grafana/ui';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
@@ -21,13 +28,23 @@ import { updateOptions } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp, changeVariableType, removeVariable } from '../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
-import { OnPropChangeArguments, VariableNameConstraints } from './types';
+import { type OnPropChangeArguments, VariableNameConstraints } from './types';
+
+// Adapter to make legacy VariableWithOptions compatible with VariableValuesPreview
+function LegacyVariableValuesPreview({ variable }: { variable: VariableWithOptions }) {
+  const options = variable.options.map((opt) => ({
+    label: String(opt.text),
+    value: Array.isArray(opt.value) ? opt.value.join(', ') : opt.value,
+    properties: opt.properties,
+  }));
+  return <VariableValuesPreview options={options} staticOptions={[]} />;
+}
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
@@ -216,7 +233,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
           {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
-          {hasOptions(this.props.variable) ? <VariableValuesPreview options={this.getVariableOptions()} /> : null}
+          {hasOptions(this.props.variable) ? <LegacyVariableValuesPreview variable={this.props.variable} /> : null}
 
           <div style={{ marginTop: '16px' }}>
             <Stack gap={2} height="inherit">

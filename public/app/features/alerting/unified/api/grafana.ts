@@ -1,9 +1,8 @@
-import { lastValueFrom } from 'rxjs';
-
-import { getBackendSrv } from '@grafana/runtime';
-import { ContactPointsState, ReceiverState, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
-
-import { getDatasourceAPIUid } from '../utils/datasource';
+import {
+  type ContactPointsState,
+  type ReceiverState,
+  type ReceiversStateDTO,
+} from 'app/features/alerting/unified/types/alerting';
 
 interface IntegrationNameObject {
   type: string;
@@ -57,18 +56,3 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
 
 export const getIntegrationType = (integrationName: string): string | undefined =>
   parseIntegrationName(integrationName)?.type;
-
-export async function fetchContactPointsState(alertManagerSourceName: string): Promise<ContactPointsState> {
-  try {
-    const response = await lastValueFrom(
-      getBackendSrv().fetch<ReceiversStateDTO[]>({
-        url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/receivers`,
-        showErrorAlert: false,
-        showSuccessAlert: false,
-      })
-    );
-    return contactPointsStateDtoToModel(response.data);
-  } catch (error) {
-    return contactPointsStateDtoToModel([]);
-  }
-}

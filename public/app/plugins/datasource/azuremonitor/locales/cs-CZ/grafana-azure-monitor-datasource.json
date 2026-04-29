@@ -13,7 +13,7 @@
       "label-resource-group": "Skupina zdrojů",
       "label-resource-name": "Název zdroje",
       "label-resource-number": "Zdroj {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "URI zdroje",
       "label-subscription": "Předplatné",
       "placeholder-resource-name": "název",
       "tooltip-region": "Oblast kódu zdroje. Volitelné pro jeden zdroj, ale povinné při výběru více zdrojů.",
@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Certifikát klienta",
       "aria-label-client-id": "ID klienta",
       "aria-label-client-secret": "Tajné heslo klienta",
+      "aria-label-private-key": "Soukromý klíč",
+      "aria-label-private-key-password": "Heslo certifikátu",
       "aria-label-symbol-client-secret": "Tajné heslo klienta",
       "aria-label-tenant-id": "ID tenanta",
+      "description-certificate-format": "Vyberte formát certifikátu (certifikáty PEM by měly být ve formátu PEM s prostým textem, certifikáty PFX by měly být ve formátu PFX kódovaném pomocí Base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formát",
+      "label-client-certificate": "Certifikát klienta",
       "label-client-id": "ID aplikace (klienta)",
       "label-client-secret": "Tajné heslo klienta",
+      "label-private-key": "Soukromý klíč",
       "label-symbol-client-secret": "Tajné heslo klienta",
+      "label-symbol-private-key-password": "Heslo certifikátu",
       "label-tenant-id": "ID adresáře (tenanta)",
       "placeholder-symbol-client-secret": "nastaveno",
       "reset-symbol-client-secret": "Obnovit"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Vyberte typ ověření pro služby Azure",
-      "label-authentication": "Ověření",
+      "label-authentication": "Typ ověření",
       "title-authentication": "Ověření"
     },
     "basic-logs-toggle": {
@@ -147,7 +155,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "Přidat skupinu podle",
+      "aria-label-add-group-by": "Přidat funkci Seřadit podle",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },
@@ -226,26 +234,26 @@
       "select-resource": "Vyberte zdroj"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "Procházet",
       "button-apply": "Použít",
       "button-cancel": "Zrušit",
       "header-location": "Poloha",
-      "header-resource-group": "",
+      "header-resource-group": "Skupina zdrojů",
       "header-scope": "Rozsah",
       "header-type": "Typ",
       "heading-selection": "Výběr",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "Umístění",
+      "locations-filter-placeholder": "Vyberte umístění",
+      "recent-tab": "Nedávné",
       "result-limit": "Zobrazují se první {{numResults}} výsledky",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "Předplatné",
+      "subscriptions-filter-placeholder": "Vyberte předplatné",
       "text-loading": "Načítání…",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "Nebyly nalezeny žádné nedávné zdroje",
       "text-no-resources": "Nebyly nalezeny žádné zdroje",
       "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "Typy zdrojů",
+      "types-filter-placeholder": "Vyberte typ zdroje"
     },
     "scope-selector": {
       "label": "Rozsah"
@@ -274,7 +282,7 @@
       "label-time-column": "Časový sloupec",
       "label-time-range": "Časový rozsah",
       "tooltip-time-column": "<0>Určuje časový sloupec používaný pro filtrování. Výchozí nastavení je první sloupec tabulek <1>timeSpan</1>, první nalezený sloupec <3>datetime</3> nebo <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>Určuje časový rozsah použitý pro dotaz. Možnost <1>Dotaz</1> použije pouze časové rozsahy uvedené v dotazu. <3>Nástěnka</3> použije pouze časový rozsah Grafany.</0>"
     },
     "top-field": {
       "label-top": "Horní část"

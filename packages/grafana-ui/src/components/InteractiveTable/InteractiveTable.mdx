@@ -19,10 +19,48 @@ It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for 
 
 The InteractiveTable can be used to allow users to perform administrative tasks workflows.
 
-### When not to use
+### Do's
 
-Avoid using the InteractiveTable where mobile or responsiveness may be a requirement.
-Consider an alternative pattern where the user is presented with a summary list and can click/tap to an individual page for each row in that list.
+- Use the table for admin user persona-centric workflows.
+- Use the table for batch selection and manipulation/editing of multiple rows of data.
+- Pagination works best when users are searching for specific pieces of content. Infinite scroll is more suitable for content exploration.
+- Use infinite scroll when the primary workflow involves exploration.
+- Conduct a use case analysis to determine what information should be in the primary table and what can be moved to the expanded section to declutter the overall UI.
+
+### Don'ts
+
+- Do not use the InteractiveTable in dashboards or panels.
+- Avoid using the table where mobile or responsiveness is a requirement. Consider an alternative pattern where the user is presented with a summary list and can click/tap to access an individual page for each row in that list.
+- Don't duplicate batch editing controls in the expanded row section.
+
+### Considerations
+
+The InteractiveTable component supports workflows where the user needs to manipulate potentially large datasets. In its simplest form it allows for batch selection of existing data for further processing within a larger workflow. Its capabilities can be expanded to enable dataset creation as well as batch editing.
+
+The table will typically be complemented by a section above to support either read-only or editing workflows. Read-only tables will usually have a summary of specific properties or calculated attributes of the dataset. Depending on the feature under design there may be import/export options. For editing workflows users will add new rows to the table below. There will also be batch edit options for existing rows in the header section.
+
+Individual rows can be expanded to display additional details or reconfigure properties previously defined when the row was created. In the case of editing a row, the UI presented should be a duplicate of the header section above the table used to create the row. In the case where a property can no longer be edited it should still be displayed but disabled/greyed out. The expanded row area should be used to declutter the primary presentation of data. Carefully consider what the user needs to know at first glance and what can be hidden behind the Row Expander button. In general, data-types that are consistent across all dataset are in the primary table, variances are pushed to the expanded section for each individual row.
+
+It is important to understand and define these as requirements for the feature under design as the InteractiveTable **is not responsive and will not provide good UX on small or touch screens.**
+
+### Content
+
+| Element                         | Details                                                                                                                                                                                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Tri-state batch selector**    | The tri-state checkbox can be checked, not checked, or partially checked. The condition of being partially checked is based on the selection of child elements. If all child elements are selected, the parent checkbox is checked. If some child elements are selected, the parent checkbox is partially checked. |
+| **Row selector**                | Select, deselect row                                                                                                                                                                                                                                                                                               |
+| **Row expand/collapse**         | The expander control is used to show and hide additional details and potentially controls/modifiers, and therefore declutter your app                                                                                                                                                                              |
+| **Row details**                 | This section is utilised to either show additional details or to provide the user with row specific controls or modifiers. Typically batch editing controls found outside the table should not be duplicated here.                                                                                                 |
+| **Column Label**                | Descriptive identifier or header assigned to a column                                                                                                                                                                                                                                                              |
+| **Column Sort**                 | Sort alphabetically, numerically etc.                                                                                                                                                                                                                                                                              |
+| **Row level Read-Only actions** | Duplicate                                                                                                                                                                                                                                                                                                          |
+| **Row level Editing action**    | Duplicate, Delete                                                                                                                                                                                                                                                                                                  |
+
+### Typical Workflows
+
+#### Mixed Read-only and Editing
+
+Where a table has a mix of read-only and editable elements, when the user selects read-only elements the editing batch operations above the table become disabled. Consider adding a column to indicate which rows are editable and which are read-only.
 
 ### Usage
 

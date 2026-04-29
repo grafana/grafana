@@ -58,6 +58,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  configure-inhibition-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
 ---
 
 # Configure silences
@@ -211,6 +216,4 @@ To link to a new silence page for an external Alertmanager, add a `alertmanager`
 
 ## Inhibition rules
 
-Inhibition rules are supported in the Prometheus Alertmanager. You can [configure a Prometheus Alertmanager](ref:configure-alertmanager) to handle the notification of alerts and suppress notifications via inhibition rules.
-
-Inhibition rules are not currently supported in the Grafana Alertmanager. For tracking the progress of this feature request, follow [this GitHub issue](https://github.com/grafana/grafana/issues/68822).
+Inhibition rules suppress notifications for target alerts when a related source alert is already firing. For more information, refer to [Configure inhibition rules](ref:configure-inhibition-rules).

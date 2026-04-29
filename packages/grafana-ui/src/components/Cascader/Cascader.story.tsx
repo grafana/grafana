@@ -1,9 +1,9 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { useId, useState } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react';
+import { useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Cascader, CascaderOption } from './Cascader';
+import { Cascader, type CascaderOption } from './Cascader';
 import mdx from './Cascader.mdx';
 
 const onSelect = (val: string) => console.log(val);
@@ -61,11 +61,10 @@ const meta: Meta<typeof Cascader> = {
   },
 };
 
-const Template: StoryFn<typeof Cascader> = (args) => {
-  const id = useId();
+const Template: StoryFn<typeof Cascader> = ({ disabled, ...rest }) => {
   return (
-    <Field label="Cascader field">
-      <Cascader {...args} id={id} />
+    <Field label="Cascader field" disabled={disabled}>
+      <Cascader {...rest} />
     </Field>
   );
 };
@@ -84,7 +83,7 @@ export const WithCustomValue = Template.bind({});
 WithCustomValue.args = {
   initialValue: 'Custom Initial Value',
   allowCustomValue: true,
-  formatCreateLabel: (val) => 'Custom Label' + val,
+  formatCreateLabel: (val) => 'Use custom value: ' + val,
 };
 
 export const WithDisplayAllSelectedLevels = Template.bind({});
@@ -100,13 +99,12 @@ export const WithOptionsStateUpdate = () => {
       value: 'initial',
     },
   ]);
-  const id = useId();
 
   setTimeout(() => setOptions(options), 2000);
 
   return (
     <Field label="Cascader field with updated options">
-      <Cascader options={updatedOptions} onSelect={onSelect} id={id} />
+      <Cascader options={updatedOptions} onSelect={onSelect} />
     </Field>
   );
 };

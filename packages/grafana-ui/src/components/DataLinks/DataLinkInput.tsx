@@ -1,17 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
-import Prism, { Grammar, LanguageMap } from 'prismjs';
+import Prism, { type Grammar, type LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
-import { Value } from 'slate';
+import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
 
-import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
 import { SlatePrism } from '../../slate-plugins/slate-prism';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
@@ -67,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: 0,
       backgroundColor: 'transparent',
       border: 'none',
+      '&:focus-within': getFocusStyles(theme),
     },
   }),
 });

@@ -221,3 +221,81 @@ func TestMacroEngineConcurrency(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestStripSQLComments(t *testing.T) {
+	t.Run("strips block comments", func(t *testing.T) {
+		result := stripSQLComments("SELECT /* comment */ 1")
+		require.Equal(t, "SELECT  1", result)
+	})
+
+	t.Run("strips line comments with --", func(t *testing.T) {
+		result := stripSQLComments("SELECT 1 -- line comment\nFROM t")
+		require.Equal(t, "SELECT 1 \nFROM t", result)
+	})
+
+	t.Run("strips hash comments", func(t *testing.T) {
+		result := stripSQLComments("SELECT 1 # hash comment\nFROM t")
+		require.Equal(t, "SELECT 1 \nFROM t", result)
+	})
+
+	t.Run("preserves hash inside single-quoted string", func(t *testing.T) {
+		sql := `SELECT JSON_UNQUOTE(JSON_EXTRACT(t.properties, '$."Claim #"')) AS claim`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("preserves hash inside double-quoted string", func(t *testing.T) {
+		sql := `SELECT "col#name" FROM t`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("preserves hash inside backtick-quoted identifier", func(t *testing.T) {
+		sql := "SELECT `Claim #` FROM t"
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("preserves -- inside single-quoted string", func(t *testing.T) {
+		sql := `SELECT '--not-a-comment' FROM t`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("preserves /* inside single-quoted string", func(t *testing.T) {
+		sql := `SELECT '/* not a comment */' FROM t`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("handles escaped quotes inside strings", func(t *testing.T) {
+		sql := `SELECT 'it\'s a #test' FROM t`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("handles doubled quotes inside strings", func(t *testing.T) {
+		sql := `SELECT 'it''s a #test' FROM t`
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("real-world JSON path with hash regression", func(t *testing.T) {
+		sql := "SELECT\n  JSON_UNQUOTE(JSON_EXTRACT(t.properties, '$.\"Claim #\"')) AS `Claim Number`\nFROM repairshopr.tickets t\nWHERE t.status = 'Resolved'"
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("hash comment after a quoted string with hash", func(t *testing.T) {
+		sql := "SELECT 'Claim #' # this is a comment\nFROM t"
+		expected := "SELECT 'Claim #' \nFROM t"
+		result := stripSQLComments(sql)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("no comments returns unchanged", func(t *testing.T) {
+		sql := "SELECT 1 FROM t WHERE id = 42"
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+}

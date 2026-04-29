@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -37,6 +37,13 @@ var bootErrorMetric = promauto.NewCounter(prometheus.CounterOpts{
 	Help:      "Total number of frontend boot errors",
 })
 
+var settingsFetchMetric = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Subsystem: "frontend",
+	Name:      "settings_fetch_total",
+	Help:      "Total number of settings service fetch attempts from the request config middleware",
+}, []string{"status"}) // status: "success" or "error"
+
 type frontendService struct {
 	*services.BasicService
 	cfg          *setting.Cfg
@@ -49,29 +56,37 @@ type frontendService struct {
 	tracer       trace.Tracer
 	license      licensing.Licensing
 
-	index *IndexProvider
+	index           *IndexProvider
+	settingsService settingservice.Service // nil if not configured
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
-	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
+	logger := log.New("frontend-service")
+
+	index, err := NewIndexProvider(cfg, license, hooksService)
 	if err != nil {
 		return nil, err
 	}
 
-	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
-	if err != nil {
+	// Initialize Settings Service client if configured
+	var settingsService settingservice.Service
+	if settingsSvc, err := setupSettingsService(cfg, promRegister); err != nil {
+		logger.Error("Settings Service failed to initialize", "err", err)
 		return nil, err
+	} else {
+		settingsService = settingsSvc
 	}
 
 	s := &frontendService{
-		cfg:          cfg,
-		features:     features,
-		log:          log.New("frontend-server"),
-		promGatherer: promGatherer,
-		promRegister: promRegister,
-		tracer:       tracer,
-		license:      license,
-		index:        index,
+		cfg:             cfg,
+		features:        features,
+		log:             logger,
+		promGatherer:    promGatherer,
+		promRegister:    promRegister,
+		tracer:          tracer,
+		license:         license,
+		index:           index,
+		settingsService: settingsService,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -139,6 +154,11 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 
 	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
+
+	// Must run before CSP middleware since CSP reads config from context
+	m.UseMiddleware(RequestConfigMiddleware(s.cfg, s.license, s.settingsService))
+
+	m.UseMiddleware(CSPMiddleware())
 
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
 }

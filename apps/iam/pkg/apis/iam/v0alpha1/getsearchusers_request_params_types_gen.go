@@ -13,3 +13,8 @@ type GetSearchUsersRequestParams struct {
 func NewGetSearchUsersRequestParams() *GetSearchUsersRequestParams {
 	return &GetSearchUsersRequestParams{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersRequestParams.
+func (GetSearchUsersRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersRequestParams"
+}

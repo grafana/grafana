@@ -2,19 +2,21 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type subResourceREST struct {
@@ -47,37 +49,40 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, ""
 }
 
-// FIXME: this endpoint has not been tested yet, so it is not enabled by default.
-// It is especially important to make sure the `ClearAuthHeadersMiddleware` is active,
-// when using this endpoint.
-var resourceEnabled = false
-
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if !resourceEnabled {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status: metav1.StatusFailure,
-				Code:   http.StatusNotImplemented,
-			},
-		}
-	}
+	m := newConnectMetric("resource", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
+		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			m.SetNotFound()
+			m.Record()
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
+		}
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
-	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+
+	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		clonedReq, err := resourceRequest(req)
 		if err != nil {
+			backend.Logger.Error("failed to create resource request", "error", err)
+			m.SetError()
 			responder.Error(err)
 			return
 		}
 
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
+			backend.Logger.Error("failed to read request body", "error", err)
+			m.SetError()
 			responder.Error(err)
 			return
 		}
@@ -92,19 +97,22 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		}, httpresponsesender.New(w))
 
 		if err != nil {
+			backend.Logger.Error("plugin resource request failed", "error", err)
+			m.SetError()
 			responder.Error(err)
+			return
 		}
 	}), nil
 }
 
 func resourceRequest(req *http.Request) (*http.Request, error) {
-	idx := strings.LastIndex(req.URL.Path, "/resource")
+	idx := strings.LastIndex(req.URL.Path, "/resources")
 	if idx < 0 {
 		return nil, fmt.Errorf("expected resource path") // 400?
 	}
 
 	clonedReq := req.Clone(req.Context())
-	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resource"):], "/")
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resources"):], "/")
 
 	clonedReq.URL = &url.URL{
 		Path:     rawURL,
