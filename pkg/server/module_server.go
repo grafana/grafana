@@ -10,15 +10,18 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/urfave/cli/v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/urfave/cli/v2"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -32,11 +35,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/nats"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"go.opentelemetry.io/otel"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -364,6 +367,10 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
+	})
+
+	m.RegisterModule(modules.NATSServer, func() (services.Service, error) {
+		return nats.ProvideNATSService(s.cfg, s.features)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
