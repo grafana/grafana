@@ -44,7 +44,7 @@ export function FolderReadmeHint({ folderUID, itemCount }: Props) {
       <Icon name="info-circle" size="sm" />
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="browse-dashboards.readme.hint">
-          Lots of dashboards and new to this folder?{' '}
+          Lots of dashboards or new to this folder?{' '}
           <TextLink
             inline
             href={`#${FOLDER_README_ANCHOR_ID}`}
