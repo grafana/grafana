@@ -1134,20 +1134,15 @@ const (
 	// maxKvListIteratorTotalAttempts bounds total retryable failures to stop
 	// slow-drip loops (1 key per attempt, always fails) from hanging.
 	maxKvListIteratorTotalAttempts = 10
-	// maxKvGetRetryAttempts is the maximum number of attempts for a single Get
-	// before giving up. Only kv.ErrRetryable errors are retried.
-	maxKvGetRetryAttempts = 3
 )
 
-// datastoreRetryBackoff is the default backoff config used between retry attempts
-// for transient dataStore errors (Get, BatchGet).
-var datastoreRetryBackoff = backoff.Config{
+// kvListIteratorBackoff is the default backoff config used between retry attempts.
+var kvListIteratorBackoff = backoff.Config{
 	MinBackoff: 500 * time.Millisecond,
 	MaxBackoff: 3 * time.Second,
 }
 
 var batchGetRetryLogger = log.New("kv-batchget-retry")
-var getRetryLogger = log.New("kv-get-retry")
 
 type batchGetRetryPull struct {
 	ctx       context.Context
@@ -1170,7 +1165,7 @@ func newBatchGetRetryPull(ctx context.Context, ds *dataStore, keys []DataKey) *b
 		ctx:       ctx,
 		dataStore: ds,
 		keys:      keys,
-		retryBo:   backoff.New(ctx, datastoreRetryBackoff),
+		retryBo:   backoff.New(ctx, kvListIteratorBackoff),
 	}
 	p.next, p.stopFn = iter.Pull2(p.dataStore.BatchGet(p.ctx, keys))
 	return p
