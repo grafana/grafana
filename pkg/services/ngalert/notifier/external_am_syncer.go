@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -69,16 +68,13 @@ const (
 )
 
 // ConfigPersister is the subset of MultiOrgAlertmanager the syncer needs to
-// commit a fetched ExtraConfig and to compare against what's already stored.
-// MultiOrgAlertmanager satisfies it via SaveAndApplyExtraConfiguration and
-// StoredExtraConfigHash.
+// commit a fetched ExtraConfig. MultiOrgAlertmanager satisfies it via
+// SaveAndApplyExtraConfiguration, which is itself idempotent: a call with
+// content byte-equivalent to what's already stored is a no-op (no
+// alert_configuration_history row is written), so the syncer calls it on
+// every tick without a separate dedup pre-check.
 type ConfigPersister interface {
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
-	// StoredExtraConfigHash returns the FNV-1a hash of the stored ExtraConfiguration
-	// with the given identifier (after decryption). (0, false, nil) when no matching
-	// entry is stored. Used to dedup against the persisted state so a no-op sync
-	// never writes a fresh row to alert_configuration_history, even after restart.
-	StoredExtraConfigHash(ctx context.Context, orgID int64, identifier string) (uint64, bool, error)
 }
 
 // ExternalAMSyncer fetches Mimir/Cortex alertmanager configuration for each org
@@ -159,63 +155,21 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 		orgIDStr := fmt.Sprintf("%d", orgID)
 		start := time.Now()
 
-		fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		ds, err := s.datasourceService.GetDataSource(fetchCtx, &datasources.GetDataSourceQuery{
-			UID:   uid,
-			OrgID: orgID,
-		})
+		ec, reason, err := s.fetchExtraConfig(ctx, orgID, uid)
 		if err != nil {
-			cancel()
-			s.logger.Warn("Failed to look up external AM datasource", "org_id", orgID, "error", err)
-			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonDatasourceLookup).Inc()
+			s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", err)
+			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
 			s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 			continue
 		}
-
-		mimirCfg, err := s.fetchMimirConfig(fetchCtx, ds)
-		cancel()
-		if err != nil {
-			s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "error", err)
-			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, syncReasonMimirFetch).Inc()
-			s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
-			continue
-		}
-
-		ec := apimodels.ExtraConfiguration{
-			Identifier:         uid,
-			AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
-			TemplateFiles:      mimirCfg.TemplateFiles,
-		}
-		incomingHash := fingerprintExtraConfig(ec)
-
-		// Dedup against the persisted ExtraConfig with the same identifier. Comparing
-		// the unencrypted parsed value (not raw stored bytes) is necessary because
-		// the on-disk form has fresh per-call IVs that defeat byte comparison even
-		// for identical input. On hashErr we fall through to save — best-effort dedup
-		// must never block sync.
-		storedHash, exists, hashErr := s.persister.StoredExtraConfigHash(ctx, orgID, uid)
-		if hashErr == nil && exists && storedHash == incomingHash {
-			s.logger.Debug("Skipping external AM config save: stored config hash unchanged", "org_id", orgID)
-			s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
-			s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(extraConfigHashAsMetricValue(incomingHash))
-			s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
-				continue
-		}
-		if hashErr != nil {
-			// Hash check failure is non-fatal — log and proceed with the save. The
-			// most likely cause is a transient decrypt/parse failure on the stored
-			// blob; SaveAndApplyExtraConfiguration will hit the same code path and
-			// surface a real error if it actually matters.
-			s.logger.Warn("Failed to compute stored extra config hash; proceeding with save", "org_id", orgID, "error", hashErr)
-		}
-
 		// SaveAndApplyExtraConfiguration is the same entry point used by the convert
-		// API, so a malformed Mimir/Cortex config is rejected before it lands in the
-		// database. Calling with replace=false also enforces single-identifier ownership:
-		// when an existing ExtraConfig has a different identifier, it returns
-		// ErrAlertmanagerMultipleExtraConfigsUnsupported, which we classify separately
-		// so operators can see the collision in admin_config rather than as a generic
-		// "save" failure.
+		// API and is idempotent: it short-circuits when the incoming ec matches what's
+		// already stored, so calling it on every tick is safe — no alert_configuration_history
+		// row is written for a no-op sync, even immediately after a process restart.
+		// With replace=false, an existing ExtraConfig under a different identifier
+		// returns ErrAlertmanagerMultipleExtraConfigsUnsupported, which we classify
+		// separately so operators can see the collision in admin_config rather than
+		// as a generic "save" failure.
 		if _, err = s.persister.SaveAndApplyExtraConfiguration(ctx, orgID, ec, false /*replace*/, false /*dryRun*/); err != nil {
 			reason := classifySyncError(err)
 			s.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
@@ -224,11 +178,45 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 			continue
 		}
 
+		// Always set the gauge to the hash of what's now stored — successful tick
+		// either applied this hash or confirmed it was already in place. Setting on
+		// every tick (rather than only when a save happened) ensures the gauge has
+		// a value after restart even if the config hasn't changed since.
 		s.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
 		s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
-		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(extraConfigHashAsMetricValue(incomingHash))
+		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(extraConfigHashAsMetricValue(fingerprintExtraConfig(ec)))
 		s.metrics.ExternalAMConfigSyncDuration.Observe(time.Since(start).Seconds())
 	}
+}
+
+// fetchExtraConfig looks up the org's external AM datasource and fetches the current
+// alertmanager configuration from it. The 10s timeout used for both calls is owned
+// via defer here so an early return cannot leak the cancel — callers don't need to
+// care about timeout management when adding new failure paths. The returned reason
+// matches the label on ExternalAMConfigSyncFailures so the caller can emit the
+// metric without re-classifying.
+func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (apimodels.ExtraConfiguration, string, error) {
+	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	ds, err := s.datasourceService.GetDataSource(fetchCtx, &datasources.GetDataSourceQuery{
+		UID:   uid,
+		OrgID: orgID,
+	})
+	if err != nil {
+		return apimodels.ExtraConfiguration{}, syncReasonDatasourceLookup, fmt.Errorf("look up datasource: %w", err)
+	}
+
+	mimirCfg, err := s.fetchMimirConfig(fetchCtx, ds)
+	if err != nil {
+		return apimodels.ExtraConfiguration{}, syncReasonMimirFetch, fmt.Errorf("fetch upstream config: %w", err)
+	}
+
+	return apimodels.ExtraConfiguration{
+		Identifier:         uid,
+		AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
+		TemplateFiles:      mimirCfg.TemplateFiles,
+	}, "", nil
 }
 
 // resolveExternalAMUID returns the datasource UID to use for external AM sync for
@@ -316,8 +304,7 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	}
 
 	var cfg mimirConfigResponse
-	decoder := yaml.NewDecoder(bytes.NewReader(body))
-	if err := decoder.Decode(&cfg); err != nil {
+	if err := yaml.Unmarshal(body, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 

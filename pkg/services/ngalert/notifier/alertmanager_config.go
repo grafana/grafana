@@ -401,6 +401,23 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return definition.RenameResources{}, fmt.Errorf("failed to get current configuration: %w", err)
 	}
 
+	// Idempotent skip: if the ExtraConfigs that modifyFn would produce are
+	// byte-equivalent (after decryption) to what's already stored, return without
+	// invoking the validate + encrypt + apply chain or writing a fresh
+	// alert_configuration_history row. Both the convert API (repeated identical
+	// imports) and the sync worker (idle Mimir tenants) benefit. Best-effort: on
+	// dedup error we fall through to the normal save path so a transient
+	// parse/decrypt failure never blocks a legitimate write.
+	if !dryRun {
+		skipped, dedupErr := moa.extraConfigsAlreadyStored(ctx, currentCfg.AlertmanagerConfiguration, modifyFn)
+		if dedupErr != nil {
+			moa.logger.Warn("Failed to compare extra config against stored value; proceeding with save", "org", org, "error", dedupErr)
+		} else if skipped {
+			moa.logger.Debug("ExtraConfig unchanged; skipping save and apply", "org", org)
+			return definition.RenameResources{}, nil
+		}
+	}
+
 	cfg, err := Load([]byte(currentCfg.AlertmanagerConfiguration))
 	if err != nil {
 		return definition.RenameResources{}, fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
@@ -448,6 +465,54 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org)
 	return merge.RenameResources, nil
+}
+
+// extraConfigsAlreadyStored reports whether the ExtraConfigs that modifyFn
+// would produce match what's already stored under the same identifier (after
+// decrypting the stored copy). Returns (false, nil) when lengths differ, an
+// identifier is missing, or any hash differs; (true, nil) when all incoming
+// entries are byte-equivalent to what's stored; (false, err) on parse/decrypt
+// failure.
+func (moa *MultiOrgAlertmanager) extraConfigsAlreadyStored(
+	ctx context.Context,
+	rawCfg string,
+	modifyFn func([]definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error),
+) (bool, error) {
+	parsed, err := Load([]byte(rawCfg))
+	if err != nil {
+		return false, fmt.Errorf("parse stored alertmanager configuration: %w", err)
+	}
+	desired, err := modifyFn(parsed.ExtraConfigs)
+	if err != nil {
+		return false, err
+	}
+	if len(parsed.ExtraConfigs) != len(desired) {
+		return false, nil
+	}
+	if len(desired) == 0 {
+		return true, nil
+	}
+
+	// Decrypt the parsed ExtraConfigs in-place so their fields can be hashed
+	// against the (already unencrypted) desired entries from modifyFn. We
+	// don't return parsed, so the in-place mutation is contained.
+	if err := moa.Crypto.DecryptExtraConfigs(ctx, parsed); err != nil {
+		return false, fmt.Errorf("decrypt stored extra config: %w", err)
+	}
+	decrypted := make(map[string]definitions.ExtraConfiguration, len(parsed.ExtraConfigs))
+	for _, e := range parsed.ExtraConfigs {
+		decrypted[e.Identifier] = e
+	}
+	for _, d := range desired {
+		existing, ok := decrypted[d.Identifier]
+		if !ok {
+			return false, nil
+		}
+		if fingerprintExtraConfig(existing) != fingerprintExtraConfig(d) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
