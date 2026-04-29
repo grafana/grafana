@@ -85,7 +85,7 @@ func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isUserTeamsK8sPathEnabled(ctx) {
 		return s.k8sService.GetTeamsByUser(ctx, query)
 	}
 
@@ -93,7 +93,7 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 }
 
 func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isUserTeamsK8sPathEnabled(ctx) {
 		// GetTeamIDsByUser is called during authentication (e.g. middleware that
 		// resolves team-based permissions) before a requester has been attached to
 		// the context. The k8s service requires a requester to build the dynamic
@@ -120,7 +120,7 @@ func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) erro
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isUserTeamsK8sPathEnabled(ctx) {
 		return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 	}
 
@@ -150,6 +150,18 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// isUserTeamsK8sPathEnabled gates the methods that read membership through
+// the /users/{uid}/teams subresource (GetTeamsByUser, GetTeamIDsByUser,
+// GetUserTeamMemberships). The subresource is gated on FlagKubernetesTeamBindings;
+// without it the apiserver returns 403 and these methods would fail. Both
+// flags must be on for the k8s path; otherwise we fall back to legacy.
+func (s *Service) isUserTeamsK8sPathEnabled(ctx context.Context) bool {
+	if !s.isKubernetesTeamServiceEnabled(ctx) {
+		return false
+	}
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamBindings, false, openfeature.TransactionContext(ctx))
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.
