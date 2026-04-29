@@ -5,6 +5,8 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
+  Badge,
+  type BadgeColor,
   Card,
   EmptyState,
   Icon,
@@ -305,6 +307,24 @@ function colorForKind(theme: GrafanaTheme2, kind: string): string {
   }
 }
 
+/** Map a manager kind to a Badge color so chips line up with donut colors. */
+function badgeColorForKind(kind: string): BadgeColor {
+  switch (kind) {
+    case ManagerKind.Repo:
+      return 'green';
+    case ManagerKind.Terraform:
+      return 'blue';
+    case ManagerKind.Kubectl:
+      return 'purple';
+    case ManagerKind.Plugin:
+      return 'orange';
+    case CLASSIC_FILE_PROVISIONING:
+      return 'red';
+    default:
+      return 'darkgrey';
+  }
+}
+
 /**
  * Builds segments for the donut and the stat cards. Donut shows only non-zero
  * segments (drawing a 0-thickness arc is meaningless). Cards always include
@@ -442,8 +462,8 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
   const managedPct = percent(stats.managedTotal, stats.instanceTotal);
 
   return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" alignItems="baseline" gap={1.5} wrap>
+    <Stack direction="column" gap={1.5}>
+      <Stack direction="column" gap={0.5}>
         <Text variant="h4">
           <Trans i18nKey="provisioning.stats.overview-heading">Provisioning overview</Trans>
         </Text>
@@ -780,9 +800,7 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
               <Text color={b.unmanagedCount > 0 ? 'warning' : 'secondary'}>{b.unmanagedCount.toLocaleString()}</Text>
               <Stack direction="row" gap={0.5} wrap>
                 {providersThatSupport(b.group).map((kind) => (
-                  <span key={kind} className={styles.kindChip}>
-                    <Text variant="bodySmall">{kindLabel(kind)}</Text>
-                  </span>
+                  <Badge key={kind} color={badgeColorForKind(kind)} text={kindLabel(kind)} />
                 ))}
               </Stack>
             </div>
@@ -832,8 +850,8 @@ export function StatsTabContent() {
 
   return (
     <Stack direction="column" gap={4}>
-      <SummarySection stats={computed} />
       <GitSyncBanner breakdowns={computed.groupBreakdowns} />
+      <SummarySection stats={computed} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
       <ResourceTypesSection breakdowns={computed.groupBreakdowns} />
@@ -893,14 +911,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference')]: {
       transition: 'opacity 150ms ease, stroke-width 150ms ease',
     },
-  }),
-  kindChip: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: theme.spacing(0.25, 1),
-    borderRadius: theme.shape.radius.pill,
-    background: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
   }),
   managerList: css({
     display: 'flex',

@@ -73,8 +73,8 @@ export default function HomePage() {
     if (isStatsEnabled) {
       tabs.push({
         value: 'stats',
-        label: t('provisioning.home-page.tab-stats', 'Stats'),
-        title: t('provisioning.home-page.tab-stats-title', 'Provisioning resource statistics'),
+        label: t('provisioning.home-page.tab-stats', 'Overview'),
+        title: t('provisioning.home-page.tab-stats-title', 'Provisioning resource overview'),
       });
     }
 
