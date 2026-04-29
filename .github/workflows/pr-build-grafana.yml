@@ -159,7 +159,6 @@ jobs:
           repo_secrets: |
             METICULOUS_API_TOKEN=meticulous-ui:api-token
 
-      # /v1/ci/data/repo/grafana/grafana/meticulous-ui | api-token
       - name: Run Meticulous tests
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
