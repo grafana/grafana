@@ -332,6 +332,33 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('Files (Classic)').length).toBeGreaterThan(0);
   });
 
+  it('search filter narrows the donut totals as well as the table', async () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 16 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // Before filtering: donut shows 0% (none managed) but the totals are
+    // computed against 20 resources, so the cards show "0 of 20".
+    expect(screen.getAllByText(/0 of 20/i).length).toBeGreaterThan(0);
+
+    await userEvent.type(screen.getByPlaceholderText(/search resource types/i), 'folder');
+
+    // After filtering to "folder" only: 4 folders, all unmanaged. Cards
+    // should now compute against 4, not 20, so "4 of 4" appears for the
+    // unmanaged segment.
+    expect(screen.getAllByText(/4 of 4/i).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/0 of 20/i)).toHaveLength(0);
+  });
+
   it('filters the Resource types table by the search input', async () => {
     mockQuery({
       data: {

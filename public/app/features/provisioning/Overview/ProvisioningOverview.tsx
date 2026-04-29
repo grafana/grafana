@@ -327,40 +327,6 @@ function badgeColorForKind(kind: string): BadgeColor {
   }
 }
 
-/**
- * Builds segments for the donut and the stat cards. Donut shows only non-zero
- * segments (drawing a 0-thickness arc is meaningless). Cards always include
- * Git Sync and Unmanaged — even at zero — so the row keeps a stable shape and
- * users can see "0 of N managed by Git Sync" rather than a missing card.
- */
-function buildSegments(stats: ComputedStats, theme: GrafanaTheme2): ProviderSegment[] {
-  const segments: ProviderSegment[] = [
-    {
-      key: ManagerKind.Repo,
-      label: kindLabel(ManagerKind.Repo),
-      value: stats.gitSync?.totals.total ?? 0,
-      color: theme.colors.success.main,
-    },
-  ];
-  for (const p of stats.otherProviders) {
-    if (p.totals.total === 0) {
-      continue;
-    }
-    segments.push({
-      key: p.kind,
-      label: kindLabel(p.kind),
-      value: p.totals.total,
-      color: colorForKind(theme, p.kind),
-    });
-  }
-  segments.push({
-    key: 'unmanaged',
-    label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
-    value: stats.unmanagedTotal,
-    color: theme.colors.warning.main,
-  });
-  return segments;
-}
 
 function Donut({
   segments,
@@ -470,12 +436,57 @@ function GitOpsExplainer() {
   );
 }
 
-function SummarySection({ stats }: { stats: ComputedStats }) {
+/**
+ * Build per-provider donut segments from a list of resource breakdowns.
+ * Used both at the top level (all data) and when the filters narrow the
+ * set of resource types — so the donut and stat cards reflect exactly the
+ * rows the user sees in the table.
+ */
+function buildSegmentsFromBreakdowns(breakdowns: GroupBreakdown[], theme: GrafanaTheme2): ProviderSegment[] {
+  let gitSync = 0;
+  let unmanaged = 0;
+  const otherByKind = new Map<string, number>();
+  breakdowns.forEach((b) => {
+    gitSync += b.gitSyncCount;
+    unmanaged += b.unmanagedCount;
+    Object.entries(b.managedByKind).forEach(([kind, count]) => {
+      otherByKind.set(kind, (otherByKind.get(kind) ?? 0) + count);
+    });
+  });
+  const segments: ProviderSegment[] = [
+    {
+      key: ManagerKind.Repo,
+      label: kindLabel(ManagerKind.Repo),
+      value: gitSync,
+      color: theme.colors.success.main,
+    },
+  ];
+  for (const [kind, value] of otherByKind) {
+    if (value === 0) {
+      continue;
+    }
+    segments.push({ key: kind, label: kindLabel(kind), value, color: colorForKind(theme, kind) });
+  }
+  segments.push({
+    key: 'unmanaged',
+    label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
+    value: unmanaged,
+    color: theme.colors.warning.main,
+  });
+  return segments;
+}
+
+function SummarySection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const segments = useMemo(() => buildSegments(stats, theme), [stats, theme]);
-  const managedPct = percent(stats.managedTotal, stats.instanceTotal);
+  const segments = useMemo(() => buildSegmentsFromBreakdowns(breakdowns, theme), [breakdowns, theme]);
+  const instanceTotal = useMemo(() => breakdowns.reduce((acc, b) => acc + b.total, 0), [breakdowns]);
+  const managedTotal = useMemo(
+    () => segments.filter((s) => s.key !== 'unmanaged').reduce((acc, s) => acc + s.value, 0),
+    [segments]
+  );
+  const managedPct = percent(managedTotal, instanceTotal);
 
   return (
     <div className={styles.summaryPanel}>
@@ -493,7 +504,7 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
       <Stack direction="row" gap={1.5} wrap flex={1}>
         <ProviderStat
           segmentKey="total"
-          big={stats.instanceTotal.toLocaleString()}
+          big={instanceTotal.toLocaleString()}
           label={t('provisioning.stats.summary-total', 'Total resources')}
           hoveredKey={hoveredKey}
           onHover={setHoveredKey}
@@ -502,10 +513,10 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
           <ProviderStat
             key={seg.key}
             segmentKey={seg.key}
-            big={percent(seg.value, stats.instanceTotal)}
+            big={percent(seg.value, instanceTotal)}
             subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
               value: seg.value,
-              total: stats.instanceTotal,
+              total: instanceTotal,
             })}
             label={seg.label}
             colorHex={seg.color}
@@ -739,16 +750,19 @@ function ManagementStatusIcon({ state }: { state: ManagementState }) {
   );
 }
 
-function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+interface FiltersValue {
+  providerFilter: string;
+  searchQuery: string;
+}
+
+function FiltersBar({
+  value,
+  onChange,
+}: {
+  value: FiltersValue;
+  onChange: (next: FiltersValue) => void;
+}) {
   const styles = useStyles2(getStyles);
-  const [providerFilter, setProviderFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [repos] = useRepositoryList({ watch: false });
-  const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
-
-  // Drop seeded zero-count rows so we don't list types nobody has any of.
-  const baseRows = useMemo(() => breakdowns.filter((b) => b.total > 0), [breakdowns]);
-
   const filterOptions: Array<SelectableValue<string>> = useMemo(
     () => [
       { value: 'all', label: t('provisioning.stats.filter-all', 'All providers') },
@@ -756,21 +770,56 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
     ],
     []
   );
+  return (
+    <Stack direction="row" gap={1.5} alignItems="center" wrap>
+      <div className={styles.searchInput}>
+        <FilterInput
+          placeholder={t('provisioning.stats.search-placeholder', 'Search resource types')}
+          value={value.searchQuery}
+          onChange={(searchQuery) => onChange({ ...value, searchQuery })}
+        />
+      </div>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
+        </Text>
+        <div className={styles.providerSelect}>
+          <Select
+            value={value.providerFilter}
+            options={filterOptions}
+            onChange={(v) => onChange({ ...value, providerFilter: v.value ?? 'all' })}
+            aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
+          />
+        </div>
+      </Stack>
+    </Stack>
+  );
+}
 
-  const rows = useMemo(() => {
-    let result = baseRows;
-    if (providerFilter !== 'all') {
-      result = result.filter((b) => providerSupports(providerFilter, b.group));
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (b) =>
-          b.label.toLowerCase().includes(q) || b.resource.toLowerCase().includes(q) || b.group.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [baseRows, providerFilter, searchQuery]);
+function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): GroupBreakdown[] {
+  let result = breakdowns.filter((b) => b.total > 0);
+  if (filters.providerFilter !== 'all') {
+    result = result.filter((b) => providerSupports(filters.providerFilter, b.group));
+  }
+  if (filters.searchQuery) {
+    const q = filters.searchQuery.toLowerCase();
+    result = result.filter(
+      (b) =>
+        b.label.toLowerCase().includes(q) || b.resource.toLowerCase().includes(q) || b.group.toLowerCase().includes(q)
+    );
+  }
+  return result;
+}
+
+function ResourceTypesSection({
+  rows,
+  hasUnfilteredRows,
+}: {
+  rows: GroupBreakdown[];
+  hasUnfilteredRows: boolean;
+}) {
+  const [repos] = useRepositoryList({ watch: false });
+  const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
 
   const columns: Array<Column<GroupBreakdown>> = useMemo(
     () => [
@@ -842,7 +891,7 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
     [gitSyncRepos]
   );
 
-  if (baseRows.length === 0) {
+  if (!hasUnfilteredRows) {
     return null;
   }
 
@@ -853,33 +902,6 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
         <Text variant="h4">
           <Trans i18nKey="provisioning.stats.resource-types-heading">Resource types</Trans>
         </Text>
-      </Stack>
-      <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="provisioning.stats.resource-types-description">
-          Each provisioning tool supports a different set of resource types — pick one to see only what it can manage.
-        </Trans>
-      </Text>
-      <Stack direction="row" gap={1.5} alignItems="center" wrap>
-        <div className={styles.searchInput}>
-          <FilterInput
-            placeholder={t('provisioning.stats.search-placeholder', 'Search resource types')}
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
-        <Stack direction="row" gap={1} alignItems="center">
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="provisioning.stats.filter-label">Show types supported by</Trans>
-          </Text>
-          <div className={styles.providerSelect}>
-            <Select
-              value={providerFilter}
-              options={filterOptions}
-              onChange={(v) => setProviderFilter(v.value ?? 'all')}
-              aria-label={t('provisioning.stats.filter-aria-label', 'Filter resource types by provider')}
-            />
-          </div>
-        </Stack>
       </Stack>
       {rows.length === 0 ? (
         <Alert
@@ -911,8 +933,17 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 export function ProvisioningOverview() {
   const { data, isLoading, isError, error } = useGetResourceStatsQuery();
+  const [filters, setFilters] = useState<FiltersValue>({ providerFilter: 'all', searchQuery: '' });
 
   const computed = useMemo(() => computeStats(data), [data]);
+  const filteredBreakdowns = useMemo(
+    () => applyFilters(computed.groupBreakdowns, filters),
+    [computed.groupBreakdowns, filters]
+  );
+  const hasUnfilteredRows = useMemo(
+    () => computed.groupBreakdowns.some((b) => b.total > 0),
+    [computed.groupBreakdowns]
+  );
 
   if (isLoading) {
     return (
@@ -938,10 +969,11 @@ export function ProvisioningOverview() {
   return (
     <Stack direction="column" gap={4}>
       <GitOpsExplainer />
-      <SummarySection stats={computed} />
+      {hasUnfilteredRows && <FiltersBar value={filters} onChange={setFilters} />}
+      <SummarySection breakdowns={filteredBreakdowns} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
-      <ResourceTypesSection breakdowns={computed.groupBreakdowns} />
+      <ResourceTypesSection rows={filteredBreakdowns} hasUnfilteredRows={hasUnfilteredRows} />
     </Stack>
   );
 }
