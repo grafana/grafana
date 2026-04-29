@@ -88,8 +88,8 @@ import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompa
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { isGlobalSceneVariable } from '../utils/globalDashboardVariables';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { isGlobalSceneVariable } from '../utils/globalDashboardVariables';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
