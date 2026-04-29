@@ -449,7 +449,40 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
-  it('shows the fully-managed status icon for resources with no unmanaged count', () => {
+  it('adds the Other tools column to the table when a specific provider is selected', async () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
+          },
+          {
+            kind: 'terraform',
+            id: 'tf-1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
+          },
+        ],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // No Other tools column under the "All" lens.
+    expect(screen.queryByRole('columnheader', { name: /other tools/i })).not.toBeInTheDocument();
+
+    // Switch the lens to Terraform.
+    await userEvent.click(screen.getByLabelText(/filter resource types by provider/i));
+    await userEvent.click(screen.getByText('Terraform', { selector: '[role="option"] *' }));
+
+    // Now the table picks up the Other tools column too.
+    expect(screen.getByRole('columnheader', { name: /other tools/i })).toBeInTheDocument();
+  });
+
+  it('renders a per-row coverage bar instead of the old status icon', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -466,9 +499,9 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Look for the localized aria-label exposed by the status icon for fully
-    // managed resource types.
-    expect(screen.getByLabelText(/fully managed/i)).toBeInTheDocument();
+    // The leading status circle was replaced by a coverage bar — there's the
+    // page-level bar plus one per row, so we expect at least two labels.
+    expect(screen.getAllByLabelText(/coverage progress/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it('lists every resource type once in the Resource types section', () => {

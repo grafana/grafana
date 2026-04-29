@@ -342,7 +342,20 @@ function aggregateLensTotals(breakdowns: GroupBreakdown[], providerFilter: strin
  * (~30°, orange) to success (~120°, green) so the visual feedback is
  * smooth — half-empty looks yellow-ish, full looks confidently green.
  */
-function CoverageBar({ covered, total }: { covered: number; total: number }) {
+function CoverageBar({
+  covered,
+  total,
+  showRange = false,
+  compact = false,
+}: {
+  covered: number;
+  total: number;
+  /** When true, render `0%` and `100%` markers at the ends to make the
+   *  scale of the bar explicit. */
+  showRange?: boolean;
+  /** When true, render the bar at a smaller height suitable for table rows. */
+  compact?: boolean;
+}) {
   const styles = useStyles2(getStyles);
   const pct = total === 0 ? 0 : Math.max(0, Math.min(100, (covered / total) * 100));
   const hue = 30 + (pct / 100) * 90;
@@ -352,18 +365,29 @@ function CoverageBar({ covered, total }: { covered: number; total: number }) {
     total,
     pct: Math.round(pct),
   });
-  return (
+  const bar = (
     <div
-      className={styles.coverageTrack}
+      className={cx(styles.coverageTrack, compact && styles.coverageTrackCompact)}
       role="img"
       aria-label={t('provisioning.stats.coverage-bar-aria', 'Coverage progress')}
       title={tooltip}
     >
-      <div
-        className={styles.coverageFill}
-        style={{ width: `${pct}%`, background: fillColor }}
-      />
+      <div className={styles.coverageFill} style={{ width: `${pct}%`, background: fillColor }} />
     </div>
+  );
+  if (!showRange) {
+    return bar;
+  }
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="provisioning.stats.coverage-bar-start">0%</Trans>
+      </Text>
+      <div className={styles.coverageBarFlex}>{bar}</div>
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="provisioning.stats.coverage-bar-end">100%</Trans>
+      </Text>
+    </Stack>
   );
 }
 
@@ -421,7 +445,7 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
                 value: totals.other,
                 total: totals.instanceTotal,
               })}
-              label={t('provisioning.stats.legend-other', 'Managed by other tools')}
+              label={t('provisioning.stats.legend-other', 'Other tools')}
               colorHex={theme.colors.info.main}
               hoveredKey={hoveredKey}
               onHover={setHoveredKey}
@@ -441,7 +465,7 @@ function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreak
           onHover={setHoveredKey}
         />
       </Stack>
-      <CoverageBar covered={selectedCount} total={totals.instanceTotal} />
+      <CoverageBar covered={selectedCount} total={totals.instanceTotal} showRange />
     </Stack>
   );
 }
@@ -619,59 +643,11 @@ function ManagerIdentityList({
   );
 }
 
-type ManagementState = 'fully' | 'partial' | 'none';
-
 function managedShare(row: GroupBreakdown): number {
   if (row.total === 0) {
     return 0;
   }
   return (row.gitSyncCount + row.otherManagedCount) / row.total;
-}
-
-function getManagementState(row: GroupBreakdown): ManagementState {
-  if (row.unmanagedCount === 0) {
-    return 'fully';
-  }
-  if (row.gitSyncCount + row.otherManagedCount === 0) {
-    return 'none';
-  }
-  return 'partial';
-}
-
-function ManagementStatusIcon({ state }: { state: ManagementState }) {
-  const theme = useTheme2();
-  if (state === 'fully') {
-    return (
-      <span aria-label={t('provisioning.stats.status-fully', 'Fully managed')} role="img">
-        <Icon name="check-circle" style={{ color: theme.colors.success.main }} />
-      </span>
-    );
-  }
-  if (state === 'none') {
-    return (
-      <svg
-        width={16}
-        height={16}
-        viewBox="0 0 16 16"
-        aria-label={t('provisioning.stats.status-none', 'Not managed')}
-        role="img"
-      >
-        <circle cx="8" cy="8" r="6" fill="none" stroke={theme.colors.error.main} strokeWidth={1.5} />
-      </svg>
-    );
-  }
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      aria-label={t('provisioning.stats.status-partial', 'Partially managed')}
-      role="img"
-    >
-      <circle cx="8" cy="8" r="6" fill="none" stroke={theme.colors.warning.main} strokeWidth={1.5} />
-      <path d="M 8 2 A 6 6 0 0 1 8 14 Z" fill={theme.colors.warning.main} />
-    </svg>
-  );
 }
 
 interface FiltersValue {
@@ -701,10 +677,7 @@ function FiltersBar({
     []
   );
   const typeOptions: Array<SelectableValue<string>> = useMemo(
-    () =>
-      breakdowns
-        .filter((b) => b.total > 0)
-        .map((b) => ({ value: rowKey(b), label: b.label || b.resource })),
+    () => breakdowns.filter((b) => b.total > 0).map((b) => ({ value: rowKey(b), label: b.label || b.resource })),
     [breakdowns]
   );
   const selectedTypeValues = useMemo(
@@ -778,6 +751,7 @@ function ResourceTypesSection({
   hasUnfilteredRows: boolean;
   providerFilter: string;
 }) {
+  const styles = useStyles2(getStyles);
   const [repos] = useRepositoryList({ watch: false });
   const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
   const managedHeader =
@@ -787,13 +761,23 @@ function ResourceTypesSection({
           provider: kindLabel(providerFilter),
         });
 
-  const columns: Array<Column<GroupBreakdown>> = useMemo(
-    () => [
+  const columns: Array<Column<GroupBreakdown>> = useMemo(() => {
+    const otherFor = (row: GroupBreakdown) =>
+      row.gitSyncCount + row.otherManagedCount - selectedManagedFor(row, providerFilter);
+    const cols: Array<Column<GroupBreakdown>> = [
       {
-        id: 'status',
+        id: 'progress',
         header: '',
-        cell: ({ row }) => <ManagementStatusIcon state={getManagementState(row.original)} />,
         disableGrow: true,
+        cell: ({ row }) => (
+          <div className={styles.tableMiniBar}>
+            <CoverageBar
+              covered={row.original.gitSyncCount + row.original.otherManagedCount}
+              total={row.original.total}
+              compact
+            />
+          </div>
+        ),
       },
       {
         id: 'label',
@@ -817,6 +801,19 @@ function ResourceTypesSection({
           return <Text color={value > 0 ? 'info' : 'secondary'}>{value.toLocaleString()}</Text>;
         },
       },
+    ];
+    if (providerFilter !== 'all') {
+      cols.push({
+        id: 'others',
+        header: t('provisioning.stats.column-others', 'Other tools'),
+        sortType: (a, b) => otherFor(a.original) - otherFor(b.original),
+        cell: ({ row }) => {
+          const value = otherFor(row.original);
+          return <Text color={value > 0 ? 'info' : 'secondary'}>{value.toLocaleString()}</Text>;
+        },
+      });
+    }
+    cols.push(
       {
         id: 'unmanagedCount',
         header: t('provisioning.stats.column-unmanaged', 'Unmanaged'),
@@ -863,10 +860,10 @@ function ResourceTypesSection({
           }
           return <MigrateRowButton repos={gitSyncRepos} />;
         },
-      },
-    ],
-    [gitSyncRepos, managedHeader, providerFilter]
-  );
+      }
+    );
+    return cols;
+  }, [gitSyncRepos, managedHeader, providerFilter, styles.tableMiniBar]);
 
   if (!hasUnfilteredRows) {
     return null;
@@ -882,12 +879,7 @@ function ResourceTypesSection({
   }
 
   return (
-    <InteractiveTable
-      columns={columns}
-      data={rows}
-      getRowId={(row) => `${row.group}/${row.resource}`}
-      pageSize={10}
-    />
+    <InteractiveTable columns={columns} data={rows} getRowId={(row) => `${row.group}/${row.resource}`} pageSize={10} />
   );
 }
 
@@ -940,9 +932,7 @@ export function ProvisioningOverview() {
   return (
     <Stack direction="column" gap={4}>
       <GitOpsExplainer />
-      {hasUnfilteredRows && (
-        <FiltersBar value={filters} onChange={setFilters} breakdowns={computed.groupBreakdowns} />
-      )}
+      {hasUnfilteredRows && <FiltersBar value={filters} onChange={setFilters} breakdowns={computed.groupBreakdowns} />}
       <SummarySection breakdowns={filteredBreakdowns} providerFilter={filters.providerFilter} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
@@ -1039,12 +1029,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     background: theme.colors.warning.transparent,
   }),
+  coverageTrackCompact: css({
+    height: theme.spacing(0.75),
+  }),
+  coverageBarFlex: css({
+    flex: '1 1 auto',
+    minWidth: 120,
+  }),
   coverageFill: css({
     height: '100%',
     borderRadius: theme.shape.radius.pill,
     [theme.transitions.handleMotion('no-preference')]: {
       transition: 'width 200ms ease, background 200ms ease',
     },
+  }),
+  tableMiniBar: css({
+    width: 80,
   }),
   typeSelect: css({
     minWidth: 260,
