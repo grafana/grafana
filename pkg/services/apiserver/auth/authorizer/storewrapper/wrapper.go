@@ -249,7 +249,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	ctx, span := w.startSpan(ctx, "DeleteCollection")
+	_, span := w.startSpan(ctx, "DeleteCollection")
 	defer span.End()
 
 	// DeleteCollection is complex to authorize properly; deny it entirely for safety
