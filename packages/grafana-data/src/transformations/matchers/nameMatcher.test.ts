@@ -501,4 +501,14 @@ describe('Field Name matcher with malformed options (pre-validation behavior)', 
       expect(matchFn(field, frame, [frame])).toBe(false);
     }
   });
+
+  it('byName.validateOptions accepts strings and rejects everything else', () => {
+    const info = fieldMatchers.get(FieldMatcherID.byName);
+    expect(info.validateOptions?.('value')).toBe(true);
+    expect(info.validateOptions?.('')).toBe(true);
+    expect(info.validateOptions?.({ name: 'value' })).toBe(false);
+    expect(info.validateOptions?.(123)).toBe(false);
+    expect(info.validateOptions?.(null)).toBe(false);
+    expect(info.validateOptions?.(undefined)).toBe(false);
+  });
 });
