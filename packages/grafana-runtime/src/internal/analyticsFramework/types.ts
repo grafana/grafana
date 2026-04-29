@@ -6,6 +6,13 @@ type DataType = string | number | boolean | null | undefined;
 
 export type EventProperty = Record<string, DataType | DataType[]>;
 
+// Extracts only the declared literal keys, stripping any string index signature
+type KnownKeys<T> = keyof { [K in keyof T as string extends K ? never : K]: T[K] };
+
+export type Exact<Base extends EventProperty, Arg extends Base> = {
+  [K in keyof Arg]: K extends KnownKeys<Base> ? Arg[K] : never;
+};
+
 export interface EventPropertySchema {
   name: string;
   type: string;
