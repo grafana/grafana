@@ -268,7 +268,7 @@ function kindLabel(kind: string): string {
     case 'grafana':
       return t('provisioning.stats.manager-kind-grafana', 'Grafana');
     case 'classic-file-provisioning':
-      return t('provisioning.stats.manager-kind-classic-fp', 'File provisioning (classic)');
+      return t('provisioning.stats.manager-kind-classic-fp', 'Files (Classic)');
     default:
       return kind || t('provisioning.stats.manager-kind-unknown', 'Unknown');
   }

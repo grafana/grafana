@@ -277,7 +277,7 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
   });
 
-  it('lists File provisioning (classic) as a supporter for folders', () => {
+  it('lists Files (Classic) as a supporter for folders', () => {
     mockQuery({
       data: {
         instance: [
@@ -291,11 +291,11 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // The Folders row should now include File provisioning (classic) — it
+    // The Folders row should now include Files (Classic) — it
     // creates folders implicitly via the dashboard provider's folder option.
     // Both Folders and Dashboards rows reference the classic chip, so we
     // expect more than one occurrence.
-    expect(screen.getAllByText('File provisioning (classic)').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Files (Classic)').length).toBeGreaterThan(1);
   });
 
   it('renders the Resource types section with supported-by chips per row', () => {
@@ -316,7 +316,7 @@ describe('ProvisioningOverview', () => {
     // Both datasources and alert rules should list Terraform and Classic file
     // provisioning as supporting providers via chips in the row.
     expect(screen.getAllByText('Terraform').length).toBeGreaterThan(1);
-    expect(screen.getAllByText('File provisioning (classic)').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Files (Classic)').length).toBeGreaterThan(0);
   });
 
   it('lists every resource type once in the Resource types section', () => {

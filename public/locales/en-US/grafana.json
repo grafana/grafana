@@ -13805,7 +13805,7 @@
       "legend-unmanaged": "Unmanaged",
       "loading": "Loading stats...",
       "manager-fallback-name": "Unnamed manager",
-      "manager-kind-classic-fp": "File provisioning (classic)",
+      "manager-kind-classic-fp": "Files (Classic)",
       "manager-kind-grafana": "Grafana",
       "manager-kind-kubectl": "kubectl",
       "manager-kind-plugin": "Plugin",
