@@ -303,15 +303,125 @@ function badgeColorForKind(kind: string): BadgeColor {
 
 function GitOpsExplainer() {
   return (
-    <Alert severity="info" title={t('provisioning.stats.gitops-title', 'What is GitOps?')}>
+    <Alert severity="info" title={t('provisioning.stats.gitops-title', 'Migrate to GitOps')}>
       <Trans i18nKey="provisioning.stats.gitops-body">
-        Manage your folders, dashboards, and other resources as code. Tools like Git Sync, Terraform, and kubectl let
-        you store these definitions in a Git repository (or another source of truth) so every change is versioned,
-        reviewable, and reproducible. The live state of the instance comes from your repository, not the other way
-        around. The breakdown below shows how much of your instance is managed this way today, and which tools are
-        involved.
+        Version-control your dashboards, folders, and configuration. Track changes, review updates, and keep your
+        instance reproducible. Start by connecting a Git repository, then migrate resources using the recommended
+        tools below.
       </Trans>
     </Alert>
+  );
+}
+
+interface NextStep {
+  key: string;
+  done: boolean;
+  title: string;
+  description: string;
+  action?: { label: string; href: string };
+}
+
+function NextStepsPanel({
+  breakdowns,
+  repos,
+}: {
+  breakdowns: GroupBreakdown[];
+  repos: Repository[];
+}) {
+  const styles = useStyles2(getStyles);
+  const supportedRows = breakdowns.filter((b) => b.isGitSyncSupported && b.total > 0);
+  const totalSupported = supportedRows.reduce((acc, b) => acc + b.total, 0);
+  const gitSyncManaged = supportedRows.reduce((acc, b) => acc + b.gitSyncCount, 0);
+  const unmanagedSupported = supportedRows.reduce((acc, b) => acc + b.unmanagedCount, 0);
+  const hasRepo = repos.length > 0;
+  const repoTarget =
+    repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
+
+  const steps: NextStep[] = [
+    {
+      key: 'connect',
+      done: hasRepo,
+      title: t('provisioning.stats.next-step-connect-title', 'Connect a Git repository'),
+      description: hasRepo
+        ? t('provisioning.stats.next-step-connect-done', 'Connected. You can add more repositories at any time.')
+        : t(
+            'provisioning.stats.next-step-connect-pending',
+            'Set up Git Sync so your folders and dashboards live in a Git repository.'
+          ),
+      action: hasRepo
+        ? undefined
+        : {
+            label: t('provisioning.stats.next-step-connect-cta', 'Connect'),
+            href: GETTING_STARTED_URL,
+          },
+    },
+    {
+      key: 'review',
+      done: totalSupported > 0 && unmanagedSupported === 0,
+      title: t('provisioning.stats.next-step-review-title', 'Review unmanaged resources'),
+      description:
+        totalSupported === 0
+          ? t('provisioning.stats.next-step-review-empty', 'No folders or dashboards yet — nothing to review.')
+          : t(
+              'provisioning.stats.next-step-review-pending',
+              '{{count}} of {{total}} folders and dashboards are still unmanaged.',
+              { count: unmanagedSupported, total: totalSupported }
+            ),
+    },
+    {
+      key: 'migrate',
+      done: gitSyncManaged > 0,
+      title: t('provisioning.stats.next-step-migrate-title', 'Migrate your first resource'),
+      description:
+        gitSyncManaged > 0
+          ? t(
+              'provisioning.stats.next-step-migrate-done',
+              '{{count}} folders and dashboards are managed by Git Sync.',
+              { count: gitSyncManaged }
+            )
+          : t(
+              'provisioning.stats.next-step-migrate-pending',
+              'Bring an existing folder or dashboard under Git Sync to start the journey.'
+            ),
+      action:
+        hasRepo && gitSyncManaged === 0 && unmanagedSupported > 0
+          ? {
+              label: t('provisioning.stats.next-step-migrate-cta', 'Open repository'),
+              href: repoTarget,
+            }
+          : undefined,
+    },
+  ];
+
+  return (
+    <div className={styles.nextStepsPanel}>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Icon name="list-ul" />
+        <Text variant="h5">
+          <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
+        </Text>
+      </Stack>
+      <Stack direction="column" gap={1.5}>
+        {steps.map((step, index) => (
+          <Stack key={step.key} direction="row" gap={2} alignItems="flex-start">
+            <div className={cx(styles.nextStepBullet, step.done && styles.nextStepBulletDone)}>
+              {step.done ? <Icon name="check" /> : <Text variant="bodySmall">{index + 1}</Text>}
+            </div>
+            <Stack direction="column" gap={0.5} flex={1}>
+              <Text weight={step.done ? 'regular' : 'medium'}>{step.title}</Text>
+              <Text color="secondary" variant="bodySmall">
+                {step.description}
+              </Text>
+            </Stack>
+            {step.action && (
+              <LinkButton variant="secondary" size="sm" href={step.action.href}>
+                {step.action.label}
+              </LinkButton>
+            )}
+          </Stack>
+        ))}
+      </Stack>
+    </div>
   );
 }
 
@@ -916,6 +1026,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 export function ProvisioningOverview() {
   const { data, isLoading, isError, error } = useGetResourceStatsQuery();
   const [filters, setFilters] = useState<FiltersValue>({ providerFilter: 'all', selectedTypes: [] });
+  const [repos] = useRepositoryList({ watch: false });
 
   const computed = useMemo(() => computeStats(data), [data]);
   const filteredBreakdowns = useMemo(
@@ -951,6 +1062,7 @@ export function ProvisioningOverview() {
   return (
     <Stack direction="column" gap={4}>
       <GitOpsExplainer />
+      <NextStepsPanel breakdowns={computed.groupBreakdowns} repos={repos ?? []} />
       {hasUnfilteredRows && <FiltersBar value={filters} onChange={setFilters} breakdowns={computed.groupBreakdowns} />}
       <SummarySection breakdowns={filteredBreakdowns} providerFilter={filters.providerFilter} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
@@ -1072,6 +1184,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference')]: {
       transition: 'width 200ms ease, background 200ms ease',
     },
+  }),
+  nextStepsPanel: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    padding: theme.spacing(2.5, 3),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    background: theme.colors.background.secondary,
+  }),
+  nextStepBullet: css({
+    flex: '0 0 auto',
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    borderRadius: theme.shape.radius.circle,
+    border: `1px solid ${theme.colors.border.medium}`,
+    color: theme.colors.text.secondary,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  nextStepBulletDone: css({
+    background: theme.colors.success.transparent,
+    borderColor: theme.colors.success.border,
+    color: theme.colors.success.text,
   }),
   managedPctCell: css({
     display: 'flex',

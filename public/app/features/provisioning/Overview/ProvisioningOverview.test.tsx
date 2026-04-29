@@ -90,7 +90,7 @@ describe('ProvisioningOverview', () => {
 
     // The page leads with a "What is GitOps?" alert and the donut shows 25%
     // (5 of 20 managed) in its center label.
-    expect(screen.getByText(/what is gitops\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/migrate to gitops/i)).toBeInTheDocument();
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
@@ -150,6 +150,40 @@ describe('ProvisioningOverview', () => {
     const migrateLinks = screen.getAllByRole('link', { name: /migrate/i });
     expect(migrateLinks).toHaveLength(2);
     expect(migrateLinks[0]).toHaveAttribute('href', '/admin/provisioning/my-repo');
+  });
+
+  it('renders the Recommended next steps panel with dynamic state', () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // Heading appears, all three steps render.
+    expect(screen.getByText(/recommended next steps/i)).toBeInTheDocument();
+    expect(screen.getByText(/connect a git repository/i)).toBeInTheDocument();
+    expect(screen.getByText(/review unmanaged resources/i)).toBeInTheDocument();
+    expect(screen.getByText(/migrate your first resource/i)).toBeInTheDocument();
+    // The unmanaged-count line includes "5 of 5".
+    expect(screen.getByText(/5 of 5 folders and dashboards/i)).toBeInTheDocument();
+    // With a repo connected the Migrate step exposes an "Open repository" CTA.
+    expect(screen.getByRole('link', { name: /open repository/i })).toBeInTheDocument();
   });
 
   it('hides the Git Sync banner when there are no folders or dashboards', () => {
@@ -377,16 +411,18 @@ describe('ProvisioningOverview', () => {
     render(<ProvisioningOverview />);
 
     // Before filtering: nothing is managed, totals are computed against 20.
-    expect(screen.getAllByText(/0 of 20/i).length).toBeGreaterThan(0);
+    // Word-boundary the regex so "20 of 20" doesn't accidentally match.
+    expect(screen.getAllByText(/\b0 of 20\b/i).length).toBeGreaterThan(0);
 
     // Pick "Folders" from the resource types MultiSelect.
     const typesInput = screen.getByLabelText(/filter by resource type/i);
     await userEvent.click(typesInput);
     await userEvent.click(screen.getByText('Folders', { selector: '[role="option"] *' }));
 
-    // After filtering to folders: 4 unmanaged of 4 total.
-    expect(screen.getAllByText(/4 of 4/i).length).toBeGreaterThan(0);
-    expect(screen.queryAllByText(/0 of 20/i)).toHaveLength(0);
+    // After filtering to folders: 4 unmanaged of 4 total. The Summary cards
+    // recompute against the filtered set.
+    expect(screen.getAllByText(/\b4 of 4\b/i).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/\b0 of 20\b/i)).toHaveLength(0);
   });
 
   it('narrows the table to the resource types picked in the MultiSelect', async () => {
