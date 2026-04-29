@@ -2,7 +2,6 @@ package storewrapper
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -27,7 +26,22 @@ var (
 	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
 )
 
-const tracerName = "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+const (
+	tracerName = "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+
+	OpBeforeCreate = "before_create"
+	OpCreate       = "create"
+	OpBeforeDelete = "before_delete"
+	OpDelete       = "delete"
+	OpDeleteGet    = "delete_get"
+	OpGet          = "get"
+	OpList         = "list"
+	OpBeforeUpdate = "before_update"
+	OpUpdate       = "update"
+	OpWatchSetup   = "watch_setup"
+	OpAfterGet     = "after_get"
+	OpFilterList   = "filter_list"
+)
 
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
@@ -184,6 +198,9 @@ func statusFromError(err error) string {
 	if errors.IsMethodNotSupported(err) {
 		return "method_not_supported"
 	}
+	if errors.IsConflict(err) {
+		return "conflict"
+	}
 	if errors.IsBadRequest(err) {
 		return "bad_request"
 	}
@@ -201,7 +218,7 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	// Enforce authorization based on the user permissions before creating the object
 	authzStart := time.Now()
 	err := w.authorizer.BeforeCreate(ctx, obj)
-	w.observeAuthz("before_create", authzStart, err)
+	w.observeAuthz(OpBeforeCreate, authzStart, err)
 	if err != nil {
 		recordSpanError(span, err)
 		return nil, err
@@ -209,7 +226,7 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 
 	innerStart := time.Now()
 	result, err := w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
-	w.observeInner("create", innerStart, err)
+	w.observeInner(OpCreate, innerStart, err)
 	recordSpanError(span, err)
 	return result, err
 }
@@ -226,7 +243,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 	}
 	innerGetStart := time.Now()
 	obj, err := w.inner.Get(storeCtx, name, getOpts)
-	w.observeInner("delete_get", innerGetStart, err)
+	w.observeInner(OpDeleteGet, innerGetStart, err)
 	if err != nil {
 		recordSpanError(span, err)
 		return nil, false, err
@@ -235,15 +252,15 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 	// Enforce authorization based on the user permissions
 	authzStart := time.Now()
 	if err := w.authorizer.BeforeDelete(ctx, obj); err != nil {
-		w.observeAuthz("before_delete", authzStart, err)
+		w.observeAuthz(OpBeforeDelete, authzStart, err)
 		recordSpanError(span, err)
 		return nil, false, err
 	}
-	w.observeAuthz("before_delete", authzStart, nil)
+	w.observeAuthz(OpBeforeDelete, authzStart, nil)
 
 	innerStart := time.Now()
 	result, deleted, err := w.inner.Delete(storeCtx, name, deleteValidation, options)
-	w.observeInner("delete", innerStart, err)
+	w.observeInner(OpDelete, innerStart, err)
 	recordSpanError(span, err)
 	return result, deleted, err
 }
@@ -254,7 +271,8 @@ func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest
 
 	// DeleteCollection is complex to authorize properly; deny it entirely for safety
 	err := errors.NewMethodNotSupported(w.resource, "deleteCollection")
-	w.observeInner("delete_collection", time.Now(), err)
+	// If we ever implement this, we should add it to the inner layer.
+	// w.observeInner(OpDeleteCollection, time.Now(), err)
 	recordSpanError(span, err)
 	return nil, err
 }
@@ -269,7 +287,7 @@ func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptio
 
 	innerStart := time.Now()
 	item, err := w.inner.Get(w.storeCtx(ctx), name, options)
-	w.observeInner("get", innerStart, err)
+	w.observeInner(OpGet, innerStart, err)
 	if err != nil {
 		recordSpanError(span, err)
 		return nil, err
@@ -278,7 +296,7 @@ func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptio
 	// Enforce authorization based on the user permissions after retrieving the object
 	authzStart := time.Now()
 	err = w.authorizer.AfterGet(ctx, item)
-	w.observeAuthz("after_get", authzStart, err)
+	w.observeAuthz(OpAfterGet, authzStart, err)
 	if err != nil {
 		recordSpanError(span, err)
 		return nil, err
@@ -296,7 +314,7 @@ func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions
 
 	innerStart := time.Now()
 	list, err := w.inner.List(w.storeCtx(ctx), options)
-	w.observeInner("list", innerStart, err)
+	w.observeInner(OpList, innerStart, err)
 	if err != nil {
 		recordSpanError(span, err)
 		return nil, err
@@ -305,7 +323,7 @@ func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions
 	// Enforce authorization based on the user permissions after retrieving the list
 	authzStart := time.Now()
 	result, err := w.authorizer.FilterList(ctx, list)
-	w.observeAuthz("filter_list", authzStart, err)
+	w.observeAuthz(OpFilterList, authzStart, err)
 	recordSpanError(span, err)
 	return result, err
 }
@@ -346,7 +364,7 @@ func (w *Wrapper) Update(
 
 	innerStart := time.Now()
 	result, updated, err := w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
-	w.observeInner("update", innerStart, err)
+	w.observeInner(OpUpdate, innerStart, err)
 	recordSpanError(span, err)
 	return result, updated, err
 }
@@ -372,7 +390,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	// Enforce authorization using the original user context
-	authzCtx, span := a.tracer.Start(a.userCtx, "iam.storewrapper.UpdateAuthz", trace.WithAttributes(
+	authzCtx, span := a.tracer.Start(a.userCtx, "authz.storewrapper.UpdateAuthz", trace.WithAttributes(
 		attribute.String("resource.group", a.resource.Group),
 		attribute.String("resource.resource", a.resource.Resource),
 	))
@@ -380,28 +398,27 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 
 	authzStart := time.Now()
 	if err := a.authorizer.BeforeUpdate(authzCtx, oldObj, updatedObj); err != nil {
-		a.observer.Observe(LayerAuthz, "before_update", a.resource, time.Since(authzStart), statusFromError(err))
+		a.observer.Observe(LayerAuthz, OpBeforeUpdate, a.resource, time.Since(authzStart), statusFromError(err))
 		recordSpanError(span, err)
 		return nil, err
 	}
-	a.observer.Observe(LayerAuthz, "before_update", a.resource, time.Since(authzStart), "success")
+	a.observer.Observe(LayerAuthz, OpBeforeUpdate, a.resource, time.Since(authzStart), "success")
 
 	return updatedObj, nil
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	ctx, span := w.startSpan(ctx, "Watch")
+	ctx, span := w.startSpan(ctx, "WatchSetup")
 	defer span.End()
 
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
 		innerStart := time.Now()
 		result, err := watcher.Watch(w.storeCtx(ctx), options)
-		w.observeInner("watch", innerStart, err)
+		w.observeInner(OpWatchSetup, innerStart, err)
 		recordSpanError(span, err)
 		return result, err
 	}
-	err := fmt.Errorf("watch is not supported on the underlying storage")
-	w.observeInner("watch", time.Now(), err)
+	err := errors.NewMethodNotSupported(w.resource, "watch")
 	recordSpanError(span, err)
 	return nil, err
 }

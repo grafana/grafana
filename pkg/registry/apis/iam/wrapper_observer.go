@@ -16,15 +16,5 @@ func NewWrapperObserver() storewrapper.Observer {
 }
 
 func (wrapperObserver) Observe(layer, op string, resource schema.GroupResource, dur time.Duration, status string) {
-	ResourceHandlerDurationHistogram.WithLabelValues(layer, op, groupResourceLabel(resource), status).Observe(dur.Seconds())
-}
-
-func groupResourceLabel(resource schema.GroupResource) string {
-	if resource.Group == "" && resource.Resource == "" {
-		return "unknown"
-	}
-	if resource.Group == "" {
-		return resource.Resource
-	}
-	return resource.Group + "/" + resource.Resource
+	ResourceHandlerDurationHistogram.WithLabelValues(layer, op, resource.Group+"/"+resource.Resource, status).Observe(dur.Seconds())
 }
