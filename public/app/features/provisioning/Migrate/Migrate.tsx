@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -409,6 +409,25 @@ function MigrationProgressPanel({
   );
 }
 
+function EmptyDonut({ size = 140, strokeWidth = 18 }: { size?: number; strokeWidth?: number }) {
+  const theme = useTheme2();
+  const radius = 50 - strokeWidth / 2;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-hidden>
+      <circle
+        cx="50"
+        cy="50"
+        r={radius}
+        fill="none"
+        stroke={theme.colors.border.weak}
+        strokeWidth={strokeWidth}
+        strokeDasharray="2 3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -438,11 +457,27 @@ function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
         <Trans i18nKey="provisioning.stats.managed-by-tool-heading">Managed resources by tool</Trans>
       </Text>
       {total === 0 ? (
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="provisioning.stats.managed-by-tool-empty">
-            Nothing is managed yet. Connect a Git Sync repository to get started.
-          </Trans>
-        </Text>
+        <Stack direction="row" gap={2} alignItems="center">
+          <div className={styles.emptyDonutWrap}>
+            <EmptyDonut />
+            <div className={styles.emptyDonutIcon}>
+              <Icon name="rocket" size="xl" />
+            </div>
+          </div>
+          <Stack direction="column" gap={0.5} flex={1}>
+            <Text weight="medium">
+              <Trans i18nKey="provisioning.stats.managed-by-tool-empty-title">
+                An empty donut. For now.
+              </Trans>
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="provisioning.stats.managed-by-tool-empty-body">
+                Connect Git Sync (or any other tool) and slices will appear here as folders and
+                dashboards come under management.
+              </Trans>
+            </Text>
+          </Stack>
+        </Stack>
       ) : (
         <Stack direction="row" gap={2} alignItems="center">
           <Donut segments={segments} centerLabel={total.toLocaleString()} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
@@ -1057,4 +1092,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 60,
     maxWidth: 120,
   }),
+  emptyDonutWrap: css({
+    position: 'relative',
+    width: 140,
+    height: 140,
+    flex: '0 0 auto',
+  }),
+  emptyDonutIcon: css({
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.secondary,
+    transform: 'rotate(-12deg)',
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rocketBob} 3s ease-in-out infinite`,
+    },
+  }),
+});
+
+const rocketBob = keyframes({
+  '0%, 100%': { transform: 'translateY(0) rotate(-12deg)' },
+  '50%': { transform: 'translateY(-4px) rotate(-12deg)' },
 });

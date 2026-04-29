@@ -243,6 +243,22 @@ describe('Migrate', () => {
     expect(screen.getByText(/2 managed/i)).toBeInTheDocument();
   });
 
+  it('renders a playful empty state inside the Managed by tool panel when nothing is managed', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    render(<Migrate />);
+    // Heading still renders.
+    expect(screen.getByText(/managed resources by tool/i)).toBeInTheDocument();
+    // New empty-state copy replaces the plain "Nothing is managed yet" line.
+    expect(screen.getByText(/an empty donut\. for now\./i)).toBeInTheDocument();
+    expect(screen.getByText(/connect git sync/i)).toBeInTheDocument();
+  });
+
   it('renders the Migration progress and Managed by tool donut panels', () => {
     mockQuery({
       data: {
