@@ -64,7 +64,8 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     key: 'git-sync',
     kind: ManagerKind.Repo,
     label: 'Git Sync',
-    description: 'Sync folders and dashboards from a Git repository.',
+    description:
+      'Two-way sync between Grafana and a Git repository. Edit folders and dashboards in either place, review every change through pull requests, and keep the full audit trail in your repo history.',
     image: gitSvg,
     recommended: true,
   },
@@ -72,21 +73,24 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     key: 'terraform',
     kind: ManagerKind.Terraform,
     label: 'Terraform',
-    description: 'Manage Grafana resources as Terraform infrastructure.',
+    description:
+      'Manage folders and dashboards as Terraform resources alongside the rest of your infrastructure. Best when Terraform already runs your platform and you want a single source of state, plans, and approvals.',
     initial: 'T',
   },
   {
     key: 'gcx',
     kind: ManagerKind.Kubectl,
     label: 'GCX',
-    description: 'Apply manifests from the Grafana command line.',
+    description:
+      'Push manifests from the command line with grafanactl, gcx, or kubectl. Lightweight for scripts, CI jobs, and one-off migrations without standing up a full GitOps pipeline.',
     icon: 'keyboard',
   },
   {
     key: 'file-system',
     kind: CLASSIC_FILE_PROVISIONING,
     label: 'File System',
-    description: 'Provision from local YAML or JSON files on the Grafana host.',
+    description:
+      'Read folders and dashboards from local YAML or JSON files on the Grafana host. The classic provisioning path — simple to set up, but one-way and host-bound.',
     icon: 'file-alt',
   },
 ];
