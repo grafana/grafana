@@ -3,7 +3,7 @@ import { Node, type SourceFile } from 'ts-morph';
 import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
 import { parseEventsFromFile } from './eventParser.mts';
-import { getMetadataFromJSDocs, getMetadataFromPropertyComments, resolveType } from './typeResolution.mts';
+import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
   const eventMap = new Map<string, EventData>();
@@ -95,7 +95,7 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
           decl && Node.isPropertySignature(decl)
             ? getMetadataFromJSDocs(decl.getJsDocs()).description
             : decl && Node.isPropertyAssignment(decl)
-              ? getMetadataFromPropertyComments(decl).description
+              ? getMetadataFromJSDocs(getJsDocsFromNode(decl)).description
               : undefined;
         return {
           name: prop.getName(),

@@ -1,4 +1,4 @@
-import { Node, type JSDoc, type PropertyAssignment, type Type } from 'ts-morph';
+import { Node, createWrappedNode, type JSDoc, type Node as TsMorphNode, type Type, type ts } from 'ts-morph';
 import type { JSDocMetadata } from './types.mts';
 
 /**
@@ -87,37 +87,21 @@ export function getMetadataFromJSDocs(docs: JSDoc[]): JSDocMetadata {
   return { description, owner };
 }
 
-// PropertyAssignment doesn't implement JSDocableNode in ts-morph, so .getJsDocs() isn't available — we parse the raw comment text instead.
-export function getMetadataFromPropertyComments(property: PropertyAssignment): JSDocMetadata {
-  const jsdocRange = property
-    .getLeadingCommentRanges()
-    .filter((r) => r.getText().startsWith('/**'))
-    .at(-1);
+// ts-morph doesn't expose getJsDocs on all node types, even if it's there on the underlying Typescript
+// compiler node. So we have to check for it ourselves and wrap if needed.
+function hasJsDocNodes(node: ts.Node): node is ts.Node & { jsDoc: ts.NodeArray<ts.JSDoc> } {
+  return 'jsDoc' in node;
+}
 
-  if (!jsdocRange) {
-    return {};
+export function getJsDocsFromNode(node: TsMorphNode): JSDoc[] {
+  if (Node.isJSDocable(node)) {
+    return node.getJsDocs();
   }
 
-  const lines = jsdocRange
-    .getText()
-    .replace(/^\/\*\*/, '')
-    .replace(/\*\/$/, '')
-    .split('\n')
-    .map((l) => l.replace(/^\s*\*\s?/, '').trim())
-    .filter(Boolean);
-
-  let description: string | undefined;
-  let owner: string | undefined;
-
-  for (const line of lines) {
-    if (line.startsWith('@owner ')) {
-      owner = line.slice('@owner '.length).trim();
-    } else if (!line.startsWith('@') && description === undefined) {
-      description = line;
-    }
+  if (hasJsDocNodes(node.compilerNode)) {
+    return [...node.compilerNode.jsDoc].map((doc) => createWrappedNode(doc));
   }
-
-  return { description, owner };
+  return [];
 }
 
 function trimString(str: string): string {

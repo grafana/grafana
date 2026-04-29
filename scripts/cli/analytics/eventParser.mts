@@ -8,11 +8,12 @@ import {
   type ts,
   type Type,
   type VariableStatement,
+  type JSDoc,
 } from 'ts-morph';
 
 import type { EventData, EventNamespace, EventPropertySchema, JSDocMetadata } from './types.mts';
 
-import { getMetadataFromJSDocs, getMetadataFromPropertyComments, resolveType } from './typeResolution.mts';
+import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
 import { resolveOwner } from './codeowners.mts';
 
 /**
@@ -96,34 +97,39 @@ const parseEventFromCall = (
   };
 };
 
-const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
+const getEventJsDocs = (eventCallExpr: CallExpression): JSDoc[] => {
   const parent = eventCallExpr.getParent();
 
-  // CODEOWNERS matching requires a path relative to the repo root
-  const relativeFilePath = path.relative(process.cwd(), eventCallExpr.getSourceFile().getFilePath());
-  const owner = resolveOwner(relativeFilePath);
-
   if (Node.isVariableDeclaration(parent)) {
-    // Flat pattern: const trackClick = createNavEvent('click')
     const variableStatement = getParentVariableStatement(parent);
     if (!variableStatement) {
       throw new Error(`Parent not found for ${parent.getText()}`);
     }
 
-    return {
-      owner,
-      ...getMetadataFromJSDocs(variableStatement.getJsDocs()),
-    };
+    return variableStatement.getJsDocs();
   }
 
   if (Node.isPropertyAssignment(parent)) {
-    return {
-      owner,
-      ...getMetadataFromPropertyComments(parent),
-    };
+    return getJsDocsFromNode(parent);
   }
 
   throw new Error(`Unexpected parent node kind ${parent?.getKindName() ?? 'unknown'} for event call expression`);
+};
+
+const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
+  // CODEOWNERS matching requires a path relative to the repo root
+  const relativeFilePath = path.relative(process.cwd(), eventCallExpr.getSourceFile().getFilePath());
+  const owner = resolveOwner(relativeFilePath);
+
+  const jsDocs = getEventJsDocs(eventCallExpr);
+  if (jsDocs.length < 1) {
+    throw new Error(`Expected JSDoc comment for event declaration at ${eventCallExpr.getSourceFile().getFilePath()}`);
+  }
+
+  return {
+    owner,
+    ...getMetadataFromJSDocs(jsDocs),
+  };
 };
 
 /**
