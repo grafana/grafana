@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { isUPlotComparePayload, readSnapshotAssertionPassed } from '../testUtils.ts';
 import type { ResolvedPayload, UPlotComparePayload } from '../types.ts';
@@ -12,7 +12,6 @@ const FALLBACK_CANVAS_HEIGHT = 200;
 const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
   .map((path) => path.split('/').pop())
   .filter((name): name is string => Boolean(name))
-  // @todo sort by date instead
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
@@ -22,6 +21,11 @@ interface Props {
   defaultHeight?: number;
 }
 
+type ViewState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; payload: ResolvedPayload }
+  | { kind: 'blocked'; error?: string; hint?: string };
+
 function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 'width' | 'height'> {
   const w = raw.width;
   const h = raw.height;
@@ -30,11 +34,6 @@ function readPayloadDimensions(raw: UPlotComparePayload): Pick<ResolvedPayload, 
     height: h,
   };
 }
-
-type ViewState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; payload: ResolvedPayload }
-  | { kind: 'blocked'; error?: string; hint?: string };
 
 function isSafePayloadBasename(name: string): boolean {
   if (!name || name.includes('/') || name.includes('\\') || name.includes('..')) {
@@ -51,17 +50,17 @@ export const CompareUPlotCanvases = ({
   defaultWidth = FALLBACK_CANVAS_WIDTH,
   defaultHeight = FALLBACK_CANVAS_HEIGHT,
 }: Props = {}) => {
-  const [view, setView] = React.useState<ViewState>({ kind: 'loading' });
-  const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
-  const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
-  const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = React.useState<
-    Record<string, boolean | undefined>
-  >({});
+  const [view, setView] = useState<ViewState>({ kind: 'loading' });
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileModifiedLabels, setFileModifiedLabels] = useState<Record<string, string>>({});
+  const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = useState<Record<string, boolean | undefined>>(
+    {}
+  );
 
   /**
    * @todo route with links instead so folks can open each in a new tab
    */
-  const navigate = React.useCallback((basename: string, mode: 'push' | 'replace') => {
+  const navigate = useCallback((basename: string, mode: 'push' | 'replace') => {
     const url = new URL(window.location.href);
     url.searchParams.set('file', basename);
     if (mode === 'push') {
@@ -71,7 +70,7 @@ export const CompareUPlotCanvases = ({
     }
   }, []);
 
-  const applyPayload = React.useCallback((raw: ResolvedPayload, sourceLabel: string) => {
+  const applyPayload = useCallback((raw: ResolvedPayload, sourceLabel: string) => {
     if (!isUPlotComparePayload(raw)) {
       setView({
         kind: 'blocked',
@@ -94,7 +93,7 @@ export const CompareUPlotCanvases = ({
     });
   }, []);
 
-  const loadPayloadFromPublicFile = React.useCallback(
+  const loadPayloadFromPublicFile = useCallback(
     async (basename: string, historyMode?: 'push' | 'replace') => {
       if (!isSafePayloadBasename(basename)) {
         setView({
@@ -131,7 +130,7 @@ export const CompareUPlotCanvases = ({
     [applyPayload, navigate]
   );
 
-  const loadFromLocation = React.useCallback(() => {
+  const loadFromLocation = useCallback(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
       const fileParam = params.get('file');
@@ -161,11 +160,11 @@ export const CompareUPlotCanvases = ({
     void run();
   }, [loadPayloadFromPublicFile]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadFromLocation();
   }, [loadFromLocation]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     const loadSnapshotAssertionFlags = async () => {
       const entries = await Promise.all(
@@ -193,7 +192,7 @@ export const CompareUPlotCanvases = ({
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
     const loadFileModifiedDates = async () => {
       const entries = await Promise.all(
@@ -226,7 +225,7 @@ export const CompareUPlotCanvases = ({
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onPopState = () => {
       loadFromLocation();
     };

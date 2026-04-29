@@ -1,6 +1,6 @@
-import { Differ, Viewer } from 'json-diff-kit';
-import * as React from 'react';
 import 'json-diff-kit/dist/viewer.css';
+import { Viewer, Differ } from 'json-diff-kit';
+import { useEffect, useMemo, useRef } from 'react';
 
 import type { CanvasEventArray } from '../types.ts';
 
@@ -31,9 +31,9 @@ export function DiffCanvas({
   expected,
   actual,
 }: DiffCanvasProps) {
-  const diffCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const diffCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const differ = React.useMemo(
+  const differ = useMemo(
     () =>
       new Differ({
         detectCircular: true,
@@ -44,9 +44,9 @@ export function DiffCanvas({
     []
   );
 
-  const diff = React.useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
+  const diff = useMemo(() => differ.diff(expected, actual), [differ, expected, actual]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const diffContext = diffCanvasRef.current?.getContext('2d');
     if (!diffContext) {
       return;

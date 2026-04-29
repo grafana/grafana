@@ -1,5 +1,5 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 
 import { eventsToCanvasScript } from '../canvasUtils.ts';
 
@@ -29,9 +29,9 @@ export function useDiffImageData({
   width,
   height,
 }: UseDiffImageDataArgs): DiffImageDataResult {
-  const [result, setResult] = React.useState<DiffImageDataResult>(EMPTY_RESULT);
+  const [result, setResult] = useState<DiffImageDataResult>(EMPTY_RESULT);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const expectedScratchCanvas = document.createElement('canvas');
     expectedScratchCanvas.width = width;
     expectedScratchCanvas.height = height;

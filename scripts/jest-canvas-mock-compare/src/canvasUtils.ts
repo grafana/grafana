@@ -1,6 +1,8 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 
 /**
+ * Converts jest-canvas-mock CanvasRenderingContext2DEvent[] to CanvasRenderingContext2D calls,
+ * i.e. this will re-reapply the recorded canvas calls from the test execution against the actual canvas
  * @param data
  * @param ctx
  */

@@ -1,16 +1,16 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import * as React from 'react';
+import { type RefObject, useEffect } from 'react';
 
 import { eventsToCanvasScript } from '../canvasUtils.ts';
 import type { CanvasEventArray } from '../types.ts';
 
 export function useCanvasEventsEffect(
-  ref: React.RefObject<HTMLCanvasElement | null>,
+  ref: RefObject<HTMLCanvasElement | null>,
   events: CanvasEventArray,
   setupEvents: CanvasRenderingContext2DEvent[],
   includeSetup: boolean
 ) {
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ref.current;
     const context = canvas?.getContext('2d');
     if (!canvas || !context) {
