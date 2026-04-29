@@ -3078,6 +3078,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:            "grafana.kubernetesPreferences",
+			Description:     "Routes legacy /api preferences endpoints through the preferences.grafana.app app platform API",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			Owner:           grafanaFrontendPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "grafana.meticulousAIRecorder",
 			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
 			Stage:        FeatureStageExperimental,

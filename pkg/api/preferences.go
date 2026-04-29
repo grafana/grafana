@@ -10,10 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
+
+var ofClient = openfeature.NewDefaultClient()
 
 // swagger:route GET /user/preferences signed_in_user preferences getUserPreferences
 //
@@ -24,6 +28,11 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.GetPreferences(c, prefapi.UserOwner(c))
+	}
+
 	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusUnauthorized, "Not a valid identity", err)
@@ -49,6 +58,11 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefapi.UserOwner(c), &dtoCmd)
+	}
+
 	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
@@ -71,6 +85,11 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefapi.UserOwner(c), &dtoCmd)
 	}
 
 	userID, err := identity.UserIdentifier(c.GetID())
@@ -150,7 +169,11 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.GetPreferences(c, prefapi.NamespaceOwner())
+	}
+	return prefapi.GetPreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
 // swagger:route PUT /org/preferences org preferences updateOrgPreferences
@@ -169,7 +192,12 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.UpdatePreferences(c, prefapi.NamespaceOwner(), &dtoCmd)
+	}
+
+	return prefapi.UpdatePreferencesFor(ctx, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org preferences patchOrgPreferences
@@ -187,7 +215,13 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), 0, 0, &dtoCmd)
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagGrafanaKubernetesPreferences, false, openfeature.TransactionContext(ctx)) {
+		return hs.preferenceK8sHandler.PatchPreferences(c, prefapi.NamespaceOwner(), &dtoCmd)
+	}
+
+	return hs.patchPreferencesFor(ctx, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:parameters  updateUserPreferences
