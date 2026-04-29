@@ -45,6 +45,7 @@ This documentation describes the Critical User Journey tracking framework in Gra
 - [Debugging and Development](#debugging-and-development)
   - [Enable Debug Logging](#enable-debug-logging)
   - [Console Output Examples](#console-output-examples)
+  - [Smoke runner: scripts/cuj-smoke.ts](#smoke-runner-scriptscuj-smokets)
 - [Implementation Details](#implementation-details)
   - [Noop Tracker](#noop-tracker)
   - [Handle Lifecycle](#handle-lifecycle)
@@ -471,7 +472,7 @@ See `panelEdit.test.ts` (recordEvent-heavy) and `browseToResource.test.ts` (star
    cujTracking = true
    ```
 
-2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (`[grafana_javascript_agent]` enabled, `tracingInstrumentalizationEnabled = true`, an endpoint pointing at a dev Faro collector).
+2. Wire Faro to a Tempo + Loki backend in `conf/custom.ini` (see [Configuration](#configuration) for the `[log.frontend]` block).
 
 3. Open Chrome devtools console. The framework logs every journey lifecycle event when `localStorage.setItem('grafana.debug.journeyTracker', 'true')` is set. You'll see `journeyTracker.JourneyTracker startJourney …`, step events, and the end outcome.
 
@@ -1003,6 +1004,34 @@ Reload the page after setting. Uses `createDebugLog` from `app/core/utils/debugL
   attributes: { source: "command_palette" }
 }
 ```
+
+### Smoke runner: `scripts/cuj-smoke.ts`
+
+A Playwright-driven runner that exercises `search_to_resource` repeatedly against a local Grafana, useful for populating CUJ dashboards with realistic telemetry while iterating on instrumentation or visualisations.
+
+**Quick start:**
+
+```bash
+# Start Grafana (with cujTracking enabled and Faro wired) in another terminal first.
+node --experimental-strip-types scripts/cuj-smoke.ts --runs 200
+node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
+node --experimental-strip-types scripts/cuj-smoke.ts --runs 50 --scenario discarded
+```
+
+**What it does per iteration:**
+
+- Picks a uniform-random scenario: `new-dashboard`, `home-dashboard`, `import-dashboard`, `existing-dashboard`, or `discarded`.
+- Picks a uniform-random query variant for that scenario (`new dashboard`, `new dash`, `create dashboard`, …).
+- Types it with one of four cadences: `burst` (40-60ms/char), `normal` (80-120ms/char), `thinking` (mid-word pause), or `hunting` (typo and correction).
+- Activates with one of three styles: `mouse` (click first result), `keyboard-immediate` (ArrowDown + Enter), or `keyboard-browse` (1-4 ArrowDowns with occasional ArrowUp).
+- Listens for the journey end log via `page.on('console')` and captures the outcome + duration.
+- Waits 2s after the journey ends so Faro's batched transport flushes the trace.
+
+**One-time setup:** the script reuses `@grafana/plugin-e2e`'s `authenticate` Playwright project for login, caching storage state in `playwright/.auth/admin.json`. It also creates a fixture dashboard (`CUJ Smoke Fixture`) via the HTTP API for the `existing-dashboard` scenario.
+
+**Output:** outcome histogram, scenario × outcome breakdown, average duration, list of failures.
+
+See `scripts/cuj-smoke.ts` for source — adding scenarios, tweaking weights, or running other journeys is a small change.
 
 ## Implementation Details
 
