@@ -14,7 +14,6 @@ import { Stack } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
@@ -23,6 +22,7 @@ import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   uid: string;
@@ -91,7 +91,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const vizPanelState: VizPanelState = {
       title,
-      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange),
+      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange?.state),
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,

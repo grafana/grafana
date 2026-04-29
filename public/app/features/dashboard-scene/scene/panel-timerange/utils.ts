@@ -7,6 +7,8 @@ import { of } from 'rxjs';
 import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
 import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
+import type { PanelTimeRangeState } from './PanelTimeRange';
+
 // rendered appropriately.
 export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
   const diff = secondary.timeRange.from.diff(primary.timeRange.from);
@@ -25,6 +27,20 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
 };
 
 export const getCompareSeriesRefId = (refId: string) => `${refId}-compare`;
+
+export function getUpdatedHoverHeader(title: string, timeOverride?: Partial<PanelTimeRangeState>): boolean {
+  if (title !== '') {
+    return false;
+  }
+
+  if (timeOverride && !timeOverride.hideTimeOverride) {
+    if (timeOverride.timeFrom || timeOverride.timeShift) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
 

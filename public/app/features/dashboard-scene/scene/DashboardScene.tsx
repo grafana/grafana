@@ -63,7 +63,7 @@ import {
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -901,7 +901,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {
-    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
   }
 
   public async changePanelPlugin(
