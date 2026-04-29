@@ -47,16 +47,9 @@ export interface GrafanaReceiverFormProps {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
-  /** When set, called instead of navigating to the notifications list after a successful save. */
-  onSaveSuccess?: () => void;
 }
 
-export const GrafanaReceiverForm = ({
-  contactPoint,
-  readOnly = false,
-  editMode,
-  onSaveSuccess,
-}: GrafanaReceiverFormProps) => {
+export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: GrafanaReceiverFormProps) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
@@ -124,11 +117,7 @@ export const GrafanaReceiverForm = ({
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      } else {
-        locationService.push('/alerting/notifications');
-      }
+      locationService.push('/alerting/notifications');
     } catch (error) {
       // Propagate so ReceiverForm can show notifyApp.error with the backend message
       throw error;

@@ -24,8 +24,6 @@ export interface CloudReceiverFormProps {
   contactPoint?: Receiver;
   readOnly?: boolean;
   editMode?: boolean;
-  /** When set, called instead of navigating to the notifications list after a successful save. */
-  onSaveSuccess?: () => void;
 }
 
 const defaultChannelValues: CloudChannelValues = Object.freeze({
@@ -45,7 +43,6 @@ export const CloudReceiverForm = ({
   alertManagerSourceName,
   readOnly = false,
   editMode,
-  onSaveSuccess,
 }: CloudReceiverFormProps) => {
   const { isLoading, data: config } = useGetAlertmanagerConfigurationQuery(alertManagerSourceName);
 
@@ -70,11 +67,7 @@ export const CloudReceiverForm = ({
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      } else {
-        locationService.push('/alerting/notifications');
-      }
+      locationService.push('/alerting/notifications');
     } catch (error) {
       // Propagate so ReceiverForm can show notifyApp.error with the backend message
       throw error;
