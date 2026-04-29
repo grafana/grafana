@@ -149,13 +149,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 auto',
   }),
   cards: css({
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    display: 'flex',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
   }),
   card: css({
-    display: 'block',
-    width: '100%',
+    flex: '1 1 220px',
+    minWidth: 220,
+    maxWidth: 320,
     textAlign: 'left',
     padding: theme.spacing(1.5),
     borderRadius: theme.shape.radius.default,
