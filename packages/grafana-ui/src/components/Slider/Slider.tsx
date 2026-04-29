@@ -180,7 +180,7 @@ export const Slider = ({
 
         {showInput && (
           <Input
-            type="text"
+            type="number"
             width={7.5}
             className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
             value={inputValue}
