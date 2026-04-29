@@ -608,15 +608,15 @@ func TestV1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "legacy bare-string panel datasource: known names resolve, unknown names are preserved as UID-only refs",
+			name: "legacy bare-string datasource: known names resolve, unknown names are preserved as UID-only refs",
 			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
 							"title": "Test Dashboard",
+							// "Existing Target Name" resolves into (uid: "existing-target-uid", type: "elasticsearch").
 							"panels": []interface{}{
 								map[string]interface{}{
-									// Known name -> resolves to (existing-target-uid, elasticsearch)
 									"id":         101,
 									"type":       "timeseries",
 									"datasource": "Existing Target Name",
@@ -627,13 +627,40 @@ func TestV1ToV2alpha1(t *testing.T) {
 									},
 								},
 								map[string]interface{}{
-									// Unknown name -> preserved as a UID-only ref (empty type),
 									"id":         103,
 									"type":       "timeseries",
-									"datasource": "TEST_DB",
+									"datasource": "non-existing-ds",
 									"targets": []interface{}{
 										map[string]interface{}{
 											"refId": "A",
+										},
+									},
+								},
+								map[string]interface{}{
+									"id":   201,
+									"type": "timeseries",
+									"datasource": map[string]interface{}{
+										"uid":  "existing-ref-uid",
+										"type": "prometheus",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"datasource": "Existing Target Name",
+										},
+									},
+								},
+								map[string]interface{}{
+									"id":   203,
+									"type": "timeseries",
+									"datasource": map[string]interface{}{
+										"uid":  "existing-ref-uid",
+										"type": "prometheus",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"datasource": "non-existing-ds",
 										},
 									},
 								},
@@ -643,32 +670,43 @@ func TestV1ToV2alpha1(t *testing.T) {
 				}
 			},
 			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
-				require.Contains(t, v2alpha1.Spec.Elements, "panel-101")
-				known := v2alpha1.Spec.Elements["panel-101"].PanelKind
-				require.NotNil(t, known)
-				require.Len(t, known.Spec.Data.Spec.Queries, 1)
-				knownQuery := known.Spec.Data.Spec.Queries[0]
-				require.NotNil(t, knownQuery.Spec.Datasource,
-					"bare-string panel datasource matching the index should produce a ref")
-				require.NotNil(t, knownQuery.Spec.Datasource.Uid)
-				require.NotNil(t, knownQuery.Spec.Datasource.Type)
-				assert.Equal(t, "existing-target-uid", *knownQuery.Spec.Datasource.Uid,
-					"known legacy string datasource should resolve to the indexed UID")
-				assert.Equal(t, "elasticsearch", *knownQuery.Spec.Datasource.Type,
-					"known legacy string datasource should resolve to the indexed type")
+				assertKnownStringDS := func(t *testing.T, panelID, where string) {
+					t.Helper()
+					require.Contains(t, v2alpha1.Spec.Elements, panelID)
+					panel := v2alpha1.Spec.Elements[panelID].PanelKind
+					require.NotNil(t, panel)
+					require.Len(t, panel.Spec.Data.Spec.Queries, 1)
+					q := panel.Spec.Data.Spec.Queries[0]
+					require.NotNil(t, q.Spec.Datasource,
+						"bare-string %s datasource matching the index should produce a ref", where)
+					require.NotNil(t, q.Spec.Datasource.Uid)
+					require.NotNil(t, q.Spec.Datasource.Type)
+					assert.Equal(t, "existing-target-uid", *q.Spec.Datasource.Uid,
+						"known legacy string %s datasource should resolve to the indexed UID", where)
+					assert.Equal(t, "elasticsearch", *q.Spec.Datasource.Type,
+						"known legacy string %s datasource should resolve to the indexed type", where)
+				}
 
-				require.Contains(t, v2alpha1.Spec.Elements, "panel-103")
-				unknown := v2alpha1.Spec.Elements["panel-103"].PanelKind
-				require.NotNil(t, unknown)
-				require.Len(t, unknown.Spec.Data.Spec.Queries, 1)
-				unknownQuery := unknown.Spec.Data.Spec.Queries[0]
-				require.NotNil(t, unknownQuery.Spec.Datasource,
-					"unknown legacy string datasource should be preserved as a ref, not dropped")
-				require.NotNil(t, unknownQuery.Spec.Datasource.Uid)
-				assert.Equal(t, "TEST_DB", *unknownQuery.Spec.Datasource.Uid,
-					"unknown legacy string datasource should preserve the name as UID")
-				assert.Nil(t, unknownQuery.Spec.Datasource.Type,
-					"unknown legacy string datasource should omit Type (UID-only ref, matches omitempty semantics)")
+				assertUnknownStringDS := func(t *testing.T, panelID, where string) {
+					t.Helper()
+					require.Contains(t, v2alpha1.Spec.Elements, panelID)
+					panel := v2alpha1.Spec.Elements[panelID].PanelKind
+					require.NotNil(t, panel)
+					require.Len(t, panel.Spec.Data.Spec.Queries, 1)
+					q := panel.Spec.Data.Spec.Queries[0]
+					require.NotNil(t, q.Spec.Datasource,
+						"unknown legacy string %s datasource should be preserved as a ref, not dropped", where)
+					require.NotNil(t, q.Spec.Datasource.Uid)
+					assert.Equal(t, "non-existing-ds", *q.Spec.Datasource.Uid,
+						"unknown legacy string %s datasource should preserve the name as UID", where)
+					assert.Nil(t, q.Spec.Datasource.Type,
+						"unknown legacy string %s datasource should omit Type (UID-only ref, matches omitempty semantics)", where)
+				}
+
+				assertKnownStringDS(t, "panel-101", "panel")
+				assertUnknownStringDS(t, "panel-103", "panel")
+				assertKnownStringDS(t, "panel-201", "target")
+				assertUnknownStringDS(t, "panel-203", "target")
 			},
 		},
 	}
