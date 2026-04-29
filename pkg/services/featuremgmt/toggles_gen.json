@@ -4724,6 +4724,20 @@
     },
     {
       "metadata": {
+        "name": "queryEditorNextMultiSelect",
+        "resourceVersion": "1777462601515",
+        "creationTimestamp": "2026-04-29T11:36:41Z"
+      },
+      "spec": {
+        "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryFetchConfigFromSettingsService",
         "resourceVersion": "1773659793759",
         "creationTimestamp": "2026-03-16T11:16:33Z"

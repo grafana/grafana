@@ -6,6 +6,7 @@
   "version": "13.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "analytics-report": "node ./scripts/cli/analytics/main.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts && yarn build:react19",
     "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts --env react19=1",
@@ -253,6 +254,7 @@
     "testing-library-selector": "0.3.1",
     "tracelib": "1.0.1",
     "ts-jest": "29.4.0",
+    "ts-morph": "^28.0.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",

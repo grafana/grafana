@@ -1209,7 +1209,6 @@ eslint-suppressions.json @grafanabot
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
 /kinds/ @grafana/grafana-as-code
-kindsv2/ @grafana/dashboards-squad
 
 # Kind system and code generation
 embed.go @grafana/grafana-as-code

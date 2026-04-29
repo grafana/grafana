@@ -19,7 +19,7 @@ interface DiffCanvasProps {
   actual?: CanvasEventArray;
 }
 
-export function DiffCanvas({
+export function CanvasDiff({
   width,
   height,
   hasDiff,
