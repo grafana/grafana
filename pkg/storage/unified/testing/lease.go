@@ -634,7 +634,7 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 
 		require.NoError(t, quick.Check(
 			pbt.RunWorkload, &quick.Config{
-				MaxCount: 10,
+				MaxCount: 50,
 				Rand:     rng,
 				Values:   pbt.Generator,
 			}),
