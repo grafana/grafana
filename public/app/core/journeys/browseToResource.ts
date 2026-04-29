@@ -1,6 +1,23 @@
-import { type StepHandle, onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
+import {
+  locationService,
+  onInteraction,
+  onJourneyInstance,
+  registerJourneyTriggers,
+  type StepHandle,
+} from '@grafana/runtime';
 
 import { collectUnsubs, str } from './utils';
+
+// Path prefixes the journey treats as still in-scope. Anything else is treated
+// as the user leaving the browse area and the journey ends as `abandoned`.
+const IN_SCOPE_PREFIXES = ['/dashboards', '/dashboard/', '/d/'];
+
+function pathInScope(pathname: string): boolean {
+  if (pathname === '/dashboards') {
+    return true;
+  }
+  return IN_SCOPE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 /**
  * Journey: browse_to_resource
@@ -20,6 +37,7 @@ import { collectUnsubs, str } from './utils';
  *
  * End conditions:
  *   - success: dashboards_init_dashboard_completed — dashboard loaded after resource click
+ *   - abandoned: SPA route change to a path outside `/dashboards`, `/dashboard/`, `/d/`
  *   - timeout: 60s — no end condition fires
  */
 
@@ -114,6 +132,23 @@ onJourneyInstance('browse_to_resource', (handle) => {
       }
     })
   );
+
+  // SPA route change: if the user navigates outside the browse / dashboard area
+  // (e.g., to /explore, /connections), end the journey as `abandoned`. The framework's
+  // beforeunload + visibility-change handlers only catch tab-level signals; in-app
+  // navigation needs explicit handling.
+  let initialLocation = true;
+  const sub = locationService.getLocationObservable().subscribe((location) => {
+    if (initialLocation) {
+      // BehaviorSubject fires with current location on subscribe; ignore that.
+      initialLocation = false;
+      return;
+    }
+    if (!pathInScope(location.pathname) && handle.isActive) {
+      handle.end('abandoned', { abandonedAt: location.pathname });
+    }
+  });
+  add(() => sub.unsubscribe());
 
   // Dashboard loads -> end the select step and the journey.
   add(
