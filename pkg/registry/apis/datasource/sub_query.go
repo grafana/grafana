@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -59,7 +60,9 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.query.connect",
+		attribute.String("namespace", namespace),
 		attribute.String("plugin_id", r.builder.pluginJSON.ID),
 		attribute.String("datasource_uid", name),
 	)
@@ -84,6 +87,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		defer m.Record()
 
 		reqCtx, reqSpan := tracing.Start(ctx, "datasource.query.request",
+			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
 		)

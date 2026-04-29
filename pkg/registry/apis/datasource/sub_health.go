@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -50,7 +51,9 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.health.connect",
+		attribute.String("namespace", namespace),
 		attribute.String("plugin_id", r.builder.pluginJSON.ID),
 		attribute.String("datasource_uid", name),
 	)
@@ -89,6 +92,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		defer m.Record()
 
 		_, reqSpan := tracing.Start(req.Context(), "datasource.health.request",
+			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
 		)

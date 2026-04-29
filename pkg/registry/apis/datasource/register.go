@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
@@ -336,6 +337,7 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
 	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
+		attribute.String("namespace", request.NamespaceValue(ctx)),
 		attribute.String("plugin_id", b.pluginJSON.ID),
 		attribute.String("datasource_uid", uid),
 	)

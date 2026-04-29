@@ -11,6 +11,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -52,7 +53,9 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	namespace := request.NamespaceValue(ctx)
 	ctx, connectSpan := tracing.Start(ctx, "datasource.resource.connect",
+		attribute.String("namespace", namespace),
 		attribute.String("plugin_id", r.builder.pluginJSON.ID),
 		attribute.String("datasource_uid", name),
 	)
@@ -78,6 +81,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		defer m.Record()
 
 		reqCtx, reqSpan := tracing.Start(ctx, "datasource.resource.request",
+			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
 			attribute.String("http_method", req.Method),
