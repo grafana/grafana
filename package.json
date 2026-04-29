@@ -76,6 +76,7 @@
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "plugin:test:ci": "nx run-many -t test:ci --projects='tag:scope:plugin' --maxParallel=2",
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
+    "cuj:new": "node --experimental-strip-types scripts/cuj-new.ts",
     "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
     "generate:openapi": "yarn workspace @grafana/openapi generate:openapi"

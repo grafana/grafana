@@ -29,6 +29,8 @@ Never import from `JourneyTrackerImpl` or `JourneyRegistryImpl` directly - those
 
 ## Adding a New Journey: Recipe
 
+> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one shot. Run `yarn cuj:new --help` for flags (`--owner`, `--description`, `--timeout-ms`, `--parent`, `--dry-run`). After scaffolding, fill in the TODOs marked in the generated files. The steps below describe what the script generates and why.
+
 This is the short version of `journey-tracking.md` Steps 0-7. Read the full version if anything's unclear.
 
 ### 1. Decide the journey shape
