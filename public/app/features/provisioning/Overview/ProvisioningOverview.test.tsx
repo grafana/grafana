@@ -94,6 +94,26 @@ describe('ProvisioningOverview', () => {
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
   });
 
+  it('hides the Migrate action when no Git Sync repository is connected', () => {
+    mockUseRepositoryList.mockReturnValue([[], false]);
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 3 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // No repository → no usable migration target → the button is omitted
+    // entirely instead of being shown disabled.
+    expect(screen.queryAllByRole('link', { name: /migrate/i })).toHaveLength(0);
+  });
+
   it('shows a Migrate link only for Git-Sync-supported rows that still have unmanaged resources', () => {
     mockUseRepositoryList.mockReturnValue([
       [

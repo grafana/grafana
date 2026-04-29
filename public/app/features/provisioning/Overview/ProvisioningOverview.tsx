@@ -564,25 +564,12 @@ function ProviderStat({
 
 /**
  * Per-row action that points the user at the Git Sync repository where they
- * can migrate the unmanaged folders or dashboards. We only render this for
- * Git-Sync-supported rows (folders and dashboards) — Migrate from the Grafana
- * UI only works against Git Sync; Terraform / kubectl migrations happen
- * outside Grafana.
+ * can migrate the unmanaged folders or dashboards. Only rendered for
+ * Git-Sync-supported rows (folders and dashboards) when at least one
+ * repository is connected — Migrate from the Grafana UI only works against
+ * Git Sync, so without a repo there's nothing the button can usefully do.
  */
 function MigrateRowButton({ repos }: { repos: Repository[] }) {
-  if (repos.length === 0) {
-    return (
-      <LinkButton
-        variant="secondary"
-        size="sm"
-        icon="upload"
-        href={PROVISIONING_URL}
-        tooltip={t('provisioning.stats.migrate-needs-repo', 'Connect a Git Sync repository first')}
-      >
-        <Trans i18nKey="provisioning.stats.migrate-button">Migrate</Trans>
-      </LinkButton>
-    );
-  }
   const target =
     repos.length === 1 && repos[0].metadata?.name ? `${PROVISIONING_URL}/${repos[0].metadata.name}` : PROVISIONING_URL;
   return (
@@ -834,10 +821,14 @@ function ResourceTypesSection({ breakdowns }: { breakdowns: GroupBreakdown[] }) 
         header: '',
         disableGrow: true,
         cell: ({ row }) => {
-          // Migrate from the UI is Git-Sync-only, so only show the action on
-          // rows where Git Sync supports the resource type and there's still
-          // something to migrate.
-          if (!row.original.isGitSyncSupported || row.original.unmanagedCount === 0) {
+          // Migrate from the UI is Git-Sync-only and needs a repository to
+          // point at, so only render the action on Git-Sync-supported rows
+          // with unmanaged resources when there's at least one repo.
+          if (
+            !row.original.isGitSyncSupported ||
+            row.original.unmanagedCount === 0 ||
+            gitSyncRepos.length === 0
+          ) {
             return null;
           }
           return <MigrateRowButton repos={gitSyncRepos} />;
