@@ -314,11 +314,6 @@ export interface FeatureToggles {
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
-  * use raw output mode for the data source querier
-  * @default false
-  */
-  datasourcesQuerierRawOutput?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */

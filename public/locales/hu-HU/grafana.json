@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Betűrendben (A–Z)",
         "alphabetically-za": "Betűrendben (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Törölve (legújabb elöl)",
         "deleted-oldest": "Törölve (legrégebbi elöl)"
       }
@@ -13577,6 +13579,7 @@
       "contact-admin": "Vegye fel a kapcsolatot Grafana-rendszergazdájával, hogy ezt az erőforrást helyi erőforrássá alakítsa, vagy törölje az összes erőforrást a hiányzó adattárból.",
       "convert-to-local-button": "Konvertálás helyi erőforrássá",
       "delete-button": "Törlés",
+      "go-to-dashboards": "",
       "job-error": "Hiba történt az árva erőforrások feldolgozása során",
       "job-success": "Az árva erőforrások feldolgozása sikeres volt",
       "job-warning": "Bizonyos erőforrások feldolgozása figyelmeztetésekkel fejeződött be. Tekintse át az eredményeket.",
@@ -14285,6 +14288,10 @@
     "buttons": {
       "restore": "Visszaállítás"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Mostanában nem törölt irányítópultokat.",
       "no-deleted-dashboards-text": "Ha töröl egy irányítópultot, az legfeljebb 12 hónapig marad elérhető az előzményekben, mielőtt véglegesen törlődik. A törlési engedéllyel rendelkező felhasználók visszaállíthatják az általuk törölt irányítópultokat, a rendszergazdák pedig visszaállíthatják a bármely felhasználó által törölt irányítópultokat.",
@@ -14446,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Adatforrás",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 perc",
       "deleted-remaining-header": "Hátralévő idő",
       "location-header": "Hely",

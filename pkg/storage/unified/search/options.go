@@ -29,8 +29,11 @@ const (
 	DefaultSnapshotCleanupInterval = 6 * time.Hour
 	// DefaultSnapshotLockTTL is the TTL for the distributed lock used during upload/cleanup.
 	DefaultSnapshotLockTTL = 3 * time.Minute
-	// DefaultSnapshotMinKeep is the minimum number of snapshots retained regardless of age.
-	DefaultSnapshotMinKeep = 3
+	// DefaultSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
+	// have existed before its predecessor in the same Grafana-version group is
+	// considered eligible for cleanup. Gives in-flight downloads time to converge
+	// on the new snapshot before its predecessor disappears.
+	DefaultSnapshotCleanupGracePeriod = 30 * time.Minute
 )
 
 func NewSearchOptions(
@@ -105,15 +108,15 @@ func NewSearchOptions(
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 
-			IndexSnapshotEnabled:         cfg.IndexSnapshotEnabled,
-			IndexSnapshotBucketURL:       cfg.IndexSnapshotBucketURL,
-			IndexSnapshotThreshold:       cfg.IndexSnapshotThreshold,
-			IndexSnapshotMaxAge:          cfg.IndexSnapshotMaxAge,
-			IndexSnapshotMinDocChanges:   DefaultSnapshotMinDocChanges,
-			IndexSnapshotUploadInterval:  DefaultSnapshotUploadInterval,
-			IndexSnapshotLockTTL:         DefaultSnapshotLockTTL,
-			IndexSnapshotMinKeep:         DefaultSnapshotMinKeep,
-			IndexSnapshotCleanupInterval: DefaultSnapshotCleanupInterval,
+			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
+			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,
+			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,
+			IndexSnapshotMaxAge:             cfg.IndexSnapshotMaxAge,
+			IndexSnapshotMinDocChanges:      DefaultSnapshotMinDocChanges,
+			IndexSnapshotUploadInterval:     DefaultSnapshotUploadInterval,
+			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
+			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
+			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 		}, nil
 	}
 	return resource.SearchOptions{
@@ -173,11 +176,22 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 	lockHeartbeat := snapshotLockHeartbeat(lockTTL)
 
 	return SnapshotOptions{
-		Store:           NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
-		MinDocCount:     int64(cfg.IndexSnapshotThreshold),
-		MaxIndexAge:     cfg.IndexSnapshotMaxAge,
-		MinBuildVersion: minBuildVersion,
-		UploadInterval:  DefaultSnapshotUploadInterval,
-		MinDocChanges:   DefaultSnapshotMinDocChanges,
+		Store:              NewBucketRemoteIndexStore(bucket, lockBackend, owner, lockTTL, lockHeartbeat),
+		MinDocCount:        int64(cfg.IndexSnapshotThreshold),
+		MaxIndexAge:        cfg.IndexSnapshotMaxAge,
+		MinBuildVersion:    minBuildVersion,
+		UploadInterval:     DefaultSnapshotUploadInterval,
+		MinDocChanges:      DefaultSnapshotMinDocChanges,
+		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 	}, nil
+}
+
+// cleanupGracePeriodOrDefault returns d if positive, otherwise the default.
+// Lets a zero value in setting.Cfg fall back to the documented default rather
+// than disabling the grace window entirely.
+func cleanupGracePeriodOrDefault(d time.Duration) time.Duration {
+	if d <= 0 {
+		return DefaultSnapshotCleanupGracePeriod
+	}
+	return d
 }
