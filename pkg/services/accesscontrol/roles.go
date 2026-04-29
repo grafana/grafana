@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -370,7 +369,7 @@ func FixedRoleRegistrations() []RoleRegistration {
 }
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
+func DeclareFixedRoles(service Service) error {
 	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
 

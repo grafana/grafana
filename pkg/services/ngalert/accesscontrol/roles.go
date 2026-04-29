@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -510,6 +509,6 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	}
 }
 
-func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
+func DeclareFixedRoles(service accesscontrol.Service) error {
 	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
