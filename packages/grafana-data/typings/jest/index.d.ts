@@ -1,6 +1,5 @@
 import type { CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import { type Observable } from 'rxjs';
-import type uPlot from 'uplot';
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
