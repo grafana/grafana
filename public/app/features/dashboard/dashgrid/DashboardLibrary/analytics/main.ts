@@ -1,5 +1,7 @@
 import { defineFeatureEvents } from '@grafana/runtime/internal';
 
+import { isSuggestedDashboardAssistantEnabled, isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
+
 import {
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
@@ -54,10 +56,16 @@ export const NewDashboardLibraryInteractions = {
  */
 export const NewTemplateDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
-  /** Fired when the user selects an item in the Template Dashboards view. */
-  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
-  /** Fired when the Template Dashboards view finishes loading. */
-  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
+
+  loaded: async (properties: LoadedProperties) => {
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+    NewTemplateDashboardInteractions.loaded({ ...properties, isDashboardTemplatesAssistantEnabled });
+  },
+
+  itemClicked: async (properties: ItemClickedProperties) => {
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+    NewTemplateDashboardInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
+  },
 };
 
 /**
@@ -65,8 +73,14 @@ export const NewTemplateDashboardInteractions = {
  */
 export const NewSuggestedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
-  /** Fired when the user selects an item in the Suggested Dashboards view. */
-  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
-  /** Fired when the Suggested Dashboards view finishes loading. */
-  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
+
+  itemClicked: async (properties: ItemClickedProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    NewTemplateDashboardInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+  },
+
+  loaded: async (properties: LoadedProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    NewTemplateDashboardInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+  },
 };
