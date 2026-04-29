@@ -197,7 +197,9 @@ describe('Migrate', () => {
     render(<Migrate />);
 
     expect(screen.getByText(/recommended next steps/i)).toBeInTheDocument();
-    expect(screen.getByText(/connect a git repository/i)).toBeInTheDocument();
+    // The phrase appears both in the page subtitle and as the first
+    // next-step's heading; assert at least one occurrence.
+    expect(screen.getAllByText(/connect a git repository/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/review unmanaged resources/i)).toBeInTheDocument();
     expect(screen.getByText(/migrate your first resource/i)).toBeInTheDocument();
     expect(screen.getByText(/5 of 5 folders and dashboards/i)).toBeInTheDocument();

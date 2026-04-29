@@ -13794,7 +13794,7 @@
       "empty": "No provisioned resources yet",
       "error-title": "Failed to load provisioning stats",
       "folders": "Folders",
-      "header-subtitle": "Version-control your dashboards and folders. Track changes, review updates, and keep your instance reproducible. Start by connecting a Git repository, then migrate the resources below.",
+      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
       "last-scan-days_one": "{{count}} d ago",
       "last-scan-days_other": "{{count}} d ago",

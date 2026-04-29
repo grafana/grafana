@@ -519,8 +519,8 @@ function MigrateToGitopsHeader() {
       </Stack>
       <Text color="secondary">
         <Trans i18nKey="provisioning.stats.header-subtitle">
-          Version-control your dashboards and folders. Track changes, review updates, and keep your instance
-          reproducible. Start by connecting a Git repository, then migrate the resources below.
+          Manage your dashboards and folders like code — every change tracked, every update reviewed, every
+          environment reproducible. Connect a Git repository to get started.
         </Trans>
       </Text>
     </Stack>
