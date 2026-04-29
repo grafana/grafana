@@ -13780,14 +13780,9 @@
       "label-pending-step": "Pending step"
     },
     "stats": {
-      "bulk-clear": "Clear",
-      "bulk-migrate": "Migrate selected",
-      "bulk-selected_one": "{{count}} resource type selected",
-      "bulk-selected_other": "{{count}} resource type selected",
       "column-managed": "Managed",
       "column-managed-pct": "% managed",
       "column-resource": "Resource",
-      "column-supported-by": "Supported by",
       "column-total": "Total",
       "column-unmanaged": "Unmanaged",
       "connect-repo": "Connect a repository",
@@ -13846,8 +13841,6 @@
       "next-step-review-pending_other": "{{count}} of {{total}} folders and dashboards are still unmanaged.",
       "next-step-review-title": "Review unmanaged resources",
       "next-steps-heading": "Recommended next steps",
-      "select-all-aria": "Select all eligible rows",
-      "select-row-aria": "Select {{label}}",
       "start-migration": "Start migration",
       "summary-managed": "Managed",
       "summary-total": "Total resources",

@@ -1,5 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -242,42 +241,6 @@ describe('Migrate', () => {
     expect(screen.getAllByText(/terraform/i).length).toBeGreaterThan(0);
     // Terraform managed count surfaces.
     expect(screen.getByText(/2 managed/i)).toBeInTheDocument();
-  });
-
-  it('exposes a Migrate selected button once rows are checked', async () => {
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
-    mockQuery({
-      data: {
-        instance: [
-          { group: 'folder.grafana.app', resource: 'folders', count: 3 },
-          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 },
-        ],
-        unmanaged: [],
-        managed: [],
-      },
-    });
-
-    render(<Migrate />);
-
-    // No bulk-action bar before any row is checked.
-    expect(screen.queryByRole('link', { name: /migrate selected/i })).not.toBeInTheDocument();
-
-    // Pick the Folders row's checkbox.
-    const foldersCell = screen.getByText('Folders').closest('[role="row"]');
-    expect(foldersCell).not.toBeNull();
-    await userEvent.click(within(foldersCell as HTMLElement).getByRole('checkbox'));
-
-    // Bulk Migrate selected link appears, pointing at the existing repo.
-    const bulkLink = screen.getByRole('link', { name: /migrate selected/i });
-    expect(bulkLink).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
   it('renders the Migration progress and Managed by tool donut panels', () => {

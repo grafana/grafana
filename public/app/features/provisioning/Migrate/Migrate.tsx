@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -7,8 +7,6 @@ import {
   Alert,
   Badge,
   type BadgeColor,
-  Button,
-  Checkbox,
   type Column,
   EmptyState,
   Icon,
@@ -624,60 +622,9 @@ function ResourceTypesTable({
   repos: Repository[];
 }) {
   const styles = useStyles2(getStyles);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const eligibleRows = useMemo(() => rows.filter((r) => r.unmanagedCount > 0), [rows]);
-  const allEligibleSelected = eligibleRows.length > 0 && eligibleRows.every((r) => selected.has(rowKey(r)));
-  const someEligibleSelected = !allEligibleSelected && eligibleRows.some((r) => selected.has(rowKey(r)));
-
-  const toggleRow = useCallback((key: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    if (allEligibleSelected) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(eligibleRows.map(rowKey)));
-    }
-  }, [allEligibleSelected, eligibleRows]);
-
-  const columns: Array<Column<GroupBreakdown>> = useMemo(() => {
-    const cols: Array<Column<GroupBreakdown>> = [
-      {
-        id: 'select',
-        header: () => (
-          <Checkbox
-            checked={allEligibleSelected}
-            indeterminate={someEligibleSelected}
-            onChange={toggleAll}
-            aria-label={t('provisioning.stats.select-all-aria', 'Select all eligible rows')}
-            disabled={eligibleRows.length === 0}
-          />
-        ),
-        disableGrow: true,
-        cell: ({ row }) => {
-          const key = rowKey(row.original);
-          return (
-            <Checkbox
-              checked={selected.has(key)}
-              onChange={() => toggleRow(key)}
-              aria-label={t('provisioning.stats.select-row-aria', 'Select {{label}}', {
-                label: row.original.label,
-              })}
-              disabled={row.original.unmanagedCount === 0}
-            />
-          );
-        },
-      },
+  const columns: Array<Column<GroupBreakdown>> = useMemo(
+    () => [
       {
         id: 'label',
         header: t('provisioning.stats.column-resource', 'Resource'),
@@ -736,57 +683,17 @@ function ResourceTypesTable({
         },
       },
       {
-        id: 'supportedBy',
-        header: t('provisioning.stats.column-supported-by', 'Supported by'),
-        cell: ({ row }) => (
-          <Stack direction="row" gap={0.5} wrap>
-            {FOLDERS_DASHBOARDS_TOOLS.map((kind) => (
-              <Badge key={kind} color={badgeColorForKind(kind)} text={kindLabel(kind)} />
-            ))}
-          </Stack>
-        ),
-      },
-      {
         id: 'actions',
         header: '',
         disableGrow: true,
         cell: ({ row }) =>
           row.original.unmanagedCount === 0 ? null : <MigrateRowButton repos={repos} />,
       },
-    ];
-    return cols;
-  }, [
-    repos,
-    selected,
-    allEligibleSelected,
-    someEligibleSelected,
-    eligibleRows,
-    toggleAll,
-    toggleRow,
-    styles.managedPctCell,
-    styles.managedPctBar,
-  ]);
-
-  return (
-    <Stack direction="column" gap={1.5}>
-      {selected.size > 0 && (
-        <Stack direction="row" gap={1.5} alignItems="center">
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="provisioning.stats.bulk-selected" count={selected.size}>
-              {{ count: selected.size }} resource type selected
-            </Trans>
-          </Text>
-          <LinkButton variant="primary" size="sm" icon="upload" href={migrateTarget(repos)}>
-            <Trans i18nKey="provisioning.stats.bulk-migrate">Migrate selected</Trans>
-          </LinkButton>
-          <Button variant="secondary" size="sm" fill="text" onClick={() => setSelected(new Set())}>
-            <Trans i18nKey="provisioning.stats.bulk-clear">Clear</Trans>
-          </Button>
-        </Stack>
-      )}
-      <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />
-    </Stack>
+    ],
+    [repos, styles.managedPctCell, styles.managedPctBar]
   );
+
+  return <InteractiveTable columns={columns} data={rows} getRowId={rowKey} pageSize={0} />;
 }
 
 interface NextStep {
