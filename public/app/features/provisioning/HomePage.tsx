@@ -73,7 +73,7 @@ export default function HomePage() {
     if (isStatsEnabled) {
       tabs.push({
         value: 'stats',
-        label: t('provisioning.home-page.tab-stats', 'Migrate'),
+        label: t('provisioning.home-page.tab-stats', 'Migrate to GitOps'),
         title: t('provisioning.home-page.tab-stats-title', 'Migrate to GitOps'),
       });
     }

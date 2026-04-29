@@ -13499,7 +13499,7 @@
       "tab-getting-started-title": "Get started",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
-      "tab-stats": "Migrate",
+      "tab-stats": "Migrate to GitOps",
       "tab-stats-title": "Migrate to GitOps",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
     },
