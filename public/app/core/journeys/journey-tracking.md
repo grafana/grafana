@@ -1046,7 +1046,7 @@ public/app/core/journeys/
 
 **Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-**Note:** `*.smoke.ts` files and `__smoke__/` directories are excluded from `tsconfig.json` because they import each other with explicit `.ts` extensions (Node ESM requirement). They aren't typechecked by `yarn typecheck`; `node --experimental-strip-types --check` validates syntax.
+**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them.
 
 ## Implementation Details
 
