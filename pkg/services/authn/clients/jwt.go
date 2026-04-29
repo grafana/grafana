@@ -139,7 +139,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	// Honour the org requested via ?orgId query param so that OrgRedirect middleware
-	// does not see a mismatch and cause an infinite redirect loop.
+	// does not see a mismatch and cause an infinite redirect loop. Downstream sync
+	// hooks and RBAC permission checks still verify membership in id.OrgID; this
+	// only sets the active-org selector for the session.
 	if r.OrgID > 0 {
 		id.OrgID = r.OrgID
 	}
