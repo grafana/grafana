@@ -1,20 +1,21 @@
 import { screen } from '@testing-library/react';
 
 import { AlertState } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';
-import { trackSelectButtonClick } from '../../../tracking';
 import { renderWithQueryEditorProvider } from '../../testUtils';
 import { type AlertRule, EMPTY_ALERT, type Transformation } from '../../types';
 
 import { SidebarFooter } from './SidebarFooter';
 
-jest.mock('../../../tracking', () => ({
-  trackSelectButtonClick: jest.fn(),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
 }));
 
-const mockTrackSelectButtonClick = jest.mocked(trackSelectButtonClick);
+const mockReportInteraction = jest.mocked(reportInteraction);
 
 function createAlertRule(overrides: Partial<AlertRule> = {}): AlertRule {
   return { ...EMPTY_ALERT, alertId: `alert-${Math.random()}`, state: AlertState.OK, ...overrides };
@@ -89,7 +90,9 @@ describe('SidebarFooter', () => {
       await user.click(screen.getByRole('button', { name: /select multiple items/i }));
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(true);
-      expect(mockTrackSelectButtonClick).toHaveBeenCalledTimes(1);
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'click_multi_select',
+      });
     });
   });
 
