@@ -68,9 +68,16 @@ const parseEventFromCall = (
     throw new Error(`Expected ${fnName} to be called with only 1 string literal argument`);
   }
 
-  const { description } = parseEventMetadata(callExpr);
-  if (!description) {
+  const metadata = parseEventMetadata(callExpr);
+  if (!metadata.description) {
     throw new Error(`Description not found for event '${arg.getLiteralText()}'`);
+  }
+
+  if (!metadata.owner) {
+    // CODEOWNERS matching requires a path relative to the repo root
+    const relativeFilePath = path.relative(process.cwd(), callExpr.getSourceFile().getFilePath());
+    const owner = resolveOwner(relativeFilePath);
+    metadata.owner = owner;
   }
 
   const eventName = arg.getLiteralText();
@@ -92,7 +99,8 @@ const parseEventFromCall = (
     repo: eventNamespace.eventPrefixProject,
     feature: eventNamespace.eventPrefixFeature,
     eventName,
-    description,
+    description: metadata.description,
+    owner: metadata.owner,
     properties: mergedProperties,
   };
 };
@@ -117,19 +125,12 @@ const getEventJsDocs = (eventCallExpr: CallExpression): JSDoc[] => {
 };
 
 const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
-  // CODEOWNERS matching requires a path relative to the repo root
-  const relativeFilePath = path.relative(process.cwd(), eventCallExpr.getSourceFile().getFilePath());
-  const owner = resolveOwner(relativeFilePath);
-
   const jsDocs = getEventJsDocs(eventCallExpr);
   if (jsDocs.length < 1) {
     throw new Error(`Expected JSDoc comment for event declaration at ${eventCallExpr.getSourceFile().getFilePath()}`);
   }
 
-  return {
-    owner,
-    ...getMetadataFromJSDocs(jsDocs),
-  };
+  return getMetadataFromJSDocs(jsDocs);
 };
 
 /**
