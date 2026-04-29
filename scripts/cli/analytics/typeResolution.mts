@@ -1,4 +1,5 @@
 import { Node, type JSDoc, type PropertyAssignment, type Type } from 'ts-morph';
+import type { JSDocMetadata } from './types.mts';
 
 /**
  * Resolves a TypeScript type to a string representation. For example for:
@@ -51,11 +52,6 @@ export function resolveType(type: Type): string {
   }
 
   return type.getText(); // Default to the type's text representation
-}
-
-export interface JSDocMetadata {
-  description?: string;
-  owner?: string;
 }
 
 /**

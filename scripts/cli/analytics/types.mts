@@ -35,3 +35,8 @@ export interface EventData extends Omit<Event, 'properties'> {
   owner?: string;
   properties?: EventPropertySchema[];
 }
+
+export interface JSDocMetadata {
+  description?: string;
+  owner?: string;
+}

@@ -4,14 +4,13 @@ import {
   Node,
   SyntaxKind,
   type CallExpression,
-  type ObjectLiteralExpression,
   type SourceFile,
   type ts,
   type Type,
   type VariableStatement,
 } from 'ts-morph';
 
-import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
+import type { EventData, EventNamespace, EventPropertySchema, JSDocMetadata } from './types.mts';
 
 import { getMetadataFromJSDocs, getMetadataFromPropertyComments, resolveType } from './typeResolution.mts';
 import { resolveOwner } from './codeowners.mts';
@@ -28,62 +27,20 @@ import { resolveOwner } from './codeowners.mts';
  *     trackClick: createNavEvent<ClickProperties>('click'),
  *   };
  */
-export const parseEvents = (file: SourceFile, eventNamespaces: Map<string, EventNamespace>): EventData[] => {
-  const flatEvents: EventData[] = [];
-  // Keyed by ObjectLiteralExpression, then by property name (e.g. 'itemClicked').
-  // Built in the CallExpression scan; consumed by resolveGroupedEvents for spread resolution.
-  const directEventsByObject = new Map<ObjectLiteralExpression, Map<string, EventData>>();
-  // CODEOWNERS matching requires a path relative to the repo root
-  const relativeFilePath = path.relative(process.cwd(), file.getFilePath());
-
-  for (const callExpr of file.getDescendantsOfKind(SyntaxKind.CallExpression)) {
-    const fnName = callExpr.getExpression().getText();
-    if (!eventNamespaces.has(fnName)) {
-      continue;
-    }
-
-    const parent = callExpr.getParent();
-
-    if (Node.isVariableDeclaration(parent)) {
-      // Flat pattern: const trackClick = createNavEvent('click')
-      const event = parseEventFromCall(callExpr.getType(), callExpr, eventNamespaces, () => {
-        const stmt = getParentVariableStatement(parent);
-        if (!stmt) {
-          throw new Error(`Parent not found for ${parent.getText()}`);
-        }
-        // JSDoc attaches to the VariableStatement, not the VariableDeclaration inside it.
-        return getMetadataFromJSDocs(stmt.getJsDocs());
-      });
-      if (event) {
-        flatEvents.push(event);
-      }
-    } else if (Node.isPropertyAssignment(parent)) {
-      // Grouped object pattern: const Interactions = { trackClick: createNavEvent('click') }
-      const objectLiteral = parent.getParent();
-      if (!Node.isObjectLiteralExpression(objectLiteral)) {
-        continue;
+export const parseEventsFromFile = (file: SourceFile, eventNamespaces: Map<string, EventNamespace>): EventData[] => {
+  // Loop through all function call expressions, check it's to a known event factory, and get the event info from it
+  const allEvents = file
+    .getDescendantsOfKind(SyntaxKind.CallExpression)
+    .map((callExpr) => {
+      const fnName = callExpr.getExpression().getText();
+      if (!eventNamespaces.has(fnName)) {
+        return null;
       }
 
-      const event = parseEventFromCall(callExpr.getType(), callExpr, eventNamespaces, () =>
-        getMetadataFromPropertyComments(parent)
-      );
-
-      if (event) {
-        if (!directEventsByObject.has(objectLiteral)) {
-          directEventsByObject.set(objectLiteral, new Map());
-        }
-        directEventsByObject.get(objectLiteral)!.set(parent.getName(), event);
-      }
-    }
-  }
-
-  const allEvents = [...flatEvents, ...resolveGroupedEvents(directEventsByObject)];
-
-  for (const event of allEvents) {
-    if (!event.owner) {
-      event.owner = resolveOwner(relativeFilePath);
-    }
-  }
+      const event = parseEventFromCall(callExpr, eventNamespaces);
+      return event;
+    })
+    .filter((event): event is EventData => event !== null);
 
   return allEvents;
 };
@@ -95,11 +52,10 @@ export const parseEvents = (file: SourceFile, eventNamespaces: Map<string, Event
  * Returns null if the call is not to a known event factory.
  */
 const parseEventFromCall = (
-  type: Type,
   callExpr: CallExpression,
-  eventNamespaces: Map<string, EventNamespace>,
-  getMetadata: () => ReturnType<typeof getMetadataFromJSDocs>
+  eventNamespaces: Map<string, EventNamespace>
 ): EventData | null => {
+  const type = callExpr.getType();
   const fnName = callExpr.getExpression().getText();
   const eventNamespace = eventNamespaces.get(fnName);
   if (!eventNamespace) {
@@ -111,7 +67,7 @@ const parseEventFromCall = (
     throw new Error(`Expected ${fnName} to be called with only 1 string literal argument`);
   }
 
-  const { description } = getMetadata();
+  const { description } = parseEventMetadata(callExpr);
   if (!description) {
     throw new Error(`Description not found for event '${arg.getLiteralText()}'`);
   }
@@ -140,53 +96,34 @@ const parseEventFromCall = (
   };
 };
 
-/**
- * Merges directly-declared events with any spread sources, respecting source order so that
- * later property assignments override earlier ones — mirroring JS spread semantics.
-*/
-const resolveGroupedEvents = (
-  directEventsByObject: Map<ObjectLiteralExpression, Map<string, EventData>>
-): EventData[] => {
-  const result: EventData[] = [];
+const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
+  const parent = eventCallExpr.getParent();
 
-  for (const [objectLiteral, directEvents] of directEventsByObject) {
-    if (!objectLiteral.getProperties().some(Node.isSpreadAssignment)) {
-      result.push(...directEvents.values());
-      continue;
+  // CODEOWNERS matching requires a path relative to the repo root
+  const relativeFilePath = path.relative(process.cwd(), eventCallExpr.getSourceFile().getFilePath());
+  const owner = resolveOwner(relativeFilePath);
+
+  if (Node.isVariableDeclaration(parent)) {
+    // Flat pattern: const trackClick = createNavEvent('click')
+    const variableStatement = getParentVariableStatement(parent);
+    if (!variableStatement) {
+      throw new Error(`Parent not found for ${parent.getText()}`);
     }
 
-    // Walk properties in source order so that later entries override earlier ones.
-    const merged = new Map<string, EventData>();
-
-    for (const property of objectLiteral.getProperties()) {
-      if (Node.isSpreadAssignment(property)) {
-        const spreadExpr = property.getExpression();
-        if (Node.isIdentifier(spreadExpr)) {
-          const decl = spreadExpr.getSymbol()?.getDeclarations()?.[0];
-          if (decl && Node.isVariableDeclaration(decl)) {
-            const spreadInit = decl.getInitializer();
-            if (spreadInit && Node.isObjectLiteralExpression(spreadInit)) {
-              const spreadEvents = directEventsByObject.get(spreadInit);
-              if (spreadEvents) {
-                for (const [key, event] of spreadEvents) {
-                  merged.set(key, event);
-                }
-              }
-            }
-          }
-        }
-      } else if (Node.isPropertyAssignment(property)) {
-        const event = directEvents.get(property.getName());
-        if (event) {
-          merged.set(property.getName(), event);
-        }
-      }
-    }
-
-    result.push(...merged.values());
+    return {
+      owner,
+      ...getMetadataFromJSDocs(variableStatement.getJsDocs()),
+    };
   }
 
-  return result;
+  if (Node.isPropertyAssignment(parent)) {
+    return {
+      owner,
+      ...getMetadataFromPropertyComments(parent),
+    };
+  }
+
+  throw new Error(`Unexpected parent node kind ${parent?.getKindName() ?? 'unknown'} for event call expression`);
 };
 
 /**
