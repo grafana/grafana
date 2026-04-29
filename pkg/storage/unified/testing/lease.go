@@ -34,7 +34,7 @@ func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
 	t.Run("concurrency", func(t *testing.T) { runLeaseConcurrency(t, store) })
 	t.Run("expiration", func(t *testing.T) { runLeaseExpiration(t, store) })
 	t.Run("release semantics", func(t *testing.T) { runLeaseReleaseSemantics(t, store) })
-	t.Run("context plumbing", func(t *testing.T) { runLeaseContextPlumbing(t, store) })
+	t.Run("notifying loss", func(t *testing.T) { runLeaseLoss(t, store) })
 	t.Run("kv errors", func(t *testing.T) { runLeaseKVErrors(t, &leaseFailingKV{KV: store}) })
 	t.Run("property-based testing", func(t *testing.T) { runLeasePBT(t, store) })
 }
@@ -44,7 +44,7 @@ func runLeaseHappyPath(t *testing.T, store kv.KV) {
 	m := lease.NewManager(store, "holder-happy")
 
 	t.Run("acquire then release", func(t *testing.T) {
-		_, l, err := m.Acquire(ctx, "happy/basic")
+		l, err := m.Acquire(ctx, "happy/basic")
 		require.NoError(t, err)
 		require.NotNil(t, l)
 
@@ -52,11 +52,11 @@ func runLeaseHappyPath(t *testing.T, store kv.KV) {
 	})
 
 	t.Run("acquire after release", func(t *testing.T) {
-		_, l, err := m.Acquire(ctx, "happy/reacquire")
+		l, err := m.Acquire(ctx, "happy/reacquire")
 		require.NoError(t, err)
 		require.NoError(t, m.Release(ctx, l))
 
-		_, l2, err := m.Acquire(ctx, "happy/reacquire")
+		l2, err := m.Acquire(ctx, "happy/reacquire")
 		require.NoError(t, err)
 		require.NotNil(t, l2)
 		require.NoError(t, m.Release(ctx, l2))
@@ -70,10 +70,10 @@ func runLeaseContention(t *testing.T, store kv.KV) {
 		a := lease.NewManager(store, "holder-a")
 		b := lease.NewManager(store, "holder-b")
 
-		_, l, err := a.Acquire(ctx, "contention/different-holders")
+		l, err := a.Acquire(ctx, "contention/different-holders")
 		require.NoError(t, err)
 
-		_, _, err = b.Acquire(ctx, "contention/different-holders")
+		_, err = b.Acquire(ctx, "contention/different-holders")
 		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 
 		require.NoError(t, a.Release(ctx, l))
@@ -82,10 +82,10 @@ func runLeaseContention(t *testing.T, store kv.KV) {
 	t.Run("same holder twice", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-same")
 
-		_, l, err := m.Acquire(ctx, "contention/same-holder")
+		l, err := m.Acquire(ctx, "contention/same-holder")
 		require.NoError(t, err)
 
-		_, _, err = m.Acquire(ctx, "contention/same-holder")
+		_, err = m.Acquire(ctx, "contention/same-holder")
 		require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 
 		require.NoError(t, m.Release(ctx, l))
@@ -94,10 +94,10 @@ func runLeaseContention(t *testing.T, store kv.KV) {
 	t.Run("different names do not interfere", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-multi")
 
-		_, leaseA, err := m.Acquire(ctx, "contention/name-a")
+		leaseA, err := m.Acquire(ctx, "contention/name-a")
 		require.NoError(t, err)
 
-		_, leaseB, err := m.Acquire(ctx, "contention/name-b")
+		leaseB, err := m.Acquire(ctx, "contention/name-b")
 		require.NoError(t, err)
 
 		require.NotNil(t, leaseA)
@@ -130,7 +130,7 @@ func runLeaseConcurrency(t *testing.T, store kv.KV) {
 			m := lease.NewManager(store, holder)
 			wg.Go(func() {
 				<-start
-				_, l, err := m.Acquire(ctx, name)
+				l, err := m.Acquire(ctx, name)
 
 				mu.Lock()
 				defer mu.Unlock()
@@ -174,7 +174,7 @@ func runLeaseConcurrency(t *testing.T, store kv.KV) {
 			name := fmt.Sprintf("concurrency/distinct-%d", i)
 			wg.Go(func() {
 				<-start
-				_, l, err := m.Acquire(ctx, name)
+				l, err := m.Acquire(ctx, name)
 
 				mu.Lock()
 				defer mu.Unlock()
@@ -206,13 +206,13 @@ func runLeaseExpiration(t *testing.T, store kv.KV) {
 		a := lease.NewManager(store, "holder-expire-a")
 		b := lease.NewManager(store, "holder-expire-b")
 
-		_, _, err := a.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		_, err := a.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
 		require.NoError(t, err)
 
 		// Wait past TTL with a small buffer for timer slack.
 		time.Sleep(ttl + 50*time.Millisecond)
 
-		_, leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
 		require.NoError(t, err, "second holder should be able to acquire after TTL elapsed")
 		require.NotNil(t, leaseB)
 		require.NoError(t, b.Release(ctx, leaseB))
@@ -221,7 +221,7 @@ func runLeaseExpiration(t *testing.T, store kv.KV) {
 	t.Run("original release after TTL returns ErrLeaseLost", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-expire-self")
 
-		_, l, err := m.Acquire(ctx, "expiration/self-release", lease.WithTTL(ttl))
+		l, err := m.Acquire(ctx, "expiration/self-release", lease.WithTTL(ttl))
 		require.NoError(t, err)
 
 		time.Sleep(ttl + 50*time.Millisecond)
@@ -237,7 +237,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 	t.Run("double release returns ErrLeaseLost", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-double-release")
 
-		_, l, err := m.Acquire(ctx, "release/double")
+		l, err := m.Acquire(ctx, "release/double")
 		require.NoError(t, err)
 
 		require.NoError(t, m.Release(ctx, l))
@@ -249,7 +249,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 		const ttl = 75 * time.Millisecond
 		m := lease.NewManager(store, "holder-release-expired")
 
-		_, l, err := m.Acquire(ctx, "release/expired", lease.WithTTL(ttl))
+		l, err := m.Acquire(ctx, "release/expired", lease.WithTTL(ttl))
 		require.NoError(t, err)
 
 		time.Sleep(ttl + 50*time.Millisecond)
@@ -259,56 +259,51 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 	})
 }
 
-func runLeaseContextPlumbing(t *testing.T, store kv.KV) {
-	t.Run("returned ctx is cancelled when TTL elapses", func(t *testing.T) {
+func runLeaseLoss(t *testing.T, store kv.KV) {
+	t.Run("Lost() closes when TTL elapses", func(t *testing.T) {
 		const ttl = 75 * time.Millisecond
-		m := lease.NewManager(store, "holder-ctx-ttl")
+		m := lease.NewManager(store, "holder-lost-ttl")
 
-		leaseCtx, _, err := m.Acquire(t.Context(), "ctx/ttl-cancel", lease.WithTTL(ttl))
+		l, err := m.Acquire(t.Context(), "ctx/lost-on-ttl", lease.WithTTL(ttl))
 		require.NoError(t, err)
-		require.NotNil(t, leaseCtx)
+		require.NotNil(t, l)
 
 		select {
-		case <-leaseCtx.Done():
+		case <-l.Lost():
 			// success
 		case <-time.After(ttl + 500*time.Millisecond):
-			t.Fatal("returned context was not cancelled after TTL elapsed")
+			t.Fatal("Lost() did not close after TTL elapsed")
 		}
 	})
 
-	t.Run("returned ctx is cancelled when parent ctx is cancelled", func(t *testing.T) {
-		m := lease.NewManager(store, "holder-ctx-parent")
-		parent, cancel := context.WithCancel(t.Context())
+	t.Run("Lost() closes after successful Release", func(t *testing.T) {
+		m := lease.NewManager(store, "holder-lost-on-release")
 
-		leaseCtx, l, err := m.Acquire(parent, "ctx/parent-cancel")
+		l, err := m.Acquire(t.Context(), "ctx/lost-on-release")
 		require.NoError(t, err)
-		require.NotNil(t, leaseCtx)
-
-		cancel()
+		require.NoError(t, m.Release(t.Context(), l))
 
 		select {
-		case <-leaseCtx.Done():
+		case <-l.Lost():
 			// success
 		case <-time.After(time.Second):
-			t.Fatal("returned context was not cancelled after parent cancel")
+			t.Fatal("Lost() did not close after successful Release")
 		}
-
-		require.NoError(t, m.Release(t.Context(), l))
 	})
 
-	t.Run("Acquire with cancelled parent returns ctx.Err()", func(t *testing.T) {
+	t.Run("Acquire with cancelled context returns error", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-ctx-acquire-cancelled")
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 
-		_, _, err := m.Acquire(ctx, "ctx/acquire-cancelled")
+		_, err := m.Acquire(ctx, "ctx/acquire-cancelled")
 		require.Error(t, err)
 		require.ErrorIs(t, err, context.Canceled)
 	})
 
-	t.Run("Release with cancelled parent returns ctx.Err()", func(t *testing.T) {
+	t.Run("Release with cancelled context returns error", func(t *testing.T) {
 		m := lease.NewManager(store, "holder-ctx-release-cancelled")
-		_, l, err := m.Acquire(t.Context(), "ctx/release-cancelled")
+		l, err := m.Acquire(t.Context(), "ctx/release-cancelled")
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -331,7 +326,7 @@ func runLeaseKVErrors(t *testing.T, failing *leaseFailingKV) {
 		t.Cleanup(failing.Reset)
 
 		m := lease.NewManager(failing, "holder-kv-acquire")
-		_, _, err := m.Acquire(ctx, "kv-errors/acquire")
+		_, err := m.Acquire(ctx, "kv-errors/acquire")
 		require.Error(t, err)
 		require.ErrorIs(t, err, injected)
 	})
@@ -339,7 +334,7 @@ func runLeaseKVErrors(t *testing.T, failing *leaseFailingKV) {
 	t.Run("Batch failure surfaces from Release", func(t *testing.T) {
 		// Acquire cleanly first, then inject failure for the Release call.
 		m := lease.NewManager(failing, "holder-kv-release")
-		_, l, err := m.Acquire(ctx, "kv-errors/release")
+		l, err := m.Acquire(ctx, "kv-errors/release")
 		require.NoError(t, err)
 
 		injected := errors.New("injected release failure")
@@ -534,7 +529,7 @@ func runLeasePBT(t *testing.T, store kv.KV) {
 			runOp := func(serverIdx int, op operation) (violation bool) {
 				switch op.kind {
 				case opAcquire:
-					_, l, err := managers[serverIdx].Acquire(ctx, leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
+					l, err := managers[serverIdx].Acquire(ctx, leaseName(op.leaseIdx), lease.WithTTL(pbtTTL))
 					if err != nil {
 						// Errors are only expected if the lease is already
 						// held by another server.

@@ -24,9 +24,18 @@ var (
 )
 
 type Lease struct {
-	name       string //nolint:unused
-	holder     string //nolint:unused
-	generation int64  // nolint:unused
+	name       string        //nolint:unused
+	holder     string        //nolint:unused
+	generation int64         //nolint:unused
+	lostCh     chan struct{} //nolint:unused
+}
+
+// Lost returns a channel that is closed when this lease ends, i.e., when its TTL
+// elapses or when Release succeeds. Calling Lost multiple times returns the
+// same channel; the channel is closed at most once. Safe to call from any
+// goroutine.
+func (l *Lease) Lost() <-chan struct{} {
+	return l.lostCh
 }
 
 // Manager acquires and releases leases backed by a KV store.
@@ -53,22 +62,19 @@ func WithTTL(d time.Duration) AcquireOption {
 	return func(o *acquireOptions) { o.ttl = d }
 }
 
-// Acquire grabs the lease for `name` on behalf of the manager's holder.
-//
-// On success, Acquire returns a context that is cancelled when the lease's
-// TTL elapses or when ctx is cancelled, along with a *Lease handle that must
-// be passed to Release.
+// Acquire grabs the lease for `name` on behalf of the manager's holder. On
+// success it returns a *Lease handle that must be passed to Release.
 //
 // On failure, Acquire returns an error. ErrLeaseAlreadyHeld indicates that
 // an unexpired lease for name is currently owned by some holder (including
 // possibly the caller).
-func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (context.Context, *Lease, error) {
+func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOption) (*Lease, error) {
 	cfg := acquireOptions{ttl: defaultTTL}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 	_ = cfg
-	return nil, nil, errors.New("not implemented")
+	return nil, errors.New("not implemented")
 }
 
 // Release releases lease. It is not idempotent: releasing a lease that has
