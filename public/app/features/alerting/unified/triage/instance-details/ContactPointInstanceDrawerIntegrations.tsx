@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,7 +13,7 @@ import {
 import {
   type ContactPointWithMetadata,
   type ReceiverConfigWithMetadata,
-  getReceiverRoutingSummaryString,
+  getReceiverDescription,
 } from 'app/features/alerting/unified/components/contact-points/utils';
 import { ReceiverMetadataBadge } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { type NotifierStatus } from 'app/features/alerting/unified/types/alerting';
@@ -70,7 +70,7 @@ function InstanceDrawerIntegrationPanel({
   const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
   const diagnostics = receiver[RECEIVER_STATUS_KEY];
   const sendingResolved = !Boolean(receiver.disableResolveMessage);
-  const routing = getReceiverRoutingSummaryString(receiver);
+  const routingSummary = getReceiverDescription(receiver);
   const routingLabel =
     receiver.type === 'email'
       ? t('alerting.contact-point-header.label-addresses', 'Addresses')
@@ -106,7 +106,7 @@ function InstanceDrawerIntegrationPanel({
             value={meta.description}
           />
         ) : null}
-        {routing ? <DetailKV label={routingLabel} value={routing} /> : null}
+        {routingSummary ? <DetailKV label={routingLabel} value={routingSummary} /> : null}
 
         <NotifierDiagnosticsCollapsible diagnostics={diagnostics} sendingResolved={sendingResolved} />
       </Stack>
@@ -114,7 +114,7 @@ function InstanceDrawerIntegrationPanel({
   );
 }
 
-function DetailKV({ label, value }: { label: string; value: string }) {
+function DetailKV({ label, value }: { label: string; value: ReactNode }) {
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="row" gap={2} alignItems="baseline" wrap>

@@ -117,6 +117,23 @@ describe('getReceiverDescription', () => {
 
     expect(getReceiverDescription(input)).toBe(undefined);
   });
+
+  it('should fall back to receiver meta description when settings are missing', () => {
+    const output = 'Meta-only description';
+    const input = {
+      name: 'legacy',
+      provenance: undefined,
+      type: 'email',
+      disableResolveMessage: false,
+      settings: undefined,
+      [RECEIVER_META_KEY]: {
+        name: 'Email',
+        description: output,
+      },
+    } as unknown as ReceiverConfigWithMetadata;
+
+    expect(getReceiverDescription(input)).toBe(output);
+  });
 });
 
 describe('summarizeEmailAddresses', () => {
