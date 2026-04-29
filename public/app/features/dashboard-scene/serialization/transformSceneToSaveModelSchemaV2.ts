@@ -968,7 +968,7 @@ export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undef
     return instance ? getDataSourceRef(instance) : { uid: ds };
   }
 
-  return ds;
+  return Object.keys(ds).length === 0 ? undefined : ds;
 }
 
 /**
@@ -988,13 +988,7 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
 
   // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
-    const elementDS = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
-    if (elementDS) {
-      const isEmptyDatasourceObject = Object.keys(elementDS).length === 0;
-      if (!isEmptyDatasourceObject) {
-        datasource = elementDS;
-      }
-    }
+    datasource = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
 
     const panelDS = normalizeDataSourceRef(context?.state?.datasource);
     if (panelDS?.uid) {
