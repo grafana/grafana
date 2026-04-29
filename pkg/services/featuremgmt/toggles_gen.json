@@ -2004,7 +2004,8 @@
       "metadata": {
         "name": "datasourcesQuerierRawOutput",
         "resourceVersion": "1774855676428",
-        "creationTimestamp": "2026-03-30T07:27:56Z"
+        "creationTimestamp": "2026-03-30T07:27:56Z",
+        "deletionTimestamp": "2026-04-28T09:16:40Z"
       },
       "spec": {
         "description": "use raw output mode for the data source querier",
