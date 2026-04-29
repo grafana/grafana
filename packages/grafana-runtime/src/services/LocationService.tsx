@@ -10,33 +10,6 @@ import { config } from '../config';
 import { type LocationUpdate } from './LocationSrv';
 
 /**
- * Appends `orgId=<N>` to a URL string, preserving the fragment ordering.
- * Returns the input unchanged if `orgId` is non-positive, non-finite, or
- * already present.
- *
- * Pure — reused by HistoryWrapper.push/replace and by the React Router
- * <Link to> helper in core (public/app/core/utils/navigationUrl.ts).
- *
- * @internal
- */
-export function appendOrgIdToPath(path: string, orgId: number): string {
-  if (!Number.isFinite(orgId) || orgId <= 0) {
-    return path;
-  }
-  const hashIdx = path.indexOf('#');
-  const fragment = hashIdx >= 0 ? path.slice(hashIdx) : '';
-  const pathAndQuery = hashIdx >= 0 ? path.slice(0, hashIdx) : path;
-  const queryIdx = pathAndQuery.indexOf('?');
-  const pathname = queryIdx >= 0 ? pathAndQuery.slice(0, queryIdx) : pathAndQuery;
-  const params = new URLSearchParams(queryIdx >= 0 ? pathAndQuery.slice(queryIdx + 1) : '');
-  if (params.has('orgId')) {
-    return path;
-  }
-  params.set('orgId', String(Math.floor(orgId)));
-  return `${pathname}?${params.toString()}${fragment}`;
-}
-
-/**
  * @public
  * A wrapper to help work with browser location and history
  */
@@ -59,6 +32,16 @@ export interface LocationService {
    * @internal
    */
   setOrgIdGetter: (fn: () => number) => void;
+
+  /**
+   * Returns `location` with `orgId=<N>` injected using the orgId from the
+   * registered getter. Used by push/replace internally and by React Router
+   * `<Link to>` props that bypass push/replace. Returns the input unchanged
+   * if no getter is registered, the orgId is non-positive / non-finite, or
+   * `orgId` is already present.
+   * @internal
+   */
+  appendOrgId: (location: H.Path | H.LocationDescriptor) => H.Path | H.LocationDescriptor;
 
   /**
    * This is from the old LocationSrv interface
@@ -93,20 +76,33 @@ export class HistoryWrapper implements LocationService {
     this.getHistory = this.getHistory.bind(this);
     this.getLocation = this.getLocation.bind(this);
     this.setOrgIdGetter = this.setOrgIdGetter.bind(this);
+    this.appendOrgId = this.appendOrgId.bind(this);
   }
 
   setOrgIdGetter(fn: () => number) {
     this.orgIdGetter = fn;
   }
 
-  private withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H.LocationDescriptor<unknown> {
-    const orgId = this.orgIdGetter?.();
-    if (!orgId) {
+  appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor {
+    const orgId = this.orgIdGetter?.() ?? 0;
+    if (!Number.isFinite(orgId) || orgId <= 0) {
       return location;
     }
+
     if (typeof location === 'string') {
-      return appendOrgIdToPath(location, orgId);
+      const hashIdx = location.indexOf('#');
+      const fragment = hashIdx >= 0 ? location.slice(hashIdx) : '';
+      const pathAndQuery = hashIdx >= 0 ? location.slice(0, hashIdx) : location;
+      const queryIdx = pathAndQuery.indexOf('?');
+      const pathname = queryIdx >= 0 ? pathAndQuery.slice(0, queryIdx) : pathAndQuery;
+      const params = new URLSearchParams(queryIdx >= 0 ? pathAndQuery.slice(queryIdx + 1) : '');
+      if (params.has('orgId')) {
+        return location;
+      }
+      params.set('orgId', String(Math.floor(orgId)));
+      return `${pathname}?${params.toString()}${fragment}`;
     }
+
     const search = location.search ?? '';
     const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
     if (params.has('orgId')) {
@@ -151,11 +147,11 @@ export class HistoryWrapper implements LocationService {
   }
 
   push(location: H.Path | H.LocationDescriptor) {
-    this.history.push(this.withOrgId(location));
+    this.history.push(this.appendOrgId(location));
   }
 
   replace(location: H.Path | H.LocationDescriptor) {
-    this.history.replace(this.withOrgId(location));
+    this.history.replace(this.appendOrgId(location));
   }
 
   reload() {

@@ -1,12 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import {
-  locationService,
-  HistoryWrapper,
-  useLocationService,
-  LocationServiceProvider,
-  appendOrgIdToPath,
-} from './LocationService';
+import { locationService, HistoryWrapper, useLocationService, LocationServiceProvider } from './LocationService';
 
 describe('LocationService', () => {
   describe('getSearchObject', () => {
@@ -67,7 +61,7 @@ describe('LocationService', () => {
     });
   });
 
-  describe('orgId injection on push/replace', () => {
+  describe('appendOrgId', () => {
     beforeEach(() => {
       locationService.setOrgIdGetter(() => 7);
     });
@@ -77,101 +71,99 @@ describe('LocationService', () => {
       locationService.setOrgIdGetter(() => 0);
     });
 
-    it('does not append orgId when the getter returns 0', () => {
+    it('returns input unchanged when getter returns 0 / negative / NaN', () => {
       locationService.setOrgIdGetter(() => 0);
-      locationService.push('/test');
-      expect(locationService.getLocation().search).toBe('');
+      expect(locationService.appendOrgId('/p')).toBe('/p');
+      locationService.setOrgIdGetter(() => -1);
+      expect(locationService.appendOrgId('/p')).toBe('/p');
+      locationService.setOrgIdGetter(() => NaN);
+      expect(locationService.appendOrgId('/p')).toBe('/p');
     });
 
-    it('appends orgId to a string path without query', () => {
-      locationService.push('/test');
-      expect(locationService.getLocation().search).toBe('?orgId=7');
+    it('appends orgId to a bare string path', () => {
+      expect(locationService.appendOrgId('/p')).toBe('/p?orgId=7');
     });
 
-    it('appends orgId with & to a string path that already has a query', () => {
-      locationService.push('/test?foo=1');
-      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+    it('appends orgId with & when the string path already has a query', () => {
+      expect(locationService.appendOrgId('/p?a=1')).toBe('/p?a=1&orgId=7');
     });
 
-    it('places orgId before the fragment on a string path', () => {
-      locationService.push('/test#section');
-      expect(locationService.getLocation().search).toBe('?orgId=7');
-      expect(locationService.getLocation().hash).toBe('#section');
+    it('places orgId before the fragment on a bare string path', () => {
+      expect(locationService.appendOrgId('/p#h')).toBe('/p?orgId=7#h');
     });
 
     it('places orgId before the fragment when the string path has a query', () => {
+      expect(locationService.appendOrgId('/p?a=1#h')).toBe('/p?a=1&orgId=7#h');
+    });
+
+    it('leaves a string path unchanged when orgId is already present', () => {
+      expect(locationService.appendOrgId('/p?orgId=3')).toBe('/p?orgId=3');
+    });
+
+    it('does not false-match notOrgId=', () => {
+      expect(locationService.appendOrgId('/p?notOrgId=5')).toBe('/p?notOrgId=5&orgId=7');
+    });
+
+    it('floors fractional orgId', () => {
+      locationService.setOrgIdGetter(() => 7.9);
+      expect(locationService.appendOrgId('/p')).toBe('/p?orgId=7');
+    });
+
+    it('appends orgId to a LocationDescriptor without a search property', () => {
+      expect(locationService.appendOrgId({ pathname: '/p' })).toEqual({
+        pathname: '/p',
+        search: '?orgId=7',
+      });
+    });
+
+    it('appends orgId to a LocationDescriptor with only a hash', () => {
+      expect(locationService.appendOrgId({ pathname: '/p', hash: '#h' })).toEqual({
+        pathname: '/p',
+        search: '?orgId=7',
+        hash: '#h',
+      });
+    });
+
+    it('appends orgId to a LocationDescriptor with a search', () => {
+      expect(locationService.appendOrgId({ pathname: '/p', search: '?a=1' })).toEqual({
+        pathname: '/p',
+        search: '?a=1&orgId=7',
+      });
+    });
+
+    it('leaves a LocationDescriptor unchanged when orgId is already present', () => {
+      expect(locationService.appendOrgId({ pathname: '/p', search: '?orgId=3' })).toEqual({
+        pathname: '/p',
+        search: '?orgId=3',
+      });
+    });
+  });
+
+  describe('orgId injection on push/replace', () => {
+    beforeEach(() => {
+      locationService.setOrgIdGetter(() => 7);
+    });
+
+    afterAll(() => {
+      locationService.setOrgIdGetter(() => 0);
+    });
+
+    it('push() injects orgId into a string path with fragment', () => {
       locationService.push('/test?foo=1#section');
       expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
       expect(locationService.getLocation().hash).toBe('#section');
     });
 
-    it('leaves a string path unchanged when orgId is already present', () => {
-      locationService.push('/test?orgId=3');
-      expect(locationService.getLocation().search).toBe('?orgId=3');
-    });
-
-    it('appends orgId to the search of a LocationDescriptor object', () => {
+    it('push() injects orgId into a LocationDescriptor', () => {
       locationService.push({ pathname: '/test', search: '?foo=1', hash: '#section' });
       expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
       expect(locationService.getLocation().hash).toBe('#section');
     });
 
-    it('appends orgId to a LocationDescriptor without a search property', () => {
-      locationService.push({ pathname: '/test' });
-      expect(locationService.getLocation().search).toBe('?orgId=7');
-    });
-
-    it('appends orgId to a LocationDescriptor with only a hash', () => {
-      locationService.push({ pathname: '/test', hash: '#section' });
-      expect(locationService.getLocation().search).toBe('?orgId=7');
-      expect(locationService.getLocation().hash).toBe('#section');
-    });
-
-    it('leaves a LocationDescriptor object unchanged when orgId is already present', () => {
-      locationService.push({ pathname: '/test', search: '?orgId=3' });
-      expect(locationService.getLocation().search).toBe('?orgId=3');
-    });
-
-    it('also applies to replace()', () => {
+    it('replace() injects orgId the same way', () => {
       locationService.replace('/test?foo=1#section');
       expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
       expect(locationService.getLocation().hash).toBe('#section');
-    });
-  });
-
-  describe('appendOrgIdToPath', () => {
-    it('returns input unchanged for non-positive or non-finite orgId', () => {
-      expect(appendOrgIdToPath('/p', 0)).toBe('/p');
-      expect(appendOrgIdToPath('/p', -1)).toBe('/p');
-      expect(appendOrgIdToPath('/p', NaN)).toBe('/p');
-    });
-
-    it('appends orgId to a bare path', () => {
-      expect(appendOrgIdToPath('/p', 7)).toBe('/p?orgId=7');
-    });
-
-    it('appends orgId with & when a query is already present', () => {
-      expect(appendOrgIdToPath('/p?a=1', 7)).toBe('/p?a=1&orgId=7');
-    });
-
-    it('preserves fragment ordering on a bare path', () => {
-      expect(appendOrgIdToPath('/p#h', 7)).toBe('/p?orgId=7#h');
-    });
-
-    it('preserves fragment ordering when a query exists', () => {
-      expect(appendOrgIdToPath('/p?a=1#h', 7)).toBe('/p?a=1&orgId=7#h');
-    });
-
-    it('returns input unchanged when orgId is already present', () => {
-      expect(appendOrgIdToPath('/p?orgId=3', 7)).toBe('/p?orgId=3');
-    });
-
-    it('does not false-match notOrgId=', () => {
-      expect(appendOrgIdToPath('/p?notOrgId=5', 7)).toBe('/p?notOrgId=5&orgId=7');
-    });
-
-    it('floors fractional orgId', () => {
-      expect(appendOrgIdToPath('/p', 7.9)).toBe('/p?orgId=7');
     });
   });
 

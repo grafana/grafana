@@ -5,8 +5,8 @@ import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
-import { appendOrgId } from 'app/core/utils/navigationUrl';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 
@@ -56,7 +56,7 @@ export const ReceiversSection = ({
         </div>
         <Stack direction="row" gap={0.5}>
           {showButton && (
-            <Link to={appendOrgId(addButtonTo)}>
+            <Link to={locationService.appendOrgId(addButtonTo)}>
               <Button type="button" icon="plus">
                 {addButtonLabel}
               </Button>

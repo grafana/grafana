@@ -4,9 +4,8 @@ import { Link } from 'react-router-dom-v5-compat';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { type DataSourcePluginOptionsEditorProps, type SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
-import { appendOrgId } from 'app/core/utils/navigationUrl';
 
 import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
@@ -83,7 +82,8 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to={appendOrgId('/alerting/admin')}>settings page</Link>.
+            Make sure to enable the alert forwarding on the{' '}
+            <Link to={locationService.appendOrgId('/alerting/admin')}>settings page</Link>.
           </Text>
         )}
       </Box>
