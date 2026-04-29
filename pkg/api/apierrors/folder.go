@@ -24,19 +24,32 @@ var stableFolderErrSentinels = []error{
 	folder.ErrFolderCannotBeParentOfItself,
 }
 
+// stableDashboardErrSentinels are dashboard errors whose legacy /api/folders message are kept stable.
+var stableDashboardErrSentinels = []error{
+	dashboards.ErrDashboardInvalidUid,
+	dashboards.ErrDashboardUidTooLong,
+}
+
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
 	// --- Dashboard errors ---
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
-		return response.Error(dashboardErr.StatusCode, err.Error(), err)
+		msg := err.Error()
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) {
+			for _, s := range stableDashboardErrSentinels {
+				if errors.Is(err, s) {
+					msg = s.Error()
+					break
+				}
+			}
+		}
+		return response.Error(dashboardErr.StatusCode, msg, err)
 	}
 
 	// --- 400 Bad Request ---
 	if errors.Is(err, folder.ErrTitleEmpty) ||
-		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
-		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
-		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
 		errors.Is(err, folder.ErrMaximumDepthReached) ||
 		errors.Is(err, folder.ErrInvalidUID) {
@@ -115,12 +128,26 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 		return defaultErr
 	}
 
-	return k8sErrors.StatusError{
+	statusErr := k8sErrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: message,
 			Code:    int32(normResp.Status()),
 		},
 	}
+
+	// Preserve the structured errutil message ID in Status.Details.UID so
+	// downstream consumers (e.g. provisioning's IsFolderValidationAPIError)
+	// can match the rejection without relying on the human-readable message.
+	// errutil.Error.Status() is the source of truth for the message ID; if
+	// the underlying error is one, copy its Details across.
+	var grafanaErr errutil.Error
+	if errors.As(err, &grafanaErr) {
+		if details := grafanaErr.Status().Details; details != nil {
+			statusErr.ErrStatus.Details = details
+		}
+	}
+
+	return statusErr
 }
 
 func getDefaultMessageForStatus(statusCode int) string {

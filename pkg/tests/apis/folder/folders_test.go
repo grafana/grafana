@@ -33,6 +33,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -398,7 +399,7 @@ func getFromBothAPIs(t *testing.T,
 	helper *apis.K8sTestHelper,
 	client *apis.K8sResourceClient,
 	uid string,
-	// Optionally match some expect some values
+// Optionally match some expect some values
 	expect *folder.Folder,
 ) *unstructured.Unstructured {
 	t.Helper()
@@ -540,19 +541,50 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 		GVR:  gvr,
 	})
 
-	payload := `{
-		"title": "Test",
-		"uid": "newFolder",
-		"parentUid: "newFolder",
-		}`
-	create := apis.DoRequest(helper, apis.RequestParams{
+	// Create a folder declaring itself as its own parent — must fail with 400.
+	selfParentPayload := `{"title": "Self Parent", "uid": "self-parent", "parentUid": "self-parent"}`
+	selfParent := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
 		Path:   "/api/folders",
-		Body:   []byte(payload),
+		Body:   []byte(selfParentPayload),
 	}, &folder.Folder{})
-	require.NotEmpty(t, create.Response)
-	require.Equal(t, 400, create.Response.StatusCode)
+	require.NotEmpty(t, selfParent.Response)
+	require.Equal(t, http.StatusBadRequest, selfParent.Response.StatusCode)
+
+	// Create a parent and a child, then attempt to move the parent under its
+	// own child — must fail with 400, not 500.
+	parentPayload := `{"title": "Circular Parent", "uid": "circ-parent"}`
+	parent := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(parentPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, parent.Result)
+	require.Equal(t, http.StatusOK, parent.Response.StatusCode)
+
+	childPayload := `{"title": "Circular Child", "uid": "circ-child", "parentUid": "circ-parent"}`
+	child := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(childPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, child.Result)
+	require.Equal(t, http.StatusOK, child.Response.StatusCode)
+
+	// Move parent under its own child via the k8s api (legacy /api/folders
+	// move uses a separate PATCH endpoint; this exercises validateOnUpdate).
+	got, err := client.Resource.Get(context.Background(), "circ-parent", metav1.GetOptions{})
+	require.NoError(t, err)
+	got.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "circ-child"})
+	_, err = client.Resource.Update(context.Background(), got, metav1.UpdateOptions{})
+	require.Error(t, err)
+	require.Truef(t, apierrors.IsBadRequest(err),
+		"expected 400 BadRequest from circular move; got: %v (%T)", err, err)
+	require.Falsef(t, apierrors.IsInternalError(err),
+		"circular-move surfaced as HTTP 500: %v", err)
 }
 
 func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
@@ -2466,25 +2498,49 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 	}
 
 	cases := []struct {
-		name        string
-		setup       func(t *testing.T) string
-		folder      func(parentUID string) *unstructured.Unstructured
-		expectedMsg string
+		name              string
+		setup             func(t *testing.T) string
+		folder            func(parentUID string) *unstructured.Unstructured
+		expectedMsg       string
+		expectedMessageID string
 	}{
 		{
-			name:        "title empty",
-			folder:      func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
-			expectedMsg: "folder title cannot be empty",
+			name:              "title empty",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
+			expectedMsg:       "folder title cannot be empty",
+			expectedMessageID: "folder.title-empty",
 		},
 		{
-			name:        "reserved uid",
-			folder:      func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
-			expectedMsg: "invalid uid for folder provided",
+			name:              "reserved uid",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
+			expectedMsg:       "invalid uid for folder provided",
+			expectedMessageID: "folder.invalid-uid",
 		},
 		{
-			name:        "parent of itself",
-			folder:      func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
-			expectedMsg: "folder cannot be parent of itself",
+			name:              "uid contains illegal characters",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("hello world", "Some title", "") },
+			expectedMsg:       "uid contains illegal characters",
+			expectedMessageID: "folder.invalid-uid-chars",
+		},
+		{
+			name: "uid too long",
+			folder: func(string) *unstructured.Unstructured {
+				return makeFolder("a0123456789012345678901234567890123456789", "Some title", "")
+			},
+			expectedMsg:       "uid too long, max 40 characters",
+			expectedMessageID: "folder.uid-too-long",
+		},
+		{
+			name:              "reserved title General",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("reserved-title-test", "General", "") },
+			expectedMsg:       "A folder with that name already exists",
+			expectedMessageID: "folder.name-exists",
+		},
+		{
+			name:              "parent of itself",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
+			expectedMsg:       "folder cannot be parent of itself",
+			expectedMessageID: "folder.cannot-be-parent-of-itself",
 		},
 		{
 			name: "max depth exceeded",
@@ -2502,7 +2558,8 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			folder: func(parentUID string) *unstructured.Unstructured {
 				return makeFolder("max-depth-6", "Max depth 6", parentUID)
 			},
-			expectedMsg: "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4",
+			expectedMsg:       "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4",
+			expectedMessageID: "folder.maximum-depth-reached",
 		},
 	}
 
@@ -2524,6 +2581,61 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
 			require.Equal(t, tc.expectedMsg, statusErr.ErrStatus.Message)
 			require.Equal(t, tc.expectedMsg, err.Error())
+			require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+			require.Equal(t, tc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
+		})
+	}
+
+	updateCases := []struct {
+		name              string
+		uid               string
+		mutate            func(obj *unstructured.Unstructured)
+		expectedMsg       string
+		expectedMessageID string
+	}{
+		{
+			name: "rename to reserved title General",
+			uid:  "rename-to-general",
+			mutate: func(obj *unstructured.Unstructured) {
+				spec := obj.Object["spec"].(map[string]any)
+				spec["title"] = "General"
+				obj.Object["spec"] = spec
+			},
+			expectedMsg:       "A folder with that name already exists",
+			expectedMessageID: "folder.name-exists",
+		},
+		{
+			name: "move into k6 folder",
+			uid:  "move-to-k6",
+			mutate: func(obj *unstructured.Unstructured) {
+				obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID})
+			},
+			expectedMsg:       "Folders cannot be moved into the k6 project",
+			expectedMessageID: "folder.cannot-be-moved-to-k6",
+		},
+	}
+
+	for _, uc := range updateCases {
+		t.Run("update: "+uc.name, func(t *testing.T) {
+			created, err := client.Resource.Create(context.Background(),
+				makeFolder(uc.uid, "Update Source", ""), metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			uc.mutate(created)
+
+			_, err = client.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Falsef(t, apierrors.IsInternalError(err),
+				"validateOnUpdate surfaced as HTTP 500: %v", err)
+			require.Truef(t, apierrors.IsBadRequest(err),
+				"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+			require.Equal(t, uc.expectedMsg, statusErr.ErrStatus.Message)
+			require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
 }
