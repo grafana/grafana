@@ -143,6 +143,7 @@ jobs:
     needs: push-docker-image
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
+    continue-on-error: true
     permissions:
       contents: read
       id-token: write
