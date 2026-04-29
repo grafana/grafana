@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -125,6 +126,11 @@ type MultiOrgAlertmanager struct {
 
 	datasourceService  datasources.DataSourceService
 	httpClientProvider httpclient.Provider
+	// requestValidator gates outbound datasource HTTP calls against the
+	// configured allow/deny lists. The OSS implementation is a no-op; the
+	// Enterprise validator enforces egress policy. Mirrors the gate used by
+	// the user-driven datasource proxy (datasourceproxy.go).
+	requestValidator validations.DataSourceRequestValidator
 
 	// lastSyncHash stores the FNV-1a hash of the most recent successful Mimir/Cortex
 	// alertmanager-config response body per org. The sync worker compares against
@@ -168,6 +174,7 @@ func NewMultiOrgAlertmanager(
 	adminConfigStore store.AdminConfigurationStore,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
+	requestValidator validations.DataSourceRequestValidator,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -189,6 +196,7 @@ func NewMultiOrgAlertmanager(
 		ns:                          ns,
 		datasourceService:           datasourceService,
 		httpClientProvider:          httpClientProvider,
+		requestValidator:            requestValidator,
 		lastSyncHash:                map[int64]uint64{},
 		peer:                        &NilPeer{},
 	}

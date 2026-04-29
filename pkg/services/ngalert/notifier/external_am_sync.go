@@ -185,6 +185,16 @@ func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datas
 		return nil, nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
+	// Apply allow/deny-list validation to the outbound request before sending.
+	// The validator is the same one the user-driven datasource proxy runs
+	// (datasourceproxy.go), so the sync worker honours whatever policy is
+	// configured for the underlying datasource.
+	if moa.requestValidator != nil {
+		if err := moa.requestValidator.Validate(ds.URL, ds.JsonData, req); err != nil {
+			return nil, nil, fmt.Errorf("datasource request validation failed: %w", err)
+		}
+	}
+
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("HTTP request failed: %w", err)

@@ -30,6 +30,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -79,6 +80,7 @@ func buildSyncTestMOA(
 	featureEnabled bool,
 	operatorUID string,
 	orgIDs []int64,
+	validator ...validations.DataSourceRequestValidator,
 ) (*MultiOrgAlertmanager, *fakeConfigStore) {
 	t.Helper()
 
@@ -88,6 +90,11 @@ func buildSyncTestMOA(
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
+
+	var v validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
+	if len(validator) > 0 && validator[0] != nil {
+		v = validator[0]
+	}
 
 	moa, err := NewMultiOrgAlertmanager(
 		&setting.Cfg{
@@ -115,6 +122,7 @@ func buildSyncTestMOA(
 		adminCfgStore,
 		dsService,
 		httpclient.NewProvider(),
+		v,
 	)
 	require.NoError(t, err)
 
@@ -415,6 +423,34 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncSkipped.WithLabelValues("1")))
+}
+
+// rejectingValidator is a DataSourceRequestValidator that always errors.
+type rejectingValidator struct{ err error }
+
+func (r *rejectingValidator) Validate(string, *simplejson.Json, *http.Request) error {
+	return r.err
+}
+
+func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
+	mimirSrv := startMimirServer(t, "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
+
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
+		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
+	}, nil)
+
+	rejecting := &rejectingValidator{err: fmt.Errorf("egress denied")}
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, rejecting)
+
+	moa.syncExternalAMs(context.Background(), []int64{1})
+
+	// Validator rejection short-circuits before the HTTP round-trip and before any save.
+	assertNoExtraConfigSaved(t, cs, 1)
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
 
 func TestBuildMimirConfigURL(t *testing.T) {

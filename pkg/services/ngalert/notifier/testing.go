@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -649,6 +650,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		nil, // adminConfigStore - not needed when datasource sync feature flag is off
 		nil, // datasourceService - not needed when datasource sync feature flag is off
 		nil, // httpClientProvider - not needed when datasource sync feature flag is off
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed when datasource sync feature flag is off
 		moaOpts...,
 	)
 	require.NoError(t, err)
