@@ -281,6 +281,29 @@ describe('browseToResource journey wiring', () => {
     expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
   });
 
+  it('should record a filter_changed event when a filter is changed', () => {
+    loadWiring();
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    simulateInteraction('grafana_browse_dashboards_filter_changed', {
+      dimension: 'sort',
+      cleared: false,
+    });
+    simulateInteraction('grafana_browse_dashboards_filter_changed', {
+      dimension: 'tag',
+      cleared: true,
+    });
+
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('filter_changed', {
+      dimension: 'sort',
+      cleared: 'false',
+    });
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('filter_changed', {
+      dimension: 'tag',
+      cleared: 'true',
+    });
+  });
+
   it('should not call createStep.end if folder_created fires without a prior drawer-open', () => {
     loadWiring();
     simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
