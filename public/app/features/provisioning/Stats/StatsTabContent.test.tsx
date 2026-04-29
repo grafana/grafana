@@ -46,7 +46,7 @@ describe('StatsTabContent', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
-  it('renders Git Sync as the primary section with folder/dashboard counts', () => {
+  it('renders the migration readiness section with folder/dashboard breakdowns', () => {
     mockQuery({
       data: {
         instance: [
@@ -69,11 +69,33 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    expect(screen.getByText('Git Sync')).toBeInTheDocument();
+    expect(screen.getByText('Git Sync migration readiness')).toBeInTheDocument();
+    expect(screen.getByText('By repository')).toBeInTheDocument();
     expect(screen.getByText('my-github-repo')).toBeInTheDocument();
-    // Folders count (7) and dashboards count (20) for the manager.
+    // Folders breakdown card should expose the 7-managed and the 3-unmanaged figures.
     expect(screen.getAllByText('7').length).toBeGreaterThan(0);
     expect(screen.getAllByText('20').length).toBeGreaterThan(0);
+  });
+
+  it('shows unmanaged counts for Git-Sync-supported types', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 10 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 20 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // 30 unmanaged across folders + dashboards is highlighted as eligible.
+    expect(screen.getByText(/eligible to migrate/i)).toBeInTheDocument();
+    // The Folders / Dashboards breakdown rows include their totals.
+    expect(screen.getAllByText('Folders').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Dashboards').length).toBeGreaterThan(0);
   });
 
   it('groups other manager kinds into the Other providers section', () => {
@@ -101,8 +123,6 @@ describe('StatsTabContent', () => {
     expect(screen.getByText('Other providers')).toBeInTheDocument();
     expect(screen.getByText('Terraform')).toBeInTheDocument();
     expect(screen.getByText('Plugin')).toBeInTheDocument();
-    // Git Sync should still render but with the empty state.
-    expect(screen.getByText(/no resources are managed by git sync/i)).toBeInTheDocument();
   });
 
   it('buckets managers with no kind under Unknown rather than Git Sync', () => {
@@ -122,8 +142,8 @@ describe('StatsTabContent', () => {
     render(<StatsTabContent />);
 
     expect(screen.getByText('Unknown')).toBeInTheDocument();
-    // Git Sync should remain empty since the missing-kind manager is not Repo.
-    expect(screen.getByText(/no resources are managed by git sync/i)).toBeInTheDocument();
+    // Without any repo-kind manager there should be no "By repository" subsection.
+    expect(screen.queryByText('By repository')).not.toBeInTheDocument();
   });
 
   it('derives the Unmanaged summary from instance - managed so the totals balance', () => {
@@ -162,10 +182,13 @@ describe('StatsTabContent', () => {
     expect(screen.getByText('18')).toBeInTheDocument();
   });
 
-  it('aggregates duplicate other-resource counts across managers of the same kind', () => {
+  it('lists every resource type once in the All resources section', () => {
     mockQuery({
       data: {
-        instance: [{ group: 'alerting.grafana.app', resource: 'alertrules', count: 10 }],
+        instance: [
+          { group: 'alerting.grafana.app', resource: 'alertrules', count: 10 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
+        ],
         unmanaged: [],
         managed: [
           {
@@ -184,8 +207,9 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    // Both managers report the same resource — the Other providers panel should
-    // render a single aggregated alertrules stat (4 + 6 = 10), not two duplicates.
+    expect(screen.getByText('All resource types')).toBeInTheDocument();
+    // Each resource type should appear exactly once in the table even when
+    // multiple managers of the same kind report it.
     expect(screen.getAllByText('alertrules')).toHaveLength(1);
   });
 });
