@@ -121,4 +121,14 @@ describe('dashboardEdit journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
     expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
+
+  it('should ignore unrelated interactions', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
 });

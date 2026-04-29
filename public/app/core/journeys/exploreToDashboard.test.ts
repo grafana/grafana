@@ -139,4 +139,15 @@ describe('exploreToDashboard journey wiring', () => {
       newTab: 'true',
     });
   });
+
+  it('should ignore unrelated interactions', () => {
+    loadWiring();
+
+    simulateInteraction('e_2_d_open', {});
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('dashboards_init_dashboard_completed', { uid: 'dash-1' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
+  });
 });
