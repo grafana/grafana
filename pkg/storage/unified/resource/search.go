@@ -678,7 +678,8 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
+			// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
+			_, err := s.build(WithIndexBuildRetryBudget(ctx), info.NamespacedResource, info.Count, reason, false, time.Time{})
 			return err
 		})
 	}
@@ -933,8 +934,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		}
 	}
 
-	// Pass rebuild=true to force rebuild of any existing file-based index
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
+	// Pass rebuild=true to force rebuild of any existing file-based index.
+	// Use WithIndexBuildRetryBudget so it can retry based on number of keys.
+	_, err = s.build(WithIndexBuildRetryBudget(ctx), req.NamespacedResource, size, "rebuild", true, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)

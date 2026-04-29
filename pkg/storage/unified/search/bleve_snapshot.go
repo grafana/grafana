@@ -82,6 +82,10 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	}
 
 	start := time.Now()
+	// TODO: retry DownloadIndex on transient errors before falling through to a
+	// from-scratch KV rebuild. The object store is its own fault domain;
+	// a single failed download shouldn't force a full rebuild for large
+	// indexes (e.g. a 1M-doc dashboard index would re-pay every read).
 	downloadedMeta, err := store.DownloadIndex(ctx, key, candidate.key, destDir)
 	if err != nil {
 		_ = os.RemoveAll(destDir)
