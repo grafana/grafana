@@ -34,6 +34,7 @@ import {
   type PostableRuleDTO,
   PromAlertingRuleState,
   type PromRuleDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
   type RulerAlertingRuleDTO,
   type RulerCloudRuleDTO,
@@ -186,7 +187,7 @@ export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
 }
 
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
-  return group.rules.some((rule) => isProvisionedRule(rule));
+  return group.rules.some(isProvisionedRule);
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -281,6 +282,44 @@ export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): R
 
 export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
+}
+
+export type GroupReadOnlyReason = 'plugin' | 'provisioned' | 'federated';
+
+export type GroupReadOnlyStatus = { readOnly: true; reason: GroupReadOnlyReason } | { readOnly: false };
+
+/**
+ * Reports whether a Ruler-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned > federated.
+ */
+export function getRulerGroupReadOnlyStatus(
+  group: Pick<RulerRuleGroupDTO, 'rules' | 'source_tenants'>
+): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  if (Array.isArray(group.source_tenants)) {
+    return { readOnly: true, reason: 'federated' };
+  }
+  return { readOnly: false };
+}
+
+/**
+ * Reports whether a Prom-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned. The Prom API doesn't carry `source_tenants`,
+ * so federated detection lives only on the Ruler-API counterpart.
+ */
+export function getPromGroupReadOnlyStatus(group: Pick<PromRuleGroupDTO, 'rules'>): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedPromRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  return { readOnly: false };
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {

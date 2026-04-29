@@ -44,8 +44,11 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{folder.ActionFoldersPermissionsRead, folder.ActionFoldersPermissionsWrite}...)
 
-func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
-	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
+// FolderFixedRoleRegistrations returns the wildcard seed role registrations for
+// folders. When wildcardSeed is false an empty slice is returned (the feature
+// is disabled for this instance).
+func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistration {
+	if !wildcardSeed {
 		return nil
 	}
 
@@ -85,7 +88,11 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 		Grants: []string{"Admin"},
 	}
 
-	return service.DeclareFixedRoles(viewer, editor, admin)
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
+}
+
+func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FolderFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("folder"))...)
 }
 
 func ProvideFolderPermissions(

@@ -4491,6 +4491,8 @@
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
         "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Verwijderd (nieuwste eerst)",
         "deleted-oldest": "Verwijderd (oudste eerst)"
       }
@@ -13577,6 +13579,7 @@
       "contact-admin": "Neem contact op met je Grafana-beheerder om deze bron naar lokaal om te zetten of om alle bronnen uit de ontbrekende repository te verwijderen.",
       "convert-to-local-button": "Converteren naar lokaal",
       "delete-button": "Verwijderen",
+      "go-to-dashboards": "",
       "job-error": "Er is een fout opgetreden bij het verwerken van verweesde bronnen",
       "job-success": "Verweesde bronnen zijn succesvol verwerkt",
       "job-warning": "Sommige bronnen zijn verwerkt met waarschuwingen. Controleer de resultaten.",
@@ -14285,6 +14288,10 @@
     "buttons": {
       "restore": "Herstellen"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
       "no-deleted-dashboards-text": "Wanneer je een dashboard verwijdert, wordt dit maximaal 12 maanden in de geschiedenis bewaard voordat het definitief wordt verwijderd. Gebruikers met verwijderingsmachtigingen kunnen de dashboards die ze hebben verwijderd herstellen en beheerders kunnen dashboards herstellen die door een gebruiker zijn verwijderd.",
@@ -14446,6 +14453,10 @@
     },
     "results-table": {
       "datasource-header": "Gegevensbron",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Resterende tijd",
       "location-header": "Locatie",

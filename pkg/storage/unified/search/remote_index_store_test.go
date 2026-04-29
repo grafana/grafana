@@ -684,3 +684,201 @@ func TestRemoteIndexStore_LockBuildIndex_LostAndReleaseAfterLoss(t *testing.T) {
 	require.True(t, err == nil || errors.Is(err, errLockNotFound), "expected nil or errLockNotFound, got %v", err)
 	require.NoError(t, lock.Release())
 }
+
+// --- ListNamespaces / ListNamespaceIndexes / LockNamespaceForCleanup ---
+
+func TestRemoteIndexStore_ListNamespaces_Empty(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	got, err := store.ListNamespaces(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, got)
+}
+
+func TestRemoteIndexStore_ListNamespaces(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	// Seed snapshots in three distinct namespaces.
+	for _, ns := range []string{"stack-1", "stack-2", "stack-3"} {
+		nsRes := resource.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
+		_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
+			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+		require.NoError(t, err)
+	}
+
+	got, err := store.ListNamespaces(ctx)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"stack-1", "stack-2", "stack-3"}, got)
+}
+
+func TestRemoteIndexStore_ListNamespaces_IgnoresStrayObjects(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	// A bare object at the bucket root must not be reported as a namespace.
+	require.NoError(t, bucket.WriteAll(ctx, "stray.txt", []byte("hi"), nil))
+
+	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
+		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+	require.NoError(t, err)
+
+	got, err := store.ListNamespaces(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"stack-1"}, got)
+}
+
+func TestRemoteIndexStore_ListNamespaceIndexes(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	resources := []resource.NamespacedResource{
+		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
+		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}
+	for _, r := range resources {
+		_, err := store.UploadIndex(ctx, r, createTestBleveIndex(t),
+			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+		require.NoError(t, err)
+	}
+
+	got, err := store.ListNamespaceIndexes(ctx, "stack-1")
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []resource.NamespacedResource{
+		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
+	}, got)
+
+	got, err = store.ListNamespaceIndexes(ctx, "stack-2")
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []resource.NamespacedResource{
+		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}, got)
+}
+
+func TestRemoteIndexStore_ListNamespaceIndexes_Empty(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	got, err := store.ListNamespaceIndexes(ctx, "stack-1")
+	require.NoError(t, err)
+	assert.Empty(t, got)
+}
+
+func TestRemoteIndexStore_ListIndexes_SkipsLockSibling(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+
+	indexKey, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
+		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+	require.NoError(t, err)
+
+	// Plant a `<resource-group>/locks/build` object directly in the data bucket.
+	// In production the lock backend shares the snapshot bucket, so this prefix
+	// is observable alongside index-key directories. ListIndexes must skip it.
+	require.NoError(t, bucket.WriteAll(ctx, buildIndexLockKey(ns), []byte("{}"), nil))
+
+	indexes, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Len(t, indexes, 1)
+	assert.Contains(t, indexes, indexKey)
+}
+
+func TestRemoteIndexStore_ListNamespaceIndexes_SkipsLockSibling(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+
+	nsRes := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	_, err := store.UploadIndex(ctx, nsRes, createTestBleveIndex(t),
+		IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 1})
+	require.NoError(t, err)
+
+	// Plant a `stack-1/locks/...` object directly in the data bucket. In production
+	// the lock backend shares the snapshot bucket, so this prefix is observable
+	// alongside resource directories. ListNamespaceIndexes must skip it.
+	require.NoError(t, bucket.WriteAll(ctx, "stack-1/locks/cleanup", []byte("{}"), nil))
+
+	got, err := store.ListNamespaceIndexes(ctx, "stack-1")
+	require.NoError(t, err)
+	assert.Equal(t, []resource.NamespacedResource{nsRes}, got)
+}
+
+func TestRemoteIndexStore_LockNamespaceForCleanup_AcquireRelease(t *testing.T) {
+	ctx := context.Background()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+
+	lock, err := store.LockNamespaceForCleanup(ctx, "stack-1")
+	require.NoError(t, err)
+	select {
+	case <-lock.Lost():
+		t.Fatal("lock should not be lost")
+	default:
+	}
+	require.NoError(t, lock.Release())
+}
+
+func TestRemoteIndexStore_LockNamespaceForCleanup_Contention(t *testing.T) {
+	ctx := context.Background()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+
+	store1 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+	store2 := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-2")
+
+	lock1, err := store1.LockNamespaceForCleanup(ctx, "stack-1")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = lock1.Release() })
+
+	_, err = store2.LockNamespaceForCleanup(ctx, "stack-1")
+	require.ErrorIs(t, err, errLockHeld)
+
+	// Different namespace must be acquirable independently.
+	lock2, err := store2.LockNamespaceForCleanup(ctx, "stack-2")
+	require.NoError(t, err)
+	require.NoError(t, lock2.Release())
+
+	require.NoError(t, lock1.Release())
+}
+
+func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testing.T) {
+	// The cleanup lock must not block the build lock for a resource in the same namespace,
+	// nor vice versa. Both are independently acquirable.
+	ctx := context.Background()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStoreWithLockOwner(t, bucket, backend, "instance-1")
+	ns := newTestNsResource()
+
+	cleanupLock, err := store.LockNamespaceForCleanup(ctx, ns.Namespace)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cleanupLock.Release() })
+
+	buildLock, err := store.LockBuildIndex(ctx, ns)
+	require.NoError(t, err)
+	require.NoError(t, buildLock.Release())
+
+	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
+}

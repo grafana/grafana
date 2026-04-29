@@ -22,6 +22,7 @@ import { panelLinksBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   uid: string;
@@ -79,8 +80,18 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       title = vizPanel.state.title ?? libPanelModel.title;
     }
 
+    const timeRange =
+      libPanelModel.timeFrom || libPanelModel.timeShift
+        ? new PanelTimeRange({
+            timeFrom: libPanelModel.timeFrom,
+            timeShift: libPanelModel.timeShift,
+            hideTimeOverride: libPanelModel.hideTimeOverride,
+          })
+        : undefined;
+
     const vizPanelState: VizPanelState = {
       title,
+      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange?.state),
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
@@ -91,12 +102,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       $data: createPanelDataProvider(libPanelModel),
     };
 
-    if (libPanelModel.timeFrom || libPanelModel.timeShift) {
-      vizPanelState.$timeRange = new PanelTimeRange({
-        timeFrom: libPanelModel.timeFrom,
-        timeShift: libPanelModel.timeShift,
-        hideTimeOverride: libPanelModel.hideTimeOverride,
-      });
+    if (timeRange) {
+      vizPanelState.$timeRange = timeRange;
     }
 
     vizPanel.setState(vizPanelState);
