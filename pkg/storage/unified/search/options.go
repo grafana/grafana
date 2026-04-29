@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -151,11 +153,10 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
 	}
 
-	lockOpts, err := cdkLockOptionsFromBucket(bucket, cfg.IndexSnapshotBucketURL)
+	lockBackend, err := snapshotLockBackendForBucket(bucket, cfg.IndexSnapshotBucketURL)
 	if err != nil {
 		return SnapshotOptions{}, fmt.Errorf("snapshot lock backend options: %w", err)
 	}
-	lockBackend := newCDKLockBackend(bucket, lockOpts)
 
 	ownerBase := cfg.InstanceID
 	if ownerBase == "" {
@@ -185,6 +186,38 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 		CleanupInterval:    DefaultSnapshotCleanupInterval,
 	}, nil
+}
+
+func snapshotLockBackendForBucket(bucket *blob.Bucket, bucketURL string) (lockBackend, error) {
+	registryKey, ok, err := localLockRegistryKey(bucketURL)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return newLocalLockBackend(registryKey), nil
+	}
+
+	lockOpts, err := cdkLockOptionsFromBucket(bucket, bucketURL)
+	if err != nil {
+		return nil, err
+	}
+	return newCDKLockBackend(bucket, lockOpts), nil
+}
+
+// localLockRegistryKey returns the map key used to share process-local locks for the exact file:// bucket URL.
+func localLockRegistryKey(bucketURL string) (string, bool, error) {
+	u, err := url.Parse(bucketURL)
+	if err != nil {
+		return "", false, fmt.Errorf("parse bucket URL: %w", err)
+	}
+	if !strings.EqualFold(u.Scheme, "file") {
+		return "", false, nil
+	}
+	if err := validatePrefix(u.Query().Get("prefix")); err != nil {
+		return "", false, err
+	}
+
+	return bucketURL, true, nil
 }
 
 // cleanupGracePeriodOrDefault returns d if positive, otherwise the default.
