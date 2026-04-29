@@ -29,9 +29,9 @@ import (
 // They are defined here to avoid import cycles.
 var (
 	ErrAPIInvalidUID = errutil.BadRequest("folder.invalid-uid-chars", errutil.WithPublicMessage("uid contains illegal characters")).
-		Errorf("%w", dashboards.ErrDashboardInvalidUid)
+				Errorf("%w", dashboards.ErrDashboardInvalidUid)
 	ErrAPIUIDTooLong = errutil.BadRequest("folder.uid-too-long", errutil.WithPublicMessage("uid too long, max 40 characters")).
-		Errorf("%w", dashboards.ErrDashboardUidTooLong)
+				Errorf("%w", dashboards.ErrDashboardUidTooLong)
 )
 
 var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by a repository")
