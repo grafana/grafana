@@ -61,7 +61,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in Create", "err", err)
 		return nil, err
 	}
 
@@ -133,7 +133,7 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByID", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -184,7 +184,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByLogin", "err", err)
 		return nil, err
 	}
 
@@ -227,7 +227,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByEmail", "err", err)
 		return nil, err
 	}
 
@@ -259,7 +259,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		ctxLogger.Error("failed to get orgID from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in Update", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -379,7 +379,7 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 		var err error
 		orgID, err = s.getOrgID(ctx, ctxLogger)
 		if err != nil {
-			ctxLogger.Error("failed to get orgID from context", "err", err)
+			ctxLogger.Error("failed to get orgID from context in GetSignedInUser", "err", err)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return nil, err
