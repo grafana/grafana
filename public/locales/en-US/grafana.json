@@ -13817,13 +13817,13 @@
       "other-provider-resource-count_other": "{{count}} resources",
       "other-providers-description": "Resources managed by tools other than Git Sync. Some of these (Terraform, kubectl, etc.) may already be the source of truth for your team — Git Sync isn’t a requirement.",
       "other-providers-heading": "Other providers",
+      "overview-heading": "Provisioning overview",
+      "overview-subhead": "How resources are managed across providers like Git Sync, Terraform, and kubectl.",
       "repository-fallback-name": "Repository",
       "resource-total_one": "{{count}} total",
       "resource-total_other": "{{count}} total",
       "resource-types-description": "Each provisioning tool supports a different set of resource types — pick one to see only what it can manage.",
       "resource-types-heading": "Resource types",
-      "summary-headline": "{{pct}} of resources are provisioned as code",
-      "summary-subhead": "A resource is provisioned as code when a tool like Git Sync, Terraform, or kubectl manages it.",
       "summary-total": "Total resources"
     },
     "status-badge": {

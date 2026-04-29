@@ -86,8 +86,9 @@ describe('StatsTabContent', () => {
 
     render(<StatsTabContent />);
 
-    // 5 of 20 = 25% of resources are provisioned as code.
-    expect(screen.getByText(/25% of resources are provisioned as code/i)).toBeInTheDocument();
+    // 5 of 20 = 25% of resources are provisioned as code; surfaced as the
+    // donut center label.
+    expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
     // The single Git Sync banner replaces the previous green card + unmanaged
     // alert pair: it leads with the coverage count and ends with the CTA.
     expect(screen.getByText(/5 of 20 folders and dashboards are managed by Git Sync/i)).toBeInTheDocument();
@@ -274,6 +275,27 @@ describe('StatsTabContent', () => {
     // providers section, and as a chip in the table.
     expect(screen.getAllByText('Terraform').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
+  });
+
+  it('lists File provisioning (classic) as a supporter for folders', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 3 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
+        ],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+
+    render(<StatsTabContent />);
+
+    // The Folders row should now include File provisioning (classic) — it
+    // creates folders implicitly via the dashboard provider's folder option.
+    // Both Folders and Dashboards rows reference the classic chip, so we
+    // expect more than one occurrence.
+    expect(screen.getAllByText('File provisioning (classic)').length).toBeGreaterThan(1);
   });
 
   it('renders the Resource types section with supported-by chips per row', () => {

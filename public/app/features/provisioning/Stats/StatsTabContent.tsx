@@ -48,10 +48,17 @@ const PROVIDER_SUPPORT: Record<string, { groups: string[] | '*' }> = {
     groups: GIT_SYNC_SUPPORTED_GROUPS,
   },
   [CLASSIC_FILE_PROVISIONING]: {
-    // YAML/JSON config under `provisioning/`: dashboards, datasources,
-    // alerting, access control. Deprecated path; documented in
+    // YAML/JSON config under `provisioning/`: dashboards (which create
+    // folders implicitly via the dashboard provider's `folder` setting),
+    // datasources, alerting, and access control. Documented in
     // docs/sources/administration/provisioning/.
-    groups: [...DASHBOARD_GROUPS, 'datasource.grafana.app', 'alerting.grafana.app', 'access-control.grafana.app'],
+    groups: [
+      ...FOLDER_GROUPS,
+      ...DASHBOARD_GROUPS,
+      'datasource.grafana.app',
+      'alerting.grafana.app',
+      'access-control.grafana.app',
+    ],
   },
   [ManagerKind.Terraform]: {
     // Grafana Terraform provider — broad coverage of Grafana resources.
@@ -433,16 +440,16 @@ function SummarySection({ stats }: { stats: ComputedStats }) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Text variant="h5">
-        <Trans i18nKey="provisioning.stats.summary-headline" values={{ pct: managedPct }}>
-          {'{{pct}}'} of resources are provisioned as code
-        </Trans>
-      </Text>
-      <Text color="secondary" variant="bodySmall">
-        <Trans i18nKey="provisioning.stats.summary-subhead">
-          A resource is provisioned as code when a tool like Git Sync, Terraform, or kubectl manages it.
-        </Trans>
-      </Text>
+      <Stack direction="row" alignItems="baseline" gap={1.5} wrap>
+        <Text variant="h4">
+          <Trans i18nKey="provisioning.stats.overview-heading">Provisioning overview</Trans>
+        </Text>
+        <Text color="secondary" variant="bodySmall">
+          <Trans i18nKey="provisioning.stats.overview-subhead">
+            How resources are managed across providers like Git Sync, Terraform, and kubectl.
+          </Trans>
+        </Text>
+      </Stack>
       <div className={styles.summaryPanel}>
         <div className={styles.summaryDonut}>
           <Donut
