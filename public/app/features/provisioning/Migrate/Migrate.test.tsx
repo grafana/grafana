@@ -257,7 +257,9 @@ describe('Migrate', () => {
     // Heading still renders.
     expect(screen.getByText(/managed resources by tool/i)).toBeInTheDocument();
     // New empty-state copy replaces the plain "Nothing is managed yet" line.
-    expect(screen.getByText(/an empty donut\. for now\./i)).toBeInTheDocument();
+    // The same playful title is shared with the Managed-by-type panel, so
+    // there can be more than one match.
+    expect(screen.getAllByText(/an empty donut\. for now\./i).length).toBeGreaterThan(0);
     expect(screen.getByText(/connect git sync/i)).toBeInTheDocument();
   });
 

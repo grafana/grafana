@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -397,6 +397,26 @@ function colorForKind(theme: GrafanaTheme2, kind: string): string {
   }
 }
 
+function EmptyDonutBlock({ title, body }: { title: NonNullable<ReactNode>; body: NonNullable<ReactNode> }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <Stack direction="row" gap={2} alignItems="center">
+      <div className={styles.emptyDonutWrap}>
+        <EmptyDonut />
+        <div className={styles.emptyDonutIcon}>
+          <Icon name="rocket" size="xl" />
+        </div>
+      </div>
+      <Stack direction="column" gap={0.5} flex={1}>
+        <Text weight="medium">{title}</Text>
+        <Text variant="bodySmall" color="secondary">
+          {body}
+        </Text>
+      </Stack>
+    </Stack>
+  );
+}
+
 function EmptyDonut({ size = 140, strokeWidth = 18 }: { size?: number; strokeWidth?: number }) {
   const theme = useTheme2();
   const radius = 50 - strokeWidth / 2;
@@ -445,27 +465,17 @@ function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
         <Trans i18nKey="provisioning.stats.managed-by-tool-heading">Managed resources by tool</Trans>
       </Text>
       {total === 0 ? (
-        <Stack direction="row" gap={2} alignItems="center">
-          <div className={styles.emptyDonutWrap}>
-            <EmptyDonut />
-            <div className={styles.emptyDonutIcon}>
-              <Icon name="rocket" size="xl" />
-            </div>
-          </div>
-          <Stack direction="column" gap={0.5} flex={1}>
-            <Text weight="medium">
-              <Trans i18nKey="provisioning.stats.managed-by-tool-empty-title">
-                An empty donut. For now.
-              </Trans>
-            </Text>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="provisioning.stats.managed-by-tool-empty-body">
-                Connect Git Sync (or any other tool) and slices will appear here as folders and
-                dashboards come under management.
-              </Trans>
-            </Text>
-          </Stack>
-        </Stack>
+        <EmptyDonutBlock
+          title={
+            <Trans i18nKey="provisioning.stats.managed-by-tool-empty-title">An empty donut. For now.</Trans>
+          }
+          body={
+            <Trans i18nKey="provisioning.stats.managed-by-tool-empty-body">
+              Connect Git Sync (or any other tool) and slices will appear here as folders and
+              dashboards come under management.
+            </Trans>
+          }
+        />
       ) : (
         <Stack direction="row" gap={2} alignItems="center">
           <Donut segments={segments} centerLabel={total.toLocaleString()} centerSubLabel={t('provisioning.stats.donut-center-managed', 'managed')} />
@@ -512,18 +522,30 @@ function ResourceBreakdownPanel({
     variant === 'managed'
       ? t('provisioning.stats.managed-by-type-heading', 'Managed by type')
       : t('provisioning.stats.unmanaged-by-type-heading', 'Unmanaged by type');
-  const emptyText =
-    variant === 'managed'
-      ? t('provisioning.stats.managed-by-type-empty', 'No folders or dashboards are managed yet.')
-      : t('provisioning.stats.unmanaged-by-type-empty', 'Everything is under management.');
+
+  const renderEmpty = () =>
+    variant === 'managed' ? (
+      <EmptyDonutBlock
+        title={
+          <Trans i18nKey="provisioning.stats.managed-by-type-empty-title">An empty donut. For now.</Trans>
+        }
+        body={
+          <Trans i18nKey="provisioning.stats.managed-by-type-empty-body">
+            Once a tool starts managing folders or dashboards, you&apos;ll see the breakdown here.
+          </Trans>
+        }
+      />
+    ) : (
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="provisioning.stats.unmanaged-by-type-empty">Everything is under management.</Trans>
+      </Text>
+    );
 
   return (
     <div className={styles.chartPanel}>
       <Text variant="h5">{heading}</Text>
       {total === 0 ? (
-        <Text variant="bodySmall" color="secondary">
-          {emptyText}
-        </Text>
+        renderEmpty()
       ) : (
         <Stack direction="row" gap={2} alignItems="center">
           <Donut segments={segments} centerLabel={total.toLocaleString()} />
