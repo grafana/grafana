@@ -199,10 +199,6 @@ const (
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
 
-	// FlagDatasourcesQuerierRawOutput
-	// use raw output mode for the data source querier
-	FlagDatasourcesQuerierRawOutput = "datasourcesQuerierRawOutput"
-
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"

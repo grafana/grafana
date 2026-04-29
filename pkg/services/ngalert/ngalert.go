@@ -206,6 +206,7 @@ func (ng *AlertNG) init() error {
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
 	var opts []notifier.Option
+	var skipClustering bool
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -249,6 +250,7 @@ func (ng *AlertNG) init() error {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
 			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+			skipClustering = true
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -296,6 +298,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
+		skipClustering,
 		opts...,
 	)
 	if err != nil {
@@ -597,7 +600,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.

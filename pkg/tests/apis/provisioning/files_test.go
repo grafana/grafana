@@ -605,6 +605,244 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "readme-test-repo"
+	const readmeContent = "# Test Repository\n\nThis is a test README for the provisioning API."
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		LocalPath:          helper.ProvisioningPath,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		ExpectedDashboards: 0,
+		ExpectedFolders:    0,
+	})
+
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("GET README.md file should succeed", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for README.md")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &result))
+
+		resource, ok := result["resource"].(map[string]interface{})
+		require.True(t, ok, "response should have resource field")
+
+		file, ok := resource["file"].(map[string]interface{})
+		require.True(t, ok, "resource should have file field")
+
+		content, ok := file["content"].(string)
+		require.True(t, ok, "file should have content field")
+		require.Equal(t, readmeContent, content, "content should match the README")
+	})
+
+	t.Run("GET nested README.md should succeed", func(t *testing.T) {
+		nestedReadmeContent := "# Nested Folder README\n\nThis is inside a folder."
+		helper.WriteToProvisioningPath(t, "folder/README.md", []byte(nestedReadmeContent))
+
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for nested README.md")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &result))
+
+		resource := result["resource"].(map[string]interface{})
+		file := resource["file"].(map[string]interface{})
+		content := file["content"].(string)
+		require.Equal(t, nestedReadmeContent, content, "nested README content should match")
+	})
+
+	t.Run("GET non-existent README.md should return 404", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/nonexistent/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode, "should return 404 for non-existent README.md")
+	})
+
+	t.Run("POST README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/new-readme.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString("# New README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for POST .md files")
+	})
+
+	t.Run("PUT README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBufferString("# Updated README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for PUT .md files")
+	})
+
+	t.Run("DELETE README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for DELETE .md files")
+	})
+
+	// The folder-scoped auth check resolves the file's parent folder ID and
+	// requires folders:get on it. The default Viewer/Editor roles include
+	// folders:read, so reads at the repo root should succeed.
+	t.Run("viewer can GET README.md at the repo root", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md")
+	})
+
+	t.Run("editor can GET README.md at the repo root", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to GET README.md")
+	})
+
+	// Negative case for the folder-scoped check: the nested 'folder/' directory
+	// exists in the repo file tree but has not been synced into Grafana, so the
+	// viewer has no permission grant on its hash-based folder UID. Admins still
+	// pass thanks to wildcard access.
+	t.Run("viewer is denied for README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode,
+			"viewer without folders:get on the parent folder should be denied")
+	})
+
+	t.Run("admin can GET README in an unsynced subfolder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README in any folder")
+	})
+
+	_ = ctx
+}
+
+// TestIntegrationProvisioning_ReadmeFiles_FolderTarget exercises the folder-scoped
+// auth check on a folder-target repository, where RootFolder() resolves to the
+// repo's name as the folder UID. This is the path that proved the new authorizer
+// resolves the synced folder rather than always falling back to the empty root.
+func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "readme-folder-target-repo"
+	const readmeContent = "# Folder-target README"
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              helper.ProvisioningPath,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("admin can GET README.md", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to GET README.md on folder-target repo")
+	})
+
+	t.Run("viewer can GET README.md when they have folders:read on the synced folder", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md on folder-target repo")
+	})
+}
+
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()

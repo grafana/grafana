@@ -3822,7 +3822,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/d3": "npm:^7"
+    "@types/d3-scale": "npm:^4"
     "@types/fs-extra": "npm:^11"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.20"
@@ -3832,7 +3832,7 @@ __metadata:
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
-    d3: "npm:^7.8.5"
+    d3-scale: "npm:^4.0.2"
     esbuild: "npm:0.25.8"
     fs-extra: "npm:^11.3.2"
     jest: "npm:^29.6.4"
@@ -3924,6 +3924,24 @@ __metadata:
     react: ^18
     rxjs: ^7.8.2
   checksum: 10/4d78ddd4a3de4ac2abbe2b2c2c819153540caa37bffe6528fcfebdc26b4621d84ec17663f2866bc5d60af9145b0bc298a23f598e784a3e46b1a0d66b0b08bbf5
+  languageName: node
+  linkType: hard
+
+"@grafana/llm@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@grafana/llm@npm:1.0.8"
+  dependencies:
+    "@modelcontextprotocol/sdk": "npm:^1.26.0"
+    publint: "npm:^0.3.12"
+    react-use: "npm:^17.6.0"
+    semver: "npm:^7.6.3"
+    uuid: "npm:^14.0.0"
+  peerDependencies:
+    "@grafana/data": ^10.4.0 ||^11 || ^12
+    "@grafana/runtime": ^10.4.0 || ^11 || ^12
+    react: ^18
+    rxjs: ^7.8.2
+  checksum: 10/48eeb37fadb3489831df3d498348c8aa95e37e435321ff3673dec61155dec203d96d2fb94b76401b7fa5b549c3a1517ebc7e49ef9c5d58e146ee316399050e24
   languageName: node
   linkType: hard
 
@@ -11304,6 +11322,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-scale@npm:^4":
+  version: 4.0.9
+  resolution: "@types/d3-scale@npm:4.0.9"
+  dependencies:
+    "@types/d3-time": "npm:*"
+  checksum: 10/2cae90a5e39252ae51388f3909ffb7009178582990462838a4edd53dd7e2e08121b38f0d2e1ac0e28e41167e88dea5b99e064ca139ba917b900a8020cf85362f
+  languageName: node
+  linkType: hard
+
 "@types/d3-selection@npm:*":
   version: 3.0.1
   resolution: "@types/d3-selection@npm:3.0.1"
@@ -11376,7 +11403,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.4.3, @types/d3@npm:^7":
+"@types/d3@npm:7.4.3":
   version: 7.4.3
   resolution: "@types/d3@npm:7.4.3"
   dependencies:
@@ -16819,7 +16846,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-scale@npm:4, d3-scale@npm:4.0.2":
+"d3-scale@npm:4, d3-scale@npm:4.0.2, d3-scale@npm:^4.0.2":
   version: 4.0.2
   resolution: "d3-scale@npm:4.0.2"
   dependencies:
@@ -16910,7 +16937,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3@npm:7.9.0, d3@npm:^7.8.5":
+"d3@npm:7.9.0":
   version: 7.9.0
   resolution: "d3@npm:7.9.0"
   dependencies:
@@ -20764,7 +20791,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.3"
+    "@grafana/llm": "npm:1.0.8"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.12"
@@ -20829,6 +20856,7 @@ __metadata:
     "@types/confusing-browser-globals": "npm:^1"
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
+    "@types/d3-scale": "npm:^4"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/eslint": "npm:9.6.1"
@@ -20907,6 +20935,7 @@ __metadata:
     css-minimizer-webpack-plugin: "npm:^8.0.0"
     d3: "npm:7.9.0"
     d3-force: "npm:3.0.0"
+    d3-scale: "npm:^4.0.2"
     d3-scale-chromatic: "npm:3.1.0"
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
@@ -35186,6 +35215,15 @@ __metadata:
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/2742b24d1e00257e60612572e4d28679423469998cafbaf1fe9f1482e3edf9c40754b31bfdb3d08d71b29239f227a304588f75210b3b48f2609f0673f1feccef
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "uuid@npm:14.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
   languageName: node
   linkType: hard
 

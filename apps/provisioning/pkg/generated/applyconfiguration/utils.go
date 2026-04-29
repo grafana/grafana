@@ -22,6 +22,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.BitbucketConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketRepositoryConfig"):
 		return &provisioningv0alpha1.BitbucketRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("CommitOptions"):
+		return &provisioningv0alpha1.CommitOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Connection"):
 		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionInfo"):
