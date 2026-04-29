@@ -114,6 +114,19 @@ type Authorizer interface {
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
+
+	// AuthorizeReadRawFile checks if the user has permission to read a raw
+	// (non-resource) file at the given path.
+	//
+	// Raw files such as README.md are returned as bytes rather than parsed as
+	// k8s resources, so we cannot derive a per-resource verb. We instead gate
+	// access on the read permission of the file's containing folder. For files
+	// at the repository root, the check uses the repository's root folder.
+	//
+	// Permissions on a parent folder grant at least that level of access to
+	// all children, so a user who can read the parent folder can read raw
+	// files inside it.
+	AuthorizeReadRawFile(ctx context.Context, path string) error
 }
 
 // ProvisioningAuthorizer implements Authorizer for provisioning operations.
@@ -493,4 +506,32 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 // This delegates to the repository's write authorization logic.
 func (a *ProvisioningAuthorizer) AuthorizeWrite(ctx context.Context, ref string) error {
 	return repository.IsWriteAllowed(a.repo, ref)
+}
+
+// AuthorizeReadRawFile checks if the user has read permission on the folder
+// containing a raw (non-resource) file.
+//
+// Folder IDs are resolved from the configured branch (ref="") for the same
+// reasons documented on the Authorizer interface — caller-supplied refs can
+// be used to spoof folder UIDs.
+func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path string) error {
+	parentPath := safepath.Dir(path)
+
+	var folderID string
+	if parentPath == "" {
+		folderID = RootFolder(a.repo)
+	} else {
+		id, err := a.getFolderID(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
+		}
+		folderID = id
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     folderID,
+		Verb:     utils.VerbGet,
+	}, folderID)
 }
