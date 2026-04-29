@@ -58,6 +58,46 @@ describe('ProvisioningOverview', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
+  it('shows the primary header CTA: Connect a repository when no repo, Start migration when one is connected', () => {
+    mockUseRepositoryList.mockReturnValueOnce([[], false]);
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    const { rerender } = render(<ProvisioningOverview />);
+    expect(screen.getByRole('link', { name: /connect a repository/i })).toBeInTheDocument();
+
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
+    rerender(<ProvisioningOverview />);
+    expect(screen.getByRole('link', { name: /start migration/i })).toBeInTheDocument();
+  });
+
+  it('renders a Last scan stat card', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
+        unmanaged: [],
+        managed: [],
+      },
+      // RTK Query exposes `fulfilledTimeStamp` on resolved queries.
+      fulfilledTimeStamp: Date.now(),
+    } as Partial<ReturnType<typeof useGetResourceStatsQuery>>);
+    render(<ProvisioningOverview />);
+    expect(screen.getByText(/last scan/i)).toBeInTheDocument();
+    expect(screen.getByText(/just now/i)).toBeInTheDocument();
+  });
+
   it('shows the Migrate to GitOps header with a Migration guide link', () => {
     mockQuery({
       data: {

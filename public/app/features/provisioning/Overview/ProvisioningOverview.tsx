@@ -12,6 +12,7 @@ import {
   type Column,
   EmptyState,
   Icon,
+  type IconName,
   InteractiveTable,
   LinkButton,
   Spinner,
@@ -461,7 +462,9 @@ function ManagedByToolPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
   );
 }
 
-function MigrateToGitopsHeader() {
+function MigrateToGitopsHeader({ repos }: { repos: Repository[] }) {
+  const hasRepo = repos.length > 0;
+  const target = migrateTarget(repos);
   return (
     <Stack direction="row" gap={2} wrap alignItems="flex-start" justifyContent="space-between">
       <Stack direction="column" gap={1}>
@@ -475,86 +478,138 @@ function MigrateToGitopsHeader() {
           </Trans>
         </Text>
       </Stack>
-      <LinkButton
-        variant="secondary"
-        icon="external-link-alt"
-        href={CONFIGURE_GRAFANA_DOCS_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
-      </LinkButton>
+      <Stack direction="row" gap={1} wrap>
+        <LinkButton
+          variant="secondary"
+          icon="external-link-alt"
+          href={CONFIGURE_GRAFANA_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
+        </LinkButton>
+        <LinkButton variant="primary" icon={hasRepo ? 'upload' : 'plus'} href={target}>
+          {hasRepo ? (
+            <Trans i18nKey="provisioning.stats.start-migration">Start migration</Trans>
+          ) : (
+            <Trans i18nKey="provisioning.stats.connect-repo">Connect a repository</Trans>
+          )}
+        </LinkButton>
+      </Stack>
     </Stack>
   );
 }
 
+type StatTone = 'neutral' | 'success' | 'info' | 'warning';
+
 function StatCard({
+  icon,
+  tone,
   big,
   subLabel,
   label,
-  color,
 }: {
+  icon: IconName;
+  tone: StatTone;
   big: string;
   subLabel?: string;
   label: string;
-  color?: 'success' | 'info' | 'warning';
 }) {
   const styles = useStyles2(getStyles);
+  const textColor = tone === 'neutral' ? undefined : tone;
   return (
     <div className={styles.statCard}>
-      <Text variant="h1" color={color}>
-        {big}
-      </Text>
-      {subLabel && (
-        <Text color="secondary" variant="bodySmall">
-          {subLabel}
+      <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
+        <Icon name={icon} />
+      </div>
+      <Stack direction="column" gap={0}>
+        <Text variant="h1" color={textColor}>
+          {big}
         </Text>
-      )}
-      <Text color="secondary" variant="bodySmall">
-        {label}
-      </Text>
+        {subLabel && (
+          <Text color="secondary" variant="bodySmall">
+            {subLabel}
+          </Text>
+        )}
+        <Text color="secondary" variant="bodySmall">
+          {label}
+        </Text>
+      </Stack>
     </div>
   );
 }
 
+function lastScanLabel(timestamp?: number): string {
+  if (!timestamp) {
+    return t('provisioning.stats.last-scan-unknown', 'Unknown');
+  }
+  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+  if (seconds < 60) {
+    return t('provisioning.stats.last-scan-just-now', 'Just now');
+  }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return t('provisioning.stats.last-scan-minutes', '{{count}} min ago', { count: minutes });
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return t('provisioning.stats.last-scan-hours', '{{count}} h ago', { count: hours });
+  }
+  const days = Math.floor(hours / 24);
+  return t('provisioning.stats.last-scan-days', '{{count}} d ago', { count: days });
+}
+
 function OverviewStatCards({
   totals,
+  lastScannedAt,
 }: {
   totals: ReturnType<typeof aggregateTotals>;
+  lastScannedAt?: number;
 }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.statCardsRow}>
       <StatCard
+        icon="apps"
+        tone="neutral"
         big={totals.instanceTotal.toLocaleString()}
         label={t('provisioning.stats.summary-total', 'Total resources')}
       />
       <StatCard
+        icon="check-circle"
+        tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
         subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
           value: totals.managed,
           total: totals.instanceTotal,
         })}
         label={t('provisioning.stats.summary-managed', 'Managed')}
-        color="success"
       />
       <StatCard
+        icon="exclamation-circle"
+        tone="warning"
         big={percent(totals.unmanaged, totals.instanceTotal)}
         subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
           value: totals.unmanaged,
           total: totals.instanceTotal,
         })}
         label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
-        color="warning"
       />
       <StatCard
+        icon="rocket"
+        tone="info"
         big={percent(totals.gitSync, totals.instanceTotal)}
         subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
           value: totals.gitSync,
           total: totals.instanceTotal,
         })}
         label={t('provisioning.stats.progress-to-gitops', 'Progress to GitOps')}
-        color="info"
+      />
+      <StatCard
+        icon="clock-nine"
+        tone="neutral"
+        big={lastScanLabel(lastScannedAt)}
+        label={t('provisioning.stats.last-scan-label', 'Last scan')}
       />
     </div>
   );
@@ -895,8 +950,12 @@ function ToolingSupportPanel({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
 }
 
 export function ProvisioningOverview() {
-  const { data, isLoading, isError, error } = useGetResourceStatsQuery();
+  const query = useGetResourceStatsQuery();
+  const { data, isLoading, isError, error } = query;
+  const lastScannedAt =
+    'fulfilledTimeStamp' in query && typeof query.fulfilledTimeStamp === 'number' ? query.fulfilledTimeStamp : undefined;
   const [repos] = useRepositoryList({ watch: false });
+  const repoList = repos ?? [];
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
   const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
@@ -923,7 +982,7 @@ export function ProvisioningOverview() {
   if (totals.instanceTotal === 0) {
     return (
       <Stack direction="column" gap={3}>
-        <MigrateToGitopsHeader />
+        <MigrateToGitopsHeader repos={repoList} />
         <EmptyState variant="not-found" message={t('provisioning.stats.empty', 'No provisioned resources yet')} />
       </Stack>
     );
@@ -931,18 +990,18 @@ export function ProvisioningOverview() {
 
   return (
     <Stack direction="column" gap={3}>
-      <MigrateToGitopsHeader />
-      <OverviewStatCards totals={totals} />
+      <MigrateToGitopsHeader repos={repoList} />
+      <OverviewStatCards totals={totals} lastScannedAt={lastScannedAt} />
       <div className={styles.mainGrid}>
         <div className={styles.tableColumn}>
-          <ResourceTypesTable rows={tableRows} repos={repos ?? []} />
+          <ResourceTypesTable rows={tableRows} repos={repoList} />
           <div className={styles.chartsRow}>
             <MigrationProgressPanel totals={totals} />
             <ManagedByToolPanel breakdowns={breakdowns} />
           </div>
         </div>
         <div className={styles.sideColumn}>
-          <NextStepsPanel totals={totals} repos={repos ?? []} />
+          <NextStepsPanel totals={totals} repos={repoList} />
           <ToolingSupportPanel breakdowns={breakdowns} />
         </div>
       </div>
@@ -958,12 +1017,38 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   statCard: css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.25),
+    flexDirection: 'row',
+    gap: theme.spacing(1.5),
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.secondary,
+    alignItems: 'flex-start',
+  }),
+  statCardIcon: css({
+    flex: '0 0 auto',
+    width: theme.spacing(4),
+    height: theme.spacing(4),
+    borderRadius: theme.shape.radius.circle,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  statIconTone_neutral: css({
+    background: theme.colors.background.canvas,
+    color: theme.colors.text.secondary,
+  }),
+  statIconTone_success: css({
+    background: theme.colors.success.transparent,
+    color: theme.colors.success.text,
+  }),
+  statIconTone_info: css({
+    background: theme.colors.info.transparent,
+    color: theme.colors.info.text,
+  }),
+  statIconTone_warning: css({
+    background: theme.colors.warning.transparent,
+    color: theme.colors.warning.text,
   }),
   coverageTrack: css({
     position: 'relative',
