@@ -80,7 +80,7 @@ const SUPPORTED_TOOLS: SupportedTool[] = [
     kind: ManagerKind.Kubectl,
     label: 'GCX',
     description: 'Apply manifests from the Grafana command line.',
-    initial: 'G',
+    icon: 'keyboard',
   },
   {
     key: 'file-system',
