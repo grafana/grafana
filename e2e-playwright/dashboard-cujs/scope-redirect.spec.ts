@@ -306,11 +306,13 @@ test.describe('Scope Redirect Functionality', () => {
     });
 
     await test.step('Exit edit mode', async () => {
-      // Click the "Exit edit" button — the dashboard is not dirty (only scopes changed,
-      // not the dashboard itself), so no confirmation dialog will appear.
+      // Click the "Exit edit" button — the dashboard is dirty so confirmation dialog will appear.
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton).click();
 
-      // Verify we are no longer in edit mode: the edit button should be visible again
+      // Entering edit mode can apply auto-changes (e.g. schema migration) that
+      // mark the dashboard dirty, so the discard confirmation may appear.
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
       const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
       await expect(editButton).toBeVisible();
     });
