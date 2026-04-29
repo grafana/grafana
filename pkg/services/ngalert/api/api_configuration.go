@@ -135,14 +135,31 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	if body.ExternalAlertmanagerUID != nil && ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+	if body.ExternalAlertmanagerUID != nil {
 		// When the operator-level ini value is set it is authoritative for all orgs,
 		// so the API must not let users overwrite or clear it via admin_config writes.
 		// Reject any UID write attempt up front (regardless of whether the body value
 		// matches the ini) — the request is meaningless because the ini wins on read
-		// and the sync worker uses the ini value.
+		// and the sync worker uses the ini value. Checked before the feature-flag
+		// gate so the more authoritative reason wins when both apply.
 		if srv.cfg != nil && srv.cfg.ExternalAlertmanagerUID != "" {
 			return response.Error(http.StatusConflict, "external alertmanager UID is managed by the operator (ini); cannot be changed via API", nil)
+		}
+
+		// Reject up front when sync is disabled rather than silently dropping the
+		// field. Returning 201 with the value not persisted hides integration bugs
+		// (callers think the UID was saved, but it wasn't).
+		//
+		// We deliberately reject empty-string clears too: if the org had a UID
+		// configured before the flag was disabled, the convert API will keep
+		// returning 409 (because IsExternalAMSyncConfiguredForOrg gates on
+		// configuration, not flag state) until the operator re-enables the flag
+		// and clears the UID, or removes the admin_config row entirely. Recovery
+		// is deliberately operator-driven — the user-facing API stays strict to
+		// surface the inconsistency rather than silently allowing a partial
+		// change with the flag off.
+		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+			return response.Error(http.StatusBadRequest, "external alertmanager UID sync is disabled on this instance", nil)
 		}
 
 		// Validate the datasource only when the value actually changes, so unrelated

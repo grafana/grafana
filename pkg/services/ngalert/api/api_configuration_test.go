@@ -248,7 +248,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:        "POST with valid UID but feature flag disabled does not validate datasource",
+			name:        "POST with UID set but feature flag disabled is rejected with 400",
 			datasources: []*datasources.DataSource{},
 			posts: []definitions.PostableNGalertConfig{
 				{
@@ -256,7 +256,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 					ExternalAlertmanagerUID: ptrTo("any-uid"),
 				},
 			},
-			wantStatus: http.StatusCreated,
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 
