@@ -66,6 +66,7 @@
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "typecheck:tsgo": "tsgo --noEmit",
+    "typecheck:smoke": "tsc -p tsconfig.smoke.json",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
