@@ -13781,6 +13781,7 @@
     },
     "stats": {
       "column-managed": "Managed",
+      "column-managed-pct": "% managed",
       "column-resource": "Resource",
       "column-supported-by": "Supported by",
       "column-total": "Total",

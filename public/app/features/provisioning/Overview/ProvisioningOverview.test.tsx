@@ -380,6 +380,37 @@ describe('ProvisioningOverview', () => {
     expect(screen.getByText('alertrules')).toBeInTheDocument();
   });
 
+  it('renders the % managed column for each row', () => {
+    mockQuery({
+      data: {
+        instance: [
+          { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
+        ],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            // 4 / 4 folders managed → 100%; 1 / 4 dashboards managed → 25%.
+            stats: [
+              { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 1 },
+            ],
+          },
+        ],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // The % managed column header is present and the per-row percentages
+    // render alongside the absolute counts.
+    expect(screen.getByText('% managed')).toBeInTheDocument();
+    expect(screen.getAllByText('100%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('25%').length).toBeGreaterThan(0);
+  });
+
   it('shows the fully-managed status icon for resources with no unmanaged count', () => {
     mockQuery({
       data: {

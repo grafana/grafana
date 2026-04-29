@@ -565,6 +565,13 @@ function ManagerIdentityList({
 
 type ManagementState = 'fully' | 'partial' | 'none';
 
+function managedShare(row: GroupBreakdown): number {
+  if (row.total === 0) {
+    return 0;
+  }
+  return (row.gitSyncCount + row.otherManagedCount) / row.total;
+}
+
 function getManagementState(row: GroupBreakdown): ManagementState {
   if (row.unmanagedCount === 0) {
     return 'fully';
@@ -709,6 +716,17 @@ function ResourceTypesSection({ rows, hasUnfilteredRows }: { rows: GroupBreakdow
             {row.original.unmanagedCount.toLocaleString()}
           </Text>
         ),
+      },
+      {
+        id: 'managedPct',
+        header: t('provisioning.stats.column-managed-pct', '% managed'),
+        sortType: (a, b) => managedShare(a.original) - managedShare(b.original),
+        cell: ({ row }) => {
+          const share = managedShare(row.original);
+          const pctText = `${Math.round(share * 100)}%`;
+          const color = share === 1 ? 'success' : share === 0 ? 'warning' : 'info';
+          return <Text color={color}>{pctText}</Text>;
+        },
       },
       {
         id: 'supportedBy',
