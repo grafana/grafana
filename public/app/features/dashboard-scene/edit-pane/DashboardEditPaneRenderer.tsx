@@ -65,7 +65,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
+      {openPane && (
+        <Sidebar.OpenPane>
+          {openPane && <openPane.Component key={openPane.state.key} model={openPane} />}
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>

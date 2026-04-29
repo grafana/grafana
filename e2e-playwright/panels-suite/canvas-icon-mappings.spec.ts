@@ -57,6 +57,7 @@ test.describe('Canvas Panel - Icon Mappings', () => {
         const svg = visibleSvgs.nth(i);
         await expect(svg).toBeAttached();
         const svgContent = await svg.innerHTML();
+        // fail
         expect(svgContent.length).toBeGreaterThan(0);
       }
     });
