@@ -89,17 +89,6 @@ const PROVIDER_SUPPORT: Record<string, { groups: string[] | '*' }> = {
   },
 };
 
-function providerSupports(kind: string, group: string): boolean {
-  const support = PROVIDER_SUPPORT[kind];
-  if (!support) {
-    return false;
-  }
-  if (support.groups === '*') {
-    return true;
-  }
-  return support.groups.includes(group);
-}
-
 function providersThatSupport(group: string): string[] {
   return Object.entries(PROVIDER_SUPPORT)
     .filter(([, info]) => info.groups === '*' || info.groups.includes(group))
@@ -316,76 +305,182 @@ function GitOpsExplainer() {
 }
 
 /**
- * Aggregate the filtered breakdowns into the four numbers we surface in the
- * Summary panel: total, Git Sync, other tools (sum of all non-Git-Sync
- * managers), and unmanaged. Per-provider detail still lives in the donut /
- * the resource table; the cards stay at four to keep the panel scannable
- * regardless of how many tools the user has.
+ * Aggregate the filtered breakdowns into the numbers we surface in the
+ * Summary panel. The provider dropdown acts as a lens:
+ * - "all": Total / Managed (any provider) / Unmanaged.
+ * - specific kind X: Total / X / Other tools (managed by ≠ X) / Unmanaged.
  */
-function aggregateTotals(breakdowns: GroupBreakdown[]) {
+function aggregateLensTotals(breakdowns: GroupBreakdown[], providerFilter: string) {
   let instanceTotal = 0;
-  let gitSync = 0;
-  let other = 0;
   let unmanaged = 0;
+  let totalManaged = 0;
+  let selected = 0;
   breakdowns.forEach((b) => {
     instanceTotal += b.total;
-    gitSync += b.gitSyncCount;
-    other += b.otherManagedCount;
     unmanaged += b.unmanagedCount;
+    const rowManaged = b.gitSyncCount + b.otherManagedCount;
+    totalManaged += rowManaged;
+    if (providerFilter === ManagerKind.Repo) {
+      selected += b.gitSyncCount;
+    } else if (providerFilter !== 'all') {
+      selected += b.managedByKind[providerFilter] ?? 0;
+    }
   });
-  return { instanceTotal, gitSync, other, unmanaged };
+  return {
+    instanceTotal,
+    unmanaged,
+    managed: totalManaged,
+    selected,
+    other: totalManaged - selected,
+  };
 }
 
-function SummarySection({ breakdowns }: { breakdowns: GroupBreakdown[] }) {
+interface BarSegment {
+  key: string;
+  value: number;
+  color: string;
+  label: string;
+}
+
+function StackedProgressBar({ segments }: { segments: BarSegment[] }) {
+  const styles = useStyles2(getStyles);
+  const total = segments.reduce((acc, s) => acc + s.value, 0);
+  return (
+    <div
+      className={styles.progressBar}
+      role="img"
+      aria-label={t('provisioning.stats.progress-aria', 'Provisioning breakdown')}
+    >
+      {total === 0
+        ? null
+        : segments
+            .filter((s) => s.value > 0)
+            .map((s) => {
+              const pct = Math.round((s.value / total) * 100);
+              return (
+                <div
+                  key={s.key}
+                  className={styles.progressSegment}
+                  style={{ flex: s.value, background: s.color }}
+                  title={t('provisioning.stats.progress-segment-tooltip', '{{label}}: {{value}} ({{pct}}%)', {
+                    label: s.label,
+                    value: s.value,
+                    pct,
+                  })}
+                />
+              );
+            })}
+    </div>
+  );
+}
+
+function SummarySection({ breakdowns, providerFilter }: { breakdowns: GroupBreakdown[]; providerFilter: string }) {
   const theme = useTheme2();
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const totals = useMemo(() => aggregateTotals(breakdowns), [breakdowns]);
+  const totals = useMemo(() => aggregateLensTotals(breakdowns, providerFilter), [breakdowns, providerFilter]);
+  const isAll = providerFilter === 'all';
+
+  const barSegments: BarSegment[] = isAll
+    ? [
+        {
+          key: 'managed',
+          value: totals.managed,
+          color: theme.colors.success.main,
+          label: t('provisioning.stats.summary-managed', 'Managed'),
+        },
+        {
+          key: 'unmanaged',
+          value: totals.unmanaged,
+          color: theme.colors.warning.main,
+          label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
+        },
+      ]
+    : [
+        {
+          key: providerFilter,
+          value: totals.selected,
+          color: theme.colors.success.main,
+          label: kindLabel(providerFilter),
+        },
+        {
+          key: 'other',
+          value: totals.other,
+          color: theme.colors.info.main,
+          label: t('provisioning.stats.legend-other', 'Managed by other tools'),
+        },
+        {
+          key: 'unmanaged',
+          value: totals.unmanaged,
+          color: theme.colors.warning.main,
+          label: t('provisioning.stats.legend-unmanaged', 'Unmanaged'),
+        },
+      ];
 
   return (
-    <Stack direction="row" gap={1.5} wrap justifyContent="center">
-      <ProviderStat
-        segmentKey="total"
-        big={totals.instanceTotal.toLocaleString()}
-        label={t('provisioning.stats.summary-total', 'Total resources')}
-        hoveredKey={hoveredKey}
-        onHover={setHoveredKey}
-      />
-      <ProviderStat
-        segmentKey={ManagerKind.Repo}
-        big={percent(totals.gitSync, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.gitSync,
-          total: totals.instanceTotal,
-        })}
-        label={kindLabel(ManagerKind.Repo)}
-        colorHex={theme.colors.success.main}
-        hoveredKey={hoveredKey}
-        onHover={setHoveredKey}
-      />
-      <ProviderStat
-        segmentKey="other"
-        big={percent(totals.other, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.other,
-          total: totals.instanceTotal,
-        })}
-        label={t('provisioning.stats.legend-other', 'Managed by other tools')}
-        colorHex={theme.colors.info.main}
-        hoveredKey={hoveredKey}
-        onHover={setHoveredKey}
-      />
-      <ProviderStat
-        segmentKey="unmanaged"
-        big={percent(totals.unmanaged, totals.instanceTotal)}
-        subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
-          value: totals.unmanaged,
-          total: totals.instanceTotal,
-        })}
-        label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
-        colorHex={theme.colors.warning.main}
-        hoveredKey={hoveredKey}
-        onHover={setHoveredKey}
-      />
+    <Stack direction="column" gap={2}>
+      <StackedProgressBar segments={barSegments} />
+      <Stack direction="row" gap={1.5} wrap justifyContent="center">
+        <ProviderStat
+          segmentKey="total"
+          big={totals.instanceTotal.toLocaleString()}
+          label={t('provisioning.stats.summary-total', 'Total resources')}
+          hoveredKey={hoveredKey}
+          onHover={setHoveredKey}
+        />
+        {isAll ? (
+          <ProviderStat
+            segmentKey="managed"
+            big={percent(totals.managed, totals.instanceTotal)}
+            subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+              value: totals.managed,
+              total: totals.instanceTotal,
+            })}
+            label={t('provisioning.stats.summary-managed', 'Managed')}
+            colorHex={theme.colors.success.main}
+            hoveredKey={hoveredKey}
+            onHover={setHoveredKey}
+          />
+        ) : (
+          <>
+            <ProviderStat
+              segmentKey={providerFilter}
+              big={percent(totals.selected, totals.instanceTotal)}
+              subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+                value: totals.selected,
+                total: totals.instanceTotal,
+              })}
+              label={kindLabel(providerFilter)}
+              colorHex={theme.colors.success.main}
+              hoveredKey={hoveredKey}
+              onHover={setHoveredKey}
+            />
+            <ProviderStat
+              segmentKey="other"
+              big={percent(totals.other, totals.instanceTotal)}
+              subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+                value: totals.other,
+                total: totals.instanceTotal,
+              })}
+              label={t('provisioning.stats.legend-other', 'Managed by other tools')}
+              colorHex={theme.colors.info.main}
+              hoveredKey={hoveredKey}
+              onHover={setHoveredKey}
+            />
+          </>
+        )}
+        <ProviderStat
+          segmentKey="unmanaged"
+          big={percent(totals.unmanaged, totals.instanceTotal)}
+          subLabel={t('provisioning.stats.n-of-m', '{{value}} of {{total}}', {
+            value: totals.unmanaged,
+            total: totals.instanceTotal,
+          })}
+          label={t('provisioning.stats.legend-unmanaged', 'Unmanaged')}
+          colorHex={theme.colors.warning.main}
+          hoveredKey={hoveredKey}
+          onHover={setHoveredKey}
+        />
+      </Stack>
     </Stack>
   );
 }
@@ -660,9 +755,6 @@ function FiltersBar({ value, onChange }: { value: FiltersValue; onChange: (next:
 
 function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): GroupBreakdown[] {
   let result = breakdowns.filter((b) => b.total > 0);
-  if (filters.providerFilter !== 'all') {
-    result = result.filter((b) => providerSupports(filters.providerFilter, b.group));
-  }
   if (filters.searchQuery) {
     const q = filters.searchQuery.toLowerCase();
     result = result.filter(
@@ -673,9 +765,34 @@ function applyFilters(breakdowns: GroupBreakdown[], filters: FiltersValue): Grou
   return result;
 }
 
-function ResourceTypesSection({ rows, hasUnfilteredRows }: { rows: GroupBreakdown[]; hasUnfilteredRows: boolean }) {
+/** Resolve the per-row "managed by the selected lens" count. */
+function selectedManagedFor(row: GroupBreakdown, providerFilter: string): number {
+  if (providerFilter === 'all') {
+    return row.gitSyncCount + row.otherManagedCount;
+  }
+  if (providerFilter === ManagerKind.Repo) {
+    return row.gitSyncCount;
+  }
+  return row.managedByKind[providerFilter] ?? 0;
+}
+
+function ResourceTypesSection({
+  rows,
+  hasUnfilteredRows,
+  providerFilter,
+}: {
+  rows: GroupBreakdown[];
+  hasUnfilteredRows: boolean;
+  providerFilter: string;
+}) {
   const [repos] = useRepositoryList({ watch: false });
   const gitSyncRepos = useMemo(() => repos ?? [], [repos]);
+  const managedHeader =
+    providerFilter === 'all'
+      ? t('provisioning.stats.column-managed', 'Managed')
+      : t('provisioning.stats.column-managed-by', 'Managed by {{provider}}', {
+          provider: kindLabel(providerFilter),
+        });
 
   const columns: Array<Column<GroupBreakdown>> = useMemo(
     () => [
@@ -698,14 +815,14 @@ function ResourceTypesSection({ rows, hasUnfilteredRows }: { rows: GroupBreakdow
         cell: ({ row }) => <Text>{row.original.total.toLocaleString()}</Text>,
       },
       {
-        id: 'otherManagedCount',
-        header: t('provisioning.stats.column-managed', 'Managed'),
-        sortType: 'number',
-        cell: ({ row }) => (
-          <Text color={row.original.otherManagedCount > 0 ? 'info' : 'secondary'}>
-            {row.original.otherManagedCount.toLocaleString()}
-          </Text>
-        ),
+        id: 'managed',
+        header: managedHeader,
+        sortType: (a, b) =>
+          selectedManagedFor(a.original, providerFilter) - selectedManagedFor(b.original, providerFilter),
+        cell: ({ row }) => {
+          const value = selectedManagedFor(row.original, providerFilter);
+          return <Text color={value > 0 ? 'info' : 'secondary'}>{value.toLocaleString()}</Text>;
+        },
       },
       {
         id: 'unmanagedCount',
@@ -755,7 +872,7 @@ function ResourceTypesSection({ rows, hasUnfilteredRows }: { rows: GroupBreakdow
         },
       },
     ],
-    [gitSyncRepos]
+    [gitSyncRepos, managedHeader, providerFilter]
   );
 
   if (!hasUnfilteredRows) {
@@ -837,10 +954,14 @@ export function ProvisioningOverview() {
     <Stack direction="column" gap={4}>
       <GitOpsExplainer />
       {hasUnfilteredRows && <FiltersBar value={filters} onChange={setFilters} />}
-      <SummarySection breakdowns={filteredBreakdowns} />
+      <SummarySection breakdowns={filteredBreakdowns} providerFilter={filters.providerFilter} />
       {computed.gitSync && <GitSyncReposSection gitSync={computed.gitSync} />}
       <OtherProvidersSection providers={computed.otherProviders} />
-      <ResourceTypesSection rows={filteredBreakdowns} hasUnfilteredRows={hasUnfilteredRows} />
+      <ResourceTypesSection
+        rows={filteredBreakdowns}
+        hasUnfilteredRows={hasUnfilteredRows}
+        providerFilter={filters.providerFilter}
+      />
     </Stack>
   );
 }
@@ -920,6 +1041,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   providerSelect: css({
     minWidth: 220,
+  }),
+  progressBar: css({
+    display: 'flex',
+    width: '100%',
+    height: theme.spacing(1.25),
+    borderRadius: theme.shape.radius.pill,
+    overflow: 'hidden',
+    background: theme.colors.background.secondary,
+  }),
+  progressSegment: css({
+    height: '100%',
   }),
   searchInput: css({
     flex: '1 1 220px',

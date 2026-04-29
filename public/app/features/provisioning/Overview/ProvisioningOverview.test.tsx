@@ -246,16 +246,17 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Total = 40, Git Sync = 16, Other = 6, Unmanaged = 18.
+    // Total = 40, Managed = 22 (Git Sync 16 + Terraform 6), Unmanaged = 18.
+    // Default "All" lens collapses managed providers into a single "Managed"
+    // card.
     expect(screen.getByText('40')).toBeInTheDocument();
-    expect(screen.getAllByText(/16 of 40/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/6 of 40/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/22 of 40/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/18 of 40/i).length).toBeGreaterThan(0);
     // 18/40 = 45% appears as the Unmanaged card big number.
     expect(screen.getAllByText('45%').length).toBeGreaterThan(0);
   });
 
-  it('renders the four fixed Summary cards regardless of how many providers are active', () => {
+  it('renders Total / Managed / Unmanaged cards under the default "All" lens', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
@@ -277,12 +278,11 @@ describe('ProvisioningOverview', () => {
 
     render(<ProvisioningOverview />);
 
-    // Four cards: Total resources, Git Sync, Managed by other tools, Unmanaged.
+    // "All providers" is the default lens — the Summary collapses the managed
+    // providers into one card called "Managed" and we always see Total +
+    // Unmanaged.
     expect(screen.getByText('Total resources')).toBeInTheDocument();
-    // Git Sync also appears as a chip in the table, so we just assert that
-    // its label shows up at least once in the Summary.
-    expect(screen.getAllByText('Git Sync').length).toBeGreaterThan(0);
-    expect(screen.getByText('Managed by other tools')).toBeInTheDocument();
+    expect(screen.getAllByText(/^Managed$/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
   });
 
@@ -326,6 +326,40 @@ describe('ProvisioningOverview', () => {
     // provisioning as supporting providers via chips in the row.
     expect(screen.getAllByText('Terraform').length).toBeGreaterThan(1);
     expect(screen.getAllByText('Files (Classic)').length).toBeGreaterThan(0);
+  });
+
+  it('switches the Summary lens when a specific provider is picked', async () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 }],
+        unmanaged: [],
+        managed: [
+          {
+            kind: 'repo',
+            id: 'r1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
+          },
+          {
+            kind: 'terraform',
+            id: 'tf-1',
+            stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
+          },
+        ],
+      },
+    });
+
+    render(<ProvisioningOverview />);
+
+    // Default "All": single Managed card with the total managed (7 of 10).
+    expect(screen.getAllByText(/7 of 10/i).length).toBeGreaterThan(0);
+
+    // Pick the Terraform lens: now we expect a Terraform card (3 of 10) and
+    // an "other tools" card (4 of 10) for Git Sync.
+    await userEvent.click(screen.getByLabelText(/filter resource types by provider/i));
+    await userEvent.click(screen.getByText('Terraform', { selector: '[role="option"] *' }));
+
+    expect(screen.getAllByText(/3 of 10/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/4 of 10/i).length).toBeGreaterThan(0);
   });
 
   it('search filter narrows the donut totals as well as the table', async () => {

@@ -13781,6 +13781,7 @@
     },
     "stats": {
       "column-managed": "Managed",
+      "column-managed-by": "Managed by {{provider}}",
       "column-managed-pct": "% managed",
       "column-resource": "Resource",
       "column-supported-by": "Supported by",
@@ -13818,6 +13819,8 @@
       "other-provider-resource-count_other": "{{count}} resources",
       "other-providers-description": "Resources managed by tools other than Git Sync. Some of these (Terraform, kubectl, etc.) may already be the source of truth for your team — Git Sync isn’t a requirement.",
       "other-providers-heading": "Other providers",
+      "progress-aria": "Provisioning breakdown",
+      "progress-segment-tooltip": "{{label}}: {{value}} ({{pct}}%)",
       "repository-fallback-name": "Repository",
       "resource-total_one": "{{count}} total",
       "resource-total_other": "{{count}} total",
@@ -13826,6 +13829,7 @@
       "status-fully": "Fully managed",
       "status-none": "Not managed",
       "status-partial": "Partially managed",
+      "summary-managed": "Managed",
       "summary-total": "Total resources"
     },
     "status-badge": {
