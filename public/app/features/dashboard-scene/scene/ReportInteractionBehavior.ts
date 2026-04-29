@@ -1,9 +1,5 @@
 import { reportInteraction } from '@grafana/runtime';
-import {
-  SceneObjectBase,
-  type AdHocFilterInteractionHandler,
-  type SceneObjectState,
-} from '@grafana/scenes';
+import { SceneObjectBase, type AdHocFilterInteractionHandler, type SceneObjectState } from '@grafana/scenes';
 
 export class ReportInteractionBehavior
   extends SceneObjectBase<SceneObjectState>
