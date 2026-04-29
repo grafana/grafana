@@ -241,9 +241,7 @@ describe('searchToResource journey wiring', () => {
       interactionMode: 'keyboard',
     });
 
-    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
-      expect.objectContaining({ interactionMode: 'keyboard' })
-    );
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(expect.objectContaining({ interactionMode: 'keyboard' }));
   });
 
   it('should default interactionMode to "unknown" when missing from the action_selected event', () => {
@@ -256,9 +254,7 @@ describe('searchToResource journey wiring', () => {
       actionName: 'Alerting',
     });
 
-    expect(mockHandle.setAttributes).toHaveBeenCalledWith(
-      expect.objectContaining({ interactionMode: 'unknown' })
-    );
+    expect(mockHandle.setAttributes).toHaveBeenCalledWith(expect.objectContaining({ interactionMode: 'unknown' }));
   });
 
   it('should record a search_query event when command_palette_search_query fires', () => {
