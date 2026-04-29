@@ -143,9 +143,7 @@ const parseEventFromCall = (
 /**
  * Merges directly-declared events with any spread sources, respecting source order so that
  * later property assignments override earlier ones — mirroring JS spread semantics.
- *
- * Note: only one level of spread is resolved
- */
+*/
 const resolveGroupedEvents = (
   directEventsByObject: Map<ObjectLiteralExpression, Map<string, EventData>>
 ): EventData[] => {
