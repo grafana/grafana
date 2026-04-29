@@ -3072,7 +3072,7 @@ For example, to set cartoDB light as the default base layer:
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Open street map",
+    "attribution": "OpenStreetMap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`
