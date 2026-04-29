@@ -270,9 +270,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
   }),
   stepperWrapper: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },
