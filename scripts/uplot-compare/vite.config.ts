@@ -123,6 +123,8 @@ function acceptSnapshotPlugin(): { name: string; configureServer: (server: ViteD
           cwd: repoRoot,
           env: {
             ...process.env,
+            // Vite sets NODE_ENV=development; jest must run as test or i18n and other code paths differ.
+            NODE_ENV: 'test',
             // Lets `toMatchUPlotSnapshot` rewrite compare payload JSON even when the assertion passes.
             GEN_CANVAS_OUTPUT_ON_PASS: '1',
           },

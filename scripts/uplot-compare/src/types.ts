@@ -28,6 +28,10 @@ export interface ComparePlotsProps {
   defaultHeight: number;
   payload: ResolvedPayload;
   acceptBaselineState: AcceptBaselineState;
+  onBackToIndex: () => void;
+  /** When non-null, navigates to that payload file (next failed snapshot in list order, wrapping). */
+  nextFailedTestBasename: string | null;
+  onGoToNextFailedTest: () => void;
   onRerunTest: () => void;
   onAcceptBaseline: () => void;
 }

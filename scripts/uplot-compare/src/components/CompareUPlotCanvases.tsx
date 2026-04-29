@@ -13,7 +13,6 @@ const FALLBACK_CANVAS_HEIGHT = 200;
 const PUBLIC_PAYLOAD_FILES = Object.keys(import.meta.glob('../../public/**/*.json', { eager: true }))
   .map((path) => path.split('/').pop())
   .filter((name): name is string => Boolean(name))
-  // @todo sort by date instead
   // eslint-disable-next-line @grafana/no-locale-compare
   .sort((a, b) => a.localeCompare(b));
 
@@ -46,6 +45,75 @@ function isSafePayloadBasename(name: string): boolean {
 
 function payloadFetchUrl(basename: string): string {
   return `${import.meta.env.BASE_URL}${basename}`;
+}
+
+/** Next payload with `snapshotAssertionPassed === false`, after `currentBasename` in circular list order. */
+function findNextFailedBasename(
+  orderedFiles: readonly string[],
+  passedMap: Record<string, boolean | undefined>,
+  currentBasename: string | null
+): string | null {
+  const n = orderedFiles.length;
+  if (n === 0) {
+    return null;
+  }
+
+  const isFailed = (name: string) => passedMap[name] === false;
+
+  const startIdx = currentBasename ? orderedFiles.indexOf(currentBasename) : -1;
+
+  if (startIdx === -1) {
+    for (let i = 0; i < n; i++) {
+      const name = orderedFiles[i];
+      if (isFailed(name)) {
+        return name;
+      }
+    }
+    return null;
+  }
+
+  for (let step = 1; step < n; step++) {
+    const idx = (startIdx + step) % n;
+    const name = orderedFiles[idx];
+    if (isFailed(name)) {
+      return name;
+    }
+  }
+
+  return null;
+}
+
+/** Failed payloads first, then passing, then unknown status; within each group by Last-Modified descending. */
+function sortPayloadFilesForIndex(
+  files: readonly string[],
+  passedMap: Record<string, boolean | undefined>,
+  modifiedMsByBasename: Record<string, number>
+): string[] {
+  const failureTier = (passed: boolean | undefined): number => {
+    if (passed === false) {
+      return 0;
+    }
+    if (passed === true) {
+      return 1;
+    }
+    return 2;
+  };
+
+  return [...files].sort((a, b) => {
+    const tierDiff = failureTier(passedMap[a]) - failureTier(passedMap[b]);
+    if (tierDiff !== 0) {
+      return tierDiff;
+    }
+    const ma = modifiedMsByBasename[a];
+    const mb = modifiedMsByBasename[b];
+    const maNum = typeof ma === 'number' && !Number.isNaN(ma) ? ma : -Infinity;
+    const mbNum = typeof mb === 'number' && !Number.isNaN(mb) ? mb : -Infinity;
+    if (maNum !== mbNum) {
+      return mbNum - maNum;
+    }
+    // eslint-disable-next-line @grafana/no-locale-compare
+    return a.localeCompare(b);
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -96,6 +164,7 @@ export const CompareUPlotCanvases = ({
   const [acceptBaselineState, setAcceptBaselineState] = React.useState<AcceptBaselineState>({ kind: 'idle' });
   const [selectedFile, setSelectedFile] = React.useState<string | null>(null);
   const [fileModifiedLabels, setFileModifiedLabels] = React.useState<Record<string, string>>({});
+  const [fileModifiedTimestampMs, setFileModifiedTimestampMs] = React.useState<Record<string, number>>({});
   const [fileSnapshotAssertionPassed, setFileSnapshotAssertionPassed] = React.useState<
     Record<string, boolean | undefined>
   >({});
@@ -144,6 +213,18 @@ export const CompareUPlotCanvases = ({
     []
   );
 
+  const navigateToIndex = React.useCallback(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('file');
+    window.history.pushState({}, '', url);
+    setSelectedFile(null);
+    setAcceptBaselineState({ kind: 'idle' });
+    setView({
+      kind: 'blocked',
+      hint: 'Choose a payload file from the list.',
+    });
+  }, []);
+
   const loadPayloadFromPublicFile = React.useCallback(
     async (basename: string, historyMode?: 'push' | 'replace') => {
       if (!isSafePayloadBasename(basename)) {
@@ -180,6 +261,23 @@ export const CompareUPlotCanvases = ({
     },
     [applyPayload, navigate]
   );
+
+  const indexOrderedPayloadFiles = React.useMemo(
+    () => sortPayloadFilesForIndex(PUBLIC_PAYLOAD_FILES, fileSnapshotAssertionPassed, fileModifiedTimestampMs),
+    [fileModifiedTimestampMs, fileSnapshotAssertionPassed]
+  );
+
+  const nextFailedTestBasename = React.useMemo(
+    () => findNextFailedBasename(indexOrderedPayloadFiles, fileSnapshotAssertionPassed, selectedFile),
+    [fileSnapshotAssertionPassed, indexOrderedPayloadFiles, selectedFile]
+  );
+
+  const goToNextFailedTest = React.useCallback(() => {
+    if (!nextFailedTestBasename) {
+      return;
+    }
+    void loadPayloadFromPublicFile(nextFailedTestBasename, 'push');
+  }, [nextFailedTestBasename, loadPayloadFromPublicFile]);
 
   const reloadPayloadAfterJest = React.useCallback(async () => {
     const basename = selectedFile ?? new URLSearchParams(window.location.search).get('file');
@@ -337,27 +435,40 @@ export const CompareUPlotCanvases = ({
     let cancelled = false;
     const loadFileModifiedDates = async () => {
       const entries = await Promise.all(
-        PUBLIC_PAYLOAD_FILES.map(async (basename): Promise<[string, string]> => {
+        PUBLIC_PAYLOAD_FILES.map(async (basename): Promise<[string, string, number | undefined]> => {
           try {
             const res = await fetch(payloadFetchUrl(basename), { method: 'HEAD' });
             if (!res.ok) {
-              return [basename, ''];
+              return [basename, '', undefined];
             }
             const lastModifiedHeader = res.headers.get('last-modified');
             if (!lastModifiedHeader) {
-              return [basename, ''];
+              return [basename, '', undefined];
             }
             const dt = new Date(lastModifiedHeader);
-            return [basename, Number.isNaN(dt.getTime()) ? lastModifiedHeader : dt.toLocaleString()];
+            const ms = dt.getTime();
+            if (Number.isNaN(ms)) {
+              return [basename, lastModifiedHeader, undefined];
+            }
+            return [basename, dt.toLocaleString(), ms];
           } catch {
-            return [basename, ''];
+            return [basename, '', undefined];
           }
         })
       );
       if (cancelled) {
         return;
       }
-      setFileModifiedLabels(Object.fromEntries(entries));
+      const labels: Record<string, string> = {};
+      const msMap: Record<string, number> = {};
+      for (const [basename, label, ms] of entries) {
+        labels[basename] = label;
+        if (typeof ms === 'number') {
+          msMap[basename] = ms;
+        }
+      }
+      setFileModifiedLabels(labels);
+      setFileModifiedTimestampMs(msMap);
     };
 
     void loadFileModifiedDates();
@@ -393,7 +504,7 @@ export const CompareUPlotCanvases = ({
           {PUBLIC_PAYLOAD_FILES.length === 0 ? (
             <p>No JSON files found in the public directory.</p>
           ) : (
-            PUBLIC_PAYLOAD_FILES.map((basename) => (
+            indexOrderedPayloadFiles.map((basename) => (
               <button
                 key={basename}
                 type="button"
@@ -423,6 +534,9 @@ export const CompareUPlotCanvases = ({
       defaultHeight={defaultHeight}
       payload={view.payload}
       acceptBaselineState={acceptBaselineState}
+      onBackToIndex={navigateToIndex}
+      nextFailedTestBasename={nextFailedTestBasename}
+      onGoToNextFailedTest={goToNextFailedTest}
       onRerunTest={() => {
         if (view.kind !== 'ready') {
           return;

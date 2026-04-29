@@ -15,6 +15,9 @@ export function ComparePlots({
   defaultHeight,
   payload,
   acceptBaselineState,
+  onBackToIndex,
+  nextFailedTestBasename,
+  onGoToNextFailedTest,
   onRerunTest,
   onAcceptBaseline,
 }: ComparePlotsProps) {
@@ -99,7 +102,12 @@ export function ComparePlots({
   return (
     <>
       <div className="compare-title-row">
-        <h3 className="compare-title">Test: {payload.testName}</h3>
+        <div className="compare-title-leading">
+          <button type="button" className="compare-back-btn" onClick={onBackToIndex} aria-label="Back to payload list">
+            ← Back
+          </button>
+          <h3 className="compare-title">Test: {payload.testName}</h3>
+        </div>
         {payload.snapshotAssertionPassed !== undefined ? (
           <AssertionStatusBadge passed={payload.snapshotAssertionPassed} />
         ) : null}
@@ -116,6 +124,19 @@ export function ComparePlots({
             updateSnapshot={jestUpdateSnapshot}
             onAcceptBaseline={onAcceptBaseline}
           />
+          <button
+            type="button"
+            className="compare-next-failed-btn"
+            disabled={nextFailedTestBasename === null}
+            onClick={onGoToNextFailedTest}
+            title={
+              nextFailedTestBasename === null
+                ? 'No other payload with a failing snapshot (or status still loading)'
+                : 'Open the next payload whose snapshot assertion failed'
+            }
+          >
+            Next failed test
+          </button>
         </div>
       </div>
       <div className={`wrap${showActualOnly ? ' wrap--actual-only' : ''}`}>
