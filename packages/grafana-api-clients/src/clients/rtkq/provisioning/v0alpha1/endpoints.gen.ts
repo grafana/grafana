@@ -1797,6 +1797,10 @@ export type BitbucketRepositoryConfig = {
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
+export type CommitOptions = {
+  /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
+  singleResourceMessageTemplate?: string;
+};
 export type ConnectionInfo = {
   name: string;
 };
@@ -1856,6 +1860,8 @@ export type WebhookConfig = {
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
+  /** Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here. */
+  commit?: CommitOptions;
   /** The connection the repository references. This means the Repository is interacting with git via a Connection. */
   connection?: ConnectionInfo;
   /** Repository description */
@@ -2094,6 +2100,8 @@ export type WebhookResponse = {
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
+  /** Commit message options. Mirrors the same-named field on the repository spec. */
+  commit?: CommitOptions;
   /** The k8s name for this repository */
   name: string;
   /** For git, this is the target path */
