@@ -110,13 +110,16 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
-  if (queryOptions.timeFrom || queryOptions.timeShift) {
+  if (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
       hideTimeOverride: queryOptions.hideTimeOverride,
+      compareWith: queryOptions.timeCompare,
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   return new VizPanel(vizPanelState);
 }
@@ -153,6 +156,8 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
+    hoverHeader: !panel.spec.title,
+    hoverHeaderOffset: 0,
     options: {},
     fieldConfig: {
       defaults: {},
@@ -165,6 +170,8 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       $behaviors: [panelMenuBehavior],
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   return new VizPanel(vizPanelState);
 }

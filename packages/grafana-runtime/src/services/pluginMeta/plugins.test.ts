@@ -1,25 +1,24 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
-import { type MonitoringLogger } from '../../utils/logging';
+import { invalidateCache } from '../../utils/getCachedPromise';
+import { getLogger, setLogger } from '../logging/registry';
 
 import { initPluginMetas, installPluginMeta, refetchPluginMetas, uninstallPluginMeta } from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
-let loggerMock: MonitoringLogger;
 
 beforeEach(() => {
   jest.clearAllMocks();
   invalidateCache();
-  loggerMock = {
+  // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+  setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning: jest.fn(),
-  };
-  setLogger(loggerMock);
+  });
 });
 
 afterEach(() => {
@@ -105,12 +104,16 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Failed to load plugin metas 500:Internal Server Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
-      });
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
+        {
+          message: 'Failed to load plugin metas 500:Internal Server Error',
+          stack: expect.any(String),
+          key: 'loadPluginMetas',
+        }
+      );
     });
 
     it('initPluginMetas should log when fetch rejects', async () => {
@@ -129,12 +132,16 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Network Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
-      });
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
+        {
+          message: 'Network Error',
+          stack: expect.any(String),
+          key: 'loadPluginMetas',
+        }
+      );
     });
   });
 

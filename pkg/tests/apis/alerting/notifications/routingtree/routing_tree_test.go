@@ -419,50 +419,92 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	require.Equal(t, "none", current.GetProvenanceStatus())
-
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.Route{}, admin.Identity.GetOrgID(), "API"))
-
-		got, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
-			{
-				Matchers: []v1beta1.RoutingTreeMatcher{
-					{
-						Label: "test",
-						Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
-						Value: "123",
-					},
-				},
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("RoutingTreeWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
 			},
+		},
+	})
+	writerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
+
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	t.Run("update", func(t *testing.T) {
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		require.Empty(t, current.GetProvenanceStatus())
+
+		t.Run("writer cannot set provenance", func(t *testing.T) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
+		})
+
+		t.Run("writer cannot update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "region")
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		// Ensure tree is provisioned before delete tests.
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		if current.GetProvenanceStatus() != string(models.ProvenanceAPI) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
 		}
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Error(t, err)
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
-	})
+		t.Run("writer cannot delete provisioned tree", func(t *testing.T) {
+			err := writerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		t.Run("provisioner can delete provisioned tree", func(t *testing.T) {
+			err := provisionerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -1057,14 +1099,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			}
 		})
 
-		t.Run("Update on provisioned should fail", func(t *testing.T) {
+		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
-					require.Error(t, err)
-					require.ErrorContains(t, err, "provenance")
+					require.NoError(t, err)
 				})
 			}
 		})

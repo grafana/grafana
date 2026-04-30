@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -49,6 +50,7 @@ type service struct {
 
 	// -- Shared Components
 	backend       resource.StorageBackend
+	vectorBackend vector.VectorBackend
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -97,10 +99,11 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -135,11 +138,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -195,12 +199,14 @@ func newService(
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
+	vectorBackend vector.VectorBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 
 	return &service{
 		backend:            backend,
+		vectorBackend:      vectorBackend,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,

@@ -31,15 +31,84 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 
 func buildDataImportRows(count int) []DataImportRow {
 	rows := make([]DataImportRow, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		rows[i] = DataImportRow{
 			GUID:    fmt.Sprintf("guid-%d", i),
 			KeyPath: fmt.Sprintf("unified/data/group/resource/ns/name-%04d/1~created~", i),
-			Value:   []byte(fmt.Sprintf(`{"name":"item-%04d"}`, i)),
+			Value:   fmt.Appendf(nil, `{"name":"item-%04d"}`, i),
 		}
 	}
 
 	return rows
+}
+
+func buildLegacyDataImportRows(count int) []DataImportRow {
+	rows := buildDataImportRows(count)
+	for i := range rows {
+		rows[i].Legacy = &DataImportLegacyFields{
+			Group:           "group",
+			Resource:        "resource",
+			Namespace:       "ns",
+			Name:            fmt.Sprintf("name-%04d", i),
+			Action:          1,
+			Folder:          "folder",
+			ResourceVersion: int64(i + 1),
+			PreviousRV:      int64(i),
+			Generation:      int64(i + 10),
+		}
+	}
+
+	return rows
+}
+
+func TestDataImportBatchStatementCount(t *testing.T) {
+	tests := []struct {
+		name     string
+		rowCount int
+		maxRows  int
+		expected int
+	}{
+		{
+			name:     "zero rows",
+			rowCount: 0,
+			maxRows:  dataImportBatchDefaultMaxRows,
+			expected: 0,
+		},
+		{
+			name:     "non positive max rows",
+			rowCount: 3,
+			maxRows:  0,
+			expected: 0,
+		},
+		{
+			name:     "single statement",
+			rowCount: 8,
+			maxRows:  8,
+			expected: 1,
+		},
+		{
+			name:     "multiple statements",
+			rowCount: 9,
+			maxRows:  8,
+			expected: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, dataImportBatchStatementCount(tc.rowCount, tc.maxRows))
+		})
+	}
+}
+
+func TestDataImportBatchPayloadBytes(t *testing.T) {
+	rows := []DataImportRow{
+		{Value: []byte("abc")},
+		{Value: []byte("de")},
+		{Value: nil},
+	}
+
+	require.Equal(t, 5, dataImportBatchPayloadBytes(rows))
 }
 
 func TestSQLKVInsertDataImportBatchTransactionSelection(t *testing.T) {
@@ -151,4 +220,91 @@ func TestSQLKVInsertDataImportBatchRollsBackOnExecError(t *testing.T) {
 	err := sqlKV.InsertDataImportBatch(context.Background(), buildDataImportRows(2))
 	require.ErrorIs(t, err, expectedErr)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+	rows := buildLegacyDataImportRows(1)
+
+	mock.ExpectBegin()
+	mock.ExpectExec("(?i)insert into .*resource_history").
+		WithArgs(
+			rows[0].GUID,
+			rows[0].KeyPath,
+			rows[0].Value,
+			rows[0].Legacy.Group,
+			rows[0].Legacy.Resource,
+			rows[0].Legacy.Namespace,
+			rows[0].Legacy.Name,
+			rows[0].Legacy.Action,
+			rows[0].Legacy.Folder,
+			rows[0].Legacy.ResourceVersion,
+			rows[0].Legacy.PreviousRV,
+			rows[0].Legacy.Generation,
+			nil,
+		).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	err := sqlKV.InsertDataImportBatch(context.Background(), rows)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+	err := sqlKV.Batch(context.Background(), DataSection, []BatchOp{
+		{Mode: BatchOpPut, Key: "k", Value: []byte("v")},
+	})
+	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
+	// Reject must short-circuit before touching the DB.
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSQLKVInsertDataImportBatchRejectsMixedLegacyRows(t *testing.T) {
+	tests := []struct {
+		name      string
+		buildRows func() []DataImportRow
+	}{
+		{
+			name: "legacy after non-legacy",
+			buildRows: func() []DataImportRow {
+				rows := buildDataImportRows(2)
+				rows[1].Legacy = &DataImportLegacyFields{
+					Group:           "group",
+					Resource:        "resource",
+					Namespace:       "ns",
+					Name:            "name-0001",
+					Action:          1,
+					Folder:          "folder",
+					ResourceVersion: 2,
+					PreviousRV:      1,
+					Generation:      11,
+				}
+				return rows
+			},
+		},
+		{
+			name: "non-legacy after legacy",
+			buildRows: func() []DataImportRow {
+				rows := buildLegacyDataImportRows(2)
+				rows[1].Legacy = nil
+				return rows
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+			mock.ExpectBegin()
+			mock.ExpectRollback()
+
+			err := sqlKV.InsertDataImportBatch(context.Background(), tc.buildRows())
+			require.ErrorContains(t, err, "mixed legacy import rows")
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }

@@ -1,7 +1,7 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { StoryExample } from '../../utils/storybook/StoryExample';
+import { Field } from '../Forms/Field';
 
 import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
@@ -19,17 +19,21 @@ const meta: Meta<typeof TagsInput> = {
   },
 };
 
-export const Basic: StoryFn<typeof TagsInput> = (props) => {
+export const Basic: StoryFn<typeof TagsInput> = ({ disabled, invalid, ...rest }) => {
   const [tags, setTags] = useState<string[]>([]);
-  return <TagsInput {...props} tags={tags} onChange={setTags} />;
+  return (
+    <Field label="Tags" disabled={disabled} invalid={invalid}>
+      <TagsInput {...rest} tags={tags} onChange={setTags} />
+    </Field>
+  );
 };
 
-export const WithManyTags = () => {
+export const WithManyTags: StoryFn<typeof TagsInput> = ({ disabled, invalid, ...rest }) => {
   const [tags, setTags] = useState<string[]>(['dashboard', 'prod', 'server', 'frontend', 'game', 'kubernetes']);
   return (
-    <StoryExample name="With many tags">
-      <TagsInput tags={tags} onChange={setTags} />
-    </StoryExample>
+    <Field label="With many tags" disabled={disabled} invalid={invalid}>
+      <TagsInput {...rest} tags={tags} onChange={setTags} />
+    </Field>
   );
 };
 

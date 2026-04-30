@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -12,62 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 func TestService(t *testing.T) {
-	t.Run("dynamic", func(t *testing.T) {
-		t.Skip("dashboards+folders are always static")
-
-		ctx := context.Background()
-		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
-		require.NoError(t, err)
-
-		// Use a managed resource so KV-based Status path is exercised.
-		gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-		status, err := mode.Status(ctx, gr)
-		require.NoError(t, err)
-		require.Equal(t, StorageStatus{
-			Group:        "folder.grafana.app",
-			Resource:     "folders",
-			WriteLegacy:  true,
-			WriteUnified: true,
-			ReadUnified:  false,
-			Migrated:     0,
-			Migrating:    0,
-			Runtime:      true,
-			UpdateKey:    1,
-		}, status, "should start with the right defaults")
-
-		// Start migration
-		status, err = mode.StartMigration(ctx, gr, 1)
-		require.NoError(t, err)
-		require.Equal(t, status.UpdateKey, int64(2), "the key increased")
-		require.True(t, status.Migrating > 0, "migration is running")
-
-		status.Migrated = time.Now().UnixMilli()
-		status.Migrating = 0
-		status, err = mode.Update(ctx, status)
-		require.NoError(t, err)
-		require.Equal(t, status.UpdateKey, int64(3), "the key increased")
-		require.Equal(t, status.Migrating, int64(0), "done migrating")
-		require.True(t, status.Migrated > 0, "migration is running")
-
-		status.WriteUnified = false
-		status.ReadUnified = true
-		_, err = mode.Update(ctx, status)
-		require.Error(t, err) // must write unified if we read it
-
-		status.WriteUnified = false
-		status.ReadUnified = false
-		status.WriteLegacy = false
-		_, err = mode.Update(ctx, status)
-		require.Error(t, err) // must write something!
-	})
-
 	t.Run("storageModeFromConfigMode collapses modes", func(t *testing.T) {
 		tests := []struct {
 			mode     rest.DualWriterMode
@@ -109,7 +57,7 @@ func TestService(t *testing.T) {
 			{rest.Mode4, "unified"},
 			{rest.Mode5, "unified"},
 		} {
-			storage, err := newStaticStorage(gr, tt.mode, ls, us)
+			storage, err := newStorage(gr, tt.mode, ls, us)
 			require.NoError(t, err, "Mode%d", tt.mode)
 			_, isDual := storage.(*dualWriter)
 			switch tt.wantType {
@@ -140,8 +88,6 @@ func TestService(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
-					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), // enabled=true to get dynamic service
-					kvstore.NewFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -181,8 +127,6 @@ func TestService(t *testing.T) {
 				ctx := context.Background()
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
-					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-					kvstore.NewFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -219,8 +163,6 @@ func TestService(t *testing.T) {
 				ctx := context.Background()
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
-					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-					kvstore.NewFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -240,8 +182,6 @@ func TestService(t *testing.T) {
 		reader := NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified)
 
 		svc, err := ProvideService(
-			featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			kvstore.NewFakeKVStore(),
 			NewFakeConfig(),
 			NewFakeMigrator(),
 			reader,
@@ -256,18 +196,16 @@ func TestService(t *testing.T) {
 
 	t.Run("static", func(t *testing.T) {
 		type testCase struct {
-			name  string
-			flags featuremgmt.FeatureToggles
-			cfg   setting.Cfg
+			name string
+			cfg  setting.Cfg
 
-			isStatic bool
-			error    string
+			isStorageService bool
+			error            string
 		}
 
 		for _, tc := range []testCase{{
-			name:     "both mode5",
-			flags:    featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			isStatic: true,
+			name:             "both mode5",
+			isStorageService: true,
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
@@ -278,10 +216,9 @@ func TestService(t *testing.T) {
 					},
 				},
 			}}, {
-			name:     "empty config",
-			flags:    featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			isStatic: true,
-			cfg:      setting.Cfg{},
+			name:             "empty config",
+			isStorageService: true,
+			cfg:              setting.Cfg{},
 		}} {
 			t.Run(tc.name, func(t *testing.T) {
 				// Build a fake MigrationStatusReader that matches the config-based modes.
@@ -289,7 +226,7 @@ func TestService(t *testing.T) {
 					"dashboards.dashboard.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode),
 					"folders.folder.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode),
 				)
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader, prometheus.NewRegistry())
+				svc, err := ProvideService(&tc.cfg, NewFakeMigrator(), statusReader, prometheus.NewRegistry())
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")
@@ -297,12 +234,34 @@ func TestService(t *testing.T) {
 				}
 				require.NoError(t, err)
 
-				_, isStatic := svc.(*staticService)
-				require.Equal(t, tc.isStatic, isStatic)
+				_, isStorageService := svc.(*storageService)
+				require.Equal(t, tc.isStorageService, isStorageService)
 			})
 		}
 	})
 }
+
+func TestProvideService(t *testing.T) {
+	t.Run("returns error when migrator fails", func(t *testing.T) {
+		failingMigrator := &failingMigrator{err: errors.New("migration failed")}
+		svc, err := ProvideService(NewFakeConfig(), failingMigrator, NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+		require.ErrorContains(t, err, "migration failed")
+		require.Nil(t, svc)
+	})
+
+	t.Run("nil cfg uses empty config", func(t *testing.T) {
+		svc, err := ProvideService(nil, NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.NotNil(t, svc)
+		_, isStorageService := svc.(*storageService)
+		require.True(t, isStorageService)
+	})
+}
+
+// failingMigrator returns an error from Run.
+type failingMigrator struct{ err error }
+
+func (f *failingMigrator) Run(_ context.Context) error { return f.err }
 
 func TestNewConfigBasedMigrationStatusReader(t *testing.T) {
 	ctx := context.Background()
@@ -352,9 +311,9 @@ func TestServiceMetrics_NullStatusReader(t *testing.T) {
 		},
 	}
 
-	t.Run("staticService increments statusReaderNull when reader is nil", func(t *testing.T) {
+	t.Run("storageService increments statusReaderNull when reader is nil", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
-		svc := &staticService{cfg: cfg, metrics: metrics}
+		svc := &storageService{cfg: cfg, metrics: metrics}
 		mode := svc.getStorageMode(context.Background(), gr)
 		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
 		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
@@ -371,21 +330,9 @@ func TestServiceMetrics_StatusReaderError(t *testing.T) {
 		},
 	}
 
-	t.Run("service increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
+	t.Run("storageService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
-		svc := &service{
-			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
-			metrics:      metrics,
-		}
-		mode := svc.getStorageMode(context.Background(), gr)
-		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode, "should use mode returned by reader alongside error")
-		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
-		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
-	})
-
-	t.Run("staticService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
-		metrics := newTestDualWriterMetrics()
-		svc := &staticService{
+		svc := &storageService{
 			cfg:          cfg,
 			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
 			metrics:      metrics,
@@ -401,7 +348,8 @@ func TestServiceMetrics_HappyPath(t *testing.T) {
 	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
 	metrics := newTestDualWriterMetrics()
 
-	svc := &service{
+	svc := &storageService{
+		cfg:          &setting.Cfg{},
 		statusReader: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
 		metrics:      metrics,
 	}
@@ -409,6 +357,71 @@ func TestServiceMetrics_HappyPath(t *testing.T) {
 	require.Equal(t, unifiedmigrations.StorageModeUnified, mode)
 	require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
 	require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
+}
+
+func TestCurrentModeMetric(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+	ls := (rest.Storage)(nil)
+	us := (rest.Storage)(nil)
+
+	t.Run("storageModeToDualWriterMode mapping", func(t *testing.T) {
+		for _, tt := range []struct {
+			mode     unifiedmigrations.StorageMode
+			expected rest.DualWriterMode
+		}{
+			{unifiedmigrations.StorageModeLegacy, rest.Mode0},
+			{unifiedmigrations.StorageModeDualWrite, rest.Mode1},
+			{unifiedmigrations.StorageModeUnified, rest.Mode5},
+		} {
+			require.Equalf(t, tt.expected, storageModeToDualWriterMode(tt.mode), "StorageMode %d", tt.mode)
+		}
+	})
+
+	t.Run("NewStorage initializes metric from status reader", func(t *testing.T) {
+		for _, tt := range []struct {
+			name          string
+			mode          unifiedmigrations.StorageMode
+			wantMetricVal float64
+		}{
+			{"Legacy", unifiedmigrations.StorageModeLegacy, float64(rest.Mode0)},
+			{"DualWrite", unifiedmigrations.StorageModeDualWrite, float64(rest.Mode1)},
+			{"Unified", unifiedmigrations.StorageModeUnified, float64(rest.Mode5)},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				metrics := newTestDualWriterMetrics()
+				svc := &storageService{
+					cfg:          &setting.Cfg{},
+					statusReader: NewFakeMigrationStatusReader(gr.String(), tt.mode),
+					metrics:      metrics,
+				}
+				_, err := svc.NewStorage(gr, ls, us)
+				require.NoError(t, err)
+				require.Equal(t, tt.wantMetricVal, testutil.ToFloat64(metrics.currentMode.WithLabelValues(gr.Resource, gr.Group)))
+			})
+		}
+	})
+
+	t.Run("metric updates dynamically when migration completes at runtime", func(t *testing.T) {
+		reader := &switchableStatusReader{mode: unifiedmigrations.StorageModeDualWrite}
+		metrics := newTestDualWriterMetrics()
+		svc := &storageService{
+			cfg:          &setting.Cfg{},
+			statusReader: reader,
+			metrics:      metrics,
+		}
+
+		storage, err := svc.NewStorage(gr, ls, us)
+		require.NoError(t, err)
+		dw, ok := storage.(*dualWriter)
+		require.True(t, ok, "expected a *dualWriter for DualWrite mode")
+		require.Equal(t, float64(rest.Mode1), testutil.ToFloat64(metrics.currentMode.WithLabelValues(gr.Resource, gr.Group)))
+
+		// Simulate a remote migration completing: status reader now returns Unified.
+		reader.mode = unifiedmigrations.StorageModeUnified
+		dw.getMode(context.Background())
+
+		require.Equal(t, float64(rest.Mode5), testutil.ToFloat64(metrics.currentMode.WithLabelValues(gr.Resource, gr.Group)))
+	})
 }
 
 // --- test helpers ---
@@ -425,6 +438,9 @@ func newTestDualWriterMetrics() *dualWriterMetrics {
 		statusReaderErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "test_reader_errors",
 		}, []string{"resource"}),
+		currentMode: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "test_current_mode",
+		}, []string{"resource", "group"}),
 	}
 }
 
@@ -436,4 +452,13 @@ type failingStatusReader struct {
 
 func (f *failingStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	return f.mode, f.err
+}
+
+// switchableStatusReader returns the current mode field, allowing tests to simulate runtime mode changes.
+type switchableStatusReader struct {
+	mode unifiedmigrations.StorageMode
+}
+
+func (s *switchableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	return s.mode, nil
 }

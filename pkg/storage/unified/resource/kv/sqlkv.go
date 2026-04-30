@@ -11,7 +11,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 const (
@@ -23,11 +30,32 @@ const (
 
 var _ KV = &SqlKV{}
 
+var sqlKVLog = logging.DefaultLogger.With("logger", "resource-sqlkv")
+
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
 	GUID    string
 	KeyPath string
 	Value   []byte
+
+	// Legacy stores temporary sql/backend compatibility fields for resource_history.
+	// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+	Legacy *DataImportLegacyFields
+}
+
+// DataImportLegacyFields stores the temporary legacy resource_history columns
+// needed to keep sqlkv compatible with the old SQL backend during bulk import.
+// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+type DataImportLegacyFields struct {
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	Action          int64
+	Folder          string
+	ResourceVersion int64
+	PreviousRV      int64
+	Generation      int64
 }
 
 type SqlKV struct {
@@ -109,6 +137,23 @@ func dataImportBatchRowLimit(dialectName string) int {
 	return dataImportBatchDefaultMaxRows
 }
 
+func dataImportBatchStatementCount(rowCount, maxRows int) int {
+	if rowCount == 0 || maxRows <= 0 {
+		return 0
+	}
+
+	return (rowCount + maxRows - 1) / maxRows
+}
+
+func dataImportBatchPayloadBytes(rows []DataImportRow) int {
+	payloadBytes := 0
+	for _, row := range rows {
+		payloadBytes += len(row.Value)
+	}
+
+	return payloadBytes
+}
+
 // conn returns the dbtx from the context (set during bulk import on SQLite)
 // or falls back to the default *sql.DB connection pool.
 func (k *SqlKV) conn(ctx context.Context) dbtx {
@@ -129,8 +174,10 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 		return err
 	}
 
+	insertStart := time.Now()
 	conn := k.conn(ctx)
 	var tx *sql.Tx
+	usingContextTx := false
 	if _, ok := dbtxFromCtx(ctx); !ok {
 		tx, err = k.db.BeginTx(ctx, nil)
 		if err != nil {
@@ -142,17 +189,33 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 				err = errors.Join(err, tx.Rollback())
 			}
 		}()
+	} else {
+		usingContextTx = true
 	}
 
 	maxRows := dataImportBatchRowLimit(k.dialect.Name())
+	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
+	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
 		end := start + maxRows
 		if end > len(rows) {
 			end = len(rows)
 		}
 
-		query, args := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if err != nil {
+			return fmt.Errorf("failed to build data import batch query: %w", err)
+		}
 		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
+			sqlKVLog.Error("sqlkv bulk import insert failed",
+				"error", err,
+				"dialect", k.dialect.Name(),
+				"rows", len(rows),
+				"statements", statementCount,
+				"max_rows", maxRows,
+				"payload_bytes", payloadBytes,
+				"using_context_tx", usingContextTx,
+			)
 			return fmt.Errorf("failed to insert data import batch: %w", err)
 		}
 	}
@@ -161,6 +224,29 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 		if err = tx.Commit(); err != nil {
 			return fmt.Errorf("failed to commit data import batch: %w", err)
 		}
+	}
+
+	insertDuration := time.Since(insertStart)
+	if insertDuration > 500*time.Millisecond {
+		sqlKVLog.Warn("slow sqlkv bulk import insert",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
+	} else {
+		sqlKVLog.Debug("sqlkv bulk import insert timing",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
 	}
 
 	return nil
@@ -397,14 +483,9 @@ func (w *sqlWriteCloser) Close() error {
 		return fmt.Errorf("failed to parse key for GUID: %w", err)
 	}
 
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := LegacyActionValue(dataKey.Action)
+	if err != nil {
+		return err
 	}
 
 	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)
@@ -460,7 +541,138 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 }
 
 func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
-	return fmt.Errorf("Batch operation not implemented for sqlKV")
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+	// DataSection maps to resource_history, which has only a non-unique index
+	// on key_path, so Create/Update semantics can't be enforced atomically here.
+	// This may be lifted once key_path becomes unique on resource_history.
+	if section == DataSection {
+		return ErrBatchNotSupportedOnDataSection
+	}
+
+	if len(ops) == 0 {
+		return nil
+	}
+
+	if len(ops) > MaxBatchOps {
+		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
+	}
+
+	for _, op := range ops {
+		if op.Mode != BatchOpDelete && len(op.Value) == 0 {
+			return ErrEmptyValue
+		}
+	}
+
+	qb, err := k.getQueryBuilder(section)
+	if err != nil {
+		return err
+	}
+
+	tx, txErr := k.db.BeginTx(ctx, nil)
+	if txErr != nil {
+		return fmt.Errorf("failed to begin batch transaction: %w", txErr)
+	}
+	rollback := func() {
+		_ = tx.Rollback()
+	}
+
+	for i, op := range ops {
+		keyPath := getKeyPath(section, op.Key)
+
+		var opErr error
+		switch op.Mode {
+		case BatchOpCreate:
+			opErr = k.batchInsert(ctx, tx, qb, keyPath, op.Value)
+		case BatchOpUpdate:
+			opErr = k.batchUpdate(ctx, tx, qb, keyPath, op.Value)
+		case BatchOpPut:
+			opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value)
+		case BatchOpDelete:
+			opErr = k.batchDeleteOp(ctx, tx, qb, keyPath)
+		default:
+			opErr = fmt.Errorf("unknown operation mode: %d", op.Mode)
+		}
+		if opErr != nil {
+			rollback()
+			return &BatchError{Err: opErr, Index: i, Op: op}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit batch transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	query, args := qb.buildUpsertQuery(keyPath, value)
+	_, err := conn.ExecContext(ctx, query, args...)
+	return err
+}
+
+func (k *SqlKV) batchDeleteOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string) error {
+	query, args := qb.buildDeleteQuery(keyPath)
+	_, err := conn.ExecContext(ctx, query, args...)
+	return err
+}
+
+// batchInsert inserts a new row. Relies on the DB's unique constraint on key_path
+// to reject duplicates; the driver error is mapped to ErrKeyAlreadyExists.
+func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	query, args := qb.buildInsertQuery(keyPath, value)
+	if _, err := conn.ExecContext(ctx, query, args...); err != nil {
+		if isDuplicateKeyError(err) {
+			return ErrKeyAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+// isDuplicateKeyError reports whether the error is a unique-constraint violation
+// from any of the supported SQL drivers (SQLite, PostgreSQL, MySQL).
+func isDuplicateKeyError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == "23505"
+	}
+
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
+		return mysqlErr.Number == 1062
+	}
+
+	return false
+}
+
+// batchUpdate updates the value for an existing key_path.
+// Returns ErrNotFound when the key does not exist (RowsAffected == 0).
+func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
+	result, err := conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {

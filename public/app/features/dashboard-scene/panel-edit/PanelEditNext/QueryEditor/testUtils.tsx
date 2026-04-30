@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
@@ -5,6 +6,7 @@ import { type ReactElement } from 'react';
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
@@ -15,6 +17,7 @@ import {
   type PanelState,
   type QueryEditorActions,
   QueryEditorProvider,
+  type QueryEditorTypeConfigState,
   type QueryEditorUIState,
   type QueryOptionsState,
   type QueryRunnerState,
@@ -95,6 +98,11 @@ export const mockActions: QueryEditorActions = {
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
   reorderTransformations: jest.fn(),
+  bulkDeleteQueries: jest.fn(),
+  bulkToggleQueriesHide: jest.fn(),
+  bulkDeleteTransformations: jest.fn(),
+  bulkToggleTransformationsDisabled: jest.fn(),
+  bulkChangeDataSource: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -132,6 +140,9 @@ export const mockUIStateBase = {
   finalizePendingTransformation: jest.fn(),
   selectedQueryRefIds: [] satisfies readonly string[],
   selectedTransformationIds: [] satisfies readonly string[],
+  toggleQuerySelection: jest.fn(),
+  toggleTransformationSelection: jest.fn(),
+  clearSelection: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -139,6 +150,36 @@ export const mockTransformToggles = {
   toggleHelp: jest.fn(),
   showDebug: false,
   toggleDebug: jest.fn(),
+};
+
+/**
+ * Mock typeConfig for tests - uses placeholder colors since tests don't need real theme values
+ */
+export const mockTypeConfig: QueryEditorTypeConfigState = {
+  [QueryEditorType.Query]: {
+    icon: 'database',
+    color: '#ff9800',
+    getLabel: () => 'Query',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Expression]: {
+    icon: 'calculator-alt',
+    color: '#9c27b0',
+    getLabel: () => 'Expression',
+    deleteConfirmation: false,
+  },
+  [QueryEditorType.Transformation]: {
+    icon: 'process',
+    color: '#4caf50',
+    getLabel: () => 'Transformation',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    color: '#666',
+    getLabel: () => 'Alert',
+    deleteConfirmation: false,
+  },
 };
 
 interface CreateQueryEditorProviderOptions {
@@ -209,6 +250,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    toggleQuerySelection: jest.fn(),
+    toggleTransformationSelection: jest.fn(),
+    clearSelection: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,
@@ -245,16 +289,19 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   return {
     user: userEvent.setup({ pointerEventsCheck: 0 }),
     ...render(
-      <QueryEditorProvider
-        dsState={defaultDsState}
-        qrState={defaultQrState}
-        panelState={defaultPanelState}
-        uiState={defaultUiState}
-        actions={defaultActions}
-        alertingState={defaultAlertingState}
-      >
-        {children}
-      </QueryEditorProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <QueryEditorProvider
+          dsState={defaultDsState}
+          qrState={defaultQrState}
+          panelState={defaultPanelState}
+          uiState={defaultUiState}
+          actions={defaultActions}
+          alertingState={defaultAlertingState}
+          typeConfig={mockTypeConfig}
+        >
+          {children}
+        </QueryEditorProvider>
+      </OpenFeatureProvider>
     ),
   };
 }

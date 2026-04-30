@@ -31,12 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type queryREST struct {
@@ -138,7 +136,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
 			"caller", getCaller(ctx),
 		)
-		connectLogger.Debug("received query-service request")
 		responderOnObjectFn := func(statusCode *int, obj runtime.Object) {
 			if *statusCode/100 == 4 {
 				span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
@@ -178,9 +175,15 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 			statusCode := 0
 			var k8sErr *errorsK8s.StatusError
-			if errors.As(err, &k8sErr) {
+			switch {
+			case errors.As(err, &k8sErr):
 				statusCode = int(k8sErr.Status().Code)
-			} else {
+			case errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded):
+				statusCode = http.StatusGatewayTimeout
+			case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+				// 499 follows the widely used "client closed request" convention.
+				statusCode = 499
+			default:
 				// we do not know what kind of error it is,
 				// we do not know what status code will get assigned to it,
 				// so we use the zero to indicate the unknown.
@@ -189,19 +192,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			b.reportStatus(ctx, statusCode)
 		}
 
-		var responder rest.Responder
-		rawOutputMode := openfeature.NewDefaultClient().Boolean(
-			ctx,
-			featuremgmt.FlagDatasourcesQuerierRawOutput,
-			false,
-			openfeature.TransactionContext(ctx),
-		)
-		connectLogger.Debug("raw-mode-feature-flag evaluated", "result", rawOutputMode)
-		if rawOutputMode {
-			responder = newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
-		} else {
-			responder = newConnectResponderWrapper(incomingResponder, responderOnObjectFn, responderOnErrorFn)
-		}
+		responder := newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
 
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
@@ -406,36 +397,6 @@ func handleQuery(
 		return nil, err
 	}
 	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
-}
-
-type connectResponderWrapper struct {
-	wrapped    rest.Responder
-	onObjectFn func(statusCode *int, obj runtime.Object)
-	onErrorFn  func(err error)
-}
-
-func newConnectResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
-	return &connectResponderWrapper{
-		wrapped:    responder,
-		onObjectFn: onObjectFn,
-		onErrorFn:  onErrorFn,
-	}
-}
-
-func (r connectResponderWrapper) Object(statusCode int, obj runtime.Object) {
-	if r.onObjectFn != nil {
-		r.onObjectFn(&statusCode, obj)
-	}
-
-	r.wrapped.Object(statusCode, obj)
-}
-
-func (r connectResponderWrapper) Error(err error) {
-	if r.onErrorFn != nil {
-		r.onErrorFn(err)
-	}
-
-	r.wrapped.Error(err)
 }
 
 type rawResponderWrapper struct {

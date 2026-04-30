@@ -4,8 +4,9 @@ export declare global {
     __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
-    __grafana_load_failed: () => void;
+    __grafana_load_failed: (err: unknown) => void;
     grafanaBootData: BootData;
+    __grafanaPublicDashboardAccessToken?: string;
 
     /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.

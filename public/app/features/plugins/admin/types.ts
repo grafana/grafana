@@ -69,6 +69,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  distributionType?: string;
 }
 export interface Screenshots {
   path: string;
@@ -197,6 +198,7 @@ export type RemotePlugin = {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  versionDistributionType?: string;
 };
 
 export enum PluginUpdateStrategy {

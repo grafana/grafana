@@ -4,6 +4,11 @@ on:
     branches: ["main"]
     paths: ["docs/sources/**"]
   workflow_dispatch:
+    inputs:
+      non-blocking:
+        description: "Report Vale linting errors without failing the job."
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -21,6 +26,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: grafana/writers-toolkit/vale-action@vale-action/v1 # zizmor: ignore[unpinned-uses]
+        continue-on-error: ${{ github.event_name == 'pull_request' || inputs.non-blocking == true }}
         with:
           filter: '.Name in ["Grafana.GrafanaCom", "Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
           token: ${{ secrets.GITHUB_TOKEN }}

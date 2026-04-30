@@ -73,6 +73,18 @@ func (qb *queryBuilder) buildUpsertQuery(keyPath string, value []byte) (string, 
 	}
 }
 
+// buildInsertQuery generates a plain INSERT (key_path, value) with no conflict handling.
+// The DB's unique constraint on key_path will reject duplicates.
+func (qb *queryBuilder) buildInsertQuery(keyPath string, value []byte) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"INSERT INTO %s (%s, %s) VALUES (%s, %s)",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.QuoteIdent("value"),
+		qb.dialect.Placeholder(1), qb.dialect.Placeholder(2),
+	)
+	return query, []interface{}{keyPath, value}
+}
+
 // buildDeleteQuery generates DELETE query
 func (qb *queryBuilder) buildDeleteQuery(keyPath string) (string, []interface{}) {
 	query := fmt.Sprintf(
@@ -181,16 +193,63 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 }
 
 // buildInsertDatastoreBatchQuery generates a multi-row INSERT for datastore import rows.
-func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (string, []interface{}) {
+// Rows with Legacy set also write the temporary compatibility columns needed by sql/backend.
+func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (string, []interface{}, error) {
 	if len(rows) == 0 {
-		return "", nil
+		return "", nil, nil
 	}
 
+	withLegacy := rows[0].Legacy != nil
 	valueRows := make([]string, 0, len(rows))
-	args := make([]interface{}, 0, len(rows)*9)
+	argsPerRow := 9
+	if withLegacy {
+		argsPerRow = 13
+	}
+	args := make([]interface{}, 0, len(rows)*argsPerRow)
 	argIdx := 1
 
-	for _, row := range rows {
+	for i, row := range rows {
+		if (row.Legacy != nil) != withLegacy {
+			return "", nil, fmt.Errorf("mixed legacy import rows in batch at index %d", i)
+		}
+
+		if withLegacy {
+			legacy := row.Legacy
+			valueRows = append(valueRows, fmt.Sprintf(
+				"(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+				qb.dialect.Placeholder(argIdx),
+				qb.dialect.Placeholder(argIdx+1),
+				qb.dialect.Placeholder(argIdx+2),
+				qb.dialect.Placeholder(argIdx+3),
+				qb.dialect.Placeholder(argIdx+4),
+				qb.dialect.Placeholder(argIdx+5),
+				qb.dialect.Placeholder(argIdx+6),
+				qb.dialect.Placeholder(argIdx+7),
+				qb.dialect.Placeholder(argIdx+8),
+				qb.dialect.Placeholder(argIdx+9),
+				qb.dialect.Placeholder(argIdx+10),
+				qb.dialect.Placeholder(argIdx+11),
+				qb.dialect.Placeholder(argIdx+12),
+			))
+			args = append(args,
+				row.GUID,
+				row.KeyPath,
+				row.Value,
+				legacy.Group,
+				legacy.Resource,
+				legacy.Namespace,
+				legacy.Name,
+				legacy.Action,
+				legacy.Folder,
+				legacy.ResourceVersion,
+				legacy.PreviousRV,
+				legacy.Generation,
+				nil, // label_set
+			)
+			argIdx += 13
+			continue
+		}
+
 		valueRows = append(valueRows, fmt.Sprintf(
 			"(%s, %s, %s, %s, %s, %s, %s, %s, %s)",
 			qb.dialect.Placeholder(argIdx),
@@ -205,6 +264,29 @@ func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (st
 		))
 		args = append(args, row.GUID, row.KeyPath, row.Value, "", "", "", "", 0, "")
 		argIdx += 9
+	}
+
+	if withLegacy {
+		query := fmt.Sprintf(
+			"INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES %s",
+			qb.dialect.QuoteIdent(qb.tableName),
+			qb.dialect.QuoteIdent("guid"),
+			qb.dialect.QuoteIdent("key_path"),
+			qb.dialect.QuoteIdent("value"),
+			qb.dialect.QuoteIdent("group"),
+			qb.dialect.QuoteIdent("resource"),
+			qb.dialect.QuoteIdent("namespace"),
+			qb.dialect.QuoteIdent("name"),
+			qb.dialect.QuoteIdent("action"),
+			qb.dialect.QuoteIdent("folder"),
+			qb.dialect.QuoteIdent("resource_version"),
+			qb.dialect.QuoteIdent("previous_resource_version"),
+			qb.dialect.QuoteIdent("generation"),
+			qb.dialect.QuoteIdent("label_set"),
+			strings.Join(valueRows, ", "),
+		)
+
+		return query, args, nil
 	}
 
 	query := fmt.Sprintf(
@@ -222,7 +304,7 @@ func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (st
 		strings.Join(valueRows, ", "),
 	)
 
-	return query, args
+	return query, args, nil
 }
 
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode

@@ -4,6 +4,9 @@ SELECT id, uid, name, email, external_uid, is_provisioned, created, updated
 {{ if .Query.UID }}
    AND uid = {{ .Arg .Query.UID }}
 {{ end }}
+{{ if .Query.ID }}
+   AND id = {{ .Arg .Query.ID }}
+{{ end }}
 {{ if .Query.Pagination.Continue }}
    AND id >= {{ .Arg .Query.Pagination.Continue }}
 {{ end }}

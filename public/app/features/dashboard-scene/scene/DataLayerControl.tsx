@@ -14,31 +14,9 @@ export type Props = {
 export function DataLayerControl({ layer, inMenu }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
   const { data } = layer.useState();
-  const { isSelected, onSelect, isSelectable } = useElementSelection(layer.state.key);
+  const { isSelected, isSelectable } = useElementSelection(layer.state.key);
   const showLoading = Boolean(data && data.state === LoadingState.Loading);
   const styles = useStyles2(getStyles);
-
-  const onPointerDown = (evt: React.PointerEvent) => {
-    if (!isSelectable) {
-      return;
-    }
-
-    // Ignore click if it's inside the switch control (has a label with for=elementId)
-    // The ControlsLabel has no htmlFor when selectable, so clicks on it won't match
-    if (evt.target instanceof Element) {
-      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
-
-      if (forAttribute === elementId) {
-        evt.stopPropagation();
-        return;
-      }
-    }
-
-    if (isSelectable && onSelect) {
-      evt.stopPropagation();
-      onSelect(evt);
-    }
-  };
 
   const label: string =
     layer instanceof dataLayers.AnnotationsDataLayer && Boolean(layer.state.query.builtIn)
@@ -56,7 +34,6 @@ export function DataLayerControl({ layer, inMenu }: Props) {
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
-        onPointerDown={onPointerDown}
       >
         <div className={styles.controlWrapper}>
           <layer.Component model={layer} />
@@ -82,7 +59,6 @@ export function DataLayerControl({ layer, inMenu }: Props) {
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
-      onPointerDown={onPointerDown}
     >
       <ControlsLabel
         htmlFor={isSelectable ? undefined : elementId}

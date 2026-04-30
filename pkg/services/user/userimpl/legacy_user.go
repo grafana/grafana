@@ -257,6 +257,10 @@ func (s *LegacyService) GetByLogin(ctx context.Context, query *user.GetUserByLog
 	return s.store.GetByLogin(ctx, query)
 }
 
+func (s *LegacyService) GetByLoginWithPassword(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return s.GetByLogin(ctx, query)
+}
+
 func (s *LegacyService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.legacy.GetByEmail")
 	defer span.End()
@@ -395,7 +399,8 @@ func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSign
 		return nil, err
 	}
 
-	usr.Teams, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
+	// nolint:staticcheck
+	usr.TeamIDs, usr.TeamUIDs, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
 		OrgID:  usr.OrgID,
 		UserID: usr.UserID,
 	})

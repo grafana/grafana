@@ -1,7 +1,7 @@
 /**
  * These tests were moved from Grafana core, we're keepign them around to prevent uncaught regressions
  */
-import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v1beta1/mocks/fakes/Routes';
+import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v0alpha1/mocks/fakes/Routes';
 
 import { type Route } from './types';
 import { findMatchingRoutes } from './utils';

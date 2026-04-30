@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -54,7 +55,7 @@ type migrationStatusReader struct {
 	registry *MigrationRegistry
 	cache    *gocache.Cache
 	metrics  *statusReaderMetrics
-	onlyCfg  bool
+	onlyCfg  atomic.Bool
 }
 
 var _ contract.MigrationStatusReader = (*migrationStatusReader)(nil)
@@ -89,7 +90,7 @@ func ProvideMigrationStatusReader(
 			return nil, fmt.Errorf("failed to ensure migration log table: %w", err)
 		}
 		// Can't create migration log table, fall back to config-only mode.
-		reader.onlyCfg = true
+		reader.onlyCfg.Store(true)
 		logger.Warn("Migration log table missing and bootstrap failed, falling back to config-driven resolution", "error", err)
 	}
 	return reader, nil
@@ -124,13 +125,13 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 		}
 	}
 
-	if r.onlyCfg {
+	if r.onlyCfg.Load() {
 		if !r.migrationLogTableAvailable() {
 			logger.Debug("Migration log table not available, using config for storage mode resolution", "resource", gr.String(), "config_mode", configKey, "resolved_mode", mode)
 			return mode, nil
 		}
 		logger.Info("Migration log table now available, using log-based resolution")
-		r.onlyCfg = false
+		r.onlyCfg.Store(false)
 	}
 
 	// The migration log is the source of truth for "data has been synced".

@@ -1,4 +1,4 @@
-# Owned by grafana-release-guild
+# Owned by grafana-backend-services-squad
 # Intended to be dropped into the base repo (Ex: grafana/grafana) for use in the security mirror.
 name: Create security patch
 run-name: create-security-patch
@@ -26,4 +26,5 @@ jobs:
       patch_repo: "grafana/grafana-security-patches"
       patch_prefix: "${{ github.event.pull_request.number }}"
       sender: "${{ github.event.pull_request.user.login }}"
+      comment: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
     secrets: inherit # zizmor: ignore[secrets-inherit]

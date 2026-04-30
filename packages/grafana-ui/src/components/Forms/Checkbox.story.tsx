@@ -65,7 +65,7 @@ export const StackedList = () => {
 export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
     <Field {...args}>
-      <Checkbox name="hide" id="hide" defaultChecked={true} />
+      <Checkbox name="hide" defaultChecked={true} />
     </Field>
   );
 };

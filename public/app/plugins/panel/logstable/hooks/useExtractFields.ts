@@ -14,6 +14,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
+import { getLogsTableFieldConfigRegistry } from '../logsTableFieldConfig';
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
 
 interface Props {
@@ -46,6 +47,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
         const extractedFrames = applyFieldOverrides({
           data,
           fieldConfig,
+          fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
           replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,

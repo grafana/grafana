@@ -49,3 +49,10 @@ func (g *lazyClientGenerator) GetCustomRouteClient(gv schema.GroupVersion, plura
 	}
 	return g.clientGenerator.GetCustomRouteClient(gv, plural)
 }
+
+func (g *lazyClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
+	if err := g.init(); err != nil {
+		return nil, err
+	}
+	return g.clientGenerator.DiscoveryClient()
+}

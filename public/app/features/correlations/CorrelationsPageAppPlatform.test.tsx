@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, type reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { type createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
@@ -138,6 +139,7 @@ jest.mock('app/core/services/context_srv');
 const mocks = {
   contextSrv: jest.mocked(contextSrv),
   reportInteraction: jest.fn(),
+  successNotif: jest.fn(),
 };
 
 jest.mock('@grafana/runtime', () => {
@@ -147,6 +149,15 @@ jest.mock('@grafana/runtime', () => {
     ...runtime,
     reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
       mocks.reportInteraction(...args);
+    },
+  };
+});
+
+jest.mock('app/core/copy/appNotification', () => {
+  return {
+    ...jest.requireActual('app/core/copy/appNotification'),
+    createSuccessNotification: (...args: Parameters<typeof createSuccessNotification>) => {
+      mocks.successNotif(...args);
     },
   };
 });
@@ -192,6 +203,7 @@ describe('CorrelationsPage - App Platform', () => {
 
     afterEach(() => {
       mocks.reportInteraction.mockClear();
+      mocks.successNotif.mockClear();
     });
 
     it('shows the first page of the wizard', async () => {
@@ -257,6 +269,7 @@ describe('CorrelationsPage - App Platform', () => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
       });
 
+      expect(mocks.successNotif).toHaveBeenCalledWith('Correlation created');
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
   });
@@ -264,6 +277,7 @@ describe('CorrelationsPage - App Platform', () => {
   describe('With correlations', () => {
     afterEach(() => {
       mocks.reportInteraction.mockClear();
+      mocks.successNotif.mockClear();
     });
 
     let queryRowsByCellValue: (columnName: Matcher, textValue: Matcher) => HTMLTableRowElement[];
@@ -385,6 +399,7 @@ describe('CorrelationsPage - App Platform', () => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
       });
 
+      expect(mocks.successNotif).toHaveBeenCalledWith('Correlation created');
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
@@ -420,6 +435,8 @@ describe('CorrelationsPage - App Platform', () => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_deleted');
         expect(screen.queryByRole('cell', { name: /loki to loki$/i })).not.toBeInTheDocument();
       });
+
+      expect(mocks.successNotif).toHaveBeenCalledWith('Correlation deleted');
     });
 
     it('correctly edits correlations', async () => {
@@ -452,6 +469,7 @@ describe('CorrelationsPage - App Platform', () => {
       });
 
       expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
+      expect(mocks.successNotif).toHaveBeenCalledWith('Correlation updated');
     });
 
     it('correctly edits transformations', async () => {
@@ -506,6 +524,7 @@ describe('CorrelationsPage - App Platform', () => {
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
       });
+      expect(mocks.successNotif).toHaveBeenCalledWith('Correlation updated');
     });
   });
 
