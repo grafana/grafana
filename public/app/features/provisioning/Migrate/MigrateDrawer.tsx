@@ -4,8 +4,19 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Checkbox, Drawer, Field, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Combobox,
+  Drawer,
+  Field,
+  Stack,
+  Text,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
+import { type Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { type BulkActionFormData } from '../components/BulkActions/utils';
@@ -24,7 +35,7 @@ interface ResourceRef {
 
 interface Props {
   folders: FolderRow[];
-  repositoryName?: string;
+  repos: Repository[];
   selectedFolderUids: Set<string>;
   selectedDashboardUids: Set<string>;
   onClose: () => void;
@@ -60,14 +71,26 @@ function resolveSelectedDashboards(
 
 export function MigrateDrawer({
   folders,
-  repositoryName,
+  repos,
   selectedFolderUids,
   selectedDashboardUids,
   onClose,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const repoOptions = useMemo(
+    () =>
+      repos
+        .filter((r) => Boolean(r.metadata?.name))
+        .map((r) => ({
+          label: r.metadata?.name ?? '',
+          value: r.metadata?.name ?? '',
+          description: r.spec?.title || r.spec?.type,
+        })),
+    [repos]
+  );
+  const [selectedRepoName, setSelectedRepoName] = useState<string | undefined>(repoOptions[0]?.value);
   const { repository, isReadOnlyRepo, isLoading: isLoadingRepo } = useGetResourceRepositoryView({
-    name: repositoryName,
+    name: selectedRepoName,
   });
   const [createJob, { isLoading: isSubmitting }] = useCreateRepositoryJobsMutation();
   const [deleteOriginals, setDeleteOriginals] = useState(true);
@@ -253,6 +276,22 @@ export function MigrateDrawer({
                 </Text>
               </div>
 
+              {repoOptions.length > 1 && (
+                <Field
+                  noMargin
+                  label={t('provisioning.stats.migrate-drawer-repo-label', 'Target repository')}
+                  description={t(
+                    'provisioning.stats.migrate-drawer-repo-description',
+                    'Pick the repository to push the migrated dashboards to.'
+                  )}
+                >
+                  <Combobox
+                    options={repoOptions}
+                    value={selectedRepoName ?? null}
+                    onChange={(opt) => setSelectedRepoName(opt?.value)}
+                  />
+                </Field>
+              )}
               <ResourceEditFormSharedFields
                 resourceType="dashboard"
                 isNew={false}

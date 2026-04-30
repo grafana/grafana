@@ -643,6 +643,7 @@ export function Migrate() {
             selected={selectedFolderUids}
             onToggle={toggleFolder}
             onSelectAll={selectAllFolders}
+            onMigrateClick={() => setMigrateDrawerOpen(true)}
           />
           <FoldersToMigrate
             folders={folders}
@@ -662,7 +663,7 @@ export function Migrate() {
       {migrateDrawerOpen && (
         <MigrateDrawer
           folders={folders}
-          repositoryName={repoList[0]?.metadata?.name}
+          repos={repoList}
           selectedFolderUids={selectedFolderUids}
           selectedDashboardUids={selectedDashboardUids}
           onClose={() => setMigrateDrawerOpen(false)}

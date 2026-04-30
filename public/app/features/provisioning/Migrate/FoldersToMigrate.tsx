@@ -148,7 +148,20 @@ export function FoldersToMigrate({
           })}
         </Text>
         {unmanagedFolders.length > 0 && (
-          <Button variant="primary" icon="upload" onClick={onMigrateClick} disabled={totalSelected === 0}>
+          <Button
+            variant="primary"
+            icon="upload"
+            onClick={onMigrateClick}
+            disabled={totalSelected === 0 || repos.length === 0}
+            tooltip={
+              repos.length === 0
+                ? t(
+                    'provisioning.stats.dashboards-to-migrate-no-repo-tooltip',
+                    'Connect a repository before migrating.'
+                  )
+                : undefined
+            }
+          >
             {t('provisioning.stats.dashboards-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
               count: totalSelected,
             })}

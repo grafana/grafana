@@ -3,24 +3,14 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Checkbox, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Icon, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
+import { GETTING_STARTED_URL } from '../constants';
 
 import { type FolderRow } from './hooks/useFolderLeaderboard';
 
 const TOP_N = 3;
-
-function migrateTarget(repos: Repository[]): string {
-  if (repos.length === 0) {
-    return GETTING_STARTED_URL;
-  }
-  if (repos.length === 1 && repos[0].metadata?.name) {
-    return `${PROVISIONING_URL}/${repos[0].metadata.name}`;
-  }
-  return PROVISIONING_URL;
-}
 
 interface Props {
   folders: FolderRow[];
@@ -28,15 +18,25 @@ interface Props {
   selected: Set<string>;
   onToggle: (uid: string) => void;
   onSelectAll: () => void;
+  onMigrateClick: () => void;
 }
 
 /**
  * Surfaces the top folders by unmanaged-dashboard count as one-click migration
- * targets. Hidden when no unmanaged folders exist — the rest of the page
- * already handles the empty state.
+ * targets. With no repository connected, the panel becomes a "connect your
+ * first repository" prompt instead. Hidden entirely when there's a repo and
+ * no unmanaged folders to surface.
  */
-export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll }: Props) {
+export function QuickWinsPanel({
+  folders,
+  repos,
+  selected,
+  onToggle,
+  onSelectAll,
+  onMigrateClick,
+}: Props) {
   const styles = useStyles2(getStyles);
+  const hasRepo = repos.length > 0;
 
   // Eligible = unmanaged folders with at least one dashboard. The folder
   // leaderboard already orders unmanaged folders by dashboardCount desc, so
@@ -52,11 +52,38 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
     [topFolders, selected]
   );
 
+  if (!hasRepo) {
+    return (
+      <div className={styles.panel}>
+        <Stack direction="row" gap={1} alignItems="center" wrap>
+          <div className={styles.bolt}>
+            <Icon name="bolt" size="lg" />
+          </div>
+          <Stack direction="column" gap={0} flex={1}>
+            <Text variant="h5">
+              <Trans i18nKey="provisioning.stats.quick-wins-heading-no-repo">
+                Connect your first repository
+              </Trans>
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="provisioning.stats.quick-wins-subtitle-no-repo">
+                Pick a Git provider, point Grafana at a repo, and the Migrate flow lights up. Until then,
+                the dashboards on your instance stay where they are.
+              </Trans>
+            </Text>
+          </Stack>
+          <LinkButton variant="primary" icon="plus" href={GETTING_STARTED_URL}>
+            <Trans i18nKey="provisioning.stats.quick-wins-connect-repo">Connect a repository</Trans>
+          </LinkButton>
+        </Stack>
+      </div>
+    );
+  }
+
   if (topFolders.length === 0) {
     return null;
   }
 
-  const target = migrateTarget(repos);
   const ctaLabel =
     selectedInTop > 0
       ? t('provisioning.stats.quick-wins-cta-selected', 'Migrate selected ({{count}})', { count: selectedInTop })
@@ -80,9 +107,9 @@ export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll
         </Stack>
         <div className={styles.spacer} />
         <Stack direction="column" gap={0.5} alignItems="flex-end">
-          <LinkButton variant="primary" icon="upload" href={target}>
+          <Button variant="primary" icon="upload" onClick={onMigrateClick}>
             {ctaLabel}
-          </LinkButton>
+          </Button>
           {totalUnmanagedFolders > topFolders.length && (
             <TextLink href="#folders-to-migrate" variant="bodySmall" onClick={onSelectAll}>
               {t('provisioning.stats.quick-wins-select-all', 'Select all {{count}} folders', {

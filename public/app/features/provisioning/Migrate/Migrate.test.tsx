@@ -152,13 +152,15 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    // Disabled before any selection.
+    // Disabled before any selection. The footer button uses "Migrate selected (0)";
+    // Quick wins uses "Migrate top 2" so the (0) match is unambiguous.
     const initial = screen.getByRole('button', { name: /migrate selected \(0\)/i });
     expect(initial).toBeDisabled();
-    // Pick folder A — the bulk action becomes enabled.
+    // Pick folder A — both Quick wins and the footer reflect the same selection.
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder a/i }));
-    const enabled = screen.getByRole('button', { name: /migrate selected \(1\)/i });
-    expect(enabled).not.toBeDisabled();
+    const enabled = screen.getAllByRole('button', { name: /migrate selected \(1\)/i });
+    expect(enabled.length).toBeGreaterThanOrEqual(1);
+    enabled.forEach((btn) => expect(btn).not.toBeDisabled());
   });
 
   it('hides the bulk Migrate selected button when nothing is unmanaged', () => {
@@ -273,7 +275,35 @@ describe('Migrate', () => {
     expect(screen.getByText(/4 via git sync/i)).toBeInTheDocument();
   });
 
+  it('replaces Quick wins with a "Connect a repository" CTA when no repo is connected', () => {
+    mockUseRepositoryList.mockReturnValue([[], false]);
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 12 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [makeFolder({ uid: 'pay', title: 'Payments', dashboardCount: 12 })],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    expect(screen.getByText(/connect your first repository/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /connect a repository/i })).toBeInTheDocument();
+  });
+
   it('shows Quick wins folder cards when the leaderboard surfaces unmanaged folders', () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
     mockQuery({
       data: {
         instance: [
@@ -451,7 +481,10 @@ describe('Migrate', () => {
     });
     render(<Migrate />);
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
-    await userEvent.click(screen.getByRole('button', { name: /migrate selected/i }));
+    // Both Quick wins and the footer expose Migrate selected — clicking either
+    // opens the drawer.
+    const triggers = screen.getAllByRole('button', { name: /migrate selected/i });
+    await userEvent.click(triggers[triggers.length - 1]);
     // Drawer surfaces the migration tip and the delete-originals checkbox (default on → submit reads "Migrate").
     expect(screen.getByText(/review how migration works/i)).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /delete original dashboards/i })).toBeChecked();
