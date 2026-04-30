@@ -27,12 +27,12 @@ describe('SplashScreenNav', () => {
     expect(screen.getAllByLabelText(/Go to slide/)).toHaveLength(4);
   });
 
-  it('marks the active dot with aria-current', () => {
+  it('marks the active dot as selected', () => {
     renderNav({ activeIndex: 2, total: 4 });
 
     const dots = screen.getAllByLabelText(/Go to slide/);
-    expect(dots[0]).not.toHaveAttribute('aria-current');
-    expect(dots[2]).toHaveAttribute('aria-current', 'step');
+    expect(dots[0]).toHaveAttribute('aria-selected', 'false');
+    expect(dots[2]).toHaveAttribute('aria-selected', 'true');
   });
 
   it('calls onGoTo with correct index when a dot is clicked', async () => {
@@ -48,10 +48,10 @@ describe('SplashScreenNav', () => {
     const onNext = jest.fn();
     renderNav({ onPrev, onNext });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Previous slide' }));
     expect(onPrev).toHaveBeenCalledTimes(1);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next slide' }));
     expect(onNext).toHaveBeenCalledTimes(1);
   });
 

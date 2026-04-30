@@ -222,7 +222,7 @@ require (
 	k8s.io/client-go v0.36.0 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.36.0 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.140.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.35.0 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.36.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // @grafana/data-sources-plugins
 	modernc.org/sqlite v1.48.2 // @grafana/grafana-backend-group
