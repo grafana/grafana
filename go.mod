@@ -6,6 +6,7 @@ go 1.26.2
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
+	cloud.google.com/go/aiplatform v1.120.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.26.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.62.1 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.19.1 // @grafana/data-sources-plugins
@@ -697,8 +698,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
-
-require cloud.google.com/go/aiplatform v1.120.0
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
