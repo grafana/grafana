@@ -78,7 +78,8 @@ func TestIntegrationIdentity(t *testing.T) {
             "email": "staff@Org1",
             "title": "staff",
 			"provisioned": false,
-			"externalUID": ""
+			"externalUID": "",
+			"externalGroups": []
           }
         }
       ]

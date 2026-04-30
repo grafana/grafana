@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -9,6 +10,10 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+// maxExternalGroupLength matches the team_group.group_id column width
+// (NVarchar(190) — see pkg/extensions/teamgroupsync/database/database_mig.go).
+const maxExternalGroupLength = 190
 
 func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
 	requester, err := identity.GetRequester(ctx)
@@ -29,6 +34,10 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
 	}
 
 	if err := validateNoDuplicateMembers(obj.Spec.Members); err != nil {
+		return err
+	}
+
+	if err := normalizeAndValidateExternalGroups(&obj.Spec); err != nil {
 		return err
 	}
 
@@ -64,6 +73,37 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 		return err
 	}
 
+	if err := normalizeAndValidateExternalGroups(&obj.Spec); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// normalizeAndValidateExternalGroups normalizes spec.externalGroups in place
+// (lowercase + trim) and rejects empty entries, entries longer than
+// team_group.group_id, and duplicates after normalization.
+func normalizeAndValidateExternalGroups(spec *iamv0alpha1.TeamSpec) error {
+	if len(spec.ExternalGroups) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(spec.ExternalGroups))
+	out := make([]string, 0, len(spec.ExternalGroups))
+	for _, g := range spec.ExternalGroups {
+		g = strings.ToLower(strings.TrimSpace(g))
+		if g == "" {
+			return apierrors.NewBadRequest("externalGroups entries must be non-empty")
+		}
+		if len(g) > maxExternalGroupLength {
+			return apierrors.NewBadRequest("externalGroups entry exceeds maximum length")
+		}
+		if _, dup := seen[g]; dup {
+			return apierrors.NewBadRequest("duplicate externalGroups entry " + g)
+		}
+		seen[g] = struct{}{}
+		out = append(out, g)
+	}
+	spec.ExternalGroups = out
 	return nil
 }
 

@@ -285,6 +285,12 @@ type CreateTeamCommand struct {
 	// populated here from the team row that was just inserted, so if the
 	// team insert rolls back the member inserts roll back with it.
 	MemberCreates []CreateTeamMemberCommand
+
+	// ExternalGroupReconciler, when non-nil, reconciles team_group rows
+	// against DesiredExternalGroups inside the same SQL transaction as the
+	// team row insert.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
 }
 
 type CreateTeamResult struct {
@@ -366,6 +372,12 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 			}
 		}
 
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
+			}
+		}
+
 		createdTeam = team.Team{
 			ID:            teamID,
 			UID:           cmd.UID,
@@ -404,6 +416,12 @@ type UpdateTeamCommand struct {
 	MemberDeletes []DeleteTeamMemberCommand
 	MemberUpdates []UpdateTeamMemberCommand
 	MemberCreates []CreateTeamMemberCommand
+
+	// ExternalGroupReconciler, when non-nil, reconciles team_group rows
+	// against DesiredExternalGroups inside the same SQL transaction as the
+	// team row update.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
 }
 
 type UpdateTeamResult struct {
@@ -445,7 +463,8 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 	// Resolve the team's internal ID before opening the write transaction. Doing
 	// the read inside WithTransaction would acquire a second DB connection while
 	// the tx holds the write lock, which deadlocks on SQLite.
-	if _, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID}); err != nil {
+	teamInfo, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID})
+	if err != nil {
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
 
@@ -510,6 +529,12 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 					return team.ErrTeamMemberAlreadyAdded
 				}
 				return fmt.Errorf("failed to create team members: %w", err)
+			}
+		}
+
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamInfo.ID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
 			}
 		}
 

@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	TEAM_SEARCH_EMAIL        = "email"
-	TEAM_SEARCH_PROVISIONED  = "provisioned"
-	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
-	TEAM_SEARCH_MEMBERS      = "members"
+	TEAM_SEARCH_EMAIL           = "email"
+	TEAM_SEARCH_PROVISIONED     = "provisioned"
+	TEAM_SEARCH_EXTERNAL_UID    = "externalUID"
+	TEAM_SEARCH_MEMBERS         = "members"
+	TEAM_SEARCH_EXTERNAL_GROUPS = "externalGroups"
 )
 
 // TeamSortableExtraFields are the additional fields that can be used for sorting team search results.
@@ -44,6 +45,15 @@ var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColum
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		IsArray:     true,
 		Description: "UIDs of users that are members of the team",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
+		},
+	},
+	TEAM_SEARCH_EXTERNAL_GROUPS: {
+		Name:        TEAM_SEARCH_EXTERNAL_GROUPS,
+		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+		IsArray:     true,
+		Description: "External group identifiers mapped to the team",
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 			Filterable: true,
 		},
@@ -93,6 +103,9 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 			uids = append(uids, m.Name)
 		}
 		doc.Fields[TEAM_SEARCH_MEMBERS] = uids
+	}
+	if len(team.Spec.ExternalGroups) > 0 {
+		doc.Fields[TEAM_SEARCH_EXTERNAL_GROUPS] = team.Spec.ExternalGroups
 	}
 
 	return doc, nil

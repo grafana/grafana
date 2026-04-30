@@ -2,9 +2,11 @@ package team
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/authlib/types"
@@ -324,4 +326,68 @@ func TestValidateOnUpdate(t *testing.T) {
 			assert.Equal(t, test.want, err)
 		})
 	}
+}
+
+func TestNormalizeAndValidateExternalGroups(t *testing.T) {
+	t.Run("nil and empty are no-ops", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{}
+		require.NoError(t, normalizeAndValidateExternalGroups(spec))
+		assert.Empty(t, spec.ExternalGroups)
+
+		spec = &iamv0alpha1.TeamSpec{ExternalGroups: []string{}}
+		require.NoError(t, normalizeAndValidateExternalGroups(spec))
+		assert.Empty(t, spec.ExternalGroups)
+	})
+
+	t.Run("lowercases and trims in place", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"  LDAP-Admins ", "Some-Group"}}
+		require.NoError(t, normalizeAndValidateExternalGroups(spec))
+		assert.Equal(t, []string{"ldap-admins", "some-group"}, spec.ExternalGroups)
+	})
+
+	t.Run("rejects empty entry", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"foo", ""}}
+		err := normalizeAndValidateExternalGroups(spec)
+		require.Error(t, err)
+		statusErr, ok := err.(*apierrors.StatusError)
+		require.True(t, ok)
+		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		assert.Contains(t, statusErr.ErrStatus.Message, "non-empty")
+	})
+
+	t.Run("rejects whitespace-only entry", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"   "}}
+		err := normalizeAndValidateExternalGroups(spec)
+		require.Error(t, err)
+		statusErr, ok := err.(*apierrors.StatusError)
+		require.True(t, ok)
+		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("rejects entry over max length", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{strings.Repeat("a", maxExternalGroupLength+1)}}
+		err := normalizeAndValidateExternalGroups(spec)
+		require.Error(t, err)
+		statusErr, ok := err.(*apierrors.StatusError)
+		require.True(t, ok)
+		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		assert.Contains(t, statusErr.ErrStatus.Message, "exceeds maximum length")
+	})
+
+	t.Run("accepts entry at exactly max length", func(t *testing.T) {
+		exact := strings.Repeat("a", maxExternalGroupLength)
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{exact}}
+		require.NoError(t, normalizeAndValidateExternalGroups(spec))
+		assert.Equal(t, []string{exact}, spec.ExternalGroups)
+	})
+
+	t.Run("rejects duplicates after normalization", func(t *testing.T) {
+		spec := &iamv0alpha1.TeamSpec{ExternalGroups: []string{"LDAP-Admins", "ldap-admins"}}
+		err := normalizeAndValidateExternalGroups(spec)
+		require.Error(t, err)
+		statusErr, ok := err.(*apierrors.StatusError)
+		require.True(t, ok)
+		assert.Equal(t, int32(400), statusErr.ErrStatus.Code)
+		assert.Contains(t, statusErr.ErrStatus.Message, "duplicate")
+	})
 }
