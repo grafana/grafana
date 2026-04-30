@@ -103,6 +103,27 @@ func TestBatchProcess_SizeZeroFallsBackToSingleChunk(t *testing.T) {
 	assert.Equal(t, int32(1), calls.Load())
 }
 
+func TestBatchProcess_RejectsTooFewResults(t *testing.T) {
+	// Callback returns fewer outputs than inputs. Without explicit
+	// validation, copy() would silently leave zero-value gaps; we surface it.
+	_, err := BatchProcess(context.Background(), []int{1, 2, 3, 4}, 2, func(_ context.Context, inputs []int) ([]int, error) {
+		// Always return one fewer than asked.
+		return inputs[:len(inputs)-1], nil
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "returned 1 outputs, expected 2")
+}
+
+func TestBatchProcess_RejectsTooManyResults(t *testing.T) {
+	// Callback returns more outputs than inputs — copy would silently
+	// truncate; we reject.
+	_, err := BatchProcess(context.Background(), []int{1, 2}, 2, func(_ context.Context, inputs []int) ([]int, error) {
+		return append([]int{99}, inputs...), nil // 3 outputs for 2 inputs
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "returned 3 outputs, expected 2")
+}
+
 func TestBatchProcess_ParentContextCancellationPropagates(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // already cancelled

@@ -2,17 +2,23 @@ package embedder
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/sync/errgroup"
 )
 
-// BatchFunc processes one chunk of inputs and returns the matching outputs.
+// BatchFunc processes one chunk of inputs and returns one output per input,
+// in the same order. Returning a different number of outputs than inputs is
+// a contract violation and BatchProcess will surface it as an error.
 type BatchFunc[I, O any] func(ctx context.Context, inputs []I) ([]O, error)
 
 // BatchProcess splits inputs into chunks of `size` and runs `fn` on each
 // concurrently. Outputs land in a single slice, in input order.
 //
-// All or nothing. If one or more batch fails, we return an error. Only succeeds and returns results when all batches were successful.
+// All or nothing. If one or more batches fails, we return an error. Only
+// succeeds and returns results when all batches were successful. Each
+// callback must return exactly len(inputs) outputs; a count mismatch is
+// reported as an error rather than silently leaving zero-value gaps.
 //
 // Provider-specific embedders use this to honor per-call batch limits
 // (Vertex: 250, Bedrock Cohere: 96) without forcing the caller to chunk.
@@ -33,6 +39,9 @@ func BatchProcess[I, O any](ctx context.Context, inputs []I, size int, fn BatchF
 			results, err := fn(gctx, inputs[s:e])
 			if err != nil {
 				return err
+			}
+			if len(results) != e-s {
+				return fmt.Errorf("batch [%d:%d] returned %d outputs, expected %d", s, e, len(results), e-s)
 			}
 			copy(out[s:], results)
 			return nil
