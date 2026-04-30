@@ -254,7 +254,7 @@ function StatCard({
       </div>
       <div className={styles.statCardBody}>
         <span className={cx(styles.statCardLabel, styles[`statCardTone_${tone}` as const])}>{label}</span>
-        <Text variant="h1">{big}</Text>
+        <span className={styles.statCardValue}>{big}</span>
         {subLabel && (
           <Text color="secondary" variant="body">
             {subLabel}
@@ -307,9 +307,9 @@ function FolderProgressCard({ folders }: { folders: FolderRow[] }) {
         <Trans i18nKey="provisioning.stats.folder-progress-label">Folders managed</Trans>
       </span>
       <SemicircleGauge pct={pct} />
-      <Text variant="h1">
+      <span className={styles.statCardValue}>
         {t('provisioning.stats.folder-progress-fraction', '{{managed}} / {{total}}', { managed, total })}
-      </Text>
+      </span>
       <Text color="secondary" variant="body">
         {t('provisioning.stats.folder-progress-pct', '{{pct}}% complete', {
           pct: Math.round(pct * 100),
@@ -350,7 +350,7 @@ function OverviewStatCards({
         tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
         subLabel={dashboardsOf(totals.managed)}
-        label={t('provisioning.stats.managed', 'Managed')}
+        label={t('provisioning.stats.managed', 'Managed dashboards')}
       />
       <StatCard
         icon="exclamation-triangle"
@@ -358,7 +358,7 @@ function OverviewStatCards({
         emphasized={totals.unmanaged > 0}
         big={percent(totals.unmanaged, totals.instanceTotal)}
         subLabel={dashboardsOf(totals.unmanaged)}
-        label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
+        label={t('provisioning.stats.summary-unmanaged', 'Unmanaged dashboards')}
       />
       <StatCard
         icon="chart-line"
@@ -766,6 +766,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   statCardLabel: css({
     fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
+  }),
+  statCardValue: css({
+    fontSize: '44px',
+    lineHeight: 1.1,
+    fontWeight: theme.typography.fontWeightBold,
+    color: theme.colors.text.primary,
+    letterSpacing: '-0.5px',
   }),
   statCardTone_neutral: css({
     color: theme.colors.text.primary,

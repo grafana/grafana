@@ -220,8 +220,8 @@ describe('Migrate', () => {
     // "Dashboards" replaces the old "Total resources" label. It also appears
     // in the Folders managed gauge subtext, so accept multiple matches.
     expect(screen.getAllByText('Dashboards').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Managed').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
+    expect(screen.getByText('Managed dashboards')).toBeInTheDocument();
+    expect(screen.getByText('Unmanaged dashboards')).toBeInTheDocument();
     expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
     // Totals are dashboard-only now; the fixture puts 4 dashboards under Git Sync.
     expect(screen.getByText(/4 via git sync/i)).toBeInTheDocument();
