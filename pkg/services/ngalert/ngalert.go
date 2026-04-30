@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -93,6 +94,7 @@ func ProvideService(
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
 	userService user.Service,
+	orgService org.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                      cfg,
@@ -124,6 +126,7 @@ func ProvideService(
 		ResourcePermissions:      resourcePermissions,
 		RouteResourcePermissions: routeResourcePermissions,
 		userService:              userService,
+		orgService:               orgService,
 	}
 
 	if ng.IsDisabled() {
@@ -177,6 +180,7 @@ type AlertNG struct {
 	annotationsRepo          annotations.Repository
 	store                    *store.DBstore
 	userService              user.Service
+	orgService               org.Service
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -202,6 +206,7 @@ func (ng *AlertNG) init() error {
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
 	var opts []notifier.Option
+	var skipClustering bool
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -245,6 +250,7 @@ func (ng *AlertNG) init() error {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
 			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+			skipClustering = true
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -292,6 +298,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
+		skipClustering,
 		opts...,
 	)
 	if err != nil {
@@ -320,7 +327,7 @@ func (ng *AlertNG) init() error {
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles,
-		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation)
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation, ng.Metrics.GetSenderMetrics())
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
@@ -451,6 +458,8 @@ func (ng *AlertNG) init() error {
 		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
+	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
+
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
@@ -466,12 +475,16 @@ func (ng *AlertNG) init() error {
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
 		ng.MultiOrgAlertmanager,
 		ng.SecretsService,
 		receiverAccess,
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	provisioningReceiverAuthz := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true)
@@ -488,6 +501,8 @@ func (ng *AlertNG) init() error {
 		ng.tracer,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		false, // imported resources are not exposed via provisioning APIs
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	// Create limits provider based on alertmanager mode.
@@ -524,7 +539,7 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
@@ -585,7 +600,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.

@@ -10,6 +10,18 @@
 
     <base href="[[.AppSubUrl]]/" />
 
+    [[if .MeticulousAIEnabled]]
+    <script
+      data-is-production-environment="true"
+      data-recording-token="[[.MeticulousAIRecordingToken]]"
+      nonce="[[.Nonce]]"
+      src="https://snippet.meticulous.ai/v1/meticulous.js"
+    ></script>
+    <script>
+      window.__METICULOUS_AI_RECORDING_TOKEN__ = '[[.MeticulousAIRecordingToken]]';
+    </script>
+    [[end]]
+
     <link rel="icon" id="grafana_favicon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
@@ -162,6 +174,11 @@
       [[if .RenderBindingSupported]]
         // For the image-renderer to check support for render binding calls
         window.__grafanaRenderBindingSupported = true;
+      [[end]]
+
+      [[if .AssetSriChecksEnabled]]
+        // For enabling SRI checks on dynamically loaded Grafana assets
+        window.__grafanaAssetSriChecksEnabled = true;
       [[end]]
 
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
@@ -409,6 +426,11 @@
 
           document.body.classList.add(isLightTheme ? "theme-light" : "theme-dark");
 
+          const lang = window.grafanaBootData.user.language;
+          if (lang) {
+            document.documentElement.lang = lang;
+          }
+
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
 
@@ -444,8 +466,21 @@
     </script>
     [[end]]
 
-    [[range $asset := .Assets.JSFiles]]
+    [[if .AssetSriChecksEnabled ]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[else]]
+      [[range $asset := .Assets.JSFiles]]
       <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
+      [[end]]
     [[end]]
 
      <script nonce="[[.Nonce]]">

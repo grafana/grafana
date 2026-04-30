@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
@@ -70,6 +71,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
@@ -153,6 +155,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	vector.ProvideVectorBackend,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -163,6 +166,7 @@ var wireExtsBasicSet = wire.NewSet(
 	configProviderExtras,
 	advisor.ProvideAppInstaller,
 	zStore.ProvideDefaultStoreProvider,
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -211,6 +215,8 @@ var wireExtsModuleServerSet = wire.NewSet(
 	sql.ProvideStorageBackend,
 	// Zanzana store provider
 	zStore.ProvideDefaultStoreProvider,
+	// Zanzana MT reconciler CRD list
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

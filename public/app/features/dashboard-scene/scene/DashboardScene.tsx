@@ -63,7 +63,6 @@ import {
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -96,6 +95,7 @@ import {
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultVizPanel,
+  getLayoutForObject,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
@@ -114,6 +114,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type LayoutParent } from './types/LayoutParent';
 
@@ -749,6 +750,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (config.featureToggles.dashboardNewLayouts) {
+      const layout = getLayoutForObject(this);
+      if (layout) {
+        layout.pastePanel();
+        return;
+      }
+    }
+
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
@@ -909,7 +918,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {
-    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange?.state) });
   }
 
   public async changePanelPlugin(

@@ -16,7 +16,6 @@ import {
   type EventBus,
   type ExploreLogsPanelState,
   type ExplorePanelsState,
-  type FieldConfigSource,
   type GrafanaTheme2,
   LoadingState,
   type LogLevel,
@@ -734,6 +733,61 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
   );
 
+  const onTableOptionsChange = useCallback(
+    (options: Options) => {
+      if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
+        setDisplayedFields(options.displayedFields);
+      }
+      if (options.sortOrder && options.sortOrder !== logsSortOrder) {
+        onChangeLogsSortOrder(options.sortOrder);
+      }
+      if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
+        store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
+        setFieldSelectorWidth(options.fieldSelectorWidth);
+      }
+      if (
+        options.sortBy &&
+        !compareArrayValues(
+          options?.sortBy ?? [],
+          tableSortBy ?? [],
+          (a, b) => a.displayName === b.displayName && a.desc === b.desc
+        )
+      ) {
+        handleSetTableSortBy(options.sortBy);
+      }
+
+      if (options.frameIndex !== tableFrameIndex) {
+        const refId = props?.logsFrames?.[options.frameIndex]?.refId;
+        if (refId) {
+          updatePanelState({ refId });
+        }
+      }
+    },
+    [
+      displayedFields,
+      fieldSelectorWidth,
+      handleSetTableSortBy,
+      logsSortOrder,
+      onChangeLogsSortOrder,
+      props?.logsFrames,
+      tableFrameIndex,
+      tableSortBy,
+      updatePanelState,
+    ]
+  );
+
+  const tableOptions = useMemo(
+    () => ({
+      sortOrder: logsSortOrder,
+      sortBy: tableSortBy,
+      displayedFields: displayedFields,
+      permalinkedLogId: props.panelState?.logs?.id,
+      frameIndex: tableFrameIndex,
+      fieldSelectorWidth: fieldSelectorWidth,
+    }),
+    [displayedFields, fieldSelectorWidth, logsSortOrder, props.panelState?.logs?.id, tableFrameIndex, tableSortBy]
+  );
+
   const onDisplayedSeriesChanged = useCallback((levels: string[]) => {
     if (visibilityChangedRef.current) {
       visibilityChangedRef.current = false;
@@ -859,52 +913,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
+              isLabelFilterActive={props.isFilterLabelActive}
               timeZone={timeZone}
               buildLinkToLogLine={onTablePermalinkClick}
-              externalOptions={{
-                sortOrder: logsSortOrder,
-                sortBy: tableSortBy,
-                displayedFields: displayedFields,
-                permalinkedLogId: props.panelState?.logs?.id,
-                frameIndex: tableFrameIndex,
-                fieldSelectorWidth: fieldSelectorWidth,
-              }}
+              externalOptions={tableOptions}
               width={width}
               height={tableHeight}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
-              onOptionsChange={(options: Options) => {
-                if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
-                  setDisplayedFields(options.displayedFields);
-                }
-                if (options.sortOrder && options.sortOrder !== logsSortOrder) {
-                  onChangeLogsSortOrder(options.sortOrder);
-                }
-                if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
-                  store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
-                  setFieldSelectorWidth(options.fieldSelectorWidth);
-                }
-                if (
-                  options.sortBy &&
-                  !compareArrayValues(
-                    options?.sortBy ?? [],
-                    tableSortBy ?? [],
-                    (a, b) => a.displayName === b.displayName && a.desc === b.desc
-                  )
-                ) {
-                  handleSetTableSortBy(options.sortBy);
-                }
-
-                if (options.frameIndex !== tableFrameIndex) {
-                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
-                  if (refId) {
-                    updatePanelState({ refId });
-                  }
-                }
-              }}
-              onFieldConfigChange={function (config: FieldConfigSource): void {
-                // @todo save field overrides somewhere (e.g. column widths)
-              }}
+              onOptionsChange={onTableOptionsChange}
               onChangeTimeRange={onChangeTime}
             />
           )}

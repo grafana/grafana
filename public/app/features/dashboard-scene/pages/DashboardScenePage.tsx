@@ -114,19 +114,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
-    let errorElement;
-    if (loadError) {
-      errorElement = <DashboardPageError error={loadError} type={type} />;
-    }
-
-    return (
-      errorElement || (
-        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
-          <Box paddingY={4} display="flex" direction="column" alignItems="center">
-            {isLoading && <PageLoader />}
-          </Box>
-        </Page>
-      )
+    return loadError ? (
+      <DashboardPageError
+        error={loadError}
+        type={type}
+        isProvisioned={route.routeName === DashboardRoutes.Provisioning}
+      />
+    ) : (
+      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          {isLoading && <PageLoader />}
+        </Box>
+      </Page>
     );
   }
 

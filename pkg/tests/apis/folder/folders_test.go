@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,6 +33,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -338,10 +341,10 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		)
 		require.NoError(t, err)
 		require.Equal(t, "test", first.GetName())
-		uids := []string{first.GetName()}
+		uids := []string{first.GetName()} //nolint:prealloc
 
 		// Create (with name generation) two folders
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			out, err := client.Resource.Create(context.Background(),
 				helper.LoadYAMLOrJSONFile("testdata/folder-generate.yaml"),
 				metav1.CreateOptions{},
@@ -538,19 +541,50 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 		GVR:  gvr,
 	})
 
-	payload := `{
-		"title": "Test",
-		"uid": "newFolder",
-		"parentUid: "newFolder",
-		}`
-	create := apis.DoRequest(helper, apis.RequestParams{
+	// Create a folder declaring itself as its own parent — must fail with 400.
+	selfParentPayload := `{"title": "Self Parent", "uid": "self-parent", "parentUid": "self-parent"}`
+	selfParent := apis.DoRequest(helper, apis.RequestParams{
 		User:   client.Args.User,
 		Method: http.MethodPost,
 		Path:   "/api/folders",
-		Body:   []byte(payload),
+		Body:   []byte(selfParentPayload),
 	}, &folder.Folder{})
-	require.NotEmpty(t, create.Response)
-	require.Equal(t, 400, create.Response.StatusCode)
+	require.NotEmpty(t, selfParent.Response)
+	require.Equal(t, http.StatusBadRequest, selfParent.Response.StatusCode)
+
+	// Create a parent and a child, then attempt to move the parent under its
+	// own child — must fail with 400, not 500.
+	parentPayload := `{"title": "Circular Parent", "uid": "circ-parent"}`
+	parent := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(parentPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, parent.Result)
+	require.Equal(t, http.StatusOK, parent.Response.StatusCode)
+
+	childPayload := `{"title": "Circular Child", "uid": "circ-child", "parentUid": "circ-parent"}`
+	child := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(childPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, child.Result)
+	require.Equal(t, http.StatusOK, child.Response.StatusCode)
+
+	// Move parent under its own child via the k8s api (legacy /api/folders
+	// move uses a separate PATCH endpoint; this exercises validateOnUpdate).
+	got, err := client.Resource.Get(context.Background(), "circ-parent", metav1.GetOptions{})
+	require.NoError(t, err)
+	got.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "circ-child"})
+	_, err = client.Resource.Update(context.Background(), got, metav1.UpdateOptions{})
+	require.Error(t, err)
+	require.Truef(t, apierrors.IsBadRequest(err),
+		"expected 400 BadRequest from circular move; got: %v (%T)", err, err)
+	require.Falsef(t, apierrors.IsInternalError(err),
+		"circular-move surfaced as HTTP 500: %v", err)
 }
 
 func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
@@ -559,7 +593,7 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 		GVR:  gvr,
 	})
 	foldersCount := 3
-	for i := 0; i < foldersCount; i++ {
+	for i := range foldersCount {
 		payload, err := json.Marshal(map[string]interface{}{
 			"title": fmt.Sprintf("Test-%d", i),
 			"uid":   fmt.Sprintf("uid-%d", i),
@@ -749,6 +783,174 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 					if tc.expectedCode == http.StatusOK {
 						require.Equal(t, childUID, resp.Result.UID)
 						require.Equal(t, "Folder", resp.Result.Title)
+					}
+				})
+			}
+		})
+	}
+}
+
+// TestIntegrationFolderCreatePermissionsK8S verifies that create-permission enforcement holds
+// when folders are created directly through the k8s API (folder.grafana.app/v1).
+// These cases were previously guarded by two explicit RBAC checks in the Folder Service
+// Create method and are now enforced inside the unified storage server (server.newEvent).
+func TestIntegrationFolderCreatePermissionsK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	type testCase struct {
+		description  string
+		parentUID    string // empty → root-level folder
+		permissions  []resourcepermissions.SetResourcePermissionCommand
+		expectedCode int
+	}
+
+	tcs := []testCase{
+		{
+			description:  "root folder creation succeeds with folders:create on wildcard scope",
+			expectedCode: http.StatusCreated,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+		},
+		{
+			description:  "root folder creation fails with no permissions",
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "root folder creation fails when folders:create is scoped only to a specific subfolder",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "some-other-folder",
+				},
+			},
+		},
+		{
+			description:  "subfolder creation succeeds with folders:create scoped to the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusCreated,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parent",
+				},
+			},
+		},
+		{
+			// folders:write has never been sufficient to create a folder via the k8s API.
+			// The authz/rbac service maps VerbCreate → folders:create (with action sets
+			// folders:edit and folders:admin). folders:write is a separate granular action
+			// that is not in any of those sets, so it does not grant create access.
+			description:  "subfolder creation fails with only folders:write scoped to the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:write"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parent",
+				},
+			},
+		},
+		{
+			description:  "subfolder creation fails with no permissions on the parent",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "subfolder creation fails when permission is scoped to a different folder",
+			parentUID:    "parent",
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "wrong-folder",
+				},
+			},
+		},
+	}
+
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+			})
+
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					username := fmt.Sprintf("k8s-perm-user-%d", i)
+					folderUID := fmt.Sprintf("k8s-perm-folder-%d", i)
+					parentUID := fmt.Sprintf("k8s-perm-parent-%d", i)
+
+					// Remap the "parent" sentinel to a unique UID for this test case.
+					permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
+					for j, p := range tc.permissions {
+						permissions[j] = p
+						if p.ResourceID == "parent" {
+							permissions[j].ResourceID = parentUID
+						}
+					}
+
+					// Create the parent folder as admin when the test case needs one.
+					if tc.parentUID != "" {
+						parentCreate := apis.DoRequest(helper, apis.RequestParams{
+							User:   helper.Org1.Admin,
+							Method: http.MethodPost,
+							Path:   "/api/folders",
+							Body:   []byte(fmt.Sprintf(`{"uid":%q,"title":"Parent folder %d"}`, parentUID, i)),
+						}, &folder.Folder{})
+						require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+					}
+
+					user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
+					userID, _ := user.Identity.GetInternalID()
+					t.Cleanup(helper.CleanupTestResources([]string{folderUID, parentUID}, []int64{userID}))
+
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User: user,
+						GVR:  gvr,
+					})
+
+					obj := &unstructured.Unstructured{
+						Object: map[string]any{
+							"spec": map[string]any{
+								"title": "Test folder",
+							},
+						},
+					}
+					obj.SetName(folderUID)
+					if tc.parentUID != "" {
+						obj.SetAnnotations(map[string]string{
+							utils.AnnoKeyFolder: parentUID,
+						})
+					}
+
+					_, err := client.Resource.Create(context.Background(), obj, metav1.CreateOptions{})
+					if tc.expectedCode == http.StatusCreated {
+						require.NoError(t, err)
+					} else {
+						helper.EnsureStatusError(err, tc.expectedCode, "Access denied")
 					}
 				})
 			}
@@ -2261,6 +2463,179 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 			// Clean up
 			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
 			require.NoError(t, err)
+		})
+	}
+}
+
+// TestIntegrationFolderValidationReturns400 asserts the folder admission
+// validator surfaces structured 4xx responses (and stable messages consumed
+// by provisioning) rather than "Unhandled Error" 500s.
+func TestIntegrationFolderValidationReturns400(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	makeFolder := func(name, title, parentUID string) *unstructured.Unstructured {
+		md := map[string]any{"name": name}
+		if parentUID != "" {
+			md["annotations"] = map[string]any{utils.AnnoKeyFolder: parentUID}
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"metadata": md,
+			"spec":     map[string]any{"title": title},
+		}}
+	}
+
+	cases := []struct {
+		name              string
+		setup             func(t *testing.T) string
+		folder            func(parentUID string) *unstructured.Unstructured
+		expectedMsg       string
+		expectedMessageID string
+	}{
+		{
+			name:              "title empty",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("title-empty-test", "", "") },
+			expectedMsg:       "folder title cannot be empty",
+			expectedMessageID: "folder.title-empty",
+		},
+		{
+			name:              "reserved uid",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder(folder.GeneralFolderUID, "Some title", "") },
+			expectedMsg:       "invalid uid for folder provided",
+			expectedMessageID: "folder.invalid-uid",
+		},
+		{
+			name:              "uid contains illegal characters",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("hello world", "Some title", "") },
+			expectedMsg:       "uid contains illegal characters",
+			expectedMessageID: "folder.invalid-uid-chars",
+		},
+		{
+			name: "uid too long",
+			folder: func(string) *unstructured.Unstructured {
+				return makeFolder("a0123456789012345678901234567890123456789", "Some title", "")
+			},
+			expectedMsg:       "uid too long, max 40 characters",
+			expectedMessageID: "folder.uid-too-long",
+		},
+		{
+			name:              "reserved title General",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("reserved-title-test", "General", "") },
+			expectedMsg:       "A folder with that name already exists",
+			expectedMessageID: "folder.name-exists",
+		},
+		{
+			name:              "parent of itself",
+			folder:            func(string) *unstructured.Unstructured { return makeFolder("self-parent", "Some title", "self-parent") },
+			expectedMsg:       "folder cannot be parent of itself",
+			expectedMessageID: "folder.cannot-be-parent-of-itself",
+		},
+		{
+			name: "max depth exceeded",
+			setup: func(t *testing.T) string {
+				parentUID := ""
+				for i := 1; i <= 5; i++ {
+					out, err := client.Resource.Create(context.Background(),
+						makeFolder(fmt.Sprintf("max-depth-%d", i), fmt.Sprintf("Max depth %d", i), parentUID),
+						metav1.CreateOptions{})
+					require.NoErrorf(t, err, "creating folder at depth %d should succeed", i)
+					parentUID = out.GetName()
+				}
+				return parentUID
+			},
+			folder: func(parentUID string) *unstructured.Unstructured {
+				return makeFolder("max-depth-6", "Max depth 6", parentUID)
+			},
+			expectedMsg:       "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4",
+			expectedMessageID: "folder.maximum-depth-reached",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var parentUID string
+			if tc.setup != nil {
+				parentUID = tc.setup(t)
+			}
+			_, err := client.Resource.Create(context.Background(), tc.folder(parentUID), metav1.CreateOptions{})
+			require.Error(t, err)
+			require.Falsef(t, apierrors.IsInternalError(err),
+				"apiserver surfaced as HTTP 500 (regression of alert #1782995): %v", err)
+			require.Truef(t, apierrors.IsBadRequest(err),
+				"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+			require.Equal(t, tc.expectedMsg, statusErr.ErrStatus.Message)
+			require.Equal(t, tc.expectedMsg, err.Error())
+			require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+			require.Equal(t, tc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
+		})
+	}
+
+	updateCases := []struct {
+		name              string
+		uid               string
+		mutate            func(obj *unstructured.Unstructured)
+		expectedMsg       string
+		expectedMessageID string
+	}{
+		{
+			name: "rename to reserved title General",
+			uid:  "rename-to-general",
+			mutate: func(obj *unstructured.Unstructured) {
+				spec := obj.Object["spec"].(map[string]any)
+				spec["title"] = "General"
+				obj.Object["spec"] = spec
+			},
+			expectedMsg:       "A folder with that name already exists",
+			expectedMessageID: "folder.name-exists",
+		},
+		{
+			name: "move into k6 folder",
+			uid:  "move-to-k6",
+			mutate: func(obj *unstructured.Unstructured) {
+				obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID})
+			},
+			expectedMsg:       "Folders cannot be moved into the k6 project",
+			expectedMessageID: "folder.cannot-be-moved-to-k6",
+		},
+	}
+
+	for _, uc := range updateCases {
+		t.Run("update: "+uc.name, func(t *testing.T) {
+			created, err := client.Resource.Create(context.Background(),
+				makeFolder(uc.uid, "Update Source", ""), metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			uc.mutate(created)
+
+			_, err = client.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Falsef(t, apierrors.IsInternalError(err),
+				"validateOnUpdate surfaced as HTTP 500: %v", err)
+			require.Truef(t, apierrors.IsBadRequest(err),
+				"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+			var statusErr *apierrors.StatusError
+			require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+			require.Equal(t, int32(http.StatusBadRequest), statusErr.ErrStatus.Code)
+			require.Equal(t, uc.expectedMsg, statusErr.ErrStatus.Message)
+			require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
 }

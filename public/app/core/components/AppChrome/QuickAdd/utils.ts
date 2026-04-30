@@ -9,10 +9,15 @@ export interface CreateActionGroup {
 
 export const ITEM_ICONS: Record<string, IconName> = {
   'dashboards/new': 'plus',
-  'browse-template-dashboard': 'apps',
-  'dashboards/import': 'cloud-download',
+  'browse-template-dashboard': 'grid',
+  'dashboards/import': 'import',
   alert: 'plus',
+  folder: 'folder',
 };
+
+export const DASHBOARD_GROUP_COLOR_NAME = 'semi-dark-green';
+export const ALERTING_GROUP_COLOR_LIGHT_NAME = 'light-purple';
+export const ALERTING_GROUP_COLOR_DARK_NAME = 'semi-dark-purple';
 
 export function findCreateActionGroups(navTree: NavModelItem[]): CreateActionGroup[] {
   const groupMap = new Map<string, CreateActionGroup>();

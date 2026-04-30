@@ -1,4 +1,4 @@
-Hey there! 🎉
+Hey there! 👋
 Grafana spotted some changes to your dashboard.
 
 ### Side by Side Comparison of file.json

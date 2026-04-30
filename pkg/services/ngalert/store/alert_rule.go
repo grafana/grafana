@@ -1058,6 +1058,36 @@ func buildRuleGroupFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, 
 	return q, nil, nil
 }
 
+// buildRuleGroupExcludeFilter adds NOT IN conditions to exclude the given rule groups.
+// It mirrors the logic of buildRuleGroupFilter but uses NOT IN semantics.
+func buildRuleGroupExcludeFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, error) {
+	if len(ruleGroups) == 0 {
+		return q, nil
+	}
+	var noGroupRuleUIDs []string
+	var realGroups []string
+	for _, group := range ruleGroups {
+		if ngmodels.IsNoGroupRuleGroup(group) {
+			noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rule group %q: %w", group, err)
+			}
+			noGroupRuleUIDs = append(noGroupRuleUIDs, noGroupRuleGroup.GetRuleUID())
+		} else {
+			realGroups = append(realGroups, group)
+		}
+	}
+	if len(realGroups) > 0 {
+		args, notIn := getINSubQueryArgs(realGroups)
+		q = q.Where(fmt.Sprintf("rule_group NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	if len(noGroupRuleUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(noGroupRuleUIDs)
+		q = q.Where(fmt.Sprintf("uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	return q, nil
+}
+
 // nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
@@ -1077,6 +1107,11 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 	}
 
+	if len(query.ExcludeNamespaceUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeNamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+
 	if len(query.RuleUIDs) > 0 {
 		args, in := getINSubQueryArgs(query.RuleUIDs)
 		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
@@ -1085,6 +1120,19 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)
 	if err != nil {
 		return nil, groupsSet, err
+	}
+
+	q, err = buildRuleGroupExcludeFilter(q, query.ExcludeRuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	if query.RuleGroupExists != nil {
+		if *query.RuleGroupExists {
+			q = q.Where("rule_group != ''")
+		} else {
+			q = q.Where("rule_group = ''")
+		}
 	}
 
 	if query.ReceiverName != "" {

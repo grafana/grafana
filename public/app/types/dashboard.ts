@@ -168,6 +168,8 @@ export interface DashboardState {
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
-export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+export function isRedirectResponse<T extends object>(
+  dto: T | HomeDashboardRedirectDTO
+): dto is HomeDashboardRedirectDTO {
   return 'redirectUri' in dto;
 }

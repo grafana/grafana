@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -56,7 +57,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService,
+	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -70,8 +71,8 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
-	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features, zanzanaClient).RegisterAPIEndpoints()
+	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 		return nil, err
 	}
 

@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.9
+GO_VERSION = 1.26.2
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -44,7 +44,7 @@ GO_BUILD_ARGS = \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
 	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
+	-o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) \
 	./pkg/cmd/grafana
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
@@ -114,6 +114,7 @@ swagger-oss-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -133,6 +134,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-x "github.com/docker/docker" \
+	-x "github.com/moby/moby" \
 	-i pkg/api/swagger_tags.json \
 	-t enterprise \
 	--exclude-tag=alpha \
@@ -150,12 +152,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -208,12 +206,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
 	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
 	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
-
-
-.PHONY: gen-cuev2
-gen-cuev2: ## Do all CUE code generation
-	@echo "generate code from .cue files (v2)"
-	@$(MAKE) -C ./kindsv2 all
 
 
 APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
@@ -725,7 +717,6 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
-	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate apps/secret --template apps/secret/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml

@@ -235,7 +235,9 @@ export enum PluginExtensionPoints {
   MegaMenuAction = 'grafana/megamenu/action',
   SingleTopBarAction = 'grafana/singletopbar/action',
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
+  AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
+  NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
 }
 
 // Don't use directly in a plugin!

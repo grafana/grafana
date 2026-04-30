@@ -24,14 +24,14 @@ cue = "$(call compile_tool,cue,cuelang.org/go/cmd/cue)"
 # Tool: "golangci-lint"
 golangci-lint = "$(call compile_tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint)"
 
+# Tool: "govulncheck"
+govulncheck = "$(call compile_tool,govulncheck,golang.org/x/vuln/cmd/govulncheck)"
+
 # Tool: "jb"
 jb = "$(call compile_tool,jb,github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb)"
 
 # Tool: "lefthook"
 lefthook = "$(call compile_tool,lefthook,github.com/evilmartians/lefthook)"
-
-# Tool: "openfeature"
-openfeature = "$(call compile_tool,openfeature,github.com/open-feature/cli/cmd/openfeature)"
 
 # Tool: "swagger"
 swagger = "$(call compile_tool,swagger,github.com/go-swagger/go-swagger/cmd/swagger)"

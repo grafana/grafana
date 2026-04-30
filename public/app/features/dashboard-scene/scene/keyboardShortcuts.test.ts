@@ -255,6 +255,14 @@ describe('setupKeyboardShortcuts', () => {
       expect(vBinding).toBeDefined();
       expect(drBinding).toBeDefined();
     });
+
+    it('should setup collapse/expand all rows shortcuts when cannot edit', () => {
+      const collapseBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd shift+c');
+      const expandBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd shift+e');
+
+      expect(collapseBinding).toBeDefined();
+      expect(expandBinding).toBeDefined();
+    });
   });
 
   describe('time range zoom shortcuts with feature toggle', () => {

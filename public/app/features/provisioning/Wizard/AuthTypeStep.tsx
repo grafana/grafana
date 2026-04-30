@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Field, RadioButtonGroup, Stack, TextLink } from '@grafana/ui';
+import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 
@@ -44,6 +46,7 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
 ];
 
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
+  const styles = useStyles2(getStyles);
   const { control, watch } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName, repoType] = watch([
     'githubAuthType',
@@ -113,6 +116,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
             control={control}
             render={({ field: { onChange, value } }) => (
               <RadioButtonGroup<GitHubAuthType>
+                className={styles.authTypeRadios}
                 value={value}
                 onChange={onChange}
                 options={authTypeOptions.map((option) => ({
@@ -136,3 +140,10 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
     </Stack>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  authTypeRadios: css({
+    maxWidth: '100%',
+    overflowX: 'auto',
+  }),
+});

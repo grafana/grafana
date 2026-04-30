@@ -25,11 +25,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const folderSearchLimit = 100000
 const folderListLimit = 100000
+
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// multi-value `In` Search when walking a subtree in GetDescendants. K=100
+// keeps per-call latency on the same order as a single-parent Search while
+// reducing the call count for non-trivial subtrees by ~100x.
+const descendantsBatchSize = 100
+
+// searchPageSize bounds the per-page hit count when searchChildren paginates
+// internally. At ~100 bytes per hit this keeps each response well under the
+// default 4 MiB gRPC max receive size, so a high-fanout search is split into
+// multiple round-trips instead of failing with ResourceExhausted.
+const searchPageSize = 10000
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
@@ -117,15 +128,6 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return dashFolder, nil
 	}
 
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
-	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, folder.ErrAccessDenied
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
 		q.ID = nil
@@ -454,44 +456,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.ParentUID != "" {
-		// Check that the user is allowed to create a subfolder in this folder
-		parentUIDScope := folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID)
-		legacyEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, parentUIDScope)
-		newEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersCreate, parentUIDScope)
-		evaluator := accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
-		}
-	} else {
-		evaluator := accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action folders:create and scope folders:uid:general, which is required to create a folder under the root level")
-		}
-	}
-
-	if cmd.UID == folder.SharedWithMeFolderUID {
-		return nil, folder.ErrBadRequest.Errorf("cannot create folder with UID %s", folder.SharedWithMeFolderUID)
-	}
-
-	trimmedUID := strings.TrimSpace(cmd.UID)
-	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, folder.ErrInvalidUID
-	}
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
 		// well, but for now we take the UID from the newly created folder.
-		UID:          trimmedUID,
+		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		Title:        cmd.Title,
 		Description:  cmd.Description,
@@ -517,43 +486,12 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
-		title := strings.TrimSpace(*cmd.NewTitle)
-		cmd.NewTitle = &title
-
-		if strings.EqualFold(*cmd.NewTitle, dashboards.RootFolderName) {
-			return nil, folder.ErrNameExists
-		}
-	}
-
-	if !util.IsValidShortUID(cmd.UID) {
-		return nil, dashboards.ErrDashboardInvalidUid
-	} else if util.IsShortUIDTooLong(cmd.UID) {
-		return nil, dashboards.ErrDashboardUidTooLong
-	}
-
-	cmd.UID = strings.TrimSpace(cmd.UID)
-
-	if cmd.NewTitle != nil && *cmd.NewTitle == "" {
-		return nil, dashboards.ErrDashboardTitleEmpty
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return nil, err
-		}
-		return nil, toFolderError(dashboards.ErrDashboardUpdateAccessDenied)
-	}
-
-	user := cmd.SignedInUser
-
 	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:                  cmd.UID,
 		OrgID:                cmd.OrgID,
 		NewTitle:             cmd.NewTitle,
 		NewDescription:       cmd.NewDescription,
-		SignedInUser:         user,
+		SignedInUser:         cmd.SignedInUser,
 		Overwrite:            cmd.Overwrite,
 		Version:              cmd.Version,
 		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
@@ -581,14 +519,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return toFolderError(err)
-		}
-		return folder.ErrAccessDenied
 	}
 
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)

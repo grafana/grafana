@@ -5,6 +5,14 @@ With some modifications to fit our preferences:
 - Rename the hooks to `useFlag<FlagName>` instead of just `use<FlagName>`
 - Hooks return the value instead of the details object
 */ -}}
+/**
+ * NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+ * To change feature flags, edit:
+ *  pkg/services/featuremgmt/registry.go
+ * Then run:
+ *  make gen-feature-toggles
+ */
+
 import {
   type ReactFlagEvaluationOptions,
   useFlag,
@@ -17,17 +25,15 @@ export const FlagKeys = {
   {{ .Key | ToPascal }}: {{ .Key | Quote }},
 {{- end }}
 } as const;
-
 {{ range .Flagset.Flags }}
 /**
-* {{ if .Description }}{{ .Description }}{{ else }}Feature flag{{ end }}
-*
-* **Details:**
-* - flag key: `{{ .Key }}`
-* - default value: `{{ if eq (.Type | OpenFeatureType) "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue }}{{ end }}`
-*/
-export const useFlag{{ .Key | ToPascal }} = (options?: ReactFlagEvaluationOptions): {{ if eq (.Type | OpenFeatureType) "object" }}JsonValue{{ else }}{{ .Type | OpenFeatureType }}{{ end }} => {
-  return useFlag({{ .Key | Quote }}, {{ if eq (.Type | OpenFeatureType) "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue | QuoteString }}{{ end }}, options).value;
+ * {{ if .Description }}{{ .Description }}{{ else }}Feature flag{{ end }}
+ *
+ * **Details:**
+ * - flag key: `{{ .Key }}`
+ * - default value: `{{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue }}{{ end }}`
+ */
+export const useFlag{{ .Key | ToPascal }} = (options?: ReactFlagEvaluationOptions): {{ if eq .Type "object" }}JsonValue{{ else }}{{ .Type }}{{ end }} => {
+  return useFlag({{ .Key | Quote }}, {{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue | QuoteString }}{{ end }}, options).value;
 };
-
 {{ end }}

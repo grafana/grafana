@@ -33,6 +33,6 @@ bootstrapWindowData().catch((error) => {
   // If a redirect was thrown, just ignore this. The index.html will handle the redirect
   if (!isRedirect) {
     console.error('Error bootstrapping Grafana', error);
-    window.__grafana_load_failed();
+    window.__grafana_load_failed(error);
   }
 });

@@ -247,13 +247,14 @@ describe('TimePickerTooltip', () => {
   it('renders time range with browser timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
 
-    expect(screen.getByText('Local browser time')).toBeInTheDocument();
-    expect(screen.getByText(/United States, E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
+    expect(screen.getByText('Browser Time')).toBeInTheDocument();
+    expect(screen.getByText(/E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
   });
 
   it('renders time range with specific timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="Africa/Accra" />);
 
-    expect(screen.getByText('Ghana, GMT')).toBeInTheDocument();
+    expect(screen.getByText('Accra')).toBeInTheDocument();
+    expect(screen.getByText('GMT')).toBeInTheDocument();
   });
 });

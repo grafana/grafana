@@ -76,9 +76,7 @@ export const ActionRow = ({
   const styles = useStyles2(getStyles);
 
   const layout = getValidQueryLayout(state);
-  const isCreatedByMeSearchFilterEnabled = useBooleanFlagValue('createdByMeSearchFilter', false);
-  // Created by me search filter is only available if the unified search is enabled
-  const showCreatedByMeSearchFilter = isCreatedByMeSearchFilterEnabled && config.featureToggles.unifiedStorageSearchUI;
+  const showCreatedByMeSearchFilter = useBooleanFlagValue('createdByMeSearchFilter', false);
 
   // Disabled folder layout option when query is present
   const disabledOptions = needsListLayout(state) ? [SearchLayout.Folders] : [];
@@ -88,7 +86,7 @@ export const ActionRow = ({
 
   return (
     <Stack justifyContent="space-between" alignItems="center" wrap={true}>
-      <Stack alignItems="center">
+      <Stack alignItems="center" wrap={true}>
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.teamFolders && onOwnerReferenceChange && (
           <OwnersFilter values={state.ownerReference ?? []} onChange={onOwnerReferenceChange} />

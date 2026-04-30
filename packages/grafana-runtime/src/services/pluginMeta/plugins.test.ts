@@ -1,6 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache } from '../../utils/getCachedPromise';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
 import { initPluginMetas, installPluginMeta, refetchPluginMetas, uninstallPluginMeta } from './plugins';
@@ -10,7 +10,7 @@ const originalFetch = global.fetch;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  invalidateCache();
+  invalidateCachedPromisesCache();
   // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
   setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
@@ -106,11 +106,12 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`Something failed while resolving a cached promise`),
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
         {
           message: 'Failed to load plugin metas 500:Internal Server Error',
           stack: expect.any(String),
-          key: 'loadPluginMetas',
+          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
         }
       );
     });
@@ -133,11 +134,12 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`Something failed while resolving a cached promise`),
+        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
+
         {
           message: 'Network Error',
           stack: expect.any(String),
-          key: 'loadPluginMetas',
+          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
         }
       );
     });
