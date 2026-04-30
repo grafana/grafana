@@ -53,7 +53,7 @@ func (l *Lease) Lost() <-chan struct{} {
 	return l.lostCh
 }
 
-func (l *Lease) markLost() {
+func (l *Lease) notifyLoss() {
 	l.lostOnce.Do(func() {
 		close(l.lostCh)
 	})
@@ -149,7 +149,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			generation: generation,
 			lostCh:     make(chan struct{}),
 		}
-		l.lostTimer = time.AfterFunc(cfg.ttl, l.markLost)
+		l.lostTimer = time.AfterFunc(cfg.ttl, l.notifyLoss)
 		return l, nil
 	}
 }
@@ -157,12 +157,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 // Release releases lease. It is not idempotent: releasing a lease that has
 // already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
 	key := leaseKey(lease.name, lease.generation)
-	state, err := m.read(ctx, key)
+	meta, err := m.read(ctx, key)
 	if errors.Is(err, kv.ErrNotFound) {
 		return ErrLeaseLost
 	}
@@ -170,17 +166,17 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return err
 	}
 
-	if state.Holder != m.holder || state.Deleted || !time.Now().Before(time.Unix(0, state.Expires)) {
+	if meta.Holder != m.holder || meta.Deleted || !time.Now().Before(time.Unix(0, meta.Expires)) {
 		return ErrLeaseLost
 	}
 
-	state.Deleted = true
-	if err := m.save(ctx, key, state); err != nil {
+	meta.Deleted = true
+	if err := m.save(ctx, key, meta); err != nil {
 		return err
 	}
 
 	lease.lostTimer.Stop()
-	lease.markLost()
+	lease.notifyLoss()
 	return nil
 }
 
@@ -237,7 +233,9 @@ func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) err
 		return err
 	}
 	if _, err := w.Write(data); err != nil {
-		_ = w.Close()
+		if closeErr := w.Close(); closeErr != nil {
+			return fmt.Errorf("%w (close error: %w)", err, closeErr)
+		}
 		return err
 	}
 	return w.Close()
