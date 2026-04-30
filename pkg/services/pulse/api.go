@@ -839,10 +839,25 @@ type PulseCreateThreadResponse struct {
 	Body CreateThreadResult `json:"body"`
 }
 
+// PulseThreadPage is the swagger-friendly mirror of PageResult[Thread].
+// go-swagger 0.30.6 does not understand Go generics (it panics on the
+// type parameter), so we hand-write concrete envelopes for each
+// response type. The JSON wire format is identical to PageResult[T]
+// because the field tags line up one-for-one.
+//
+// swagger:model
+type PulseThreadPage struct {
+	Items      []Thread `json:"items"`
+	NextCursor string   `json:"nextCursor,omitempty"`
+	HasMore    bool     `json:"hasMore"`
+	Page       int      `json:"page,omitempty"`
+	TotalCount int64    `json:"totalCount,omitempty"`
+}
+
 // swagger:response pulseListThreadsResponse
 type PulseListThreadsResponse struct {
 	// in: body
-	Body PageResult[Thread] `json:"body"`
+	Body PulseThreadPage `json:"body"`
 }
 
 // swagger:response pulseGetThreadResponse
@@ -851,10 +866,22 @@ type PulseGetThreadResponse struct {
 	Body Thread `json:"body"`
 }
 
+// PulsePulsePage is the swagger-friendly mirror of PageResult[Pulse].
+// See PulseThreadPage for why generics don't work in swagger annotations.
+//
+// swagger:model
+type PulsePulsePage struct {
+	Items      []Pulse `json:"items"`
+	NextCursor string  `json:"nextCursor,omitempty"`
+	HasMore    bool    `json:"hasMore"`
+	Page       int     `json:"page,omitempty"`
+	TotalCount int64   `json:"totalCount,omitempty"`
+}
+
 // swagger:response pulseListPulsesResponse
 type PulseListPulsesResponse struct {
 	// in: body
-	Body PageResult[Pulse] `json:"body"`
+	Body PulsePulsePage `json:"body"`
 }
 
 // swagger:response pulseAddPulseResponse

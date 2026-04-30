@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

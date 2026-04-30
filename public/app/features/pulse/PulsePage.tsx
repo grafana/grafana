@@ -292,9 +292,7 @@ function AuthorCell({ thread }: { thread: PulseThread }): React.ReactElement {
   const name = thread.authorName?.trim() || thread.authorLogin?.trim() || t('pulse.overview.author-unknown', 'Unknown');
   return (
     <Stack direction="row" alignItems="center" gap={1}>
-      {thread.authorAvatarUrl ? (
-        <Avatar src={thread.authorAvatarUrl} alt="" width={2.5} height={2.5} />
-      ) : null}
+      {thread.authorAvatarUrl ? <Avatar src={thread.authorAvatarUrl} alt="" width={2.5} height={2.5} /> : null}
       <Text variant="bodySmall">{name}</Text>
     </Stack>
   );

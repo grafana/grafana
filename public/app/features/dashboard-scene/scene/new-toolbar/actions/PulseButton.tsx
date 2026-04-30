@@ -12,7 +12,10 @@ export const PulseButton = ({ dashboard }: ToolbarActionProps) => {
   return (
     <ToolbarButton
       icon="comment-alt"
-      tooltip={t('dashboard.toolbar.new.pulse.tooltip', 'Open Pulse — start or join the conversation about this dashboard')}
+      tooltip={t(
+        'dashboard.toolbar.new.pulse.tooltip',
+        'Open Pulse — start or join the conversation about this dashboard'
+      )}
       onClick={() => dashboard.onShowPulseDrawer()}
       data-testid="pulse-toolbar-button"
     >
