@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -54,6 +55,7 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
 
   const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
@@ -120,7 +122,13 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected || isPartOfSelection}
       >
-        <div className={styles.cardContent}>{children}</div>
+        <div className={styles.cardContent}>
+          {isMultiSelectEnabled && (
+            // TODO(queryEditorNextMultiSelect): checkbox goes here
+            <></>
+          )}
+          {children}
+        </div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
         {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (

@@ -1679,15 +1679,15 @@
     {
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
-        "resourceVersion": "1775213461656",
+        "resourceVersion": "1777451091484",
         "creationTimestamp": "2026-03-09T18:40:15Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 10:51:01.656487 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-29 08:24:51.48419 +0000 UTC"
         }
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
@@ -2565,6 +2565,23 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.meticulousAIRecorder",
+        "resourceVersion": "1777401759422",
+        "creationTimestamp": "2026-04-28T17:20:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-28 18:42:39.422606 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable Meticulous AI session recorder for automated UI test generation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4731,6 +4748,20 @@
       "spec": {
         "description": "Enables next generation query editor experience",
         "stage": "privatePreview",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryEditorNextMultiSelect",
+        "resourceVersion": "1777462601515",
+        "creationTimestamp": "2026-04-29T11:36:41Z"
+      },
+      "spec": {
+        "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+        "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"

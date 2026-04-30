@@ -961,4 +961,8 @@ const (
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
+
+	// FlagGrafanaMeticulousAIRecorder
+	// Enable Meticulous AI session recorder for automated UI test generation
+	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
 )

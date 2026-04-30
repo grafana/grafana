@@ -62,6 +62,7 @@ type RemoteIndexStore interface {
 
 	// UploadIndex uploads a local index directory to remote storage.
 	// It generates a unique, lexicographically sortable ULID key and returns it.
+	// Caller should hold LockBuildIndex to avoid concurrent build and upload of the index.
 	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error)
 
 	// DownloadIndex downloads a remote index to a local directory.
@@ -85,6 +86,7 @@ type RemoteIndexStore interface {
 
 	// CleanupIncompleteUploads removes incomplete uploads older than minAge.
 	// Returns the number of cleaned prefixes.
+	// Caller should hold a namespace-level cleanup lock to avoid concurrent cleanup by different instances.
 	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
@@ -175,7 +177,6 @@ func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, na
 	return l, nil
 }
 
-// TODO: caller must hold a namespace/group/resource build lock.
 func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
 	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
 	if err != nil {
@@ -522,7 +523,6 @@ func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource res
 	return nil
 }
 
-// TODO: caller must hold a namespace-level cleanup lock.
 func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error) {
 	nsPfx := nsPrefix(nsResource)
 
