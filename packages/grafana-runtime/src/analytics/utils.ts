@@ -48,9 +48,17 @@ export const reportPageview = () => {
 /**
  * Helper function to report interaction events to the {@link EchoSrv}.
  *
+ * @param options.silent - If true, the event is dispatched to EchoSrv subscribers
+ * but not forwarded to analytics backends. Use for high-frequency UI signals
+ * that downstream subscribers care about but shouldn't pollute the analytics stream.
+ *
  * @public
  */
-export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
+export const reportInteraction = (
+  interactionName: string,
+  properties?: Record<string, unknown>,
+  options?: { silent?: boolean }
+) => {
   // get static reporting context and append it to properties
   if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
     properties = { ...properties, ...config.reportingStaticContext };
@@ -60,6 +68,7 @@ export const reportInteraction = (interactionName: string, properties?: Record<s
     payload: {
       interactionName,
       properties,
+      silent: options?.silent,
     },
   });
 };
