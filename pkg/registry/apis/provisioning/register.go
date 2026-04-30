@@ -772,7 +772,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion)
+	// The files subresource handles GET/POST/PUT/DELETE in a single connector
+	// and the appropriate role fallback differs per verb: reads should fall
+	// back to Viewer, writes to Editor. A static accessWithEditor would over-
+	// restrict reads when the inner authz denies; a static accessWithViewer
+	// would over-permit writes. Compose a verb-aware checker so each operation
+	// gets the right fallback. Per-resource authz still happens inside the
+	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
+	// level operations remain Admin-gated by authorizeRepositorySubresource.
+	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
