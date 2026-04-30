@@ -163,9 +163,13 @@ Example:
 ```markdown
 # Analytics report
 
-## dashboard_library
+This report contains all the analytics events that are defined in the project.
 
-### 1: _grafana_dashboard_library_loaded_
+## Events
+
+### dashboard_library
+
+#### `grafana_dashboard_library_loaded`
 
 **Description**: Fired when the library panel finishes rendering and its items are visible.
 
