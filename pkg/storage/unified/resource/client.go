@@ -99,12 +99,18 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(server ResourceServer) ResourceClient {
+func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
+
+	var metricsInt grpc.UnaryServerInterceptor
+	if s, ok := srv.(*server); ok {
+		metricsInt = UnaryRequestDurationInterceptor(s.storageMetrics)
+	}
+
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -114,13 +120,17 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 	} {
+		wrapped := desc
+		if metricsInt != nil {
+			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
 		channel.RegisterService(
 			grpchan.InterceptServer(
-				desc,
+				wrapped,
 				grpcAuth.UnaryServerInterceptor(grpcAuthInt),
 				grpcAuth.StreamServerInterceptor(grpcAuthInt),
 			),
-			server,
+			srv,
 		)
 	}
 

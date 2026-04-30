@@ -10,11 +10,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fullstorydev/grpchan"
 	"github.com/gorilla/mux"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -513,9 +515,14 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+	} {
+		srv.RegisterService(grpchan.InterceptServer(desc, metricsInt, nil), handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
 }
@@ -533,15 +540,20 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
-	// Register storage services
 	srv := provider.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, handler)
-	resourcepb.RegisterBulkStoreServer(srv, handler)
-	resourcepb.RegisterBlobStoreServer(srv, handler)
-	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	resourcepb.RegisterQuotasServer(srv, handler)
-	// Register search services
-	resourcepb.RegisterResourceIndexServer(srv, handler)
-	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
+	for _, desc := range []*grpc.ServiceDesc{
+		// Storage services
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
+		// Search services
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		srv.RegisterService(grpchan.InterceptServer(desc, metricsInt, nil), handler)
+	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 }
