@@ -32,9 +32,9 @@ func TestIntegrationProvisioning_FullSync_FolderInvalidUIDChars(t *testing.T) {
 	// Contains a space — illegal per the folder API's DNS-name validation.
 	const illegalUID = "hello world"
 
-	helper.CreateLocalRepo(t, common.TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo,
-		SyncTarget:             "folder",
+		Target:                 "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
