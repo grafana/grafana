@@ -36,6 +36,7 @@ describe('Command consistency', () => {
     for (const cmd of ALL_COMMANDS) {
       if (
         cmd.name === 'LIST_VARIABLES' ||
+        cmd.name === 'LIST_ANNOTATIONS' ||
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
@@ -50,6 +51,7 @@ describe('Command consistency', () => {
   it('registers the expected set of commands', () => {
     const names = ALL_COMMANDS.map((cmd) => cmd.name).sort();
     expect(names).toEqual([
+      'ADD_ANNOTATION',
       'ADD_PANEL',
       'ADD_ROW',
       'ADD_TAB',
@@ -57,15 +59,18 @@ describe('Command consistency', () => {
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
+      'LIST_ANNOTATIONS',
       'LIST_PANELS',
       'LIST_VARIABLES',
       'MOVE_PANEL',
       'MOVE_ROW',
       'MOVE_TAB',
+      'REMOVE_ANNOTATION',
       'REMOVE_PANEL',
       'REMOVE_ROW',
       'REMOVE_TAB',
       'REMOVE_VARIABLE',
+      'UPDATE_ANNOTATION',
       'UPDATE_DASHBOARD_SETTINGS',
       'UPDATE_LAYOUT',
       'UPDATE_PANEL',
