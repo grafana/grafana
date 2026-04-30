@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
+import { useSelector } from 'app/types/store';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
@@ -118,10 +119,15 @@ export default function HomePage() {
   };
 
   // Each tab maps to its own nav node so breadcrumbs and the command palette
-  // can deep-link directly to it. The Migrate tab is gated by the
-  // provisioningExport feature flag — if the flag is off, fall through to
-  // the default Provisioning nav id.
-  const navId = activeTab === 'stats' && isStatsEnabled ? 'provisioning-migrate-to-gitops' : 'provisioning';
+  // can deep-link directly to it. The backend registers the Migrate child
+  // node when the provisioningExport flag is on, but the navIndex on the
+  // client may lag (e.g. cached frontend bundle, mismatched feature toggles).
+  // If the id isn't in the index yet, fall back to the parent provisioning
+  // nav so the page renders instead of showing "Page not found".
+  const navIndex = useSelector((state) => state.navIndex);
+  const migrateNavId = 'provisioning-migrate-to-gitops';
+  const navId =
+    activeTab === 'stats' && isStatsEnabled && navIndex[migrateNavId] ? migrateNavId : 'provisioning';
 
   return (
     <Page
