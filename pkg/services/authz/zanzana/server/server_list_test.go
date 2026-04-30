@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -186,6 +187,19 @@ func TestIntegrationServerList(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, res.GetItems(), "ctx-list-dashboard")
 		assert.NotContains(t, res.GetItems(), "ctx-check-dashboard")
+		assert.False(t, res.GetAll())
+	})
+
+	t.Run("user should list dashboard access with one thousand auth info team groups", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		res, err := server.List(newContextWithGroups(groups...), newList("user:contextual-1000", dashboardGroup, dashboardResource, ""))
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-1000-dashboard")
 		assert.False(t, res.GetAll())
 	})
 }
