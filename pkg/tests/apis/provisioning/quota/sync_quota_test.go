@@ -280,7 +280,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
-		// Verify we have 3 folders (root + subfolder + subfolder/nested)
+		// Should have 3 folders: root + subfolder + subfolder/nested
 		helper.RequireRepoFolderCount(t, repo, 3)
 
 		// Step 2: Add 2 dashboards in new subfolders (each creates a folder + a dashboard).
@@ -353,7 +353,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"should still have only 2 dashboards: both new dashboards were skipped due to quota")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-		// Verify 1 new folder was created and 1 was skipped (4 total managed folders)
+		// Should have 4 folders: root + subfolder + subfolder/nested + 1 new (the other was skipped)
 		helper.RequireRepoFolderCount(t, repo, 4)
 
 		// Step 6: Verify the repo is now at quota (4 folders + 2 dashboards = 6/6)
