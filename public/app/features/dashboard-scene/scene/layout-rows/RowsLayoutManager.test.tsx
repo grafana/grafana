@@ -100,6 +100,31 @@ describe('RowsLayoutManager', () => {
 
       expect(rowsLayoutManager.state.rows).toHaveLength(0);
     });
+
+    it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+      const rowsLayoutManager = new RowsLayoutManager({
+        key: 'test-RowsLayoutManager',
+        rows: [new RowItem({ title: 'First' })],
+      });
+      const dashboard = new DashboardScene({
+        body: rowsLayoutManager,
+        isEditing: true,
+        editable: true,
+      });
+      dashboard.state.body.editModeChanged?.(true);
+
+      const newRow = rowsLayoutManager.addNewRow();
+      const layout = newRow.getLayout();
+
+      if (layout instanceof DefaultGridLayoutManager) {
+        expect(layout.state.grid.state.isResizable).toBe(true);
+        expect(layout.state.grid.state.isDraggable).toBe(true);
+      } else if (layout instanceof AutoGridLayoutManager) {
+        expect(layout.state.layout.state.isDraggable).toBe(true);
+      } else {
+        throw new Error(`Unexpected layout type for assertion: ${layout.constructor.name}`);
+      }
+    });
   });
 
   describe('removeRow', () => {
