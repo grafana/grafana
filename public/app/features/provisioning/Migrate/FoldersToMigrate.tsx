@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
+  Combobox,
   EmptyState,
   FilterInput,
   Icon,
@@ -17,6 +18,31 @@ import {
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderRow } from './hooks/useFolderLeaderboard';
+
+type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
+
+function compareFolders(a: FolderRow, b: FolderRow, key: SortKey): number {
+  switch (key) {
+    case 'count-desc':
+      if (b.dashboardCount !== a.dashboardCount) {
+        return b.dashboardCount - a.dashboardCount;
+      }
+      // eslint-disable-next-line @grafana/no-locale-compare
+      return a.title.localeCompare(b.title);
+    case 'count-asc':
+      if (a.dashboardCount !== b.dashboardCount) {
+        return a.dashboardCount - b.dashboardCount;
+      }
+      // eslint-disable-next-line @grafana/no-locale-compare
+      return a.title.localeCompare(b.title);
+    case 'title-asc':
+      // eslint-disable-next-line @grafana/no-locale-compare
+      return a.title.localeCompare(b.title);
+    case 'title-desc':
+      // eslint-disable-next-line @grafana/no-locale-compare
+      return b.title.localeCompare(a.title);
+  }
+}
 
 interface Props {
   folders: FolderRow[];
@@ -46,6 +72,7 @@ export function FoldersToMigrate({
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>('count-desc');
 
   const unmanagedFolders = useMemo(
     () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0),
@@ -53,16 +80,17 @@ export function FoldersToMigrate({
   );
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) {
-      return unmanagedFolders;
-    }
-    return unmanagedFolders.filter((folder) => {
-      if (folder.title.toLowerCase().includes(q)) {
-        return true;
-      }
-      return folder.directDashboards.some((d) => d.title.toLowerCase().includes(q));
-    });
-  }, [unmanagedFolders, search]);
+    const matched = !q
+      ? unmanagedFolders.slice()
+      : unmanagedFolders.filter((folder) => {
+          if (folder.title.toLowerCase().includes(q)) {
+            return true;
+          }
+          return folder.directDashboards.some((d) => d.title.toLowerCase().includes(q));
+        });
+    matched.sort((a, b) => compareFolders(a, b, sortKey));
+    return matched;
+  }, [unmanagedFolders, search, sortKey]);
 
   const totalSelected = selectedFolderUids.size + selectedDashboardUids.size;
 
@@ -91,13 +119,41 @@ export function FoldersToMigrate({
         </Text>
       </Stack>
 
-      <div className={styles.searchInput}>
-        <FilterInput
-          placeholder={t('provisioning.stats.dashboards-to-migrate-search', 'Search folders and dashboards')}
-          value={search}
-          onChange={setSearch}
-        />
-      </div>
+      <Stack direction="row" gap={1} alignItems="center" wrap>
+        <div className={styles.searchInput}>
+          <FilterInput
+            placeholder={t('provisioning.stats.dashboards-to-migrate-search', 'Search folders and dashboards')}
+            value={search}
+            onChange={setSearch}
+          />
+        </div>
+        <div className={styles.sortInput}>
+          <Combobox<SortKey>
+            options={[
+              {
+                value: 'count-desc',
+                label: t('provisioning.stats.dashboards-sort-count-desc', 'Most dashboards'),
+              },
+              {
+                value: 'count-asc',
+                label: t('provisioning.stats.dashboards-sort-count-asc', 'Fewest dashboards'),
+              },
+              { value: 'title-asc', label: t('provisioning.stats.dashboards-sort-title-asc', 'Name (A–Z)') },
+              {
+                value: 'title-desc',
+                label: t('provisioning.stats.dashboards-sort-title-desc', 'Name (Z–A)'),
+              },
+            ]}
+            value={sortKey}
+            onChange={(opt) => {
+              if (opt?.value) {
+                setSortKey(opt.value);
+              }
+            }}
+            aria-label={t('provisioning.stats.dashboards-sort-aria', 'Sort folders')}
+          />
+        </div>
+      </Stack>
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -254,6 +310,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchInput: css({
     flex: '1 1 auto',
+    minWidth: 200,
+  }),
+  sortInput: css({
+    flex: '0 0 auto',
     minWidth: 200,
   }),
   list: css({

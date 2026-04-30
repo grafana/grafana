@@ -382,7 +382,32 @@ describe('Migrate', () => {
     expect(screen.queryByRole('link', { name: /^migrate to my-repo$/i })).not.toBeInTheDocument();
   });
 
-  it('expands a folder row to show its direct dashboards', async () => {
+  it('renders folders in the default "Most dashboards" sort order', () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 7 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({ uid: 'beta', title: 'Beta', dashboardCount: 2 }),
+        makeFolder({ uid: 'alpha', title: 'Alpha', dashboardCount: 5 }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    // Default sort is "Most dashboards" — Alpha (5) precedes Beta (2) in the
+    // table even though the leaderboard returned them the other way around.
+    const titles = screen.getAllByText(/^(Alpha|Beta)$/);
+    expect(titles.map((el) => el.textContent)).toEqual(['Alpha', 'Beta']);
+    // The sort selector is present so the user can change the order.
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+it('expands a folder row to show its direct dashboards', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
