@@ -956,7 +956,7 @@ jobs:
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
           api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ needs.publish-dockerhub.outputs.tag-version }}
+          image-tag: grafana/grafana-dev:${{ needs.publish-dockerhub.outputs.tag-version }}
           container-port: 3000
 
   dispatch-npm-canaries:

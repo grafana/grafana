@@ -9,12 +9,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 # for meticulous tests
-permissions:
-  actions: write
-  contents: read
-  issues: write
-  pull-requests: write
-  statuses: read
+permissions: {}
 
 jobs:
   detect-changes:
@@ -145,8 +140,12 @@ jobs:
     runs-on: ubuntu-x64-small
     continue-on-error: true
     permissions:
+      actions: write
       contents: read
       id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
 
     steps:
       - uses: actions/checkout@v5
