@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -98,6 +99,10 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPITitleEmpty
 	}
 
+	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
+	}
+
 	parentName := meta.GetFolder()
 	if parentName == "" {
 		return nil // OK, we do not need to validate the tree
@@ -141,6 +146,10 @@ func validateOnUpdate(ctx context.Context,
 
 	if obj.Spec.Title == "" {
 		return folder.ErrAPITitleEmpty
+	}
+
+	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {
