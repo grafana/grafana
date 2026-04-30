@@ -8,12 +8,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
-	"github.com/grafana/alerting/utils/hash"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,30 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 )
-
-// extraConfigHashMask matches the truncation applied by hashAsMetricValue
-// (notifier/alertmanager.go) so the gauge value stays exact under Prometheus's
-// float64 storage. Prometheus stores values as float64, which can exactly
-// represent integers only up to 2^53-1.
-const extraConfigHashMask uint64 = (1 << 53) - 1
-
-// fingerprintExtraConfig returns a stable FNV-1a hash of the parsed unencrypted
-// ExtraConfiguration. Mirrors the primitive used by alertingNotify.CalculateConfigFingerprint
-// (notify/grafana_alertmanager.go) and remote/alertmanager.go's calculateUserGrafanaConfigHash.
-// Hashing the parsed value (rather than serialized bytes) sidesteps map iteration
-// order concerns in TemplateFiles and the encryption IV churn of the persisted form.
-func fingerprintExtraConfig(ec apimodels.ExtraConfiguration) uint64 {
-	h := fnv.New64a()
-	hash.DeepHashObject(h, &ec)
-	return h.Sum64()
-}
-
-// extraConfigHashAsMetricValue truncates an FNV-1a hash to 53 bits and converts
-// to float64 for Prometheus gauge storage. We don't care about magnitudes or
-// rates — only whether the value changes between scrapes.
-func extraConfigHashAsMetricValue(h uint64) float64 {
-	return float64(h & extraConfigHashMask)
-}
 
 // mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
 type mimirConfigResponse struct {
@@ -69,18 +45,17 @@ const (
 
 // ConfigPersister is the subset of MultiOrgAlertmanager the syncer needs to
 // commit a fetched ExtraConfig. MultiOrgAlertmanager satisfies it via
-// SaveAndApplyExtraConfiguration, which is itself idempotent: a call with
-// content byte-equivalent to what's already stored is a no-op (no
-// alert_configuration_history row is written), so the syncer calls it on
-// every tick without a separate dedup pre-check.
+// SaveAndApplyExtraConfiguration.
 type ConfigPersister interface {
 	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error)
 }
 
 // ExternalAMSyncer fetches Mimir/Cortex alertmanager configuration for each org
 // that has it configured and applies it through the configured ConfigPersister.
-// Per-tick dedup compares the incoming hash against ConfigPersister.StoredExtraConfigHash —
-// survives restart without holding any in-memory hash map.
+// Per-tick dedup hashes the raw response body and compares against the previous
+// successful sync's hash, held in memory. The map is per-process: each org pays
+// one save per restart before dedup engages, which is acceptable in exchange for
+// not maintaining sidecar persistence for the hash.
 type ExternalAMSyncer struct {
 	persister          ConfigPersister
 	adminConfigStore   store.AdminConfigurationStore
@@ -90,6 +65,9 @@ type ExternalAMSyncer struct {
 	settings           *setting.Cfg
 	metrics            *metrics.MultiOrgAlertmanager
 	logger             log.Logger
+
+	lastSyncHashMu sync.RWMutex
+	lastSyncHash   map[int64]uint64
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may not be
@@ -113,6 +91,7 @@ func NewExternalAMSyncer(
 		settings:           settings,
 		metrics:            m,
 		logger:             logger,
+		lastSyncHash:       make(map[int64]uint64),
 	}
 }
 
@@ -155,18 +134,30 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 		orgIDStr := fmt.Sprintf("%d", orgID)
 		start := time.Now()
 
-		ec, reason, err := s.fetchExtraConfig(ctx, orgID, uid)
+		ec, newHash, reason, err := s.fetchExtraConfig(ctx, orgID, uid)
 		if err != nil {
 			s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", err)
 			s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason).Inc()
 			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 			continue
 		}
+
+		// Cross-tick dedup against the last successful sync's response hash held in
+		// memory. Mimir/Cortex returns the config from storage so the response is
+		// byte-stable across identical reads.
+		s.lastSyncHashMu.RLock()
+		prevHash, hasPrev := s.lastSyncHash[orgID]
+		s.lastSyncHashMu.RUnlock()
+		if hasPrev && prevHash == newHash {
+			s.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
+			s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
+			s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(float64(newHash & mask53))
+			s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
+			continue
+		}
+
 		// SaveAndApplyExtraConfiguration is the same entry point used by the convert
-		// API and is idempotent: it short-circuits when the incoming ec matches what's
-		// already stored, so calling it on every tick is safe — no alert_configuration_history
-		// row is written for a no-op sync, even immediately after a process restart.
-		// With replace=false, an existing ExtraConfig under a different identifier
+		// API. With replace=false, an existing ExtraConfig under a different identifier
 		// returns ErrAlertmanagerMultipleExtraConfigsUnsupported, which we classify
 		// separately so operators can see the collision in admin_config rather than
 		// as a generic "save" failure.
@@ -178,13 +169,13 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 			continue
 		}
 
-		// Always set the gauge to the hash of what's now stored — successful tick
-		// either applied this hash or confirmed it was already in place. Setting on
-		// every tick (rather than only when a save happened) ensures the gauge has
-		// a value after restart even if the config hasn't changed since.
+		s.lastSyncHashMu.Lock()
+		s.lastSyncHash[orgID] = newHash
+		s.lastSyncHashMu.Unlock()
+
 		s.logger.Info("Synced external AM configuration", "org_id", orgID, "duration_ms", time.Since(start).Milliseconds())
 		s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
-		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(extraConfigHashAsMetricValue(fingerprintExtraConfig(ec)))
+		s.metrics.ExternalAMConfigSyncHash.WithLabelValues(orgIDStr).Set(float64(newHash & mask53))
 		s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 	}
 }
@@ -192,10 +183,11 @@ func (s *ExternalAMSyncer) Sync(ctx context.Context, orgIDs []int64) {
 // fetchExtraConfig looks up the org's external AM datasource and fetches the current
 // alertmanager configuration from it. The 10s timeout used for both calls is owned
 // via defer here so an early return cannot leak the cancel — callers don't need to
-// care about timeout management when adding new failure paths. The returned reason
-// matches the label on ExternalAMConfigSyncFailures so the caller can emit the
-// metric without re-classifying.
-func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (apimodels.ExtraConfiguration, string, error) {
+// care about timeout management when adding new failure paths. Returns the FNV-1a
+// hash of the raw response body so the caller can dedup across ticks. The returned
+// reason matches the label on ExternalAMConfigSyncFailures so the caller can emit
+// the metric without re-classifying.
+func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (apimodels.ExtraConfiguration, uint64, string, error) {
 	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -204,19 +196,19 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 		OrgID: orgID,
 	})
 	if err != nil {
-		return apimodels.ExtraConfiguration{}, syncReasonDatasourceLookup, fmt.Errorf("look up datasource: %w", err)
+		return apimodels.ExtraConfiguration{}, 0, syncReasonDatasourceLookup, fmt.Errorf("look up datasource: %w", err)
 	}
 
-	mimirCfg, err := s.fetchMimirConfig(fetchCtx, ds)
+	mimirCfg, hash, err := s.fetchMimirConfig(fetchCtx, ds)
 	if err != nil {
-		return apimodels.ExtraConfiguration{}, syncReasonMimirFetch, fmt.Errorf("fetch upstream config: %w", err)
+		return apimodels.ExtraConfiguration{}, 0, syncReasonMimirFetch, fmt.Errorf("fetch upstream config: %w", err)
 	}
 
 	return apimodels.ExtraConfiguration{
 		Identifier:         uid,
 		AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
 		TemplateFiles:      mimirCfg.TemplateFiles,
-	}, "", nil
+	}, hash, "", nil
 }
 
 // resolveExternalAMUID returns the datasource UID to use for external AM sync for
@@ -260,21 +252,23 @@ func classifySyncError(err error) string {
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex
 // datasource. Uses the datasource service's HTTP transport so TLS, basic auth,
 // bearer tokens, custom headers and OAuth pass-through configured on the datasource
-// are all honoured.
-func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, error) {
+// are all honoured. Returns the FNV-1a hash of the raw response body alongside the
+// parsed value; callers use the hash for cross-tick dedup without needing to keep
+// the body bytes around.
+func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, uint64, error) {
 	configURL, err := s.buildMimirConfigURL(ds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build config URL: %w", err)
+		return nil, 0, fmt.Errorf("failed to build config URL: %w", err)
 	}
 
 	transport, err := s.datasourceService.GetHTTPTransport(ctx, ds, s.httpClientProvider)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build datasource HTTP transport: %w", err)
+		return nil, 0, fmt.Errorf("failed to build datasource HTTP transport: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, configURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, 0, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	// Apply allow/deny-list validation to the outbound request before sending.
@@ -283,32 +277,34 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	// configured for the underlying datasource.
 	if s.requestValidator != nil {
 		if err := s.requestValidator.Validate(ds.URL, ds.JsonData, req); err != nil {
-			return nil, fmt.Errorf("datasource request validation failed: %w", err)
+			return nil, 0, fmt.Errorf("datasource request validation failed: %w", err)
 		}
 	}
 
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, 0, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-		return nil, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
+		return nil, 0, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, 0, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	var cfg mimirConfigResponse
 	if err := yaml.Unmarshal(body, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, 0, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	return &cfg, nil
+	h := fnv.New64a()
+	_, _ = h.Write(body)
+	return &cfg, h.Sum64(), nil
 }
 
 // buildMimirConfigURL constructs the Mimir alertmanager configuration API URL.

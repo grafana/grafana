@@ -422,46 +422,6 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
 }
 
-// TestSyncExternalAMs_DedupSurvivesNewSyncerInstance pins the no-restart-clutter
-// property: a fresh syncer (simulating a process restart) seeing identical Mimir
-// output must NOT write a new history row, because dedup compares against
-// persisted state rather than in-memory.
-func TestSyncExternalAMs_DedupSurvivesNewSyncerInstance(t *testing.T) {
-	const amConfig = "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default"
-
-	mimirSrv := startMimirServer(t, amConfig)
-
-	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
-	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
-
-	adminCfg := &mockAdminConfigStore{}
-	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")},
-	}, nil)
-
-	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
-
-	// First syncer instance writes one history row on top of bootstrap default.
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 2)
-
-	// Replace the syncer with a brand-new instance — same persister, fresh
-	// in-memory state. Mirrors a process restart.
-	moa.externalAMSyncer = NewExternalAMSyncer(
-		moa,
-		adminCfg,
-		dsSvc,
-		moa.externalAMSyncer.httpClientProvider,
-		moa.externalAMSyncer.requestValidator,
-		moa.settings,
-		moa.metrics,
-		moa.logger,
-	)
-
-	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 2, "post-restart sync on identical config must not write a new history row")
-}
-
 func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 	// Server flips the response on the second call so the body hash differs and
 	// the sync re-saves.
