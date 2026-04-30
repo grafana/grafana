@@ -155,17 +155,61 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 		return nil, nil
 	}
 
-	// Check if pull request rule is active
 	// Only pull_request rules actually block direct pushes.
 	// Other rules like non_fast_forward (blocks force push only),
 	// required_status_checks (checks run after push), etc. do not prevent regular git push operations.
-	if len(branchRules.PullRequest) > 0 {
-		logger.Debug("Branch requires pull request (blocks direct push)",
-			slog.Int("pr_rule_count", len(branchRules.PullRequest)))
-		return &Rulesets{RequiresPullRequest: true}, nil
+	if len(branchRules.PullRequest) == 0 {
+		logger.Debug("No blocking rules found for branch")
+		return nil, nil
 	}
 
-	logger.Debug("No blocking rules found for branch")
+	// bypass_actors live on the parent ruleset, not on the per-branch rule entries.
+	// We must fetch each unique parent to know whether the current actor (e.g. the
+	// GitHub App installation token in use) can bypass the PR requirement; GitHub
+	// evaluates that for us and returns it as `current_user_can_bypass`, so we don't
+	// need to know the App's installation ID to match against bypass_actors.
+	rulesetIDs := make(map[int64]struct{}, len(branchRules.PullRequest))
+	for _, rule := range branchRules.PullRequest {
+		if rule == nil {
+			continue
+		}
+		if rule.RulesetID == 0 {
+			// Without a valid ID we can't fetch the parent to confirm bypass — keep blocking.
+			logger.Warn("Pull request rule has zero ruleset_id, treating as blocking")
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+		rulesetIDs[rule.RulesetID] = struct{}{}
+	}
+
+	for rulesetID := range rulesetIDs {
+		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, owner, repository, rulesetID, false)
+		if err != nil {
+			// Fail-closed: a silent false negative would let the Repository save and
+			// then fail every subsequent sync push with a 403. Surfacing a block at
+			// setup is the safer default.
+			logger.Warn("Failed to fetch parent ruleset, treating PR requirement as blocking",
+				slog.Int64("ruleset_id", rulesetID),
+				slog.Any("error", err))
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+
+		// Only "always" and "exempt" allow unrestricted direct push.
+		// "pull_request" only bypasses during PR merge — direct push remains blocked.
+		canBypass := ruleset.CurrentUserCanBypass
+		if canBypass == nil ||
+			(*canBypass != github.BypassModeAlways && *canBypass != github.BypassModeExempt) {
+			logger.Debug("Branch requires pull request (current actor cannot bypass)",
+				slog.Int64("ruleset_id", rulesetID),
+				slog.Any("current_user_can_bypass", canBypass))
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+
+		logger.Debug("Ruleset PR requirement is bypassable by current actor",
+			slog.Int64("ruleset_id", rulesetID),
+			slog.String("bypass_mode", string(*canBypass)))
+	}
+
+	logger.Debug("All PR-requiring rulesets are bypassable by current actor")
 	return nil, nil
 }
 
