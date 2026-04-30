@@ -102,6 +102,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
           <CustomHeadersSettings dataSourceConfig={options} onChange={onOptionsChange} />
         </>
       )}
+      <Space v={3} />
     </Box>
   );
 };
