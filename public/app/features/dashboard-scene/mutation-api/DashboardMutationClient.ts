@@ -18,6 +18,7 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
+import { replaceVariableSet } from './commands/variableUtils';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
@@ -68,10 +69,11 @@ export class DashboardMutationClient implements MutationClient {
 
     const context: MutationContext = { scene: this.scene };
 
-    // Snapshot variable state before the mutation for undo/redo wiring.
-    // This follows the same snapshot pattern used by dashboardEditActions in shared.ts.
-    const varsBefore = this.scene.state.$variables?.state.variables.slice() ?? [];
+    // Capture the variable set reference and variable array before the handler runs.
+    // replaceVariableSet (used by all variable commands) always creates a new
+    // SceneVariableSet instance, so identity comparison detects any variable mutation.
     const varSetBefore = this.scene.state.$variables;
+    const varsBefore = varSetBefore?.state.variables.slice() ?? [];
 
     try {
       const result = await registration.handler(payload, context);
@@ -79,28 +81,29 @@ export class DashboardMutationClient implements MutationClient {
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
 
-        // Wire into the DashboardEditPane undo/redo history system when the variable
-        // set changed. Mutation was already applied inside the handler, so perform()
-        // skips its first call and re-applies on subsequent redo calls.
+        // Register undo/redo when the variable set was replaced by the handler.
+        // Both callbacks use replaceVariableSet to ensure proper SceneVariableSet
+        // lifecycle (child variable activation) on each undo/redo cycle.
         const varSetAfter = this.scene.state.$variables;
         if (varSetAfter !== varSetBefore && typeof this.scene.publishEvent === 'function') {
           const varsAfter = varSetAfter!.state.variables.slice();
           const scene = this.scene;
-          let alreadyPerformed = true;
+          // The mutation is already applied; skip the first perform() call from handleEditAction.
+          let firstPerform = true;
 
           this.scene.publishEvent(
             new DashboardEditActionEvent({
               source: this.scene,
               description: type,
               perform() {
-                if (alreadyPerformed) {
-                  alreadyPerformed = false;
+                if (firstPerform) {
+                  firstPerform = false;
                   return;
                 }
-                scene.state.$variables?.setState({ variables: varsAfter });
+                replaceVariableSet(scene, varsAfter);
               },
               undo() {
-                scene.state.$variables?.setState({ variables: varsBefore });
+                replaceVariableSet(scene, varsBefore);
               },
             }),
             true
