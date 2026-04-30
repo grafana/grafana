@@ -91,4 +91,46 @@ describe('defineFeatureEvents', () => {
       })
     );
   });
+
+  it('per-event silent: true overrides factory-level silent: false', () => {
+    const factory = defineFeatureEvents('grafana', 'feature_x', undefined, { silent: false });
+    const loud = factory('loud');
+    const silent = factory('silent', { silent: true });
+    loud();
+    silent();
+
+    expect(mockAddEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        payload: expect.objectContaining({ interactionName: 'grafana_feature_x_loud', silent: undefined }),
+      })
+    );
+    expect(mockAddEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        payload: expect.objectContaining({ interactionName: 'grafana_feature_x_silent', silent: true }),
+      })
+    );
+  });
+
+  it('per-event silent: false overrides factory-level silent: true', () => {
+    const factory = defineFeatureEvents('grafana', 'feature_x', undefined, { silent: true });
+    const loud = factory('loud', { silent: false });
+    const silent = factory('silent');
+    loud();
+    silent();
+
+    expect(mockAddEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        payload: expect.objectContaining({ interactionName: 'grafana_feature_x_loud', silent: undefined }),
+      })
+    );
+    expect(mockAddEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        payload: expect.objectContaining({ interactionName: 'grafana_feature_x_silent', silent: true }),
+      })
+    );
+  });
 });
