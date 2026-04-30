@@ -8145,7 +8145,7 @@
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
       "default-button": "Make default",
-      "default-error": "An unknown error occurred",
+      "default-error": "Failed to update default data source",
       "default-label": "Default",
       "default-remove": "Remove default",
       "default-tooltip": "The default data source is preselected in new panels.",
