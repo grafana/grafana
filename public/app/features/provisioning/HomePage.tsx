@@ -117,9 +117,15 @@ export default function HomePage() {
     }
   };
 
+  // Each tab maps to its own nav node so breadcrumbs and the command palette
+  // can deep-link directly to it. The Migrate tab is gated by the
+  // provisioningExport feature flag — if the flag is off, fall through to
+  // the default Provisioning nav id.
+  const navId = activeTab === 'stats' && isStatsEnabled ? 'provisioning-migrate-to-gitops' : 'provisioning';
+
   return (
     <Page
-      navId="provisioning"
+      navId={navId}
       subTitle={t('provisioning.home-page.subtitle', 'View and manage your configured repositories')}
       actions={renderActions()}
     >

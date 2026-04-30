@@ -55,12 +55,23 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.HasRole(identity.RoleAdmin) &&
 		s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		provisioningChildren := []*navtree.NavLink{}
+		if s.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport) {
+			provisioningChildren = append(provisioningChildren, &navtree.NavLink{
+				Text:     "Migrate to GitOps",
+				Id:       "provisioning-migrate-to-gitops",
+				SubTitle: "Move dashboards and folders into a Git repository",
+				Url:      s.cfg.AppSubURL + "/admin/provisioning?tab=stats",
+				Keywords: []string{"git sync", "git-sync", "gitops", "migrate", "export", "as code"},
+			})
+		}
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
+			Children: provisioningChildren,
 		})
 	}
 
