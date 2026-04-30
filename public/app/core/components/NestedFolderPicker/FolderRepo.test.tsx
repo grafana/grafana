@@ -9,9 +9,12 @@ import { type DashboardViewItem } from 'app/features/search/types';
 
 import { FolderRepo } from './FolderRepo';
 
-jest.mock('@grafana/runtime', () => ({
-  config: { featureToggles: { provisioning: true } },
-}));
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    config: { featureToggles: { provisioning: true } },
+  };
+});
 
 const mockUseGetFrontendSettingsQuery = jest.fn();
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
