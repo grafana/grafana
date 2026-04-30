@@ -11,7 +11,6 @@ import {
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
@@ -41,8 +40,6 @@ jest.mock('@grafana/runtime/internal', () => ({
 }));
 
 const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
-
-config.featureToggles.externalVizSuggestions = true;
 
 let idx = 0;
 
