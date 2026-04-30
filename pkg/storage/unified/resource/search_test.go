@@ -205,7 +205,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -261,7 +261,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -311,7 +311,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -445,6 +445,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 		minTime          time.Time
 		lastImportTime   time.Time
 		minBuildVersion  *semver.Version
+		maxBuildVersion  *semver.Version
 		selectableFields []string
 
 		expected bool
@@ -502,6 +503,26 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minBuildVersion: semver.MustParse("10.15.20"),
 			expected:        false,
 		},
+		"build version newer than running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("12.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        true,
+		},
+		"build version same as running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
+		"build version older than running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
+		"no index build version with maxBuildVersion set": {
+			buildInfo:       IndexBuildInfo{},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
 		"index with no previous selectable fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: nil,
@@ -539,7 +560,7 @@ func TestShouldRebuildIndex(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, nil)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}
@@ -565,6 +586,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"},
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to GetIndex.
@@ -616,6 +638,11 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now.Add(-30 * time.Minute), BuildVersion: semver.MustParse("6.0.0")},
 			},
+
+			// To be rebuilt because of version newer than running (7.0.0 > 6.5.0)
+			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("7.0.0")},
+			},
 		},
 	}
 
@@ -632,9 +659,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		DashboardIndexMaxAge: 1 * time.Hour,
 		MaxIndexAge:          5 * time.Hour,
 		MinBuildVersion:      semver.MustParse("5.5.5"),
+		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -647,14 +675,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	}
 
 	support.findIndexesToRebuild(importTimes, nil, now, false)
-	require.Equal(t, 7, support.rebuildQueue.Len())
+	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
 	support.findIndexesToRebuild(importTimes, nil, now5m, false)
-	require.Equal(t, 7, support.rebuildQueue.Len())
+	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -672,6 +700,9 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 
 		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
+
+		// Index built by newer version than running (7.0.0 > 6.5.0)
+		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
@@ -708,7 +739,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -800,7 +831,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -913,7 +944,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -994,7 +1025,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1103,7 +1134,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1114,7 +1145,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.

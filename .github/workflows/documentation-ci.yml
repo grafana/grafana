@@ -13,14 +13,14 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      security-events: write
     container:
       image: grafana/vale:latest # zizmor: ignore[unpinned-images]
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: grafana/writers-toolkit/vale-action@vale-action/v1 # zizmor: ignore[unpinned-uses]
+      - uses: grafana/writers-toolkit/vale-action@vale-action/v2 # zizmor: ignore[unpinned-uses]
         with:
+          fail_on_error: "false"
           filter: '.Name in ["Grafana.GrafanaCom", "Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
           token: ${{ secrets.GITHUB_TOKEN }}

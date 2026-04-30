@@ -38,10 +38,12 @@ var (
 	_ backend.CheckHealthHandler = (*Service)(nil)
 )
 
+// nolint:staticcheck
 func ProvideService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	return newService(store, features)
 }
 
+// nolint:staticcheck
 func newService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		store:    store,
@@ -54,7 +56,7 @@ func newService(store store.StorageService, features featuremgmt.FeatureToggles)
 
 // Service exists regardless of user settings
 type Service struct {
-	store    store.StorageService
+	store    store.StorageService // nolint:staticcheck
 	log      log.Logger
 	features featuremgmt.FeatureToggles
 }
@@ -110,7 +112,7 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 
 	path := store.RootPublicStatic + "/" + q.Path
 	maxFiles := int(query.MaxDataPoints)
-	listFrame, err := s.store.List(ctx, nil, path, maxFiles)
+	listFrame, err := s.store.List(ctx, nil, path, maxFiles) // nolint:staticcheck
 	response.Error = err
 	if listFrame != nil {
 		response.Frames = data.Frames{listFrame.Frame}
@@ -133,7 +135,7 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 	}
 
 	path := store.RootPublicStatic + "/" + q.Path
-	file, err := s.store.Read(ctx, nil, path)
+	file, err := s.store.Read(ctx, nil, path) // nolint:staticcheck
 	if err != nil {
 		response.Error = err
 		return response

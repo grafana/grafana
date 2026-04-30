@@ -122,13 +122,13 @@ func newIntegrationTestContext(t *testing.T) context.Context {
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
 	// Test SQL backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
 	})
 
 	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL KV Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
 	})
 }
@@ -295,13 +295,13 @@ func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend re
 
 	// Test SQL backend with 3 resources through complete lifecycle
 	t.Run("SQL Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, sqlBackend, namespace+"-sql", db, ctx)
 	})
 
 	// Test KV backend with 3 resources through complete lifecycle
 	t.Run("KV Backend Operations", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, kvBackend, namespace+"-kv", db, ctx)
 	})
 }

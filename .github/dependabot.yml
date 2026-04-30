@@ -6,6 +6,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "no-changelog"
   - package-ecosystem: "gomod"
     commit-message:
       prefix: deps(go)
@@ -13,16 +15,23 @@ updates:
       - "/"
       - "/apps/advisor"
       - "/apps/alerting/alertenrichment"
+      - "/apps/alerting/historian"
       - "/apps/alerting/notifications"
       - "/apps/alerting/rules"
+      - "/apps/annotation"
+      - "/apps/collections"
       - "/apps/correlations"
       - "/apps/dashboard"
+      - "/apps/dashvalidator"
+      - "/apps/example"
       - "/apps/folder"
       - "/apps/iam"
+      - "/apps/logsdrilldown"
       - "/apps/playlist"
       - "/apps/plugins"
       - "/apps/preferences"
       - "/apps/provisioning"
+      - "/apps/quotas"
       - "/apps/scope"
       - "/apps/secret"
       - "/apps/shorturl"
@@ -33,11 +42,15 @@ updates:
       - "/pkg/build"
       - "/pkg/build/wire"
       - "/pkg/codegen"
+      - "/pkg/infra/features"
+      - "/pkg/plugins"
       - "/pkg/plugins/codegen"
       - "/pkg/semconv"
+      - "/pkg/storage/unified/resource/kv"
       - "/pkg/util/xorm"
       - "/scripts/go-workspace"
       - "/scripts/modowners"
+      - "/.citools/src/govulncheck"
     schedule:
       interval: "daily"
       time: "02:00"
@@ -55,6 +68,11 @@ updates:
         patterns:
           - "github.com/aws/aws-sdk-go*"
           - "github.com/aws/smithy-go"
+      grafana-app-sdk:
+        patterns:
+          - "github.com/grafana/grafana-app-sdk*"
+    labels:
+      - "no-changelog"
   - package-ecosystem: "docker"
     commit-message:
       prefix: deps(docker)
@@ -66,4 +84,6 @@ updates:
       interval: "daily"
       time: "02:00"
       timezone: Etc/UTC
+    labels:
+      - "no-changelog"
     open-pull-requests-limit: 20

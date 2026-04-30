@@ -43,16 +43,39 @@ type IndexMeta struct {
 	Files map[string]int64 `json:"files"`
 }
 
+// IndexStoreLock represents a distributed lock used to coordinate index store operations.
+type IndexStoreLock interface {
+	Release() error
+	Lost() <-chan struct{}
+}
+
 // RemoteIndexStore manages index snapshots on remote storage.
 // Index keys are immutable: each snapshot uses a unique ULID key.
 type RemoteIndexStore interface {
+	// LockBuildIndex acquires a distributed build lock for namespace/group/resource.
+	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error)
+
+	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
+	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
+	// in-flight upload for any resource in the namespace.
+	LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error)
+
 	// UploadIndex uploads a local index directory to remote storage.
 	// It generates a unique, lexicographically sortable ULID key and returns it.
+	// Caller should hold LockBuildIndex to avoid concurrent build and upload of the index.
 	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error)
 
 	// DownloadIndex downloads a remote index to a local directory.
 	// destDir must not exist; it will be created atomically on success.
 	DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error)
+
+	// ListNamespaces returns the namespaces currently known to the store.
+	ListNamespaces(ctx context.Context) ([]string, error)
+
+	// ListNamespaceIndexes returns the resources currently known under the given
+	// namespace. It does not list the snapshots themselves; callers follow up
+	// with ListIndexes for each returned NamespacedResource.
+	ListNamespaceIndexes(ctx context.Context, namespace string) ([]resource.NamespacedResource, error)
 
 	// ListIndexes lists all complete index snapshots for a namespaced resource.
 	// Note: indexes may be deleted between listing and subsequent operations.
@@ -63,6 +86,7 @@ type RemoteIndexStore interface {
 
 	// CleanupIncompleteUploads removes incomplete uploads older than minAge.
 	// Returns the number of cleaned prefixes.
+	// Caller should hold a namespace-level cleanup lock to avoid concurrent cleanup by different instances.
 	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
@@ -70,37 +94,89 @@ type RemoteIndexStore interface {
 //
 // Object storage layout:
 //
-//	/<namespace>/<group>.<resource>/<index-key>/index_meta.json
-//	/<namespace>/<group>.<resource>/<index-key>/store/root.bolt
-//	/<namespace>/<group>.<resource>/<index-key>/store/*.zap
-//	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
+//	/<namespace>/<resource>.<group>/<index-key>/index_meta.json
+//	/<namespace>/<resource>.<group>/<index-key>/store/root.bolt
+//	/<namespace>/<resource>.<group>/<index-key>/store/*.zap
+//	/<namespace>/<resource>.<group>/<index-key>/meta.json  <- uploaded last, signals complete upload
 //
 // meta.json is uploaded last during upload and deleted first during delete,
 // serving as the completion signal.
 type BucketRemoteIndexStore struct {
-	bucket resource.CDKBucket
-	log    log.Logger
+	bucket                resource.CDKBucket
+	lockBackend           lockBackend
+	lockOwner             string
+	lockTTL               time.Duration
+	lockHeartbeatInterval time.Duration
+	log                   log.Logger
 }
 
 // NewBucketRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
-func NewBucketRemoteIndexStore(bucket resource.CDKBucket) *BucketRemoteIndexStore {
+func NewBucketRemoteIndexStore(bucket resource.CDKBucket, lockBackend lockBackend, lockOwner string, lockTTL, lockHeartbeatInterval time.Duration) *BucketRemoteIndexStore {
 	return &BucketRemoteIndexStore{
-		bucket: bucket,
-		log:    log.New("bucket-remote-index-store"),
+		bucket:                bucket,
+		lockBackend:           lockBackend,
+		lockOwner:             lockOwner,
+		lockTTL:               lockTTL,
+		lockHeartbeatInterval: lockHeartbeatInterval,
+		log:                   log.New("bucket-remote-index-store"),
 	}
 }
 
 // indexPrefix returns the object storage prefix for a namespaced resource + index key.
 func indexPrefix(ns resource.NamespacedResource, indexKey string) string {
-	return fmt.Sprintf("%s/%s.%s/%s/", ns.Namespace, ns.Group, ns.Resource, indexKey)
+	return fmt.Sprintf("%s/%s/", resourceSubPath(ns), indexKey)
 }
 
 // nsPrefix returns the object storage prefix for a namespaced resource (without index key).
 func nsPrefix(ns resource.NamespacedResource) string {
-	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
+	return fmt.Sprintf("%s/", resourceSubPath(ns))
 }
 
-// TODO: caller must hold a namespace/group/resource build lock.
+func buildIndexLockKey(ns resource.NamespacedResource) string {
+	return fmt.Sprintf("%s/locks/build", resourceSubPath(ns))
+}
+
+// cleanupLockKey returns the object-storage lock key used to serialise cleanup
+// passes within a namespace. It is intentionally distinct from
+// buildIndexLockKey so cleanup never blocks ongoing uploads.
+func cleanupLockKey(namespace string) string {
+	return fmt.Sprintf("%s/locks/cleanup", cleanFileSegment(namespace))
+}
+
+func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
+	l, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:           s.lockBackend,
+		Key:               buildIndexLockKey(nsResource),
+		Owner:             s.lockOwner,
+		TTL:               s.lockTTL,
+		HeartbeatInterval: s.lockHeartbeatInterval,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating build lock: %w", err)
+	}
+	if err := l.Acquire(ctx); err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
+func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
+	l, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:           s.lockBackend,
+		Key:               cleanupLockKey(namespace),
+		Owner:             s.lockOwner,
+		TTL:               s.lockTTL,
+		HeartbeatInterval: s.lockHeartbeatInterval,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating cleanup lock: %w", err)
+	}
+	if err := l.Acquire(ctx); err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
 func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
 	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
 	if err != nil {
@@ -363,7 +439,64 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 	return result, nil
 }
 
-// TODO: caller must hold a namespace-level cleanup lock.
+// ListNamespaces returns the namespaces currently known to the store.
+func (s *BucketRemoteIndexStore) ListNamespaces(ctx context.Context) ([]string, error) {
+	iter := s.bucket.List(&blob.ListOptions{Delimiter: "/"})
+	var namespaces []string
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing namespaces: %w", err)
+		}
+		if !obj.IsDir {
+			continue
+		}
+		ns := strings.TrimSuffix(obj.Key, "/")
+		if ns == "" {
+			continue
+		}
+		namespaces = append(namespaces, ns)
+	}
+	return namespaces, nil
+}
+
+// ListNamespaceIndexes returns the resources currently known under the given
+// namespace.
+func (s *BucketRemoteIndexStore) ListNamespaceIndexes(ctx context.Context, namespace string) ([]resource.NamespacedResource, error) {
+	pfx := cleanFileSegment(namespace) + "/"
+	iter := s.bucket.List(&blob.ListOptions{Prefix: pfx, Delimiter: "/"})
+	var resources []resource.NamespacedResource
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing namespace indexes: %w", err)
+		}
+		if !obj.IsDir {
+			continue
+		}
+		rel := strings.TrimSuffix(strings.TrimPrefix(obj.Key, pfx), "/")
+		// `<resource>.<group>` — split on the first dot only; group may contain
+		// further dots (e.g. `dashboard.grafana.app`). Anything without a dot
+		// (e.g. the `locks` sibling) is not a resource directory.
+		dot := strings.Index(rel, ".")
+		if dot <= 0 || dot == len(rel)-1 {
+			continue
+		}
+		resources = append(resources, resource.NamespacedResource{
+			Namespace: namespace,
+			Resource:  rel[:dot],
+			Group:     rel[dot+1:],
+		})
+	}
+	return resources, nil
+}
+
 func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
@@ -390,7 +523,6 @@ func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource res
 	return nil
 }
 
-// TODO: caller must hold a namespace-level cleanup lock.
 func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error) {
 	nsPfx := nsPrefix(nsResource)
 

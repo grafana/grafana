@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bearbeiten",
         "save": "Speichern"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "Name",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle Regeln löschen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Löschen",
       "delete-modal-delete-button": "Löschen",
@@ -1573,8 +1575,14 @@
         "update-error": "Die Regelgruppe konnte nicht aktualisiert werden",
         "update-success": "Regelgruppe erfolgreich aktualisiert"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Die ausgewählte Gruppe kann nicht bearbeitet werden",
       "group-not-editable-description": "Diese Gruppe gehört zu einer Datenquelle, die keine Bearbeitung unterstützt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgruppe bearbeiten",
       "rule-group-error": "Fehler beim Laden der Regelgruppe"
     },
@@ -3589,9 +3597,9 @@
         "declare-incident": "Vorfall angeben",
         "declare-incident-no-permission": "Sie haben keine Berechtigung, auf den Incident zuzugreifen",
         "instance-details": "Instanzdetails",
+        "section-silence": "",
         "silence-button": "Stummschaltung",
-        "silence-no-permission": "Sie haben keine Berechtigung zur Erstellung von Stummschaltungen",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Sie haben keine Berechtigung zur Erstellung von Stummschaltungen"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alphabetisch (A–Z)",
         "alphabetically-za": "Alphabetisch (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Gelöscht (neueste zuerst)",
         "deleted-oldest": "Gelöscht (älteste zuerst)"
       }
@@ -5636,6 +5646,7 @@
         "panels": "Fenster",
         "row": "Zeile",
         "rows": "Zeilen",
+        "section-filters-set": "",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} Variable",
@@ -6453,7 +6464,6 @@
         "save-library-panel": "Bibliotheks-Panel speichern",
         "share": {
           "arrow": "Teilen",
-          "title": "Teilen",
           "tooltip": "Link kopieren"
         },
         "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Eingabedaten",
+      "loading": "",
       "output-data": "Ausgabedaten",
       "title-debug-transformation": "Transformation debuggen"
     },
@@ -8269,6 +8280,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Suche"
     },
     "resource-dimension-editor": {
@@ -8655,6 +8667,7 @@
         "copy-link": "Link zur Logzeile kopieren",
         "copy-to-clipboard": "In die Zwischenablage kopieren",
         "inspect-value": "Wert prüfen",
+        "show-details": "",
         "view-log-line": "Logzeile anzeigen"
       }
     },
@@ -10119,6 +10132,12 @@
     "cascader": {
       "clear-button": "Auswahl löschen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-Wert"
     },
@@ -10464,6 +10483,7 @@
     "sidebar": {
       "close": "Schließen",
       "dock": "Ankoppeln",
+      "go-back": "",
       "hide": "Ausblenden",
       "show": "Anzeigen",
       "undock": "Abkoppeln"
@@ -11124,6 +11144,12 @@
       "update-all": "Alles aktualisieren",
       "num-affected_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>",
       "num-affected_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
     }
   },
   "link": {
@@ -11214,6 +11240,7 @@
       "label-numbers": "Zahlen",
       "label-signature": "Signatur"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimentell. Eine Komponente anzeigen, um die angezeigten Felder aus den Logs zu verwalten.",
     "description-enable-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
     "description-enable-logs-highlighting": "Nutzen Sie ein vordefiniertes Farbschema, um relevante Teile der Logzeilen hervorzuheben.",
@@ -11323,6 +11350,8 @@
       "fields-section": "Felder",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Link-Wert",
       "links-section": "Links",
       "log-attributes-field": "Log-Attribute",
@@ -11509,6 +11538,7 @@
         "common-labels": "Allgemeine Labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Allgemeine Labels",
     "name-deduplication": "Deduplizierung",
     "name-details-mode": "Panel-Modus für Log-Details",
@@ -11571,13 +11601,13 @@
   "logstable": {
     "category-table": "Logs-Tabelle",
     "description-show-controls": "Tabellen-Steuerelemente anzeigen",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeilen-Link“ in der ersten Spalte jeder Zeile",
       "name": "Schaltfläche „Log-Link kopieren“ anzeigen"
-    },
-    "show-inspect-button": {
-      "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeile prüfen“ in der ersten Spalte jeder Zeile",
-      "name": "Schaltfläche „Prüfen“ anzeigen"
     }
   },
   "manage-dashbaords": {
@@ -11897,8 +11927,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefiltert)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles löschen"
@@ -12993,9 +13025,7 @@
       "update-available": "Update verfügbar!"
     },
     "plugin-usage": {
-      "body-missing-feature-toggle-panel-title-search": "Die Plugin-Nutzung erfordert den neuen Suchindex, damit die Nutzung Dashboard-übergreifend festgestellt werden kann. Bitte aktivieren Sie den Funktionsschalter",
       "num-usages": " {{pluginName}} wird <2>{{numUsages}}</2> mal verwendet.",
-      "title-missing-feature-toggle-panel-title-search": "Fehlender Funktionsschalter: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} wird bisher in keinen Dashboards verwendet"
     },
     "plugins-errors-info": {
@@ -13143,6 +13173,7 @@
       "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem API-Token verwendet wird",
       "token-user-required": "Benutzername erforderlich",
       "url-description": "Die Bitbucket-Repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL erforderlich"
     },
     "bootstrap-step": {
@@ -13556,6 +13587,7 @@
       "contact-admin": "Wenden Sie sich an Ihren Grafana-Administrator, um diese Ressource in eine lokale Ressource umzuwandeln oder alle Ressourcen aus dem fehlenden Repository zu löschen.",
       "convert-to-local-button": "In lokal konvertieren",
       "delete-button": "Löschen",
+      "go-to-dashboards": "",
       "job-error": "Bei der Verarbeitung verwaister Ressourcen ist ein Fehler aufgetreten",
       "job-success": "Verwaiste Ressourcen erfolgreich verarbeitet",
       "job-warning": "Einige Ressourcen wurden mit Warnungen verarbeitet. Bitte überprüfen Sie die Ergebnisse.",
@@ -13802,7 +13834,8 @@
       "make-sure": "Token mit diesen Berechtigungen erstellen"
     },
     "validation": {
-      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut."
+      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Warnung",
     "watch-stream": {
@@ -14096,7 +14129,6 @@
       "hide": "{{type}} ausblenden",
       "hide-help": "Datenquellen-Hilfe ausblenden",
       "hide-transformation-help": "Hilfe zur Transformation ausblenden",
-      "inspector": "Abfrage-Inspektor",
       "more-actions": "Weitere {{type}} Aktionen",
       "remove": "{{type}} entfernen",
       "remove-transformation-filter": "Filter entfernen",
@@ -14108,6 +14140,27 @@
     "alerts": {
       "no-alerts": "Keine Warnregeln für dieses Panel",
       "no-alerts-description": "Erstellen Sie eine Warnregel, um benachrichtigt zu werden, wenn Ihre Daten bestimmte Bedingungen erfüllen."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Möchten Sie diese Abfrage wirklich löschen?",
@@ -14145,6 +14198,7 @@
     },
     "footer": {
       "edit-option": "{{label}} bearbeiten",
+      "inspect-queries": "",
       "label": {
         "interval": "Intervall",
         "max-data-points": "Max. Datenpunkte",
@@ -14155,6 +14209,7 @@
       "placeholder": {
         "no-limit": "Kein Limit"
       },
+      "query-inspector": "",
       "query-options": "Abfrageoptionen"
     },
     "header": {
@@ -14241,6 +14296,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Wiederherstellen"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
@@ -14403,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Datenquelle",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 Min.",
       "deleted-remaining-header": "Verbleibende Zeit",
       "location-header": "Standort",
@@ -14757,6 +14820,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Home-Dashboard",
       "home-dashboard-placeholder": "Standard-Dashboard",
@@ -15926,6 +15993,7 @@
           "group-by": "Gruppieren nach"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Ignoriert",
       "placeholder-select-stats": "Statistiken auswählen"
     },
@@ -15937,6 +16005,16 @@
         "group-by": "Gruppieren nach"
       },
       "title-calc-alert": "Berechnungen haben keine Auswirkung, wenn keine Felder gruppiert werden"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15960,6 +16038,9 @@
       "name": {
         "grouping-to-matrix": "Gruppierung zu Matrix"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16295,6 +16376,9 @@
       "label-time-field": "Zeitfeld",
       "tooltip-statistic-should-calculated-series": "Die Statistik, die für diese Zeitreihe berechnet werden soll.",
       "tooltip-time-field": "Das Zeitfeld, das für die Zeitreihe verwendet wird. Wenn nichts ausgewählt ist, wird verwendet, was zuerst gefunden wird."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Name des ersten Felds",
