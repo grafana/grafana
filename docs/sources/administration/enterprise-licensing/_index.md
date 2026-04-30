@@ -244,11 +244,11 @@ For example, if your contract includes three production instances and 180 total 
 - Users are counted separately on each production instance where they're active. If the same user signs in to two production instances, that user counts once on each instance, consuming two users from your total allocation.
 - To change how users are allocated across your instances, refer to [Request a change to your license](#request-a-change-to-your-license).
 
-#### Dev and test instances
+#### Development and test instances
 
-Each production instance includes a paired dev instance and a paired test instance. Dev and test instances receive the same user count as the production instance they're paired with.
+Each production instance includes a paired development instance and a paired test instance. Development and test instances receive the same user count as the production instance they're paired with.
 
-For example, if you have three production instances with 60 users allocated to each, then each production instance's paired dev and test instances also get 60 users.
+For example, if you have three production instances with 60 users allocated to each, then each production instance's paired development and test instances also get 60 users.
 
 ### Tiered licensing (deprecated)
 
