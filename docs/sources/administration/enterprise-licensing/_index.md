@@ -239,16 +239,16 @@ To determine the number of active users:
 
 If you have multiple production instances, your licensed users form a shared pool. You divide the total number of users across your production instances rather than receiving the full user count on each one.
 
-For example, if your contract includes three production instances and 180 total users, you could allocate 60 users per instance, or 100 on one instance and 40 on each of the other two. You aren't licensed for 180 active users on each instance.
+For example, if your contract includes 3 production instances and 180 total users, you could allocate 60 users per instance, or 100 on one instance and 40 on each of the other 2. You aren't licensed for 180 active users on each instance.
 
-- Users are counted separately on each production instance where they're active. If the same user signs in to two production instances, that user counts once on each instance, consuming two users from your total allocation.
+- Users are counted separately on each production instance where they're active. If the same user signs in to 2 production instances, that user counts once on each instance, consuming 2 users from your total allocation.
 - To change how users are allocated across your instances, refer to [Request a change to your license](#request-a-change-to-your-license).
 
 #### Development and test instances
 
 Each production instance includes a paired development instance and a paired test instance. Development and test instances receive the same user count as the production instance they're paired with.
 
-For example, if you have three production instances with 60 users allocated to each, then each production instance's paired development and test instances also get 60 users.
+For example, if you have 3 production instances with 60 users allocated to each, then each production instance's paired development and test instances also get 60 users.
 
 ### Tiered licensing (deprecated)
 
