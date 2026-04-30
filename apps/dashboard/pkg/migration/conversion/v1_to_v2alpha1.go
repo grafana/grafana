@@ -722,7 +722,7 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsIndexP
 					Uid:  schemaversion.GetStringValue(libraryPanel, "uid"),
 					Name: schemaversion.GetStringValue(libraryPanel, "name"),
 				},
-				Id:    float64(panelID),
+				Id:    int32(panelID),
 				Title: schemaversion.GetStringValue(panelMap, "title"),
 			},
 		}
@@ -748,7 +748,7 @@ func buildElement(ctx context.Context, panelMap map[string]interface{}, dsIndexP
 }
 
 func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) (*dashv2alpha1.DashboardPanelKind, error) {
-	panelID := float64(getIntField(panelMap, "id", 0))
+	panelID := int32(getIntField(panelMap, "id", 0))
 
 	// Transform queries
 	queries := transformPanelQueries(ctx, panelMap, dsIndexProvider)
@@ -2064,7 +2064,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 
 func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.DashboardAnnotationPanelFilter {
 	filter := &dashv2alpha1.DashboardAnnotationPanelFilter{
-		Ids: []uint32{},
+		Ids: []int32{},
 	}
 
 	if exclude := getBoolField(filterMap, "exclude", false); exclude {
@@ -2072,20 +2072,20 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	}
 
 	if ids, ok := filterMap["ids"].([]interface{}); ok {
-		uintIds := make([]uint32, 0, len(ids))
+		intIds := make([]int32, 0, len(ids))
 		for _, id := range ids {
 			switch v := id.(type) {
 			case float64:
-				if v >= 0 && v <= float64(^uint32(0)) {
-					uintIds = append(uintIds, uint32(v))
+				if v >= 0 && v <= float64(math.MaxInt32) {
+					intIds = append(intIds, int32(v))
 				}
 			case int:
-				if v >= 0 && uint64(v) <= math.MaxUint32 {
-					uintIds = append(uintIds, uint32(v))
+				if v >= 0 && int64(v) <= math.MaxInt32 {
+					intIds = append(intIds, int32(v))
 				}
 			}
 		}
-		filter.Ids = uintIds
+		filter.Ids = intIds
 	}
 
 	return filter

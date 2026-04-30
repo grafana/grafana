@@ -44,12 +44,18 @@ const updatePreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
+const getSignedInUserTeamListHandler = () =>
+  http.get('/api/user/teams', async () => {
+    return HttpResponse.json([]);
+  });
+
 const handlers = [
   getPreferencesHandler(),
   updatePreferencesHandler(),
   getStarsHandler(),
   deleteDashboardStarHandler(),
   addDashboardStarHandler(),
+  getSignedInUserTeamListHandler(),
 ];
 
 export default handlers;

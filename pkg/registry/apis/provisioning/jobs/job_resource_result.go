@@ -60,7 +60,12 @@ func classifyWarning(err error) (string, bool) {
 	var invalidMetaErr *resources.InvalidFolderMetadata
 	var depthExceededErr *resources.FolderDepthExceededError
 	var folderManagedByOtherErr *resources.FolderManagedByOtherError
+	var uidTooLongErr *resources.FolderUIDTooLongError
+	var folderValidationErr *resources.FolderValidationError
 
+	// Order matters: the more specific folder reasons must be checked
+	// before the generic FolderValidationError fallback so the user-facing
+	// reason stays as descriptive as possible.
 	switch {
 	case errors.As(err, &quotaExceededErr):
 		return provisioning.ReasonQuotaExceeded, true
@@ -80,6 +85,10 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonFolderDepthExceeded, true
 	case errors.As(err, &folderManagedByOtherErr):
 		return provisioning.ReasonFolderManagedByOther, true
+	case errors.As(err, &uidTooLongErr):
+		return provisioning.ReasonFolderUIDTooLong, true
+	case errors.As(err, &folderValidationErr):
+		return provisioning.ReasonFolderValidationFailed, true
 	default:
 		return "", false
 	}

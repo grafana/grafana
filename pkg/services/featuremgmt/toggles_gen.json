@@ -1905,6 +1905,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.useNewStackInfoToSettingsCache",
+        "resourceVersion": "1777558060067",
+        "creationTimestamp": "2026-04-30T14:07:40Z"
+      },
+      "spec": {
+        "description": "Use the new cache for datasource.StackInfoToSettings, backend flag",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpoint",
         "resourceVersion": "1772118749630",
         "creationTimestamp": "2026-02-26T15:12:29Z"
@@ -2565,6 +2578,23 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.meticulousAIRecorder",
+        "resourceVersion": "1777401759422",
+        "creationTimestamp": "2026-04-28T17:20:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-28 18:42:39.422606 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable Meticulous AI session recorder for automated UI test generation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
