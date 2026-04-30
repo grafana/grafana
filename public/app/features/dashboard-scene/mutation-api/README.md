@@ -143,6 +143,8 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization (requires the **`dashboardSectionVariables`** feature toggle; when off, `variables` in the payload are ignored).
+
 **Response:**
 
 ```json
@@ -158,7 +160,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 
 ### `UPDATE_ROW`
 
-Update a row's properties. Only provided fields are changed.
+Update a row's properties. Only provided fields are changed. Optional **`spec.variables`** sets or clears section variables for the row (`[]` clears when the toggle is on; omit to leave unchanged).
 
 **Request:**
 
@@ -308,6 +310,8 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 }
 ```
 
+Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables` and the **`dashboardSectionVariables`** toggle).
+
 **Response:**
 
 ```json
@@ -323,7 +327,7 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 
 ### `UPDATE_TAB`
 
-Update a tab's properties. Only provided fields are changed.
+Update a tab's properties. Only provided fields are changed. Optional **`spec.variables`** sets or clears section variables on the tab (`[]` clears when the toggle is on; omit to leave unchanged).
 
 **Request:**
 
@@ -740,6 +744,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (omit or `"/"` only affects dashboard scope).
+
 ### `ADD_VARIABLE`
 
 **Request:**
@@ -751,6 +757,21 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
     "variable": {
       "kind": "CustomVariable",
       "spec": { "name": "env", "query": "dev,staging,prod", "multi": true }
+    }
+  }
+}
+```
+
+**Add a section variable on the first row:**
+
+```json
+{
+  "type": "ADD_VARIABLE",
+  "payload": {
+    "parentPath": "/rows/0",
+    "variable": {
+      "kind": "CustomVariable",
+      "spec": { "name": "region", "query": "eu,us", "multi": false }
     }
   }
 }
@@ -774,6 +795,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 }
 ```
 
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`).
+
 ### `UPDATE_VARIABLE`
 
 **Request:**
@@ -786,6 +809,22 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
     "variable": {
       "kind": "CustomVariable",
       "spec": { "name": "env", "query": "dev,staging,prod,canary", "multi": true }
+    }
+  }
+}
+```
+
+**Update a variable on the first row:**
+
+```json
+{
+  "type": "UPDATE_VARIABLE",
+  "payload": {
+    "parentPath": "/rows/0",
+    "name": "region",
+    "variable": {
+      "kind": "CustomVariable",
+      "spec": { "name": "region", "query": "eu,us,apac", "multi": false }
     }
   }
 }
@@ -823,6 +862,15 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 }
 ```
 
+**Remove a section variable:**
+
+```json
+{
+  "type": "REMOVE_VARIABLE",
+  "payload": { "parentPath": "/rows/0", "name": "region" }
+}
+```
+
 **Response:**
 
 ```json
@@ -839,6 +887,12 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ```json
 { "type": "LIST_VARIABLES", "payload": {} }
+```
+
+**List variables for a row section:**
+
+```json
+{ "type": "LIST_VARIABLES", "payload": { "parentPath": "/rows/0" } }
 ```
 
 **Response:**

@@ -8,6 +8,10 @@ import { type z } from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
+import {
+  deserializeSectionVariables,
+  serializeSectionVariables,
+} from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
@@ -41,6 +45,7 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
       const previousValue = {
         title: tab.state.title,
         conditionalRendering: tab.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(tab.state.$variables),
       };
 
       const updates: Record<string, unknown> = {};
@@ -59,9 +64,14 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.setState({ conditionalRendering: group });
       }
 
+      if (spec.variables !== undefined) {
+        tab.setState({ $variables: deserializeSectionVariables(spec.variables) });
+      }
+
       const currentSpec = {
         title: tab.state.title,
         conditionalRendering: tab.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(tab.state.$variables),
       };
 
       return {
