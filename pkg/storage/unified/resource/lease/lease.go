@@ -39,12 +39,6 @@ type Lease struct {
 	lostTimer  *time.Timer
 }
 
-type leaseMetadata struct {
-	Holder  string `json:"holder"`
-	Expires int64  `json:"expires"`
-	Deleted bool   `json:"deleted"`
-}
-
 // Lost returns a channel that is closed when this lease ends, i.e., when its TTL
 // elapses or when Release succeeds. Calling Lost multiple times returns the
 // same channel; the channel is closed at most once. Safe to call from any
@@ -57,6 +51,17 @@ func (l *Lease) notifyLoss() {
 	l.lostOnce.Do(func() {
 		close(l.lostCh)
 	})
+}
+
+// leaseMetadata is the data saved in the KV store for each lease.
+type leaseMetadata struct {
+	Holder  string `json:"holder"`
+	Expires int64  `json:"expires"`
+	Deleted bool   `json:"deleted"`
+}
+
+func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
+	return !meta.Deleted && ts.Before(time.Unix(0, meta.Expires))
 }
 
 // Manager acquires and releases leases backed by a KV store.
@@ -102,7 +107,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 	for attempt := 0; ; attempt++ {
 		latestKey, latestGeneration, err := m.latest(ctx, name)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("acquiring %s: %w", name, err)
 		}
 
 		now := time.Now()
@@ -111,7 +116,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			if err != nil {
 				return nil, err
 			}
-			if !latest.Deleted && now.Before(time.Unix(0, latest.Expires)) {
+			if latest.ValidAsOf(now) {
 				return nil, ErrLeaseAlreadyHeld
 			}
 		}
@@ -135,12 +140,12 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		}})
 		if errors.Is(err, kv.ErrKeyAlreadyExists) {
 			if attempt >= maxAcquireAttempts-1 {
-				return nil, fmt.Errorf("%w: exhausted retries acquiring %q", ErrLeaseAlreadyHeld, name)
+				return nil, fmt.Errorf("%w: exhausted retries acquiring %s", ErrLeaseAlreadyHeld, name)
 			}
 			continue
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("acquiring %s: %w", name, err)
 		}
 
 		l := &Lease{
@@ -155,24 +160,21 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 }
 
 // Release releases lease. It is not idempotent: releasing a lease that has
-// already been released — or one that has expired — returns ErrLeaseLost.
+// already been released (or one that has expired) returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
-	if errors.Is(err, kv.ErrNotFound) {
-		return ErrLeaseLost
-	}
 	if err != nil {
-		return err
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
-	if meta.Holder != m.holder || meta.Deleted || !time.Now().Before(time.Unix(0, meta.Expires)) {
-		return ErrLeaseLost
+	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
 
 	meta.Deleted = true
 	if err := m.save(ctx, key, meta); err != nil {
-		return err
+		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
 	lease.lostTimer.Stop()
@@ -238,7 +240,11 @@ func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) err
 		}
 		return err
 	}
-	return w.Close()
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("closing writer: %w", err)
+	}
+
+	return nil
 }
 
 // leaseKey generates a 20-digit generation suffix so leases sort
@@ -260,6 +266,8 @@ func validateLeaseName(name string) error {
 func parseGeneration(name, key string) (int64, error) {
 	suffix, ok := strings.CutPrefix(key, name+"/")
 	if !ok {
+		// Should not happen in practice unless we get an invalid key from
+		// the underlying KV store.
 		return 0, fmt.Errorf("lease key %q does not match lease name %q", key, name)
 	}
 	generation, err := strconv.ParseInt(suffix, 10, 64)
