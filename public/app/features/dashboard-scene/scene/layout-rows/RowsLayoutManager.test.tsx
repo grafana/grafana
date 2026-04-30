@@ -102,28 +102,37 @@ describe('RowsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+      // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
       const rowsLayoutManager = new RowsLayoutManager({
         key: 'test-RowsLayoutManager',
         rows: [new RowItem({ title: 'First' })],
       });
-      const dashboard = new DashboardScene({
+      new DashboardScene({
         body: rowsLayoutManager,
         isEditing: true,
         editable: true,
+        preferences: { defaultLayoutTemplate },
       });
-      dashboard.state.body.editModeChanged?.(true);
+
+      rowsLayoutManager.editModeChanged(true);
 
       const newRow = rowsLayoutManager.addNewRow();
       const layout = newRow.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
-      if (layout instanceof DefaultGridLayoutManager) {
-        expect(layout.state.grid.state.isResizable).toBe(true);
-        expect(layout.state.grid.state.isDraggable).toBe(true);
-      } else if (layout instanceof AutoGridLayoutManager) {
-        expect(layout.state.layout.state.isDraggable).toBe(true);
-      } else {
-        throw new Error(`Unexpected layout type for assertion: ${layout.constructor.name}`);
-      }
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
     });
   });
 

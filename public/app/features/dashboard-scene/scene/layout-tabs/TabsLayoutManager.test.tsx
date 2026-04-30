@@ -142,28 +142,37 @@ describe('TabsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
       const tabsLayoutManager = new TabsLayoutManager({
         key: 'test-TabsLayoutManager',
         tabs: [new TabItem({ title: 'First' })],
       });
-      const dashboard = new DashboardScene({
+      new DashboardScene({
         body: tabsLayoutManager,
         isEditing: true,
         editable: true,
+        preferences: { defaultLayoutTemplate },
       });
-      dashboard.state.body.editModeChanged?.(true);
+
+      tabsLayoutManager.editModeChanged(true);
 
       const newTab = tabsLayoutManager.addNewTab();
       const layout = newTab.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
-      if (layout instanceof DefaultGridLayoutManager) {
-        expect(layout.state.grid.state.isResizable).toBe(true);
-        expect(layout.state.grid.state.isDraggable).toBe(true);
-      } else if (layout instanceof AutoGridLayoutManager) {
-        expect(layout.state.layout.state.isDraggable).toBe(true);
-      } else {
-        throw new Error(`Unexpected layout type for assertion: ${layout.constructor.name}`);
-      }
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
     });
   });
 
