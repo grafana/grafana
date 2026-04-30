@@ -1,5 +1,5 @@
-import { render, screen, within } from 'test/test-utils';
 import { Provider } from 'react-redux';
+import { render, screen, within } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
