@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -18,6 +19,7 @@ export function SidebarFooter() {
   const { transformations } = usePanelContext();
   const { alertRules } = useAlertingContext();
   const { cardType, setMultiSelectMode } = useQueryEditorUIContext();
+  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
   const styles = useStyles2(getStyles);
 
   const isAlertView = cardType === QueryEditorType.Alert;
@@ -42,7 +44,7 @@ export function SidebarFooter() {
         <Text weight="medium" variant="bodySmall">
           {suffixText}
         </Text>
-        {!isAlertView && (
+        {!isAlertView && isMultiSelectEnabled && (
           <Button
             fill="text"
             size="sm"

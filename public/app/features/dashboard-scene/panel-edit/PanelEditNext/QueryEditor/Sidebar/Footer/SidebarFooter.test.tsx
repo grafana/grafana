@@ -3,6 +3,7 @@ import { screen } from '@testing-library/react';
 import { AlertState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { QueryEditorType } from '../../../constants';
 import { renderWithQueryEditorProvider } from '../../testUtils';
@@ -22,6 +23,14 @@ function createAlertRule(overrides: Partial<AlertRule> = {}): AlertRule {
 }
 
 describe('SidebarFooter', () => {
+  beforeAll(() => {
+    setTestFlags({ queryEditorNextMultiSelect: true });
+  });
+
+  afterAll(() => {
+    setTestFlags();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -93,6 +102,23 @@ describe('SidebarFooter', () => {
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
         action: 'click_multi_select',
       });
+    });
+  });
+
+  describe('with queryEditorNextMultiSelect flag off', () => {
+    beforeAll(() => {
+      setTestFlags({ queryEditorNextMultiSelect: false });
+    });
+
+    afterAll(() => {
+      setTestFlags({ queryEditorNextMultiSelect: true });
+    });
+
+    it('should hide the select button', () => {
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      expect(screen.getByText('0 items')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
     });
   });
 
