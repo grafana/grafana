@@ -34,10 +34,16 @@ export interface FolderRow {
   managedBy?: string;
   /** Recursive count: dashboards anywhere inside this folder's subtree. */
   dashboardCount: number;
-  /** Dashboards directly in this folder (not nested), used by the Peek view. */
+  /** Dashboards directly in this folder (not nested), used by the expand view. */
   directDashboards: FolderPeekDashboard[];
-  /** Folders directly under this folder, used by the Peek view. */
+  /** Folders directly under this folder. */
   subfolders: FolderPeekSubfolder[];
+  /**
+   * Every dashboard anywhere in this folder's subtree. Used by the migrate
+   * call (which only accepts dashboard refs, not folder refs) and by the
+   * cascading folder-selection logic in the UI.
+   */
+  allDashboards: FolderPeekDashboard[];
 }
 
 interface State {
@@ -113,15 +119,16 @@ function aggregate(
   // row that picks them all up in one shot.
   const dashboardCountByFolder = new Map<string, number>();
   const directDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
+  const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
   const rootDirectDashboards: FolderPeekDashboard[] = [];
   let rootDashboardCount = 0;
 
-  const pushDirect = (folderUid: string, dash: FolderPeekDashboard) => {
-    const existing = directDashboardsByFolder.get(folderUid);
+  const pushTo = (map: Map<string, FolderPeekDashboard[]>, folderUid: string, dash: FolderPeekDashboard) => {
+    const existing = map.get(folderUid);
     if (existing) {
       existing.push(dash);
     } else {
-      directDashboardsByFolder.set(folderUid, [dash]);
+      map.set(folderUid, [dash]);
     }
   };
 
@@ -134,8 +141,9 @@ function aggregate(
     }
     for (const ancestorUid of dash.ancestors) {
       dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
+      pushTo(allDashboardsByFolder, ancestorUid, dashItem);
     }
-    pushDirect(dash.ancestors[dash.ancestors.length - 1], dashItem);
+    pushTo(directDashboardsByFolder, dash.ancestors[dash.ancestors.length - 1], dashItem);
   }
 
   // Group folders by parent so each row knows its direct subfolders.
@@ -162,6 +170,7 @@ function aggregate(
     dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
     directDashboards: directDashboardsByFolder.get(folder.uid) ?? [],
     subfolders: subfoldersByParent.get(folder.uid) ?? [],
+    allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
   }));
 
   if (rootDashboardCount > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
@@ -171,6 +180,7 @@ function aggregate(
       dashboardCount: rootDashboardCount,
       directDashboards: rootDirectDashboards,
       subfolders: subfoldersByParent.get(GENERAL_FOLDER_UID) ?? [],
+      allDashboards: rootDirectDashboards,
     });
   }
 

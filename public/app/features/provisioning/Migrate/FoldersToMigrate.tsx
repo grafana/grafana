@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
+  Button,
   Checkbox,
   EmptyState,
   FilterInput,
@@ -16,19 +17,7 @@ import {
 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
-
 import { type FolderPeekDashboard, type FolderRow } from './hooks/useFolderLeaderboard';
-
-function migrateTarget(repos: Repository[]): string {
-  if (repos.length === 0) {
-    return GETTING_STARTED_URL;
-  }
-  if (repos.length === 1 && repos[0].metadata?.name) {
-    return `${PROVISIONING_URL}/${repos[0].metadata.name}`;
-  }
-  return PROVISIONING_URL;
-}
 
 function folderUrl(uid: string): string {
   return `/dashboards/f/${encodeURIComponent(uid)}`;
@@ -45,6 +34,7 @@ interface Props {
   selectedDashboardUids: Set<string>;
   onToggleFolder: (uid: string) => void;
   onToggleDashboard: (uid: string) => void;
+  onMigrateClick: () => void;
 }
 
 /**
@@ -60,6 +50,7 @@ export function FoldersToMigrate({
   selectedDashboardUids,
   onToggleFolder,
   onToggleDashboard,
+  onMigrateClick,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
@@ -82,7 +73,6 @@ export function FoldersToMigrate({
     });
   }, [unmanagedFolders, search]);
 
-  const target = migrateTarget(repos);
   const totalSelected = selectedFolderUids.size + selectedDashboardUids.size;
 
   const toggleExpanded = (uid: string) => {
@@ -158,11 +148,11 @@ export function FoldersToMigrate({
           })}
         </Text>
         {unmanagedFolders.length > 0 && (
-          <LinkButton variant="primary" icon="upload" href={target} disabled={totalSelected === 0}>
+          <Button variant="primary" icon="upload" onClick={onMigrateClick} disabled={totalSelected === 0}>
             {t('provisioning.stats.dashboards-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
               count: totalSelected,
             })}
-          </LinkButton>
+          </Button>
         )}
       </Stack>
     </div>

@@ -31,6 +31,7 @@ import { useRepositoryList } from '../hooks/useRepositoryList';
 import gitSvg from '../img/git.svg';
 
 import { FoldersToMigrate } from './FoldersToMigrate';
+import { MigrateDrawer } from './MigrateDrawer';
 import { QuickWinsPanel } from './QuickWinsPanel';
 import { type FolderRow, useFolderLeaderboard } from './hooks/useFolderLeaderboard';
 
@@ -553,18 +554,37 @@ export function Migrate() {
   const { data: folders } = useFolderLeaderboard();
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
   const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
+  const [migrateDrawerOpen, setMigrateDrawerOpen] = useState(false);
 
-  const toggleFolder = useCallback((uid: string) => {
-    setSelectedFolderUids((prev) => {
-      const next = new Set(prev);
-      if (next.has(uid)) {
-        next.delete(uid);
-      } else {
-        next.add(uid);
-      }
-      return next;
-    });
-  }, []);
+  const toggleFolder = useCallback(
+    (uid: string) => {
+      const folder = folders.find((f) => f.uid === uid);
+      const cascadeUids = folder?.allDashboards.map((d) => d.uid) ?? [];
+      setSelectedFolderUids((prevFolders) => {
+        const willSelect = !prevFolders.has(uid);
+        const nextFolders = new Set(prevFolders);
+        if (willSelect) {
+          nextFolders.add(uid);
+        } else {
+          nextFolders.delete(uid);
+        }
+        // Cascade: selecting a folder selects every dashboard in its subtree;
+        // deselecting it removes them. Other selected folders sharing
+        // descendants will be re-cascaded if the user re-toggles them.
+        setSelectedDashboardUids((prevDashes) => {
+          const nextDashes = new Set(prevDashes);
+          if (willSelect) {
+            cascadeUids.forEach((d) => nextDashes.add(d));
+          } else {
+            cascadeUids.forEach((d) => nextDashes.delete(d));
+          }
+          return nextDashes;
+        });
+        return nextFolders;
+      });
+    },
+    [folders]
+  );
 
   const toggleDashboard = useCallback((uid: string) => {
     setSelectedDashboardUids((prev) => {
@@ -628,6 +648,7 @@ export function Migrate() {
             selectedDashboardUids={selectedDashboardUids}
             onToggleFolder={toggleFolder}
             onToggleDashboard={toggleDashboard}
+            onMigrateClick={() => setMigrateDrawerOpen(true)}
           />
         </div>
         <div className={styles.sideColumn}>
@@ -635,6 +656,15 @@ export function Migrate() {
           <ToolingSupportPanel breakdowns={breakdowns} />
         </div>
       </div>
+      {migrateDrawerOpen && (
+        <MigrateDrawer
+          folders={folders}
+          repos={repoList}
+          selectedFolderUids={selectedFolderUids}
+          selectedDashboardUids={selectedDashboardUids}
+          onClose={() => setMigrateDrawerOpen(false)}
+        />
+      )}
     </Stack>
   );
 }

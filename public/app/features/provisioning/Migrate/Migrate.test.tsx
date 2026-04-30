@@ -10,6 +10,10 @@ import { type FolderRow, useFolderLeaderboard } from './hooks/useFolderLeaderboa
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
+  useCreateRepositoryJobsMutation: jest.fn(() => [
+    jest.fn(() => ({ unwrap: () => Promise.resolve({}) })),
+    { isLoading: false },
+  ]),
 }));
 
 jest.mock('../hooks/useRepositoryList', () => ({
@@ -42,6 +46,7 @@ function makeFolder(partial: Partial<FolderRow> & { uid: string; title: string }
     dashboardCount: 0,
     directDashboards: [],
     subfolders: [],
+    allDashboards: [],
     ...partial,
   };
 }
@@ -102,14 +107,12 @@ describe('Migrate', () => {
     });
     render(<Migrate />);
     // Disabled before any selection.
-    const initial = screen.getByRole('link', { name: /migrate selected \(0\)/i });
-    expect(initial).toHaveAttribute('aria-disabled', 'true');
-    // Pick folder A — the bulk action becomes enabled and points at the connected repo.
-    // Quick wins shares the same label, so we expect at least two matches.
+    const initial = screen.getByRole('button', { name: /migrate selected \(0\)/i });
+    expect(initial).toBeDisabled();
+    // Pick folder A — the bulk action becomes enabled.
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder a/i }));
-    const links = screen.getAllByRole('link', { name: /migrate selected \(1\)/i });
-    expect(links.length).toBeGreaterThanOrEqual(1);
-    expect(links[0]).toHaveAttribute('href', '/admin/provisioning/my-repo');
+    const enabled = screen.getByRole('button', { name: /migrate selected \(1\)/i });
+    expect(enabled).not.toBeDisabled();
   });
 
   it('hides the bulk Migrate selected button when nothing is unmanaged', () => {
@@ -133,7 +136,7 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    expect(screen.queryByRole('link', { name: /migrate selected/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
   it('marks the page header with an Experimental feature badge', () => {
@@ -332,6 +335,79 @@ describe('Migrate', () => {
     // Subfolders are deliberately not surfaced inside the expansion — they
     // already appear as their own rows in the panel.
     expect(screen.queryByText('EU subteam')).not.toBeInTheDocument();
+  });
+
+  it('cascades a folder selection to every dashboard inside its subtree', async () => {
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 6 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({
+          uid: 'pay',
+          title: 'Payments',
+          dashboardCount: 3,
+          directDashboards: [
+            { uid: 'd1', title: 'Daily revenue', url: '/d/d1' },
+            { uid: 'd2', title: 'Refund rate', url: '/d/d2' },
+          ],
+          allDashboards: [
+            { uid: 'd1', title: 'Daily revenue', url: '/d/d1' },
+            { uid: 'd2', title: 'Refund rate', url: '/d/d2' },
+            { uid: 'd3', title: 'Nested dashboard', url: '/d/d3' },
+          ],
+        }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
+    // 1 folder + 3 cascaded dashboards (incl. one that lives in a subfolder).
+    expect(screen.getByRole('button', { name: /migrate selected \(4\)/i })).toBeInTheDocument();
+  });
+
+  it('opens the migrate drawer when the bulk action is clicked', async () => {
+    mockUseRepositoryList.mockReturnValue([
+      [
+        {
+          metadata: { name: 'my-repo' },
+          spec: { type: 'github', sync: { target: 'folder' } },
+        },
+      ] as ReturnType<typeof useRepositoryList>[0],
+      false,
+    ]);
+    mockQuery({
+      data: {
+        instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }],
+        unmanaged: [],
+        managed: [],
+      },
+    });
+    mockUseFolderLeaderboard.mockReturnValue({
+      data: [
+        makeFolder({
+          uid: 'pay',
+          title: 'Payments',
+          dashboardCount: 1,
+          directDashboards: [{ uid: 'd1', title: 'Daily revenue', url: '/d/d1' }],
+          allDashboards: [{ uid: 'd1', title: 'Daily revenue', url: '/d/d1' }],
+        }),
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    render(<Migrate />);
+    await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
+    await userEvent.click(screen.getByRole('button', { name: /migrate selected/i }));
+    // Drawer surfaces the migration tip and the delete-originals checkbox (default on → submit reads "Migrate").
+    expect(screen.getByText(/smoother migration tip/i)).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /delete original dashboards/i })).toBeChecked();
+    expect(screen.getByRole('button', { name: /^migrate$/i })).toBeInTheDocument();
   });
 
   it('hides already-managed folders from the Dashboards to migrate panel', () => {
