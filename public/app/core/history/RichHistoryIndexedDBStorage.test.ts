@@ -195,6 +195,33 @@ describe('RichHistoryIndexedDBStorage', () => {
       expect(richHistory[0].starred).toBe(true);
     });
 
+    it('should return all starred queries regardless of time range on starred tab', async () => {
+      const db = await storage.getDB();
+
+      // Old starred entry — well outside any reasonable time filter
+      await db.put('queries', {
+        id: 'old-starred',
+        datasourceUid: 'dev-test',
+        datasourceName: 'name-of-dev-test',
+        createdAt: oldMs,
+        starred: 1,
+        comment: 'old starred',
+        queries: [{ refId: 'A' }],
+      });
+
+      // Recent starred entry
+      await storage.addToRichHistory({ ...mockItem, starred: true, comment: 'recent starred' });
+
+      const sevenDaysAgo = nowMs - 7 * 86_400_000;
+      const { richHistory } = await storage.getRichHistory(
+        filtersWithTimeRange({ starred: true, from: sevenDaysAgo, to: nowMs + 86_400_000 })
+      );
+      expect(richHistory).toHaveLength(2);
+      const comments = richHistory.map((q) => q.comment);
+      expect(comments).toContain('old starred');
+      expect(comments).toContain('recent starred');
+    });
+
     it('should filter by datasource name', async () => {
       await storage.addToRichHistory(mockItem);
       dateNowSpy.mockReturnValue(nowMs + 1);
@@ -232,28 +259,42 @@ describe('RichHistoryIndexedDBStorage', () => {
       expect(richHistory).toHaveLength(1);
     });
 
-    it('should filter by time range', async () => {
+    it('should filter unstarred queries by time range but always include starred', async () => {
       await storage.addToRichHistory(mockItem);
 
-      // Manually insert an old entry via db (starred so it survives retention)
       const db = await storage.getDB();
+
+      // Old starred entry — should appear regardless of time filter
       await db.put('queries', {
-        id: 'old-entry',
+        id: 'old-starred',
         datasourceUid: 'dev-test',
         datasourceName: 'name-of-dev-test',
         createdAt: oldMs,
         starred: 1,
-        comment: 'old',
+        comment: 'old starred',
         queries: [{ refId: 'A' }],
       });
 
-      // Filter to only recent entries (last 7 days)
+      // Old unstarred entry — should be excluded by time filter
+      await db.put('queries', {
+        id: 'old-unstarred',
+        datasourceUid: 'dev-test',
+        datasourceName: 'name-of-dev-test',
+        createdAt: oldMs + 1,
+        starred: 0,
+        comment: 'old unstarred',
+        queries: [{ refId: 'B' }],
+      });
+
       const sevenDaysAgo = nowMs - 7 * 86_400_000;
       const { richHistory } = await storage.getRichHistory(
         filtersWithTimeRange({ from: sevenDaysAgo, to: nowMs + 86_400_000 })
       );
-      expect(richHistory).toHaveLength(1);
-      expect(richHistory[0].comment).toBe('test');
+      expect(richHistory).toHaveLength(2);
+      const comments = richHistory.map((q) => q.comment);
+      expect(comments).toContain('test');
+      expect(comments).toContain('old starred');
+      expect(comments).not.toContain('old unstarred');
     });
   });
 

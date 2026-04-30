@@ -47,7 +47,7 @@ export const createRetentionPeriodBoundary = (
 };
 
 function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  return queries.filter((q) => q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]);
+  return queries.filter((q) => q.starred || (q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]));
 }
 
 function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {

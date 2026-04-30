@@ -232,16 +232,26 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
     // 1. Index-based retrieval — narrow at the DB level
     let storedResults: StoredQuery[];
 
-    if (filters.starred && filters.from !== undefined && filters.to !== undefined) {
-      // Starred tab: compound index [starred=1, createdAt] with time range
-      const index = db.transaction(QUERIES_STORE).objectStore(QUERIES_STORE).index('by-starred-createdAt');
-      const range = IDBKeyRange.bound([1, filters.from], [1, filters.to], true, true);
-      storedResults = await index.getAll(range);
+    if (filters.starred) {
+      // Starred tab: all starred queries regardless of time range
+      storedResults = await db
+        .transaction(QUERIES_STORE)
+        .objectStore(QUERIES_STORE)
+        .index('by-starred')
+        .getAll(IDBKeyRange.only(1));
     } else if (filters.from !== undefined && filters.to !== undefined) {
-      // Queries tab: time range only, no starred filter
-      const index = db.transaction(QUERIES_STORE).objectStore(QUERIES_STORE).index('by-createdAt');
-      const range = IDBKeyRange.bound(filters.from, filters.to, true, true);
-      storedResults = await index.getAll(range);
+      // Queries tab: fetch time-ranged results plus all starred queries outside the range
+      const tx = db.transaction(QUERIES_STORE);
+      const store = tx.objectStore(QUERIES_STORE);
+
+      const timeRange = IDBKeyRange.bound(filters.from, filters.to, true, true);
+      const timeResults = await store.index('by-createdAt').getAll(timeRange);
+
+      const starredResults = await store.index('by-starred').getAll(IDBKeyRange.only(1));
+      const timeResultIds = new Set(timeResults.map((q) => q.id));
+      const starredOutsideRange = starredResults.filter((q) => !timeResultIds.has(q.id));
+
+      storedResults = [...timeResults, ...starredOutsideRange];
     } else {
       // No time range (rare: query library fetchQueryHistory)
       storedResults = await db.getAll(QUERIES_STORE);
