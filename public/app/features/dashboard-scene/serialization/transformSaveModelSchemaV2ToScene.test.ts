@@ -376,7 +376,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       intervalVar.spec.auto = true;
 
       const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
       const variable = scene.state.$variables?.getByName('intervalVar') as IntervalVariable;
 
       expect(variable.state.value).toBe('$__auto');
