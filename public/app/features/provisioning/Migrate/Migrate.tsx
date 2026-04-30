@@ -390,11 +390,13 @@ function NextStepsPanel({
 }) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
-
   const hasStartedMigrating = totals.managed > 0;
   const hasDashboards = totals.instanceTotal > 0;
   const everythingManaged = hasDashboards && totals.unmanaged === 0;
 
+  // Step state machine. Steps marked `done` get a green check; the next step
+  // after the last done one is the "active" step that drives the user's
+  // attention with bolder copy and (where relevant) a primary action.
   const steps: NextStep[] = [
     {
       key: 'connect',
@@ -404,7 +406,7 @@ function NextStepsPanel({
         ? t('provisioning.stats.next-step-connect-done', 'Connected. You can add more at any time.')
         : t(
             'provisioning.stats.next-step-connect-pending',
-            'Set up Git Sync so your folders and dashboards live in a Git repository.'
+            'Wire Grafana to a Git repository so it can act as the source of truth.'
           ),
       action: hasRepo
         ? undefined
@@ -415,56 +417,85 @@ function NextStepsPanel({
       key: 'pick',
       done: hasStartedMigrating || everythingManaged,
       title: t('provisioning.stats.next-step-pick-title', 'Pick what to migrate'),
-      description: everythingManaged
-        ? t(
-            'provisioning.stats.next-step-pick-empty',
-            'Nothing left to migrate. New dashboards will appear here as your instance grows.'
-          )
-        : t(
-            'provisioning.stats.next-step-pick-pending',
-            'Use Quick wins for whole folders, or expand a folder below to migrate individual dashboards.'
-          ),
+      description: t(
+        'provisioning.stats.next-step-pick-pending',
+        'Use Quick wins for whole folders or expand a folder below for individual dashboards. Selecting a folder migrates everything inside it.'
+      ),
     },
     {
-      key: 'track',
+      key: 'run',
       done: everythingManaged,
-      title: t('provisioning.stats.next-step-track-title', 'Track migration progress'),
-      description:
-        !hasDashboards
-          ? t('provisioning.stats.next-step-track-empty', 'No dashboards yet — nothing to track.')
-          : t(
-              'provisioning.stats.next-step-track-progress',
-              '{{count}} of {{total}} dashboards managed.',
-              { count: totals.managed, total: totals.instanceTotal }
-            ),
+      title: t('provisioning.stats.next-step-run-title', 'Run the migration'),
+      description: t(
+        'provisioning.stats.next-step-run-pending',
+        'Open the Migrate drawer when you\'re ready, review the workflow, and start the job. You can run it again later for anything that\'s still unmanaged.'
+      ),
     },
   ];
+
+  // Find the first not-done step — that's the active one.
+  const activeIndex = steps.findIndex((s) => !s.done);
 
   return (
     <div className={styles.sidePanel}>
       <Text variant="h5">
         <Trans i18nKey="provisioning.stats.next-steps-heading">Recommended next steps</Trans>
       </Text>
-      <Stack direction="column" gap={1.5}>
-        {steps.map((step, index) => (
-          <Stack key={step.key} direction="row" gap={2} alignItems="flex-start">
-            <div className={cx(styles.nextStepBullet, step.done && styles.nextStepBulletDone)}>
-              {step.done ? <Icon name="check" /> : <Text variant="bodySmall">{index + 1}</Text>}
-            </div>
-            <Stack direction="column" gap={0.25} flex={1}>
-              <Text weight={step.done ? 'regular' : 'medium'}>{step.title}</Text>
-              <Text color="secondary" variant="bodySmall">
-                {step.description}
-              </Text>
-            </Stack>
-            {step.action && (
-              <LinkButton variant={step.primary ? 'primary' : 'secondary'} size="sm" href={step.action.href}>
-                {step.action.label}
-              </LinkButton>
-            )}
+      <ol className={styles.stepperList}>
+        {steps.map((step, index) => {
+          const isActive = !step.done && index === activeIndex;
+          return (
+            <li
+              key={step.key}
+              className={cx(
+                styles.stepperItem,
+                step.done && styles.stepperItemDone,
+                isActive && styles.stepperItemActive,
+                index < steps.length - 1 && styles.stepperItemConnected
+              )}
+            >
+              <div
+                className={cx(
+                  styles.nextStepBullet,
+                  step.done && styles.nextStepBulletDone,
+                  isActive && styles.nextStepBulletActive
+                )}
+              >
+                {step.done ? <Icon name="check" /> : <Text variant="bodySmall">{index + 1}</Text>}
+              </div>
+              <Stack direction="column" gap={0.25} flex={1}>
+                <Text weight={isActive ? 'medium' : 'regular'} color={step.done ? 'secondary' : undefined}>
+                  {step.title}
+                </Text>
+                <Text color="secondary" variant="bodySmall">
+                  {step.description}
+                </Text>
+              </Stack>
+              {step.action && (
+                <LinkButton variant={step.primary ? 'primary' : 'secondary'} size="sm" href={step.action.href}>
+                  {step.action.label}
+                </LinkButton>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {everythingManaged && (
+        <div className={styles.stepperComplete}>
+          <Icon name="check-circle" size="lg" />
+          <Stack direction="column" gap={0}>
+            <Text weight="medium">
+              <Trans i18nKey="provisioning.stats.next-steps-complete-title">All set!</Trans>
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="provisioning.stats.next-steps-complete-body">
+                Every dashboard on this instance is managed by Git Sync. New ones will show up here when
+                they need migrating.
+              </Trans>
+            </Text>
           </Stack>
-        ))}
-      </Stack>
+        </div>
+      )}
       <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL} variant="bodySmall">
         <Trans i18nKey="provisioning.stats.migration-guide">Migration guide</Trans>
       </TextLink>
@@ -820,6 +851,40 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.secondary,
   }),
+  stepperList: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+  }),
+  stepperItem: css({
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(2),
+  }),
+  stepperItemConnected: css({
+    // Vertical connector from this bullet to the next one's bullet so the
+    // panel reads as a stepper rather than a flat list.
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: theme.spacing(1.4375),
+      top: theme.spacing(3),
+      bottom: theme.spacing(-2),
+      width: 1,
+      background: theme.colors.border.weak,
+    },
+  }),
+  stepperItemDone: css({
+    '&::before': {
+      background: theme.colors.success.border,
+    },
+  }),
+  stepperItemActive: css({}),
   nextStepBullet: css({
     flex: '0 0 auto',
     width: theme.spacing(3),
@@ -827,13 +892,32 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     border: `1px solid ${theme.colors.border.medium}`,
     color: theme.colors.text.secondary,
+    background: theme.colors.background.secondary,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   }),
   nextStepBulletDone: css({
     background: theme.colors.success.transparent,
     borderColor: theme.colors.success.border,
+    color: theme.colors.success.text,
+  }),
+  nextStepBulletActive: css({
+    background: theme.colors.primary.transparent,
+    borderColor: theme.colors.primary.border,
+    color: theme.colors.primary.text,
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  stepperComplete: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.5),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.success.transparent,
+    border: `1px solid ${theme.colors.success.borderTransparent}`,
     color: theme.colors.success.text,
   }),
   toolingGrid: css({
