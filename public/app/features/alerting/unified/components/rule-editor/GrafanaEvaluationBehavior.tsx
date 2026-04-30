@@ -55,10 +55,23 @@ export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
 type EvaluationMode = 'new' | 'legacy';
 
-const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
-  const folderGroups = Object.values(rulerNamespace).flat();
+export const namespaceToGroupOptions = (
+  rulerNamespace: RulerRulesConfigDTO,
+  enableProvisionedGroups: boolean,
+  // Optional in-flight group. Including it here lets the Select display
+  // the new group as the selected option immediately.
+  pendingGroup?: { name: string; interval?: string }
+) => {
+  const folderGroups = Object.values(rulerNamespace)
+    .flat()
+    .filter((group) => !isUngroupedRuleGroup(group.name));
 
-  return folderGroups
+  const groups =
+    pendingGroup && !isUngroupedRuleGroup(pendingGroup.name) && !folderGroups.some((g) => g.name === pendingGroup.name)
+      ? [...folderGroups, { name: pendingGroup.name, interval: pendingGroup.interval, rules: [] }]
+      : folderGroups;
+
+  return groups
     .map<SelectableValue<string>>((group) => {
       const isProvisioned = isProvisionedRuleGroup(group);
       return {
@@ -153,8 +166,12 @@ export function GrafanaEvaluationBehaviorStep({
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
   const groupOptions = useMemo(() => {
-    return rulerNamespace ? namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups) : [];
-  }, [enableProvisionedGroups, rulerNamespace]);
+    if (!rulerNamespace) {
+      return [];
+    }
+    const pendingGroup = group ? { name: group, interval: evaluateEvery } : undefined;
+    return namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups, pendingGroup);
+  }, [enableProvisionedGroups, rulerNamespace, group, evaluateEvery]);
 
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
@@ -283,7 +300,7 @@ export function GrafanaEvaluationBehaviorStep({
         )}
 
         {showGroupSelection && (
-          <Stack alignItems="center" gap={1}>
+          <Stack alignItems="end" gap={1}>
             <div style={{ width: 420 }}>
               <Field
                 noMargin
@@ -384,10 +401,14 @@ export function GrafanaEvaluationBehaviorStep({
           </div>
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
-        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
-        <Divider />
-        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
-        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
+        {isGrafanaAlertingRule && (
+          <>
+            <Divider />
+            <ForInput evaluateEvery={evaluateEvery} />
+            <Divider />
+            <KeepFiringFor evaluateEvery={evaluateEvery} />
+          </>
+        )}
 
         {existing && (
           <Field noMargin htmlFor="pause-alert-switch">
