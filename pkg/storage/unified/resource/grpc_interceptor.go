@@ -43,14 +43,6 @@ func requestKeyLabels(req any) (group, resource string) {
 		key = r.GetKey()
 	case *resourcepb.ListRequest:
 		key = r.GetOptions().GetKey()
-	case *resourcepb.ResourceSearchRequest:
-		key = r.GetOptions().GetKey()
-	case *resourcepb.PutBlobRequest:
-		key = r.GetResource()
-	case *resourcepb.GetBlobRequest:
-		key = r.GetResource()
-	case *resourcepb.QuotaUsageRequest:
-		key = r.GetKey()
 	}
 	if key != nil {
 		if g := key.GetGroup(); g != "" {

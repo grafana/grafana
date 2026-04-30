@@ -121,7 +121,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 		&resourcepb.Quotas_ServiceDesc,
 	} {
 		wrapped := desc
-		if metricsInt != nil {
+		if metricsInt != nil && desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
 		}
 		channel.RegisterService(

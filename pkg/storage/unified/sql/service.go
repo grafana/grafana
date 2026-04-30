@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -515,14 +514,9 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
-	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
-	for _, desc := range []*grpc.ServiceDesc{
-		&resourcepb.ResourceIndex_ServiceDesc,
-		&resourcepb.ManagedObjectIndex_ServiceDesc,
-		&resourcepb.Diagnostics_ServiceDesc,
-	} {
-		srv.RegisterService(grpchan.InterceptServer(desc, metricsInt, nil), handler)
-	}
+	resourcepb.RegisterResourceIndexServer(srv, handler)
+	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
+	resourcepb.RegisterDiagnosticsServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
 }
@@ -541,19 +535,16 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
+	// Storage services. ResourceStore is wrapped with the request-duration interceptor
+	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
-	for _, desc := range []*grpc.ServiceDesc{
-		// Storage services
-		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.BulkStore_ServiceDesc,
-		&resourcepb.BlobStore_ServiceDesc,
-		&resourcepb.Diagnostics_ServiceDesc,
-		&resourcepb.Quotas_ServiceDesc,
-		// Search services
-		&resourcepb.ResourceIndex_ServiceDesc,
-		&resourcepb.ManagedObjectIndex_ServiceDesc,
-	} {
-		srv.RegisterService(grpchan.InterceptServer(desc, metricsInt, nil), handler)
-	}
+	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
+	resourcepb.RegisterBulkStoreServer(srv, handler)
+	resourcepb.RegisterBlobStoreServer(srv, handler)
+	resourcepb.RegisterDiagnosticsServer(srv, handler)
+	resourcepb.RegisterQuotasServer(srv, handler)
+	// Search services
+	resourcepb.RegisterResourceIndexServer(srv, handler)
+	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 }
