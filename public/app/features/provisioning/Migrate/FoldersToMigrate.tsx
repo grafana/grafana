@@ -10,22 +10,13 @@ import {
   FilterInput,
   Icon,
   IconButton,
-  LinkButton,
   Stack,
   Text,
   useStyles2,
 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type FolderPeekDashboard, type FolderRow } from './hooks/useFolderLeaderboard';
-
-function folderUrl(uid: string): string {
-  return `/dashboards/f/${encodeURIComponent(uid)}`;
-}
-
-function dashboardUrl(dash: FolderPeekDashboard): string {
-  return dash.url || `/d/${encodeURIComponent(dash.uid)}`;
-}
+import { type FolderRow } from './hooks/useFolderLeaderboard';
 
 interface Props {
   folders: FolderRow[];
@@ -220,17 +211,6 @@ function FolderEntry({
             })}
           </Text>
         </Stack>
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
-          icon="external-link-alt"
-          href={folderUrl(folder.uid)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
-        </LinkButton>
       </div>
       {isExpanded && (
         <div className={styles.children}>
@@ -252,18 +232,6 @@ function FolderEntry({
                   />
                   <Icon name="apps" size="sm" />
                   <Text variant="bodySmall">{dash.title}</Text>
-                  <div className={styles.spacer} />
-                  <LinkButton
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="external-link-alt"
-                    href={dashboardUrl(dash)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
-                  </LinkButton>
                 </div>
               );
             })
@@ -328,8 +296,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       background: theme.colors.background.canvas,
     },
-  }),
-  spacer: css({
-    flex: '1 1 auto',
   }),
 });

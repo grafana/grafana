@@ -357,7 +357,7 @@ describe('Migrate', () => {
     expect(screen.queryByText('Quick wins')).not.toBeInTheDocument();
   });
 
-  it('renders the Dashboards to migrate panel with foldable rows and an Open link to a new tab', () => {
+  it('renders the Dashboards to migrate panel with foldable rows and no per-row Open link', () => {
     mockQuery({
       data: {
         instance: [
@@ -375,10 +375,10 @@ describe('Migrate', () => {
     });
     render(<Migrate />);
     expect(screen.getByText(/dashboards to migrate/i)).toBeInTheDocument();
-    // No per-row Migrate; only an Open link that targets a new tab.
-    const open = screen.getByRole('link', { name: /^open$/i });
-    expect(open).toHaveAttribute('href', '/dashboards/f/pay');
-    expect(open).toHaveAttribute('target', '_blank');
+    // The row only carries the expand toggle, the checkbox, and the folder
+    // metadata. No per-row Open or Migrate buttons.
+    expect(screen.queryByRole('link', { name: /^open$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^open$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /^migrate to my-repo$/i })).not.toBeInTheDocument();
   });
 

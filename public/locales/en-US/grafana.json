@@ -13786,7 +13786,6 @@
       "dashboards-folder-only-subfolders": "Dashboards in this folder live in subfolders. Migrate the folder to bring them all in one go.",
       "dashboards-folder-summary_one": "{{count}} dashboards",
       "dashboards-folder-summary_other": "{{count}} dashboards",
-      "dashboards-open": "Open",
       "dashboards-select-folder": "Select folder {{folder}}",
       "dashboards-to-migrate-all-managed": "All folders are already managed.",
       "dashboards-to-migrate-empty": "No folders or dashboards match the current search.",
