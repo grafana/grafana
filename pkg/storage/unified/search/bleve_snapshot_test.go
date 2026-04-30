@@ -24,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -95,6 +96,15 @@ func (f *fakeRemoteIndexStore) DeleteIndex(context.Context, resource.NamespacedR
 }
 func (f *fakeRemoteIndexStore) CleanupIncompleteUploads(context.Context, resource.NamespacedResource, time.Duration) (int, error) {
 	panic("CleanupIncompleteUploads not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) ListNamespaces(context.Context) ([]string, error) {
+	panic("ListNamespaces not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) ListNamespaceIndexes(context.Context, string) ([]resource.NamespacedResource, error) {
+	panic("ListNamespaceIndexes not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) LockNamespaceForCleanup(context.Context, string) (IndexStoreLock, error) {
+	panic("LockNamespaceForCleanup not implemented for fakeRemoteIndexStore")
 }
 
 // writeFakeSnapshot creates an empty bleve index at dir with RV and build info
@@ -439,7 +449,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("skips when upload interval has not elapsed", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 		idx := newUploadTestIndex(t, be, key, 42)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 5))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
 		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -450,7 +460,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("skips when mutation count is below threshold", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 100})
 		idx := newUploadTestIndex(t, be, key, 150)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 50))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -461,7 +471,7 @@ func TestShouldUpload(t *testing.T) {
 	t.Run("uploads when interval elapsed and mutation count is large enough", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 25})
 		idx := newUploadTestIndex(t, be, key, 150)
-		require.NoError(t, setSnapshotMutationCount(idx.index, 30))
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
@@ -475,7 +485,7 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	key := newTestNsResource()
 	idx := newUploadTestIndex(t, be, key, 42)
 
-	count, err := getSnapshotMutationCount(idx.index)
+	count, err := readSnapshotMutationCount(idx.index)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
@@ -505,7 +515,7 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	count, err = getSnapshotMutationCount(idx.index)
+	count, err = readSnapshotMutationCount(idx.index)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -535,6 +545,108 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	assert.Nil(t, be.getCachedIndex(key, time.Now()))
 	_, ok := be.getUploadTracking(key)
 	assert.False(t, ok)
+}
+
+func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "default"})
+	bucketURL := fileBucketURL(t, t.TempDir())
+	key := newTestNsResource()
+
+	beA, metricsA := newConfiguredSnapshotBackend(t, bucketURL)
+	beAStopped := false
+	t.Cleanup(func() {
+		if !beAStopped {
+			beA.Stop()
+		}
+	})
+	idxA, err := beA.BuildIndex(ctx, key, 10, nil, "startup", func(index resource.ResourceIndex) (int64, error) {
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  "dash-prod",
+					Title: "Production Overview",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-prod",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    2,
+					Name:  "dash-api",
+					Title: "API Latency",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-api",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+		}}))
+		return 2, nil
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxA)
+
+	beA.runUploadSnapshots(ctx)
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsA.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+
+	indexes, err := beA.opts.Snapshot.Store.ListIndexes(ctx, key)
+	require.NoError(t, err)
+	require.Len(t, indexes, 1)
+
+	beA.Stop()
+	beAStopped = true
+
+	beB, metricsB := newConfiguredSnapshotBackend(t, bucketURL)
+	t.Cleanup(beB.Stop)
+	var builderCalled atomic.Bool
+	idxB, err := beB.BuildIndex(ctx, key, 10, nil, "startup", func(resource.ResourceIndex) (int64, error) {
+		builderCalled.Store(true)
+		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxB)
+
+	assert.False(t, builderCalled.Load())
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsB.IndexSnapshotDownloads.WithLabelValues(snapshotStatusSuccess)))
+
+	res, err := idxB.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Query: "Production",
+		Limit: 100,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), res.TotalHits)
+	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
+}
+
+func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend, *resource.BleveIndexMetrics) {
+	t.Helper()
+	cfg := snapshotOptionsTestCfg(t)
+	cfg.EnableSearch = true
+	cfg.BuildVersion = "11.5.0"
+	cfg.IndexSnapshotEnabled = true
+	cfg.IndexSnapshotBucketURL = bucketURL
+
+	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	require.NoError(t, err)
+	be, ok := opts.Backend.(*bleveBackend)
+	require.True(t, ok)
+	be.opts.Snapshot.MinDocChanges = 1
+	return be, metrics
 }
 
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
@@ -590,7 +702,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	require.True(t, tracked)
 	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
 
-	mutationCount, err := getSnapshotMutationCount(bi.index)
+	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)
 	assert.Zero(t, mutationCount)
 }

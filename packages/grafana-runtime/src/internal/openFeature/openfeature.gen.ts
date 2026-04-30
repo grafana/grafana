@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enable Meticulous AI session recorder for automated UI test generation */
+  GrafanaMeticulousAIRecorder: "grafana.meticulousAIRecorder",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -55,12 +57,16 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
+  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
+  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables option to position series names above bars in the state timeline panel */
+  StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables plugins decoupling from bootdata */
@@ -189,6 +195,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enable Meticulous AI session recorder for automated UI test generation
+ *
+ * **Details:**
+ * - flag key: `grafana.meticulousAIRecorder`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMeticulousAIRecorder = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.meticulousAIRecorder", false, options).value;
+};
+
+/**
  * Whether to use the new SharedPreferences functional component
  *
  * **Details:**
@@ -299,6 +316,17 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
+ * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ *
+ * **Details:**
+ * - flag key: `queryEditorNextMultiSelect`
+ * - default value: `false`
+ */
+export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryEditorNextMultiSelect", false, options).value;
+};
+
+/**
  * Enables recently viewed dashboards section in the browsing dashboard page
  *
  * **Details:**
@@ -329,6 +357,17 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("splashScreen", true, options).value;
+};
+
+/**
+ * Enables option to position series names above bars in the state timeline panel
+ *
+ * **Details:**
+ * - flag key: `stateTimeline.nameAboveBars`
+ * - default value: `false`
+ */
+export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("stateTimeline.nameAboveBars", false, options).value;
 };
 
 /**

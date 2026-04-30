@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -29,6 +30,7 @@ type QOSEnqueueDequeuer interface {
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
 	Backend          resource.StorageBackend
+	VectorBackend    vector.VectorBackend
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -59,6 +61,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withAccessClient,
 		withMaxPageSizeBytes,
 		withBackend,
+		withVectorBackend,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
@@ -92,6 +95,7 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBlobConfig,
 		withAccessClient,
 		withBackend,
+		withVectorBackend,
 		withSearch,
 	)
 	if err != nil {
@@ -178,6 +182,13 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
 		resourceOpts.Diagnostics = diagnostics
 	}
+	return nil
+}
+
+// withVectorBackend propagates the optional VectorBackend through. nil is
+// allowed; callers fall back to non-vector search paths when it's absent.
+func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorBackend = opts.VectorBackend
 	return nil
 }
 

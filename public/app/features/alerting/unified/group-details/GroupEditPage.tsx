@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -45,6 +45,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
+import { getRulerGroupReadOnlyStatus } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 import { evaluateEveryValidationOptions } from './validation';
@@ -152,13 +153,59 @@ function GroupEditPage() {
           </Alert>
         )}
       </>
-      {rulerGroup && <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
+      {rulerGroup && <GroupEditBody rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />}
       {!rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
     </AlertingPageWrapper>
   );
 }
 
 export default withErrorBoundary(GroupEditPage, { style: 'page' });
+
+interface GroupEditBodyProps {
+  rulerGroup: RulerRuleGroupDTO;
+  groupIdentifier: RuleGroupIdentifierV2;
+}
+
+function GroupEditBody({ rulerGroup, groupIdentifier }: GroupEditBodyProps) {
+  const status = getRulerGroupReadOnlyStatus(rulerGroup);
+
+  if (!status.readOnly) {
+    return <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />;
+  }
+
+  switch (status.reason) {
+    case 'plugin':
+      return (
+        <Alert
+          title={t('alerting.group-edit.group-plugin-provided', 'This rule group is managed by a plugin')}
+          severity="info"
+        >
+          <Trans i18nKey="alerting.group-edit.group-plugin-provided-description">
+            Rule groups provisioned by a plugin cannot be edited from Grafana. Manage them from the plugin that owns
+            them.
+          </Trans>
+        </Alert>
+      );
+    case 'provisioned':
+      return (
+        <Alert title={t('alerting.group-edit.group-provisioned', 'This rule group is provisioned')} severity="info">
+          <Trans i18nKey="alerting.group-edit.group-provisioned-description">
+            Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.
+          </Trans>
+        </Alert>
+      );
+    case 'federated':
+      return (
+        <Alert title={t('alerting.group-edit.group-federated', 'This rule group is federated')} severity="info">
+          <Trans i18nKey="alerting.group-edit.group-federated-description">
+            Federated rule groups cannot be edited from Grafana.
+          </Trans>
+        </Alert>
+      );
+    default:
+      return <GroupEditForm rulerGroup={rulerGroup} groupIdentifier={groupIdentifier} />;
+  }
+}
 
 interface GroupEditFormProps {
   rulerGroup: RulerRuleGroupDTO;
@@ -233,11 +280,18 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 
       setMatchingGroupPageUrl(updatedGroupIdentifier);
     } catch (error) {
-      logError(error instanceof Error ? error : new Error('Failed to update rule group'));
-      appInfo.error(
-        t('alerting.group-edit.form.update-error', 'Failed to update rule group'),
-        stringifyErrorLike(error)
-      );
+      const message = stringifyErrorLike(error);
+      const loggedError = error instanceof Error ? error : new Error(message);
+      logError(loggedError, {
+        operation: 'updateRuleGroup',
+        message,
+        ...(isFetchError(error) && {
+          status: String(error.status),
+          statusText: error.statusText ?? '',
+          url: error.config?.url ?? '',
+        }),
+      });
+      appInfo.error(t('alerting.group-edit.form.update-error', 'Failed to update rule group'), message);
     }
   };
 

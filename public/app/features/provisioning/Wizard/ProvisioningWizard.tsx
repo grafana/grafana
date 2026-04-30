@@ -198,10 +198,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        <>
+        <div className={styles.stepperWrapper}>
           <Stepper steps={wizardSteps} activeStep={activeStep} visitedSteps={completedSteps} />
           <div className={styles.divider} />
-        </>
+        </div>
         <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
           <FormPrompt
             onDiscard={onDiscard}
@@ -268,6 +268,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   form: css({
     maxWidth: '900px',
     flexGrow: 1,
+    [theme.breakpoints.down('md')]: {
+      maxWidth: '100%',
+      minWidth: 0,
+    },
+  }),
+  stepperWrapper: css({
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
   }),
   divider: css({
     width: 1,
@@ -283,5 +292,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     paddingBottom: theme.spacing(4),
     marginBottom: theme.spacing(4),
+    overflowX: 'auto',
   }),
 });

@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
         "save": "Spara"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "namn",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Radera alla regler"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Radera",
       "delete-modal-delete-button": "Radera",
@@ -1573,8 +1575,14 @@
         "update-error": "Misslyckades med att uppdatera regelgrupp",
         "update-success": "Regelgruppen har uppdaterats"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Redigera regelgrupp",
       "rule-group-error": "Fel vid laddning av regelgrupp"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alfabetiskt (A–Ö)",
         "alphabetically-za": "Alfabetiskt (Ö–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Raderat (nyaste först)",
         "deleted-oldest": "Raderat (äldsta först)"
       }
@@ -13577,6 +13587,7 @@
       "contact-admin": "Kontakta din Grafana-administratör för att konvertera denna resurs till lokal eller radera alla resurser från den saknade lagringsplatsen.",
       "convert-to-local-button": "Konvertera till lokala",
       "delete-button": "Radera",
+      "go-to-dashboards": "",
       "job-error": "Ett fel uppstod vid behandlingen av övergivna resurser",
       "job-success": "Övergivna resurser har behandlats",
       "job-warning": "Vissa resurser behandlades med varningar. Granska resultaten.",
@@ -13823,7 +13834,8 @@
       "make-sure": "Skapa en token med dessa behörigheter"
     },
     "validation": {
-      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen."
+      "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Varning",
     "watch-stream": {
@@ -14285,6 +14297,10 @@
     "buttons": {
       "restore": "Återställ"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
       "no-deleted-dashboards-text": "När du tar bort en instrumentpanel kommer den att sparas i historiken i upp till 12 månader innan den raderas permanent. Användare med behörighet att radera kan återställa de instrumentpaneler de själva har raderat och administratörer kan återställa instrumentpaneler som tagits bort av alla användare.",
@@ -14446,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Datakälla",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Återstående tid",
       "location-header": "Plats",
