@@ -563,8 +563,8 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
     return intervals[0];
   }
 
-  // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  // If auto is eanbled and value is $__auto or older format $__auto_interval_
+  if (variable.spec.auto && selectedInterval.startsWith('$__auto')) {
     return '$__auto';
   }
 
