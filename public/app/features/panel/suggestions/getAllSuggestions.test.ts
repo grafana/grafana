@@ -24,8 +24,28 @@ import { appEvents } from 'app/core/app_events';
 import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
-import { panelsToCheckFirst } from './consts';
 import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
+
+const PANELS_TO_TEST = [
+  'timeseries',
+  'barchart',
+  'gauge',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
+  'heatmap',
+  'histogram',
+  'text',
+] as const;
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -68,16 +88,11 @@ function getPanelPluginMeta(pluginId: string) {
 
 function getPanelPlugins() {
   const plugins = [];
-  for (const pluginId of panelsToCheckFirst) {
-    if (pluginId === 'geomap') {
-      continue;
-    }
+  for (const pluginId of PANELS_TO_TEST) {
     plugins.push(getPanelPluginMeta(pluginId));
   }
   return plugins;
 }
-
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 class ScenarioContext {
   data: DataFrame[] = [];
