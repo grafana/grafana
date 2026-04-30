@@ -376,11 +376,12 @@ func (pr *FakeBackendProcessProvider) BackendFactory(ctx context.Context, p *plu
 }
 
 type FakeLicensingService struct {
-	LicenseEdition string
-	TokenRaw       string
-	LicensePath    string
-	LicenseAppURL  string
-	CDNPrefix      string
+	LicenseEdition  string
+	TokenRaw        string
+	LicensePath     string
+	LicenseAppURL   string
+	CDNPrefix       string
+	LicenseHasValid bool
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -412,6 +413,10 @@ func (s *FakeLicensingService) PluginLicensePath(pluginID string) (string, error
 		return "", nil
 	}
 	return filepath.Join(filepath.Dir(s.LicensePath), "license-"+pluginID+".jwt"), nil
+}
+
+func (s *FakeLicensingService) HasValidLicense() bool {
+	return s.LicenseHasValid
 }
 
 type FakeRoleRegistry struct {

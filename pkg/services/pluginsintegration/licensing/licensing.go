@@ -72,6 +72,24 @@ func (l *Service) ContentDeliveryPrefix() string {
 	return l.license.ContentDeliveryPrefix()
 }
 
+// validLicenseChecker is implemented by license backends (e.g. the enterprise
+// LicenseTokenService) that can report whether the host is running with an
+// active, non-expired license. The OSS licensing service does not implement
+// it, so HasValidLicense returns false on OSS builds.
+type validLicenseChecker interface {
+	HasValidLicense() bool
+}
+
+// HasValidLicense reports whether the host is running with an active,
+// non-expired commercial license. Returns false on OSS builds, where the
+// underlying licensing service does not expose a token state.
+func (l *Service) HasValidLicense() bool {
+	if checker, ok := l.license.(validLicenseChecker); ok {
+		return checker.HasValidLicense()
+	}
+	return false
+}
+
 // PluginLicensePath returns the absolute path of the per-plugin JWT license
 // file that lives next to the enterprise license. The pluginID is validated
 // to prevent path traversal: any separator, parent reference, or NUL byte

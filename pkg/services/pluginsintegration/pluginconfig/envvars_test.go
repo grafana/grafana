@@ -59,6 +59,65 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	})
 }
 
+func TestPluginEnvVarsProvider_marketplaceLicensePath(t *testing.T) {
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "test",
+		},
+	}
+
+	cfg := &PluginInstanceCfg{
+		Features: featuremgmt.WithFeatures(),
+	}
+
+	t.Run("nil license: marketplace path not set", func(t *testing.T) {
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		_, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.False(t, ok, "marketplace license path must not be set without a license")
+	})
+
+	t.Run("license without active token: marketplace path not set", func(t *testing.T) {
+		licensing := &pluginfakes.FakeLicensingService{
+			LicenseEdition:  "test",
+			LicensePath:     "/path/to/ent/license",
+			LicenseHasValid: false,
+		}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		_, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.False(t, ok, "marketplace license path must not be set when license is not valid")
+	})
+
+	t.Run("license with active token: marketplace path is set", func(t *testing.T) {
+		licensing := &pluginfakes.FakeLicensingService{
+			LicenseEdition:  "test",
+			LicensePath:     "/path/to/ent/license",
+			LicenseHasValid: true,
+		}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		got, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.True(t, ok, "marketplace license path must be set when license is valid")
+		require.Equal(t, "/path/to/ent/license-test.jwt", got)
+	})
+
+	t.Run("license valid but PluginLicensePath returns empty: env var still emitted with empty value", func(t *testing.T) {
+		// FakeLicensingService.PluginLicensePath returns "" without error when
+		// LicensePath is unset. The provider only skips on error, so an empty
+		// (but successful) path still produces the env var. This guards the
+		// observed behaviour.
+		licensing := &pluginfakes.FakeLicensingService{
+			LicenseHasValid: true,
+		}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		got, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.True(t, ok)
+		require.Equal(t, "", got)
+	})
+}
+
 func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 	const (
 		envVarName  = "HTTP_PROXY"
