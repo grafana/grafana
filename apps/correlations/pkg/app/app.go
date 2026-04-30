@@ -58,10 +58,13 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 }
 
 const (
-	// SourceRefLabelKey is the label key for the composite source reference (group.name)
-	// without provisioning is used for filtering when we don't care about if the correlation was provisioned (ie, showing all correlations for the selected datasource(s) in explore)
-	// with provisioning is when we do (ie: deleting all previously provisioned correlations by datasource)
-	SourceRefLabelKey     = "correlations.grafana.app/sourceDS-ref"
+	// TODO can datasources have periods in their names/uids? will using this work or should we use something else?
+
+	// SourceRefLabelKey is the label key for the composite source reference (group.name aka datasource type.datasource UID)
+	// this is used for filtering when we don't care about if the correlation was provisioned (ie, showing all correlations for the selected datasource(s) in explore)
+	SourceRefLabelKey = "correlations.grafana.app/sourceDS-ref"
+	// SourceRefProvLabelKey is the label key for the composite source reference and a boolean for if the correlation was provisioned (group.name.(true|false))
+	// this is used when we need to filter correlations by their provisioned status (ie: deleting all previously provisioned correlations by datasource)
 	SourceRefProvLabelKey = "correlations.grafana.app/sourceDSProv-ref"
 
 	// TargetRefLabelKey is the label key for the composite target reference (group.name)

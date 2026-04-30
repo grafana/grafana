@@ -44,6 +44,11 @@ func TestConversion(t *testing.T) {
 					Annotations: map[string]string{
 						"grafana.app/managedBy": "classic-file-provisioning",
 					},
+					Labels: map[string]string{
+						"correlations.grafana.app/sourceDS-ref":     "source-type.source",
+						"correlations.grafana.app/sourceDSProv-ref": "source-type.source.true",
+						"correlations.grafana.app/targetDS-ref":     "target-type.target",
+					},
 				},
 				Spec: correlationsV0.CorrelationSpec{
 					Description: ptr.To("A test correlation"),
