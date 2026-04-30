@@ -152,6 +152,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        id: login-to-gar
+        with:
+          registry: 'us-docker.pkg.dev'
+          environment: 'dev'
+
       - name: Get vault secrets
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
