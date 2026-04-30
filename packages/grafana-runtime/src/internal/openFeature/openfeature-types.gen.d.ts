@@ -15,6 +15,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "stateTimeline.nameAboveBars"
     | "newSavedQueriesExperience"
+    | "dashboard.orgTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"

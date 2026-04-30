@@ -19,6 +19,8 @@ export const FlagKeys = {
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the created by me search filter on the browse dashboards page */
   CreatedByMeSearchFilter: "createdByMeSearchFilter",
+  /** Enables org-defined dashboard templates for enterprise */
+  DashboardOrgTemplates: "dashboard.orgTemplates",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -102,6 +104,17 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
  */
 export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("createdByMeSearchFilter", false, options).value;
+};
+
+/**
+ * Enables org-defined dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `dashboard.orgTemplates`
+ * - default value: `false`
+ */
+export const useFlagDashboardOrgTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.orgTemplates", false, options).value;
 };
 
 /**
