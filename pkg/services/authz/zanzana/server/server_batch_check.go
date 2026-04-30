@@ -227,7 +227,7 @@ func (s *Server) runGroupResourcePhase(
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheckWithContextualTeamChunks(ctx, store, checks, base, teamTuples)
+	results, err := s.doBatchCheck(ctx, store, checks, base, teamTuples)
 	if err != nil {
 		return len(checks), err
 	}
@@ -511,7 +511,7 @@ func (s *Server) resolveFolderChecksByBatch(
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheckWithContextualTeamChunks(ctx, store, checks, base, teamTuples)
+	results, err := s.doBatchCheck(ctx, store, checks, base, teamTuples)
 	if err != nil {
 		return len(checks), err
 	}
@@ -750,7 +750,7 @@ func (s *Server) collectAllowedObjects(
 	base *openfgav1.ContextualTupleKeys,
 	teamTuples []*openfgav1.TupleKey,
 ) error {
-	res, err := s.listObjectsWithContextualTeamChunks(ctx, req, base, teamTuples)
+	res, err := s.listObjects(ctx, req, base, teamTuples)
 	if err != nil {
 		return err
 	}
@@ -769,9 +769,9 @@ func resolveByMembership(items []*batchCheckItem, allowed map[string]bool) {
 	}
 }
 
-// doBatchCheck executes a batch check against OpenFGA, splitting into
+// doOpenFGABatchCheck executes a batch check against OpenFGA, splitting into
 // sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
-func (s *Server) doBatchCheck(
+func (s *Server) doOpenFGABatchCheck(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,

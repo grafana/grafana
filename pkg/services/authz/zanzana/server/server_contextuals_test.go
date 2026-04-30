@@ -55,7 +55,7 @@ func TestGetContextualParts(t *testing.T) {
 	})
 
 	t.Run("auth info groups add team member tuples", func(t *testing.T) {
-		ctx := newContextWithGroups("team:aa", "team:bb")
+		ctx := newContextWithGroups("aa", "bb")
 		base, team, err := srv.getContextualParts(ctx, "user:1")
 		require.NoError(t, err)
 		assert.Nil(t, base)

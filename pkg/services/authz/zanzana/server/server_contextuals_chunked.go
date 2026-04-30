@@ -99,8 +99,8 @@ func (s *Server) openfgaCheckWithContextualTeamChunks(
 	return last, nil
 }
 
-// listObjectsWithContextualTeamChunks calls [Server.listObjects] for each chunk and unions object ids (deduplicated, stable order).
-func (s *Server) listObjectsWithContextualTeamChunks(
+// listObjects calls [Server.doOpenFGAListObjects] for each chunk and unions object ids (deduplicated, stable order).
+func (s *Server) listObjects(
 	ctx context.Context,
 	req *openfgav1.ListObjectsRequest,
 	base *openfgav1.ContextualTupleKeys,
@@ -108,15 +108,15 @@ func (s *Server) listObjectsWithContextualTeamChunks(
 ) (*openfgav1.ListObjectsResponse, error) {
 	chunks := s.buildContextualTupleChunks(base, teamTuples)
 	if len(chunks) == 0 {
-		return s.listObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, nil))
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, nil))
 	}
 	if len(chunks) == 1 {
-		return s.listObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunks[0]))
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunks[0]))
 	}
 	seen := make(map[string]struct{})
 	var merged []string
 	for _, ch := range chunks {
-		lo, err := s.listObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, ch))
+		lo, err := s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, ch))
 		if err != nil {
 			return nil, err
 		}
@@ -138,9 +138,9 @@ func cloneListObjectsRequestWithContextualTuples(req *openfgav1.ListObjectsReque
 	return out
 }
 
-// doBatchCheckWithContextualTeamChunks sets contextual tuples on each check item, possibly running
+// doBatchCheck sets contextual tuples on each check item, possibly running
 // multiple OpenFGA [BatchCheck] calls (OR across chunks per correlation id).
-func (s *Server) doBatchCheckWithContextualTeamChunks(
+func (s *Server) doBatchCheck(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
@@ -153,17 +153,17 @@ func (s *Server) doBatchCheckWithContextualTeamChunks(
 	chunks := s.buildContextualTupleChunks(base, teamTuples)
 	if len(chunks) == 0 {
 		s.setBatchCheckItemsContextualTuples(checks, nil)
-		return s.doBatchCheck(ctx, store, checks)
+		return s.doOpenFGABatchCheck(ctx, store, checks)
 	}
 	if len(chunks) == 1 {
 		s.setBatchCheckItemsContextualTuples(checks, chunks[0])
-		return s.doBatchCheck(ctx, store, checks)
+		return s.doOpenFGABatchCheck(ctx, store, checks)
 	}
 
 	var merged map[string]*openfgav1.BatchCheckSingleResult
 	for _, ch := range chunks {
 		s.setBatchCheckItemsContextualTuples(checks, ch)
-		partial, err := s.doBatchCheck(ctx, store, checks)
+		partial, err := s.doOpenFGABatchCheck(ctx, store, checks)
 		if err != nil {
 			return nil, err
 		}

@@ -286,13 +286,12 @@ func (s *Server) getContextualParts(ctx context.Context, subject string) (base *
 	var teamNames []string
 	if c, ok := authtypes.AuthInfoFrom(ctx); ok {
 		for _, g := range c.GetGroups() {
-			n, ok := strings.CutPrefix(g, common.TypeTeamPrefix)
-			if !ok || n == "" {
+			if g == "" {
 				continue
 			}
-			if _, dup := seen[n]; !dup {
-				seen[n] = struct{}{}
-				teamNames = append(teamNames, n)
+			if _, dup := seen[g]; !dup {
+				seen[g] = struct{}{}
+				teamNames = append(teamNames, g)
 			}
 		}
 	}

@@ -96,7 +96,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	var items []string
 	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
 		// List requested subresources
-		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
@@ -113,7 +113,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}
 
 	// List all resources user has access too
-	res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
+	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 resource.Type(),
@@ -143,7 +143,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	// 1. List all folders subject has access to resource type in
 	var folders []string
 	if common.IsSubresourceRelation(folderRelation) {
-		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
@@ -161,7 +161,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 
 	// Special case for folder permission based resources (like dashboards in a folder)
 	if isFolderPermissionBasedResource(resource.GroupResource()) {
-		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
@@ -180,7 +180,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	// 2. List all resource directly assigned to subject
 	var objects []string
 	if resource.IsValidRelation(relation) {
-		res, err := s.listObjectsWithContextualTeamChunks(ctx, &openfgav1.ListObjectsRequest{
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeResource,
@@ -201,9 +201,9 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	}, nil
 }
 
-// listObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
+// doOpenFGAListObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
 // aggregating all streamed objects. That avoids unary ListObjects max-result truncation for large sets.
-func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (s *Server) doOpenFGAListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {

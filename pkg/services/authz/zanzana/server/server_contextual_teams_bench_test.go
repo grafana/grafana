@@ -120,7 +120,7 @@ func setupContextualTeamBenchServer(b *testing.B, withStoredUserTeam bool) (*Ser
 func newBenchCtxWithTeams(nTeams int) context.Context {
 	teams := make([]string, 0, nTeams)
 	for i := 0; i < nTeams; i++ {
-		teams = append(teams, fmt.Sprintf("team:%d", i))
+		teams = append(teams, fmt.Sprintf("%d", i))
 	}
 	return newContextWithGroups(teams...)
 }
