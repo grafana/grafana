@@ -22,6 +22,9 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeMovedToK6 = errutil.BadRequest("folder.cannot-be-moved-to-k6", errutil.WithPublicMessage("Folders cannot be moved into the k6 project"))
+
+// ErrCyclicReference indicates corrupt storage state, not user input.
 var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
 
 // Legacy /api/folders sentinels: kept as errors.New so /api responses match byte-for-byte.
