@@ -7,6 +7,7 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "analytics-report": "node ./scripts/cli/analytics/main.mts",
+    "analytics-report:test": "node --test ./scripts/cli/analytics/*.test.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts && yarn build:react19",
     "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.ts --env react19=1",
