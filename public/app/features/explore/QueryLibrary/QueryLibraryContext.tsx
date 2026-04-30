@@ -1,10 +1,10 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext } from 'react';
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext } from 'react';
 
-import { CoreApp } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
-import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
+import { type CoreApp } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
+import { type SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
+import { type OnSelectQueryType, type QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -40,7 +40,7 @@ export type QueryLibraryContextType = {
    */
   renderSavedQueryButtons: (
     query: DataQuery,
-    app?: CoreApp,
+    app?: CoreApp | string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
     datasourceFilters?: string[],
@@ -74,7 +74,7 @@ export type QueryLibraryContextType = {
     contextOverride?: string
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
-  onSelectQuery: (query: DataQuery) => void;
+  onSelectQuery: OnSelectQueryType;
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { config } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -38,6 +39,8 @@ describe('ExportButton', () => {
 });
 
 function setup() {
+  config.featureToggles.kubernetesDashboards = false;
+
   const panel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',

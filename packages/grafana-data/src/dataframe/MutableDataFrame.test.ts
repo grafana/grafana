@@ -1,4 +1,4 @@
-import { DataFrameDTO, FieldType } from '../types/dataFrame';
+import { type DataFrameDTO, FieldType } from '../types/dataFrame';
 
 import { MutableDataFrame } from './MutableDataFrame';
 

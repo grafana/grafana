@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from 'test/test-utils';
 
-import { useGetSignedInUserTeamListQuery } from '@grafana/api-clients/rtkq/legacy';
+import { useGetSignedInUserTeamListQuery } from '@grafana/api-clients/internal/rtkq/legacy';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 
 import { useGetTeamFolders } from './useTeamOwnedFolder';
@@ -9,9 +9,9 @@ jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   useSearchDashboardsAndFoldersQuery: jest.fn(),
 }));
 
-jest.mock('@grafana/api-clients/rtkq/legacy', () => {
+jest.mock('@grafana/api-clients/internal/rtkq/legacy', () => {
   return {
-    ...jest.requireActual('@grafana/api-clients/rtkq/legacy'),
+    ...jest.requireActual('@grafana/api-clients/internal/rtkq/legacy'),
     useGetSignedInUserTeamListQuery: jest.fn(),
   };
 });

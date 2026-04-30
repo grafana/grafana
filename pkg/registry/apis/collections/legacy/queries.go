@@ -28,6 +28,7 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlDashboardStarsQuery = mustTemplate("sql_dashboard_stars.sql")
 	sqlDashboardStarsRV    = mustTemplate("sql_dashboard_stars_rv.sql")
+	sqlListUsersWithStars  = mustTemplate("sql_list_users.sql")
 )
 
 type starQuery struct {
@@ -39,10 +40,8 @@ type starQuery struct {
 	QueryUIDs []string
 	QueryUID  string
 
-	StarTable              string
-	UserTable              string
-	QueryHistoryStarsTable string
-	QueryHistoryTable      string
+	StarTable string
+	UserTable string
 }
 
 func (r starQuery) Validate() error {
@@ -59,9 +58,7 @@ func newStarQueryReq(sql *legacysql.LegacyDatabaseHelper, user string, orgId int
 		UserUID: user,
 		OrgID:   orgId,
 
-		StarTable:              sql.Table("star"),
-		UserTable:              sql.Table("user"),
-		QueryHistoryStarsTable: sql.Table("query_history_star"),
-		QueryHistoryTable:      sql.Table("query_history"),
+		StarTable: sql.Table("star"),
+		UserTable: sql.Table("user"),
 	}
 }

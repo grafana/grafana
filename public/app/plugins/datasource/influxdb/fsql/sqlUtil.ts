@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { createSelectClause, haveColumns, SQLQuery } from '@grafana/sql';
+import { createSelectClause, haveColumns, type SQLQuery } from '@grafana/sql';
 
 // remove identifier quoting from identifier to use in metadata queries
 export function unquoteIdentifier(value: string) {

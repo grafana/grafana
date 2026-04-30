@@ -1,13 +1,117 @@
 import { Meta, Canvas, ArgTypes, Unstyled } from '@storybook/blocks';
 import { Button, LinkButton } from './Button';
 import { Alert } from '../Alert/Alert';
+import { Stack } from '../Layout/Stack/Stack';
 import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 <Meta title="MDX|Button" component={Button} />
 
 # Button
 
+Clickable elements that are used to trigger actions. Buttons communicate what action will occur when users interact with it.
+
 When using a button please always follow a11y rules (e.g. W3C Recommendation [3.3.2 Labels or instructions](https://www.w3.org/TR/WCAG21/#labels-or-instructions)) and make sure the context in which the button is located is also communicated by screen readers.
+
+### Do's
+
+- Apply the same width of the container for all buttons when they are in a group.
+- Use only one primary button and two of the same lower emphasis when in the button group.
+- Maintain the same style about using or not an icon with the label text in the button group.
+
+### Don'ts
+
+- Do not use two primary buttons in a button group.
+- Do not use buttons with icons and buttons without icons in a button group.
+- Do not have more than one primary action.
+- Do not pair a solid primary and solid destructive button -- one must take precedence over the other.
+- Do not use buttons with icons only (in case this is impossible please always add text for a tooltip and an aria label as they are needed to meet accessible requirements).
+
+## Emphasis
+
+- **High:** Are used for the most important and common actions on the screen. These are Primary and Destructive buttons.
+- **Default:** Used as secondary actions that can be more than one on the same page. This is the most common button usage within Grafana.
+- **Low:** Are complementary actions or links that are optional on the page.
+
+![button emphasis](./images/button.emphasis.png 'Visual representation of button emphasis')
+
+## Variants
+
+| Type          | Component                                                                                                                       | Emphasis | Purpose                                                                                                                                                                                                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Primary**   | <p>Filled with Label</p> <p>Filled with Icon + Label</p> <p>Filled with Label + Icon</p> <p>Filled with Icon + Label + Icon</p> | High     | Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If you need multiple buttons for different actions, decide which action is the most important and make that the primary Button. All other Button components should be secondary. If there is no primary action, all Button components should be secondary. |
+| **Secondary** | <p>Filled</p> <p>Outline</p> <p>Ghost</p>                                                                                       | Default  | The secondary Button is the default button style and can trigger various actions. How it is used depends on its surroundings: 1. When next to the primary Button, the Secondary style can for example be used for "Cancel" or "Abort" actions. 2. When there is no main important action on a given page, all Button components should use the secondary style.       |
+
+## Button Sizes and Label Typography
+
+| Size       | Width-Height (px - rem) | Font-Size | Font-Weight |
+| ---------- | ----------------------- | --------- | ----------- |
+| **Small**  | Auto - 24px             | 12px      | 500         |
+| **Medium** | Auto - 32px             | 14px      | 500         |
+| **Large**  | Auto - 48px             | 18px      | 500         |
+
+![button sizes](./images/button.sizes.png 'Visual representation of button sizes')
+
+## Formatting
+
+### Anatomy
+
+<Stack direction="row" gap={4}>
+  <div>
+
+![Icon + Label Button anatomy](./images/button.anatomy.a.png)
+
+#### Icon + Label Button
+
+1. Solid container
+2. Icon
+3. Text label
+
+  </div>
+  <div>
+
+![Icon Button anatomy](./images/button.anatomy.b.png)
+
+#### Icon Button
+
+**Note:** Before using buttons without text always consider using [IconButton](/docs/inputs-iconbutton--docs) instead.
+
+1. Solid container (optional)
+2. Icon
+
+  </div>
+</Stack>
+
+### Hierarchy and Button Pairings
+
+- **Primary/Destructive Button -- High Emphasis:**
+
+  A single page should only display one button with the highest importance for the main action. Other buttons should have lower emphasis and be visually different within the UI. This primary button has to attract the user's attention.
+
+- **Secondary/Icon Button -- Default Emphasis:**
+
+  A single screen can show more than one button, the other buttons can be in the same page with a primary button, these buttons have to be less important according to the actions, and do not distract users from the main content page. You should only group calls to action that are related to each other. A higher emphasis button can be paired with multiple buttons which are lower emphasis.
+
+- **Outline/Text Button -- Low Emphasis:**
+
+  These buttons have less impact and are less distracting to the user's attention, on the same screen several of them can be used. They are actionable to take users to a new page, the main objective being to provide more information about that section.
+
+### Placement
+
+- Primary
+  - On the page on the top-right
+  - Inside the content page on the center
+- Default
+  - Inside cards on the bottom-right
+  - Inside content page on the bottom-left
+- Text link
+  - Inside cards on the top-right
+  - Inside cards on the bottom-center
+
+## Accessibility
+
+- Use ARIA tags when using buttons to ensure they are accessible.
+  - For example buttons represented by icons, the accessible name may be provided from the aria-label or aria-labelledby attributes.
+  - Using role="button" instead of the semantic `<button>` or `<input type="button">` (iOS "clickable elements" fix for role="button").
 
 ## Primary
 
@@ -91,6 +195,12 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
     {'Large'}
   </LinkButton>
 </ExampleFrame>
+
+## Further Reading
+
+- [Buttons UX best practices](https://uxplanet.org/5-best-practices-for-designing-effective-buttons-71a4a33e6d26)
+- [7 Basic Rules for Button Design](https://uxplanet.org/7-basic-rules-for-button-design-63dcdf5676b4)
+- [A comprehensive guide to designing UX buttons](https://www.invisionapp.com/inside-design/comprehensive-guide-designing-ux-buttons/)
 
 ## Props
 

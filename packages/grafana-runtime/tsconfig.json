@@ -8,8 +8,10 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
+    "rootDir": "../../",
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true
   },
   "exclude": ["dist/**/*"],
   "include": [

@@ -1,17 +1,19 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { SegmentedToggle, SegmentedToggleProps } from '../../SegmentedToggle';
-import { QueryEditorType, SidebarSize } from '../../constants';
+import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
+import { QueryEditorType, type SidebarSize } from '../../constants';
 import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
+import { BulkActionsBar } from './BulkActionsBar';
 import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
@@ -25,6 +27,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const styles = useStyles2(getStyles);
   const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
+  const isMultiSelectEnabled = useBooleanFlagValue('queryEditorNextMultiSelect', false);
 
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
@@ -53,6 +56,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           showBackground={false}
         />
       </SidebarHeaderActions>
+      {!isMultiSelectEnabled && <BulkActionsBar />}
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>

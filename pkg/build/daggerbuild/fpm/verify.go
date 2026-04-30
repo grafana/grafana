@@ -25,7 +25,7 @@ func VerifyDeb(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("ubuntu:22.04").
+	}).From("ubuntu:24.04").
 		WithFile("/src/package.deb", file).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates"}).
@@ -38,7 +38,7 @@ func VerifyDeb(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	}
 
 	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
-		Args: []string{"grafana-server"},
+		Args: []string{"./bin/grafana", "server"},
 	})
 
 	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
@@ -77,11 +77,11 @@ func VerifyRpm(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	}
 
 	service = service.
-		WithExec([]string{"grafana-server"}).
+		WithExec([]string{"./bin/grafana", "server"}).
 		WithExposedPort(3000)
 
 	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
-		Args: []string{"grafana-server"},
+		Args: []string{"./bin/grafana", "server"},
 	})
 
 	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)

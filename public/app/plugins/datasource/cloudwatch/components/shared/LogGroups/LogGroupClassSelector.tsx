@@ -1,7 +1,7 @@
 import { EditorField } from '@grafana/plugin-ui';
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { LogGroupClass } from '../../../dataquery.gen';
+import { type LogGroupClass } from '../../../dataquery.gen';
 
 export interface LogGroupClassSelectorProps {
   value: LogGroupClass | undefined;

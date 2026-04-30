@@ -12,11 +12,19 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.0.0-pre";
+export const pluginVersion = "13.1.0-pre";
+
+export interface TimeSeriesLegendOptions extends common.VizLegendOptions {
+  enableFacetedFilter?: boolean;
+}
+
+export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = {
+  enableFacetedFilter: true,
+};
 
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {
   disableKeyboardEvents?: boolean;
-  legend: common.VizLegendOptions;
+  legend: TimeSeriesLegendOptions;
   orientation?: common.VizOrientation;
   timeCompare?: common.TimeCompareOptions;
   tooltip: common.VizTooltipOptions;

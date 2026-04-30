@@ -4,8 +4,10 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, DateTime, rangeUtil, TimeRange } from '@grafana/data';
-import { ExtraQueryDataProcessor } from '@grafana/scenes';
+import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { type ExtraQueryDataProcessor } from '@grafana/scenes';
+
+import type { PanelTimeRangeState } from './PanelTimeRange';
 
 // rendered appropriately.
 export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
@@ -25,6 +27,25 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
 };
 
 export const getCompareSeriesRefId = (refId: string) => `${refId}-compare`;
+
+/**
+ * Whether a panel should use a hover header, used when there's
+ * nothing always-visible to display in it (no title, no visible time override).
+ * return true hides the header, return false displays the header
+ */
+export function getUpdatedHoverHeader(title: string, timeOverride?: Partial<PanelTimeRangeState>): boolean {
+  if (title !== '') {
+    return false;
+  }
+
+  if (timeOverride && !timeOverride.hideTimeOverride) {
+    if (timeOverride.timeFrom || timeOverride.timeShift) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
 

@@ -1,6 +1,6 @@
 import { useStyles2 } from '@grafana/ui';
 
-import { getServerStyles, ServerData } from '../server';
+import { getServerStyles, type ServerData } from '../server';
 
 export const ServerStack = (data: ServerData) => {
   const styles = useStyles2(getServerStyles(data));

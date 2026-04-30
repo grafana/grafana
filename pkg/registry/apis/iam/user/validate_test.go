@@ -307,7 +307,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Login: "", Email: "", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
-				Type: types.TypeUser,
+				Type: types.TypeAccessPolicy,
 			},
 			expectError:   true,
 			errorContains: "user must have either login or email",
@@ -321,8 +321,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
-				Type:           types.TypeUser,
-				IsGrafanaAdmin: true,
+				Type: types.TypeAccessPolicy,
 			},
 			searchClient: &FakeUserLegacySearchClient{},
 			expectError:  false,
@@ -336,8 +335,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Login: "", Email: "test@example", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
-				Type:           types.TypeUser,
-				IsGrafanaAdmin: true,
+				Type: types.TypeAccessPolicy,
 			},
 			searchClient: &FakeUserLegacySearchClient{},
 			expectError:  false,
@@ -472,6 +470,49 @@ func TestValidateOnUpdate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "non-service non-admin user updating role field is allowed",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Role: "Editor"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-service non-admin user updating non-role fields is forbidden",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "old@example", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "new@example", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError:   true,
+			errorContains: "updating fields beyond org role requires service identity or grafana admin",
+		},
+		{
+			name: "grafana admin updating non-role fields is allowed",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Title: "Old Title", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Title: "New Title", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
 			name: "update with existing email",
 			oldUser: &iamv0alpha1.User{
 				ObjectMeta: metav1.ObjectMeta{
@@ -486,7 +527,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Email: "two@example", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
-				Type:           types.TypeUser,
+				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
 			searchClient: &FakeUserLegacySearchClient{
@@ -512,7 +553,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Login: "two", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
-				Type:           types.TypeUser,
+				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
 			searchClient: &FakeUserLegacySearchClient{

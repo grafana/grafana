@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, UrlQueryValue } from '@grafana/data';
+import { type AdHocVariableFilter, type UrlQueryValue } from '@grafana/data';
 
 import { toFilters, toUrl } from './urlParser';
 

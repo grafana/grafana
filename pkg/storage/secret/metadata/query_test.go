@@ -268,6 +268,16 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueSetInactiveAllFromGroup: {
+				{
+					Name: "set inactive all from group",
+					Data: &setInactiveAllFromGroupSecureValue{
+						SQLTemplate:            mocks.NewTestingSQLTemplate(),
+						Namespace:              "ns",
+						OwnerReferenceAPIGroup: "prometheus.datasource.grafana.app",
+					},
+				},
+			},
 			sqlSecureValueLeaseInactive: {
 				{
 					Name: "lease inactive",

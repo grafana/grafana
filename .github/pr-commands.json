@@ -101,15 +101,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/elasticsearch/**/*",
-      "pkg/tsdb/elasticsearch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Elasticsearch"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/graphite/**/*",
       "pkg/tsdb/graphite/**/*"
     ],
@@ -365,7 +356,6 @@
     "type": "changedfiles",
     "matches": [
       "public/app/plugins/panel/gauge/**/*",
-      "/packages/grafana-ui/src/components/Gauge/**/*",
       "/packages/grafana-ui/src/components/RadialGauge/**/*"
     ],
     "action": "updateLabel",
@@ -432,17 +422,6 @@
     "matches": [
       "public/app/plugins/datasource/influxdb/**/*",
       "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/elasticsearch/**/*",
-      "pkg/tsdb/elasticsearch/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

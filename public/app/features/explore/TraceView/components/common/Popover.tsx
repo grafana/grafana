@@ -1,4 +1,4 @@
-import { cloneElement, ReactElement, useRef } from 'react';
+import { cloneElement, type ReactElement, useRef } from 'react';
 
 import { Popover as GrafanaPopover, PopoverController } from '@grafana/ui';
 

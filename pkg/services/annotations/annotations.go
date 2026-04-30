@@ -23,7 +23,14 @@ type Repository interface {
 	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
+// CleanupSettings groups pruning policies for each annotation category.
+type CleanupSettings struct {
+	Alerting  setting.AnnotationCleanupSettings
+	API       setting.AnnotationCleanupSettings
+	Dashboard setting.AnnotationCleanupSettings
+}
+
 // Cleaner is responsible for cleaning up old annotations
 type Cleaner interface {
-	Run(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
+	Run(ctx context.Context, settings CleanupSettings) (int64, int64, error)
 }

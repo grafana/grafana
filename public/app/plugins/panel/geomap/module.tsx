@@ -11,7 +11,7 @@ import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { defaultMapViewConfig, type Options, TooltipMode } from './panelcfg.gen';
 import { geomapSuggestionsSupplier } from './suggestions';
-import { GeomapInstanceState } from './types';
+import { type GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()

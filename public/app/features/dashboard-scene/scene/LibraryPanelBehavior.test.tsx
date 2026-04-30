@@ -1,17 +1,17 @@
 import { of } from 'rxjs';
 
-import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneCanvasText,
-  SceneDataTransformer,
+  type SceneDataTransformer,
   sceneGraph,
   SceneGridLayout,
-  SceneQueryRunner,
+  type SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -21,7 +21,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { VizPanelLinks } from './PanelLinks';
+import { type VizPanelLinks } from './PanelLinks';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
@@ -188,6 +188,33 @@ describe('LibraryPanelBehavior', () => {
     expect(behaviorClone.state._loadedPanel?.uid).toBe('111');
   });
 
+  describe('hoverHeader', () => {
+    it('should set hoverHeader to false when library panel has a title', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.body.state.hoverHeader).toBe(false);
+    });
+
+    it('should set hoverHeader to true when library panel has no title', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        vizPanelTitle: '',
+        libPanelModelTitle: '',
+      });
+
+      expect(gridItem.state.body.state.hoverHeader).toBe(true);
+    });
+
+    it('should set hoverHeader to false when library panel has a time override', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        vizPanelTitle: '',
+        libPanelModelTitle: '',
+        timeFrom: '2h',
+      });
+
+      expect(gridItem.state.body.state.hoverHeader).toBe(false);
+    });
+  });
+
   it('should use dashboard panel ID for data provider filtering', async () => {
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
@@ -207,11 +234,19 @@ describe('LibraryPanelBehavior', () => {
   });
 });
 
-async function buildTestSceneWithLibraryPanel() {
+interface BuildTestSceneOptions {
+  vizPanelTitle?: string;
+  libPanelModelTitle?: string;
+  timeFrom?: string;
+}
+
+async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {}) {
+  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom } = options;
+
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
   const vizPanel = new VizPanel({
-    title: 'Panel A',
+    title: vizPanelTitle,
     pluginId: 'lib-panel-loading',
     key: 'panel-1',
     $behaviors: [behavior],
@@ -222,13 +257,14 @@ async function buildTestSceneWithLibraryPanel() {
     uid: '111',
     type: 'table',
     model: {
-      title: 'LibraryPanel A title',
+      title: libPanelModelTitle,
       type: 'table',
       links: [{ ...NEW_LINK, title: 'link1' }],
       options: { showHeader: true },
       fieldConfig: { defaults: {}, overrides: [] },
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
+      ...(timeFrom ? { timeFrom } : {}),
     },
     version: 1,
   };

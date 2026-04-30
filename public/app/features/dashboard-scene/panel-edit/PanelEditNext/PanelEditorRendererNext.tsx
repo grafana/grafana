@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../../scene/NavToolbarActions';
-import { PanelEditor } from '../PanelEditor';
+import { type PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';

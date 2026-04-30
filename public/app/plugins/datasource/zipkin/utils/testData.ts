@@ -1,4 +1,4 @@
-import { ZipkinSpan } from '../types';
+import { type ZipkinSpan } from '../types';
 
 export const zipkinResponse: ZipkinSpan[] = [
   {

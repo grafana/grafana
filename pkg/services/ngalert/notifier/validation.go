@@ -109,6 +109,9 @@ func NewNotificationSettingsValidator(cfg *definitions.PostableUserConfig) Notif
 		availableRoutes[routeName] = struct{}{}
 	}
 	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+	if len(cfg.ExtraConfigs) > 0 {
+		availableRoutes[cfg.ExtraConfigs[0].Identifier] = struct{}{}
+	}
 
 	return staticNotificationSettingsValidator{
 		staticContactPointValidator: &validator,

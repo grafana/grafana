@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeRegistryItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Drawer, TextLink, useStyles2, useTheme2 } from '@grafana/ui';

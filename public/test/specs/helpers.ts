@@ -1,6 +1,6 @@
 import { template } from 'lodash';
 
-import { RawTimeRange, dateMath } from '@grafana/data';
+import { type RawTimeRange, dateMath } from '@grafana/data';
 import { ContextSrv } from 'app/core/services/context_srv';
 
 export class TimeSrvStub {

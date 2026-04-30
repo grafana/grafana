@@ -18,7 +18,7 @@ test.describe(
 
     test.describe('App Page', () => {
       test('Loads the app page with the sandbox div wrapper', async ({ page }) => {
-        await page.goto(`/a/${APP_ID}`);
+        await page.goto(`/a/${APP_ID}`, { waitUntil: 'networkidle' });
 
         const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
         await expect(sandboxDiv).toBeVisible();
@@ -28,7 +28,7 @@ test.describe(
       });
 
       test('Loads the app configuration with the sandbox div wrapper', async ({ page }) => {
-        await page.goto(`/plugins/${APP_ID}`);
+        await page.goto(`/plugins/${APP_ID}`, { waitUntil: 'networkidle' });
 
         const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
         await expect(sandboxDiv).toBeVisible();

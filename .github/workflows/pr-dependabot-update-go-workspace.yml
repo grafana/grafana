@@ -46,6 +46,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Configure Git
       run: |

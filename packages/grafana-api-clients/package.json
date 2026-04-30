@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -31,17 +31,23 @@
       "import": "./dist/esm/clients/rtkq/index.mjs",
       "require": "./dist/cjs/clients/rtkq/index.cjs"
     },
-    "./rtkq/legacy": {
+    "./internal/rtkq/legacy": {
       "@grafana-app/source": "./src/clients/rtkq/legacy/index.ts"
     },
-    "./rtkq/legacy/migrate-to-cloud": {
+    "./internal/rtkq/legacy/migrate-to-cloud": {
       "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./rtkq/legacy/preferences": {
+    "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
-    "./rtkq/legacy/user": {
+    "./internal/rtkq/legacy/user": {
       "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/org": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/org/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/team": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/team/index.ts"
     },
     "./rtkq/advisor/v0alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
@@ -138,6 +144,12 @@
       "types": "./dist/types/clients/rtkq/quotas/v0alpha1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/quotas/v0alpha1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/quotas/v0alpha1/index.cjs"
+    },
+    "./rtkq/notifications.alerting/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/notifications.alerting/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/notifications.alerting/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/notifications.alerting/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/notifications.alerting/v1beta1/index.cjs"
     }
   },
   "publishConfig": {
@@ -163,8 +175,8 @@
     "@rtk-query/codegen-openapi": "^2.0.0",
     "openapi-types": "^12.1.3",
     "plop": "^4.0.1",
-    "rollup": "^4.22.4",
-    "typescript": "5.9.2"
+    "rollup": "^4.60.1",
+    "typescript": "6.0.2"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",

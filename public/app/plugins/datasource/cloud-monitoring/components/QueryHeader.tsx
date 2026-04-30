@@ -1,7 +1,7 @@
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 
 import { QUERY_TYPES } from '../constants';
-import { CloudMonitoringQuery } from '../types/query';
+import { type CloudMonitoringQuery } from '../types/query';
 
 export interface QueryEditorHeaderProps {
   query: CloudMonitoringQuery;

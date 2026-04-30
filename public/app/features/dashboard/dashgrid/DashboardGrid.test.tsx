@@ -2,18 +2,18 @@ import { act, screen } from '@testing-library/react';
 import { useEffectOnce } from 'react-use';
 import { render } from 'test/test-utils';
 
-import { TextBoxVariableModel } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import { type TextBoxVariableModel } from '@grafana/data';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { GetVariables } from 'app/features/variables/state/selectors';
+import { type GetVariables } from 'app/features/variables/state/selectors';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-import { DashboardGrid, PANEL_FILTER_VARIABLE, Props } from './DashboardGrid';
-import { Props as LazyLoaderProps } from './LazyLoader';
+import { DashboardGrid, PANEL_FILTER_VARIABLE, type Props } from './DashboardGrid';
+import { type Props as LazyLoaderProps } from './LazyLoader';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

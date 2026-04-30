@@ -5,7 +5,6 @@ const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
@@ -69,7 +68,7 @@ test.describe(
       await expect(datasourceSelect).toBeVisible();
       await expect(datasourceSelect).toHaveAttribute('placeholder', 'gdev-testdata');
 
-      await expect(page.locator('label').filter({ hasText: 'Refresh' })).toBeVisible();
+      await expect(page.getByRole('group', { name: 'Refresh' })).toBeVisible();
       await expect(page.locator('label').filter({ hasText: 'On dashboard load' })).toBeVisible();
 
       const regexInput = dashboardPage.getByGrafanaSelector(

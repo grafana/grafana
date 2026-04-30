@@ -435,7 +435,8 @@
           "hide": "dontHide",
           "skipUrlSync": false,
           "description": "Custom multi-value variable",
-          "allowCustomValue": true
+          "allowCustomValue": true,
+          "valuesFormat": "json"
         }
       },
       {

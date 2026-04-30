@@ -1,17 +1,19 @@
 import { useCallback } from 'react';
 
-import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { TimelineValueAlignment, TooltipDisplayMode, VisibilityMode, VizTooltipOptions } from '@grafana/schema';
-import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
+import { type DataFrame, FALLBACK_COLOR, FieldType, type TimeRange } from '@grafana/data';
+import {
+  type TimelineValueAlignment,
+  TooltipDisplayMode,
+  type VisibilityMode,
+  type VizTooltipOptions,
+} from '@grafana/schema';
+import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
 
-import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
 
-import { preparePlotConfigBuilder, TimelineMode } from './utils';
+import { preparePlotConfigBuilder, type TimelineMode } from './utils';
 
-/**
- * @alpha
- */
 export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight?: number;
@@ -33,6 +35,7 @@ const propsToDiff = [
   'tooltip',
   'paginationRev',
   'annotationLanes',
+  'theme',
 ];
 
 export const TimelineChart = (props: TimelineProps) => {

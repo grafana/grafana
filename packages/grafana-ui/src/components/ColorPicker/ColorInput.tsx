@@ -4,12 +4,12 @@ import { forwardRef, useState, useEffect, useMemo } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Input, Props as InputProps } from '../Input/Input';
+import { Input, type Props as InputProps } from '../Input/Input';
 
-import { ColorPickerProps } from './ColorPickerPopover';
+import { type ColorPickerProps } from './ColorPickerPopover';
 
 interface ColorInputProps extends ColorPickerProps, Omit<InputProps, 'color' | 'onChange'> {
   isClearable?: boolean;

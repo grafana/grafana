@@ -20,7 +20,7 @@ import {
   Switch,
 } from '@grafana/ui';
 import {
-  Repository,
+  type Repository,
   useGetFrontendSettingsQuery,
   useGetRepositoryRefsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -32,7 +32,7 @@ import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
@@ -286,6 +286,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 {...register('url', {
                   required: gitFields.urlConfig.validation?.required,
                   pattern: gitFields.urlConfig.validation?.pattern,
+                  validate: gitFields.urlConfig.validation?.validate,
                 })}
                 placeholder={gitFields.urlConfig.placeholder}
               />

@@ -1,12 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { defaultDashboard } from '@grafana/schema';
-import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types/dashboard';
+import { type DashboardInitError, DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
 
 import { DashboardModel } from './DashboardModel';
-import { PanelModel } from './PanelModel';
+import { type PanelModel } from './PanelModel';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,

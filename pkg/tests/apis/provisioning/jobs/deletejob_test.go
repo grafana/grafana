@@ -12,22 +12,19 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "delete-job-test-repo"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",
@@ -37,7 +34,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		ExpectedFolders:    1,
 	}
 
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.
@@ -363,45 +360,31 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		})
 	})
 
-	t.Run("delete non-existent file", func(t *testing.T) {
-		spec := provisioning.JobSpec{
+	t.Run("delete non-existent file is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{"non-existent.json"},
 			},
-		}
+		})
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
 
-		// Convert to typed object to check warnings
-		jobObj := &provisioning.Job{}
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		// With the new behavior, ErrFileNotFound should result in a warning, not an error
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-			"delete job should complete with warning state for non-existent file")
-		require.NotEmpty(t, jobObj.Status.Warnings,
-			"job should have warnings for non-existent file")
-
-		// Verify the warning message mentions the file not found error
-		found := false
-		for _, warningMsg := range jobObj.Status.Warnings {
-			if strings.Contains(warningMsg, "non-existent.json") && strings.Contains(warningMsg, "file not found") {
-				found = true
-				break
-			}
-		}
-		require.True(t, found,
-			"should have warning message mentioning the non-existent file")
+		require.Error(t, result.Error(), "delete job for non-existent file should be rejected at creation")
 	})
 
-	t.Run("delete non-existent file with successful deletion", func(t *testing.T) {
-		// First, create a new file to delete alongside the non-existent one
+	t.Run("delete mixed existing and non-existent file is rejected", func(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "test-delete-mixed.json")
 		helper.SyncAndWait(t, repo, nil)
 
-		spec := provisioning.JobSpec{
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{
@@ -409,41 +392,22 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					"non-existent-file.json", // This doesn't exist
 				},
 			},
-		}
+		})
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
 
-		jobObj := &provisioning.Job{}
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		// Job should complete with warning state (one success, one warning)
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-			"job should have warning state when mixing successful deletes with non-existent files")
-
-		// Should have warnings for the non-existent file
-		require.NotEmpty(t, jobObj.Status.Warnings,
-			"job should have warnings for non-existent file")
-
-		// Verify the existing file was deleted
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-delete-mixed.json")
-		require.Error(t, err, "existing file should be deleted")
-		require.True(t, apierrors.IsNotFound(err))
-
-		// Verify warning message
-		found := false
-		for _, warningMsg := range jobObj.Status.Warnings {
-			if strings.Contains(warningMsg, "non-existent-file.json") {
-				found = true
-				break
-			}
-		}
-		require.True(t, found,
-			"should have warning message for non-existent file")
+		require.Error(t, result.Error(), "delete job with any non-existent file should be rejected at creation")
 	})
 
-	t.Run("delete multiple non-existent files", func(t *testing.T) {
-		spec := provisioning.JobSpec{
+	t.Run("delete multiple non-existent files is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,
 			Delete: &provisioning.DeleteJobOptions{
 				Paths: []string{
@@ -452,29 +416,17 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					"does-not-exist-3.json",
 				},
 			},
-		}
+		})
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
 
-		jobObj := &provisioning.Job{}
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		// All non-existent files should result in warnings
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-			"job should complete with warning state when all files are non-existent")
-		require.NotEmpty(t, jobObj.Status.Warnings,
-			"job should have warnings for all non-existent files")
-
-		// Should have at least one warning mentioning file not found
-		foundWarning := false
-		for _, warningMsg := range jobObj.Status.Warnings {
-			if strings.Contains(warningMsg, "does-not-exist") {
-				foundWarning = true
-				break
-			}
-		}
-		require.True(t, foundWarning,
-			"should have warnings mentioning the non-existent files")
+		require.Error(t, result.Error(), "delete job for all non-existent files should be rejected at creation")
 	})
 }

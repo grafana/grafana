@@ -1,6 +1,8 @@
-import { fieldReducers, FieldReducerInfo, ReducerID } from '../transformations/fieldReducer';
+import { fieldReducers, type FieldReducerInfo, ReducerID } from '../transformations/fieldReducer';
 
-import { Registry } from './Registry';
+import { Registry, type RegistryItem } from './Registry';
+
+const makeRegistry = (items: RegistryItem[]) => new Registry(() => items);
 
 describe('Registry', () => {
   describe('selectOptions', () => {
@@ -26,6 +28,35 @@ describe('Registry', () => {
           const select = registry.selectOptions();
           expect(select.current).toEqual([]);
         });
+      });
+    });
+
+    describe('formatLabel', () => {
+      it('uses item.name as label by default', () => {
+        const registry = makeRegistry([{ id: 'foo', name: 'Foo' }]);
+        const { options } = registry.selectOptions();
+        expect(options[0].label).toBe('Foo');
+      });
+
+      it('uses the provided formatLabel function to build the label', () => {
+        type CustomItem = RegistryItem & { displayName: string };
+        const registry = new Registry<CustomItem>(() => [
+          { id: 'a', name: 'Internal A', displayName: 'Pretty A' },
+          { id: 'b', name: 'Internal B', displayName: 'Pretty B' },
+        ]);
+        const { options } = registry.selectOptions(undefined, undefined, (item) => item.displayName);
+        expect(options[0].label).toBe('Pretty A');
+        expect(options[1].label).toBe('Pretty B');
+      });
+
+      it('excludes items with excludeFromPicker set to true', () => {
+        const registry = makeRegistry([
+          { id: 'visible', name: 'Visible' },
+          { id: 'hidden', name: 'Hidden', excludeFromPicker: true },
+        ]);
+        const { options } = registry.selectOptions();
+        expect(options).toHaveLength(1);
+        expect(options[0].value).toBe('visible');
       });
     });
   });

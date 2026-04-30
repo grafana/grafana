@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -261,22 +262,17 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 
 	deadline := time.Now().Add(20 * time.Second)
 	for {
-		conn, err := net.DialTimeout("tcp", testServer.grpcAddress, 1*time.Second)
-		if err == nil {
-			_ = conn.Close()
+		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+		if err == nil && res.Status == grpc_health_v1.HealthCheckResponse_SERVING {
 			break
 		}
 
 		if time.Now().After(deadline) {
-			t.Fatal("server failed to become ready: ", testServer.id)
+			t.Fatal("server failed to become healthy: ", testServer.id)
 		}
 
 		time.Sleep(1 * time.Second)
 	}
-
-	res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-	require.NoError(t, err)
-	require.Equal(t, res.Status, grpc_health_v1.HealthCheckResponse_SERVING)
 }
 
 type testModuleServer struct {
@@ -371,7 +367,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -399,11 +395,11 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
-	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
+	cfg.DisablePruner = dbType == "sqlite3"
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
@@ -411,7 +407,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:       backend,
 		Cfg:           cfg,
-		Tracer:        tracer,
+		Tracer:        noop.NewTracerProvider().Tracer("test-tracer"),
 		Reg:           nil,
 		AccessClient:  nil,
 		SearchOptions: searchOpts,

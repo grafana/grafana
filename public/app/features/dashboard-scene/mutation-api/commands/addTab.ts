@@ -6,8 +6,9 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -27,6 +28,7 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
   payloadSchema: payloads.addTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -50,6 +52,9 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: DefaultGridLayoutManager.fromVizPanels([]),
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
         });
 
         const currentTabs = [...tabsManager.state.tabs];
@@ -70,6 +75,9 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: targetLayout,
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
         });
 
         tabsManager = new TabsLayoutManager({ tabs: [newTab] });
@@ -90,8 +98,8 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
       return {
         success: true,
-        data: { path: newPath },
-        changes: [{ path: newPath, previousValue: undefined, newValue: { title: tab.spec.title } }],
+        data: { path: newPath, tab: { kind: 'TabsLayoutTab', spec: tab.spec } },
+        changes: [{ path: newPath, previousValue: null, newValue: { title: tab.spec.title } }],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {

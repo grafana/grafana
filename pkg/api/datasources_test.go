@@ -84,16 +84,22 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 }
 
 // setupDsConfigMetrics creates and registers the prometheus metrics needed for HTTPServer tests
-// that call methods using dsConfigHandlerRequestsDuration.
-func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.HistogramVec) {
+// that call methods using dsConfigHandlerRequestsDuration and dsEndpointRedirects.
+func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.HistogramVec, *prometheus.CounterVec) {
 	promRegister := prometheus.NewRegistry()
 	dsConfigHandlerRequestsDuration := metricutil.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "ds_config_handler_requests_duration_seconds",
 		Help:      "Duration of requests handled by datasource configuration handlers",
 	}, []string{"handler"})
+	dsEndpointRedirects := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "ds_endpoint_redirects_total",
+		Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
+	}, []string{"route", "plugin_type", "target"})
 	promRegister.MustRegister(dsConfigHandlerRequestsDuration)
-	return promRegister, dsConfigHandlerRequestsDuration
+	promRegister.MustRegister(dsEndpointRedirects)
+	return promRegister, dsConfigHandlerRequestsDuration, dsEndpointRedirects
 }
 
 // Adding data sources with invalid URLs should lead to an error.
@@ -103,7 +109,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{},
 		Cfg:                setting.NewCfg(),
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -134,7 +140,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
@@ -160,7 +166,7 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{},
 		Cfg:                setting.NewCfg(),
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
@@ -193,7 +199,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{},
 		Cfg:                setting.NewCfg(),
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -218,7 +224,7 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{},
 		Cfg:                setting.NewCfg(),
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	hs.Cfg.AuthProxy.Enabled = true
@@ -256,7 +262,7 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 			ExpectedErr:      nil,
 		},
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 	sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 	hs.Cfg.AuthProxy.Enabled = true
 
@@ -310,7 +316,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -448,10 +454,13 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
+				// id-based datasource apis are disabled by default, to be able to use them,
+				// we need to enable this feaure-flag
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceLegacyIdApi)
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}
 				hs.Live = newTestLive(t)
-				hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+				hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 			})
 
 			for _, url := range tt.urls {

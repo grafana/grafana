@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles
-weight: 40
+weight: 60
 refs:
   custom-role-actions-scopes:
     - pattern: /docs/grafana/

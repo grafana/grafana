@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { CompatibilityBadge, CompatibilityState } from './CompatibilityBadge';
+import { CompatibilityBadge, type CompatibilityState } from './CompatibilityBadge';
 
 describe('CompatibilityBadge', () => {
   const mockOnCheck = jest.fn();

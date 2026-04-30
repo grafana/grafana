@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -14,7 +14,7 @@ import { Stack } from '../../Layout/Stack/Stack';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from '../utils';
 
 import { FilterList } from './FilterList';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 interface Props {
   column: any;

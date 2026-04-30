@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { PluginExtensionLink, usePluginContext } from '@grafana/data';
-import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
+import { type PluginExtensionLink, usePluginContext } from '@grafana/data';
+import { type UsePluginLinksOptions, type UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';

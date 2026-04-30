@@ -1,15 +1,14 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { getAppEvents } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -22,7 +21,6 @@ jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getAppEvents: jest.fn(),
     config: {
       ...actual.config,
     },
@@ -114,7 +112,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
   folder: {
     metadata: {
       annotations: {
-        'grafana.app/sourcePath': '/dashboards',
+        'grafana.app/sourcePath': 'dashboards',
       },
     },
     spec: {
@@ -143,7 +141,6 @@ describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
-    (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (usePullRequestParam as jest.Mock).mockReturnValue({});
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
   });
@@ -237,6 +234,49 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('New%20Test%20Folder');
     expect(request.url.searchParams.get('message')).toBe('Creating a new test folder');
     expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
+  });
+
+  it('should not produce double slashes when folder annotation has trailing slash', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+
+    const hookDataWithTrailingSlash = {
+      ...mockHookData,
+      folder: {
+        metadata: {
+          annotations: {
+            'grafana.app/sourcePath': 'dashboards/',
+          },
+        },
+        spec: {
+          title: '',
+        },
+      },
+    };
+
+    const { user } = setup({}, hookDataWithTrailingSlash);
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'New Folder');
+
+    const submitButton = screen.getByRole('button', { name: /^create$/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).not.toContain('//');
+    expect(request.url.pathname).toContain('/dashboards/New%20Folder/');
   });
 
   it('should create folder with branch workflow', async () => {

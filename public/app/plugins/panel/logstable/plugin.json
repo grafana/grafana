@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Logs Table",
   "id": "logstable",
+  "suggestions": true,
   "state": "alpha",
   "info": {
     "author": {

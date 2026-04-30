@@ -4,48 +4,144 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
   useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Drawer, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, TabContent, useStyles2 } from '@grafana/ui';
+import { type PageInfoItem } from 'app/core/components/Page/types';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
-import { AlertsSection } from './NotificationDetailAlerts';
-import { DebugDetails } from './NotificationDetailDebug';
+import { NotificationActionsMenu } from './NotificationDetailActions';
+import { AlertsListSection, OverviewSection } from './NotificationDetailAlerts';
 import { NotificationHeader } from './NotificationDetailHeader';
+import { NotificationDetailSidebar } from './NotificationDetailSidebar';
 import { RelatedNotificationsSidebar } from './RelatedNotificationsSidebar';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
-function pickHeadingLabel(groupLabels: Record<string, string> | undefined): string {
+enum ActiveTab {
+  Overview = 'overview',
+  Alerts = 'alerts',
+  Related = 'related',
+}
+
+function isValidTab(tab: unknown): tab is ActiveTab {
+  return tab === ActiveTab.Overview || tab === ActiveTab.Alerts || tab === ActiveTab.Related;
+}
+
+function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+  const [queryParams, setQueryParams] = useQueryParams();
+  const tabFromQuery = queryParams.tab;
+
+  const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Overview;
+
+  const setActiveTab = (tab: ActiveTab) => {
+    setQueryParams({ tab });
+  };
+
+  return [activeTab, setActiveTab];
+}
+
+function pickHeadingLabel(groupLabels: Record<string, string> | undefined): { short: string; full: string } {
   if (!groupLabels || Object.keys(groupLabels).length === 0) {
-    return 'Notification';
+    return { short: 'Notification', full: 'Notification' };
   }
-  if (groupLabels.alertname) {
-    return groupLabels.alertname;
+
+  const name = groupLabels.alertname || groupLabels.service_name || Object.values(groupLabels)[0];
+  const extraValues = Object.entries(groupLabels)
+    .filter(([key]) => key !== 'alertname' && key !== 'service_name')
+    .map(([, value]) => value);
+
+  if (extraValues.length > 0) {
+    return { short: name, full: `${name} (${extraValues.join(', ')})` };
   }
-  if (groupLabels.service_name) {
-    return groupLabels.service_name;
-  }
-  return Object.keys(groupLabels).sort()[0];
+
+  return { short: name, full: name };
+}
+
+interface HeaderData {
+  notification: NotificationEntry;
+  relatedCount: number;
+  failedRelatedCount: number;
 }
 
 function NotificationDetailPage() {
-  const { uuid, timestamp } = useParams<{ uuid: string; timestamp?: string }>();
-  const [pageTitle, setPageTitle] = useState(t('alerting.notification-detail.page-title', 'View'));
+  const { uuid } = useParams<{ uuid: string }>();
+  const [queryParams] = useQueryParams();
+  const timestamp = typeof queryParams.ts === 'string' ? queryParams.ts : undefined;
+  const defaultTitle = t('alerting.notification-detail.page-title', 'View');
+  const [pageTitle, setPageTitle] = useState(defaultTitle);
+  const [displayTitle, setDisplayTitle] = useState(defaultTitle);
+  const [notification, setNotification] = useState<CreateNotificationqueryNotificationEntry | null>(null);
+  const [alertCount, setAlertCount] = useState(0);
+  const [relatedCount, setRelatedCount] = useState(0);
+  const [activeTab, setActiveTab] = useActiveTab();
+  const [headerData, setHeaderData] = useState<HeaderData | null>(null);
 
-  const pageNav = { text: pageTitle };
+  const pageNav: NavModelItem = {
+    text: pageTitle,
+    children: [
+      {
+        text: t('alerting.notification-detail.tab-overview', 'Overview'),
+        active: activeTab === ActiveTab.Overview,
+        onClick: () => setActiveTab(ActiveTab.Overview),
+      },
+      {
+        text: t('alerting.notification-detail.tab-alerts', 'Alerts'),
+        active: activeTab === ActiveTab.Alerts,
+        onClick: () => setActiveTab(ActiveTab.Alerts),
+        tabCounter: alertCount,
+      },
+      {
+        text: t('alerting.notification-detail.tab-related', 'Related'),
+        active: activeTab === ActiveTab.Related,
+        onClick: () => setActiveTab(ActiveTab.Related),
+        tabCounter: relatedCount,
+      },
+    ],
+  };
+
+  const info: PageInfoItem[] = [];
+  if (notification?.groupLabels && Object.keys(notification.groupLabels).length > 0) {
+    info.push({
+      label: t('alerting.notification-detail.info-group-labels', 'Group labels'),
+      value: <AlertLabels labels={notification.groupLabels} size="sm" />,
+    });
+  }
+
+  const subTitle = headerData ? <NotificationHeader notification={headerData.notification} /> : undefined;
 
   return (
-    <AlertingPageWrapper navId="alerts-notifications" pageNav={pageNav} isLoading={false}>
+    <AlertingPageWrapper
+      navId="alerts-history"
+      pageNav={pageNav}
+      isLoading={false}
+      renderTitle={() => <h1>{displayTitle}</h1>}
+      info={info.length > 0 ? info : undefined}
+      actions={notification ? <NotificationActionsMenu notification={notification} /> : undefined}
+      subTitle={subTitle}
+    >
       {uuid ? (
-        <NotificationDetail uuid={uuid} timestamp={timestamp} onTitleChange={setPageTitle} />
+        <NotificationDetail
+          uuid={uuid}
+          timestamp={timestamp}
+          activeTab={activeTab}
+          onTitleChange={(short, full) => {
+            setDisplayTitle(short);
+            setPageTitle(full);
+          }}
+          onNotificationLoaded={setNotification}
+          onAlertCountChange={setAlertCount}
+          onRelatedCountChange={setRelatedCount}
+          onHeaderDataChange={setHeaderData}
+        />
       ) : (
         <NotificationNotFound />
       )}
@@ -66,13 +162,25 @@ function NotificationNotFound() {
 interface NotificationDetailProps {
   uuid: string;
   timestamp?: string;
-  onTitleChange: (title: string) => void;
+  activeTab: ActiveTab;
+  onTitleChange: (shortTitle: string, fullTitle: string) => void;
+  onNotificationLoaded: (notification: CreateNotificationqueryNotificationEntry) => void;
+  onAlertCountChange: (count: number) => void;
+  onRelatedCountChange: (count: number) => void;
+  onHeaderDataChange: (data: HeaderData | null) => void;
 }
 
-function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDetailProps) {
+function NotificationDetail({
+  uuid,
+  timestamp,
+  activeTab,
+  onTitleChange,
+  onNotificationLoaded,
+  onAlertCountChange,
+  onRelatedCountChange,
+  onHeaderDataChange,
+}: NotificationDetailProps) {
   const styles = useStyles2(getStyles);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [notification, setNotification] = useState<NotificationEntry | null | undefined>(undefined);
   const [relatedNotifications, setRelatedNotifications] = useState<NotificationEntry[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
@@ -83,6 +191,21 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
   const [fetchNotifications] = useCreateNotificationqueryMutation();
   const [fetchAlerts] = useCreateNotificationsqueryalertsMutation();
 
+  // Keep header data in sync
+  useEffect(() => {
+    if (notification) {
+      const failedRelated = relatedNotifications.filter((n) => n.outcome === 'error').length;
+      onHeaderDataChange({
+        notification,
+        relatedCount: relatedNotifications.length + 1,
+        failedRelatedCount: failedRelated,
+      });
+      onRelatedCountChange(relatedNotifications.length);
+    } else {
+      onHeaderDataChange(null);
+    }
+  }, [notification, relatedNotifications, onHeaderDataChange, onRelatedCountChange]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -92,7 +215,7 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
       let from: string;
       let to: string;
       if (timestamp) {
-        const ts = new Date(timestamp).getTime();
+        const ts = Number(timestamp);
         from = new Date(ts - 1000).toISOString();
         to = new Date(ts + 1000).toISOString();
       } else {
@@ -115,7 +238,9 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
           return;
         }
 
-        onTitleChange(pickHeadingLabel(found.groupLabels));
+        const { short, full } = pickHeadingLabel(found.groupLabels);
+        onTitleChange(short, full);
+        onNotificationLoaded(found);
 
         const foundTs = new Date(found.timestamp).getTime();
 
@@ -168,7 +293,9 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
         }).unwrap();
 
         if (!cancelled) {
-          setAlerts(alertResult.alerts ?? []);
+          const loadedAlerts = alertResult.alerts ?? [];
+          setAlerts(loadedAlerts);
+          onAlertCountChange(loadedAlerts.length);
         }
       } catch {
         // Alert details are non-critical; silently ignore failures
@@ -211,53 +338,37 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
     );
   }
 
-  const failedRelated = relatedNotifications.filter((n) => n.outcome === 'error').length;
-
   return (
     <div className={styles.container}>
-      <NotificationHeader
-        notification={notification}
-        relatedCount={relatedNotifications.length + 1}
-        failedRelatedCount={failedRelated}
-        onOpenRelated={() => setIsSidebarOpen(true)}
-      />
-
       {notification.error && (
         <Alert title={t('alerting.notification-detail.error-title-banner', 'Delivery error')} severity="error">
           {notification.error}
         </Alert>
       )}
 
-      <AlertsSection alerts={alerts} groupLabels={notification.groupLabels} isLoading={isLoadingAlerts} />
-
-      {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
-        <div className={styles.detailsBox}>
-          <Text variant="h6">
-            <Trans i18nKey="alerting.notification-detail.group-labels-heading">Group Labels</Trans>
-          </Text>
-          <AlertLabels labels={notification.groupLabels} size="sm" />
+      <div className={styles.layout}>
+        <div className={styles.main}>
+          <TabContent>
+            {activeTab === ActiveTab.Overview && (
+              <OverviewSection alerts={alerts} groupLabels={notification.groupLabels} isLoading={isLoadingAlerts} />
+            )}
+            {activeTab === ActiveTab.Alerts && (
+              <AlertsListSection alerts={alerts} groupLabels={notification.groupLabels} isLoading={isLoadingAlerts} />
+            )}
+            {activeTab === ActiveTab.Related && (
+              <RelatedNotificationsSidebar
+                currentNotification={notification}
+                relatedNotifications={relatedNotifications}
+                isLoading={isLoadingRelated}
+              />
+            )}
+          </TabContent>
         </div>
-      )}
 
-      <DebugDetails notification={notification} isOpen={isDetailsOpen} onToggle={setIsDetailsOpen} />
-
-      {isSidebarOpen && (
-        <Drawer
-          title={t('alerting.notification-detail.related-sidebar-title', 'Related Notifications')}
-          subtitle={t(
-            'alerting.notification-detail.related-sidebar-subtitle',
-            'Notification attempts for the same alert group and route'
-          )}
-          onClose={() => setIsSidebarOpen(false)}
-          size="sm"
-        >
-          <RelatedNotificationsSidebar
-            currentNotification={notification}
-            relatedNotifications={relatedNotifications}
-            isLoading={isLoadingRelated}
-          />
-        </Drawer>
-      )}
+        <aside className={styles.sidebar}>
+          <NotificationDetailSidebar notification={notification} />
+        </aside>
+      </div>
     </div>
   );
 }
@@ -268,14 +379,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(2),
   }),
-  detailsBox: css({
+  layout: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr 320px',
+    gap: theme.spacing(3),
+    alignItems: 'start',
+
+    [theme.breakpoints.down('lg')]: {
+      gridTemplateColumns: '1fr',
+    },
+  }),
+  main: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
+    gap: theme.spacing(2),
+  }),
+  sidebar: css({
+    borderLeft: `1px solid ${theme.colors.border.weak}`,
+    paddingLeft: theme.spacing(3),
+
+    [theme.breakpoints.down('lg')]: {
+      borderLeft: 'none',
+      paddingLeft: 0,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      paddingTop: theme.spacing(3),
+    },
   }),
 });
 

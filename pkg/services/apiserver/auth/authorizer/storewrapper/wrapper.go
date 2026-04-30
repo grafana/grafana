@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
@@ -24,7 +25,7 @@ var (
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
-	BeforeUpdate(ctx context.Context, obj runtime.Object) error
+	BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
@@ -34,9 +35,25 @@ type ResourceStorageAuthorizer interface {
 // It overrides the identity in the context to use service identity for the underlying store operations so the
 // store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
 // user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithOriginalIdentityUID).
+// The wrapper also supports an option to preserve the original caller's identity in the context for inner store calls instead of replacing it with a service identity.
+// Use this when the inner store does not perform its own RBAC checks and the caller's identity is needed downstream (e.g. for admission webhooks).
 type Wrapper struct {
-	inner      K8sStorage
-	authorizer ResourceStorageAuthorizer
+	inner            K8sStorage
+	authorizer       ResourceStorageAuthorizer
+	preserveIdentity bool
+}
+
+// Option configures a Wrapper.
+type Option func(*Wrapper)
+
+// WithPreserveIdentity instructs the Wrapper to leave the caller's identity in the context when
+// calling the inner store, instead of replacing it with a service identity. Use this when the inner
+// store does not perform its own RBAC checks and the caller's identity is needed downstream
+// (e.g. for admission webhooks).
+func WithPreserveIdentity() Option {
+	return func(w *Wrapper) {
+		w.preserveIdentity = true
+	}
 }
 
 type K8sStorage interface {
@@ -54,17 +71,27 @@ var _ k8srest.Watcher = (*Wrapper)(nil)
 
 // New returns a Wrapper that enforces authorization and uses service identity for inner store calls,
 // injecting the original user's UID for createdBy/updatedBy annotations.
-func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
-	return &Wrapper{inner: store, authorizer: authz}
+func New(store K8sStorage, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
+	w := &Wrapper{inner: store, authorizer: authz}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
 }
 
 // storeCtx returns the context for inner store calls: service identity so the store's authorization
 // succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithOriginalIdentityUID).
+// When preserveIdentity is true the original caller context is returned unchanged;
 func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
+	if w.preserveIdentity {
+		return ctx
+	}
+
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
 		srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
 	}
+
 	return srvCtx
 }
 
@@ -78,6 +105,7 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
+
 	return w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
 }
 
@@ -102,9 +130,8 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	// DeleteCollection is complex to authorize properly
-	// For now, deny it entirely for safety
-	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
+	// DeleteCollection is complex to authorize properly; deny it entirely for safety
+	return nil, errors.NewMethodNotSupported(schema.GroupResource{}, "deleteCollection")
 }
 
 func (w *Wrapper) Destroy() {
@@ -188,7 +215,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	// Enforce authorization using the original user context
-	if err := a.authorizer.BeforeUpdate(a.userCtx, updatedObj); err != nil {
+	if err := a.authorizer.BeforeUpdate(a.userCtx, oldObj, updatedObj); err != nil {
 		return nil, err
 	}
 
@@ -212,7 +239,7 @@ func (b *NoopAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return nil
 }
 
-func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return nil
 }
 
@@ -237,7 +264,7 @@ func (d *DenyAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return ErrUnauthorized
 }
 
-func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return ErrUnauthorized
 }
 

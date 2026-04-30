@@ -1,11 +1,11 @@
-import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
 
 import {
@@ -18,7 +18,15 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import {
+  type NodesMap,
+  type RecentScope,
+  RecentScopeSchema,
+  ScopeSchema,
+  type ScopesMap,
+  type SelectedScope,
+  type TreeNode,
+} from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -467,14 +475,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // Get scopeNode and parentNode, preferring defaultPath as the source of truth
       let parentNode: ScopeNode | undefined;
       let scopeNodeId: string | undefined;
+      const defaultPath = firstScope?.spec.defaultPath || [];
 
-      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 1) {
+      if (defaultPath.length > 1) {
         // Extract from defaultPath (most reliable source)
         // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
-        scopeNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 1];
-        const parentNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 2];
+        scopeNodeId = defaultPath[defaultPath.length - 1];
+        const parentNodeId = defaultPath[defaultPath.length - 2];
 
-        scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
         parentNode = parentNodeId && parentNodeId !== '' ? this.state.nodes[parentNodeId] : undefined;
       } else {
         // Fallback to next in priority order
@@ -485,8 +493,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
       }
 
+      // Backfill scopeNodeId from defaultPath so open() can expand the tree.
+      if (scopeNodeId && scopes[0] && !scopes[0].scopeNodeId) {
+        scopes[0] = { ...scopes[0], scopeNodeId };
+      }
+
       this.addRecentScopes(fetchedScopes, parentNode, scopeNodeId);
-      this.updateState({ scopes: newScopesState, loading: false });
+      this.updateState({ appliedScopes: scopes, selectedScopes: scopes, scopes: newScopesState, loading: false });
     }
   };
 

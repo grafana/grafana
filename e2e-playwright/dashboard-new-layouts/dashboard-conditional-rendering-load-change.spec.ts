@@ -1,6 +1,6 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
-import { test, expect, E2ESelectorGroups, DashboardPage, DashboardPageArgs } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups, type DashboardPage, type DashboardPageArgs } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/DashboardWithAllConditionalRendering.json';
 

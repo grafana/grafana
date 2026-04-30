@@ -1,14 +1,14 @@
-import { FormEvent, useCallback } from 'react';
+import { type FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, readCSV } from '@grafana/data';
+import { type DataSourceInstanceSettings, type MetricFindValue, type SelectableValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DefaultValueEditor } from './DefaultValueEditor';
+import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
@@ -89,7 +89,11 @@ export function GroupByVariableForm({
       ) : null}
 
       {datasourceSupported && onDefaultValueChange && (
-        <DefaultValueEditor values={defaultValue ?? []} options={defaultValueOptions} onChange={onDefaultValueChange} />
+        <DefaultGroupByValueEditor
+          values={defaultValue ?? []}
+          options={defaultValueOptions}
+          onChange={onDefaultValueChange}
+        />
       )}
 
       {datasourceSupported && (

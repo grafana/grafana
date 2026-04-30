@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -29,6 +30,7 @@ type QOSEnqueueDequeuer interface {
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
 	Backend          resource.StorageBackend
+	VectorBackend    vector.VectorBackend
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -47,8 +49,9 @@ type ServerOptions struct {
 	DisableStorageServices bool
 }
 
-// NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
-func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+// NewUninitializedResourceServer creates a new ResourceServer without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	if opts.DisableStorageServices {
 		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
 	}
@@ -58,6 +61,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withAccessClient,
 		withMaxPageSizeBytes,
 		withBackend,
+		withVectorBackend,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
@@ -68,22 +72,36 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return resource.NewResourceServer(*resourceOpts)
+	return resource.NewUninitializedResourceServer(*resourceOpts)
 }
 
-// NewSearchServer creates a new SearchServer with only search capabilities enabled.
-func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+// NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+	server, err := NewUninitializedResourceServer(opts)
+	if err != nil {
+		return nil, err
+	}
+	if err := server.Init(context.Background()); err != nil {
+		return nil, err
+	}
+	return server, nil
+}
+
+// NewUninitializedSearchServer creates a new SearchServer without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, error) {
 	opts.DisableStorageServices = true
 	resourceOpts, err := buildResourceServerOptions(&opts,
 		withBlobConfig,
 		withAccessClient,
 		withBackend,
+		withVectorBackend,
 		withSearch,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return resource.NewSearchServer(*resourceOpts)
+	return resource.NewUninitializedSearchServer(*resourceOpts)
 }
 
 type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOptions) error
@@ -160,9 +178,17 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	}
 
 	resourceOpts.Backend = opts.Backend
+	//nolint: staticcheck
 	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
 		resourceOpts.Diagnostics = diagnostics
 	}
+	return nil
+}
+
+// withVectorBackend propagates the optional VectorBackend through. nil is
+// allowed; callers fall back to non-vector search paths when it's absent.
+func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorBackend = opts.VectorBackend
 	return nil
 }
 
@@ -189,9 +215,13 @@ func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceSe
 }
 
 func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	enforced := make(map[string]bool, len(opts.Cfg.EnforcedQuotaResources))
+	for _, r := range opts.Cfg.EnforcedQuotaResources {
+		enforced[r] = true
+	}
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
-		EnforceQuotas:  opts.Cfg.EnforceQuotas,
-		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
+		EnforcedResources: enforced,
+		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
 	return nil
 }

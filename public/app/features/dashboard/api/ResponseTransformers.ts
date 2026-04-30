@@ -1,52 +1,55 @@
-import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
+import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  DataQuery,
-  DataSourceRef,
-  Panel,
-  RowPanel,
-  VariableModel,
-  VariableType,
-  FieldConfigSource as FieldConfigSourceV1,
+  type DataQuery,
+  type DataSourceRef,
+  type Panel,
+  type RowPanel,
+  type VariableModel,
+  type VariableType,
+  type FieldConfigSource as FieldConfigSourceV1,
   FieldColorModeId as FieldColorModeIdV1,
   ThresholdsMode as ThresholdsModeV1,
   MappingType as MappingTypeV1,
   SpecialValueMatch as SpecialValueMatchV1,
 } from '@grafana/schema';
 import {
-  AnnotationQueryKind,
-  Spec as DashboardV2Spec,
-  DataLink,
-  DatasourceVariableKind,
+  type AnnotationQueryKind,
+  type Spec as DashboardV2Spec,
+  type DataLink,
+  type DatasourceVariableKind,
   defaultSpec as defaultDashboardV2Spec,
   defaultTimeSettingsSpec,
-  PanelQueryKind,
-  QueryVariableKind,
-  TransformationKind,
-  FieldColorModeId,
-  FieldConfigSource,
-  ThresholdsMode,
-  SpecialValueMatch,
-  AdhocVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  IntervalVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
-  SwitchVariableKind,
-  LibraryPanelKind,
-  PanelKind,
-  GridLayoutItemKind,
+  type PanelQueryKind,
+  type QueryVariableKind,
+  type TransformationKind,
+  type FieldColorModeId,
+  type FieldConfigSource,
+  type ThresholdsMode,
+  type SpecialValueMatch,
+  type AdhocVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type IntervalVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
+  type SwitchVariableKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type GridLayoutItemKind,
   defaultDataQueryKind,
-  RowsLayoutRowKind,
-  GridLayoutKind,
+  type RowsLayoutRowKind,
+  type GridLayoutKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
   defaultFieldConfigSource,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
-import { isWeekStart, WeekStart } from '@grafana/ui';
+import {
+  type DashboardLink,
+  type DataTransformerConfig,
+} from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
+import { isWeekStart, type WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -57,12 +60,12 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  ObjectMeta,
+  type ObjectMeta,
 } from 'app/features/apiserver/types';
 import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
-import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
+import { type TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
   transformCursorSyncV2ToV1,
@@ -78,9 +81,9 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
@@ -162,7 +165,7 @@ export function ensureV2Response(
       // sometimes we can have a v2 spec returned through legacy api like public dashboard
       // in that case we need to return dashboard as it is, since the conversion is not needed
       return {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2',
         kind: 'DashboardWithAccessInfo',
         metadata,
         spec: dto.dashboard,
@@ -224,7 +227,7 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2beta1',
+    apiVersion: 'v2',
     kind: 'DashboardWithAccessInfo',
     metadata,
     spec,
@@ -678,10 +681,13 @@ export function buildPanelKind(p: Panel): PanelKind {
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {
   return transformations.map((t) => {
     return {
-      kind: t.id,
+      kind: 'Transformation' as const,
+      group: t.id,
       spec: {
-        ...t,
+        disabled: t.disabled,
+        filter: t.filter,
         ...(t.topic !== undefined && { topic: transformDataTopic(t.topic) }),
+        options: t.options,
       },
     };
   });
@@ -1205,7 +1211,10 @@ function transformV2PanelToV1Panel(
           ...q.spec.query.spec,
         };
       }),
-      transformations: panel.data.spec.transformations.map((t) => t.spec),
+      transformations: panel.data.spec.transformations.map((t) => ({
+        id: t.group,
+        ...t.spec,
+      })),
       gridPos,
       ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
         cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
@@ -1263,7 +1272,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
   };
 
   if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
       switch (mapping.type) {
         case 'value':
           return {
@@ -1280,15 +1289,20 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
             ...mapping,
             type: MappingTypeV1.RegexToText,
           };
-        case 'special':
+        case 'special': {
+          const v1Match = transformSpecialValueMatchToV1(mapping.options.match);
+          if (v1Match === undefined) {
+            return [];
+          }
           return {
             ...mapping,
             options: {
               ...mapping.options,
-              match: transformSpecialValueMatchToV1(mapping.options.match),
+              match: v1Match,
             },
             type: MappingTypeV1.SpecialValue,
           };
+        }
         default:
           return mapping;
       }
@@ -1362,7 +1376,7 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
   }
 }
 
-function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
+function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 | undefined {
   switch (match) {
     case 'true':
       return SpecialValueMatchV1.True;
@@ -1377,7 +1391,8 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
     case 'empty':
       return SpecialValueMatchV1.Empty;
     default:
-      throw new Error(`Unknown match type: ${match}`);
+      console.warn(`Skipping special value mapping with unknown match type: "${match}"`);
+      return undefined;
   }
 }
 
@@ -1407,10 +1422,10 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 }
 
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
+  const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
 
   const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
-  const variables = getVariablesV1(spec.variables);
+  const variables = getVariablesV1(spec.variables ?? []);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {
     uid: metadata.name,

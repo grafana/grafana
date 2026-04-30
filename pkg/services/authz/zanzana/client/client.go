@@ -72,6 +72,16 @@ func (c *Client) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authli
 	return c.authzlibclient.BatchCheck(ctx, id, req)
 }
 
+func (c *Client) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.List")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("List"))
+	defer timer.ObserveDuration()
+
+	return c.authz.List(ctx, req)
+}
+
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Read")
 	defer span.End()

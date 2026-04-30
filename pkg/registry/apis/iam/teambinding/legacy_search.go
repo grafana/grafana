@@ -54,14 +54,17 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		OrgID: signedInUser.GetOrgID(),
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 50
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
+	}
+	if req.Page < 1 {
+		req.Page = 1
 	}
 
-	if req.Page > math.MaxInt32 || req.Page < 1 {
+	if req.Page > math.MaxInt32 {
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
@@ -94,8 +97,10 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		pageItems     []legacy.TeamMember
 	)
 
+	var teamBindings *legacy.ListTeamBindingsResult
+
 	for p := int64(1); p <= req.Page; p++ {
-		res, err := c.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
+		teamBindings, err = c.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
 			UserUID: subjectUID,
 			TeamUID: teamRef,
 			Pagination: common.Pagination{
@@ -107,8 +112,8 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 			return nil, err
 		}
 
-		pageItems = res.Bindings
-		continueToken = res.Continue
+		pageItems = teamBindings.Bindings
+		continueToken = teamBindings.Continue
 
 		if len(pageItems) > int(req.Limit) {
 			pageItems = pageItems[:req.Limit]

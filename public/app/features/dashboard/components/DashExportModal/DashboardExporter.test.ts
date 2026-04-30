@@ -1,19 +1,24 @@
 import { find } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type PanelPluginMeta,
+  type TypedVariableModel,
+} from '@grafana/data';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
-import { DashboardJson } from '../../../manage-dashboards/types';
+import { type DashboardJson } from '../../../manage-dashboards/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporter, type LibraryElementExport } from './DashboardExporter';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -41,6 +46,9 @@ jest.mock('@grafana/runtime', () => ({
     apps: {},
     featureToggles: {
       newVariables: false,
+    },
+    unifiedAlerting: {
+      minInterval: '10s',
     },
   },
 }));

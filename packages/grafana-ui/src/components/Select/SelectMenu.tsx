@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { max } from 'lodash';
-import { RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
+import { type RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -170,7 +169,10 @@ export const VirtualizedSelectMenu = ({
     );
   }
 
-  let longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  let longestOption = flattenedOptions.reduce((max, option) => {
+    const length = option.label?.length ?? 0;
+    return Math.max(max, length);
+  }, 0);
   if (toggleAllOptions && longestOption < 12) {
     longestOption = 12;
   }

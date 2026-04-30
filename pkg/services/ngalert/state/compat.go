@@ -64,6 +64,12 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureTo
 		nA[alertingModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
 	}
 
+	// Propagate the namespace/folder UID as an annotation because the label is stripped before sending.
+	// This is required by notification history.
+	if namespaceUID, ok := nL[alertingModels.NamespaceUIDLabel]; ok && namespaceUID != "" {
+		nA[alertingModels.NamespaceUIDLabel] = namespaceUID
+	}
+
 	var urlStr string
 	if uid := nL[alertingModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL

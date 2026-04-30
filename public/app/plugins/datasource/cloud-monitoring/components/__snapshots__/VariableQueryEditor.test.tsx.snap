@@ -8,7 +8,9 @@ exports[`VariableQueryEditor renders correctly 1`] = `
     <div
       class="css-l4ykjo-Label"
     >
-      <label>
+      <label
+        for=":r0:"
+      >
         <div
           class="css-70qvj9"
         >
@@ -56,7 +58,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
                   autocomplete="off"
                   autocorrect="off"
                   class=""
-                  id="react-select-2-input"
+                  id=":r0:"
                   role="combobox"
                   spellcheck="false"
                   style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"

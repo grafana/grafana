@@ -1,51 +1,48 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
-	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
-	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
-	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service playlistsvc.Service
+	features      featuremgmt.FeatureToggles
+	accessControl accesscontrol.AccessControl
+	logger        log.Logger
 }
 
 func RegisterAppInstaller(
-	p playlistsvc.Service,
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	accessControlService accesscontrol.Service,
+	ac accesscontrol.AccessControl,
 ) (*AppInstaller, error) {
+	if err := DeclareFixedRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("declaring fixed roles: %w", err)
+	}
+
 	installer := &AppInstaller{
-		cfg:     cfg,
-		service: p,
+		features:      features,
+		accessControl: ac,
+		logger:        log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -68,55 +65,52 @@ func RegisterAppInstaller(
 }
 
 func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	//nolint:staticcheck // not yet migrated to Resource Authorizer
-	return roleauthorizer.NewRoleAuthorizer()
-}
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
 
-// GetLegacyStorage returns the legacy storage for the playlist app.
-// v0alpha1 and v1 use the same storage implementation since they share the same schema
-func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvrV0alpha1 := playlistv0alpha1.PlaylistKind().GroupVersionResource()
-	gvrV1 := playlistv1.PlaylistKind().GroupVersionResource()
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
 
-	// check if the requested GVR matches either v0alpha1 or v1
-	var gvk schema.GroupVersionKind
-	switch requested.String() {
-	case gvrV0alpha1.String():
-		gvk = playlistv0alpha1.PlaylistKind().GroupVersionKind()
-	case gvrV1.String():
-		gvk = playlistv1.PlaylistKind().GroupVersionKind()
-	default:
-		return nil
-	}
-
-	legacyStore := &legacyStorage{
-		service:    p.service,
-		namespacer: request.GetNamespaceMapper(p.cfg),
-		gvk:        gvk,
-	}
-
-	legacyStore.tableConverter = utils.NewTableConverter(
-		requested.GroupResource(),
-		utils.TableColumns{
-			Definition: []metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-				{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
-				{Name: "Created At", Type: "date"},
-			},
-			Reader: func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*playlistv1.Playlist)
-				if !ok {
-					return nil, fmt.Errorf("expected playlist, got %T", obj)
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
+				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
+				// All other roles are handled by the default role authorizer.
+				if user.GetOrgRole() != org.RoleNone {
+					return authorizer.DecisionNoOpinion, "", nil
 				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.Spec.Interval,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
+				switch attr.GetVerb() {
+				case "get", "list", "watch":
+					return authorizer.DecisionAllow, "", nil
+				default:
+					return authorizer.DecisionNoOpinion, "", nil
+				}
+			}
+
+			var action string
+			switch attr.GetVerb() {
+			case "get", "list", "watch":
+				action = ActionPlaylistsRead
+			case "create", "update", "patch", "delete", "deletecollection":
+				action = ActionPlaylistsWrite
+			default:
+				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
+			}
+
+			hasAccess, err := p.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+			if err != nil {
+				p.logger.Error("failed to evaluate permission", "error", err)
+				return authorizer.DecisionDeny, "permission evaluation failed", err
+			}
+			if !hasAccess {
+				return authorizer.DecisionDeny, "insufficient permissions", nil
+			}
+
+			return authorizer.DecisionAllow, "", nil
 		},
 	)
-	return legacyStore
 }

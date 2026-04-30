@@ -1,18 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Combobox, Field, Stack } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
-import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { type ConnectionFormData } from '../types';
+import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -73,7 +74,10 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [isEdit, data?.status?.fieldErrors, setError]);
 
+  const [submitError, setSubmitError] = useState<string>();
+
   const onSubmit = async (form: ConnectionFormData) => {
+    setSubmitError(undefined);
     try {
       const spec = {
         title: form.title,
@@ -96,7 +100,19 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           }
           return;
         }
+
+        // Show unmapped error details as a top-level form error
+        const allErrors = extractFormErrors(err.data);
+        const detail = allErrors.find((e) => e.detail)?.detail;
+        if (detail) {
+          setSubmitError(detail);
+          return;
+        }
       }
+
+      setSubmitError(
+        extractErrorMessage(err) || t('provisioning.connection-form.error-submit', 'Failed to save connection')
+      );
     }
   };
 
@@ -105,6 +121,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
+          {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin
             htmlFor="type"

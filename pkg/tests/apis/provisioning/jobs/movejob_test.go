@@ -6,27 +6,23 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",
@@ -35,7 +31,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		ExpectedDashboards: 3,
 		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("move single file", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE SINGLE FILE")
@@ -136,20 +132,25 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.True(t, foundPaths["archived/folder/dashboard3.json"], "should have dashboard3 in archived nested location")
 	})
 
-	t.Run("move non-existent file", func(t *testing.T) {
-		helper.DebugState(t, repo, "BEFORE MOVE NON-EXISTENT FILE")
-
-		spec := provisioning.JobSpec{
+	t.Run("move non-existent file is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
 				Paths:      []string{"non-existent.json"},
 				TargetPath: "moved/",
 			},
-		}
+		})
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := common.MustNestedString(job.Object, "status", "state")
-		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.Error(t, result.Error(), "move job for non-existent file should be rejected at creation")
 	})
 
 	t.Run("move non-existent uid", func(t *testing.T) {
@@ -204,10 +205,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.NoError(t, err)
 
 		// Wait for repository to be fully deleted
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*5, time.Millisecond*50, "repository should be deleted before creating new one")
+		helper.WaitForRepositoryDeleted(t, ctx, repo)
 
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")
@@ -236,9 +234,10 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Create a unique repository for resource reference testing to avoid contamination
 		const refRepo = "move-ref-test-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   refRepo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
+			Workflows:              []string{"write"},
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
 		})
 

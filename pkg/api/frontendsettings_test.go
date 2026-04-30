@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -31,14 +34,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -93,8 +99,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		Features:     features,
 		License:      &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
-			Cfg:                   cfg,
-			RendererPluginManager: &fakeRendererPluginManager{},
+			Cfg: cfg,
 		},
 		SQLStore:              db.InitTestDB(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),
@@ -109,6 +114,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
 		DataSourcesService:    &datafakes.FakeDataSourceService{},
+
+		dsGuardian:              guardian.ProvideGuardian(),
+		publicDashboardsService: &publicdashboards.FakePublicDashboardService{},
 	}
 
 	m := web.New()
@@ -759,9 +767,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						reqContext := &contextmodel.ReqContext{
-							Context:                    web.FromContext(ctx),
-							SignedInUser:               test.signedInUser,
-							PublicDashboardAccessToken: "test-token",
+							Context:      web.FromContext(ctx),
+							SignedInUser: test.signedInUser,
 						}
 						ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
 						*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -790,4 +797,90 @@ func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *plugina
 		calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
 		return pluginassets.ProvideService(calc)
 	}
+}
+
+func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFiltering(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	enabledPlugins := []string{"prometheus", "loki", "mysql"}
+
+	pluginList := make([]pluginstore.Plugin, len(enabledPlugins))
+	pluginSettingsList := make(map[string]*pluginsettings.DTO, len(enabledPlugins))
+	for i, name := range enabledPlugins {
+		pluginList[i] = pluginstore.Plugin{
+			Module:          fmt.Sprintf("/%s/module.js", name),
+			JSONData:        plugins.JSONData{ID: name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource},
+			FS:              &pluginfakes.FakePluginFS{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
+		}
+		pluginSettingsList[name] = &pluginsettings.DTO{ID: int64(i + 1), OrgID: 1, PluginID: name, PluginVersion: "1.0.0", Enabled: true}
+	}
+
+	pluginStore := &pluginstore.FakePluginStore{PluginList: pluginList}
+	pluginSettings := &pluginsettings.FakePluginSettings{Plugins: pluginSettingsList}
+
+	cfg := setting.NewCfg()
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, pluginSettings, nil)
+
+	hs.DataSourcesService = &datafakes.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{UID: "ds-uid-1", Name: "Prom", Type: "prometheus", OrgID: 1, JsonData: simplejson.New()},
+			{UID: "ds-uid-2", Name: "Loki", Type: "loki", OrgID: 1, JsonData: simplejson.New()},
+			{UID: "ds-uid-3", Name: "MySQL", Type: "mysql", OrgID: 1, JsonData: simplejson.New()},
+		},
+	}
+
+	testDashboard := simplejson.New()
+	testDashboard.Set("title", "Test Community Dashboard")
+	testDashboard.Set("uid", "test-uid")
+	testDashboard.Set("panels", []any{
+		map[string]any{"id": 1, "datasource": map[string]any{"uid": "ds-uid-1"}},
+		map[string]any{"id": 2, "datasource": map[string]any{"uid": "ds-uid-2"}},
+	})
+
+	dash := dashboards.NewDashboardFromJson(testDashboard)
+	dash.OrgID = 1
+
+	mockPubDashService := &publicdashboards.FakePublicDashboardService{}
+	mockPubDashService.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, "test-token").Return(nil, dash, nil)
+	hs.publicDashboardsService = mockPubDashService
+
+	m.UseMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			reqContext := &contextmodel.ReqContext{
+				Context:                    web.FromContext(ctx),
+				SignedInUser:               &user.SignedInUser{OrgID: 1},
+				PublicDashboardAccessToken: "test-token",
+			}
+			ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+			*reqContext.Req = *reqContext.Req.WithContext(ctx)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+	recorder := httptest.NewRecorder()
+
+	m.ServeHTTP(recorder, req)
+
+	type settings struct {
+		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
+	}
+
+	var got settings
+	err := json.Unmarshal(recorder.Body.Bytes(), &got)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	names := make([]string, 0)
+	for name := range got.Datasources {
+		// skip default data sources: -- Grafana --, -- Mixed --, -- Dashboard --
+		if strings.HasPrefix(name, "--") && strings.HasSuffix(name, "--") {
+			continue
+		}
+		names = append(names, name)
+	}
+
+	require.ElementsMatch(t, []string{"Prom", "Loki"}, names)
 }

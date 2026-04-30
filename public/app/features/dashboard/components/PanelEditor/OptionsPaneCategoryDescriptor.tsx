@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box } from '@grafana/ui';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { type OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 
 export interface OptionsPaneCategoryDescriptorProps {
   id: string;

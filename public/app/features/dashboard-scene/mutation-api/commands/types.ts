@@ -5,7 +5,7 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { config } from '@grafana/runtime';
 

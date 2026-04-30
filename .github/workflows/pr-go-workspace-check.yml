@@ -32,29 +32,45 @@ jobs:
     name: Go Workspace Check
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
         persist-credentials: false
 
+    - name: Setup Enterprise
+      if: github.event.pull_request.head.repo.fork == false
+      uses: ./.github/actions/setup-enterprise
+
+    # Enterprise must be cloned before setup-go so that enterprise
+    # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
 
-    - name: Check for go mod & workspace changes 
+    - name: Check for go mod & workspace changes
       run: |
-        if ! git diff --exit-code --quiet; then
+        if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum; then
           echo "Changes detected:"
-          git diff
+          git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum
+          echo ""
           echo "Please run 'make update-workspace' and commit the changes."
-          echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
+          echo ""
+          echo "If you are adding or removing a dependency used **only** by Enterprise code,"
+          echo "please update pkg/extensions/enterprise_imports.go or pkg/extensions/enterprise_imports_test.go"
+          echo ""
+          echo "You should add blank imports for dependencies that are used in enterprise code but isn't in OSS."
+          echo "If this is a test-only dependency, add it to enterprise_imports_test.go instead"
           exit 1
         fi
-    - name: Ensure Dockerfile contains submodule COPY commands
-      run: ./scripts/go-workspace/validate-dockerfile.sh
 
   check-wire:
     needs: detect-changes
@@ -80,6 +96,8 @@ jobs:
     # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss

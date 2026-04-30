@@ -4,13 +4,19 @@ import pluralize from 'pluralize';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';
+import {
+  type DataQuery,
+  type GrafanaTheme2,
+  type SelectableValue,
+  DataTopic,
+  type QueryEditorProps,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
@@ -18,8 +24,8 @@ import { filterPanelDataToQuery } from 'app/features/query/components/QueryEdito
 import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 import { SHARED_DASHBOARD_QUERY } from './constants';
-import { DashboardDatasource } from './datasource';
-import { DashboardQuery, ResultInfo } from './types';
+import { type DashboardDatasource } from './datasource';
+import { type DashboardQuery, type ResultInfo } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
@@ -218,11 +224,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
             </Field>
           )}
 
-          <Field
-            label="AdHoc Filters"
-            description="Apply --Dashboard-- data source AdHoc filters to this panel"
-            noMargin
-          >
+          <Field label="Filters" description="Apply --Dashboard-- data source filters to this panel" noMargin>
             <InlineSwitch value={Boolean(query.adHocFiltersEnabled)} onChange={onAdHocFiltersToggle} />
           </Field>
         </Stack>

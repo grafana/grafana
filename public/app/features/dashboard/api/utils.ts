@@ -1,21 +1,20 @@
 import { config, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
-import { Resource } from 'app/features/apiserver/types';
-import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { AnnoKeyGrantPermissions, type Resource, type ResourceForCreate } from 'app/features/apiserver/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
-  return version === 'v2alpha1' || version === 'v2beta1';
+  return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
 }
 
 export function isV0V1StoredVersion(version: string | undefined): boolean {
-  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1';
+  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1' || version === 'v1';
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
@@ -24,8 +23,9 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
 
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
-  // Force legacy API when dashboard scene is disabled or explicitly forced
-  if (!isDashboardSceneEnabled() || forcingOldDashboardArch) {
+  // console.log(forcingOldDashboardArch);
+  // Force legacy API when dashboard scene is force disabled
+  if (forcingOldDashboardArch) {
     if (responseFormat === 'v2') {
       throw new Error('v2 is not supported for legacy architecture');
     }
@@ -95,6 +95,20 @@ export function isV2DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
 ): cmd is SaveDashboardCommand<DashboardV2Spec> {
   return isDashboardV2Spec(cmd.dashboard);
+}
+
+export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
+  return {
+    metadata: {
+      ...dashboard.metadata,
+      resourceVersion: '',
+      annotations: {
+        ...dashboard.metadata.annotations,
+        [AnnoKeyGrantPermissions]: 'default',
+      },
+    },
+    spec: dashboard.spec,
+  };
 }
 
 /**

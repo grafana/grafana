@@ -4,11 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 // ResourceMigratorTestCase defines the interface for testing a resource migrator.
@@ -21,8 +24,11 @@ type ResourceMigratorTestCase interface {
 	FeatureToggles() []string
 	// RenameTables returns the legacy tables that should be renamed after migration
 	RenameTables() []string
-	// Setup creates test resources in legacy storage (Mode0)
-	Setup(t *testing.T, helper *apis.K8sTestHelper)
+	// Setup any tables that are no longer run on startup
+	AddLegacySQLMigrations(mg *migrator.Migrator)
+	// Setup creates test resources in legacy storage -- returns true if
+	// the properties should be accessible via k8s APIs
+	Setup(t *testing.T, helper *apis.K8sTestHelper) bool
 	// Verify checks that resources exist (or don't exist) in unified storage
 	Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }

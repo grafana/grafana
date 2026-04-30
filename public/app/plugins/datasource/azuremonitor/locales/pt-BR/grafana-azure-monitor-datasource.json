@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Certificado do cliente",
       "aria-label-client-id": "ID do cliente",
       "aria-label-client-secret": "Segredo do cliente",
+      "aria-label-private-key": "Chave privada",
+      "aria-label-private-key-password": "Senha do certificado",
       "aria-label-symbol-client-secret": "Segredo do cliente",
       "aria-label-tenant-id": "ID de locatário",
+      "description-certificate-format": "Escolha o formato do certificado (os certificados PEM devem estar no formato PEM de texto sem formatação; os certificados PFX devem estar no formato PFX codificado em Base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formato",
+      "label-client-certificate": "Certificado do cliente",
       "label-client-id": "ID do aplicativo (cliente)",
       "label-client-secret": "Segredo do cliente",
+      "label-private-key": "Chave privada",
       "label-symbol-client-secret": "Segredo do cliente",
+      "label-symbol-private-key-password": "Senha do certificado",
       "label-tenant-id": "ID do diretório (locatário)",
       "placeholder-symbol-client-secret": "configurados",
       "reset-symbol-client-secret": "Redefinir"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Escolha o tipo de autenticação para os serviços do Azure",
-      "label-authentication": "Autenticação",
+      "label-authentication": "Tipo de autenticação",
       "title-authentication": "Autenticação"
     },
     "basic-logs-toggle": {
@@ -131,12 +139,12 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
-      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
+      "aria-label-add-fuzzy-search": "Adicionar busca difusa",
+      "aria-label-remove-fuzzy-search": "Remover busca difusa",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
-      "placeholder-search-team": "Digite o termo de pesquisa",
-      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a pesquisa difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
+      "placeholder-search-team": "Digite o termo de busca",
+      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a busca difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
     },
     "grafana-template-variable-fn-input": {
       "label-grafana-template-variable": "Função de variável de modelo do Grafana",
@@ -212,7 +220,7 @@
         "label-kql": "KQL"
       },
       "label-service": "Serviço",
-      "placeholder-service": "Serviço...",
+      "placeholder-service": "Serviço…",
       "title-switch-mode": "Deseja trocar para o modo de edição?"
     },
     "raw-query": {
@@ -252,7 +260,7 @@
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
-      "placeholder-resource-search": "Pesquisar um recurso"
+      "placeholder-resource-search": "Buscar um recurso"
     },
     "subscription-field": {
       "label-subscriptions": "Assinaturas",

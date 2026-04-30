@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
+import { renameFieldsTransformer, type RenameFieldsTransformerOptions } from './rename';
 
 describe('Rename Transformer', () => {
   beforeAll(() => {

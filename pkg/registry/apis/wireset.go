@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
+	inmemory "github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -28,12 +30,11 @@ import (
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
-	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	iam.ProvideNoopRoleApiInstaller,
-	iam.ProvideNoopGlobalRoleApiInstaller,
+	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
 	iam.ProvideNoopExternalGroupMappingApiInstaller,
-	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	iam.ProvideNoopRoleBindingApiInstaller,
 
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
@@ -68,6 +69,9 @@ var WireSet = wire.NewSet(
 	// Provisioning
 	provisioning.RegisterDependencies,
 	provisioningExtras,
+
+	// Resource Permission
+	resourcepermission.ProvideMappersRegistry,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,

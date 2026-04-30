@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { UseFormRegister } from 'react-hook-form';
+import { type UseFormRegister } from 'react-hook-form';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 

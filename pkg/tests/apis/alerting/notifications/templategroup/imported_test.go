@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -35,7 +35,7 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		},
 	})
 
-	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -63,22 +63,22 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, templates.Items, 3)
 
-	require.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+	require.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 	require.Equal(t, "imported", templates.Items[1].Spec.Title)
 	require.Equal(t, "template", templates.Items[2].Spec.Title)
 
 	t.Run("should be correct kind", func(t *testing.T) {
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "imported",
 				Content: amConfig.TemplateFiles["imported"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[1].Spec)
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "template",
 				Content: amConfig.TemplateFiles["template"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[2].Spec)
 	})
 
@@ -101,13 +101,13 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	})
 
 	t.Run("should not conflict with Grafana kind", func(t *testing.T) {
-		tpl := v0alpha1.TemplateGroup{
+		tpl := v1beta1.TemplateGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: templates.Items[1].Spec,
 		}
-		tpl.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		tpl.Spec.Kind = v1beta1.TemplateGroupTemplateKindGrafana
 
 		created, err := client.Create(context.Background(), &tpl, resource.CreateOptions{})
 		require.NoError(t, err)
@@ -120,11 +120,11 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, templates.Items, 4)
-		assert.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+		assert.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 		assert.Equal(t, "imported", templates.Items[1].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
 		assert.Equal(t, "imported", templates.Items[2].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
 		assert.Equal(t, "template", templates.Items[3].Spec.Title)
 	})
 }

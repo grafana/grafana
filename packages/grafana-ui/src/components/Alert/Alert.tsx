@@ -1,16 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -84,17 +85,22 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </Box>
 
-          <Box paddingY={1} grow={1}>
-            <Text color="primary" weight="medium">
-              {title}
-            </Text>
-            {children && <div className={styles.content}>{children}</div>}
-          </Box>
-          {action && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              {action}
+          <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
+            <Box paddingY={1} flex={1} minWidth="50%">
+              <Text color="primary" weight="medium">
+                {title}
+              </Text>
+              {children && <div className={styles.content}>{children}</div>}
             </Box>
-          )}
+            <Stack alignItems="center" wrap="wrap">
+              {action}
+              {onRemove && buttonContent && (
+                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                  {buttonContent}
+                </Button>
+              )}
+            </Stack>
+          </Stack>
           {/* If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>
@@ -107,14 +113,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
                 variant="secondary"
               />
             </div>
-          )}
-
-          {onRemove && buttonContent && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
-                {buttonContent}
-              </Button>
-            </Box>
           )}
         </Box>
       </div>
@@ -162,6 +160,7 @@ const getStyles = (
         bottom: 0,
         right: 0,
         background: theme.colors.background.primary,
+        borderRadius: theme.shape.radius.default,
         zIndex: -1,
       },
     }),

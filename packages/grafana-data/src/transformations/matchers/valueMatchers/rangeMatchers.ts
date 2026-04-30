@@ -1,8 +1,8 @@
-import { Field, FieldType } from '../../../types/dataFrame';
-import { ValueMatcherInfo } from '../../../types/transformations';
+import { type Field, FieldType } from '../../../types/dataFrame';
+import { type ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
 
-import { RangeValueMatcherOptions } from './types';
+import { type RangeValueMatcherOptions } from './types';
 
 const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions> = {
   id: ValueMatcherID.between,

@@ -1,6 +1,11 @@
 import { Chance } from 'chance';
 
-import { DashboardsTreeItem, DashboardViewItem, ManagerKind, UIDashboardViewItem } from '../types/browse-dashboards';
+import {
+  type DashboardsTreeItem,
+  type DashboardViewItem,
+  ManagerKind,
+  type UIDashboardViewItem,
+} from '../types/browse-dashboards';
 
 function wellFormedEmptyFolder(
   seed = 1,

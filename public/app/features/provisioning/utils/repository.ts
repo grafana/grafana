@@ -1,10 +1,10 @@
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
-import { BrowseDashboardsState } from 'app/features/browse-dashboards/types';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { RepoWorkflows } from '../types';
+import { type RepoWorkflows } from '../types';
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)

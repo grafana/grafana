@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import {
-  AnnotationQuery,
+  type AnnotationQuery,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,

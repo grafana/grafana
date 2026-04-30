@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { limitTransformer, LimitTransformerOptions } from './limit';
+import { limitTransformer, type LimitTransformerOptions } from './limit';
 
 describe('Limit transformer', () => {
   beforeAll(() => {

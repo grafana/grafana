@@ -1,7 +1,7 @@
-import { FieldDisplay, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type Threshold, ThresholdsMode } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
-import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
+import { type GradientStop, type RadialGaugeDimensions, type RadialShape } from './types';
 import { getThresholdPercentageValue } from './utils';
 
 interface ThresholdsBarProps {

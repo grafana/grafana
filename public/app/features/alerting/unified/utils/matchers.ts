@@ -8,10 +8,15 @@
 import { chain, compact } from 'lodash';
 
 import { type LabelMatcher } from '@grafana/alerting/unstable';
-import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type Matcher,
+  MatcherOperator,
+  type ObjectMatcher,
+  type Route,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { Labels } from '../../../../types/unified-alerting-dto';
-import { MatcherFieldValue } from '../types/silence-form';
+import { type Labels } from '../../../../types/unified-alerting-dto';
+import { type MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
 
@@ -261,4 +266,13 @@ export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatc
     type,
     value,
   };
+}
+
+export function labelsToMatchersParam(labels: Labels): string | undefined {
+  const entries = Object.entries(labels);
+  if (entries.length === 0) {
+    return undefined;
+  }
+  const parts = entries.map(([k, v]) => `${k}=${quoteWithEscape(v)}`);
+  return `{${parts.join(',')}}`;
 }

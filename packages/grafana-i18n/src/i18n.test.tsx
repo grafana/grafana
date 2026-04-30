@@ -9,7 +9,7 @@ import {
   initDefaultReactI18nInstance,
   initPluginTranslations,
 } from './i18n';
-import { ResourceLoader } from './types';
+import { type ResourceLoader } from './types';
 
 jest.mock('react-i18next', () => ({
   getI18n: () => i18n,

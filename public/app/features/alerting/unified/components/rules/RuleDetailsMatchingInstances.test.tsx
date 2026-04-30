@@ -6,7 +6,7 @@ import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 import { PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 
-import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
+import { type CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
 import { mockCombinedRule, mockDataSource, mockPromAlert, mockPromAlertingRule } from '../../mocks';
 import { alertStateToReadable } from '../../utils/rules';

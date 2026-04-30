@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
+import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
@@ -278,8 +278,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
     },
     {
-      path: '/alerting/notifications-history/view/:uuid/:timestamp?',
-      component: cfg.featureToggles.alertingNotificationHistoryGlobal
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
         ? importAlertingComponent(
             () =>
               import(

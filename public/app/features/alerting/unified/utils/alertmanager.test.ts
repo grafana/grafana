@@ -1,5 +1,5 @@
-import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
-import { Labels } from 'app/types/unified-alerting-dto';
+import { type Matcher, MatcherOperator, type Route } from 'app/plugins/datasource/alertmanager/types';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers, matchersToString, removeTimeIntervalFromRoute } from './alertmanager';
 import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from './matchers';

@@ -1,55 +1,59 @@
 import { capitalize } from 'lodash';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { AlertState } from '@grafana/data';
 import {
-  Alert,
-  AlertingRule,
-  CloudRuleIdentifier,
-  CombinedRule,
-  CombinedRuleGroup,
-  CombinedRuleWithLocation,
-  EditableRuleIdentifier,
-  GrafanaRuleIdentifier,
-  PromRuleWithLocation,
-  PrometheusRuleIdentifier,
-  RecordingRule,
-  Rule,
-  RuleGroupIdentifier,
-  RuleIdentifier,
-  RuleNamespace,
-  RuleWithLocation,
-  RulesSource,
+  type Alert,
+  type AlertingRule,
+  type CloudRuleIdentifier,
+  type CombinedRule,
+  type CombinedRuleGroup,
+  type CombinedRuleWithLocation,
+  type EditableRuleIdentifier,
+  type GrafanaRuleIdentifier,
+  type PromRuleWithLocation,
+  type PrometheusRuleIdentifier,
+  type RecordingRule,
+  type Rule,
+  type RuleGroupIdentifier,
+  type RuleIdentifier,
+  type RuleNamespace,
+  type RuleWithLocation,
+  type RulesSource,
 } from 'app/types/unified-alerting';
 import {
-  Annotations,
+  type Annotations,
   GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  GrafanaAlertingRuleDefinition,
-  GrafanaPromAlertingRuleDTO,
-  GrafanaPromRecordingRuleDTO,
-  GrafanaRecordingRuleDefinition,
-  PostableRuleDTO,
+  type GrafanaAlertStateWithReason,
+  type GrafanaAlertingRuleDefinition,
+  type GrafanaNotificationSettings,
+  type GrafanaPromAlertingRuleDTO,
+  type GrafanaPromRecordingRuleDTO,
+  type GrafanaRecordingRuleDefinition,
+  type Labels,
+  type PostableRuleDTO,
   PromAlertingRuleState,
-  PromRuleDTO,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerCloudRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type RulerAlertingRuleDTO,
+  type RulerCloudRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
-import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
-import { State } from '../components/StateTag';
+import { type CombinedRuleNamespace } from '../../../../types/unified-alerting';
+import { type State } from '../components/StateTag';
 import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 
-import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
-import { AsyncRequestState } from './redux';
+import { type AsyncRequestState } from './redux';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
@@ -64,6 +68,16 @@ function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO
 
 function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
+}
+
+export function ruleUsesDefaultPolicy(notificationSettings?: GrafanaNotificationSettings): boolean {
+  if (notificationSettings?.receiver) {
+    return false;
+  }
+  if (notificationSettings?.policy && notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+    return false;
+  }
+  return true;
 }
 
 export function isPausedRule(rule: RulerGrafanaRuleDTO) {
@@ -173,7 +187,7 @@ export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
 }
 
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
-  return group.rules.some((rule) => isProvisionedRule(rule));
+  return group.rules.some(isProvisionedRule);
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -268,6 +282,44 @@ export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): R
 
 export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
+}
+
+export type GroupReadOnlyReason = 'plugin' | 'provisioned' | 'federated';
+
+export type GroupReadOnlyStatus = { readOnly: true; reason: GroupReadOnlyReason } | { readOnly: false };
+
+/**
+ * Reports whether a Ruler-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned > federated.
+ */
+export function getRulerGroupReadOnlyStatus(
+  group: Pick<RulerRuleGroupDTO, 'rules' | 'source_tenants'>
+): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  if (Array.isArray(group.source_tenants)) {
+    return { readOnly: true, reason: 'federated' };
+  }
+  return { readOnly: false };
+}
+
+/**
+ * Reports whether a Prom-API rule group cannot be edited from Grafana, and why.
+ * Precedence: plugin > provisioned. The Prom API doesn't carry `source_tenants`,
+ * so federated detection lives only on the Ruler-API counterpart.
+ */
+export function getPromGroupReadOnlyStatus(group: Pick<PromRuleGroupDTO, 'rules'>): GroupReadOnlyStatus {
+  if (group.rules.some((rule) => isPluginProvidedRule(rule))) {
+    return { readOnly: true, reason: 'plugin' };
+  }
+  if (group.rules.some(isProvisionedPromRule)) {
+    return { readOnly: true, reason: 'provisioned' };
+  }
+  return { readOnly: false };
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
@@ -552,3 +604,35 @@ export function getRuleUID(rule?: RulerRuleDTO | Rule) {
 
 export const NO_GROUP_PREFIX = 'no_group_for_rule_';
 export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith(NO_GROUP_PREFIX);
+
+/**
+ * Returns the full effective label set for a Grafana-managed alert rule, merging
+ * user-defined labels with the system labels Grafana attaches to every fired
+ * alert instance at evaluation time (alertname, grafana_folder, __alert_rule_uid__).
+ *
+ * User-defined labels take precedence over system labels if they conflict,
+ * matching Go backend behavior (GetRuleExtraLabels).
+ *
+ * For non-Grafana rules sources, only the user-defined labels are returned since
+ * system labels are not predictable from the rule definition alone.
+ *
+ * Note: labels derived from metric query results (e.g. `instance`, `job`) are
+ * unknowable at rule-definition time and cannot be included.
+ */
+export function getEffectiveRuleLabels(rule: CombinedRule): Labels {
+  if (!isGrafanaRulesSource(rule.namespace.rulesSource)) {
+    return rule.labels;
+  }
+
+  const systemLabels: Labels = {
+    alertname: rule.name,
+    [GRAFANA_FOLDER_LABEL]: rule.namespace.name,
+  };
+
+  if (rule.uid) {
+    systemLabels[MATCHER_ALERT_RULE_UID] = rule.uid;
+  }
+
+  // System labels are the base; user-defined labels override them, matching Go backend behavior.
+  return { ...systemLabels, ...rule.labels };
+}

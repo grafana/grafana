@@ -1,10 +1,10 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
+import { SaveDashboardAsForm, type SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));

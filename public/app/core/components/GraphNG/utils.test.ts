@@ -1,9 +1,9 @@
 import {
   createTheme,
-  DataFrame,
+  type DataFrame,
   DefaultTimeZone,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
@@ -13,7 +13,7 @@ import {
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
   VisibilityMode,

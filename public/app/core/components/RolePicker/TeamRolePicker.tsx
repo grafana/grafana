@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { useListTeamRolesQuery, useSetTeamRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
 

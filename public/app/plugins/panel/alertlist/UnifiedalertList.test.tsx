@@ -1,16 +1,27 @@
-import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
-import { TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
+import {
+  type FieldConfigSource,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelProps,
+  PluginExtensionTypes,
+  ThresholdsMode,
+} from '@grafana/data';
+import { config, TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
+import { BigValueColorMode } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PromRuleGroupDTO, PromRulesResponse, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  type PromRuleGroupDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
@@ -26,7 +37,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/ut
 import { AccessControlAction } from '../../../types/accessControl';
 
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
 const grafanaRuleMock = {
@@ -116,6 +127,9 @@ const defaultOptions: UnifiedAlertListOptions = {
   datasource: 'grafana',
   viewMode: ViewMode.List,
   showInactiveAlerts: false,
+  statColorMode: BigValueColorMode.None,
+  statThresholds: STAT_THRESHOLDS_DEFAULT,
+  statValueMappings: [],
 };
 
 const defaultProps: PanelProps<UnifiedAlertListOptions> = {
@@ -159,11 +173,7 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 
   const props = { ...defaultProps, options: { ...defaultOptions, ...options } };
 
-  return render(
-    <Provider store={store}>
-      <UnifiedAlertListPanel {...props} />
-    </Provider>
-  );
+  return render(<UnifiedAlertListPanel {...props} />, { store });
 };
 
 describe('UnifiedAlertList', () => {
@@ -255,11 +265,7 @@ describe('UnifiedAlertList', () => {
       stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false, recovering: false },
     };
 
-    const { rerender } = render(
-      <Provider store={store}>
-        <UnifiedAlertListPanel {...{ ...defaultProps, options: initialOptions }} />
-      </Provider>
-    );
+    const { rerender } = render(<UnifiedAlertListPanel {...{ ...defaultProps, options: initialOptions }} />, { store });
 
     await waitFor(() => expect(subscribeMock).toHaveBeenCalledTimes(1));
     expect(subscribeMock.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
@@ -269,11 +275,7 @@ describe('UnifiedAlertList', () => {
       stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true, recovering: true },
     };
 
-    rerender(
-      <Provider store={store}>
-        <UnifiedAlertListPanel {...{ ...defaultProps, options: updatedOptions }} />
-      </Provider>
-    );
+    rerender(<UnifiedAlertListPanel {...{ ...defaultProps, options: updatedOptions }} />);
 
     // The old subscription should be cleaned up
     await waitFor(() => expect(unsubscribeMock).toHaveBeenCalled());
@@ -281,5 +283,105 @@ describe('UnifiedAlertList', () => {
     // The subscription should be re-created after the useEffect re-runs.
     await waitFor(() => expect(subscribeMock).toHaveBeenCalledTimes(2));
     expect(subscribeMock.mock.calls[1][0]).toEqual(TimeRangeUpdatedEvent);
+  });
+
+  describe('stat mode with feature flag off', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingAlertListPanelEnhancements = false;
+      jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('');
+    });
+
+    it('renders plain stat value without link when flag is off', async () => {
+      renderPanel({
+        viewMode: ViewMode.Stat,
+        dashboardAlerts: false,
+        alertName: '',
+        datasource: GRAFANA_RULES_SOURCE_NAME,
+        folder: undefined,
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('stat mode with feature flag on', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingAlertListPanelEnhancements = true;
+      jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('');
+    });
+
+    afterEach(() => {
+      config.featureToggles.alertingAlertListPanelEnhancements = false;
+    });
+
+    it('renders stat value wrapped in a link when flag is on', async () => {
+      renderPanel({
+        viewMode: ViewMode.Stat,
+        dashboardAlerts: false,
+        alertName: '',
+        datasource: GRAFANA_RULES_SOURCE_NAME,
+        folder: undefined,
+        statColorMode: BigValueColorMode.None,
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      const link = screen.getByRole('link');
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', expect.stringContaining('/alerting/list'));
+    });
+
+    it('uses variable-expanded options when building the stat link', async () => {
+      jest
+        .spyOn(defaultProps, 'replaceVariables')
+        .mockImplementation((value: string) => (value === '$alert' ? 'cpu-high' : ''));
+
+      renderPanel({
+        viewMode: ViewMode.Stat,
+        dashboardAlerts: false,
+        alertName: '$alert',
+        datasource: GRAFANA_RULES_SOURCE_NAME,
+        folder: undefined,
+        statColorMode: BigValueColorMode.None,
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('href', expect.stringContaining('cpu-high'));
+    });
+
+    it('renders stat value with threshold color when colorMode is Value', async () => {
+      renderPanel({
+        viewMode: ViewMode.Stat,
+        dashboardAlerts: false,
+        alertName: '',
+        datasource: GRAFANA_RULES_SOURCE_NAME,
+        folder: undefined,
+        statColorMode: BigValueColorMode.Value,
+        statThresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 5, color: 'red' },
+          ],
+        },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      const link = screen.getByRole('link');
+      expect(link).toBeInTheDocument();
+    });
   });
 });

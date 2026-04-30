@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
-import Prism, { Grammar, LanguageMap } from 'prismjs';
+import Prism, { type Grammar, type LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
-import { Value } from 'slate';
+import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
 
-import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
 import { SlatePrism } from '../../slate-plugins/slate-prism';
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -29,6 +29,9 @@ interface DataLinkInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  // For accessibility, this should be the id of the label that describes this input.
+  // This is needed because the input is rendered as a contenteditable div and can't use the normal label/htmlFor logic.
+  ['aria-labelledby']?: string;
 }
 
 const datalinksSyntax: Grammar = {
@@ -81,6 +84,7 @@ export const DataLinkInput = memo(
     onChange,
     suggestions,
     placeholder = 'http://your-grafana.com/d/000000010/annotations',
+    ['aria-labelledby']: ariaLabelledby,
   }: DataLinkInputProps) => {
     const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
@@ -241,6 +245,7 @@ export const DataLinkInput = memo(
                   padding: '3px 8px',
                 })
               )}
+              aria-labelledby={ariaLabelledby}
             />
           </div>
         </div>

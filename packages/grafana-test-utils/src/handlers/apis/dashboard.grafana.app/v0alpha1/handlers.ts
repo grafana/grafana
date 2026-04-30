@@ -1,6 +1,8 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+
 import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
@@ -16,14 +18,74 @@ const typeFilterMap: Record<string, string> = {
   folders: 'folder',
 };
 
-const getSearchHandler = () =>
-  http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
+export const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
+
+type HitFilterArray = Array<(hit: DashboardHit) => boolean>;
+
+/**
+ * Very similar to the default handler, but this takes a list of DashboardHit objects which will get filtered and then
+ * returned without mapping. This means you can test more custom responses and object shapes as DashboardHit has
+ * lots of optional fields.
+ * @param hits
+ */
+export function getCustomSearchHandler(hits: DashboardHit[]) {
+  return http.get(searchRoute, ({ request }) => {
+    const url = new URL(request.url);
+    // TODO: query filter
+    const limitFilter = parseInt(url.searchParams.get('limit') || '', 10) || hits.length;
+    const folderFilter = url.searchParams.get('folder') || null;
+    const typeFilter = url.searchParams.getAll('type');
+    const mappedTypeFilters = typeFilter.map((f) => typeMap[f] || f);
+    const nameFilter = url.searchParams.getAll('name');
+    const tagFilter = url.searchParams.getAll('tag');
+    const ownerReferenceFilter = url.searchParams.getAll('ownerReference');
+    const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
+
+    const filters: HitFilterArray = [];
+
+    if (nameFilter.length > 0) {
+      const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
+      filters.push((hit) => filteredNameFilter.includes(hit.name));
+    }
+
+    if (typeFilter.length > 0) {
+      filters.push((hit) => mappedTypeFilters.includes(hit.resource));
+    }
+
+    if (tagFilter.length > 0) {
+      filters.push((hit) => Boolean(hit.tags?.some((tag) => tagFilter.includes(tag))));
+    }
+
+    if (ownerReferenceFilter.length > 0) {
+      filters.push((hit) =>
+        Boolean(hit.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference)))
+      );
+    }
+
+    if (folderFilter === 'general') {
+      filters.push((hit) => hit.folder === undefined || hit.folder === 'general');
+    } else if (folderFilter) {
+      filters.push((hit) => hit.folder === folderFilter);
+    }
+
+    const filtered = hits.filter((hit) => filters.every((fn) => fn(hit)));
+    const sliced = filtered.slice(offset, offset + limitFilter);
+
+    return HttpResponse.json({
+      totalHits: filtered.length,
+      hits: sliced,
+    });
+  });
+}
+
+const getDefaultSearchHandler = () =>
+  http.get(searchRoute, ({ request }) => {
     const limitFilter = new URL(request.url).searchParams.get('limit') || null;
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
-    const typeFilter = new URL(request.url).searchParams.get('type') || null;
+    const typeFilters = new URL(request.url).searchParams.getAll('type');
     const nameFilter = new URL(request.url).searchParams.getAll('name');
-    const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
-    const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
+    const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
+    const tagFilter = new URL(request.url).searchParams.getAll('tag');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
@@ -36,11 +98,11 @@ const getSearchHandler = () =>
         filters.push(({ item }) => filteredNameFilter.includes(item.uid));
       }
 
-      if (typeFilter) {
-        filters.push(({ item }) => item.kind === mappedTypeFilter);
+      if (mappedTypeFilters.length > 0) {
+        filters.push(({ item }) => mappedTypeFilters.includes(item.kind));
       }
 
-      if (tagFilter && tagFilter.length > 0) {
+      if (tagFilter.length > 0) {
         filters.push(({ item }) =>
           Boolean(
             (item.kind === 'folder' || item.kind === 'dashboard') && item.tags?.some((tag) => tagFilter.includes(tag))
@@ -48,15 +110,13 @@ const getSearchHandler = () =>
         );
       }
 
-      if (folderFilter && folderFilter !== 'general') {
-        filters.push(
-          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
-        );
-      }
-
       if (folderFilter === 'general') {
         filters.push(
           ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
+        );
+      } else if (folderFilter) {
+        filters.push(
+          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
         );
       }
 
@@ -82,9 +142,9 @@ const getSearchHandler = () =>
     const sliced = limitFilter ? mapped.slice(0, parseInt(limitFilter, 10)) : mapped;
 
     return HttpResponse.json({
-      totalHits: sliced.length,
+      totalHits: filtered.length,
       hits: sliced,
     });
   });
 
-export default [getSearchHandler()];
+export default [getDefaultSearchHandler()];

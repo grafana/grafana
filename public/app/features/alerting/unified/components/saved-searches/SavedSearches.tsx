@@ -48,7 +48,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
@@ -56,7 +56,7 @@ import { PopupCard } from '../HoverCard';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
-import { SavedSearch } from './savedSearchesSchema';
+import { type SavedSearch } from './savedSearchesSchema';
 
 // ============================================================================
 // Types

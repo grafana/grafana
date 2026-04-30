@@ -83,7 +83,6 @@ func (d *Deb) BuildFile(ctx context.Context, builder *dagger.Container, opts *pi
 		BeforeRemove: "/src/packaging/deb/control/prerm",
 		Depends: []string{
 			"adduser",
-			"musl",
 		},
 		EnvFolder: "/pkg/etc/default",
 		ExtraArgs: []string{

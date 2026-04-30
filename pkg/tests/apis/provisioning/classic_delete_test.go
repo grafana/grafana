@@ -12,7 +12,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_ClassicDashboardDeletion verifies that classic-format dashboards
@@ -21,18 +20,16 @@ import (
 // and lacked the ReadClassicResource fallback, causing "no object found" errors when deleting
 // classic dashboards.
 func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	t.Run("classic dashboard deleted via filesystem removal and sync", func(t *testing.T) {
 		const repo = "classic-delete-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
@@ -73,10 +70,10 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "inline-classic.json"), classicDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -113,10 +110,10 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "status-check.json"), classicDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -179,10 +176,10 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "k8s.json"), k8sDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 

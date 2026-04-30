@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
-import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import MoreButton from '../components/MoreButton';
 import { WithReturnButton } from '../components/WithReturnButton';
@@ -15,7 +15,7 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
-import { isUngroupedRuleGroup } from '../utils/rules';
+import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
@@ -27,7 +27,7 @@ import { NoRulesFound } from './components/NoRulesFound';
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
-import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
+import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
@@ -206,7 +206,13 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       key={group.name}
       name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
-      actions={<GrafanaGroupActions folderUid={group.folderUid} groupName={group.name} />}
+      actions={
+        <GrafanaGroupActions
+          folderUid={group.folderUid}
+          groupName={group.name}
+          readOnly={getPromGroupReadOnlyStatus(group).readOnly}
+        />
+      }
       href={detailsLink}
       isOpen={false}
     >
@@ -218,15 +224,16 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 interface GrafanaGroupActionsProps {
   folderUid: string;
   groupName: string;
+  readOnly: boolean;
 }
 
-function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps) {
+function GrafanaGroupActions({ folderUid, groupName, readOnly }: GrafanaGroupActionsProps) {
   const [showExportDrawer, setShowExportDrawer] = useState(false);
 
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
-  const canEdit = editRuleSupported && editRuleAllowed;
+  const canEdit = editRuleSupported && editRuleAllowed && !readOnly;
   const canExport = exportRulesSupported && exportRulesAllowed;
 
   if (!canEdit && !canExport) {

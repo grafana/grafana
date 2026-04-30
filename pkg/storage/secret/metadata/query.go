@@ -27,15 +27,14 @@ var (
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
-	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
-	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
-	sqlSecureValueListByIDs        = mustTemplate("secure_value_list_by_ids.sql")
-	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
-	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
-	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
-	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
-	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
-	sqlSecureValueAddGCRetryCount  = mustTemplate("secure_value_add_gc_retry_count.sql")
+	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList                    = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate                  = mustTemplate("secure_value_create.sql")
+	sqlSecureValueUpdateExternalId        = mustTemplate("secure_value_updateExternalId.sql")
+	sqlSecureValueDelete                  = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueSetInactiveAllFromGroup = mustTemplate("secure_value_set_inactive_all_from_group.sql")
+	sqlSecureValueLeaseInactive           = mustTemplate("secure_value_lease_inactive.sql")
+	sqlSecureValueListByLeaseToken        = mustTemplate("secure_value_list_by_lease_token.sql")
 
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
@@ -259,6 +258,17 @@ type deleteSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type setInactiveAllFromGroupSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace              string
+	OwnerReferenceAPIGroup string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r setInactiveAllFromGroupSecureValue) Validate() error {
 	return nil // TODO
 }
 

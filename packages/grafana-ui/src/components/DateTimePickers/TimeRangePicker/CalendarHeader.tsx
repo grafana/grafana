@@ -4,7 +4,7 @@ import { t, Trans } from '@grafana/i18n';
 import { IconButton } from '../../IconButton/IconButton';
 import { Stack } from '../../Layout/Stack/Stack';
 
-import { TimePickerCalendarProps } from './TimePickerCalendar';
+import { type TimePickerCalendarProps } from './TimePickerCalendar';
 import { TimePickerTitle } from './TimePickerTitle';
 
 export function Header({ onClose }: TimePickerCalendarProps) {

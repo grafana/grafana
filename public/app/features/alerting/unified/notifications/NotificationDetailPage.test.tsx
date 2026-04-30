@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 import { setupMswServer } from '../mockApi';
 import { HISTORIAN_BASE, setHistorianAlerts, setHistorianNotifications } from '../mocks/server/handlers/historian';
@@ -42,12 +42,12 @@ function makeNotification(overrides: Partial<NotificationEntry> = {}): Notificat
 
 function renderPage(uuid: string, timestamp?: string) {
   const path = timestamp
-    ? `/alerting/notifications-history/view/${uuid}/${encodeURIComponent(timestamp)}`
+    ? `/alerting/notifications-history/view/${uuid}?ts=${new Date(timestamp).getTime()}`
     : `/alerting/notifications-history/view/${uuid}`;
 
   return render(
     <Routes>
-      <Route path="/alerting/notifications-history/view/:uuid/:timestamp?" element={<NotificationDetailPage />} />
+      <Route path="/alerting/notifications-history/view/:uuid" element={<NotificationDetailPage />} />
     </Routes>,
     { historyOptions: { initialEntries: [path] } }
   );
@@ -124,10 +124,11 @@ describe('NotificationDetailPage', () => {
 
     await screen.findByText('Delivered successfully');
 
-    expect(screen.getByTestId('icon-sync')).toBeInTheDocument();
+    expect(screen.getByText('This was a retry of a previous attempt')).toBeInTheDocument();
   });
 
-  it('renders firing and resolved alerts', async () => {
+  it('renders firing and resolved alerts on alerts tab', async () => {
+    const user = userEvent.setup();
     const notification = makeNotification();
     setHistorianNotifications([notification]);
     setHistorianAlerts([
@@ -149,12 +150,16 @@ describe('NotificationDetailPage', () => {
 
     renderPage(notification.uuid, notification.timestamp);
 
-    expect(await screen.findByText(/firing alerts/i)).toBeInTheDocument();
-    expect(screen.getByText(/resolved alerts/i)).toBeInTheDocument();
-    expect(screen.getByText('CPU is above 90%')).toBeInTheDocument();
+    // Wait for data to load, then switch to Alerts tab
+    await screen.findByText('Delivered successfully');
+    await user.click(screen.getByRole('tab', { name: /alerts/i }));
+
+    expect(await screen.findByText('CPU is above 90%')).toBeInTheDocument();
+    expect(screen.getAllByText('Firing').length).toBeGreaterThanOrEqual(2); // header + alert badge
+    expect(screen.getByText('Resolved')).toBeInTheDocument();
   });
 
-  it('shows group labels section when present', async () => {
+  it('shows group labels in page info when present', async () => {
     const notification = makeNotification({
       groupLabels: { alertname: 'HighCPU', severity: 'critical' },
     });
@@ -162,10 +167,16 @@ describe('NotificationDetailPage', () => {
 
     renderPage(notification.uuid, notification.timestamp);
 
-    expect(await screen.findByText(/group labels/i)).toBeInTheDocument();
+    // Wait for notification data to load
+    await screen.findByText('Delivered successfully');
+    // Labels are rendered in the page info area via AlertLabels
+    const labelElements = await screen.findAllByTestId('label-value');
+    expect(labelElements.length).toBe(2);
+    expect(screen.getByLabelText('alertname: HighCPU')).toBeInTheDocument();
+    expect(screen.getByLabelText('severity: critical')).toBeInTheDocument();
   });
 
-  it('renders debug details section collapsed by default', async () => {
+  it('renders more details section collapsed by default', async () => {
     const notification = makeNotification();
     setHistorianNotifications([notification]);
 
@@ -173,11 +184,11 @@ describe('NotificationDetailPage', () => {
 
     await screen.findByText('Delivered successfully');
 
-    expect(screen.getByText(/debug details/i)).toBeInTheDocument();
+    expect(screen.getByText(/more details/i)).toBeInTheDocument();
     expect(screen.queryByText(notification.uuid)).not.toBeInTheDocument();
   });
 
-  it('expands debug details on click and shows UUID', async () => {
+  it('expands more details on click and shows UUID', async () => {
     const user = userEvent.setup();
     const notification = makeNotification();
     setHistorianNotifications([notification]);
@@ -186,12 +197,12 @@ describe('NotificationDetailPage', () => {
 
     await screen.findByText('Delivered successfully');
 
-    await user.click(screen.getByText(/debug details/i));
+    await user.click(screen.getByText(/more details/i));
 
     expect(await screen.findByText(notification.uuid)).toBeInTheDocument();
   });
 
-  it('opens related notifications drawer', async () => {
+  it('shows related notifications in tab', async () => {
     const user = userEvent.setup();
     const notification = makeNotification();
     const relatedNotification = makeNotification({
@@ -207,13 +218,14 @@ describe('NotificationDetailPage', () => {
 
     await screen.findByText('Delivered successfully');
 
-    const relatedButton = screen.getByRole('button', { name: /related/i });
-    await user.click(relatedButton);
+    const relatedTab = screen.getByRole('tab', { name: /related/i });
+    await user.click(relatedTab);
 
-    expect(await screen.findByText('Related Notifications')).toBeInTheDocument();
+    expect(await screen.findByText('email-receiver')).toBeInTheDocument();
   });
 
-  it('shows quick action links', async () => {
+  it('shows actions menu with quick action links', async () => {
+    const user = userEvent.setup();
     const notification = makeNotification({
       receiver: 'my-slack',
       groupLabels: { alertname: 'HighCPU' },
@@ -222,7 +234,16 @@ describe('NotificationDetailPage', () => {
 
     renderPage(notification.uuid, notification.timestamp);
 
-    expect(await screen.findByRole('link', { name: /view contact point/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /silence this group/i })).toBeInTheDocument();
+    // Wait for the notification to load
+    await screen.findByText('Delivered successfully');
+    // Open the actions menu (there may be multiple "More" buttons rendered by the Page header)
+    const moreButtons = await screen.findAllByRole('button', { name: /more/i });
+    const moreButton = moreButtons[0];
+    await user.click(moreButton);
+
+    expect(screen.getByRole('menuitem', { name: /view contact point/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /view alert rule/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /silence notifications/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /copy link/i })).toBeInTheDocument();
   });
 });

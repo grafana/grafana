@@ -5,7 +5,7 @@ import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, TimeRangeInput } from '@grafana/ui';
 
-import { SilenceFormFields } from '../../types/silence-form';
+import { type SilenceFormFields } from '../../types/silence-form';
 
 export const SilencePeriod = () => {
   const { control, getValues } = useFormContext<SilenceFormFields>();

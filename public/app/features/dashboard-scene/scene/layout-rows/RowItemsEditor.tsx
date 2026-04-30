@@ -3,7 +3,7 @@ import { Checkbox } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { RowItems } from './RowItems';
+import { type RowItems } from './RowItems';
 
 export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
   const categoryId = 'rows-options';

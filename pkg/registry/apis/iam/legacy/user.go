@@ -3,20 +3,102 @@ package legacy
 import (
 	"context"
 	stdsql "database/sql"
-	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
+
+type GetUserUIDByIDQuery struct {
+	OrgID            int64
+	ID               int64
+	IsServiceAccount bool
+}
+
+type GetUserUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryUserUIDByIDTemplate = mustTemplate("user_uid_by_id.sql")
+
+func newGetUserUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetUserUIDByIDQuery) getUserUIDByIDQuery {
+	return getUserUIDByIDQuery{
+		SQLTemplate:  sqltemplate.New(sqlHelper.DialectForDriver()),
+		UserTable:    sqlHelper.Table("user"),
+		OrgUserTable: sqlHelper.Table("org_user"),
+		Query:        q,
+	}
+}
+
+type getUserUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Query        *GetUserUIDByIDQuery
+}
+
+func (r getUserUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) getUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetUserUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryUserUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUserUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, user.ErrUserNotFound
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetUserUIDByIDResult{UID: uid}, nil
+}
+
+func (s *legacySQLStore) GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = false
+	return s.getUserUIDByID(ctx, ns, query)
+}
+
+func (s *legacySQLStore) GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = true
+	return s.getUserUIDByID(ctx, ns, query)
+}
 
 type GetUserInternalIDQuery struct {
 	OrgID int64
@@ -55,7 +137,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +160,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 	}
 
 	if !rows.Next() {
-		return nil, errors.New("user not found")
+		return nil, user.ErrUserNotFound
 	}
 
 	var id int64
@@ -94,6 +176,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 type ListUserQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 	Email string
 	Login string
 
@@ -130,6 +213,9 @@ func (r listUsersQuery) Validate() error {
 
 // ListUsers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	limit := int(query.Pagination.Limit)
 	query.Pagination.Limit += 1
@@ -139,7 +225,7 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -170,13 +256,25 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 		var lastID int64
 		for rows.Next() {
 			u := common.UserWithRole{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
-				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
+			var name, email, role stdsql.NullString
+			var emailVerified stdsql.NullBool
+			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &email, &name,
+				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &emailVerified,
+				&u.IsProvisioned, &u.LastSeenAt, &role,
 			)
 			if err != nil {
 				return res, err
 			}
+			if name.Valid {
+				u.Name = name.String
+			}
+			if email.Valid {
+				u.Email = email.String
+			}
+			if role.Valid {
+				u.Role = role.String
+			}
+			u.EmailVerified = emailVerified.Valid && emailVerified.Bool
 
 			lastID = u.ID
 			res.Items = append(res.Items, u)
@@ -241,7 +339,7 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +506,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.LastSeenAt = legacysql.NewDBTime(lastSeenAt)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -472,10 +570,34 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
+}
+
+// toUserConflictError converts a UNIQUE constraint violation on user.email or
+// user.login into a 409 Conflict API error. All other errors are returned as-is.
+// It uses the DB dialect to detect the violation across SQLite, MySQL and PostgreSQL.
+func toUserConflictError(dialect migrator.Dialect, err error, uid string) error {
+	if err == nil {
+		return nil
+	}
+	if dialect != nil && dialect.IsUniqueConstraintViolation(err) {
+		msg := dialect.ErrorMessage(err)
+		switch {
+		case strings.Contains(msg, "email"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("email is already taken"))
+		case strings.Contains(msg, "login"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("login is already taken"))
+		default:
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("user already exists"))
+		}
+	}
+	return err
 }
 
 func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
@@ -523,7 +645,7 @@ func (r deleteOrgUserQuery) Validate() error {
 
 // DeleteUser implements LegacyIdentityStore.
 func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}
@@ -559,8 +681,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			if err := rows.Err(); err != nil {
 				return fmt.Errorf("failed to read user lookup rows: %w", err)
 			}
-			// User not found, nothing to delete
-			return fmt.Errorf("user not found")
+			return user.ErrUserNotFound
 		}
 		if err := rows.Scan(&userID); err != nil {
 			return fmt.Errorf("failed to scan user ID: %w", err)
@@ -603,7 +724,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if rowsAffected == 0 {
-			return fmt.Errorf("user not found")
+			return user.ErrUserNotFound
 		}
 
 		return nil
@@ -673,7 +794,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	now := time.Now().UTC()
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -733,8 +854,63 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil
+}
+
+type UpdateUserLastSeenAtCommand struct {
+	UID        string
+	LastSeenAt legacysql.DBTime
+}
+
+var sqlUpdateUserLastSeenAtTemplate = mustTemplate("update_user_last_seen_at.sql")
+
+func newUpdateUserLastSeenAt(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateUserLastSeenAtCommand) updateUserLastSeenAtQuery {
+	return updateUserLastSeenAtQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
+	}
+}
+
+type updateUserLastSeenAtQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	Command   *UpdateUserLastSeenAtCommand
+}
+
+func (r updateUserLastSeenAtQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("UID is required")
+	}
+	return nil
+}
+
+// UpdateLastSeenAt implements LegacyIdentityStore.
+func (s *legacySQLStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error {
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	req := newUpdateUserLastSeenAt(sql, &cmd)
+	q, err := sqltemplate.Execute(sqlUpdateUserLastSeenAtTemplate, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlUpdateUserLastSeenAtTemplate.Name(), err)
+	}
+
+	result, err := sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return apierrors.NewNotFound(iamv0.UserResourceInfo.GroupResource(), cmd.UID)
+	}
+	return nil
 }

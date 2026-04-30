@@ -96,14 +96,14 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint32 `json:"ids"`
+	Ids []int32 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
-		Ids:     []uint32{},
+		Ids:     []int32{},
 	}
 }
 
@@ -183,7 +183,7 @@ func (DashboardPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
-	Id          float64                 `json:"id"`
+	Id          int32                   `json:"id"`
 	Title       string                  `json:"title"`
 	Description string                  `json:"description"`
 	Links       []DashboardDataLink     `json:"links"`
@@ -355,6 +355,8 @@ func (DashboardDataTransformerConfig) OpenAPIModelName() string {
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *DashboardMatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options interface{} `json:"options,omitempty"`
 }
@@ -369,6 +371,21 @@ func NewDashboardMatcherConfig() *DashboardMatcherConfig {
 // OpenAPIModelName returns the OpenAPI model name for DashboardMatcherConfig.
 func (DashboardMatcherConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMatcherScope string
+
+const (
+	DashboardMatcherScopeSeries     DashboardMatcherScope = "series"
+	DashboardMatcherScopeNested     DashboardMatcherScope = "nested"
+	DashboardMatcherScopeAnnotation DashboardMatcherScope = "annotation"
+	DashboardMatcherScopeExemplar   DashboardMatcherScope = "exemplar"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMatcherScope.
+func (DashboardMatcherScope) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherScope"
 }
 
 // A topic is attached to DataFrame metadata in query results.
@@ -1015,7 +1032,7 @@ func (DashboardLibraryPanelKind) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardLibraryPanelKindSpec struct {
 	// Panel ID for the library panel in the dashboard
-	Id float64 `json:"id"`
+	Id int32 `json:"id"`
 	// Title for the library panel in the dashboard
 	Title        string                   `json:"title"`
 	LibraryPanel DashboardLibraryPanelRef `json:"libraryPanel"`
@@ -1854,14 +1871,15 @@ func (DashboardVariableOption) OpenAPIModelName() string {
 }
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 // +k8s:openapi-gen=true
 type DashboardVariableHide string
 
 const (
-	DashboardVariableHideDontHide     DashboardVariableHide = "dontHide"
-	DashboardVariableHideHideLabel    DashboardVariableHide = "hideLabel"
-	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
+	DashboardVariableHideDontHide       DashboardVariableHide = "dontHide"
+	DashboardVariableHideHideLabel      DashboardVariableHide = "hideLabel"
+	DashboardVariableHideHideVariable   DashboardVariableHide = "hideVariable"
+	DashboardVariableHideInControlsMenu DashboardVariableHide = "inControlsMenu"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardVariableHide.
@@ -2327,6 +2345,8 @@ type DashboardAdhocVariableSpec struct {
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool `json:"enableGroupBy,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
@@ -2339,6 +2359,7 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 	}
 }
 

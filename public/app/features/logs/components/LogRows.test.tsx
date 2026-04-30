@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { type LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
-import { LogRows, Props } from './LogRows';
+import { LogRows, type Props } from './LogRows';
 import { createLogRow } from './mocks/logRow';
 
 jest.mock('../utils', () => ({

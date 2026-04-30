@@ -1,7 +1,7 @@
-import OpenLayersMap from 'ol/Map';
-import View from 'ol/View';
+import type OpenLayersMap from 'ol/Map';
+import type View from 'ol/View';
 import { transformExtent } from 'ol/proj';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { dateTime, EventBusSrv, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

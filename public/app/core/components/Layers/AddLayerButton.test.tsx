@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { AddLayerButton, AddLayerButtonProps } from './AddLayerButton';
+import { AddLayerButton, type AddLayerButtonProps } from './AddLayerButton';
 
 describe('AddLayerButton', () => {
   const testLabel = 'Add Layer';

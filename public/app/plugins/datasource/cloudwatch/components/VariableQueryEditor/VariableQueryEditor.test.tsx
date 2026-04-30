@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
 import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
-import { GetDimensionKeysRequest } from '../../resources/types';
+import { type GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
 
-import { VariableQueryEditor, Props } from './VariableQueryEditor';
+import { VariableQueryEditor, type Props } from './VariableQueryEditor';
 
 const defaultQuery = {
   queryType: VariableQueryType.Regions,

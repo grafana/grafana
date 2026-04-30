@@ -691,6 +691,19 @@ func TestGenerateConnectionString(t *testing.T) {
 			},
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
 		},
+		{
+			desc: "Password with semicolon (ODBC escaping)",
+			dataSource: DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "myuser",
+				DecryptedSecureJSONData: map[string]string{
+					"password": "StrongPass;123",
+				},
+				JsonData: JsonData{},
+			},
+			expConnStr: "odbc:server=localhost;database=database;user id={myuser};password={StrongPass;123};",
+		},
 	}
 
 	logger := backend.NewLoggerWith("logger", "mssql.test")

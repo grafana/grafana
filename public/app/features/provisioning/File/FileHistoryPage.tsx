@@ -12,7 +12,7 @@ import { useUrlParams } from 'app/core/navigation/hooks';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { PROVISIONING_URL } from '../constants';
-import { HistoryListResponse } from '../types';
+import { type HistoryListResponse } from '../types';
 import { formatTimestamp } from '../utils/time';
 
 import { isFileHistorySupported } from './utils';
