@@ -896,6 +896,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/meticulous.ts @grafana/dataviz-squad
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
