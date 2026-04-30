@@ -13,11 +13,13 @@
  * 3. Payload validation (does the payload match the Zod schema?)
  */
 
+import { type SceneVariable } from '@grafana/scenes';
+
 import { DashboardEditActionEvent } from '../edit-pane/events';
 import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
-import type { MutationCommand, MutationContext } from './commands/types';
+import type { MutationCommand, MutationContext, UndoDomain } from './commands/types';
 import { replaceVariableSet } from './commands/variableUtils';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
@@ -27,6 +29,7 @@ interface CommandRegistration {
   handler: MutationHandler;
   canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
+  undoDomain?: UndoDomain;
 }
 
 export class DashboardMutationClient implements MutationClient {
@@ -69,11 +72,9 @@ export class DashboardMutationClient implements MutationClient {
 
     const context: MutationContext = { scene: this.scene };
 
-    // Capture the variable set reference and variable array before the handler runs.
-    // replaceVariableSet (used by all variable commands) always creates a new
-    // SceneVariableSet instance, so identity comparison detects any variable mutation.
-    const varSetBefore = this.scene.state.$variables;
-    const varsBefore = varSetBefore?.state.variables.slice() ?? [];
+    // Snapshot the declared domain before the handler runs.
+    const { undoDomain } = registration;
+    const beforeSnapshot = undoDomain ? this.snapshotDomain(undoDomain) : undefined;
 
     try {
       const result = await registration.handler(payload, context);
@@ -81,30 +82,25 @@ export class DashboardMutationClient implements MutationClient {
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
 
-        // Register undo/redo when the variable set was replaced by the handler.
-        // Both callbacks use replaceVariableSet to ensure proper SceneVariableSet
-        // lifecycle (child variable activation) on each undo/redo cycle.
-        const varSetAfter = this.scene.state.$variables;
-        if (varSetAfter !== varSetBefore && typeof this.scene.publishEvent === 'function') {
-          const varsAfter = varSetAfter!.state.variables.slice();
-          const scene = this.scene;
-          // The mutation is already applied; skip the first perform() call from handleEditAction.
+        // Register undo/redo entry when the command declared a snapshot domain.
+        // perform() is called immediately by DashboardEditPane.handleEditAction —
+        // the mutation is already applied so we skip that first call.
+        if (undoDomain && beforeSnapshot && typeof this.scene.publishEvent === 'function') {
+          const afterSnapshot = this.snapshotDomain(undoDomain);
           let firstPerform = true;
 
           this.scene.publishEvent(
             new DashboardEditActionEvent({
               source: this.scene,
               description: type,
-              perform() {
+              perform: () => {
                 if (firstPerform) {
                   firstPerform = false;
                   return;
                 }
-                replaceVariableSet(scene, varsAfter);
+                this.restoreDomain(undoDomain, afterSnapshot);
               },
-              undo() {
-                replaceVariableSet(scene, varsBefore);
-              },
+              undo: () => this.restoreDomain(undoDomain, beforeSnapshot),
             }),
             true
           );
@@ -125,12 +121,26 @@ export class DashboardMutationClient implements MutationClient {
     return Array.from(this.commands.keys());
   }
 
+  private snapshotDomain(domain: UndoDomain): SceneVariable[] {
+    if (domain === 'variables') {
+      return this.scene.state.$variables?.state.variables.slice() ?? [];
+    }
+    return [];
+  }
+
+  private restoreDomain(domain: UndoDomain, snapshot: SceneVariable[]): void {
+    if (domain === 'variables') {
+      replaceVariableSet(this.scene, snapshot);
+    }
+  }
+
   private registerCommand(cmd: MutationCommand): void {
     this.commands.set(cmd.name, {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,
       canExecute: cmd.permission,
       readOnly: cmd.readOnly ?? false,
+      undoDomain: cmd.undoDomain,
     });
   }
 }
