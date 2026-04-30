@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Save"
-      }
+      },
+      "error-title": "Failed to save alert rule"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Delete all rules"
-        }
+        },
+        "error": "Failed to delete folder rules"
       },
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",
@@ -1573,8 +1575,14 @@
         "update-error": "Failed to update rule group",
         "update-success": "Successfully updated the rule group"
       },
+      "group-federated": "This rule group is federated",
+      "group-federated-description": "Federated rule groups cannot be edited from Grafana.",
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
+      "group-plugin-provided": "This rule group is managed by a plugin",
+      "group-plugin-provided-description": "Rule groups provisioned by a plugin cannot be edited from Grafana. Manage them from the plugin that owns them.",
+      "group-provisioned": "This rule group is provisioned",
+      "group-provisioned-description": "Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.",
       "page-title": "Edit rule group",
       "rule-group-error": "Error loading rule group"
     },

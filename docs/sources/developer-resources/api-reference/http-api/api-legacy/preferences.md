@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/preferences/ # /docs/grafana/next/http_api/preferences/
-  - ../../../developers/http_api/preferences/ # /docs/grafana/next/developers/http_api/preferences/
+  - ../../../../http_api/preferences/ # /docs/grafana/next/http_api/preferences/
+  - ../../../../developers/http_api/preferences/ # /docs/grafana/next/developers/http_api/preferences/
   - ../../../../developer-resources/api-reference/http-api/preferences/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/preferences/
 description: Grafana HTTP API
