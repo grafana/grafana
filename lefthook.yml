@@ -37,3 +37,9 @@ pre-commit:
       glob: '*public/app/plugins/**/**/*.cue'
       run: make fix-cue
       stage_fixed: true
+
+    dashboard-golden-checksums:
+      glob: 'devenv/dev-dashboards/**/*.json'
+      run: |
+        cd apps/dashboard && make regenerate-golden-checksums &&
+        git add pkg/migration/testdata/golden_checksums.json pkg/migration/conversion/testdata/golden_checksums.json
