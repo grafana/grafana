@@ -199,7 +199,7 @@ func runLeaseConcurrency(t *testing.T, store kv.KV) {
 }
 
 func runLeaseExpiration(t *testing.T, store kv.KV) {
-	const ttl = 75 * time.Millisecond
+	const ttl = 100 * time.Millisecond
 	ctx := t.Context()
 
 	t.Run("different holder can acquire after TTL", func(t *testing.T) {
@@ -246,7 +246,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 	})
 
 	t.Run("release after expiry returns ErrLeaseLost", func(t *testing.T) {
-		const ttl = 75 * time.Millisecond
+		const ttl = 100 * time.Millisecond
 		m := lease.NewManager(store, "holder-release-expired")
 
 		l, err := m.Acquire(ctx, "release/expired", lease.WithTTL(ttl))
@@ -261,7 +261,7 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 
 func runLeaseLoss(t *testing.T, store kv.KV) {
 	t.Run("Lost() closes when TTL elapses", func(t *testing.T) {
-		const ttl = 75 * time.Millisecond
+		const ttl = 100 * time.Millisecond
 		m := lease.NewManager(store, "holder-lost-ttl")
 
 		l, err := m.Acquire(t.Context(), "ctx/lost-on-ttl", lease.WithTTL(ttl))
