@@ -3092,7 +3092,7 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 			HideFromDocs: true,
-			Generate:     Generate{React: true, Go: true},
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:        "datasources.useNewStackInfoToSettingsCache",
