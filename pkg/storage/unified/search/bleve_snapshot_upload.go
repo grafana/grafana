@@ -2,32 +2,79 @@ package search
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/oklog/ulid/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex) (retErr error) {
+	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.upload")
+	start := time.Now()
+	logger := b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
+	var rv int64
+	var uploadKey ulid.ULID
+
+	defer func() {
+		outcome := "success"
+		if retErr != nil {
+			outcome = "error"
+		}
+		attrs := []attribute.KeyValue{
+			attribute.String("namespace", key.Namespace),
+			attribute.String("group", key.Group),
+			attribute.String("resource", key.Resource),
+			attribute.String("outcome", outcome),
+		}
+		if rv > 0 {
+			attrs = append(attrs, attribute.Int64("snapshot_rv", rv))
+		}
+		if uploadKey != (ulid.ULID{}) {
+			attrs = append(attrs, attribute.String("snapshot_key", uploadKey.String()))
+		}
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+			logger.Warn("Remote index snapshot upload failed", "elapsed", time.Since(start), "err", retErr)
+		} else {
+			logger.Info("Remote index snapshot upload completed", "elapsed", time.Since(start), "snapshot_key", uploadKey.String(), "snapshot_rv", rv)
+		}
+		span.SetAttributes(attrs...)
+		span.End()
+	}()
+
+	logger.Info("Remote index snapshot upload started")
+
+	lockAttrs := []attribute.KeyValue{
+		attribute.String("lock_scope", "build"),
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+	}
+	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
 	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key)
 	if err != nil {
+		span.AddEvent("snapshot.lock.acquire.failed", oteltrace.WithAttributes(lockAttrs...))
 		return fmt.Errorf("acquiring snapshot upload lock: %w", err)
 	}
+	span.AddEvent("snapshot.lock.acquire.completed", oteltrace.WithAttributes(lockAttrs...))
+
 	defer func() {
-		releaseErr := lock.Release()
-		if releaseErr == nil {
+		span.AddEvent("snapshot.lock.release.started", oteltrace.WithAttributes(lockAttrs...))
+		if releaseErr := lock.Release(); releaseErr != nil {
+			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
+			logger.Warn("releasing snapshot upload lock", "err", releaseErr)
 			return
 		}
-		if retErr == nil {
-			retErr = fmt.Errorf("releasing snapshot upload lock: %w", releaseErr)
-			return
-		}
-		retErr = errors.Join(retErr, fmt.Errorf("releasing snapshot upload lock: %w", releaseErr))
+		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
 	}()
 
 	stagingDir, err := b.newSnapshotStagingDir(key)
@@ -36,7 +83,6 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	}
 	defer func() { _ = os.RemoveAll(stagingDir) }()
 
-	start := time.Now()
 	if err := b.snapshotIndex(idx.index, stagingDir); err != nil {
 		return err
 	}
@@ -56,31 +102,26 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		return fmt.Errorf("opening staged snapshot: %w", err)
 	}
 
-	rv, rvErr := getRV(snapshotIdx)
+	rv, err = getRV(snapshotIdx)
 	bi, biErr := getBuildInfo(snapshotIdx)
 	if closeErr := snapshotIdx.Close(); closeErr != nil {
 		return fmt.Errorf("closing staged snapshot: %w", closeErr)
 	}
-	if rvErr != nil {
-		return fmt.Errorf("reading snapshot rv: %w", rvErr)
+	if err != nil {
+		return fmt.Errorf("reading snapshot rv: %w", err)
 	}
 	if biErr != nil {
 		return fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
 
-	_, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, IndexMeta{
+	uploadKey, err = b.opts.Snapshot.Store.UploadIndex(ctx, key, stagingDir, IndexMeta{
 		GrafanaBuildVersion:   bi.BuildVersion,
 		LatestResourceVersion: rv,
 	})
 	if err != nil {
 		return fmt.Errorf("uploading snapshot: %w", err)
 	}
-	if err := checkSnapshotLock(lock); err != nil {
-		return err
-	}
 
-	elapsed := time.Since(start)
-	b.log.Info("Uploaded remote index snapshot", "key", key, "elapsed", elapsed, "rv", rv)
 	return nil
 }
 
