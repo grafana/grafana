@@ -61,11 +61,12 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
-  // Surfaces the rule's group evaluation interval inline on the row — used for ungrouped rules
-  // where the group header (which normally displays it) is not rendered.
-  // Note: this is the raw interval in seconds, distinct from `evaluationInterval` above which is
-  // a Prometheus duration string consumed by `EvaluationMetadata`.
-  groupIntervalSeconds?: number;
+  // Evaluation interval (in seconds) for the rule. Only set for rules that belong to artificial
+  // `no_group_for_rule_*` groups, where the group header — which normally surfaces this — isn't
+  // rendered. For rules in normal groups this stays undefined and the interval is shown at the
+  // group-header level instead. Distinct from `evaluationInterval` above which is a Prometheus
+  // duration string consumed by `EvaluationMetadata`.
+  evalIntervalSeconds?: number;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -93,7 +94,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
-    groupIntervalSeconds,
+    evalIntervalSeconds,
   } = props;
 
   const listItemAriaId = useId();
@@ -117,15 +118,15 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
+  if (evalIntervalSeconds !== undefined) {
+    metadata.push(<GroupIntervalIndicator seconds={evalIntervalSeconds} />);
+  }
+
   if (!isPaused) {
     if (lastEvaluation && evaluationInterval) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
-    }
-
-    if (groupIntervalSeconds !== undefined) {
-      metadata.push(<GroupIntervalIndicator seconds={groupIntervalSeconds} />);
     }
 
     if (instancesCount) {
@@ -212,7 +213,7 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
-  groupIntervalSeconds,
+  evalIntervalSeconds,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -233,10 +234,8 @@ export function RecordingRuleListItem({
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
-  if (!isPaused) {
-    if (groupIntervalSeconds !== undefined) {
-      metadata.push(<GroupIntervalIndicator seconds={groupIntervalSeconds} />);
-    }
+  if (evalIntervalSeconds !== undefined) {
+    metadata.push(<GroupIntervalIndicator seconds={evalIntervalSeconds} />);
   }
 
   const ruleHealth = normalizeHealth(health);

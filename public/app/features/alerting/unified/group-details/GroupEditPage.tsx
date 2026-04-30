@@ -62,7 +62,7 @@ function GroupEditPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
 
   if (isUngroupedRuleGroup(groupName)) {
-    return <EntityNotFound entity={t('alerting.group-edit.ungrouped-entity-name', 'Group')} />;
+    return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
   }
 
   return <GroupEditPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;

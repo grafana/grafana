@@ -40,7 +40,7 @@ function GroupDetailsPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
 
   if (isUngroupedRuleGroup(groupName)) {
-    return <EntityNotFound entity={t('alerting.group-details.ungrouped-entity-name', 'Group')} />;
+    return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
   }
 
   return <GroupDetailsPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;

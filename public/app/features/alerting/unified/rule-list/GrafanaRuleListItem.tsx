@@ -21,7 +21,7 @@ interface GrafanaRuleListItemProps {
   namespaceName: string;
   operation?: 'creating' | 'deleting';
   showLocation?: boolean;
-  groupIntervalSeconds?: number;
+  evalIntervalSeconds?: number;
 }
 
 export function GrafanaRuleListItem({
@@ -30,7 +30,7 @@ export function GrafanaRuleListItem({
   namespaceName,
   operation,
   showLocation = true,
-  groupIntervalSeconds,
+  evalIntervalSeconds,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
@@ -56,7 +56,7 @@ export function GrafanaRuleListItem({
     actions: <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
     querySourceUIDs: rule?.queriedDatasourceUIDs,
     origin: getRulePluginOrigin(rule),
-    groupIntervalSeconds,
+    evalIntervalSeconds,
   };
 
   if (prometheusRuleType.grafana.alertingRule(rule)) {

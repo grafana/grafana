@@ -1152,6 +1152,9 @@
         "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
       }
     },
+    "entities": {
+      "group": "Group"
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
@@ -1551,8 +1554,7 @@
       "new": "New",
       "title": {
         "back": "Back to alerting"
-      },
-      "ungrouped-entity-name": "Group"
+      }
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -1583,8 +1585,7 @@
       "group-provisioned": "This rule group is provisioned",
       "group-provisioned-description": "Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.",
       "page-title": "Edit rule group",
-      "rule-group-error": "Error loading rule group",
-      "ungrouped-entity-name": "Group"
+      "rule-group-error": "Error loading rule group"
     },
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",

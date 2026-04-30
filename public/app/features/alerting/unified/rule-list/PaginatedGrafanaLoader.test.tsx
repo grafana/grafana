@@ -99,7 +99,7 @@ describe('GrafanaRuleGroupListItem', () => {
     expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
   });
 
-  it('should not render the group interval inline for a paused ungrouped rule', async () => {
+  it('should render the eval interval inline for a paused ungrouped rule', async () => {
     const pausedRule = mockGrafanaPromAlertingRule({ name: 'Paused Alert Rule', isPaused: true });
     const ungroupedGroup: GrafanaPromRuleGroupDTO = {
       name: `${NO_GROUP_PREFIX}paused-rule-uid`,
@@ -113,9 +113,7 @@ describe('GrafanaRuleGroupListItem', () => {
 
     const treeItem = await ui.treeItem.find();
     expect(within(treeItem).getByRole('link', { name: 'Paused Alert Rule' })).toBeInTheDocument();
-    expect(
-      within(treeItem).queryByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))
-    ).not.toBeInTheDocument();
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
   });
 
   it('should display normal group name for grouped rules', async () => {
