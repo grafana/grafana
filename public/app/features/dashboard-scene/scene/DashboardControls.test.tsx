@@ -17,6 +17,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
@@ -26,6 +27,10 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: false,
   },
+}));
+
+jest.mock('../panel-edit/PanelEditControls', () => ({
+  PanelEditControls: () => <div data-testid="mock-panel-edit-controls">Table view toggle</div>,
 }));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -145,6 +150,27 @@ describe('DashboardControls', () => {
       const renderer = render(<scene.Component model={scene} />);
 
       expect(renderer.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+    });
+
+    it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
+      const controls = new DashboardControls({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+        hideDashboardControls: true,
+      });
+
+      const dashboard = new DashboardScene({
+        uid: 'test-dashboard',
+        controls,
+        editPanel: { state: { useQueryExperienceNext: false } } as unknown as PanelEditor,
+      });
+
+      dashboard.activate();
+
+      render(<controls.Component model={controls} />);
+
+      expect(screen.getByTestId('mock-panel-edit-controls')).toBeInTheDocument();
     });
 
     it('should render ScopesVariable Component even when hidden', () => {
