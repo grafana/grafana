@@ -40,8 +40,6 @@ export interface ThemeChanged extends EventProperty {
 
 ### 2. Create the factory
 
-Create the tracking event file next to `types.ts`.
-
 Call `defineFeatureEvents` with two required string literal arguments — the repo name and the feature name. There is an optional third argument to set default properties (merged into every event in the namespace):
 
 ```ts
