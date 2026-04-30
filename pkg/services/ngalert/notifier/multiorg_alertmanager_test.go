@@ -21,6 +21,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -396,6 +397,10 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
+		nil, // httpClientProvider - not needed in this test
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
 	)
 	require.NoError(t, err)
 	return mam

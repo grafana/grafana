@@ -20,8 +20,10 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -29,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -120,6 +123,11 @@ type MultiOrgAlertmanager struct {
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 
+	// externalAMSyncer owns the Mimir/Cortex sync state and dependencies
+	// (datasource service, HTTP transport, request validator). MultiOrgAlertmanager
+	// only delegates to it; the sync surface is intentionally kept off this struct.
+	externalAMSyncer *ExternalAMSyncer
+
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
 }
@@ -150,6 +158,10 @@ func NewMultiOrgAlertmanager(
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,
+	adminConfigStore store.AdminConfigurationStore,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
+	requestValidator validations.DataSourceRequestValidator,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -170,6 +182,18 @@ func NewMultiOrgAlertmanager(
 		ns:                          ns,
 		peer:                        &NilPeer{},
 	}
+	// Sync responsibilities live on ExternalAMSyncer; MOA exposes only the persister
+	// surface. Built after the MOA literal so we can pass moa as the ConfigPersister.
+	moa.externalAMSyncer = NewExternalAMSyncer(
+		moa,
+		adminConfigStore,
+		datasourceService,
+		httpClientProvider,
+		requestValidator,
+		cfg,
+		m,
+		l,
+	)
 
 	if skipClustering {
 		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
@@ -342,6 +366,9 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 		return err
 	}
 
+	// Sync remote AM configs to DB first so SyncAlertmanagersForOrgs sees fresh data.
+	moa.externalAMSyncer.Sync(ctx, orgIDs)
+
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
@@ -374,6 +401,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
 		return
 	}
+
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
@@ -499,6 +527,18 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // Returns nil if clustering is not configured.
 func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
 	return moa.peer
+}
+
+// IsExternalAMSyncConfiguredForOrg reports whether external Alertmanager sync
+// configuration exists for the given org (operator-level ini value or per-org
+// admin_config UID). It does not consider whether the sync feature flag is on —
+// gating on configuration alone is intentional so that the convert API stays
+// consistent with the persisted admin_config regardless of feature-flag state.
+// Thin wrapper around ExternalAMSyncer.IsConfiguredForOrg kept here so the
+// Alertmanager interface used by the convert API does not need to know about
+// ExternalAMSyncer.
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(_ context.Context, orgID int64) (bool, error) {
+	return moa.externalAMSyncer.IsConfiguredForOrg(orgID)
 }
 
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.

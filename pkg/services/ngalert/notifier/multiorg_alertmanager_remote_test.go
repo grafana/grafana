@@ -22,6 +22,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -93,6 +94,10 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
+		nil, // httpClientProvider - not needed in this test
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)

@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -283,6 +284,14 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	// Reuse the validator wired into the user-driven datasource proxy so the sync
+	// worker honours the same allow/deny rules. Tests construct ngalert without a
+	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
+	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
+	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
+		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
+	}
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -299,6 +308,10 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles,
 		notificationHistorian,
 		skipClustering,
+		ng.store,
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
 		opts...,
 	)
 	if err != nil {
