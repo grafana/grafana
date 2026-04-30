@@ -1,4 +1,4 @@
-module github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend
+module github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend-app
 
 go 1.26.2
 

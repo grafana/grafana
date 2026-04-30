@@ -27,7 +27,7 @@ import (
 )
 
 const instanceName = "instance" // the name is always "instance"
-const testAppID = "test-app-with-backend"
+const testAppID = "test-app-with-backend-app"
 
 var gvrSettings = schema.GroupVersionResource{
 	Group:    testAppID,
@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAppPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode5} //rest.Mode0, rest.Mode2, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := setupHelper(t, mode)
@@ -56,10 +56,6 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			// Render the openapi spec
 			if mode == rest.Mode5 {
 				apis.VerifyOpenAPISnapshots(t, "testdata", gvrSettings.GroupVersion(), helper)
-			}
-
-			if true {
-				return
 			}
 
 			// writeSettings writes a known settings state with a fresh secret and returns
@@ -306,6 +302,14 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				if mode < rest.Mode5 {
 					require.Contains(t, name, "lps-sv-", "name should use the legacy plugin secure value prefix")
 				}
+			})
+
+			t.Run("check health", func(t *testing.T) {
+				health, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{}, "health")
+				require.NoError(t, err)
+
+				status, _, _ := unstructured.NestedString(health.Object, "status")
+				require.Equal(t, "OK", status)
 			})
 
 			t.Run("get not-found for wrong name", func(t *testing.T) {

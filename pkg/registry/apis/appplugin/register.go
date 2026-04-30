@@ -79,8 +79,14 @@ func RegisterAPIService(
 
 	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
 		func(jsonData plugins.JSONData) bool {
-			// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
-			return jsonData.Type == plugins.TypeApp && strings.HasSuffix(jsonData.ID, "-app")
+			if jsonData.Type == plugins.TypeApp {
+				// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
+				if strings.HasSuffix(jsonData.ID, "-app") {
+					backend.Logger.Warn("app plugin with invalid suffix: %s", jsonData.ID)
+				}
+				return true
+			}
+			return false
 		}, true)
 
 	if err != nil {
