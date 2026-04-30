@@ -2085,6 +2085,135 @@ func TestListAlertRules(t *testing.T) {
 			require.ElementsMatch(t, expected, got)
 		})
 	})
+
+	t.Run("TitleFilter", func(t *testing.T) {
+		matchTitle := "exact-match-title"
+		matchRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithTitle(matchTitle)).GenerateManyRef(2)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
+
+		initWithTitleData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(matchRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact title", func(t *testing.T) {
+			service, _ := initWithTitleData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				TitleFilter: ListRuleStringFilter{Include: []string{matchTitle}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, matchTitle, r.Title)
+			}
+		})
+	})
+
+	t.Run("PausedFilter", func(t *testing.T) {
+		pausedRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithIsPaused(true)).GenerateManyRef(2)
+		activeRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithIsPaused(false)).GenerateManyRef(3)
+
+		initWithPausedData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(pausedRules, activeRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("true should return only paused rules", func(t *testing.T) {
+			service, _ := initWithPausedData(t)
+			trueVal := true
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PausedFilter: ListRuleBoolFilter{Value: &trueVal},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.True(t, r.IsPaused)
+			}
+		})
+
+		t.Run("false should return only non-paused rules", func(t *testing.T) {
+			service, _ := initWithPausedData(t)
+			falseVal := false
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PausedFilter: ListRuleBoolFilter{Value: &falseVal},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 3)
+			for _, r := range rules {
+				require.False(t, r.IsPaused)
+			}
+		})
+	})
+
+	t.Run("DashboardFilter", func(t *testing.T) {
+		dashUID := "dash-abc"
+		otherDashUID := "dash-xyz"
+		dashRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, nil)).GenerateManyRef(2)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&otherDashUID, nil)).GenerateManyRef(3)
+
+		initWithDashData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(dashRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact dashboardUID", func(t *testing.T) {
+			service, _ := initWithDashData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				DashboardFilter: ListRuleStringFilter{Include: []string{dashUID}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, dashUID, r.GetDashboardUID())
+			}
+		})
+	})
+
+	t.Run("PanelIDFilter", func(t *testing.T) {
+		panelID := int64(42)
+		panelIDStr := "42"
+		dashUID := "dash-for-panel"
+		panelRules := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, &panelID)).GenerateManyRef(2)
+		otherPanelID := int64(99)
+		otherRules := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex(), gen.WithDashboardAndPanel(&dashUID, &otherPanelID)).GenerateManyRef(3)
+
+		initWithPanelData := func(t *testing.T) (*AlertRuleService, *fakeRuleAccessControlService) {
+			service, ruleStore, _, ac := initService(t)
+			service.folderService = fs
+			ruleStore.Rules = map[int64][]*models.AlertRule{orgID: append(panelRules, otherRules...)}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+			return service, ac
+		}
+
+		t.Run("Include should return only rules with the exact panelID", func(t *testing.T) {
+			service, _ := initWithPanelData(t)
+			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+				PanelIDFilter: ListRuleStringFilter{Include: []string{panelIDStr}},
+			})
+			require.NoError(t, err)
+			require.Len(t, rules, 2)
+			for _, r := range rules {
+				require.Equal(t, panelID, r.GetPanelID())
+			}
+		})
+	})
 }
 
 func TestGetAlertRules(t *testing.T) {
