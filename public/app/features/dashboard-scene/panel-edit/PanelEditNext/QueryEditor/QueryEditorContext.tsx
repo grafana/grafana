@@ -83,9 +83,11 @@ export interface QueryEditorUIState {
   selectedAlert: AlertRule | null;
   selectedQueryRefIds: readonly string[];
   selectedTransformationIds: readonly string[];
+  multiSelectMode: boolean;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  setMultiSelectMode: (enabled: boolean) => void;
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
