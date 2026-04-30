@@ -4,7 +4,7 @@ import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -21,7 +21,7 @@ import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
-// Account for Monaco editor's border to prevent clipping
+// Account for the editor border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
 const CLAUSE_COMPLETIONS = [
@@ -233,9 +233,10 @@ LIMIT
                 value={query.expression || initialQuery}
                 onChange={onEditorChange}
                 completionProvider={completionProvider}
-                completionMode="override"
+                completionMode="merge"
                 formatter={formatSQL}
                 height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+                ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
               >
                 {({ formatQuery }) => (
                   <div ref={toolboxRef}>

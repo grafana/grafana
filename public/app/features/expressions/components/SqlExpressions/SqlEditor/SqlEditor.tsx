@@ -11,6 +11,7 @@ export interface SqlEditorProps {
   completionMode?: CodeMirrorCompletionMode;
   formatter?: (value: string) => string;
   height?: number | string;
+  ariaLabel?: string;
   children?: (props: { formatQuery: () => void }) => ReactNode;
 }
 
@@ -21,6 +22,7 @@ export const SqlEditor = ({
   completionMode,
   formatter,
   height = '200px',
+  ariaLabel,
   children,
 }: SqlEditorProps) => {
   const completionSource = useMemo(() => {
@@ -44,6 +46,7 @@ export const SqlEditor = ({
         value={value}
         onChange={onChange}
         height={typeof height === 'number' ? `${height}px` : height}
+        aria-label={ariaLabel}
         completionMode={completionMode}
         completionSources={completionSource ? [completionSource] : undefined}
       />

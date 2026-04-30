@@ -2,6 +2,7 @@ import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-ut
 
 import { type ExpressionQuery, ExpressionQueryType } from '../../types';
 
+import { SqlEditor } from './SqlEditor/SqlEditor';
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
 
 jest.mock('@grafana/ui', () => ({
@@ -11,6 +12,16 @@ jest.mock('@grafana/ui', () => ({
 
 jest.mock('@grafana/plugin-ui', () => ({
   SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
+}));
+
+jest.mock('react-virtualized-auto-sizer', () => ({
+  __esModule: true,
+  default: ({ children }: { children: (size: { width: number; height: number }) => unknown }) =>
+    children({ width: 800, height: 300 }),
+}));
+
+jest.mock('./SqlEditor/SqlEditor', () => ({
+  SqlEditor: jest.fn(({ children }) => <div data-testid="sql-editor">{children?.({ formatQuery: jest.fn() })}</div>),
 }));
 
 const mockBackendSrv = {
@@ -35,6 +46,12 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('SqlExpr', () => {
+  const SqlEditorMock = jest.mocked(SqlEditor);
+
+  beforeEach(() => {
+    SqlEditorMock.mockClear();
+  });
+
   it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
@@ -74,6 +91,21 @@ describe('SqlExpr', () => {
       const updatedQuery = onChange.mock.calls[0][0];
       expect(updatedQuery.format).toBe('alerting');
     });
+  });
+
+  it('merges custom SQL completions with default SQL completions', () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    expect(SqlEditorMock.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        ariaLabel: 'SQL expression editor',
+        completionMode: 'merge',
+      })
+    );
   });
 });
 
