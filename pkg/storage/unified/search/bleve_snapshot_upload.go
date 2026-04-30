@@ -20,6 +20,11 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.upload")
 	start := time.Now()
 	logger := b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
+	commonSpanAttrs := []attribute.KeyValue{
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+	}
 	var rv int64
 	var uploadKey ulid.ULID
 
@@ -28,12 +33,8 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		if retErr != nil {
 			outcome = "error"
 		}
-		attrs := []attribute.KeyValue{
-			attribute.String("namespace", key.Namespace),
-			attribute.String("group", key.Group),
-			attribute.String("resource", key.Resource),
-			attribute.String("outcome", outcome),
-		}
+		attrs := append([]attribute.KeyValue{}, commonSpanAttrs...)
+		attrs = append(attrs, attribute.String("outcome", outcome))
 		if rv > 0 {
 			attrs = append(attrs, attribute.Int64("snapshot_rv", rv))
 		}
@@ -53,12 +54,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 
 	logger.Info("Remote index snapshot upload started")
 
-	lockAttrs := []attribute.KeyValue{
-		attribute.String("lock_scope", "build"),
-		attribute.String("namespace", key.Namespace),
-		attribute.String("group", key.Group),
-		attribute.String("resource", key.Resource),
-	}
+	lockAttrs := append([]attribute.KeyValue{attribute.String("lock_scope", "build")}, commonSpanAttrs...)
 	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
 	lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key)
 	if err != nil {
@@ -71,6 +67,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		span.AddEvent("snapshot.lock.release.started", oteltrace.WithAttributes(lockAttrs...))
 		if releaseErr := lock.Release(); releaseErr != nil {
 			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
+			// A release failure after UploadIndex succeeds does not make the uploaded snapshot invalid.
 			logger.Warn("releasing snapshot upload lock", "err", releaseErr)
 			return
 		}

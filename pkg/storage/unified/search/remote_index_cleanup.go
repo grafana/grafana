@@ -19,14 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// snapshotNamespaceCleanupStatus labels for the
-// index_server_snapshot_namespace_cleanups_total counter. One increment per
-// (namespace, outcome) tuple per cleanup pass.
+// snapshotNamespaceCleanupStatus values are used for namespace cleanup logs,
+// spans, and the index_server_snapshot_namespace_cleanups_total counter.
+// Canceled is intentionally not recorded in the counter because it usually means shutdown.
 const (
 	snapshotNamespaceCleanupStatusSuccess      = "success"
 	snapshotNamespaceCleanupStatusError        = "error"
 	snapshotNamespaceCleanupStatusSkipLockHeld = "skip_lock_held"
 	snapshotNamespaceCleanupStatusSkipUnowned  = "skip_unowned"
+	snapshotNamespaceCleanupStatusCanceled     = "canceled"
 )
 
 // snapshotDeleteOutcome labels for the index_server_snapshot_deleted_total
@@ -111,35 +112,23 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 	hadNamespaceError := false
 	for _, ns := range namespaces {
 		if ctx.Err() != nil {
-			span.SetAttributes(attribute.String("outcome", "canceled"))
+			span.SetAttributes(attribute.String("outcome", snapshotNamespaceCleanupStatusCanceled))
 			b.log.Info("Remote index snapshot cleanup completed",
 				"elapsed", time.Since(start),
-				"outcome", "canceled",
+				"outcome", snapshotNamespaceCleanupStatusCanceled,
 			)
 			return
 		}
 
-		nsLogger := b.log.New("namespace", ns)
-		nsLogger.Info("Remote index snapshot namespace cleanup started")
-		nsStart := time.Now()
-		outcome, err := b.runNamespaceCleanup(ctx, ns, nsLogger)
+		outcome, err := b.runNamespaceCleanup(ctx, ns)
 		// Cancellation usually means shutdown; keep it out of the namespace outcome metric.
-		if outcome != "canceled" {
+		if outcome != snapshotNamespaceCleanupStatusCanceled {
 			b.recordSnapshotNamespaceCleanupStatus(outcome)
 		}
 		if err != nil {
 			hadNamespaceError = true
-			nsLogger.Warn("Remote index snapshot namespace cleanup failed",
-				"elapsed", time.Since(nsStart),
-				"outcome", outcome,
-				"err", err,
-			)
 			continue
 		}
-		nsLogger.Info("Remote index snapshot namespace cleanup completed",
-			"elapsed", time.Since(nsStart),
-			"outcome", outcome,
-		)
 	}
 	if hadNamespaceError {
 		err := fmt.Errorf("one or more namespace cleanups failed")
@@ -159,8 +148,26 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 // runNamespaceCleanup applies the retention rules to every resource under one
 // namespace. Errors in one namespace must not abort the rest of the cleanup
 // pass, so all error paths return without panicking.
-func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string, nsLogger log.Logger) (string, error) {
+func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string) (outcome string, retErr error) {
 	store := b.opts.Snapshot.Store
+	nsLogger := b.log.New("namespace", namespace)
+	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.namespace_cleanup",
+		oteltrace.WithAttributes(attribute.String("namespace", namespace)),
+	)
+	start := time.Now()
+
+	nsLogger.Info("Remote index snapshot namespace cleanup started")
+	defer func() {
+		span.SetAttributes(attribute.String("outcome", outcome))
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+			nsLogger.Warn("Remote index snapshot namespace cleanup failed", "elapsed", time.Since(start), "outcome", outcome, "err", retErr)
+		} else {
+			nsLogger.Info("Remote index snapshot namespace cleanup completed", "elapsed", time.Since(start), "outcome", outcome)
+		}
+		span.End()
+	}()
 
 	// Ownership is checked at namespace granularity. The production OwnsIndex
 	// implementation hashes on Namespace alone, so calling it with an empty
@@ -174,10 +181,8 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 		return snapshotNamespaceCleanupStatusSkipUnowned, nil
 	}
 
-	span := oteltrace.SpanFromContext(ctx)
 	lockAttrs := []attribute.KeyValue{
 		attribute.String("lock_scope", "cleanup"),
-		attribute.String("namespace", namespace),
 	}
 	span.AddEvent("snapshot.lock.acquire.started", oteltrace.WithAttributes(lockAttrs...))
 	lock, err := store.LockNamespaceForCleanup(ctx, namespace)
@@ -259,7 +264,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 		return snapshotNamespaceCleanupStatusError, errCleanupLockLost
 	}
 	if ctx.Err() != nil {
-		return "canceled", nil
+		return snapshotNamespaceCleanupStatusCanceled, nil
 	}
 	if len(resourceErrs) > 0 {
 		return snapshotNamespaceCleanupStatusError, fmt.Errorf("resource cleanup failed: %w", errors.Join(resourceErrs...))

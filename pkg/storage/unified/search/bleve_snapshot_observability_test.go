@@ -109,8 +109,11 @@ func TestSnapshotCleanupEmitsSpanAndLockEvents(t *testing.T) {
 	be, _ := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(ctx)
 
-	assertSpanNames(t, recorder, "search.remote_index_snapshot.cleanup")
-	assertSpanEvents(t, recorder, "search.remote_index_snapshot.cleanup",
+	assertSpanNames(t, recorder,
+		"search.remote_index_snapshot.cleanup",
+		"search.remote_index_snapshot.namespace_cleanup",
+	)
+	assertSpanEvents(t, recorder, "search.remote_index_snapshot.namespace_cleanup",
 		"snapshot.lock.acquire.started",
 		"snapshot.lock.acquire.completed",
 		"snapshot.lock.release.started",
