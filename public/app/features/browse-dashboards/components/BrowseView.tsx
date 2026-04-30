@@ -10,7 +10,7 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { type DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
 import { canSelectItems } from '../permissions';
 import { fetchNextChildrenPage } from '../state/actions';
 import {
