@@ -64,6 +64,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 		} else {
 			hostEnv = append(hostEnv, p.envVar("GF_MARKETPLACE_LICENSE_PATH", marketplaceLicenseFile))
 		}
+		// TODO: jwks
 	}
 
 	if plugin.ExternalService != nil {
