@@ -10,13 +10,43 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
 
 func TestLease(t *testing.T) {
 	test.RunLeaseTest(t, func(ctx context.Context) kv.KV {
 		return newMapKV()
+	})
+}
+
+func TestAcquireNameValidation(t *testing.T) {
+	m := lease.NewManager(newMapKV(), "holder-validation")
+
+	t.Run("invalid keys are rejected", func(t *testing.T) {
+		for _, name := range []string{"", "invalid key", "invalid\nkey"} {
+			l, err := m.Acquire(t.Context(), name)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "invalid lease name")
+			require.Nil(t, l)
+		}
+	})
+
+	t.Run("trailing slash is rejected", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/trailing/")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "trailing slash")
+		require.Nil(t, l)
+	})
+
+	t.Run("valid slash-separated name is accepted", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/slash-separated")
+		require.NoError(t, err)
+		require.NotNil(t, l)
+		require.NoError(t, m.Release(t.Context(), l))
 	})
 }
 
