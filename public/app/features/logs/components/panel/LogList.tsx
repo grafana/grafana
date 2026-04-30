@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
 import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
@@ -40,6 +41,7 @@ import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, type LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
+  allowDownload?: boolean;
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
@@ -122,6 +124,7 @@ type LogListComponentProps = Omit<
 
 export const LogList = ({
   app,
+  allowDownload,
   displayedFields,
   dataFrames,
   containerElement,
@@ -178,6 +181,7 @@ export const LogList = ({
 }: Props) => {
   return (
     <LogListContextProvider
+      allowDownload={allowDownload}
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
@@ -323,6 +327,7 @@ const LogListComponent = ({
     ]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -379,6 +384,7 @@ const LogListComponent = ({
         {
           getFieldLinks,
           escape: forceEscape ?? false,
+          otelLogsFormattingEnabled,
           prettifyJSON,
           order: sortOrder,
           timeZone,
@@ -390,7 +396,18 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [
+    forceEscape,
+    getFieldLinks,
+    grammar,
+    logs,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -454,10 +471,10 @@ const LogListComponent = ({
   );
 
   const focusLogLine = useCallback(
-    (log: LogListModel) => {
+    (log: LogListModel, align: Align = 'start') => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
-        debouncedScrollToItem(index, 'start');
+        debouncedScrollToItem(index, align);
       }
     },
     [debouncedScrollToItem, filteredLogs]

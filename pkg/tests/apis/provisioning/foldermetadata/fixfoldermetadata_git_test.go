@@ -203,7 +203,7 @@ func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, ctx conte
 		"%s: failed to decode files API response for branch %q", filePath, ref)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion,
+	require.Equal(t, "folder.grafana.app/v1", apiVersion,
 		"%s: unexpected apiVersion", filePath)
 	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 	require.Equal(t, "Folder", kind,

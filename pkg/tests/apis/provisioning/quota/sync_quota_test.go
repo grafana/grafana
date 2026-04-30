@@ -24,9 +24,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify both dashboards were created with no quota restriction
@@ -69,16 +69,16 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
@@ -114,9 +114,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -124,7 +124,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 2 dashboards were created with no quota restriction
@@ -141,7 +141,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify the repo is over quota using the quotas package
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		typedRepo := common.UnstructuredToRepository(t, repoObj)
+		typedRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
@@ -179,16 +179,16 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Step 1: Create a repo with 1 dashboard (2 resources total: 1 root folder + 1 dashboard)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -264,9 +264,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Total: 5 resources → 5/6, within quota.
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"../testdata/text-options.json": "subfolder/nested/dashboard2.json",
@@ -274,7 +274,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -333,14 +333,19 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		quotaWarningCount := 0
 		for _, w := range jobObj.Status.Warnings {
 			// TODO: Using contains for now, this will be easier once jobs contain top-level warning reasons.
-			if strings.Contains(w, "resource quota exceeded") {
+			// A nested resource whose parent folder failed quota check is recorded with the generic
+			// "parent folder could not be created" wording, so it counts toward the quota cascade as well.
+			if strings.Contains(w, "resource quota exceeded") ||
+				strings.Contains(w, "parent folder could not be created") {
 				quotaWarningCount++
 			}
 		}
 		require.Equal(t, 3, quotaWarningCount,
-			"should have 3 quota warnings: 1 skipped folder + 2 skipped dashboards")
+			"should have 3 quota-related warnings: 1 skipped folder + 1 dashboard skipped by quota + 1 dashboard skipped due to failed parent folder")
 
-		// Step 5: Verify no new dashboards were created (both skipped because the new folder consumed the last quota slot)
+		// Step 5: Verify no new dashboards were created. One new folder consumes the last quota slot,
+		// so its sibling dashboard is skipped due to quota. The other folder fails creation,
+		// so its child dashboard is skipped because the parent folder could not be created.
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if !assert.NoError(collect, err) {
@@ -380,9 +385,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",
@@ -391,7 +396,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction
@@ -428,9 +433,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",
@@ -439,7 +444,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction

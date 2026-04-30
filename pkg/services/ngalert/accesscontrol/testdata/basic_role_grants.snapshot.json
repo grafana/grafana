@@ -2,8 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
-      "fixed:alerting.legacy.config:reader",
-      "fixed:alerting.legacy.config:writer",
+      "fixed:alerting.legacy:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
@@ -230,7 +229,6 @@
     "roles": [
       "fixed:alerting.inhibition-rules:writer",
       "fixed:alerting.instances:writer",
-      "fixed:alerting.legacy:writer",
       "fixed:alerting.managed-routes:creator",
       "fixed:alerting.notifications.external:writer",
       "fixed:alerting.provisioning.provenance:writer",
@@ -328,12 +326,6 @@
         "action": "alert.notifications.time-intervals:write"
       },
       {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
-      },
-      {
         "action": "alert.provisioning.provenance:write"
       },
       {
@@ -382,7 +374,6 @@
     "roles": [
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
-      "fixed:alerting.legacy:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
       "fixed:alerting.rules:reader",
@@ -417,9 +408,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications:read"
       },
       {
         "action": "alert.rules.external:read",

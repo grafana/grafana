@@ -66,11 +66,11 @@ import {
   type OwnerReference,
 } from './index';
 
-function getFolderUrl(uid: string, title: string): string {
-  // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
-  // Not the same slugify as on the backend https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L86
-  // Probably does not matter as it seems to be only for better human readability.
-  const slug = kbn.slugifyForUrl(title);
+export function getFolderUrl(uid: string, title: string): string {
+  // slugifyForUrl strips non-ASCII characters, so for titles composed entirely of non-Latin
+  // characters (CJK, Cyrillic, Arabic, etc.) the slug is empty. Fall back to uid to avoid
+  // double-slash URLs that break route matching.
+  const slug = kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '') || uid;
   return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
 }
 

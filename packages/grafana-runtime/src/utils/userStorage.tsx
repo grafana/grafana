@@ -1,4 +1,5 @@
 import { get } from 'lodash';
+import { useRef } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { usePluginContext, type UserStorage as UserStorageType, store } from '@grafana/data';
@@ -300,4 +301,18 @@ export function usePluginUserStorage(): PluginUserStorage {
     throw new Error(`No PluginContext found. The usePluginUserStorage() hook can only be used from a plugin.`);
   }
   return new UserStorage(context?.meta.id);
+}
+
+/**
+ * Internal Grafana-core only interface for constructing a UserStorage instance in a
+ * react component.
+ */
+export function useUserStorage(service: string): UserStorageType {
+  const ref = useRef<[service: string, UserStorageType] | undefined>(undefined);
+
+  if (!ref.current || ref.current[0] !== service) {
+    ref.current = [service, new UserStorage(service)];
+  }
+
+  return ref.current[1];
 }

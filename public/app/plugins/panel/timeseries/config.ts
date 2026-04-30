@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {
   FieldColorModeId,
   FieldConfigProperty,
@@ -25,7 +26,6 @@ import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
-
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
@@ -146,6 +146,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         .addRadio({
           path: 'gradientMode',
           name: t('timeseries.config.get-graph-field-config.name-gradient-mode', 'Gradient mode'),
+          description: 'This is my description',
           category: categoryStyles,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
@@ -166,6 +167,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           id: 'lineStyle',
           path: 'lineStyle',
           name: t('timeseries.config.get-graph-field-config.name-line-style', 'Line style'),
+          useFieldset: true,
           category: categoryStyles,
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           editor: LineStyleEditor,
@@ -177,6 +179,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           id: 'spanNulls',
           path: 'spanNulls',
           name: t('timeseries.config.get-graph-field-config.name-connect-nulls', 'Connect null values'),
+          useFieldset: true,
           category: categoryStyles,
           defaultValue: false,
           editor: SpanNullsEditor,
@@ -191,6 +194,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           path: 'insertNulls',
           name: t('timeseries.config.get-graph-field-config.name-disconnect-values', 'Disconnect values'),
           category: categoryStyles,
+          useFieldset: true,
           defaultValue: false,
           editor: InsertNullsEditor,
           override: InsertNullsEditor,

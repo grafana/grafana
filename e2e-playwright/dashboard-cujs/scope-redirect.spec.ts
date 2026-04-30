@@ -9,6 +9,7 @@ test.use({
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
     useScopesNavigationEndpoint: true,
+    dashboardNewLayouts: false,
   },
 });
 

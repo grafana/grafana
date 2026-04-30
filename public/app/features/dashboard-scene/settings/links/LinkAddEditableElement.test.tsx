@@ -107,10 +107,10 @@ describe('LinkAddEditableElement', () => {
       const editPane = dashboard.state.editPane;
 
       openAddLinkPane(dashboard);
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.state.selection).toBeUndefined();
+      expect(editPane.getSelectedObject()).toBeUndefined();
     });
 
     it('reselects the link on redo after undo', () => {
@@ -118,13 +118,13 @@ describe('LinkAddEditableElement', () => {
       const editPane = dashboard.state.editPane;
 
       openAddLinkPane(dashboard);
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.state.selection).toBeUndefined();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       act(() => editPane.redoAction());
-      expect(editPane.state.selection).toBeDefined();
+      expect(editPane.getSelectedObject()).toBeDefined();
       expect(dashboard.state.links).toHaveLength(1);
     });
   });
@@ -151,6 +151,23 @@ describe('LinkAddEditableElement', () => {
         const info = element.getEditableElementInfo();
 
         expect(info.instanceName).toBe('New link');
+      });
+    });
+
+    describe('onDuplicate', () => {
+      it('duplicates the link at the given index', () => {
+        const dashboard = buildDashboard([
+          createTestLink({ title: 'First' }),
+          createTestLink({ title: 'Second' }),
+          createTestLink({ title: 'Third' }),
+        ]);
+        const linkEdit = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex: 1 });
+        const element = new LinkEditEditableElement(linkEdit);
+
+        element.onDuplicate();
+
+        expect(dashboard.state.links).toHaveLength(4);
+        expect(dashboard.state.links.map((l) => l.title)).toEqual(['First', 'Second', 'Third', 'Second - Copy']);
       });
     });
 

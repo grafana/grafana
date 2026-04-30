@@ -71,11 +71,19 @@ jest.mock('../services', () => ({
 }));
 jest.mock('./publicDashboardQueryHandler');
 
+const mockIsQueryServiceCompatible = jest.fn().mockReturnValue(false);
+jest.mock('./qscheck', () => ({
+  ...jest.requireActual('./qscheck'),
+  isQueryServiceCompatible: (a: unknown, b: unknown) => mockIsQueryServiceCompatible(a, b),
+}));
+
 const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+const mockGetObjectValue = jest.fn().mockReturnValue({ types: ['prometheus'] });
 jest.mock('../internal/openFeature', () => ({
   ...jest.requireActual('../internal/openFeature'),
   getFeatureFlagClient: () => ({
     getBooleanValue: mockGetBooleanValue,
+    getObjectValue: mockGetObjectValue,
   }),
 }));
 
@@ -502,7 +510,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the new URL when feature toggle is enabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -513,7 +521,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the legacy URL when feature toggle is disabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -522,7 +529,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses legacy API OK response (status, message, details)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.OK,
         message: 'Data source is working',
@@ -540,7 +546,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses legacy API ERROR response', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Connection refused',
@@ -557,7 +562,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response via toHealthCheckResult (OK)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -579,7 +584,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -597,7 +602,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when legacy API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const errorData: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Network error',
@@ -614,7 +618,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when new API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const errorData = {
         status: HealthStatus.Error,
         message: 'Service unavailable',
@@ -768,6 +772,68 @@ describe('DataSourceWithBackend', () => {
       mockGetBooleanValue.mockReturnValue(false);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
+    });
+  });
+
+  describe('queryServiceDecision', () => {
+    let oldQsUI: boolean | undefined = undefined;
+    beforeEach(() => {
+      oldQsUI = config.featureToggles.queryServiceFromUI;
+      config.featureToggles.queryServiceFromUI = true;
+    });
+    afterEach(() => {
+      config.featureToggles.queryServiceFromUI = oldQsUI;
+      mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
+      mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
+    });
+
+    const prometheus = {
+      name: 'prm',
+      id: 1,
+      uid: 'p',
+      type: 'prometheus',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    const loki = {
+      name: 'lk',
+      id: 2,
+      uid: 'l',
+      type: 'loki',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    it.each([
+      [
+        'handle per-query data source references',
+        [
+          { refId: 'A', datasource: prometheus },
+          { refId: 'B', datasource: loki },
+        ],
+        ['prometheus', 'loki'],
+      ],
+      ['handle no per-query data source references', [{ refId: 'A' }, { refId: 'B' }], ['dummy', 'dummy']],
+      [
+        'handle a mix of query and no-query data source references',
+        [{ refId: 'A' }, { refId: 'B', datasource: loki }],
+        ['dummy', 'loki'],
+      ],
+    ])('%s', (_, targets, expectedTypes) => {
+      const { ds } = createMockDatasource();
+
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets,
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest);
+
+      const { calls } = mockIsQueryServiceCompatible.mock;
+      expect(calls).toHaveLength(1);
+
+      const [datasources, compatibilityFlag] = calls[0];
+      expect([datasources, compatibilityFlag]).toHaveLength(2);
+      expect((datasources as Array<{ type: string }>).map((ds) => ds.type)).toStrictEqual(expectedTypes);
     });
   });
 });

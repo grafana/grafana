@@ -1,0 +1,11 @@
+{
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "simple-test-dashboard",
+    "namespace": "wrong-namespace"
+  },
+  "spec": {
+    "title": "Simple Test Dashboard"
+  }
+}

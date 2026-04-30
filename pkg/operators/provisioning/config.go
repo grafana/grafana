@@ -92,6 +92,7 @@ type ControllerConfig struct {
 // provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
+// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =

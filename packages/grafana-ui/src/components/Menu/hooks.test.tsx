@@ -159,6 +159,53 @@ describe('useMenuFocus', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
+  it('clicks focused item when Space key is pressed', async () => {
+    const ref = createRef<HTMLDivElement>();
+    const onClick = jest.fn();
+    const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
+    const [handleKeys] = result.current;
+    const { rerender } = render(getMenuElement(ref, handleKeys, undefined, onClick));
+
+    await user.type(screen.getByTestId(testid), '{ArrowDown}');
+
+    const [handleKeys2] = result.current;
+    rerender(getMenuElement(ref, handleKeys2, undefined, onClick));
+
+    await user.type(screen.getByTestId(testid), '{ }');
+
+    expect(onClick).toHaveBeenCalled();
+  });
+
+  it('does not click submenu items when Enter key is pressed', async () => {
+    const ref = createRef<HTMLDivElement>();
+    const onClick = jest.fn();
+    const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
+    const [handleKeys] = result.current;
+
+    // Create a menu element with a submenu item (has nested menuitem)
+    const getMenuElementWithSubmenu = (
+      ref: RefObject<HTMLDivElement>,
+      handleKeys?: (event: KeyboardEvent) => void,
+      onClick?: () => void
+    ) => (
+      <div data-testid={testid} ref={ref} tabIndex={0} onKeyDown={handleKeys}>
+        <span data-role="menuitem" onClick={onClick}>
+          Submenu Item
+          <span data-role="menuitem">Nested Item</span>
+        </span>
+        <span data-role="menuitem" onClick={onClick}>
+          Regular Item
+        </span>
+      </div>
+    );
+
+    render(getMenuElementWithSubmenu(ref, handleKeys, onClick));
+
+    await user.type(screen.getByTestId(testid), '{Enter}');
+
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   it('calls onClose on Tab or Escape', async () => {
     const ref = createRef<HTMLDivElement>();
     const onClose = jest.fn();

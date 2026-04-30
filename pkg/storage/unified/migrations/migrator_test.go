@@ -44,6 +44,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+		testcases.NewStarsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -72,6 +73,9 @@ func TestIntegrationKVMigrations(t *testing.T) {
 
 type migrationTestOptions struct {
 	enableSQLKVBackend bool
+	// extraMigrationIDs adds migration IDs (and their default status) to the verification map.
+	// Used by enterprise tests to include enterprise-only migrations.
+	extraMigrationIDs map[string]bool
 }
 
 // runMigrationTestSuite executes the migration test suite for the given test cases
@@ -133,7 +137,9 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	// reuse org users throughout the tests
 	var org1 *apis.OrgUsers
 	var orgB *apis.OrgUsers
-	t.Run("Step 1: Create data in legacy", func(t *testing.T) {
+
+	// Step 1: Create data in legacy
+	func() {
 		// Enforce Mode0 for all migrated resources
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
@@ -159,7 +165,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			EnableFeatureToggles: featureToggles,
 			EnableSQLKVBackend:   opts.enableSQLKVBackend,
 		})
-		t.Cleanup(helper.Shutdown)
+		defer helper.Shutdown()
 		org1 = &helper.Org1
 		orgB = &helper.OrgB
 
@@ -176,13 +182,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		// Setup
 		for i := range testStates {
 			state := &testStates[i]
-			t.Run(state.tc.Name(), func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 1: Create data in legacy", func(t *testing.T) {
 				inK8s := state.tc.Setup(t, helper)
 				// Verify resources were created in legacy storage
 				state.tc.Verify(t, helper, inK8s)
 			})
 		}
-	})
+	}()
 
 	// Set SKIP_DB_TRUNCATE to not truncate the data created in Step 1
 	oldSkipTruncate := os.Getenv("SKIP_DB_TRUNCATE")
@@ -195,7 +201,8 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 	})
 
-	t.Run("Step 2: Verify data is NOT in unified storage before the migration", func(t *testing.T) {
+	// Step 2: Verify data is NOT in unified storage before the migration
+	func() {
 		// Build unified storage config for Mode5
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
@@ -221,17 +228,18 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			Org1Users: org1,
 			OrgBUsers: orgB,
 		})
-		t.Cleanup(helper.Shutdown)
+		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name(), func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 2: Verify data is NOT in unified storage before the migration", func(t *testing.T) {
 				// Verify resources don't exist in unified storage yet
 				state.tc.Verify(t, helper, false)
 			})
 		}
-	})
+	}()
 
-	t.Run("Step 3: verify that opted-out resources are not migrated", func(t *testing.T) {
+	// Step 3: verify that opted-out resources are not migrated
+	func() {
 		// Build unified storage config for Mode5
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
@@ -257,18 +265,19 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			Org1Users: org1,
 			OrgBUsers: orgB,
 		})
-		t.Cleanup(helper.Shutdown)
+		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name(), func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 3: verify that opted-out resources are not migrated", func(t *testing.T) {
 				// Verify resources don't exist in unified storage yet
 				state.tc.Verify(t, helper, false)
 			})
 		}
-		verifyRegisteredMigrations(t, helper, false, true)
-	})
+		verifyRegisteredMigrations(t, helper, false, true, opts.extraMigrationIDs)
+	}()
 
-	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
+	// Step 4: verify data is migrated to unified storage
+	func() {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
@@ -282,10 +291,10 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			Org1Users: org1,
 			OrgBUsers: orgB,
 		})
-		t.Cleanup(helper.Shutdown)
+		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name(), func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 4: verify data is migrated to unified storage", func(t *testing.T) {
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 					// Only verify resources that are expected to be migrated by default.
@@ -301,10 +310,11 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 
 		t.Logf("Verifying migrations are correctly registered")
-		verifyRegisteredMigrations(t, helper, true, false)
-	})
+		verifyRegisteredMigrations(t, helper, true, false, opts.extraMigrationIDs)
+	}()
 
-	t.Run("Step 5: verify data is migrated for all migrations", func(t *testing.T) {
+	// Step 5: verify data is migrated for all migrations
+	func() {
 		// Trigger migrations that are not enabled by default
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
@@ -328,24 +338,24 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			Org1Users: org1,
 			OrgBUsers: orgB,
 		})
-		t.Cleanup(helper.Shutdown)
+		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name(), func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 5: verify data is migrated for all migrations", func(t *testing.T) {
 				// Verify resources still exist in unified storage after restart
 				state.tc.Verify(t, helper, true)
 			})
 		}
 
 		t.Logf("Verifying migrations are correctly registered")
-		verifyRegisteredMigrations(t, helper, false, false)
+		verifyRegisteredMigrations(t, helper, false, false, opts.extraMigrationIDs)
 
 		t.Logf("Verifying key_path is populated in resource_history after bulkimport")
 		verifyKeyPathPopulated(t, helper)
 
 		t.Logf("Verifying legacy tables were renamed")
 		verifyTablesRenamed(t, helper, testCases)
-	})
+	}()
 }
 
 const (
@@ -355,6 +365,7 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	starsID                = "stars migration"
 	datasourceID           = "datasources migration"
 )
 
@@ -363,13 +374,23 @@ var migrationIDsToDefault = map[string]bool{
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
 	datasourceID:           false,
+	starsID:                false,
 }
 
-func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
+func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
 	getMigrationsQuery := fmt.Sprintf("SELECT migration_id FROM %s", migrationTable)
 	createTableMigrationID := fmt.Sprintf("create %s table", migrationTable)
 	expectedMigrationIDs := []string{createTableMigrationID}
+
+	allMigrationIDs := make(map[string]bool)
 	for id, enabled := range migrationIDsToDefault {
+		allMigrationIDs[id] = enabled
+	}
+	for id, enabled := range extraMigrationIDs {
+		allMigrationIDs[id] = enabled
+	}
+
+	for id, enabled := range allMigrationIDs {
 		if onlyDefault && !enabled {
 			continue
 		}

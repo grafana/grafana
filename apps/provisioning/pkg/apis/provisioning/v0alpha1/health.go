@@ -75,6 +75,26 @@ const (
 	// ReasonFolderMetadataConflict indicates a conflict between folder metadata in the
 	// repository and the actual folder state in Grafana (e.g., ID mismatch, deleted folder).
 	ReasonFolderMetadataConflict = "FolderMetadataConflict"
+	// ReasonInvalidFolderMetadata indicates a _folder.json file exists but contains
+	// malformed or unparseable content; the folder falls back to hash-derived identity.
+	ReasonInvalidFolderMetadata = "InvalidFolderMetadata"
+	// ReasonFolderMetadataUpdated indicates the folder metadata UID changed,
+	// so the old folder was replaced with a new identity.
+	ReasonFolderMetadataUpdated = "FolderMetadataUpdated"
+	// ReasonFolderMetadataCreated indicates folder metadata was created where
+	// none existed, so the old hash-based folder was replaced.
+	ReasonFolderMetadataCreated = "FolderMetadataCreated"
+	// ReasonFolderMetadataDeleted indicates folder metadata was deleted,
+	// so the folder reverts to hash-based identity.
+	ReasonFolderMetadataDeleted = "FolderMetadataDeleted"
+	// ReasonFolderOrphaned indicates the folder exists in the cluster but
+	// no longer in the git repository.
+	ReasonFolderOrphaned = "FolderOrphaned"
+	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
+	// the maximum folder depth enforced by the folder API. The repository
+	// owner must shorten the offending path; provisioning cannot recover
+	// automatically and will not retry the failed write.
+	ReasonFolderDepthExceeded = "FolderDepthExceeded"
 )
 
 // Condition reasons for the Quota condition

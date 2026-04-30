@@ -16,10 +16,10 @@ test.describe(
       await expect(svgElements).toHaveCount(3);
     });
 
-    test('Can view solo panel in scenes', async ({ page, selectors }) => {
+    test('Can view solo panel', async ({ page, selectors }) => {
       // open Panel Tests - Graph NG
       const soloPanelUrl = selectors.pages.SoloPanel.url(
-        'TkZXxlNG3/panel-tests-graph-ng?orgId=1&from=1699954597665&to=1699956397665&panelId=54&__feature.dashboardScene=true'
+        'TkZXxlNG3/panel-tests-graph-ng?orgId=1&from=1699954597665&to=1699956397665&panelId=54'
       );
       await page.goto(soloPanelUrl);
 
@@ -32,10 +32,10 @@ test.describe(
       await expect(uplotDiv).toBeHidden();
     });
 
-    test('Can view solo repeated panel in scenes', async ({ page, selectors }) => {
+    test('Can view solo repeated panel', async ({ page, selectors }) => {
       // open Panel Tests - Graph NG
       const soloPanelUrl = selectors.pages.SoloPanel.url(
-        'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=A$panel-2&__feature.dashboardScene=true'
+        'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=A$panel-2'
       );
       await page.goto(soloPanelUrl);
 
@@ -48,10 +48,10 @@ test.describe(
       await expect(uplotDiv).toBeHidden();
     });
 
-    test('Can view solo in repeated row and panel in scenes', async ({ page, selectors }) => {
+    test('Can view solo in repeated row and panel', async ({ page, selectors }) => {
       // open Panel Tests - Graph NG
       const soloPanelUrl = selectors.pages.SoloPanel.url(
-        'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=B$2$panel-2&__feature.dashboardScene=true'
+        'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=B$2$panel-2'
       );
       await page.goto(soloPanelUrl);
 

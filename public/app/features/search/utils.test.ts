@@ -25,6 +25,23 @@ describe('Search utils', () => {
       });
     });
 
+    it('should return ownerReference as array, if present', () => {
+      const params = { ownerReference: 'iam.grafana.app/v0alpha1/Team/test-team', query: 'test' };
+      expect(parseRouteParams(params)).toEqual({
+        query: 'test',
+        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
+      });
+
+      const params2: Partial<SearchQueryParams> = {
+        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
+        query: 'test',
+      };
+      expect(parseRouteParams(params2)).toEqual({
+        query: 'test',
+        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
+      });
+    });
+
     it('should prepend folder:{folder} to the query if folder is present', () => {
       expect(parseRouteParams({ folder: 'current' })).toEqual({
         folder: 'current',

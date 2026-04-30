@@ -10,6 +10,7 @@ export interface FieldValidationMessageProps {
   /** Override component style */
   className?: string;
   horizontal?: boolean;
+  id?: string;
 }
 
 /**
@@ -19,6 +20,7 @@ export interface FieldValidationMessageProps {
  */
 export const FieldValidationMessage = ({
   children,
+  id,
   horizontal,
   className,
 }: React.PropsWithChildren<FieldValidationMessageProps>) => {
@@ -26,7 +28,7 @@ export const FieldValidationMessage = ({
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
   return (
-    <div role="alert" className={cssName}>
+    <div id={id} role="alert" aria-live="polite" className={cssName}>
       <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
       {children}
     </div>

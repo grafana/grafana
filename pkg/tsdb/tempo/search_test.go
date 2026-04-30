@@ -256,6 +256,54 @@ func TestTransformSpanSearchResponse_MissingDynamicAttributeUsesNil(t *testing.T
 	assert.True(t, frames[0].Fields[6].NilAt(1))
 }
 
+func TestTransformTraceSearchResponseSubFrame_SameNumericKeyIntAndDouble(t *testing.T) {
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	trace := &tempopb.TraceSearchMetadata{
+		TraceID:           "t1",
+		RootServiceName:   "svc",
+		RootTraceName:     "op",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+	}
+	// Last attribute seen for "count" during schema scan is int; first span row has double — must not panic on Append.
+	spanSet := &tempopb.SpanSet{
+		Spans: []*tempopb.Span{
+			{
+				SpanID:            "s1",
+				Name:              "a",
+				StartTimeUnixNano: 1000000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "count", Value: &v1.AnyValue{Value: &v1.AnyValue_DoubleValue{DoubleValue: 1.5}}},
+				},
+			},
+			{
+				SpanID:            "s2",
+				Name:              "b",
+				StartTimeUnixNano: 1001000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "count", Value: &v1.AnyValue{Value: &v1.AnyValue_IntValue{IntValue: 2}}},
+				},
+			},
+		},
+	}
+
+	frame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx)
+	require.NotNil(t, frame)
+	require.Equal(t, 2, frame.Rows())
+	idx := -1
+	for i, f := range frame.Fields {
+		if f.Name == "count" {
+			idx = i
+			break
+		}
+	}
+	require.GreaterOrEqual(t, idx, 0, "expected dynamic field count")
+	assert.Equal(t, 1.5, *(frame.Fields[idx].At(0).(*float64)))
+	assert.Equal(t, 2.0, *(frame.Fields[idx].At(1).(*float64)))
+}
+
 func TestTransformSpanSearchResponse_NoSpanAttributes(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
 	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{

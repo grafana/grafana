@@ -337,6 +337,7 @@ export interface PickerContentProps extends DataSourcePickerProps {
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
   const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -349,7 +350,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer showScrollIndicators>
+      <ScrollContainer showScrollIndicators ref={scrollRef}>
         <DataSourceList
           {...props}
           favoriteDataSources={favoriteDataSources}
@@ -364,6 +365,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
           dataSources={dataSources}
+          scrollRef={scrollRef}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
@@ -383,6 +385,19 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
+      minWidth: calculateMinWidth('97vw'),
+      [theme.breakpoints.up('md')]: {
+        minWidth: calculateMinWidth('80vw'),
+      },
+      [theme.breakpoints.up('lg')]: {
+        minWidth: calculateMinWidth('60vw'),
+      },
+      [theme.breakpoints.up('xl')]: {
+        minWidth: calculateMinWidth('50vw'),
+      },
+      [theme.breakpoints.up('xxl')]: {
+        minWidth: calculateMinWidth('40vw'),
+      },
     }),
     picker: css({
       background: theme.colors.background.secondary,
@@ -400,6 +415,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary,
     }),
   };
+}
+
+function calculateMinWidth(width: string): string {
+  return `min(700px, ${width})`;
 }
 
 export interface FooterProps extends PickerContentProps {}

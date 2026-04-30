@@ -16,10 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var (
-	ErrNotFound = errors.New("annotation not found")
-)
-
 const (
 	defaultMaxConnections  = 10
 	defaultMaxIdleConns    = 5

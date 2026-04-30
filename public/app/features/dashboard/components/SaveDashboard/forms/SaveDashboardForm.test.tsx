@@ -1,6 +1,7 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type Dashboard } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -57,7 +58,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
     />
   );
 
-  const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
+  const button = screen.getByRole('button', { name: 'Save' });
   await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
@@ -85,12 +86,8 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      const variablesCheckbox = screen.getByRole('checkbox', {
-        name: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
-      });
-      const timeRangeCheckbox = screen.getByRole('checkbox', {
-        name: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
-      });
+      const variablesCheckbox = screen.getByTestId(selectors.pages.SaveDashboardModal.saveVariables);
+      const timeRangeCheckbox = screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange);
 
       expect(variablesCheckbox).toBeInTheDocument();
       expect(timeRangeCheckbox).toBeInTheDocument();

@@ -126,8 +126,12 @@ const viridisHuePreset = (maxRows?: number) =>
   );
 
 export const barchartPresetsSupplier: VisualizationPresetsSupplier<Options, FieldConfig> = ({ dataSummary }) => {
-  const hasMultipleNumberFields = (dataSummary?.fieldCountByType(FieldType.number) ?? 0) > 1;
-  const rowCountMax = dataSummary?.rowCountMax ?? 0;
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
+  const hasMultipleNumberFields = dataSummary.fieldCountByType(FieldType.number) > 1;
+  const rowCountMax = dataSummary.rowCountMax;
   const maxRows = rowCountMax > MAX_PREVIEW_ROWS ? MAX_PREVIEW_ROWS : undefined;
 
   const presets = [paletteClassicPreset(maxRows), fixedPurpleHuePreset(maxRows), viridisHuePreset(maxRows)];

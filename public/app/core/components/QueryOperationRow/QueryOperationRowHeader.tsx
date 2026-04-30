@@ -65,6 +65,7 @@ export const QueryOperationRowHeader = ({
             onClick={onRowToggle}
             aria-expanded={isContentVisible}
             aria-controls={id}
+            tabIndex={0}
           />
         )}
         {title && (

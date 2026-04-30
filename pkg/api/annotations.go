@@ -585,14 +585,14 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
 				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
 				if dashboard.FolderUID != "" {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-					inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
 					if err != nil {
 						return nil, err
 					}
 					scopes = append(scopes, inheritedScopes...)
 				} else {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
 				}
 				return scopes, nil
 			})

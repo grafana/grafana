@@ -27,7 +27,6 @@ import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
-import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
@@ -50,9 +49,6 @@ export const TimeSeriesPanel = ({
     sync,
     eventsScope,
     canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
     eventBus,
     canExecuteActions,
     getFiltersBasedOnGrouping,
@@ -177,7 +173,10 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                    seriesIdx !== null &&
+                    (config.featureToggles.perPanelFiltering ||
+                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                    getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
@@ -196,7 +195,10 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                        (config.featureToggles.perPanelFiltering ||
+                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                        groupingFilters.length &&
+                        onAddAdHocFilters
                           ? {
                               onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
                               onFilterOutGroupedLabels: () =>
@@ -234,13 +236,6 @@ export const TimeSeriesPanel = ({
                     timeZone={timeZone}
                     maxHeight={options.tooltip.maxHeight}
                     maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
-                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-                  <ThresholdControlsPlugin
-                    config={uplotConfig}
-                    fieldConfig={fieldConfig}
-                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
                   />
                 )}
               </>

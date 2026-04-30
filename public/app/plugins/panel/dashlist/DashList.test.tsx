@@ -40,7 +40,7 @@ const fixtures: Array<
     Parameters<typeof testWithFeatureToggles>[0],
   ]
 > = [
-  ['DashList - app platform APIs enabled', { enable: ['unifiedStorageSearchUI', 'starsFromAPIServer'] }],
+  ['DashList - app platform APIs enabled', { enable: ['starsFromAPIServer'] }],
   ['DashList - app platform APIs disabled', {}],
 ];
 describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {

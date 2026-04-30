@@ -12,7 +12,7 @@ import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
-import { type QueryEditorType } from '../constants';
+import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
@@ -70,23 +70,25 @@ interface TransformationToggles extends TransformationToggleState {
   toggleDebug: () => void;
 }
 
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
-  /**
-   * Ordered selection array. The last element is the primary (editor-visible) item.
-   * Single-select is always a single-element array; multi-select adds to the end.
-   */
   selectedQueryRefIds: readonly string[];
-  /**
-   * Ordered selection array. The last element is the primary (editor-visible) item.
-   * Single-select is always a single-element array; multi-select adds to the end.
-   */
   selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -124,7 +126,15 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => Promise<void>;
 }
+
+export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;
 
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
@@ -132,6 +142,7 @@ const PanelContext = createContext<PanelState | null>(null);
 const AlertingContext = createContext<AlertingState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
+const QueryEditorTypeConfigContext = createContext<QueryEditorTypeConfigState | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
   const context = useContext(DatasourceContext);
@@ -181,6 +192,14 @@ export function useQueryEditorUIContext(): QueryEditorUIState {
   return context;
 }
 
+export function useQueryEditorTypeConfig(): QueryEditorTypeConfigState {
+  const context = useContext(QueryEditorTypeConfigContext);
+  if (!context) {
+    throw new Error('useQueryEditorTypeConfig must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
@@ -189,6 +208,7 @@ interface QueryEditorProviderProps {
   alertingState: AlertingState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
+  typeConfig: QueryEditorTypeConfigState;
 }
 
 export function QueryEditorProvider({
@@ -199,6 +219,7 @@ export function QueryEditorProvider({
   alertingState,
   uiState,
   actions,
+  typeConfig,
 }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
@@ -206,7 +227,11 @@ export function QueryEditorProvider({
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
             <AlertingContext.Provider value={alertingState}>
-              <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+              <QueryEditorUIContext.Provider value={uiState}>
+                <QueryEditorTypeConfigContext.Provider value={typeConfig}>
+                  {children}
+                </QueryEditorTypeConfigContext.Provider>
+              </QueryEditorUIContext.Provider>
             </AlertingContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>

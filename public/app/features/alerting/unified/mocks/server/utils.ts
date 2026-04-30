@@ -7,14 +7,14 @@ import { type PromRuleGroupDTO, type PromRulesResponse } from 'app/types/unified
 export const getK8sResponse = <T>(kind: string, items: T[]) => {
   return {
     kind,
-    apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
     metadata: {},
     items,
   };
 };
 
 /** Expected base URL for our k8s APIs */
-export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v1beta1';
+export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v0alpha1';
 
 export function paginatedHandlerFor(
   groups: PromRuleGroupDTO[]

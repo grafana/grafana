@@ -10,22 +10,25 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
-	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
+// Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
+// so there is a single source of truth. Folder and User live here because
+// pkg/registry/apis/provisioning is the only caller for those.
 var (
 	UserResource              = iam.UserResourceInfo.GroupVersionResource()
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	FolderKind                = folders.FolderResourceInfo.GroupVersionKind()
-	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
-	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
-	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResource         = provisioningresources.DashboardResource
+	DashboardKind             = provisioningresources.DashboardKind
+	DashboardResourceV2       = provisioningresources.DashboardResourceV2
+	DashboardResourceV2alpha1 = provisioningresources.DashboardResourceV2alpha1
+	DashboardResourceV2beta1  = provisioningresources.DashboardResourceV2beta1
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
@@ -33,6 +36,24 @@ var (
 	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
+
+// folderGVR builds the GVR for the folder API at the given version.
+func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    FolderResource.Group,
+		Version:  folderAPIVersion,
+		Resource: FolderResource.Resource,
+	}
+}
+
+// FolderGVKForVersion returns a GVK for the folder API at the given version.
+func FolderGVKForVersion(version string) schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   FolderKind.Group,
+		Version: version,
+		Kind:    FolderKind.Kind,
+	}
+}
 
 // ClientFactory is a factory for creating clients for a given namespace
 //
@@ -52,7 +73,8 @@ type clientFactory struct {
 type ResourceClients interface {
 	ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
 	ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
-	Folder(ctx context.Context) (dynamic.ResourceInterface, error)
+	// Folder returns a dynamic client for the folder API at the given version.
+	Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
 }
 
@@ -289,9 +311,8 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	return info.client, info.gvk, nil
 }
 
-func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(ctx, FolderResource)
-	return client, err
+func (c *resourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderGVR(folderAPIVersion))
 }
 
 func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
@@ -335,9 +356,8 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	return resourceClients.ForResource(ctx, gvr)
 }
 
-func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(ctx, FolderResource)
-	return client, err
+func (c *multiResourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderGVR(folderAPIVersion))
 }
 
 func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {

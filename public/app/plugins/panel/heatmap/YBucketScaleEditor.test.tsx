@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
@@ -168,10 +168,7 @@ describe('YBucketScaleEditor', () => {
         />
       );
 
-      // Find the log base field container and query the combobox within it
-      const logBaseLabel = screen.getByText('Log base');
-      const fieldContainer = logBaseLabel.closest('div[style]') as HTMLElement; // The div with style="margin-top: 8px;"
-      const selectEl = within(fieldContainer).getByRole('combobox');
+      const selectEl = screen.getByRole('combobox');
 
       await selectEvent.select(selectEl, '10', { container: document.body });
 
@@ -189,10 +186,7 @@ describe('YBucketScaleEditor', () => {
         />
       );
 
-      // Find the log base field container and query the combobox within it
-      const logBaseLabel = screen.getByText('Log base');
-      const fieldContainer = logBaseLabel.closest('div[style]') as HTMLElement; // The div with style="margin-top: 8px;"
-      const selectEl = within(fieldContainer).getByRole('combobox');
+      const selectEl = screen.getByRole('combobox');
 
       await selectEvent.select(selectEl, '10', { container: document.body });
 

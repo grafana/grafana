@@ -1,4 +1,5 @@
-// @ts-check
+// TODO: Migrate to Typescript.
+// @ts-nocheck
 const emotionPlugin = require('@emotion/eslint-plugin');
 const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
@@ -170,6 +171,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      '@grafana/no-direct-date-fns': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -195,6 +197,16 @@ module.exports = [
       ],
       'no-restricted-imports': ['error', baseImportConfig],
       'no-restricted-globals': ['error'].concat(restrictedGlobals),
+      // React 19 related TransitionGroup rules to prevent usage of findDomNode. Remove once React 19 is the default
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXElement[openingElement.name.name=/^(CSSTransition|Transition)$/]:not(:has(JSXAttribute[name.name='nodeRef']))",
+          message:
+            'CSSTransition components must have a nodeRef attribute to avoid findDOMNode usage which breaks in React 19. See https://reactcommunity.org/react-transition-group/transition#Transition-prop-nodeRef for more details.',
+        },
+      ],
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
@@ -207,14 +219,8 @@ module.exports = [
       ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
-      'no-restricted-syntax': [
-        'error',
-        {
-          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
-          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
-          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
-        },
-      ],
+      '@grafana/define-feature-events': 'error',
+      '@grafana/no-plain-links': 'error',
     },
   },
 
@@ -389,7 +395,6 @@ module.exports = [
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-data/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
-      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
@@ -463,9 +468,11 @@ module.exports = [
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/influxdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
@@ -584,50 +591,13 @@ module.exports = [
     ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'Identifier[name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector: 'MemberExpression[object.name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
-          message:
-            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
-        },
-        {
-          // eslint-disable-next-line no-restricted-syntax
-          selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
-          // eslint-disable-next-line no-restricted-syntax
-          message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-direct-local-storage-access': 'error',
+      '@grafana/require-no-margin': 'error',
+      '@grafana/no-locale-compare': 'error',
+      // eslint-disable-next-line @grafana/no-gf-form
+      '@grafana/no-gf-form': 'error',
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
     },
   },
   {
@@ -638,37 +608,18 @@ module.exports = [
       ...enterpriseIgnores,
     ],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
+    },
+    plugins: {
+      '@grafana': grafanaPlugin,
     },
   },
   {
     files: [...enterpriseIgnores],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
     },
   },
   {

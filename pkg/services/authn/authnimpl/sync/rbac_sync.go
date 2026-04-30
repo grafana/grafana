@@ -3,12 +3,13 @@ package sync
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -187,7 +188,7 @@ func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string)
 		case len(groupResource) == 2:
 			// Case group/resource:verb
 			resource := groupResource[1]
-			resourceMappings, ok := s.mapper.Get(group, resource)
+			resourceMappings, ok := s.mapper.Get(group, resource, "")
 			if !ok {
 				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
 				continue
@@ -249,7 +250,7 @@ func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error)
 		}
 	}
 
-	return maps.Keys(rolesToAdd), rolesToRemove, nil
+	return slices.Collect(maps.Keys(rolesToAdd)), rolesToRemove, nil
 }
 
 func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r *authn.Request) error {

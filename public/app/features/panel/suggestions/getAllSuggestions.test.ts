@@ -159,7 +159,6 @@ scenario('Single frame with time and number field', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
       expect.objectContaining({ pluginId: 'gauge' }),
@@ -216,7 +215,6 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),

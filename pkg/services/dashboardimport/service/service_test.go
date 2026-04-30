@@ -359,19 +359,10 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 
 type libraryPanelServiceMock struct {
 	librarypanels.Service
-	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
+	importLibraryPanelsForDashboardFunc func(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
 }
 
 var _ librarypanels.Service = (*libraryPanelServiceMock)(nil)
-
-func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
-	if s.connectLibraryPanelsForDashboardFunc != nil {
-		return s.connectLibraryPanelsForDashboardFunc(ctx, signedInUser, dash)
-	}
-
-	return nil
-}
 
 func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {

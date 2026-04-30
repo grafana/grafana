@@ -77,3 +77,60 @@ func TestConvertToSortOptions(t *testing.T) {
 		require.Len(t, opts, 0)
 	})
 }
+
+func TestConvertToSortParams(t *testing.T) {
+	fieldMapping := map[string]string{
+		"title":        "name",
+		"fields.email": "email",
+	}
+
+	t.Run("maps name ascending to title", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("name-asc", 0)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Equal(t, []string{"title"}, params)
+	})
+
+	t.Run("maps name descending to -title", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("name-desc", 0)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Equal(t, []string{"-title"}, params)
+	})
+
+	t.Run("maps email ascending and strips fields prefix", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("email-asc", 1)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Equal(t, []string{"email"}, params)
+	})
+
+	t.Run("maps email descending", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("email-desc", 1)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Equal(t, []string{"-email"}, params)
+	})
+
+	t.Run("maps multiple sort options", func(t *testing.T) {
+		sortOpts := []model.SortOption{
+			newSortOption("name-desc", 0),
+			newSortOption("email-asc", 1),
+		}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Equal(t, []string{"-title", "email"}, params)
+	})
+
+	t.Run("skips unmapped fields", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("member_count-desc", 2)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Empty(t, params)
+	})
+
+	t.Run("skips malformed sort option name", func(t *testing.T) {
+		sortOpts := []model.SortOption{newSortOption("invalid", 0)}
+		params := ConvertToSortParams(sortOpts, fieldMapping)
+		require.Empty(t, params)
+	})
+
+	t.Run("returns empty for nil input", func(t *testing.T) {
+		params := ConvertToSortParams(nil, fieldMapping)
+		require.Empty(t, params)
+	})
+}

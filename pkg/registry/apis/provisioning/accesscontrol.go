@@ -34,8 +34,8 @@ const (
 	ActionProvisioningStatsRead = "provisioning.stats:read" // GET + LIST.
 )
 
-func registerAccessControlRoles(service accesscontrol.Service) error {
-	// Repositories
+// FixedRoleRegistrations returns the provisioning role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	repositoriesReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:provisioning.repositories:reader",
@@ -203,7 +203,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return service.DeclareFixedRoles(
+	return []accesscontrol.RoleRegistration{
 		repositoriesReader,
 		repositoriesWriter,
 		connectionsReader,
@@ -213,5 +213,9 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		historicJobsReader,
 		settingsReader,
 		statsReader,
-	)
+	}
+}
+
+func registerAccessControlRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

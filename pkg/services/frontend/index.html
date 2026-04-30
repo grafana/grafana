@@ -10,6 +10,18 @@
 
     <base href="[[.AppSubUrl]]/" />
 
+    [[if .MeticulousAIEnabled]]
+    <script
+      data-is-production-environment="true"
+      data-recording-token="[[.MeticulousAIRecordingToken]]"
+      nonce="[[.Nonce]]"
+      src="https://snippet.meticulous.ai/v1/meticulous.js"
+    ></script>
+    <script>
+      window.__METICULOUS_AI_RECORDING_TOKEN__ = '[[.MeticulousAIRecordingToken]]';
+    </script>
+    [[end]]
+
     <link rel="icon" id="grafana_favicon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
@@ -163,13 +175,33 @@
         // For the image-renderer to check support for render binding calls
         window.__grafanaRenderBindingSupported = true;
       [[end]]
+
+      [[if .AssetSriChecksEnabled]]
+        // For enabling SRI checks on dynamically loaded Grafana assets
+        window.__grafanaAssetSriChecksEnabled = true;
+      [[end]]
+
+      window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
+      // global config
+      window.grafanaBootData = {
+        _femt: true, // isFrontendService() needs this
+        assets: [[.Assets]],
+        navTree: [],
+        settings: [[.Settings]],
+        user: [[.DefaultUser]],
+      }
     </script>
 
+    [[if .BootScript]]
+    <script nonce="[[.Nonce]]">
+      [[.BootScript]]
+    </script>
+    [[else]]
     <script nonce="[[.Nonce]]">
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        const publicDashboardAccessToken = [[.PublicDashboardAccessToken]]
+        const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
         // Grafana can only fail to load once
         // However, it can fail to load in multiple different places
         // To avoid double reporting the error, we use this boolean to check if we've already failed
@@ -291,7 +323,17 @@
 
           // Handle SSO auto-login redirection from /bootdata.
           // Only redirect if there's no login error to avoid redirect loops.
-          if (rawBootData.autoLoginRedirectURL && !rawBootData.settings.loginError && !queryParams.has('disableAutoLogin')) {
+          const hasLoginError = rawBootData.settings?.loginError || window.grafanaBootData.settings.loginError;
+          const annonAccessPages = [
+            /\/dashboard\/snapshot\/.*$/,
+            /\/invite$/,
+            /\/signup$/,
+            /\/user\/password\/send-reset-email$/,
+            /\/user\/password\/reset$/,
+            /\/public-dashboards\/.*$/,
+          ]
+          const isAllowedAnonPage = annonAccessPages.some((regex) => regex.test(window.location.pathname));
+          if (rawBootData.autoLoginRedirectURL && !hasLoginError && !queryParams.has('disableAutoLogin') && !isAllowedAnonPage) {
             // Copied from context_srv.setRedirectToUrl
             const redirectPath = window.location.href.substring(window.location.origin.length)
             if (redirectPath !== "/login") {
@@ -348,15 +390,6 @@
         }
 
         async function initGrafana() {
-          // global config
-          window.grafanaBootData = {
-            _femt: true, // isFrontendService() needs this
-            assets: [[.Assets]],
-            navTree: [],
-            settings: [[.Settings]],
-            user: [[.DefaultUser]],
-          }
-
           // Preserve a mix of values from the initial boot data, and from the backend
           // - nav tree and user info come from the backend
           // - merge settings from both. FS settings contains less values
@@ -393,6 +426,11 @@
 
           document.body.classList.add(isLightTheme ? "theme-light" : "theme-dark");
 
+          const lang = window.grafanaBootData.user.language;
+          if (lang) {
+            document.documentElement.lang = lang;
+          }
+
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
 
@@ -426,9 +464,27 @@
         });
       })();
     </script>
-
-    [[range $asset := .Assets.JSFiles]]
-      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
     [[end]]
+
+    [[if .AssetSriChecksEnabled ]]
+      [[range $asset := .Assets.JSFiles]]
+        <script
+        nonce="[[$.Nonce]]"
+        src="[[$asset.FilePath]]"
+        integrity="[[$asset.Integrity]]"
+        crossorigin="anonymous"
+        type="text/javascript"
+        defer
+      ></script>
+      [[end]]
+    [[else]]
+      [[range $asset := .Assets.JSFiles]]
+      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
+      [[end]]
+    [[end]]
+
+     <script nonce="[[.Nonce]]">
+      performance.mark('frontend_boot_js_done_time_seconds');
+    </script>
   </body>
 </html>

@@ -89,11 +89,11 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             placeholder={t('dashboard.visualization-select-pane.placeholder-search-for', 'Search for...')}
           />
           <Button
-            title={t('dashboard.visualization-select-pane.title-close', 'Close')}
+            aria-label={t('dashboard.visualization-select-pane.title-close', 'Close')}
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
-            aria-label={selectors.components.PanelEditor.toggleVizPicker}
+            data-testid={selectors.components.PanelEditor.toggleVizPicker}
             onClick={onCloseVizPicker}
           />
         </div>

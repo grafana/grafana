@@ -63,7 +63,7 @@ func RegisterAppInstaller(
 	}
 	customCfg := notificationsApp.Config{
 		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -131,7 +131,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
-		return routingtree.NewStorage(api.RouteService, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

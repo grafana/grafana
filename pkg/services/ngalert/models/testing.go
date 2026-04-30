@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"slices"
 	"sync"
@@ -21,7 +22,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
 

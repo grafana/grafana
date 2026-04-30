@@ -194,6 +194,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	err = res.Scan(
 		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
 		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Description, &keeper.Type, &keeper.Payload,
+		&keeper.Active,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
@@ -404,6 +405,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		err = rows.Scan(
 			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
 			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Description, &row.Type, &row.Payload,
+			&row.Active,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
@@ -557,7 +559,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		thirdPartyKeepers = append(thirdPartyKeepers, name)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err := keepersRows.Err(); err != nil {
 		return fmt.Errorf("third party keeper rows error: %w", err)
 	}
 

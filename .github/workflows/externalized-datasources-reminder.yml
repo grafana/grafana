@@ -4,12 +4,15 @@ on:
   pull_request:
     types: [opened]
     paths:
+      - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/cloud-monitoring/**"
+      - "public/app/plugins/datasource/graphite/**"
       - "public/app/plugins/datasource/zipkin/**"
       - "public/app/plugins/datasource/opentsdb/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/cloud-monitoring/**"
+      - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/zipkin/**"
       - "pkg/tsdb/opentsdb/**"
 

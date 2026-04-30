@@ -419,50 +419,92 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	require.Equal(t, "none", current.GetProvenanceStatus())
-
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.Route{}, admin.Identity.GetOrgID(), "API"))
-
-		got, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
-			{
-				Matchers: []v1beta1.RoutingTreeMatcher{
-					{
-						Label: "test",
-						Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
-						Value: "123",
-					},
-				},
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("RoutingTreeWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
 			},
+		},
+	})
+	writerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
+
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	t.Run("update", func(t *testing.T) {
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		require.Empty(t, current.GetProvenanceStatus())
+
+		t.Run("writer cannot set provenance", func(t *testing.T) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
+		})
+
+		t.Run("writer cannot update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "region")
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		// Ensure tree is provisioned before delete tests.
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		if current.GetProvenanceStatus() != string(models.ProvenanceAPI) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
 		}
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Error(t, err)
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
-	})
+		t.Run("writer cannot delete provisioned tree", func(t *testing.T) {
+			err := writerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		t.Run("provisioner can delete provisioned tree", func(t *testing.T) {
+			err := provisionerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -529,7 +571,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 		managedRoute := legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" })
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -904,7 +946,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Helper()
 		gotRoute, err := adminClient.Get(ctx, nameToIdentifier(name))
 		require.NoError(t, err)
-		assert.Equal(t, expectedRoute, gotRoute)
+
+		assert.Equal(t, expectedRoute.Spec, gotRoute.Spec)
+		assert.Equal(t, expectedRoute.TypeMeta, gotRoute.TypeMeta)
+		assert.Equal(t, expectedRoute.Name, gotRoute.Name)
 	}
 
 	t.Run("Create", func(t *testing.T) {
@@ -1054,14 +1099,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			}
 		})
 
-		t.Run("Update on provisioned should fail", func(t *testing.T) {
+		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
-					require.Error(t, err)
-					require.ErrorContains(t, err, "provenance")
+					require.NoError(t, err)
 				})
 			}
 		})
@@ -1115,6 +1159,285 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			})
 		}
 	})
+}
+
+// TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting route resource. It
+// verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
+func TestIntegrationResourcePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	org1 := helper.Org1
+	noneUser := org1.None
+
+	creator := helper.CreateUser("routeCreator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{accesscontrol.ActionAlertingManagedRoutesCreate},
+		},
+	})
+
+	admin := org1.Admin
+	viewer := org1.Viewer
+	editor := org1.Editor
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	writeACMetadata := []string{"canWrite", "canDelete"}
+	allACMetadata := []string{"canWrite", "canDelete", "canAdmin"}
+
+	mustID := func(user apis.User) int64 {
+		id, err := user.Identity.GetInternalID()
+		require.NoError(t, err)
+		return id
+	}
+
+	for _, tc := range []struct {
+		name          string
+		creatingUser  apis.User
+		testUser      apis.User
+		assignments   []accesscontrol.SetResourcePermissionCommand
+		expACMetadata []string
+		expRead       bool
+		expUpdate     bool
+		expDelete     bool
+	}{
+		// Basic access.
+		{
+			name:          "Admin creates and has all access",
+			creatingUser:  admin,
+			testUser:      admin,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		{
+			name:          "Creator creates and has all access",
+			creatingUser:  creator,
+			testUser:      creator,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		{
+			name:          "Admin creates, noneUser has no access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			expACMetadata: nil,
+		},
+		{
+			name:          "Admin creates, viewer has read access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, editor has read and write access",
+			creatingUser:  admin,
+			testUser:      editor,
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		// User-based assignments.
+		{
+			name:          "Admin creates, assigns view, noneUser has read access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(models.PermissionView)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns edit, noneUser has read+write+delete access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(models.PermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		{
+			name:          "Admin creates, assigns admin, noneUser has all access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(models.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		// Role-based access.
+		{
+			name:          "Admin creates, assigns edit, viewer has read+write+delete access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(models.PermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		{
+			name:          "Admin creates, assigns admin, viewer has all access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(models.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+		// Team-based access. Staff team has editor+admin but not viewer in it.
+		{
+			name:          "Admin creates, assigns admin to staff, viewer has read access only",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(models.PermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin to staff, editor has all access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(models.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+			expUpdate:     true,
+			expDelete:     true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			createClient, err := v1beta1.NewRoutingTreeClientFromGenerator(tc.creatingUser.GetClientRegistry())
+			require.NoError(t, err)
+			client, err := v1beta1.NewRoutingTreeClientFromGenerator(tc.testUser.GetClientRegistry())
+			require.NoError(t, err)
+
+			routeName := fmt.Sprintf("perm-test-%s", util.GenerateShortUID())
+			created, err := createClient.Create(ctx, k8sRoute(t, routeName, &defaultPolicy), resource.CreateOptions{})
+			require.NoError(t, err)
+
+			defer func() {
+				_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			}()
+
+			// Assign resource permissions.
+			cliCfg := helper.Org1.Admin.NewRestConfig()
+			alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+			for _, permission := range tc.assignments {
+				status, body := alertingApi.AssignRoutePermission(t, routeName, permission)
+				require.Equalf(t, http.StatusOK, status, "Expected status 200 but got %d: %s", status, body)
+			}
+
+			assertACMetadata := func(t *testing.T, annotations map[string]string) {
+				t.Helper()
+				for _, k := range allACMetadata {
+					key := v1beta1.AccessControlAnnotation(k)
+					var expected bool
+					for _, exp := range tc.expACMetadata {
+						if exp == k {
+							expected = true
+							break
+						}
+					}
+					if expected {
+						assert.Equalf(t, "true", annotations[key], "expected annotation %s to be set", key)
+					} else {
+						_, exists := annotations[key]
+						assert.Falsef(t, exists, "expected annotation %s to not be set", key)
+					}
+				}
+			}
+
+			if tc.expRead {
+				t.Run("should be able to read route", func(t *testing.T) {
+					got, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					assertACMetadata(t, got.Annotations)
+				})
+
+				t.Run("should see route in list with correct metadata", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					var found bool
+					for _, item := range list.Items {
+						if item.Name == routeName {
+							found = true
+							assertACMetadata(t, item.Annotations)
+							break
+						}
+					}
+					assert.Truef(t, found, "expected route %s to be in list", routeName)
+				})
+			} else {
+				t.Run("should be forbidden to read route", func(t *testing.T) {
+					_, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+
+			if tc.expUpdate {
+				t.Run("should be able to update route", func(t *testing.T) {
+					current, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					updated := current.Copy().(*v1beta1.RoutingTree)
+					updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
+						{
+							Matchers: []v1beta1.RoutingTreeMatcher{
+								{
+									Label: "test",
+									Type:  v1beta1.RoutingTreeMatcherTypeEqual,
+									Value: "test",
+								},
+							},
+						},
+					}
+					_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+					require.NoError(t, err)
+				})
+			} else {
+				t.Run("should be forbidden to update route", func(t *testing.T) {
+					current, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					updated := current.Copy().(*v1beta1.RoutingTree)
+					updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
+						{
+							Matchers: []v1beta1.RoutingTreeMatcher{
+								{
+									Label: "test",
+									Type:  v1beta1.RoutingTreeMatcherTypeEqual,
+									Value: "test",
+								},
+							},
+						},
+					}
+					_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+					require.Error(t, err)
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+
+			if tc.expDelete {
+				t.Run("should be able to delete route", func(t *testing.T) {
+					err := client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+					require.NoError(t, err)
+				})
+			} else {
+				t.Run("should be forbidden to delete route", func(t *testing.T) {
+					err := client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+					require.Error(t, err)
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+		})
+	}
 }
 
 func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
@@ -1225,7 +1548,11 @@ func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingT
 	err := r.Validate()
 	require.NoError(t, err)
 	managedRoute := legacy_storage.NewManagedRoute(name, r)
-	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace })
+	allPermissions := models.NewRoutePermissionSet()
+	allPermissions.Set(models.RoutePermissionWrite, true)
+	allPermissions.Set(models.RoutePermissionDelete, true)
+	allPermissions.Set(models.RoutePermissionAdmin, true)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
 		Kind:       v1beta1.RoutingTreeKind().Kind(),

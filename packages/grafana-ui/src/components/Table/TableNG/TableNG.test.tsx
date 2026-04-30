@@ -1314,6 +1314,148 @@ describe('TableNG', () => {
       expect(filteredFooterTexts[1]).toBe('1');
     });
 
+    it('cross-filter: second filter popup shows only values reachable after first filter is applied', async () => {
+      // Category A rows have Status=up; Category B rows have Status=down.
+      // Once we filter to Category=A, the Status filter popup should only offer "up".
+      const crossFilterFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'CrossFilterData',
+          length: 4,
+          fields: [
+            {
+              name: 'Category',
+              type: FieldType.string,
+              values: ['A', 'A', 'B', 'B'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Status',
+              type: FieldType.string,
+              values: ['up', 'up', 'down', 'down'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      render(<TableNG enableVirtualization={false} data={crossFilterFrame} width={800} height={600} />);
+
+      // Two filter buttons: [0]=Category, [1]=Status
+      const filterButtons = screen.getAllByTestId(
+        selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton
+      );
+      expect(filterButtons).toHaveLength(2);
+
+      // --- Apply Category = A ---
+      await user.click(filterButtons[0]);
+      const popup1 = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container);
+      expect(popup1).toBeInTheDocument();
+
+      // Select "A": click the checkbox (not the wrapper div) so onChange fires
+      await user.click(screen.getByRole('checkbox', { name: 'A' }));
+      await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+      // Category filter is now active; only rows with Category=A are visible
+      const rowsAfterCategoryFilter = screen.getAllByRole('row');
+      // header row + 2 data rows
+      expect(rowsAfterCategoryFilter).toHaveLength(3);
+
+      // --- Open Status filter popup ---
+      await user.click(filterButtons[1]);
+      expect(
+        screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)
+      ).toBeInTheDocument();
+
+      // Cross-filter: rows passed to this popup are the 2 category-A rows (both Status=up).
+      // "up" must be an option; "down" must NOT be present.
+      expect(screen.getByTitle('up')).toBeInTheDocument();
+      expect(screen.queryByTitle('down')).not.toBeInTheDocument();
+    });
+
+    it('cross-filter: top-level filter does not affect nested table filter options', async () => {
+      // Nested tables use their own parentIndex-scoped cross-filter chain, independent of
+      // top-level filters. A top-level filter on Column A should not restrict nested options.
+      const nestedCrossFilterFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedCrossFilter',
+          length: 2,
+          fields: [
+            {
+              name: 'Column A',
+              type: FieldType.string,
+              values: ['A1', 'A2'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [
+                [
+                  withFieldOverrides(
+                    toDataFrame({
+                      fields: [
+                        {
+                          name: 'Nested Col',
+                          type: FieldType.string,
+                          values: ['X', 'Y'],
+                          config: { custom: { filterable: true } },
+                          display: displayString,
+                          ...stdField,
+                        },
+                      ],
+                    })
+                  ),
+                ],
+                [
+                  withFieldOverrides(
+                    toDataFrame({
+                      fields: [
+                        {
+                          name: 'Nested Col',
+                          type: FieldType.string,
+                          values: ['X', 'Z'],
+                          config: { custom: { filterable: true } },
+                          display: displayString,
+                          ...stdField,
+                        },
+                      ],
+                    })
+                  ),
+                ],
+              ],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      render(<TableNG enableVirtualization={false} data={nestedCrossFilterFrame} width={800} height={600} />);
+
+      // Apply top-level Column A filter to keep only row A1
+      const filterButtons = screen.getAllByTestId(
+        selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton
+      );
+      await user.click(filterButtons[0]);
+      await user.click(screen.getByRole('checkbox', { name: 'A1' }));
+      await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+      // Only A1 row is visible at the top level
+      expect(screen.getByText('A1')).toBeInTheDocument();
+      expect(screen.queryByText('A2')).not.toBeInTheDocument();
+    });
+
     it('filters rows with case-insensitive text matching', () => {
       // Create a case-insensitive filtered frame (filtering for 'a1' should match 'A1')
       const baseFrame = createBasicDataFrame();
@@ -1602,9 +1744,6 @@ describe('TableNG', () => {
       onAnnotationDelete: jest.fn(),
       onSelectRange: jest.fn(),
       onAddAdHocFilter: jest.fn(),
-      canEditThresholds: false,
-      showThresholds: false,
-      onThresholdsChange: jest.fn(),
       instanceState: {},
       onInstanceStateChange: jest.fn(),
       onToggleLegendSort: jest.fn(),

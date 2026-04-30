@@ -33,19 +33,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 type Options struct {
-	Cfg          *setting.Cfg
-	Features     featuremgmt.FeatureToggles
-	DB           infraDB.DB
-	Tracer       tracing.Tracer
-	Reg          prometheus.Registerer
-	Authzc       types.AccessClient
-	Docs         resource.DocumentBuilderSupplier
-	SecureValues secrets.InlineSecureValueSupport
+	Cfg           *setting.Cfg
+	Features      featuremgmt.FeatureToggles
+	DB            infraDB.DB
+	Tracer        tracing.Tracer
+	Reg           prometheus.Registerer
+	Authzc        types.AccessClient
+	Docs          resource.DocumentBuilderSupplier
+	SecureValues  secrets.InlineSecureValueSupport
+	VectorBackend vector.VectorBackend
 }
 
 type clientMetrics struct {
@@ -67,7 +69,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.VectorBackend)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -94,6 +96,7 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
+	vectorBackend vector.VectorBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -151,7 +154,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer, false)
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, false)
 		if err != nil {
 			return nil, err
 		}
@@ -163,15 +166,17 @@ func newClient(opts options.StorageOptions,
 		}
 
 		serverOptions := sql.ServerOptions{
-			Backend:       backend,
-			Cfg:           cfg,
-			Tracer:        tracer,
-			Reg:           reg,
-			AccessClient:  authzc,
-			SearchOptions: searchOptions,
-			IndexMetrics:  indexMetrics,
-			Features:      features,
-			SecureValues:  secure,
+			Backend:        backend,
+			VectorBackend:  vectorBackend,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   authzc,
+			SearchOptions:  searchOptions,
+			StorageMetrics: storageMetrics,
+			IndexMetrics:   indexMetrics,
+			Features:       features,
+			SecureValues:   secure,
 		}
 
 		if cfg.QOSEnabled {

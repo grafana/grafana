@@ -10,9 +10,7 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { type TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -30,6 +28,7 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
+  onWrapTextClick: () => void;
 }
 
 export function TableNGWrap({
@@ -51,6 +50,7 @@ export function TableNGWrap({
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
+  onWrapTextClick,
 }: Props) {
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
@@ -62,14 +62,6 @@ export function TableNGWrap({
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
   const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth);
-
-  // Callbacks
-  const onTableOptionsChange = useCallback(
-    (options: TableOptions) => {
-      onOptionsChange(options);
-    },
-    [onOptionsChange]
-  );
 
   const handleSortOrderChange = useCallback(
     (sortOrder: LogsSortOrder) => {
@@ -104,12 +96,15 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
-            logOptionsStorageKey={SETTING_KEY_ROOT}
+            allowDownload={options.allowDownload}
+            logOptionsStorageKey={logOptionsStorageKey}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
+            onWrapTextClick={onWrapTextClick}
+            wrapText={Boolean(options.wrapText)}
           />
         </div>
       )}
@@ -123,13 +118,13 @@ export function TableNGWrap({
         height={height}
         id={id}
         timeZone={timeZone}
-        options={{ ...options }}
+        options={options}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}
         title={title}
         eventBus={eventBus}
-        onOptionsChange={onTableOptionsChange}
+        onOptionsChange={onOptionsChange}
         onFieldConfigChange={handleTableOnFieldConfigChange}
         replaceVariables={replaceVariables}
         onChangeTimeRange={onChangeTimeRange}
@@ -139,19 +134,18 @@ export function TableNGWrap({
 }
 
 const getStyles = (
-  theme: GrafanaTheme2,
+  _: GrafanaTheme2,
   fieldSelectorWidth: number,
   height: number,
   tableWidth: number,
   controlsWidth: number
 ) => {
-  const listControlsWrapperTableHeaderOffset = '-5px';
   return {
     listControlsWrapper: css({
       height: '100%',
       width: controlsWidth,
       label: 'listControlsWrapper',
-      marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px + ${listControlsWrapperTableHeaderOffset})`,
+      // Needed to keep the panel menu from overlapping the logs options when there's no title
       position: 'absolute',
       right: 0,
       top: 0,

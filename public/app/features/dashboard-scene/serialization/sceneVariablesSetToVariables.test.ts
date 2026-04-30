@@ -695,9 +695,14 @@ describe('sceneVariablesSetToVariables', () => {
         "filters": [
           {
             "key": "filterTest",
+            "keyLabel": "filterTest",
             "operator": "=",
             "origin": "dashboard",
             "value": "test",
+            "valueLabels": [
+              "test",
+            ],
+            "values": undefined,
           },
           {
             "key": "filterTest2",

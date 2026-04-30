@@ -1,9 +1,9 @@
-import { clamp } from 'lodash';
 import { PureComponent, type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
 import { VizOrientation } from '@grafana/data';
 
+import { clamp } from '../../utils/clamp';
 import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {

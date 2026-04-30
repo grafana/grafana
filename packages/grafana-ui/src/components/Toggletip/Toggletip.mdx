@@ -3,22 +3,30 @@ import { Toggletip } from './Toggletip';
 
 # Toggletip
 
-Toggletips, similar to Tooltips, provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state.
-Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required “X” (close) trigger.
+Toggletips, similar to [Tooltips](/docs/overlays-tooltip--docs), provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state.
+Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required "X" (close) trigger.
 Toggletips are capable of containing varying types of complex content including interactive components, buttons, and dropdowns.
 
 ## When to use
 
-- Users need further context to understand or learn a topic
-- Links to supporting documentation or content are needed to provide
-- When an interactive element must be placed within the popover
-- When content needs to persist for consumption until the user dismisses it
+Toggletips reveal **supplemental content** when a user clicks a button or another UI element and remains actively open until a user dismisses it.
 
-## When not to use
+### Do's
 
-- When only a primary label or an auxiliary clarification is needed to be displayed (see: Tooltip)
-- Do not house information critical to user’s task completion
-- Do not request required information from a user to complete a task or workflow
+- Use when further context is needed to understand a topic.
+- Link to supporting documentation or content via a link.
+- Use when an interactive element must be placed within a tooltip-like component.
+- Use content that needs to persist for users to reference until they dismiss it.
+- Use for content that is informational to what a user is actively working on.
+- Provide users ways to navigate to docs for further learning.
+
+### Don'ts
+
+- Do not use if a user would be configuring, selecting, entering data, or editing content on a page through the toggletip.
+- Do not use when a [Tooltip](/docs/overlays-tooltip--docs) with clarifying text would suffice.
+- Do not house information critical to a user's task completion.
+- Do not hide required information from a user to complete a task or workflow.
+- Do not use to surface actions to users.
 
 ## Content
 
@@ -29,7 +37,7 @@ Toggletips are able to house various types of content. Below is a potential list
 - Dropdowns
 - Selects
 - Images/gifs/videos
-- Various combinations of elements — ex: strings of text with buttons and an image
+- Various combinations of elements -- ex: strings of text with buttons and an image
 
 ## Theme
 
@@ -46,15 +54,40 @@ This is the default theme, usually used in forms to show more information.
 
 Tooltip with a red background.
 
-## Triggers
+## Accessibility
 
-- Toggletips display on
-  - user click of UI trigger
-  - pressing ENTER or SPACE on a keyboard while the trigger element has focus
+Toggletips are revealed by clicking rather than by hovering and focusing. It is important for them to prompt screen readers to announce the information after the click event.
+
+- Include [ARIA live region](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions).
+- Use **type="button"** to avoid mistaking the trigger as a submit button.
+- Use a describable label or aria-label on the UI-Trigger to ensure the user understands what extra information is in the Toggletip content (i.e. "More information").
+
+## Behaviors
+
+### Triggers
+
+- Toggletips display on:
+  - **User click** of UI trigger.
+  - Pressing **ENTER** or **SPACE** on a keyboard while the trigger element has focus.
 - Toggletips dismiss by:
-  - user click of close icon (x) — optional
-  - clicking outside of the popover container
-  - pressing the ESC key
+  - **User click** of the close icon (x) -- optional.
+  - Clicking outside the popover container.
+  - Pressing the **ESC** key.
+
+### User Interactions
+
+Toggletips are intended to house interactive elements within them. UI elements such as buttons, text links, dropdowns, etc. are able to be fully interacted with inside of the toggletip.
+
+### Scrolling
+
+In the instance that a toggletip requires scrolling of content (e.g. with a dropdown) the header and the footer of the toggletip remain fixed with the body enabling scroll.
+
+### States
+
+Toggletips have two states.
+
+- Hidden -- the default state of a toggletip.
+- Visible -- state change is triggered by ui-trigger click or keyboard enter.
 
 ### Usage
 
@@ -75,3 +108,12 @@ return (
   </Toggletip>
 );
 ```
+
+## Related
+
+- [Tooltip](/docs/overlays-tooltip--docs)
+
+## Further Reading
+
+- [Inclusive Components: Tooltips and Toggletips](https://inclusive-components.design/tooltips-toggletips/)
+- [Providing Accessible Names and Descriptions](https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/)

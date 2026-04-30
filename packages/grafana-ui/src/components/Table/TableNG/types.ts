@@ -19,7 +19,7 @@ import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type TextAlign } from './utils';
+import { type ApplyFilterResult, type TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -291,6 +291,7 @@ export type FrameToRowsConverter = (frame: DataFrame, nestedRowIndex?: number) =
 export interface NestedRowEntry {
   raw: TableRow[];
   final: TableRow[];
+  filterResult: ApplyFilterResult;
 }
 
 // Type for mapping column names to their field types
