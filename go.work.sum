@@ -164,6 +164,7 @@ cloud.google.com/go/ids v1.5.7/go.mod h1:N3ZQOIgIBwwOu2tzyhmh3JDT+kt8PcoKkn2BRT9
 cloud.google.com/go/iot v1.8.7 h1:PDUtxCzlFwFHODEFAgaGJy/Zv4tdvLbZ+lvZ1mKQXE4=
 cloud.google.com/go/iot v1.8.7/go.mod h1:HvVcypV8LPv1yTXSLCNK+YCtqGHhq+p0F3BXETfpN+U=
 cloud.google.com/go/kms v1.22.0/go.mod h1:U7mf8Sva5jpOb4bxYZdtw/9zsbIjrklYwPcvMk34AL8=
+cloud.google.com/go/kms v1.26.0 h1:cK9mN2cf+9V63D3H1f6koxTatWy39aTI/hCjz1I+adU=
 cloud.google.com/go/kms v1.26.0/go.mod h1:pHKOdFJm63hxBsiPkYtowZPltu9dW0MWvBa6IA4HM58=
 cloud.google.com/go/language v1.14.6 h1:/0Fbd3/T4oNmpPqIq5/hrWdHc/eoYGtVH5lDNkuHH3k=
 cloud.google.com/go/language v1.14.6/go.mod h1:7y3J9OexQsfkWNGCxhT+7lb64pa60e12ZCoWDOHxJ1M=
@@ -173,6 +174,7 @@ cloud.google.com/go/logging v1.13.0/go.mod h1:36CoKh6KA/M0PbhPKMq6/qety2DCAErbhX
 cloud.google.com/go/logging v1.13.2/go.mod h1:zaybliM3yun1J8mU2dVQ1/qDzjbOqEijZCn6hSBtKak=
 cloud.google.com/go/longrunning v0.6.7/go.mod h1:EAFV3IZAKmM56TyiE6VAP3VoTzhZzySwI/YI1s/nRsY=
 cloud.google.com/go/longrunning v0.7.0/go.mod h1:ySn2yXmjbK9Ba0zsQqunhDkYi0+9rlXIwnoAf+h+TPY=
+cloud.google.com/go/longrunning v0.9.0 h1:0EzbDEGsAvOZNbqXopgniY0w0a1phvu5IdUFq8grmqY=
 cloud.google.com/go/longrunning v0.9.0/go.mod h1:pkTz846W7bF4o2SzdWJ40Hu0Re+UoNT6Q5t+igIcb8E=
 cloud.google.com/go/managedidentities v1.7.7 h1:vC/q7D+97PZfb0UNf7r/+/clHauuaf1PqWwP7neuaeg=
 cloud.google.com/go/managedidentities v1.7.7/go.mod h1:nwNlMxtBo2YJMvsKXRtAD1bL41qiCI9npS7cbqrsJUs=
@@ -1228,6 +1230,7 @@ github.com/moby/sys/reexec v0.1.0/go.mod h1:EqjBg8F3X7iZe5pU6nRZnYCMUTXoxsjiIfHu
 github.com/moby/term v0.5.0/go.mod h1:8FzsFHVUBGZdbDsJw/ot+X+d5HLUbvklYLJ9uGfcI3Y=
 github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8eaE=
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
+github.com/morikuni/aec v1.0.0 h1:nP9CBfwrvYnBRgY6qfDQkygYDmYwOilePFkwzv4dU8A=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
 github.com/morikuni/aec v1.1.0/go.mod h1:xDRgiq/iw5l+zkao76YTKzKttOp2cwPEne25HDkJnBw=
 github.com/mostynb/go-grpc-compression v1.2.3 h1:42/BKWMy0KEJGSdWvzqIyOZ95YcR9mLPqKctH7Uo//I=
@@ -1284,6 +1287,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.1
 github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.121.0/go.mod h1:/+tb7Hkt0i92WFkkfHurT7rXrZ98nxat5AeGmbBYFm4=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.121.0 h1:Q27uarV8CEGLKfG4OJQGFkOKZ49/SDEqTr6BbMOoKmA=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.121.0/go.mod h1:f9MPSdMvooe2s9Zg0WVBJOvg72d9fFikxFt7yniFros=
+github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.150.0 h1:bpwaePe1iDZUzvF/TBtGb/aFJBRyBAYbWSpCDlMV62Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.150.0/go.mod h1://jdJ6pGeThzJ9e/kLXBnp2gcqTuvjvu4df/HycUFGE=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.121.0 h1:I+F6xdXQsiXXdce7yjHN+y4LX5MrZI1kNmhBunJffdA=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.121.0/go.mod h1:cRh3l2emFBwW96dHnlPLr1psbEYjYJmn5qFujOkbfRo=
@@ -1298,6 +1302,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/internal/sharedcompone
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/sharedcomponent v0.124.1/go.mod h1:jRQpw8VJDmUmyH8ONQ5FmhYEXkaxzMFX6Tei8N4GDZs=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.121.0 h1:dnRf9xyjTBGHui949SS0A87fNa49Al32dog9XmeGY7I=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchpersignal v0.121.0/go.mod h1:ZAFQ1Te56fodNun+lmC/jFjVxhecumV882ct8sbdeAM=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.150.0 h1:Rn+s865vOKUOxiQ024mL8LR1Oyxvsx5qOnlRz81N41o=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.150.0/go.mod h1:MQOHiv39A973LwC49WEe7TaqMgFp2i/OEj1vUqKxoJ8=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.124.1 h1:QX88VjAiUaG7SQe4A14b3JPgvzZK6OXpWoBd32Zlp1o=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.124.1/go.mod h1:jRsmTRbn1HkrOpoeXS0KGfXobrh7E3W/p9fLwLdpcB8=
@@ -1317,6 +1322,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.121.0 h1
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.121.0/go.mod h1:PQjfR4WB9Q1MR9X/6IqxWGpKfavp9OF1fUcAqnPGGpQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/azure v0.124.1 h1:kPPjaOlncaJjoaJRUzW3TbqHM4v/+TtxC2Bzpa7z9X4=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/azure v0.124.1/go.mod h1:+6zqsZ1YGNsl7RUxfjzg7MKEWd5J6QAlq7zM3Nqy8UI=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0 h1:QyAlAfLh26KhfhHoS0p77qGtQ9o1lTTfqR84ir+q++Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0/go.mod h1:oH8MAPQVje+h6zawzcX9O5heDyXm3hhvTUl0SqTE6cs=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus v0.124.1 h1:IYxc8uPVCtKlgxjbYFGZ5/wXLdwAH1WQPKRlzaXtr8E=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus v0.124.1/go.mod h1:jFRiSEn2ss3e4CWG6GTDOJMYRI0C/N2XbMMIBzZuqZY=
@@ -2232,6 +2238,8 @@ k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
 k8s.io/klog/v2 v2.80.1/go.mod h1:y1WjHnz7Dj687irZUWR/WLkLc5N1YHtjLdmgWjndZn0=
 k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
 k8s.io/kms v0.35.1/go.mod h1:VT+4ekZAdrZDMgShK37vvlyHUVhwI9t/9tvh0AyCWmQ=
+k8s.io/kube-aggregator v0.35.0 h1:FBtbuRFA7Ohe2QKirFZcJf8rgimC8oSaNiCi4pdU5xw=
+k8s.io/kube-aggregator v0.35.0/go.mod h1:vKBRpQUfDryb7udwUwF3eCSvv3AJNgHtL4PGl6PqAg8=
 k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912/go.mod h1:kdmbQkyfwUagLfXIad1y2TdrjPFWp2Q89B3qkRwf/pQ=
 k8s.io/utils v0.0.0-20240711033017-18e509b52bc8/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 k8s.io/utils v0.0.0-20251002143259-bc988d571ff4/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
