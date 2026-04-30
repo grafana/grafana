@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAssistant } from '@grafana/assistant';
+
 import { useShortcuts } from './HelpModal';
 
 // Mock the assistant hook
