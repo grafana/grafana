@@ -16,24 +16,25 @@ export function SplashScreenNav({ activeIndex, total, onPrev, onNext, onGoTo }: 
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.nav}>
+    <nav className={styles.nav} aria-label={t('splash-screen.nav.label', 'Slide navigation')}>
       <Button
         icon="angle-left"
         variant="secondary"
         fill="outline"
         size="sm"
         onClick={onPrev}
-        aria-label={t('splash-screen.nav.prev', 'Previous')}
+        aria-label={t('splash-screen.nav.prev', 'Previous slide')}
         className={styles.navButton}
       />
-      <div className={styles.dots}>
+      <div className={styles.dots} role="tablist">
         {Array.from({ length: total }, (_, i) => (
           <button
             key={i}
+            role="tab"
             className={cx(styles.dotBase, i === activeIndex ? styles.dotActive : styles.dotInactive)}
             onClick={() => onGoTo(i)}
             aria-label={t('splash-screen.nav.go-to', 'Go to slide {{number}}', { number: i + 1 })}
-            aria-current={i === activeIndex ? 'step' : undefined}
+            aria-selected={i === activeIndex}
           />
         ))}
       </div>
@@ -43,13 +44,20 @@ export function SplashScreenNav({ activeIndex, total, onPrev, onNext, onGoTo }: 
         fill="outline"
         size="sm"
         onClick={onNext}
-        aria-label={t('splash-screen.nav.next', 'Next')}
+        aria-label={t('splash-screen.nav.next', 'Next slide')}
         className={styles.navButton}
       />
-      <Text color="secondary" variant="bodySmall">
+      <Text
+        color="secondary"
+        variant="bodySmall"
+        aria-label={t('splash-screen.nav.counter', 'Slide {{current}} of {{total}}', {
+          current: activeIndex + 1,
+          total,
+        })}
+      >
         {activeIndex + 1}/{total}
       </Text>
-    </div>
+    </nav>
   );
 }
 
