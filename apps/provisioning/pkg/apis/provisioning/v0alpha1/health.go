@@ -95,6 +95,11 @@ const (
 	// owner must shorten the offending path; provisioning cannot recover
 	// automatically and will not retry the failed write.
 	ReasonFolderDepthExceeded = "FolderDepthExceeded"
+	// ReasonFolderManagedByOther indicates a target folder is already managed
+	// by a different manager (another repository, a plugin, etc.). The user
+	// must resolve the conflict; provisioning cannot recover automatically
+	// and will not retry the failed write.
+	ReasonFolderManagedByOther = "FolderManagedByOther"
 )
 
 // Condition reasons for the Quota condition

@@ -468,3 +468,28 @@ func TestIsFolderDepthExceededAPIError(t *testing.T) {
 		require.False(t, IsFolderDepthExceededAPIError(apierrors.NewBadRequest("title cannot be empty")))
 	})
 }
+
+func TestFolderManagedByOtherError(t *testing.T) {
+	t.Run("Error includes folder ID and current manager", func(t *testing.T) {
+		err := NewFolderManagedByOtherError("grafanacloud-iouXpah4k", "dashboard-grafanacloud-usage")
+
+		require.Contains(t, err.Error(), "grafanacloud-iouXpah4k")
+		require.Contains(t, err.Error(), "dashboard-grafanacloud-usage")
+	})
+
+	t.Run("Unwrap exposes sentinel", func(t *testing.T) {
+		err := NewFolderManagedByOtherError("folder-id", "other-manager")
+
+		require.True(t, errors.Is(err, ErrFolderManagedByOther), "should match sentinel via errors.Is")
+	})
+
+	t.Run("errors.As extracts FolderManagedByOtherError through wrapping", func(t *testing.T) {
+		err := NewFolderManagedByOtherError("folder-id", "other-manager")
+		wrapped := fmt.Errorf("ensure folder exists: %w", err)
+
+		var ownErr *FolderManagedByOtherError
+		require.True(t, errors.As(wrapped, &ownErr))
+		require.Equal(t, "folder-id", ownErr.FolderID)
+		require.Equal(t, "other-manager", ownErr.CurrentManager)
+	})
+}

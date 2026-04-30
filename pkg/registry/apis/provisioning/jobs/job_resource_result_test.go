@@ -404,6 +404,29 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		assert.Nil(t, result.Error(), "depth-exceeded should be a warning even when wrapped through PathCreationError")
 		assert.NotNil(t, result.Warning())
 	})
+
+	t.Run("FolderManagedByOtherError classifies as ReasonFolderManagedByOther", func(t *testing.T) {
+		ownErr := resources.NewFolderManagedByOtherError("folder-id", "other-repo")
+		result := NewResourceResult().WithError(ownErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Nil(t, result.Error(), "cross-manager conflict should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "cross-manager conflict should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderManagedByOtherError classifies as ReasonFolderManagedByOther", func(t *testing.T) {
+		ownErr := resources.NewFolderManagedByOtherError("folder-id", "other-repo")
+		pathErr := &resources.PathCreationError{
+			Path: "somefolder/",
+			Err:  fmt.Errorf("ensure folder exists: %w", ownErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "somefolder/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Nil(t, result.Error())
+		assert.NotNil(t, result.Warning())
+	})
 }
 
 func TestIsNonFailingWarning(t *testing.T) {
