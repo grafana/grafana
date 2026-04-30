@@ -105,7 +105,11 @@ export type PageviewEchoEvent = EchoEvent<EchoEventType.Pageview, PageviewEchoEv
 export interface InteractionEchoEventPayload {
   interactionName: string;
   properties?: Record<string, any>;
-  /** When true, onInteraction subscribers fire but analytics backends are skipped. */
+  /**
+   * If true, the event is dispatched to {@link EchoSrv} subscribers but is
+   * not forwarded to analytics backends. Use for high-frequency UI signals
+   * that downstream subscribers care about but shouldn't pollute analytics.
+   */
   silent?: boolean;
 }
 

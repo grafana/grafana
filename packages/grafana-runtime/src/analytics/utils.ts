@@ -48,9 +48,9 @@ export const reportPageview = () => {
 /**
  * Helper function to report interaction events to the {@link EchoSrv}.
  *
- * @param options.silent - If true, the event fires onInteraction subscribers
- * but is not sent to analytics backends. Use for CUJ-internal signals that
- * don't need to be stored (e.g. command_palette_closed).
+ * @param options.silent - If true, the event is dispatched to EchoSrv subscribers
+ * but not forwarded to analytics backends. Use for high-frequency UI signals
+ * that downstream subscribers care about but shouldn't pollute the analytics stream.
  *
  * @public
  */
