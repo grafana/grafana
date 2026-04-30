@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Elimina tutte le regole"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Elimina",
       "delete-modal-delete-button": "Elimina",
@@ -1573,8 +1575,14 @@
         "update-error": "Impossibile aggiornare il gruppo di regole",
         "update-success": "Gruppo di regole aggiornato correttamente"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifica gruppo di regole",
       "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "In ordine alfabetico (A-Z)",
         "alphabetically-za": "In ordine alfabetico (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Elementi eliminati (prima il più recente)",
         "deleted-oldest": "Elementi eliminati (prima il meno recente)"
       }
@@ -13577,6 +13587,7 @@
       "contact-admin": "Contatta l'amministratore di Grafana per convertire questa risorsa in locale o per eliminare tutte le risorse dal repository mancante.",
       "convert-to-local-button": "Converti in risorsa locale",
       "delete-button": "Elimina",
+      "go-to-dashboards": "",
       "job-error": "Si è verificato un errore durante l'elaborazione delle risorse non gestite",
       "job-success": "Risorse non gestite elaborate correttamente",
       "job-warning": "Alcune risorse sono state elaborate con avvisi. Rivedi i risultati.",
@@ -13823,7 +13834,8 @@
       "make-sure": "Crea un token con queste autorizzazioni"
     },
     "validation": {
-      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova."
+      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Attenzione",
     "watch-stream": {
@@ -14285,6 +14297,10 @@
     "buttons": {
       "restore": "Ripristina"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
       "no-deleted-dashboards-text": "Quando elimini una dashboard, questa verrà conservata nella cronologia per un massimo di 12 mesi prima di essere eliminata definitivamente. Gli utenti con autorizzazioni di eliminazione possono ripristinare le dashboard che hanno eliminato e gli amministratori possono ripristinare le dashboard eliminate da qualsiasi utente.",
@@ -14446,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Sorgente dati",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo rimanente",
       "location-header": "Posizione",

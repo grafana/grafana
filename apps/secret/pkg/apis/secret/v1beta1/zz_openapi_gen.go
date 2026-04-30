@@ -117,6 +117,12 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 							Ref: ref(KeeperAWSAssumeRole{}.OpenAPIModelName()),
 						},
 					},
+					"kmsKeyId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"region"},
 			},

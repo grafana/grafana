@@ -86,6 +86,18 @@ func (s *uploadTestStore) CleanupIncompleteUploads(context.Context, resource.Nam
 	panic("CleanupIncompleteUploads not implemented for uploadTestStore")
 }
 
+func (s *uploadTestStore) ListNamespaces(context.Context) ([]string, error) {
+	panic("ListNamespaces not implemented for uploadTestStore")
+}
+
+func (s *uploadTestStore) ListNamespaceIndexes(context.Context, string) ([]resource.NamespacedResource, error) {
+	panic("ListNamespaceIndexes not implemented for uploadTestStore")
+}
+
+func (s *uploadTestStore) LockNamespaceForCleanup(context.Context, string) (IndexStoreLock, error) {
+	panic("LockNamespaceForCleanup not implemented for uploadTestStore")
+}
+
 func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedResource, rv int64) *bleveIndex {
 	t.Helper()
 	resourceDir := be.getResourceDir(key)

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/dashboard_public/ # /docs/grafana/next/http_api/dashboard_public/
-  - ../../../developers/http_api/dashboard_public/ # /docs/grafana/next/developers/http_api/dashboard_public/
+  - ../../../../http_api/dashboard_public/ # /docs/grafana/next/http_api/dashboard_public/
+  - ../../../../developers/http_api/dashboard_public/ # /docs/grafana/next/developers/http_api/dashboard_public/
   - ../../../../developer-resources/api-reference/http-api/dashboard_public/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard_public/
 description: Grafana Shared Dashboards HTTP API

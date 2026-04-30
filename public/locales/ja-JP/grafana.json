@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "YAMLを編集",
         "save": "保存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "すべてのルールを削除"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "削除",
       "delete-modal-delete-button": "削除",
@@ -1568,8 +1570,14 @@
         "update-error": "ルールグループの更新に失敗しました",
         "update-success": "ルールグループが正常に更新されました"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "選択したグループは編集できません",
       "group-not-editable-description": "このグループは、編集をサポートしていないデータソースに属しています。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "ルールグループを編集",
       "rule-group-error": "ルールグループの読み込み中にエラーが発生しました"
     },
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "アルファベット順（A-Z）",
         "alphabetically-za": "アルファベット順（Z-A）",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "削除済み（新しい順）",
         "deleted-oldest": "削除済み（古い順）"
       }
@@ -13502,6 +13512,7 @@
       "contact-admin": "このリソースをローカルリソースに変換するか、存在しないリポジトリからすべてのリソースを削除するには、Grafana管理者にお問い合わせください。",
       "convert-to-local-button": "ローカルに変換",
       "delete-button": "削除",
+      "go-to-dashboards": "",
       "job-error": "孤立したリソースの処理中にエラーが発生しました",
       "job-success": "孤立したリソースが正常に処理されました",
       "job-warning": "一部のリソースが警告付きで処理されました。結果を確認してください。",
@@ -13740,7 +13751,8 @@
       "make-sure": "これらの権限を持つトークンを作成する"
     },
     "validation": {
-      "hidden-characters": "このフィールドには、コピー＆ペーストによって挿入された可能性のある非表示の文字が含まれています。値を再入力するか、削除してから再試行してください。"
+      "hidden-characters": "このフィールドには、コピー＆ペーストによって挿入された可能性のある非表示の文字が含まれています。値を再入力するか、削除してから再試行してください。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14196,6 +14208,10 @@
     "buttons": {
       "restore": "復元"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "最近ダッシュボードを削除していません。",
       "no-deleted-dashboards-text": "ダッシュボードを削除すると、最大12か月間履歴に保存され、その後完全に削除されます。削除権限を持つユーザーは、削除したダッシュボードを復元できます。また、管理者は、どのユーザーが削除したダッシュボードでも復元できます。",
@@ -14355,6 +14371,10 @@
     },
     "results-table": {
       "datasource-header": "データソース",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "1分以下",
       "deleted-remaining-header": "残り時間",
       "location-header": "場所",
