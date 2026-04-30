@@ -233,7 +233,7 @@ LIMIT
                 value={query.expression || initialQuery}
                 onChange={onEditorChange}
                 completionProvider={completionProvider}
-                completionMode="merge"
+                completionMode="override"
                 formatter={formatSQL}
                 height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
                 ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
