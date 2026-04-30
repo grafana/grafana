@@ -3,10 +3,10 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Box, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useFolderReadme } from '../../hooks/useFolderReadme';
+import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 
@@ -25,14 +25,13 @@ interface Props {
  */
 export function FolderReadmePanel({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, isRepoLoading, isFileLoading, isError, fileData } =
-    useFolderReadme(folderUID);
+  const { repository, folder, readmePath, status, fileData, refetch } = useFolderReadme(folderUID);
 
   if (!config.featureToggles.provisioningReadmes) {
     return null;
   }
 
-  if (!repository || isRepoLoading) {
+  if (!repository || status === 'loading') {
     return null;
   }
 
@@ -54,8 +53,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
     template: buildReadmeTemplate(folderTitle),
   });
 
-  const hasReadme = !isError && !!fileData;
-  const markdownContent = hasReadme ? extractMarkdownContent(fileData?.resource?.file) : undefined;
+  const markdownContent = status === 'ok' ? extractMarkdownContent(fileData?.resource?.file) : undefined;
 
   return (
     <section id={FOLDER_README_ANCHOR_ID} className={styles.panel} aria-labelledby={`${FOLDER_README_ANCHOR_ID}-title`}>
@@ -69,7 +67,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
             </span>
           </Text>
         </Stack>
-        {hasReadme && editUrl && (
+        {status === 'ok' && editUrl && (
           <LinkButton
             href={editUrl}
             target="_blank"
@@ -89,26 +87,53 @@ export function FolderReadmePanel({ folderUID }: Props) {
         )}
       </header>
       <div className={styles.body}>
-        {isFileLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" paddingY={4}>
-            <Spinner size="lg" />
-          </Box>
-        ) : hasReadme && markdownContent ? (
-          <RenderedMarkdown
-            markdown={markdownContent}
-            repository={repository}
-            baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
-          />
-        ) : hasReadme ? (
-          <Text color="secondary">
-            <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
-          </Text>
-        ) : (
-          <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />
-        )}
+        <ReadmeBody
+          status={status}
+          markdownContent={markdownContent}
+          repository={repository}
+          readmePath={readmePath}
+          newFileUrl={newFileUrl}
+          refetch={refetch}
+        />
       </div>
     </section>
   );
+}
+
+interface ReadmeBodyProps {
+  status: FolderReadmeStatus;
+  markdownContent: string | undefined;
+  repository: RepositoryView;
+  readmePath: string;
+  newFileUrl: string | undefined;
+  refetch: () => void;
+}
+
+function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUrl, refetch }: ReadmeBodyProps) {
+  switch (status) {
+    case 'loading':
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" paddingY={4}>
+          <Spinner size="lg" />
+        </Box>
+      );
+    case 'ok':
+      return markdownContent ? (
+        <RenderedMarkdown
+          markdown={markdownContent}
+          repository={repository}
+          baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
+        />
+      ) : (
+        <Text color="secondary">
+          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
+        </Text>
+      );
+    case 'missing':
+      return <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />;
+    case 'error':
+      return <ReadmeLoadError onRetry={refetch} />;
+  }
 }
 
 function RenderedMarkdown({
@@ -161,6 +186,16 @@ function AddReadmeEmptyState({ newFileUrl, repositoryType }: { newFileUrl?: stri
         </LinkButton>
       )}
     </Stack>
+  );
+}
+
+function ReadmeLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load README")}>
+      <Button variant="secondary" size="sm" onClick={onRetry}>
+        <Trans i18nKey="browse-dashboards.readme.load-error-retry">Try again</Trans>
+      </Button>
+    </Alert>
   );
 }
 

@@ -1,27 +1,31 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
-interface UseFolderReadmeResult {
+export type FolderReadmeStatus = 'loading' | 'missing' | 'error' | 'ok';
+
+export interface UseFolderReadmeResult {
   repository?: RepositoryView;
   folder?: Folder;
   /** Path of the README relative to the repository's configured root. */
   readmePath: string;
-  isRepoLoading: boolean;
-  isFileLoading: boolean;
-  isError: boolean;
+  status: FolderReadmeStatus;
   fileData: ReturnType<typeof useGetRepositoryFilesWithPathQuery>['data'];
+  refetch: () => void;
 }
 
 /**
  * Resolves a folder's README.md path (using the source-path annotation when
  * present) and fetches it through the provisioning files API. Skips the fetch
  * when the `provisioningReadmes` toggle is off.
+ *
+ * Returns a tagged `status` instead of raw boolean flags so callers can
+ * exhaustively switch on the four states without reconstructing the machine.
  */
 export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
@@ -34,7 +38,8 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
   const {
     data: fileData,
     isLoading: isFileLoading,
-    isError,
+    error,
+    refetch,
   } = useGetRepositoryFilesWithPathQuery(
     shouldFetch
       ? {
@@ -44,13 +49,27 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
       : skipToken
   );
 
+  let status: FolderReadmeStatus;
+  if (isRepoLoading || isFileLoading) {
+    status = 'loading';
+  } else if (error && isFetchError(error) && error.status === 404) {
+    status = 'missing';
+  } else if (error) {
+    status = 'error';
+  } else if (fileData) {
+    status = 'ok';
+  } else {
+    // No error, no data, not loading — shouldn't happen in practice but
+    // treat as loading (the query hasn't started, e.g. skipToken is active).
+    status = 'loading';
+  }
+
   return {
     repository,
     folder,
     readmePath,
-    isRepoLoading: !!isRepoLoading,
-    isFileLoading,
-    isError,
+    status,
     fileData,
+    refetch,
   };
 }

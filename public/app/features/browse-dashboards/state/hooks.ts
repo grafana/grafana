@@ -102,6 +102,21 @@ export function useChildrenByParentUIDState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
 }
 
+/**
+ * Returns the number of direct children of the given folder (or root when
+ * `folderUID` is undefined) that the browse-dashboards slice has loaded so far.
+ *
+ * Returns 0 before the first page is loaded.
+ */
+export function useBrowseFolderItemCount(folderUID: string | undefined): number {
+  return useSelector((state: StoreState) => {
+    const collection = folderUID
+      ? state.browseDashboards.childrenByParentUID[folderUID]
+      : state.browseDashboards.rootItems;
+    return collection?.items.length ?? 0;
+  });
+}
+
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }

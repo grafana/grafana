@@ -4,7 +4,8 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { useFolderReadme } from '../../hooks/useFolderReadme';
+import { useBrowseFolderItemCount } from '../../../browse-dashboards/state/hooks';
+import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
 
 import { FOLDER_README_HINT_MIN_ITEMS, FolderReadmeHint } from './FolderReadmeHint';
 
@@ -25,8 +26,13 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('../../hooks/useFolderReadme');
+jest.mock('../../../browse-dashboards/state/hooks', () => ({
+  ...jest.requireActual('../../../browse-dashboards/state/hooks'),
+  useBrowseFolderItemCount: jest.fn(),
+}));
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
+const mockUseBrowseFolderItemCount = useBrowseFolderItemCount as jest.MockedFunction<typeof useBrowseFolderItemCount>;
 const mockReportInteraction = reportInteraction as jest.MockedFunction<typeof reportInteraction>;
 
 const mockRepository = {
@@ -39,17 +45,21 @@ const mockRepository = {
   workflows: [],
 };
 
-function setReadmeResult(overrides: Partial<ReturnType<typeof useFolderReadme>> = {}) {
+function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
   mockUseFolderReadme.mockReturnValue({
     repository: mockRepository,
     folder: undefined,
     readmePath: 'README.md',
-    isRepoLoading: false,
-    isFileLoading: false,
-    isError: false,
+    status: 'ok',
     fileData: { resource: { file: { content: '# hello' } } } as never,
+    refetch: jest.fn(),
     ...overrides,
   });
+  mockUseBrowseFolderItemCount.mockReturnValue(FOLDER_README_HINT_MIN_ITEMS);
+}
+
+function setItemCount(n: number) {
+  mockUseBrowseFolderItemCount.mockReturnValue(n);
 }
 
 describe('FolderReadmeHint', () => {
@@ -61,7 +71,7 @@ describe('FolderReadmeHint', () => {
   it('renders an inline link that scrolls to the README panel anchor when the list is long', () => {
     setReadmeResult();
 
-    renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={FOLDER_README_HINT_MIN_ITEMS} />);
+    renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
 
     expect(screen.getByText(/Lots of dashboards/i)).toBeInTheDocument();
 
@@ -72,7 +82,7 @@ describe('FolderReadmeHint', () => {
   it('reports an interaction when the link is clicked', () => {
     setReadmeResult();
 
-    renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={FOLDER_README_HINT_MIN_ITEMS} />);
+    renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     fireEvent.click(screen.getByRole('link', { name: /See the README/i }));
 
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_provisioning_readme_hint_clicked', {
@@ -91,7 +101,7 @@ describe('FolderReadmeHint', () => {
     document.body.appendChild(anchor);
 
     try {
-      renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={FOLDER_README_HINT_MIN_ITEMS} />);
+      renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
       fireEvent.click(screen.getByRole('link', { name: /See the README/i }));
 
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
@@ -102,10 +112,23 @@ describe('FolderReadmeHint', () => {
 
   it('renders nothing when the dashboards list is below the threshold', () => {
     setReadmeResult();
+    setItemCount(FOLDER_README_HINT_MIN_ITEMS - 1);
 
-    const { container } = renderWithRouter(
-      <FolderReadmeHint folderUID="test-folder" itemCount={FOLDER_README_HINT_MIN_ITEMS - 1} />
-    );
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing when isProvisionedFolder is false', () => {
+    setReadmeResult();
+
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={false} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing when folderUID is undefined', () => {
+    setReadmeResult();
+
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID={undefined} isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -113,35 +136,35 @@ describe('FolderReadmeHint', () => {
     config.featureToggles = { provisioningReadmes: false };
     setReadmeResult();
 
-    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={50} />);
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing while still loading', () => {
-    setReadmeResult({ isFileLoading: true });
+    setReadmeResult({ status: 'loading' });
 
-    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={50} />);
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when the README fetch fails', () => {
-    setReadmeResult({ isError: true, fileData: undefined });
+    setReadmeResult({ status: 'error', fileData: undefined });
 
-    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={50} />);
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when no README is found', () => {
-    setReadmeResult({ fileData: undefined });
+    setReadmeResult({ status: 'missing', fileData: undefined });
 
-    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={50} />);
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing when the folder is not provisioned', () => {
-    setReadmeResult({ repository: undefined });
+  it('renders nothing when the folder is not provisioned (repository undefined)', () => {
+    setReadmeResult({ repository: undefined, status: 'loading' });
 
-    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" itemCount={50} />);
+    const { container } = renderWithRouter(<FolderReadmeHint folderUID="test-folder" isProvisionedFolder={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

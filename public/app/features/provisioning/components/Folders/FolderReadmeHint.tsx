@@ -4,6 +4,7 @@ import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, Stack, Text, TextLink } from '@grafana/ui';
 
+import { useBrowseFolderItemCount } from '../../../browse-dashboards/state/hooks';
 import { useFolderReadme } from '../../hooks/useFolderReadme';
 
 import { FOLDER_README_ANCHOR_ID } from './FolderReadmePanel';
@@ -13,27 +14,34 @@ import { FOLDER_README_ANCHOR_ID } from './FolderReadmePanel';
 export const FOLDER_README_HINT_MIN_ITEMS = 18;
 
 interface Props {
-  folderUID: string;
-  /** Number of items currently visible in the dashboards list. */
-  itemCount: number;
+  folderUID: string | undefined;
+  isProvisionedFolder: boolean;
 }
 
 /**
  * Compact one-line hint above the dashboards list that scrolls down to the
  * inline README panel via a same-page anchor. Shown only when
  *   - the provisioningReadmes feature is on,
+ *   - the folder is provisioned,
  *   - a README has loaded successfully for the folder, and
  *   - the dashboards list is long enough (>= FOLDER_README_HINT_MIN_ITEMS)
  *     that the README would otherwise be off-screen at the bottom.
+ *
+ * Self-gates on all conditions so the caller doesn't need conditional rendering.
  */
-export function FolderReadmeHint({ folderUID, itemCount }: Props) {
-  const { repository, isRepoLoading, isFileLoading, isError, fileData } = useFolderReadme(folderUID);
-
-  if (!config.featureToggles.provisioningReadmes) {
+export function FolderReadmeHint({ folderUID, isProvisionedFolder }: Props) {
+  if (!config.featureToggles.provisioningReadmes || !isProvisionedFolder || !folderUID) {
     return null;
   }
 
-  if (!repository || isRepoLoading || isFileLoading || isError || !fileData) {
+  return <FolderReadmeHintInner folderUID={folderUID} />;
+}
+
+function FolderReadmeHintInner({ folderUID }: { folderUID: string }) {
+  const { repository, status } = useFolderReadme(folderUID);
+  const itemCount = useBrowseFolderItemCount(folderUID);
+
+  if (status !== 'ok') {
     return null;
   }
 
@@ -51,7 +59,7 @@ export function FolderReadmeHint({ folderUID, itemCount }: Props) {
       block: 'start',
     });
     reportInteraction('grafana_provisioning_readme_hint_clicked', {
-      repositoryType: repository.type,
+      repositoryType: repository?.type,
     });
   };
 

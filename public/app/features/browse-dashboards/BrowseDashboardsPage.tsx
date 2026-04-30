@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { type CSSProperties, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
@@ -17,7 +17,7 @@ import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { FolderReadmeHint } from '../provisioning/components/Folders/FolderReadmeHint';
-import { FolderReadmePanel } from '../provisioning/components/Folders/FolderReadmePanel';
+import { InlineFolderReadmeLayout } from '../provisioning/components/Folders/InlineFolderReadmeLayout';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
@@ -33,13 +33,8 @@ import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { useFlatTreeState, useHasSelection } from './state/hooks';
+import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
-
-// Match the constants in DashboardsTree so the list takes its natural height.
-const DASHBOARDS_TREE_ROW_HEIGHT = 36;
-const DASHBOARDS_TREE_HEADER_HEIGHT = 36;
-const DASHBOARDS_TREE_FALLBACK_HEIGHT = 480;
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
@@ -124,20 +119,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [folderDTO]);
 
   const hasSelection = useHasSelection();
-  const flatTree = useFlatTreeState(folderUID);
-
-  // Match GitHub's per-directory README pattern: let the dashboards list take
-  // its natural height so the README panel below sits right after the last
-  // row instead of below a stretch of empty AutoSizer space. We still cap at
-  // ~70% of the viewport so very long folders stay scrollable.
-  const naturalListHeight =
-    !isSearching && flatTree.length > 0
-      ? DASHBOARDS_TREE_HEADER_HEIGHT + flatTree.length * DASHBOARDS_TREE_ROW_HEIGHT
-      : DASHBOARDS_TREE_FALLBACK_HEIGHT;
-  const subViewStyle: CSSProperties = {
-    height: `min(${naturalListHeight}px, 70vh)`,
-    minHeight: 'unset',
-  };
 
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
@@ -207,9 +188,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && (
-          <FolderReadmeHint folderUID={folderUID} itemCount={flatTree.length} />
-        )}
+        <FolderReadmeHint folderUID={folderUID} isProvisionedFolder={isProvisionedFolder} />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
@@ -223,7 +202,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
-        <div className={styles.subView} style={subViewStyle}>
+        <InlineFolderReadmeLayout
+          folderUID={folderUID}
+          isProvisionedFolder={isProvisionedFolder}
+          className={styles.subView}
+        >
           <AutoSizer>
             {({ width, height }: Size) =>
               isSearching ? (
@@ -245,10 +228,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               )
             }
           </AutoSizer>
-        </div>
-        {config.featureToggles.provisioningReadmes && isProvisionedFolder && folderUID && (
-          <FolderReadmePanel folderUID={folderUID} />
-        )}
+        </InlineFolderReadmeLayout>
         {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
       {showRenameDrawer && folderDTO && (

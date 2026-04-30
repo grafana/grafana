@@ -4466,6 +4466,8 @@
       "edit-tooltip": "Edit README",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "hint": "Lots of dashboards or new to this folder? <2>See the README</2>",
+      "load-error-retry": "Try again",
+      "load-error-title": "Couldn't load README",
       "parse-error": "Unable to display README content."
     },
     "recently-viewed": {
