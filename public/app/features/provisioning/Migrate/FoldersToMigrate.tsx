@@ -65,7 +65,10 @@ export function FoldersToMigrate({
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const unmanagedFolders = useMemo(() => folders.filter((f) => !f.managedBy), [folders]);
+  const unmanagedFolders = useMemo(
+    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0),
+    [folders]
+  );
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) {
@@ -186,7 +189,6 @@ function FolderEntry({
   onToggleDashboard,
 }: FolderEntryProps) {
   const styles = useStyles2(getStyles);
-  const hasContent = folder.directDashboards.length > 0 || folder.subfolders.length > 0;
   return (
     <div className={cx(styles.row, isSelected && styles.rowSelected)}>
       <div className={styles.rowHeader}>
@@ -198,7 +200,6 @@ function FolderEntry({
               : t('provisioning.stats.dashboards-expand', 'Expand {{folder}}', { folder: folder.title })
           }
           onClick={onToggleExpanded}
-          disabled={!hasContent}
         />
         <Checkbox
           value={isSelected}
@@ -230,61 +231,39 @@ function FolderEntry({
       </div>
       {isExpanded && (
         <div className={styles.children}>
-          {folder.subfolders.map((sub) => (
-            <div key={`sub-${sub.uid}`} className={styles.childRow}>
-              <Icon name="folder" size="sm" />
-              <Text variant="bodySmall">{sub.title}</Text>
-              <Text variant="bodySmall" color="secondary">
-                {t('provisioning.stats.dashboards-subfolder-count', '· {{count}} dashboards', {
-                  count: sub.dashboardCount,
-                })}
-              </Text>
-              <div className={styles.spacer} />
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="external-link-alt"
-                href={folderUrl(sub.uid)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
-              </LinkButton>
-            </div>
-          ))}
-          {folder.directDashboards.map((dash) => {
-            const checked = selectedDashboardUids.has(dash.uid);
-            return (
-              <div key={`dash-${dash.uid}`} className={styles.childRow}>
-                <Checkbox
-                  value={checked}
-                  onChange={() => onToggleDashboard(dash.uid)}
-                  aria-label={dash.title}
-                />
-                <Icon name="apps" size="sm" />
-                <Text variant="bodySmall">{dash.title}</Text>
-                <div className={styles.spacer} />
-                <LinkButton
-                  variant="secondary"
-                  size="sm"
-                  fill="text"
-                  icon="external-link-alt"
-                  href={dashboardUrl(dash)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
-                </LinkButton>
-              </div>
-            );
-          })}
-          {!hasContent && (
+          {folder.directDashboards.length === 0 ? (
             <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="provisioning.stats.dashboards-folder-empty">
-                This folder is empty. Migrating it creates an empty folder in your repository.
+              <Trans i18nKey="provisioning.stats.dashboards-folder-only-subfolders">
+                Dashboards in this folder live in subfolders. Migrate the folder to bring them all in one go.
               </Trans>
             </Text>
+          ) : (
+            folder.directDashboards.map((dash) => {
+              const checked = selectedDashboardUids.has(dash.uid);
+              return (
+                <div key={`dash-${dash.uid}`} className={styles.childRow}>
+                  <Checkbox
+                    value={checked}
+                    onChange={() => onToggleDashboard(dash.uid)}
+                    aria-label={dash.title}
+                  />
+                  <Icon name="apps" size="sm" />
+                  <Text variant="bodySmall">{dash.title}</Text>
+                  <div className={styles.spacer} />
+                  <LinkButton
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    icon="external-link-alt"
+                    href={dashboardUrl(dash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
+                  </LinkButton>
+                </div>
+              );
+            })
           )}
         </div>
       )}

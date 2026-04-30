@@ -301,7 +301,7 @@ describe('Migrate', () => {
     expect(screen.queryByRole('link', { name: /^migrate to my-repo$/i })).not.toBeInTheDocument();
   });
 
-  it('expands a folder row to show its dashboards and subfolders', async () => {
+  it('expands a folder row to show its direct dashboards', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
@@ -329,7 +329,9 @@ describe('Migrate', () => {
     await userEvent.click(screen.getByRole('button', { name: /^expand payments$/i }));
     expect(screen.getByText('Daily revenue')).toBeInTheDocument();
     expect(screen.getByText('Refund rate')).toBeInTheDocument();
-    expect(screen.getByText('EU subteam')).toBeInTheDocument();
+    // Subfolders are deliberately not surfaced inside the expansion — they
+    // already appear as their own rows in the panel.
+    expect(screen.queryByText('EU subteam')).not.toBeInTheDocument();
   });
 
   it('hides already-managed folders from the Dashboards to migrate panel', () => {
