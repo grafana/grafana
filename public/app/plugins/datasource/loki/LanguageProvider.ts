@@ -247,7 +247,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params = { 'match[]': match, start, end };
-    return await this.request(url, params);
+    const data = await this.request(url, params);
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data;
   };
 
   // Cache key is a bit different here. We round up to a minute the intervals.
