@@ -23,7 +23,7 @@ var _ authn.ContextAwareClient = new(Session)
 func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
 	authInfoService login.AuthInfoService, tracer trace.Tracer) *Session {
 	return &Session{
-		cfg:             cfg,
+		cfgResolver:     &auth.StaticSessionConfigResolver{Cfg: cfg},
 		log:             log.New(authn.ClientSession),
 		sessionService:  sessionService,
 		authInfoService: authInfoService,
@@ -32,7 +32,7 @@ func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
 }
 
 type Session struct {
-	cfg             *setting.Cfg
+	cfgResolver     auth.SessionConfigResolver
 	log             log.Logger
 	sessionService  auth.UserTokenService
 	authInfoService login.AuthInfoService
@@ -44,7 +44,8 @@ func (s *Session) Name() string {
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	unescapedCookie, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName)
+	cfg := s.cfgResolver.Resolve(ctx)
+	unescapedCookie, err := r.HTTPRequest.Cookie(cfg.LoginCookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
+	if token.NeedsRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute) {
 		return nil, authn.NewTokenNeedsRotationError(token.UserId)
 	}
 
@@ -91,11 +92,12 @@ func (s *Session) IsEnabled() bool {
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
-	if s.cfg.LoginCookieName == "" {
+	cfg := s.cfgResolver.Resolve(ctx)
+	if cfg.LoginCookieName == "" {
 		return false
 	}
 
-	if _, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName); err != nil {
+	if _, err := r.HTTPRequest.Cookie(cfg.LoginCookieName); err != nil {
 		return false
 	}
 
