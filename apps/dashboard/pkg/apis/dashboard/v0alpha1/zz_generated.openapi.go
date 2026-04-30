@@ -1312,8 +1312,16 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSharingOptions(ref common.Refere
 							Format: "",
 						},
 					},
+					"snapshotTTLDays": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Default TTL for new snapshots in days. 0 means never expire.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
 				},
-				Required: []string{"snapshotEnabled"},
+				Required: []string{"snapshotEnabled", "snapshotTTLDays"},
 			},
 		},
 	}

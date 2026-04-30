@@ -859,6 +859,10 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
+#### `snapshot_ttl_days`
+
+Default expiration time for new snapshots in days. Set to `0` to default to never expire. Default is `7` (one week). This can be overridden by users when creating a snapshot. Environment variable: `GF_SNAPSHOTS_SNAPSHOT_TTL_DAYS`.
+
 <hr />
 
 ### `[dashboards]`

@@ -55,6 +55,7 @@ func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 		"externalSnapshotURL":  hs.Cfg.ExternalSnapshotUrl,
 		"externalSnapshotName": hs.Cfg.ExternalSnapshotName,
 		"externalEnabled":      hs.Cfg.ExternalEnabled,
+		"snapshotTTLDays":      hs.Cfg.SnapshotTTLDays,
 	})
 }
 

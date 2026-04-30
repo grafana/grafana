@@ -54,7 +54,14 @@ export const getExpireOptions = () => {
   ];
 };
 
-const getDefaultExpireOption = () => {
+const getDefaultExpireOption = (snapshotTTLDays?: number) => {
+  if (snapshotTTLDays !== undefined) {
+    const seconds = snapshotTTLDays * 60 * 60 * 24;
+    const match = getExpireOptions().find((o) => o.value === seconds);
+    if (match) {
+      return match;
+    }
+  }
   return getExpireOptions()[2];
 };
 
@@ -97,6 +104,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
         if (this.isActive) {
           this.setState({
             snapshotSharingOptions: shareOptions,
+            selectedExpireOption: getDefaultExpireOption(shareOptions.snapshotTTLDays),
           });
         }
       });
