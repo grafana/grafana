@@ -207,6 +207,7 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
         groupIdentifier={groupIdentifier}
         namespaceName={namespaceName}
         showLocation={false}
+        groupIntervalSeconds={group.interval}
       />
     );
   }

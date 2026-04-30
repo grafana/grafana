@@ -30,6 +30,7 @@ import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink, makeDataSourceLink } from '../../utils/misc';
 import { type RulePluginOrigin } from '../../utils/rules';
 
+import { GroupIntervalIndicator } from './GroupIntervalMetadata';
 import { ListItem } from './ListItem';
 import { RuleLocation } from './RuleLocation';
 import { calculateNextEvaluationEstimate, normalizeHealth, normalizeState } from './util';
@@ -60,6 +61,11 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
+  // Surfaces the rule's group evaluation interval inline on the row — used for ungrouped rules
+  // where the group header (which normally displays it) is not rendered.
+  // Note: this is the raw interval in seconds, distinct from `evaluationInterval` above which is
+  // a Prometheus duration string consumed by `EvaluationMetadata`.
+  groupIntervalSeconds?: number;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -87,6 +93,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
+    groupIntervalSeconds,
   } = props;
 
   const listItemAriaId = useId();
@@ -115,6 +122,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
+    }
+
+    if (groupIntervalSeconds !== undefined) {
+      metadata.push(<GroupIntervalIndicator seconds={groupIntervalSeconds} />);
     }
 
     if (instancesCount) {
@@ -201,6 +212,7 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
+  groupIntervalSeconds,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -219,6 +231,12 @@ export function RecordingRuleListItem({
 
   if (querySourceUIDs.length > 0) {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
+  }
+
+  if (!isPaused) {
+    if (groupIntervalSeconds !== undefined) {
+      metadata.push(<GroupIntervalIndicator seconds={groupIntervalSeconds} />);
+    }
   }
 
   const ruleHealth = normalizeHealth(health);

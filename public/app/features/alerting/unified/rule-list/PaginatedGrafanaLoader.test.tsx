@@ -13,6 +13,7 @@ import {
 import { mockFolderApi, setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockFolder, mockGrafanaPromAlertingRule } from '../mocks';
 import { NO_GROUP_PREFIX } from '../utils/rules';
+import { formatPrometheusDuration } from '../utils/time';
 
 import { GrafanaRuleGroupListItem } from './PaginatedGrafanaLoader';
 
@@ -68,6 +69,8 @@ describe('GrafanaRuleGroupListItem', () => {
     expect(screen.queryByText(/Ungrouped/)).not.toBeInTheDocument();
     // No ListGroup wrapper => no aria-expanded toggle on the treeitem.
     expect(treeItem).not.toHaveAttribute('aria-expanded');
+    // Group interval surfaced inline since the group header isn't rendered for ungrouped rules.
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
   });
 
   it('should render an ungrouped recording rule directly', async () => {
@@ -93,6 +96,26 @@ describe('GrafanaRuleGroupListItem', () => {
     const treeItem = await ui.treeItem.find();
     expect(within(treeItem).getByRole('link', { name: 'My Recording Rule' })).toBeInTheDocument();
     expect(treeItem).not.toHaveAttribute('aria-expanded');
+    expect(within(treeItem).getByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))).toBeInTheDocument();
+  });
+
+  it('should not render the group interval inline for a paused ungrouped rule', async () => {
+    const pausedRule = mockGrafanaPromAlertingRule({ name: 'Paused Alert Rule', isPaused: true });
+    const ungroupedGroup: GrafanaPromRuleGroupDTO = {
+      name: `${NO_GROUP_PREFIX}paused-rule-uid`,
+      file: 'TestFolder',
+      folderUid: 'folder-123',
+      interval: 60,
+      rules: [pausedRule],
+    };
+
+    render(<GrafanaRuleGroupListItem group={ungroupedGroup} namespaceName="TestFolder" />);
+
+    const treeItem = await ui.treeItem.find();
+    expect(within(treeItem).getByRole('link', { name: 'Paused Alert Rule' })).toBeInTheDocument();
+    expect(
+      within(treeItem).queryByText(formatPrometheusDuration(ungroupedGroup.interval * 1000))
+    ).not.toBeInTheDocument();
   });
 
   it('should display normal group name for grouped rules', async () => {
