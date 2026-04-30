@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -120,7 +121,9 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		if cont := queryParams.Get("continue"); cont != "" {
 			token, err := resource.GetContinueToken(cont)
 			if err != nil {
-				http.Error(w, "invalid continue token", http.StatusBadRequest)
+				span.SetStatus(codes.Error, "invalid continue token")
+				span.RecordError(err)
+				http.Error(w, fmt.Sprintf("invalid continue token: %v", err), http.StatusBadRequest)
 				return
 			}
 			searchAfter = token.SearchAfter
@@ -128,7 +131,10 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		span.SetAttributes(attribute.Int("limit", limit),
 			attribute.String("name", name),
-			attribute.Bool("continue", len(searchAfter) > 0))
+			// Record the cursor itself (the "last team UID seen" on the
+			// previous page) so a stuck pagination walk is debuggable from
+			// traces. Empty slice when this is the first page.
+			attribute.StringSlice("search_after", searchAfter))
 
 		teamGR := iamv0alpha1.TeamResourceInfo.GroupResource()
 		searchRequest := &resourcepb.ResourceSearchRequest{
@@ -189,7 +195,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 					responder.Error(apierrors.NewInternalError(err))
 					return
 				}
-				response.ListMeta.Continue = token
+				response.Continue = token
 			}
 		}
 		responder.Object(http.StatusOK, response)

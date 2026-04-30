@@ -159,9 +159,9 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
 		require.True(t, ok)
-		require.NotEmpty(t, result.ListMeta.Continue, "continue token should be set when page is full")
+		require.NotEmpty(t, result.Continue, "continue token should be set when page is full")
 
-		decoded, err := resource.GetContinueToken(result.ListMeta.Continue)
+		decoded, err := resource.GetContinueToken(result.Continue)
 		require.NoError(t, err)
 		require.Equal(t, []string{"team-b"}, decoded.SearchAfter)
 	})
@@ -198,7 +198,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
 		require.True(t, ok)
-		require.Empty(t, result.ListMeta.Continue, "continue token should be empty when page is not full")
+		require.Empty(t, result.Continue, "continue token should be empty when page is not full")
 	})
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {

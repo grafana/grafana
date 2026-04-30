@@ -97,11 +97,16 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 
 	// Walk the legacy id-keyed cursor to gather every team this user is in,
 	// then re-sort by UID so the keyset cursor we expose externally is
-	// consistent with the unified-search path. Per-user membership counts are
-	// bounded (capped by MaxListLimit at the API layer), so the in-memory
-	// resort is cheap.
-	// TODO: Consider improving this if there is any performance issues with
-	// this endpoint.
+	// consistent with the unified-search path.
+	//
+	// Cost: O(N) per page request, where N is the user's actual membership
+	// count — *not* the requested page size. MaxListLimit only caps req.Limit;
+	// it does not bound how many teams a user can belong to. For typical users
+	// N is small, but power users (admins, service accounts) can have many
+	// memberships and pay the full walk on every page.
+	// TODO: switch to a UID-ordered SQL query with `WHERE uid > searchAfter`
+	// if this endpoint shows up as a hot path or if N grows beyond a few
+	// hundred for representative users.
 	const pageSize = 500
 	var items []legacy.UserTeam
 	var continueToken int64

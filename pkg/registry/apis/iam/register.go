@@ -815,11 +815,13 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 				&spec3.Parameter{
 					ParameterProps: spec3.ParameterProps{
-						Name:        "continue",
-						In:          "query",
-						Description: "opaque token from a previous response's metadata.continue; resumes listing after the last team returned",
-						Required:    false,
-						Schema:      spec.StringProperty(),
+						Name: "continue",
+						In:   "query",
+						Description: "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. " +
+							"The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, " +
+							"otherwise '+' will silently decode to a space on the server and pagination will fail.",
+						Required: false,
+						Schema:   spec.StringProperty(),
 					},
 				},
 			)

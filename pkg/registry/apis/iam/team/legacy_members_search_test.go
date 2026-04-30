@@ -67,6 +67,39 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		require.Equal(t, []string{"team-b"}, resp.Results.Rows[1].SortFields)
 	})
 
+	t.Run("SortFields[0] equals Key.Name for every row (continue-token contract)", func(t *testing.T) {
+		// Lock the cross-mode invariant: continue tokens minted by this
+		// adapter must encode the team's metadata.name in SortFields[0],
+		// matching what the unified-search path emits via SEARCH_FIELD_NAME.
+		// If a future change moves SortFields off Key.Name, tokens stop
+		// being portable across legacy/unified during dual-writer cutovers.
+		store := &fakeUserTeamsStore{
+			pages: []*legacy.ListUserTeamsResult{{
+				Items: []legacy.UserTeam{
+					{UID: "team-zeta", Permission: team.PermissionTypeMember},
+					{UID: "team-alpha", Permission: team.PermissionTypeMember},
+					{UID: "team-mu", Permission: team.PermissionTypeMember},
+				},
+			}},
+		}
+		client := NewLegacyUserTeamsSearchClient(store, tracing.InitializeTracerForTest())
+
+		req := &resourcepb.ResourceSearchRequest{
+			Limit:   10,
+			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
+		}
+
+		resp, err := client.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Results.Rows)
+		for i, row := range resp.Results.Rows {
+			require.Lenf(t, row.SortFields, 1, "row %d: expected exactly one sort field", i)
+			require.Equalf(t, row.Key.Name, row.SortFields[0],
+				"row %d: SortFields[0]=%q must equal Key.Name=%q (continue-token contract)",
+				i, row.SortFields[0], row.Key.Name)
+		}
+	})
+
 	t.Run("walks every page of the underlying Continue cursor before slicing", func(t *testing.T) {
 		store := &fakeUserTeamsStore{
 			pages: []*legacy.ListUserTeamsResult{
