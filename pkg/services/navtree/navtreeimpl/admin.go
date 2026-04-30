@@ -61,7 +61,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 				Text:     "Migrate to GitOps",
 				Id:       "provisioning-migrate-to-gitops",
 				SubTitle: "Move dashboards and folders into a Git repository",
-				Url:      s.cfg.AppSubURL + "/admin/provisioning?tab=stats",
+				Url:      s.cfg.AppSubURL + "/admin/provisioning?tab=migrate",
 				Keywords: []string{"git sync", "git-sync", "gitops", "migrate", "export", "as code"},
 			})
 		}

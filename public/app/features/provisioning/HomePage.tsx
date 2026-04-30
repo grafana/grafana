@@ -44,7 +44,7 @@ export default function HomePage() {
   // If the URL points at the stats tab but the feature flag is off (e.g. a stale
   // bookmark), fall back to the default tab so the bar, content, and action button
   // stay in sync.
-  const activeTab = urlTab === 'stats' && !isStatsEnabled ? defaultTab : (urlTab ?? defaultTab);
+  const activeTab = urlTab === 'migrate' && !isStatsEnabled ? defaultTab : (urlTab ?? defaultTab);
 
   // Handler to update URL when tab changes
   const handleTabChange = (tab: string) => {
@@ -73,7 +73,7 @@ export default function HomePage() {
 
     if (isStatsEnabled) {
       tabs.push({
-        value: 'stats',
+        value: 'migrate',
         label: t('provisioning.home-page.tab-stats', 'Migrate to GitOps'),
         title: t('provisioning.home-page.tab-stats-title', 'Migrate to GitOps'),
       });
@@ -93,7 +93,7 @@ export default function HomePage() {
         return <ConnectionsTabContent items={connections ?? []} error={connectionsError} />;
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
-      case 'stats':
+      case 'migrate':
         return <Migrate />;
       case 'repositories':
       default:
@@ -110,7 +110,7 @@ export default function HomePage() {
           </LinkButton>
         );
       case 'getting-started':
-      case 'stats':
+      case 'migrate':
         return null;
       case 'repositories':
       default:
@@ -127,7 +127,7 @@ export default function HomePage() {
   const navIndex = useSelector((state) => state.navIndex);
   const migrateNavId = 'provisioning-migrate-to-gitops';
   const navId =
-    activeTab === 'stats' && isStatsEnabled && navIndex[migrateNavId] ? migrateNavId : 'provisioning';
+    activeTab === 'migrate' && isStatsEnabled && navIndex[migrateNavId] ? migrateNavId : 'provisioning';
 
   return (
     <Page
