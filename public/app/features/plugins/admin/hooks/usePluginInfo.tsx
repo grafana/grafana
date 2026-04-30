@@ -7,8 +7,7 @@ import { type PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges/PluginDisabledBadge';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
-import { formatGrafanaDependency } from '../components/formatGrafanaDependency';
-import { getLatestCompatibleVersion } from '../helpers';
+import { formatGrafanaDependency, getLatestCompatibleVersion } from '../helpers';
 import { type CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
