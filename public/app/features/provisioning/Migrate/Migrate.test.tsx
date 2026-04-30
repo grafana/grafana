@@ -188,7 +188,9 @@ describe('Migrate', () => {
     // panel also includes the phrase as part of a longer sentence, so we
     // accept multiple matches here.
     expect(screen.getAllByText(/folders managed/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('2 / 4')).toBeInTheDocument();
+    // Empty folders (dashboardCount === 0) are excluded from the gauge math
+    // — only A (managed) and B (unmanaged) count, so the gauge reads 1 / 2.
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
     expect(screen.getByText(/50% complete/i)).toBeInTheDocument();
   });
 

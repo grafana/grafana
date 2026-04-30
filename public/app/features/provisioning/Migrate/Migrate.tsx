@@ -250,13 +250,13 @@ function StatCard({
       )}
     >
       <div className={cx(styles.statCardIcon, styles[`statIconTone_${tone}` as const])}>
-        <Icon name={icon} size="lg" />
+        <Icon name={icon} size="xl" />
       </div>
       <div className={styles.statCardBody}>
         <span className={cx(styles.statCardLabel, styles[`statCardTone_${tone}` as const])}>{label}</span>
-        <Text variant="h2">{big}</Text>
+        <Text variant="h1">{big}</Text>
         {subLabel && (
-          <Text color="secondary" variant="bodySmall">
+          <Text color="secondary" variant="body">
             {subLabel}
           </Text>
         )}
@@ -295,8 +295,11 @@ function SemicircleGauge({ pct }: { pct: number }) {
 
 function FolderProgressCard({ folders }: { folders: FolderRow[] }) {
   const styles = useStyles2(getStyles);
-  const total = folders.length;
-  const managed = folders.filter((f) => Boolean(f.managedBy)).length;
+  // Empty folders don't count toward "Folders managed" — there's nothing to
+  // migrate inside them, so they shouldn't drag the percentage either way.
+  const eligible = folders.filter((f) => f.dashboardCount > 0);
+  const total = eligible.length;
+  const managed = eligible.filter((f) => Boolean(f.managedBy)).length;
   const pct = total === 0 ? 0 : managed / total;
   return (
     <div className={cx(styles.statCard, styles.gaugeCard)}>
@@ -304,10 +307,10 @@ function FolderProgressCard({ folders }: { folders: FolderRow[] }) {
         <Trans i18nKey="provisioning.stats.folder-progress-label">Folders managed</Trans>
       </span>
       <SemicircleGauge pct={pct} />
-      <Text variant="h2">
+      <Text variant="h1">
         {t('provisioning.stats.folder-progress-fraction', '{{managed}} / {{total}}', { managed, total })}
       </Text>
-      <Text color="secondary" variant="bodySmall">
+      <Text color="secondary" variant="body">
         {t('provisioning.stats.folder-progress-pct', '{{pct}}% complete', {
           pct: Math.round(pct * 100),
         })}
@@ -672,7 +675,7 @@ export function Migrate() {
 const getStyles = (theme: GrafanaTheme2) => ({
   statCardsRow: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
     gap: theme.spacing(2),
   }),
   statCard: css({
@@ -733,8 +736,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   statCardIcon: css({
     flex: '0 0 auto',
-    width: theme.spacing(5),
-    height: theme.spacing(5),
+    width: theme.spacing(6),
+    height: theme.spacing(6),
     borderRadius: theme.shape.radius.circle,
     display: 'inline-flex',
     alignItems: 'center',
@@ -761,7 +764,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.visualization.getColorByName('purple'),
   }),
   statCardLabel: css({
-    fontSize: theme.typography.bodySmall.fontSize,
+    fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
   }),
   statCardTone_neutral: css({

@@ -11,12 +11,6 @@ import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 import { type FolderRow } from './hooks/useFolderLeaderboard';
 
 const TOP_N = 3;
-/**
- * Minimum dashboard count for a folder to qualify as a "quick win". Below
- * this threshold the leverage isn't really there — the folder will still
- * appear in the Dashboards to migrate panel, just not as a featured target.
- */
-const MIN_DASHBOARDS_FOR_QUICK_WIN = 3;
 
 function migrateTarget(repos: Repository[]): string {
   if (repos.length === 0) {
@@ -44,8 +38,11 @@ interface Props {
 export function QuickWinsPanel({ folders, repos, selected, onToggle, onSelectAll }: Props) {
   const styles = useStyles2(getStyles);
 
+  // Eligible = unmanaged folders with at least one dashboard. The folder
+  // leaderboard already orders unmanaged folders by dashboardCount desc, so
+  // slicing the top N gives the highest-leverage migration targets.
   const eligibleFolders = useMemo(
-    () => folders.filter((f) => !f.managedBy && f.dashboardCount >= MIN_DASHBOARDS_FOR_QUICK_WIN),
+    () => folders.filter((f) => !f.managedBy && f.dashboardCount > 0),
     [folders]
   );
   const topFolders = eligibleFolders.slice(0, TOP_N);
