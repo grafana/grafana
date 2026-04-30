@@ -969,4 +969,8 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
+
+	// FlagAlertingV0ReceiversAsLegacy
+	// Disable automatic conversion of legacy (V0/Mimir) Alertmanager receivers to Grafana model
+	FlagAlertingV0ReceiversAsLegacy = "alerting.v0ReceiversAsLegacy"
 )
