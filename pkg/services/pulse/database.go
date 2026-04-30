@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // store wraps the SQL operations for Pulse. It is intentionally separate
@@ -213,6 +213,114 @@ func (s *store) listThreads(ctx context.Context, q ListThreadsQuery) (PageResult
 	return res, nil
 }
 
+// listAllThreads returns the most-recently-active threads across every
+// resource in an org. Powers the global Pulse overview page; callers with
+// MineOnly=true narrow to threads the user participates in.
+//
+// Authorization is intentionally NOT enforced at this layer — the caller
+// has the org_id and a Pulse RBAC action gate at the route. Per-thread
+// dashboard read permission is filtered in the API layer because the
+// dashboard guardian wants a *contextmodel.ReqContext we don't have here.
+//
+// SQL shape:
+//   - Search collapses to (title LIKE %q% OR thread has any non-deleted
+//     pulse whose body_text LIKE %q%). Both halves are case-insensitive
+//     via LOWER(...) so behavior is identical on SQLite, MySQL and
+//     Postgres without relying on collation defaults.
+//   - "Mine" expands to (created_by=? OR I authored any pulse OR I am
+//     subscribed). Each half is a subquery on its own indexed
+//     (org_id, user_id) prefix, so the planner can use the right index
+//     for each branch.
+func (s *store) listAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error) {
+	if q.Limit <= 0 || q.Limit > 100 {
+		q.Limit = 25
+	}
+	if q.Page <= 0 {
+		q.Page = 1
+	}
+
+	threads := make([]Thread, 0, q.Limit)
+	var total int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Apply the filter conditions to a fresh xorm session. We can't
+		// reuse the same builder for both Count and Find because xorm
+		// consumes the conditions on Run, so we rebuild via this helper.
+		applyFilters := func() *xorm.Session {
+			sb := sess.Where("org_id = ?", q.OrgID)
+			if needle := strings.TrimSpace(q.Query); needle != "" {
+				like := "%" + strings.ToLower(needle) + "%"
+				sb = sb.And(
+					"(LOWER(title) LIKE ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND deleted = ? AND LOWER(body_text) LIKE ?))",
+					like, q.OrgID, false, like,
+				)
+			}
+			if q.MineOnly && q.UserID > 0 {
+				sb = sb.And(
+					"(created_by = ? OR uid IN (SELECT thread_uid FROM pulse WHERE org_id = ? AND author_user_id = ?) OR uid IN (SELECT thread_uid FROM pulse_subscription WHERE org_id = ? AND user_id = ?))",
+					q.UserID, q.OrgID, q.UserID, q.OrgID, q.UserID,
+				)
+			}
+			return sb
+		}
+
+		n, err := applyFilters().Count(&Thread{})
+		if err != nil {
+			return err
+		}
+		total = n
+
+		offset := (q.Page - 1) * q.Limit
+		return applyFilters().
+			OrderBy("last_pulse_at DESC, id DESC").
+			Limit(q.Limit, offset).
+			Find(&threads)
+	})
+	if err != nil {
+		return PageResult[Thread]{}, err
+	}
+
+	res := PageResult[Thread]{
+		Items:      threads,
+		Page:       q.Page,
+		TotalCount: total,
+		HasMore:    int64(q.Page*q.Limit) < total,
+	}
+	return res, nil
+}
+
+// firstPulseBodiesByThread returns the body_json of the earliest
+// non-deleted pulse for each given thread. We hand back the AST (not the
+// pre-rendered body_text) so the frontend can render the same mention
+// chips + formatting it would inside the thread itself; that also lets
+// us reflow legacy rows whose stored body_text was generated before
+// later formatting fixes (panel `#` prefix, post-mention spacing).
+func (s *store) firstPulseBodiesByThread(ctx context.Context, orgID int64, threadUIDs []string) (map[string]json.RawMessage, error) {
+	if len(threadUIDs) == 0 {
+		return nil, nil
+	}
+	rows := make([]Pulse, 0, len(threadUIDs))
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.
+			Where("org_id = ?", orgID).
+			In("thread_uid", threadUIDs).
+			And("deleted = ?", false).
+			Cols("thread_uid", "body_json", "created").
+			OrderBy("thread_uid ASC, created ASC, id ASC").
+			Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]json.RawMessage, len(rows))
+	for _, r := range rows {
+		if _, ok := out[r.ThreadUID]; ok {
+			continue
+		}
+		out[r.ThreadUID] = r.BodyJSON
+	}
+	return out, nil
+}
+
 // listPulses returns the pulses inside a thread, oldest first.
 func (s *store) listPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error) {
 	if q.Limit <= 0 || q.Limit > 200 {
@@ -314,6 +422,85 @@ func (s *store) softDelete(ctx context.Context, orgID int64, uid string) error {
 	})
 }
 
+// deleteThread hard-deletes a thread plus its pulses, mention rows,
+// subscriptions, and read-state rows. We deliberately do not soft-delete
+// here: a thread author or admin pulling the plug expects the data gone.
+// Individual pulses inside still have soft-delete (the tombstone UI), but
+// removing the parent removes everything.
+func (s *store) deleteThread(ctx context.Context, orgID int64, uid string) error {
+	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var t Thread
+		ok, err := sess.Where("org_id = ? AND uid = ?", orgID, uid).Get(&t)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return ErrThreadNotFound
+		}
+		if _, err := sess.Exec("DELETE FROM pulse_mention WHERE org_id = ? AND thread_uid = ?", orgID, uid); err != nil {
+			return err
+		}
+		if _, err := sess.Exec("DELETE FROM pulse WHERE org_id = ? AND thread_uid = ?", orgID, uid); err != nil {
+			return err
+		}
+		if _, err := sess.Exec("DELETE FROM pulse_subscription WHERE org_id = ? AND thread_uid = ?", orgID, uid); err != nil {
+			return err
+		}
+		if _, err := sess.Exec("DELETE FROM pulse_read_state WHERE org_id = ? AND thread_uid = ?", orgID, uid); err != nil {
+			return err
+		}
+		if _, err := sess.Exec("DELETE FROM pulse_thread WHERE org_id = ? AND uid = ?", orgID, uid); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// setThreadClosed flips the closed flag and bumps the thread version. We
+// use raw SQL for the same reason as softDelete: xorm's struct-Update
+// elides false bools, which would prevent reopen from working.
+func (s *store) setThreadClosed(ctx context.Context, orgID int64, uid string, closed bool, by int64) error {
+	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var t Thread
+		ok, err := sess.Where("org_id = ? AND uid = ?", orgID, uid).Get(&t)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return ErrThreadNotFound
+		}
+		if closed && t.Closed {
+			return ErrThreadAlreadyClosed
+		}
+		if !closed && !t.Closed {
+			return ErrThreadNotClosed
+		}
+		now := time.Now().UTC()
+		if closed {
+			if _, err := sess.Exec(
+				"UPDATE pulse_thread SET closed = ?, closed_at = ?, closed_by = ?, updated = ? WHERE org_id = ? AND uid = ?",
+				true, now, by, now, orgID, uid,
+			); err != nil {
+				return err
+			}
+		} else {
+			if _, err := sess.Exec(
+				"UPDATE pulse_thread SET closed = ?, closed_at = NULL, closed_by = NULL, updated = ? WHERE org_id = ? AND uid = ?",
+				false, now, orgID, uid,
+			); err != nil {
+				return err
+			}
+		}
+		// Bump version via a no-op Update so xorm's auto-version column
+		// trigger fires; subscribers will refetch.
+		t.Updated = now
+		if _, err := sess.ID(t.ID).Cols("updated").Update(&t); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 // upsertSubscription is idempotent — calling it twice for the same user is
 // a no-op rather than an error.
 func (s *store) upsertSubscription(ctx context.Context, sub Subscription) error {
@@ -411,8 +598,3 @@ func ensureThreadResource(kind ResourceKind, uid string) error {
 	}
 	return nil
 }
-
-// errMentionRowsExist is sentinel-like; not exported, only used to detect
-// unique-violation cases on retry. Keep close to the store to avoid
-// leaking xorm error types upward.
-var errMentionRowsExist = errors.New("mention rows already exist")

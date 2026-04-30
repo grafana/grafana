@@ -12,10 +12,13 @@ import (
 type EventAction string
 
 const (
-	EventThreadCreated EventAction = "thread_created"
-	EventPulseAdded    EventAction = "pulse_added"
-	EventPulseEdited   EventAction = "pulse_edited"
-	EventPulseDeleted  EventAction = "pulse_deleted"
+	EventThreadCreated  EventAction = "thread_created"
+	EventThreadDeleted  EventAction = "thread_deleted"
+	EventThreadClosed   EventAction = "thread_closed"
+	EventThreadReopened EventAction = "thread_reopened"
+	EventPulseAdded     EventAction = "pulse_added"
+	EventPulseEdited    EventAction = "pulse_edited"
+	EventPulseDeleted   EventAction = "pulse_deleted"
 )
 
 // Event is the payload broadcast on grafana/pulse/<resourceKind>/<resourceUID>.

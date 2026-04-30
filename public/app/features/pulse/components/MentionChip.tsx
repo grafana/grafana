@@ -26,15 +26,22 @@ export function MentionChip({ mention, onClick }: Props): ReactNode {
   const label = mention.displayName ?? mention.targetId;
   const isPanel = mention.kind === 'panel';
   const className = isPanel ? styles.panel : styles.user;
+  const prefix = isPanel ? '#' : '@';
 
   if (onClick) {
     return (
       <button type="button" className={className} onClick={() => onClick(mention)}>
-        @{label}
+        {prefix}
+        {label}
       </button>
     );
   }
-  return <span className={className}>@{label}</span>;
+  return (
+    <span className={className}>
+      {prefix}
+      {label}
+    </span>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

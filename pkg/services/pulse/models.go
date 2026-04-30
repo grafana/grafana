@@ -50,14 +50,21 @@ const (
 	AuthorKindServiceAccount AuthorKind = "service_account"
 )
 
-// Body is the structured pulse body. It is a Lexical-compatible AST stored as
-// JSON. The server enforces a strict allowlist of node types in
-// ValidateBody so that the body is safe to render directly via React data
-// bindings on the frontend without any HTML sanitization.
+// Body is the structured pulse body. The Markdown field carries the
+// human-authored markdown source (rendered through the same
+// renderMarkdown / sanitizer pipeline that other Grafana panels use, so
+// it is XSS-safe to drop into dangerouslySetInnerHTML on the frontend).
+// The Root AST is retained for two reasons: it is how the composer
+// reports mention metadata back to the server (so notifications fan out
+// without re-parsing markdown server-side), and bodies authored before
+// markdown support was added still render via the AST walker.
 //
-// Allowed node types: paragraph, text, mention, link, code, quote, linebreak.
+// Allowed AST node types: paragraph, text, mention, link, code, quote,
+// linebreak. The allowlist is enforced in ValidateBody so the AST is
+// also safe to render directly via React data bindings.
 type Body struct {
-	Root BodyNode `json:"root"`
+	Root     BodyNode `json:"root"`
+	Markdown string   `json:"markdown,omitempty"`
 }
 
 // BodyNode is a single node in the body AST.
@@ -98,6 +105,28 @@ type Thread struct {
 	LastPulseAt  time.Time    `json:"lastPulseAt" xorm:"last_pulse_at"`
 	PulseCount   int64        `json:"pulseCount" xorm:"pulse_count"`
 	Version      int64        `json:"version" xorm:"version"`
+	// Closed flips when an author or admin closes the thread; replies are
+	// rejected at the service layer when set. Reopening clears all three
+	// columns and is gated to admins.
+	Closed   bool       `json:"closed" xorm:"'closed'"`
+	ClosedAt *time.Time `json:"closedAt,omitempty" xorm:"closed_at"`
+	ClosedBy *int64     `json:"closedBy,omitempty" xorm:"closed_by"`
+	// PreviewBody is the body AST of the first pulse, populated by the
+	// API handler so the thread list can render the same mention chips
+	// + formatting it would inside the thread itself. xorm:"-" keeps
+	// this out of the table — it's a denormalized read-side projection.
+	PreviewBody json.RawMessage `json:"previewBody,omitempty" xorm:"-"`
+	// AuthorName / AuthorLogin / AuthorAvatarURL are populated alongside
+	// PreviewBody so the thread card renders the starter's avatar and
+	// display name without an N+1 user lookup on the frontend.
+	AuthorName      string `json:"authorName,omitempty" xorm:"-"`
+	AuthorLogin     string `json:"authorLogin,omitempty" xorm:"-"`
+	AuthorAvatarURL string `json:"authorAvatarUrl,omitempty" xorm:"-"`
+	// ResourceTitle is populated on the global Pulse overview only —
+	// it's the human-readable title of the resource the thread is
+	// attached to (e.g. the dashboard title), resolved at API time so
+	// the frontend can render a rich link without N+1 lookups.
+	ResourceTitle string `json:"resourceTitle,omitempty" xorm:"-"`
 }
 
 // Pulse is a single message inside a thread. The first pulse in a thread is
@@ -123,6 +152,13 @@ type Pulse struct {
 	// quote-escape the column name to bypass xorm's magic.
 	Edited  bool `json:"edited" xorm:"'edited'"`
 	Deleted bool `json:"deleted" xorm:"'deleted'"`
+	// AuthorName / AuthorLogin / AuthorAvatarURL are populated by the API
+	// handler from the user service so the frontend doesn't need a
+	// separate user lookup per pulse. The xorm:"-" tag keeps these out
+	// of the table.
+	AuthorName      string `json:"authorName,omitempty" xorm:"-"`
+	AuthorLogin     string `json:"authorLogin,omitempty" xorm:"-"`
+	AuthorAvatarURL string `json:"authorAvatarUrl,omitempty" xorm:"-"`
 }
 
 // Subscription marks that a user wants to be notified about new pulses on a
@@ -219,6 +255,32 @@ type DeletePulseCommand struct {
 	IsAuthor bool   `json:"-"`
 }
 
+// DeleteThreadCommand hard-deletes a thread plus all its pulses, mentions,
+// subscriptions, and read-state rows. Either the thread author or an admin
+// can delete; the API handler is responsible for setting IsAdmin.
+type DeleteThreadCommand struct {
+	OrgID   int64  `json:"-"`
+	UID     string `json:"-"`
+	UserID  int64  `json:"-"`
+	IsAdmin bool   `json:"-"`
+}
+
+// CloseThreadCommand marks a thread as closed. Author or admin can close.
+type CloseThreadCommand struct {
+	OrgID   int64  `json:"-"`
+	UID     string `json:"-"`
+	UserID  int64  `json:"-"`
+	IsAdmin bool   `json:"-"`
+}
+
+// ReopenThreadCommand clears the closed flag. Admin-only.
+type ReopenThreadCommand struct {
+	OrgID   int64  `json:"-"`
+	UID     string `json:"-"`
+	UserID  int64  `json:"-"`
+	IsAdmin bool   `json:"-"`
+}
+
 // ListThreadsQuery returns threads attached to a resource, ordered by most
 // recent activity.
 type ListThreadsQuery struct {
@@ -228,6 +290,24 @@ type ListThreadsQuery struct {
 	PanelID      *int64       `json:"-"` // nil = all threads on the resource (incl. panel-scoped)
 	Limit        int          `json:"-"`
 	Cursor       string       `json:"-"`
+}
+
+// ListAllThreadsQuery returns threads across every resource in an org,
+// ordered by most recent activity. Powers the global Pulse overview page
+// in the main nav. The caller's UserID is required when MineOnly is true
+// — that filter narrows the result to threads where the caller is the
+// thread starter, has posted any pulse, or is subscribed.
+//
+// Pagination is offset-based (Page is 1-indexed) rather than cursor-based:
+// the overview page is a browsing surface, not a chronological replay
+// stream, and the table allows arbitrary jumps between pages.
+type ListAllThreadsQuery struct {
+	OrgID    int64  `json:"-"`
+	UserID   int64  `json:"-"`
+	Query    string `json:"-"` // optional: matches thread title and pulse body_text
+	MineOnly bool   `json:"-"` // optional: scope to threads the caller participates in
+	Page     int    `json:"-"`
+	Limit    int    `json:"-"`
 }
 
 // ListPulsesQuery returns pulses inside a thread, oldest first by default
@@ -240,10 +320,17 @@ type ListPulsesQuery struct {
 }
 
 // PageResult is the generic page envelope used by list endpoints.
+//
+// Cursor-based listings (per-resource threads, per-thread pulses) populate
+// NextCursor and HasMore; offset-based listings (global overview) populate
+// Page and TotalCount instead. A response uses one paradigm or the other
+// — clients decide based on the endpoint they're calling.
 type PageResult[T any] struct {
 	Items      []T    `json:"items"`
 	NextCursor string `json:"nextCursor,omitempty"`
 	HasMore    bool   `json:"hasMore"`
+	Page       int    `json:"page,omitempty"`
+	TotalCount int64  `json:"totalCount,omitempty"`
 }
 
 // ResourceVersion is returned by the polling fallback endpoint. Clients that

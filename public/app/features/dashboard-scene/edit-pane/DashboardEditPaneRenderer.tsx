@@ -136,6 +136,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
+          {hasUid && !isEmbedded && !meta.isSnapshot && config.featureToggles.dashboardPulse && (
+            <Sidebar.Button
+              icon="comment-alt"
+              onClick={() => dashboard.onShowPulseDrawer()}
+              title={t('dashboard.sidebar.pulse.title', 'Pulse')}
+              tooltip={t('dashboard.sidebar.pulse.tooltip', 'Open Pulse')}
+              data-testid="pulse-sidebar-button"
+            />
+          )}
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
               config.featureToggles.dashboardUnifiedDrilldownControls) && (

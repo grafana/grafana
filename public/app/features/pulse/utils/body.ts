@@ -46,9 +46,7 @@ export function tokensToBody(tokens: BodyToken[]): PulseBody {
  * disable the send button.
  */
 export function isEmptyTokens(tokens: BodyToken[]): boolean {
-  return !tokens.some(
-    (t) => (t.kind === 'text' && t.text.trim().length > 0) || t.kind === 'mention'
-  );
+  return !tokens.some((t) => (t.kind === 'text' && t.text.trim().length > 0) || t.kind === 'mention');
 }
 
 /**
@@ -66,7 +64,8 @@ export function bodyToText(body: PulseBody): string {
       return;
     }
     if (n.type === 'mention' && n.mention) {
-      out.push('@' + (n.mention.displayName ?? n.mention.targetId));
+      const prefix = n.mention.kind === 'panel' ? '#' : '@';
+      out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
     }
     if (n.type === 'linebreak') {
@@ -104,4 +103,146 @@ export function isSafeUrl(raw: string): string | undefined {
     return undefined;
   }
   return parsed.toString();
+}
+
+/**
+ * mentionMarkdownToken returns the markdown source representation of a
+ * mention. We wrap it in backticks so it renders as inline `<code>` —
+ * visually distinct from prose without needing a custom React node, and
+ * it matches the user's earlier ask for an inline-code mention style.
+ */
+export function mentionMarkdownToken(m: PulseMention): string {
+  const prefix = m.kind === 'panel' ? '#' : '@';
+  const label = m.displayName ?? m.targetId;
+  return '`' + prefix + label + '`';
+}
+
+/**
+ * bodyFromMarkdown wraps a markdown source plus its mention metadata
+ * into the AST shape the backend expects. The AST stays the
+ * source-of-truth for mention extraction (so notifications fan out
+ * without re-parsing markdown server-side); the markdown string is the
+ * source-of-truth for rendering.
+ */
+export function bodyFromMarkdown(text: string, mentions: PulseMention[]): PulseBody {
+  const children: PulseBodyNode[] = [];
+  // Always include at least one text node so the AST validator's
+  // "non-empty body" check passes even if the user wrote only
+  // mentions or only whitespace.
+  if (text.trim().length > 0) {
+    children.push({ type: 'text', text });
+  }
+  for (const m of mentions) {
+    children.push({ type: 'mention', mention: m });
+  }
+  if (children.length === 0) {
+    children.push({ type: 'text', text: text || ' ' });
+  }
+  return {
+    root: {
+      type: 'root',
+      children: [{ type: 'paragraph', children }],
+    },
+    markdown: text,
+  };
+}
+
+/**
+ * bodyToMarkdown reconstructs an editable markdown source from a body.
+ * If the body already has markdown, return that verbatim. Otherwise
+ * synthesize one from the AST so the markdown composer can edit
+ * pre-markdown pulses without losing content.
+ */
+export function bodyToMarkdown(body: PulseBody): { text: string; mentions: PulseMention[] } {
+  if (body.markdown !== undefined && body.markdown !== null) {
+    return { text: body.markdown, mentions: collectMentions(body) };
+  }
+  const out: string[] = [];
+  const mentions: PulseMention[] = [];
+  walk(body.root);
+  return {
+    text: out
+      .join('')
+      .replace(/\n{3,}/g, '\n\n')
+      .trimEnd(),
+    mentions,
+  };
+
+  function walk(n: PulseBodyNode) {
+    if (n.type === 'text') {
+      out.push(n.text ?? '');
+      return;
+    }
+    if (n.type === 'mention' && n.mention) {
+      out.push(mentionMarkdownToken(n.mention));
+      mentions.push(n.mention);
+      return;
+    }
+    if (n.type === 'linebreak') {
+      out.push('\n');
+      return;
+    }
+    if (n.children) {
+      for (const c of n.children) {
+        walk(c);
+      }
+    }
+    if (n.type === 'paragraph' || n.type === 'quote') {
+      out.push('\n\n');
+    }
+  }
+}
+
+function collectMentions(body: PulseBody): PulseMention[] {
+  const out: PulseMention[] = [];
+  walk(body.root);
+  return out;
+
+  function walk(n: PulseBodyNode) {
+    if (n.type === 'mention' && n.mention) {
+      out.push(n.mention);
+    }
+    n.children?.forEach(walk);
+  }
+}
+
+/**
+ * bodyToTokens converts the AST into editable composer tokens so a pulse can
+ * be edited with the same mention-aware input used for creation/replies.
+ */
+export function bodyToTokens(body: PulseBody): BodyToken[] {
+  const out: BodyToken[] = [];
+  walk(body.root);
+  return trimTrailingNewlines(out);
+
+  function walk(n: PulseBodyNode) {
+    if (n.type === 'text' && n.text) {
+      out.push({ kind: 'text', text: n.text });
+      return;
+    }
+    if (n.type === 'mention' && n.mention) {
+      out.push({ kind: 'mention', mention: n.mention });
+      return;
+    }
+    if (n.type === 'linebreak') {
+      out.push({ kind: 'newline' });
+      return;
+    }
+    if (n.children) {
+      for (const c of n.children) {
+        walk(c);
+      }
+    }
+    if (n.type === 'paragraph' || n.type === 'quote') {
+      out.push({ kind: 'newline' });
+    }
+  }
+}
+
+function trimTrailingNewlines(tokens: BodyToken[]): BodyToken[] {
+  const next = [...tokens];
+  while (next.length > 0 && next[next.length - 1].kind === 'newline') {
+    next.pop();
+  }
+  return next;
 }

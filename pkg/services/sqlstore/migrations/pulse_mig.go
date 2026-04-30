@@ -113,4 +113,17 @@ func addPulseMigrations(mg *Migrator) {
 		},
 	}
 	mg.AddMigration("create pulse_read_state table v1", NewAddTableMigration(pulseReadV1))
+
+	// v2: thread can be closed (history visible, no further replies). Reopen
+	// is admin-only. Stored on the thread itself rather than as an event row
+	// so the most common reads (list/get) stay a single-row fetch.
+	mg.AddMigration("add closed column to pulse_thread", NewAddColumnMigration(pulseThreadV1, &Column{
+		Name: "closed", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("add closed_at column to pulse_thread", NewAddColumnMigration(pulseThreadV1, &Column{
+		Name: "closed_at", Type: DB_DateTime, Nullable: true,
+	}))
+	mg.AddMigration("add closed_by column to pulse_thread", NewAddColumnMigration(pulseThreadV1, &Column{
+		Name: "closed_by", Type: DB_BigInt, Nullable: true,
+	}))
 }

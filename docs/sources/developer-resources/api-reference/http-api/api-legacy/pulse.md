@@ -24,53 +24,68 @@ title: 'Pulse HTTP API'
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-> Pulse is experimental and is gated behind the `dashboardPulse` feature toggle. The endpoints below return `404` when the toggle is off.
+> Pulse is experimental and is gated behind the `dashboardPulse` feature toggle. Every endpoint below returns `404 Not Found` when the toggle is disabled, even for authenticated callers.
 
-The Pulse API attaches Slack-style threaded conversations to Grafana resources. v1 supports two resource kinds:
+The Pulse API attaches Slack-style threaded conversations to Grafana resources. v1 supports a single resource kind:
 
-- `dashboard` — comments scoped to a dashboard (use the dashboard UID as `resourceUID`)
-- `panel` — comments scoped to a single panel (use `<dashboardUID>:<panelID>` as `resourceUID`)
+- `dashboard` — comments scoped to a dashboard. Use the dashboard UID as `resourceUID`.
 
-A **thread** has one or more **pulses** (the parent pulse plus any number of replies, one level deep). Pulses are written as a Lexical-compatible JSON AST with a strict node and URL allowlist; the server rejects anything outside the allowlist with `400 invalid body`.
+A **thread** has one or more **pulses**. The first pulse is the parent; replies are one level deep. Pulse bodies are stored as a small Lexical-compatible JSON AST plus an optional `markdown` source. The server enforces a strict allowlist on the AST and renders the markdown through the same sanitizer Grafana uses for Markdown panels — so any `pulse.body` returned by the API is safe to drop into the standard Grafana renderer client-side.
 
-All endpoints require Grafana authentication. Authorization is delegated to the parent dashboard:
+## Authentication and authorization
 
-- Reading pulses requires `dashboards:read` on the parent dashboard.
-- Writing pulses requires `pulse:write` (granted by default to viewers with dashboard read access).
-- Deleting another user's pulse requires `pulse:admin`. Authors can always delete their own pulses.
+All endpoints require Grafana authentication. Each route checks two things:
+
+1. A **Pulse RBAC action** appropriate to the verb:
+   - `pulse:read` — list/get threads, list pulses, subscribe/unsubscribe, mark read, get resource version
+   - `pulse:write` — create thread, add pulse, edit pulse, close own thread
+   - `pulse:delete` — delete own pulse, delete own thread
+   - `pulse:admin` — delete other users' pulses or threads, reopen any thread
+2. **`dashboards:read`** on the parent dashboard.
+
+OSS Grafana grants `pulse:read`, `pulse:write`, and `pulse:delete` to every org role by default (Viewer, Editor, Admin), so any authenticated user that can view a dashboard can comment on it. `pulse:admin` is granted to org Admin and Grafana server admin only. These defaults are exposed through the standard fixed-role machinery — administrators can override them via custom roles or by editing role grants the same way they do for any other built-in role group.
+
+The thread author is **always** allowed to edit, delete, or close their own pulses and threads regardless of `pulse:admin`. Reopening a closed thread requires `pulse:admin`.
 
 ## Body format
 
-A pulse body is a small JSON document. Allowed top-level shape:
+A pulse body is a small JSON document. The two top-level fields are `root` (the AST, required) and `markdown` (the source the composer authored, optional). The renderer prefers `markdown` when present and falls back to walking the AST otherwise.
 
 ```json
 {
-  "version": 1,
+  "markdown": "Hello `@alice`, see `#cpu`.",
   "root": {
     "type": "root",
     "children": [
       { "type": "paragraph", "children": [
         { "type": "text", "text": "Hello " },
-        { "type": "mention", "mention": { "kind": "user", "uid": "u-42" }, "text": "@alice" },
+        { "type": "mention", "mention": { "kind": "user", "targetId": "42", "displayName": "alice" }, "text": "@alice" },
         { "type": "text", "text": ", see " },
-        { "type": "mention", "mention": { "kind": "panel", "uid": "abc:3" }, "text": "#cpu" }
+        { "type": "mention", "mention": { "kind": "panel", "targetId": "abc:3", "displayName": "cpu" }, "text": "#cpu" },
+        { "type": "text", "text": "." }
       ] }
     ]
   }
 }
 ```
 
-Allowed node `type` values: `root`, `paragraph`, `text`, `linebreak`, `link`, `mention`, `code`. Allowed link schemes: `http`, `https`, `mailto`. Bodies larger than 64 KiB are rejected.
+Allowed AST node `type` values: `root`, `paragraph`, `text`, `linebreak`, `link`, `mention`, `code`, `quote`. Allowed link schemes: `http`, `https`, `mailto`. Bodies larger than the configured cap (32 KiB by default) are rejected with `400 invalid body`. The `markdown` field has its own cap and may be omitted.
+
+Mentions carry both metadata (`kind`, `targetId`) and a human-readable `text` — the backend uses `targetId` to fan out notifications and the frontend uses `text` to render chips. `kind` is `user` or `panel`.
 
 ## List threads
 
-`GET /api/pulse/:resourceKind/:resourceUID/threads`
+`GET /api/pulse/threads`
 
 Query parameters:
 
-- `limit` (optional, default 25, max 100)
-- `cursor` (optional, opaque cursor from a previous response)
-- `unread` (optional, `true` to return only threads with unread pulses for the caller)
+| Name | Description |
+| ---- | ----------- |
+| `resourceKind` | Required. `dashboard` for v1. |
+| `resourceUID`  | Required. Dashboard UID. |
+| `panelId`      | Optional. Numeric panel ID — when present, returns only panel-scoped threads. Omit to include all threads on the dashboard. |
+| `limit`        | Optional. Default 25, max 100. |
+| `cursor`       | Optional. Opaque cursor returned by a previous response. |
 
 **Example response:**
 
@@ -82,35 +97,50 @@ Content-Type: application/json
   "items": [
     {
       "uid": "p1a2b3c4d5e6f7",
+      "orgId": 1,
       "resourceKind": "dashboard",
       "resourceUID": "abc",
-      "version": 4,
-      "pulseCount": 3,
+      "title": "Deploy is rolling out",
+      "createdBy": 42,
+      "created": "2026-04-28T13:55:00Z",
+      "updated": "2026-04-28T14:02:00Z",
       "lastPulseAt": "2026-04-28T14:02:00Z",
-      "lastAuthor": { "kind": "user", "uid": "u-42", "name": "alice" },
-      "preview": "deploy is rolling out, watch the p99..."
+      "pulseCount": 3,
+      "version": 4,
+      "closed": false,
+      "previewBody": { "root": { "type": "root", "children": [ ... ] }, "markdown": "Deploy is rolling out..." },
+      "authorName": "Alice Example",
+      "authorLogin": "alice",
+      "authorAvatarUrl": "/avatar/9c..."
     }
   ],
-  "nextCursor": "eyJjIjoiMjAyNi0wNC0yOFQxNDowMjowMFoiLCJ1IjoicDFhMmIzYzRkNWU2ZjcifQ=="
+  "nextCursor": "eyJjIjoiMjAyNi0wNC0yOFQxNDowMjowMFoiLCJ1IjoicDFhMmIzYzRkNWU2ZjcifQ==",
+  "hasMore": true
 }
 ```
 
 ## Create a thread
 
-`POST /api/pulse/:resourceKind/:resourceUID/threads`
+`POST /api/pulse/threads`
+
+The `resourceKind` and `resourceUID` are part of the request body, not the path. The author is auto-subscribed to the new thread; any `@user` or `#panel` mentions in the body are persisted in the mention index and trigger notifications.
 
 **Body:**
 
 ```json
-{ "body": { "version": 1, "root": { "type": "root", "children": [ ... ] } } }
+{
+  "resourceKind": "dashboard",
+  "resourceUID": "abc",
+  "panelId": 3,
+  "title": "Optional override; auto-derived from first sentence if omitted",
+  "body": { "root": { "type": "root", "children": [ ... ] }, "markdown": "..." }
+}
 ```
-
-The author is auto-subscribed to the new thread. Any `@user` or `#panel` mentions in the body are persisted and notified.
 
 **Example response:**
 
 ```http
-HTTP/1.1 201 Created
+HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
@@ -123,76 +153,108 @@ Content-Type: application/json
 
 `GET /api/pulse/threads/:threadUID`
 
-Returns the thread metadata. Use `List pulses` to fetch the messages.
+Returns the thread metadata plus the populated preview/author fields used by the list view. Use `List pulses in a thread` to fetch the messages.
 
 ## List pulses in a thread
 
 `GET /api/pulse/threads/:threadUID/pulses?limit=50&cursor=...`
 
-Pulses are returned in ascending chronological order. The cursor uses `(created, id)` as a stable tiebreaker.
+Pulses are returned in ascending chronological order. The cursor uses `(created, id)` as a stable tiebreaker so deduplication is safe across restarts.
 
 ## Add a reply
 
 `POST /api/pulse/threads/:threadUID/pulses`
 
 ```json
-{ "body": { "version": 1, "root": { ... } } }
+{ "body": { "root": { ... }, "markdown": "..." }, "parentUID": "x9y8z7w6v5u4t3" }
 ```
 
-Replying to a soft-deleted parent pulse returns `409`.
+`parentUID` is optional — when omitted the reply attaches to the thread's parent pulse. Replying to a soft-deleted parent or to a closed thread returns `409 Conflict`.
 
 ## Edit a pulse
 
 `PATCH /api/pulse/pulses/:pulseUID`
 
 ```json
-{ "body": { "version": 1, "root": { ... } } }
+{ "body": { "root": { ... }, "markdown": "..." } }
 ```
 
-Only the original author may edit. Edits set `edited=true` and bump the thread version.
+Only the original author may edit. Edits set `edited=true` on the pulse and bump the thread version so other clients can re-render. Editing a soft-deleted pulse returns `410 Gone`.
 
 ## Delete a pulse
 
 `DELETE /api/pulse/pulses/:pulseUID`
 
-Soft-deletes the pulse (the row is retained for audit). Author or `pulse:admin` only.
+Soft-deletes the pulse — the row is retained for audit but the body is omitted from list responses. Authorization: the original author or any user with `pulse:admin`.
+
+## Delete a thread
+
+`DELETE /api/pulse/threads/:threadUID`
+
+Hard-deletes the thread plus all its pulses, mention rows, subscriptions, and read-state markers. Authorization: the thread author or any user with `pulse:admin`.
+
+## Close a thread
+
+`POST /api/pulse/threads/:threadUID/close`
+
+Marks the thread as read-only — replies and edits return `409 Conflict`. The history remains visible. Authorization: the thread author or `pulse:admin`.
+
+## Reopen a thread
+
+`POST /api/pulse/threads/:threadUID/reopen`
+
+Clears the `closed` flag. Authorization: `pulse:admin` only — the original close decision is treated as final unless an admin overrides.
 
 ## Subscribe / unsubscribe
 
-`PUT /api/pulse/:resourceKind/:resourceUID/subscription`
+`POST /api/pulse/threads/:threadUID/subscribe`
 
-`DELETE /api/pulse/:resourceKind/:resourceUID/subscription`
+`POST /api/pulse/threads/:threadUID/unsubscribe`
 
-Subscribers receive a notification on every new pulse on the resource.
+Subscribers receive a notification on every new pulse on the thread. The thread author is auto-subscribed when they create the thread or post their first reply.
 
 ## Mark read
 
 `POST /api/pulse/threads/:threadUID/read`
 
 ```json
-{ "lastSeenPulseUID": "x9y8z7w6v5u4t3" }
+{ "lastReadPulseUID": "x9y8z7w6v5u4t3" }
 ```
 
-Updates the caller's per-thread read state. Used by the UI to compute unread badges.
+Updates the caller's per-thread read state. Used by the UI to compute unread badges. The endpoint is idempotent; clients can call it on every drawer open.
 
 ## Get resource version
 
-`GET /api/pulse/:resourceKind/:resourceUID/version`
+`GET /api/pulse/resources/:kind/:uid/version`
 
 ```json
-{ "version": 17, "lastActivityAt": "2026-04-28T14:02:00Z" }
+{
+  "resourceKind": "dashboard",
+  "resourceUID": "abc",
+  "version": 17,
+  "lastPulseAt": "2026-04-28T14:02:00Z"
+}
 ```
 
-A monotonic counter that increments on any pulse activity for the resource. Frontends poll this as a fallback when Grafana Live is unreachable.
+A monotonic counter that increments on any pulse activity for the resource. Frontends poll this every 10 seconds as a fallback when Grafana Live is unreachable; when it changes they re-fetch the thread list.
 
 ## Realtime updates
 
-Pulse events are broadcast on `grafana/pulse/:resourceKind/:resourceUID` over Grafana Live. Clients subscribe via the standard Live API; the server refuses all client-initiated publishes on this channel.
+Pulse events are broadcast on `grafana/pulse/<resourceKind>/<resourceUID>` over Grafana Live. Clients subscribe via the standard Live API; the server refuses all client-initiated publishes on this channel.
 
 Event payload:
 
 ```json
-{ "action": "thread.created", "threadUID": "...", "pulseUID": "...", "resourceKind": "dashboard", "resourceUID": "abc" }
+{
+  "action": "thread_created",
+  "orgId": 1,
+  "resourceKind": "dashboard",
+  "resourceUID": "abc",
+  "threadUID": "p1a2b3c4d5e6f7",
+  "pulseUID": "x9y8z7w6v5u4t3",
+  "authorUserId": 42,
+  "at": "2026-04-28T14:02:00.123Z"
+}
 ```
 
-`action` is one of `thread.created`, `pulse.added`, `pulse.edited`, `pulse.deleted`.
+`action` is one of `thread_created`, `thread_deleted`, `thread_closed`, `thread_reopened`, `pulse_added`, `pulse_edited`, `pulse_deleted`. Bodies are intentionally not included in the event — clients refetch via HTTP after seeing an event. This keeps the channel small and avoids leaking content to subscribers whose permissions may have changed since they connected.

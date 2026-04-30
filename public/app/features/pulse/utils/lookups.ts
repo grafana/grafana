@@ -16,6 +16,12 @@ interface UserSearchResponse {
   }>;
 }
 
+interface SearchUsersOptions {
+  signal?: AbortSignal;
+  /** Drop this user id from the results. We never want to mention ourselves. */
+  excludeUserId?: number;
+}
+
 /**
  * searchUsers hits the existing legacy users-search endpoint. We
  * intentionally use the legacy /api/users/search rather than building a
@@ -26,14 +32,20 @@ interface UserSearchResponse {
  * request: getBackendSrv doesn't accept AbortSignal directly, so we
  * race the network response against the signal and discard the result
  * if the signal aborted before the fetch resolved.
+ *
+ * `excludeUserId` filters the current user out of the suggestion list
+ * so people don't accidentally @-mention themselves; we ask for one
+ * extra row from the API to keep the visible page size at 10 even
+ * when the current user matches the query.
  */
-export async function searchUsers(query: string, signal?: AbortSignal): Promise<UserSuggestion[]> {
+export async function searchUsers(query: string, options: SearchUsersOptions = {}): Promise<UserSuggestion[]> {
   const trimmed = query.trim();
   if (trimmed.length === 0) {
     return [];
   }
+  const { signal, excludeUserId } = options;
   const url = new URL('/api/users/search', window.location.origin);
-  url.searchParams.set('perpage', '10');
+  url.searchParams.set('perpage', excludeUserId ? '11' : '10');
   url.searchParams.set('page', '1');
   url.searchParams.set('query', trimmed);
 
@@ -46,12 +58,16 @@ export async function searchUsers(query: string, signal?: AbortSignal): Promise<
   if (!data) {
     return [];
   }
-  return data.users.map((u) => ({
-    id: u.id,
-    login: u.login,
-    name: u.name,
-    avatarUrl: u.avatarUrl,
-  }));
+  const users = data.users
+    .filter((u) => excludeUserId === undefined || u.id !== excludeUserId)
+    .slice(0, 10)
+    .map((u) => ({
+      id: u.id,
+      login: u.login,
+      name: u.name,
+      avatarUrl: u.avatarUrl,
+    }));
+  return users;
 }
 
 export interface PanelSuggestion {
@@ -69,7 +85,5 @@ export function filterPanels(panels: PanelSuggestion[], query: string): PanelSug
   if (trimmed.length === 0) {
     return panels.slice(0, 10);
   }
-  return panels
-    .filter((p) => p.title.toLowerCase().includes(trimmed) || String(p.id).includes(trimmed))
-    .slice(0, 10);
+  return panels.filter((p) => p.title.toLowerCase().includes(trimmed) || String(p.id).includes(trimmed)).slice(0, 10);
 }

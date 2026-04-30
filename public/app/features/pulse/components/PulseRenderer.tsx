@@ -1,4 +1,8 @@
+import { css } from '@emotion/css';
 import { Fragment, type ReactNode } from 'react';
+
+import { renderMarkdown, type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
 import { isSafeUrl } from '../utils/body';
@@ -11,18 +15,73 @@ interface Props {
 }
 
 /**
- * PulseRenderer walks the validated AST and produces React nodes. We
- * never use dangerouslySetInnerHTML here — every node maps to a typed
- * React element so the rendered output cannot execute scripts even if
- * the AST somehow contained a disallowed type (we'd render text-as-text
- * for unknown nodes, which is safe).
+ * PulseRenderer renders a body to React nodes. New bodies carry a
+ * `markdown` source which we render through Grafana's renderMarkdown
+ * (xss + DOMPurify sanitized via sanitizeTextPanelContent). Older
+ * bodies only carry the validated AST; we walk those node-by-node so
+ * we never call dangerouslySetInnerHTML on unsanitized content.
  */
 export function PulseRenderer({ body, onMentionClick }: Props): ReactNode {
-  if (!body || !body.root) {
+  const styles = useStyles2(getStyles);
+  if (!body) {
+    return null;
+  }
+  if (typeof body.markdown === 'string' && body.markdown.length > 0) {
+    // renderMarkdown returns sanitized HTML; the surrounding `<div>` is
+    // styled to scope mention-style inline-code rendering to the pulse
+    // body so we don't bleed into the rest of the page.
+    const html = renderMarkdown(body.markdown);
+    return <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: html }} />;
+  }
+  if (!body.root) {
     return null;
   }
   return <RenderNode node={body.root} onMentionClick={onMentionClick} />;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  markdown: css({
+    '& p': {
+      margin: '0 0 0.5em',
+    },
+    '& p:last-child': {
+      marginBottom: 0,
+    },
+    '& code': {
+      background: theme.colors.warning.transparent,
+      color: theme.colors.warning.text,
+      padding: '0 4px',
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+    '& pre': {
+      background: theme.colors.background.canvas,
+      padding: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      overflowX: 'auto',
+    },
+    '& pre code': {
+      background: 'transparent',
+      color: 'inherit',
+      padding: 0,
+      borderRadius: 'unset',
+    },
+    '& blockquote': {
+      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      margin: '0 0 0.5em',
+      padding: theme.spacing(0, 1),
+      color: theme.colors.text.secondary,
+    },
+    '& ul, & ol': {
+      margin: '0 0 0.5em',
+      paddingLeft: theme.spacing(3),
+    },
+    '& a': {
+      color: theme.colors.primary.text,
+      textDecoration: 'underline',
+    },
+  }),
+});
 
 interface NodeProps {
   node: PulseBodyNode;

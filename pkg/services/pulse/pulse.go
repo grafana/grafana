@@ -3,6 +3,8 @@ package pulse
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -25,8 +27,12 @@ type Service interface {
 	AddPulse(ctx context.Context, cmd AddPulseCommand) (Pulse, error)
 	EditPulse(ctx context.Context, cmd EditPulseCommand) (Pulse, error)
 	DeletePulse(ctx context.Context, cmd DeletePulseCommand) error
+	DeleteThread(ctx context.Context, cmd DeleteThreadCommand) error
+	CloseThread(ctx context.Context, cmd CloseThreadCommand) (Thread, error)
+	ReopenThread(ctx context.Context, cmd ReopenThreadCommand) (Thread, error)
 	GetThread(ctx context.Context, orgID int64, uid string) (Thread, error)
 	ListThreads(ctx context.Context, q ListThreadsQuery) (PageResult[Thread], error)
+	ListAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error)
 	ListPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error)
 	Subscribe(ctx context.Context, cmd SubscribeCommand) error
 	Unsubscribe(ctx context.Context, cmd SubscribeCommand) error
@@ -59,11 +65,16 @@ func ProvideService(
 	sqlStore db.DB,
 	routeRegister routing.RouteRegister,
 	ac accesscontrol.AccessControl,
+	acService accesscontrol.Service,
 	features featuremgmt.FeatureToggles,
 	userSvc user.Service,
 	dashSvc dashboards.DashboardService,
 	channelPub ChannelPublisher,
 ) (*PulseService, error) {
+	if err := RegisterAccessControlRoles(acService); err != nil {
+		return nil, err
+	}
+
 	s := &PulseService{
 		cfg:           PulseConfig{MaxBodyBytes: MaxBodyBytes},
 		store:         newStore(sqlStore),
@@ -113,6 +124,15 @@ func (s *PulseService) CreateThread(ctx context.Context, cmd CreateThreadCommand
 		return CreateThreadResult{}, err
 	}
 
+	// Auto-derive the title from the first pulse's plain text when the
+	// caller didn't supply one. The list view falls back to "Conversation
+	// started <date>" only if both this and the client-side derivation
+	// produced an empty string.
+	title := strings.TrimSpace(cmd.Title)
+	if title == "" {
+		title = derivePreviewTitle(parsed.Text)
+	}
+
 	now := time.Now().UTC()
 	thread := Thread{
 		UID:          util.GenerateShortUID(),
@@ -120,7 +140,7 @@ func (s *PulseService) CreateThread(ctx context.Context, cmd CreateThreadCommand
 		ResourceKind: cmd.ResourceKind,
 		ResourceUID:  cmd.ResourceUID,
 		PanelID:      cmd.PanelID,
-		Title:        cmd.Title,
+		Title:        title,
 		CreatedBy:    cmd.AuthorUserID,
 		Created:      now,
 		Updated:      now,
@@ -169,6 +189,15 @@ func (s *PulseService) CreateThread(ctx context.Context, cmd CreateThreadCommand
 func (s *PulseService) AddPulse(ctx context.Context, cmd AddPulseCommand) (Pulse, error) {
 	if cmd.AuthorKind == "" {
 		cmd.AuthorKind = AuthorKindUser
+	}
+	// Reject replies on a closed thread before we hit the body validator
+	// so closed threads cannot accumulate work-in-progress drafts.
+	existing, err := s.store.getThreadByUID(ctx, cmd.OrgID, cmd.ThreadUID)
+	if err != nil {
+		return Pulse{}, err
+	}
+	if existing.Closed {
+		return Pulse{}, ErrThreadClosed
 	}
 	parsed, err := ParseAndValidateBody(cmd.Body)
 	if err != nil {
@@ -287,6 +316,91 @@ func (s *PulseService) DeletePulse(ctx context.Context, cmd DeletePulseCommand) 
 	return nil
 }
 
+// DeleteThread removes a thread and all of its pulses, mention rows,
+// subscriptions, and read-state markers. Authorization: thread author or
+// org admin. The dashboard read-permission check at the API boundary
+// already gated us in.
+func (s *PulseService) DeleteThread(ctx context.Context, cmd DeleteThreadCommand) error {
+	t, err := s.store.getThreadByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return err
+	}
+	if !cmd.IsAdmin && t.CreatedBy != cmd.UserID {
+		return ErrCannotDeleteThreadForbidden
+	}
+	if err := s.store.deleteThread(ctx, cmd.OrgID, cmd.UID); err != nil {
+		return err
+	}
+	s.publishEvent(Event{
+		Action:       EventThreadDeleted,
+		OrgID:        cmd.OrgID,
+		ResourceKind: string(t.ResourceKind),
+		ResourceUID:  t.ResourceUID,
+		ThreadUID:    t.UID,
+		AuthorUserID: cmd.UserID,
+		At:           time.Now().UTC(),
+	})
+	return nil
+}
+
+// CloseThread freezes a thread so no further replies are accepted. The
+// thread and its history remain visible. Author or admin can close.
+func (s *PulseService) CloseThread(ctx context.Context, cmd CloseThreadCommand) (Thread, error) {
+	t, err := s.store.getThreadByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return Thread{}, err
+	}
+	if !cmd.IsAdmin && t.CreatedBy != cmd.UserID {
+		return Thread{}, ErrCannotCloseThreadForbidden
+	}
+	if err := s.store.setThreadClosed(ctx, cmd.OrgID, cmd.UID, true, cmd.UserID); err != nil {
+		return Thread{}, err
+	}
+	t, err = s.store.getThreadByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return Thread{}, err
+	}
+	s.publishEvent(Event{
+		Action:       EventThreadClosed,
+		OrgID:        cmd.OrgID,
+		ResourceKind: string(t.ResourceKind),
+		ResourceUID:  t.ResourceUID,
+		ThreadUID:    t.UID,
+		AuthorUserID: cmd.UserID,
+		At:           time.Now().UTC(),
+	})
+	return t, nil
+}
+
+// ReopenThread clears the closed flag. Admin-only by design — the original
+// author closing decision is treated as final unless an admin overrides.
+func (s *PulseService) ReopenThread(ctx context.Context, cmd ReopenThreadCommand) (Thread, error) {
+	if !cmd.IsAdmin {
+		return Thread{}, ErrCannotReopenThreadForbidden
+	}
+	t, err := s.store.getThreadByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return Thread{}, err
+	}
+	if err := s.store.setThreadClosed(ctx, cmd.OrgID, cmd.UID, false, cmd.UserID); err != nil {
+		return Thread{}, err
+	}
+	t, err = s.store.getThreadByUID(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		return Thread{}, err
+	}
+	s.publishEvent(Event{
+		Action:       EventThreadReopened,
+		OrgID:        cmd.OrgID,
+		ResourceKind: string(t.ResourceKind),
+		ResourceUID:  t.ResourceUID,
+		ThreadUID:    t.UID,
+		AuthorUserID: cmd.UserID,
+		At:           time.Now().UTC(),
+	})
+	return t, nil
+}
+
 func (s *PulseService) GetThread(ctx context.Context, orgID int64, uid string) (Thread, error) {
 	return s.store.getThreadByUID(ctx, orgID, uid)
 }
@@ -296,6 +410,14 @@ func (s *PulseService) ListThreads(ctx context.Context, q ListThreadsQuery) (Pag
 		return PageResult[Thread]{}, err
 	}
 	return s.store.listThreads(ctx, q)
+}
+
+// ListAllThreads is the org-wide thread listing used by the global Pulse
+// overview page. Per-thread dashboard read permission is enforced by the
+// API layer (we do not have the request context here); the store query
+// itself is org-scoped only.
+func (s *PulseService) ListAllThreads(ctx context.Context, q ListAllThreadsQuery) (PageResult[Thread], error) {
+	return s.store.listAllThreads(ctx, q)
 }
 
 func (s *PulseService) ListPulses(ctx context.Context, q ListPulsesQuery) (PageResult[Pulse], error) {
@@ -439,4 +561,32 @@ func parseUserID(s string) int64 {
 // errors to 404s.
 func IsErrNotFound(err error) bool {
 	return errors.Is(err, ErrThreadNotFound) || errors.Is(err, ErrPulseNotFound)
+}
+
+// previewTitleMaxChars caps the auto-derived title at 160 chars. The
+// pulse_thread.title column is a NVarchar(255) so we leave headroom for
+// the ellipsis and any future suffix.
+const previewTitleMaxChars = 160
+
+// previewSentenceRegex matches the first sentence boundary so the
+// derived title doesn't bleed into a follow-up paragraph.
+var previewSentenceRegex = regexp.MustCompile(`(?s)^(.+?[.!?])(?:\s|$)`)
+
+// derivePreviewTitle returns a short, single-line preview of the pulse
+// body text. Used as the thread title when callers don't supply one;
+// matches the frontend's buildThreadPreviewTitle so the UI looks the
+// same whether the title was set by the client or backfilled here.
+func derivePreviewTitle(text string) string {
+	collapsed := strings.Join(strings.Fields(text), " ")
+	if collapsed == "" {
+		return ""
+	}
+	first := collapsed
+	if m := previewSentenceRegex.FindStringSubmatch(collapsed); len(m) > 1 {
+		first = m[1]
+	}
+	if len(first) <= previewTitleMaxChars {
+		return first
+	}
+	return strings.TrimRight(first[:previewTitleMaxChars-1], " ") + "…"
 }

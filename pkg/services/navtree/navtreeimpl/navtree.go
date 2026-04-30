@@ -191,6 +191,27 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			EmptyMessageId: "bookmarks-empty",
 			Url:            s.cfg.AppSubURL + "/bookmarks",
 		})
+
+		// Pulse is dashboard-conversation surfaces (threads on dashboards
+		// and panels). The top-level entry hosts the org-wide overview
+		// page; threads themselves live on each dashboard via the
+		// PulseDrawer overlay. Gated on the experimental dashboardPulse
+		// feature toggle so the default Grafana nav stays unchanged.
+		//
+		// SortWeight slots Pulse just below Dashboards (it's
+		// dashboard-adjacent in mental model) and above Explore.
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardPulse) {
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Pulse",
+				SubTitle:   "Threaded conversations on dashboards and panels",
+				Id:         navtree.NavIDPulse,
+				Icon:       "comment-alt-message",
+				SortWeight: navtree.WeightDashboard + 50,
+				Url:        s.cfg.AppSubURL + "/pulse",
+				IsNew:      true,
+			})
+		}
 	}
 
 	return treeRoot, nil

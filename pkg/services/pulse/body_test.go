@@ -26,7 +26,7 @@ func TestParseAndValidateBody_AcceptsAllowedNodes(t *testing.T) {
 		{
 			name: "panel mention",
 			raw:  `{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"mention","mention":{"kind":"panel","targetId":"7","displayName":"CPU"}}]}]}}`,
-			want: "@CPU",
+			want: "#CPU",
 		},
 		{
 			name: "https link is ok",

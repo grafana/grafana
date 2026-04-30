@@ -9,12 +9,20 @@ export type MentionKind = 'user' | 'panel';
 export type AuthorKind = 'user' | 'service_account';
 
 /**
- * Body is a Lexical-compatible JSON AST. The backend strictly validates
- * the node types so the frontend can render via React data bindings
- * (no dangerouslySetInnerHTML) without a sanitization step.
+ * Body carries the human-authored markdown source plus an AST sidecar
+ * that records mention metadata for notifications. Bodies authored
+ * before markdown support shipped have only `root` populated; the
+ * renderer handles both shapes.
+ *
+ * The AST allowlist is enforced server-side (paragraph / text /
+ * mention / link / code / quote / linebreak), and the markdown source
+ * is rendered through `renderMarkdown` from `@grafana/data` (which
+ * sanitizes via the same xss/DOMPurify pipeline used by the Text
+ * panel) so dangerouslySetInnerHTML stays safe.
  */
 export interface PulseBody {
   root: PulseBodyNode;
+  markdown?: string;
 }
 
 export interface PulseBodyNode {
@@ -45,6 +53,17 @@ export interface PulseThread {
   lastPulseAt: string;
   pulseCount: number;
   version: number;
+  closed?: boolean;
+  closedAt?: string;
+  closedBy?: number;
+  /** First pulse body AST, populated server-side for the thread list. */
+  previewBody?: PulseBody;
+  /** Display info for the thread starter, server-resolved. */
+  authorName?: string;
+  authorLogin?: string;
+  authorAvatarUrl?: string;
+  /** Resource title (e.g. dashboard title) — only set on the global overview. */
+  resourceTitle?: string;
 }
 
 export interface Pulse {
@@ -60,6 +79,9 @@ export interface Pulse {
   updated: string;
   edited: boolean;
   deleted: boolean;
+  authorName?: string;
+  authorLogin?: string;
+  authorAvatarUrl?: string;
 }
 
 export interface CreateThreadResult {
@@ -90,8 +112,12 @@ export interface MarkReadRequest {
 
 export interface PageResult<T> {
   items: T[];
+  /** Cursor-based listings populate this. */
   nextCursor?: string;
   hasMore: boolean;
+  /** Offset-paginated listings populate the page index and total count. */
+  page?: number;
+  totalCount?: number;
 }
 
 export interface ResourceVersion {
@@ -102,7 +128,14 @@ export interface ResourceVersion {
 }
 
 /** Discriminated union of events the live channel emits. */
-export type PulseEventAction = 'thread_created' | 'pulse_added' | 'pulse_edited' | 'pulse_deleted';
+export type PulseEventAction =
+  | 'thread_created'
+  | 'thread_deleted'
+  | 'thread_closed'
+  | 'thread_reopened'
+  | 'pulse_added'
+  | 'pulse_edited'
+  | 'pulse_deleted';
 
 export interface PulseEvent {
   action: PulseEventAction;

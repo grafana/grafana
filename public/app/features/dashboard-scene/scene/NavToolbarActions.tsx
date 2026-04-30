@@ -375,23 +375,6 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showPulseButton = uid && config.featureToggles.dashboardPulse && !isSnapshot && !isPlaying && !isEmbedded;
-  toolbarActions.push({
-    group: 'new-share-dashboard-buttons',
-    condition: Boolean(showPulseButton),
-    render: () => (
-      <ToolbarButton
-        key="pulse-toolbar-button"
-        tooltip={t('dashboard.toolbar.pulse.tooltip', 'Open Pulse — start or join the conversation about this dashboard')}
-        icon="comment-alt"
-        onClick={() => dashboard.onShowPulseDrawer()}
-        data-testid="pulse-toolbar-button"
-      >
-        <Trans i18nKey="dashboard.toolbar.pulse.label">Pulse</Trans>
-      </ToolbarButton>
-    ),
-  });
-
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
     condition: showShareButton,

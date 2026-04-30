@@ -12,6 +12,11 @@ import (
 // later; 32 KiB matches the value set in the design doc.
 const MaxBodyBytes = 32 * 1024
 
+// MaxMarkdownBytes caps the markdown source length. We allow most of the
+// body envelope budget for prose so a long write-up doesn't get rejected
+// because the AST sidecar pushed the JSON over MaxBodyBytes.
+const MaxMarkdownBytes = 24 * 1024
+
 // allowedNodeTypes is the strict allowlist of Lexical node types that may
 // appear in a pulse body. Validating the parsed AST against this allowlist
 // is what lets the frontend render the body via React data bindings without
@@ -60,12 +65,23 @@ func ParseAndValidateBody(raw json.RawMessage) (*ParsedBody, error) {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidBody, err)
 	}
 
+	if len(body.Markdown) > MaxMarkdownBytes {
+		return nil, ErrBodyTooLarge
+	}
+
 	pb := &ParsedBody{Body: body}
 	if err := walkNode(body.Root, pb, 0); err != nil {
 		return nil, err
 	}
 
 	pb.Text = strings.TrimSpace(pb.Text)
+	// When markdown is provided, prefer it for the text projection used
+	// by notifications and search — that's what the user actually wrote,
+	// and it includes formatting characters that are still readable in
+	// plain-text contexts (e.g. "**bold**" reads fine in an email).
+	if body.Markdown != "" {
+		pb.Text = strings.TrimSpace(body.Markdown)
+	}
 	if pb.Text == "" && len(pb.Mentions) == 0 {
 		return nil, ErrEmptyBody
 	}
@@ -93,10 +109,17 @@ func walkNode(n BodyNode, pb *ParsedBody, depth int) error {
 			return ErrBodyInvalidMention
 		}
 		pb.Mentions = append(pb.Mentions, *n.Mention)
+		// Panel mentions read more naturally as `#` (matching the
+		// composer's trigger character) and trailing space keeps the
+		// preview from concatenating into the next text node.
+		prefix := "@"
+		if n.Mention.Kind == MentionKindPanel {
+			prefix = "#"
+		}
 		if n.Mention.DisplayName != "" {
-			pb.Text += "@" + n.Mention.DisplayName
+			pb.Text += prefix + n.Mention.DisplayName + " "
 		} else {
-			pb.Text += "@" + string(n.Mention.Kind) + ":" + n.Mention.TargetID
+			pb.Text += prefix + string(n.Mention.Kind) + ":" + n.Mention.TargetID + " "
 		}
 	case "link":
 		if n.URL == "" {

@@ -21,19 +21,26 @@ import { type DashboardScene } from './DashboardScene';
 export interface PulseDrawerState extends SceneObjectState {
   /** When set, the drawer scopes its thread list to a specific panel. */
   panelId?: number;
+  /** When set, the drawer opens straight to this thread. Set via the
+   *  `?pulse=thread-<uid>` deep link from the global Pulse overview. */
+  initialThreadUID?: string;
 }
 
 /**
  * PulseDrawer is the side-drawer overlay that hosts the Pulse UI for
  * the active dashboard. It mirrors AddLibraryPanelDrawer's pattern: a
  * SceneObject that the dashboard's `overlay` slot renders. URL state
- * is synced via a single `pulse` key whose value is "open" or "panel-N";
- * deep links restore both the visibility and the panel-scoped variant.
+ * is synced via a single `pulse` key whose value is "open", "panel-N",
+ * or "thread-<uid>"; deep links restore both the visibility and the
+ * scoped variant.
  */
 export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
   protected _urlSync: SceneObjectUrlSyncHandler = new SceneObjectUrlSyncConfig(this, { keys: ['pulse'] });
 
   public getUrlState() {
+    if (this.state.initialThreadUID !== undefined) {
+      return { pulse: `thread-${this.state.initialThreadUID}` };
+    }
     if (this.state.panelId !== undefined) {
       return { pulse: `panel-${this.state.panelId}` };
     }
@@ -50,8 +57,24 @@ export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
       if (!Number.isNaN(id)) {
         this.setState({ panelId: id });
       }
+      return;
+    }
+    if (v.startsWith('thread-')) {
+      const uid = v.slice('thread-'.length).trim();
+      if (uid) {
+        this.setState({ initialThreadUID: uid });
+      }
     }
   }
+
+  /** Called once the drawer content has selected the deep-linked thread,
+   *  so the URL collapses back to `pulse=open` and a refresh doesn't
+   *  re-trigger the auto-open behavior. */
+  public clearInitialThreadUID = () => {
+    if (this.state.initialThreadUID !== undefined) {
+      this.setState({ initialThreadUID: undefined });
+    }
+  };
 
   public onClose = () => {
     getDashboardSceneFor(this).closeModal();
@@ -59,10 +82,14 @@ export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
 
   static Component = ({ model }: SceneComponentProps<PulseDrawer>) => {
     const dashboard = getDashboardSceneFor(model);
-    const { panelId } = model.useState();
+    const { panelId, initialThreadUID } = model.useState();
     const resourceUID = dashboard.state.uid ?? '';
     const panels = collectPanels(dashboard);
     const currentUserId = contextSrv.user.id;
+    // Reopen-thread is admin-only; close+delete-thread also surface for
+    // org admins so a moderation flow exists even when the original
+    // author has rotated out.
+    const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
     const title =
       panelId !== undefined
@@ -76,6 +103,9 @@ export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
           panelId={panelId}
           panels={panels}
           currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          initialThreadUID={initialThreadUID}
+          onInitialThreadOpened={model.clearInitialThreadUID}
           onMentionPanel={(id) => {
             // Navigate to the mentioned panel by switching the drawer to
             // its panel-scoped variant. The dashboard already provides

@@ -369,7 +369,7 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and @panel mentions, subscriptions, and notifications)
+  * Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)
   * @default false
   */
   dashboardPulse?: boolean;

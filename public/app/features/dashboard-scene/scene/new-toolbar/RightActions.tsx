@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -17,7 +16,6 @@ import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButt
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
 import { PlayListStopButton } from './actions/PlayListStopButton';
-import { PulseButton } from './actions/PulseButton';
 import { SaveDashboard } from './actions/SaveDashboard';
 import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
@@ -108,16 +106,6 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: MakeDashboardEditableButton,
             group: 'save-edit',
             condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
-          },
-          {
-            key: 'pulse-button',
-            component: PulseButton,
-            group: 'save-edit',
-            condition:
-              Boolean(config.featureToggles.dashboardPulse) &&
-              isShowingDashboard &&
-              !isPlaying &&
-              !isEditingDashboard,
           },
         ],
         dashboard

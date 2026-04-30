@@ -17,17 +17,17 @@ type Notifier interface {
 
 // PulseNotification is the data passed to Notifier.NotifyPulse.
 type PulseNotification struct {
-	OrgID         int64
-	ResourceKind  ResourceKind
-	ResourceUID   string
-	ThreadUID     string
-	PulseUID      string
-	AuthorUserID  int64
-	Recipients    []int64
-	BodyText      string
-	IsMention     map[int64]bool
-	ThreadTitle   string
-	Reason        NotificationReason
+	OrgID        int64
+	ResourceKind ResourceKind
+	ResourceUID  string
+	ThreadUID    string
+	PulseUID     string
+	AuthorUserID int64
+	Recipients   []int64
+	BodyText     string
+	IsMention    map[int64]bool
+	ThreadTitle  string
+	Reason       NotificationReason
 }
 
 // NotificationReason explains why a particular user was notified.

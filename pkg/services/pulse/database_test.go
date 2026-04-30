@@ -160,6 +160,137 @@ func TestIntegrationPulseStore_SubscriptionAndReadState(t *testing.T) {
 	require.Empty(t, users)
 }
 
+func TestIntegrationPulseStore_ListAllThreads(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	ctx := context.Background()
+	sql := db.InitTestDB(t)
+	st := newStore(sql)
+
+	now := time.Now().UTC()
+
+	// Three threads on three dashboards. user 1 starts threads A and B,
+	// user 2 starts thread C. user 3 will reply to A. user 4 subscribes to C.
+	makeThread := func(uid, dash, body string, by int64, created time.Time) {
+		t.Helper()
+		raw, parsed := sampleBody(t, body)
+		err := st.insertThreadAndPulse(ctx,
+			Thread{
+				UID: uid, OrgID: 1, ResourceKind: ResourceKindDashboard, ResourceUID: dash,
+				CreatedBy: by, Created: created, Updated: created, LastPulseAt: created,
+				PulseCount: 1, Version: 1, Title: body,
+			},
+			Pulse{
+				UID: util.GenerateShortUID(), ThreadUID: uid, OrgID: 1,
+				AuthorUserID: by, AuthorKind: AuthorKindUser,
+				BodyText: parsed.Text, BodyJSON: raw, Created: created, Updated: created,
+			},
+			parsed.Mentions,
+		)
+		require.NoError(t, err)
+	}
+	makeThread("aaaaaaaaaaaaaa", "dash-A", "deploy is rolling out", 1, now.Add(-3*time.Minute))
+	makeThread("bbbbbbbbbbbbbb", "dash-B", "p99 is spiking", 1, now.Add(-2*time.Minute))
+	makeThread("cccccccccccccc", "dash-C", "fresh annotation here", 2, now.Add(-1*time.Minute))
+
+	// user 3 replies on thread A
+	_, err := st.insertPulse(ctx, Pulse{
+		UID: util.GenerateShortUID(), ThreadUID: "aaaaaaaaaaaaaa", OrgID: 1,
+		AuthorUserID: 3, AuthorKind: AuthorKindUser,
+		BodyText: "rolling forward", BodyJSON: json.RawMessage(`{"root":{"type":"root","children":[{"type":"paragraph","children":[{"type":"text","text":"rolling forward"}]}]}}`),
+		Created: now, Updated: now,
+	}, nil)
+	require.NoError(t, err)
+
+	// user 4 subscribes to thread C
+	require.NoError(t, st.upsertSubscription(ctx, Subscription{
+		OrgID: 1, ThreadUID: "cccccccccccccc", UserID: 4, SubscribedAt: now,
+	}))
+
+	t.Run("no filter returns every thread, newest first", func(t *testing.T) {
+		page, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.Len(t, page.Items, 3)
+		// thread A bumped its last_pulse_at via the reply, so it should
+		// be first now.
+		require.Equal(t, "aaaaaaaaaaaaaa", page.Items[0].UID)
+	})
+
+	t.Run("text search matches title and body", func(t *testing.T) {
+		page, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Query: "p99"})
+		require.NoError(t, err)
+		require.Len(t, page.Items, 1)
+		require.Equal(t, "bbbbbbbbbbbbbb", page.Items[0].UID)
+
+		// case-insensitive
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Query: "ANNOTATION"})
+		require.NoError(t, err)
+		require.Len(t, page.Items, 1)
+		require.Equal(t, "cccccccccccccc", page.Items[0].UID)
+
+		// match in a reply body, not the original
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Query: "rolling forward"})
+		require.NoError(t, err)
+		require.Len(t, page.Items, 1)
+		require.Equal(t, "aaaaaaaaaaaaaa", page.Items[0].UID)
+	})
+
+	t.Run("mineOnly scopes to author/creator/subscriber", func(t *testing.T) {
+		// user 1 created A and B
+		page, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, UserID: 1, MineOnly: true})
+		require.NoError(t, err)
+		uids := threadUIDs(page.Items)
+		require.ElementsMatch(t, []string{"aaaaaaaaaaaaaa", "bbbbbbbbbbbbbb"}, uids)
+
+		// user 3 only replied to A
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, UserID: 3, MineOnly: true})
+		require.NoError(t, err)
+		require.Equal(t, []string{"aaaaaaaaaaaaaa"}, threadUIDs(page.Items))
+
+		// user 4 only subscribed to C
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, UserID: 4, MineOnly: true})
+		require.NoError(t, err)
+		require.Equal(t, []string{"cccccccccccccc"}, threadUIDs(page.Items))
+	})
+
+	t.Run("mineOnly + search compose", func(t *testing.T) {
+		page, err := st.listAllThreads(ctx, ListAllThreadsQuery{
+			OrgID: 1, UserID: 1, MineOnly: true, Query: "deploy",
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"aaaaaaaaaaaaaa"}, threadUIDs(page.Items))
+	})
+
+	t.Run("offset pagination splits results across pages", func(t *testing.T) {
+		page1, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Limit: 2, Page: 1})
+		require.NoError(t, err)
+		require.Len(t, page1.Items, 2)
+		require.True(t, page1.HasMore)
+		require.EqualValues(t, 3, page1.TotalCount)
+
+		page2, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Limit: 2, Page: 2})
+		require.NoError(t, err)
+		require.Len(t, page2.Items, 1)
+		require.False(t, page2.HasMore)
+		require.EqualValues(t, 3, page2.TotalCount)
+
+		// First two results plus the third must be the full set with no
+		// duplicates and no skips.
+		all := append(threadUIDs(page1.Items), threadUIDs(page2.Items)...)
+		require.ElementsMatch(t, []string{"aaaaaaaaaaaaaa", "bbbbbbbbbbbbbb", "cccccccccccccc"}, all)
+	})
+}
+
+func threadUIDs(threads []Thread) []string {
+	out := make([]string, 0, len(threads))
+	for _, t := range threads {
+		out = append(out, t.UID)
+	}
+	return out
+}
+
 func TestCursorRoundTrip(t *testing.T) {
 	c := cursor{Created: "2026-04-28T00:00:00Z", UID: "abc"}
 	enc := encodeCursor(c)

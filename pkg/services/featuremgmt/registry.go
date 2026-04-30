@@ -647,7 +647,7 @@ var (
 		},
 		{
 			Name:        "dashboardPulse",
-			Description: "Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and @panel mentions, subscriptions, and notifications)",
+			Description: "Enables Pulse, threaded conversations attached to dashboards and panels (Slack-style threads with @user and #panel mentions, subscriptions, and notifications)",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
