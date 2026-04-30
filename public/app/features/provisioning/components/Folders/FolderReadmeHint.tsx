@@ -26,8 +26,6 @@ interface Props {
  *   - a README has loaded successfully for the folder, and
  *   - the dashboards list is long enough (>= FOLDER_README_HINT_MIN_ITEMS)
  *     that the README would otherwise be off-screen at the bottom.
- *
- * Self-gates on all conditions so the caller doesn't need conditional rendering.
  */
 export function FolderReadmeHint({ folderUID, isProvisionedFolder }: Props) {
   if (!config.featureToggles.provisioningReadmes || !isProvisionedFolder || !folderUID) {
@@ -69,7 +67,7 @@ function FolderReadmeHintInner({ folderUID }: { folderUID: string }) {
       <Text variant="bodySmall" color="secondary">
         <Trans i18nKey="browse-dashboards.readme.hint">
           Lots of dashboards or new to this folder?{' '}
-          <TextLink inline href={`#${FOLDER_README_ANCHOR_ID}`} onClick={handleClick}>
+          <TextLink inline variant="bodySmall" href={`#${FOLDER_README_ANCHOR_ID}`} onClick={handleClick}>
             See the README
           </TextLink>
         </Trans>
