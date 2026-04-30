@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/external_group_sync/ # /docs/grafana/next/http_api/external_group_sync/
-  - ../../../developers/http_api/external_group_sync/ # /docs/grafana/next/developers/http_api/external_group_sync/
-  - ../../../developers/http_api/team_sync/ # /docs/grafana/next/developers/http_api/team_sync/
+  - ../../../../http_api/external_group_sync/ # /docs/grafana/next/http_api/external_group_sync/
+  - ../../../../developers/http_api/external_group_sync/ # /docs/grafana/next/developers/http_api/external_group_sync/
+  - ../../../../developers/http_api/team_sync/ # /docs/grafana/next/developers/http_api/team_sync/
   - ../../../../developer-resources/api-reference/http-api/team_sync/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/team_sync/
 description: Grafana Team Sync HTTP API

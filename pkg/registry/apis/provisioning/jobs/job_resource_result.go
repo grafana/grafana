@@ -58,6 +58,7 @@ func classifyWarning(err error) (string, bool) {
 	var missingMetaErr *resources.MissingFolderMetadata
 	var metaConflictErr *resources.FolderMetadataConflict
 	var invalidMetaErr *resources.InvalidFolderMetadata
+	var depthExceededErr *resources.FolderDepthExceededError
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
@@ -74,6 +75,8 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonFolderMetadataConflict, true
 	case errors.As(err, &invalidMetaErr):
 		return provisioning.ReasonInvalidFolderMetadata, true
+	case errors.As(err, &depthExceededErr):
+		return provisioning.ReasonFolderDepthExceeded, true
 	default:
 		return "", false
 	}

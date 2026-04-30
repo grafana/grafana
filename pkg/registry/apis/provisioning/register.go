@@ -135,11 +135,13 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter      func(context.Context) (*clientrest.Config, error)
-	registry              prometheus.Registerer
-	quotaGetter           quotas.QuotaGetter
-	folderMetadataEnabled bool
-	folderAPIVersion      string
+	restConfigGetter              func(context.Context) (*clientrest.Config, error)
+	registry                      prometheus.Registerer
+	quotaGetter                   quotas.QuotaGetter
+	folderMetadataEnabled         bool
+	maxIncrementalChanges         int
+	folderAPIVersion              string
+	webhookSecretRotationInterval time.Duration
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -186,6 +188,7 @@ func NewAPIBuilder(
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
 	folderAPIVersion string,
+	maxIncrementalChanges int,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -237,6 +240,7 @@ func NewAPIBuilder(
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
 		folderAPIVersion:                    folderAPIVersion,
+		maxIncrementalChanges:               maxIncrementalChanges,
 	}
 
 	for _, builder := range extraBuilders {
@@ -311,6 +315,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
+	maxIncrementalChanges := cfg.ProvisioningMaxIncrementalChanges
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -342,10 +347,12 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
 	}
+	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -378,12 +385,14 @@ func RegisterAPIService(
 		quotaGetter,
 		folderMetadataEnabled,
 		folderAPIVersion,
+		maxIncrementalChanges,
 	)
 	if err != nil {
 		return nil, err
 	}
-
+	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(v1beta1Builder)
+
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
@@ -1001,6 +1010,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			webhookSecretRotationInterval := b.webhookSecretRotationInterval
+			if webhookSecretRotationInterval <= 0 {
+				// If webhookSecretRotationInterval is not set, use the default value
+				webhookSecretRotationInterval = 30 * 24 * time.Hour
+			}
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -1020,6 +1035,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.quotaGetter,
 				b.folderMetadataEnabled,
 				b.folderAPIVersion,
+				b.maxIncrementalChanges,
+				webhookSecretRotationInterval,
 			)
 			if err != nil {
 				return err
@@ -1428,6 +1445,19 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
+	// use an empty ReferenceCallback, so non-primitive fields like commit lose
+	// their $ref and have to be re-attached here (same pattern as RepositoryViewList.items).
+	commitSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"]
+	commitSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
 
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{

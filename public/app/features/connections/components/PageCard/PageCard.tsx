@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 type PageCardProps = {
   title: string;
@@ -32,8 +32,12 @@ export default function PageCard({ title, description, icon, url, index }: PageC
     >
       <Icon name={icon} className={`${styles.logo} ${index % 2 === 0 ? styles.evenLogo : styles.oddLogo}`} />
       <div className={styles.contentColumn}>
-        <h3 className={styles.title}>{title}</h3>
-        <p className={styles.description}>{description}</p>
+        <Stack direction="column" gap={1}>
+          <Text element="h2" variant="h4">
+            {title}
+          </Text>
+          <p className={styles.description}>{description}</p>
+        </Stack>
       </div>
     </div>
   );
@@ -57,12 +61,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   contentColumn: css({
     flex: 1,
-  }),
-  title: css({
-    marginBottom: theme.spacing(1),
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: theme.typography.h4.fontWeight,
-    color: theme.colors.text.primary,
   }),
   description: css({
     WebkitLineClamp: 3,

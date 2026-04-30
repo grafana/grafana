@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Удалить все правила"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Удалить",
       "delete-modal-delete-button": "Удалить",
@@ -1583,8 +1585,14 @@
         "update-error": "Не удалось обновить группу правил",
         "update-success": "Группа правил обновлена"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Редактирование группы правил",
       "rule-group-error": "Ошибка при загрузке группы правил"
     },
@@ -3627,9 +3635,9 @@
         "declare-incident": "Сообщить об инциденте",
         "declare-incident-no-permission": "У вас нет разрешения на доступ к инциденту",
         "instance-details": "Сведения об экземпляре",
+        "section-silence": "",
         "silence-button": "Временное отключение",
-        "silence-no-permission": "У вас нет разрешения на создание временных отключений",
-        "silence-title-with-name": ""
+        "silence-no-permission": "У вас нет разрешения на создание временных отключений"
       },
       "labels-column-title": "Метки",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -4551,6 +4559,8 @@
       "label": {
         "alphabetically-az": "В алфавитном порядке (прямом)",
         "alphabetically-za": "В алфавитном порядке (обратном)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Удалено (сначала новые)",
         "deleted-oldest": "Удалено (сначала старые)"
       }
@@ -5696,6 +5706,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-filters-set": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -6515,7 +6526,6 @@
         "save-library-panel": "Сохранить панель библиотеки",
         "share": {
           "arrow": "Общий доступ",
-          "title": "Общий доступ",
           "tooltip": "Копировать ссылку"
         },
         "unlink-library-panel": "Отсоединить панель библиотеки"
@@ -6550,6 +6560,7 @@
     },
     "transformation-editor": {
       "input-data": "Ввод данных",
+      "loading": "",
       "output-data": "Данные вывода",
       "title-debug-transformation": "Отладка преобразования"
     },
@@ -8361,6 +8372,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Поиск"
     },
     "resource-dimension-editor": {
@@ -8747,6 +8759,7 @@
         "copy-link": "Копировать ссылку в строку журнала",
         "copy-to-clipboard": "Копировать в буфер обмена",
         "inspect-value": "Проверить значение",
+        "show-details": "",
         "view-log-line": "Просмотр строки журнала"
       }
     },
@@ -10235,6 +10248,12 @@
     "cascader": {
       "clear-button": "Очистить выбор"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Значение RGBA"
     },
@@ -10580,6 +10599,7 @@
     "sidebar": {
       "close": "Закрыть",
       "dock": "Закрепить",
+      "go-back": "",
       "hide": "Скрыть",
       "show": "Показать",
       "undock": "Открепить"
@@ -11346,6 +11366,7 @@
       "label-numbers": "Номера",
       "label-signature": "Подпись"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Экспериментальная функция. Показывает компонент для управления отображаемыми полями из журналов.",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала.",
@@ -11461,6 +11482,8 @@
       "fields-section": "Поля",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Значение ссылки",
       "links-section": "Ссылки",
       "log-attributes-field": "Атрибуты журнала",
@@ -11647,6 +11670,7 @@
         "common-labels": "Общие метки:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Общие метки",
     "name-deduplication": "Дедупликация",
     "name-details-mode": "Сведения о журналах на панели",
@@ -11709,13 +11733,13 @@
   "logstable": {
     "category-table": "Таблица журналов",
     "description-show-controls": "Отображение элементов управления таблицами",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
       "name": "Отображение кнопки копирования ссылки на журнал"
-    },
-    "show-inspect-button": {
-      "description": "Включает/отключает кнопку проверки строки журнала в первом столбце каждой строки",
-      "name": "Отображение кнопки проверки"
     }
   },
   "manage-dashbaords": {
@@ -12035,8 +12059,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Все",
-      "title-filtered": "Все (после фильтра)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Очистить всё"
@@ -13285,6 +13311,7 @@
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном API",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "bootstrap-step": {
@@ -13710,6 +13737,7 @@
       "contact-admin": "Чтобы преобразовать этот ресурс в локальный или удалить все ресурсы из отсутствующего репозитория, обратитесь к администратору Grafana.",
       "convert-to-local-button": "Преобразовать в локальные",
       "delete-button": "Удалить",
+      "go-to-dashboards": "",
       "job-error": "Ошибка при обработке потерянных ресурсов",
       "job-success": "Потерянные ресурсы обработаны",
       "job-warning": "Некоторые ресурсы были обработаны с предупреждениями. Просмотрите результаты.",
@@ -13972,7 +14000,8 @@
       "make-sure": "Создать токен с этими разрешениями"
     },
     "validation": {
-      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку."
+      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Предупреждение",
     "watch-stream": {
@@ -14268,7 +14297,6 @@
       "hide": "Скрыть {{type}}",
       "hide-help": "Скрыть справку по источнику данных",
       "hide-transformation-help": "Скрыть справку по преобразованию",
-      "inspector": "Проверка запросов",
       "more-actions": "Другие действия с {{type}}",
       "remove": "Удалить {{type}}",
       "remove-transformation-filter": "Удалить фильтр",
@@ -14280,6 +14308,31 @@
     "alerts": {
       "no-alerts": "Для этой панели нет правил оповещений",
       "no-alerts-description": "Создайте правило оповещений, чтобы получать уведомления, когда ваши данные будут соответствовать определенным условиям."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_few": "",
+      "delete-confirm-title_many": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_few": "",
+      "delete-transformations-confirm-title_many": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Удалить запрос?",
@@ -14317,6 +14370,7 @@
     },
     "footer": {
       "edit-option": "Редактировать {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Интервал",
         "max-data-points": "Макс. количество точек данных",
@@ -14327,6 +14381,7 @@
       "placeholder": {
         "no-limit": "Без ограничения"
       },
+      "query-inspector": "",
       "query-options": "Параметры запроса"
     },
     "header": {
@@ -14419,6 +14474,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Восстановить"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
@@ -14585,6 +14644,10 @@
     },
     "results-table": {
       "datasource-header": "Источник данных",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 мин.",
       "deleted-remaining-header": "Оставшееся время",
       "location-header": "Расположение",
@@ -14941,6 +15004,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",
@@ -16112,6 +16179,7 @@
           "group-by": "Группировать по"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Пропущено",
       "placeholder-select-stats": "Выбрать статистику"
     },
@@ -16123,6 +16191,16 @@
         "group-by": "Группировать по"
       },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -16146,6 +16224,9 @@
       "name": {
         "grouping-to-matrix": "Группировка в матрицу"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16481,6 +16562,9 @@
       "label-time-field": "Поле времени",
       "tooltip-statistic-should-calculated-series": "Статистика, которая должна быть рассчитана для этого временного ряда.",
       "tooltip-time-field": "Поле времени, которое будет использоваться для временного ряда. Если оно не выбрано, будет использоваться первое найденное."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Имя первого поля",

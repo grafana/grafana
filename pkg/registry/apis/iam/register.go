@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
@@ -377,7 +378,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength: 80,
+		MaximumNameLength:           80,
+		RequireDeprecatedInternalID: true,
 	})
 
 	if enableTeamsApi {
@@ -399,7 +401,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi, enableZanzanaSync); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
 			return err
 		}
 	}
@@ -474,18 +476,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.dual != nil && b.unified != nil {
-		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
-
-		teamBindingSearchClient := resource.NewSearchClient(
-			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamBindingResourceInfo.GroupResource(),
-			b.unified,
-			legacyTeamBindingSearchClient,
-		)
-
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
@@ -574,13 +565,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
 
 	if b.dual != nil && b.unified != nil {
-		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
-
-		teamBindingSearchClient := resource.NewSearchClient(
+		teamSearchClient := resource.NewSearchClient(
 			dualwrite.NewSearchAdapter(b.dual),
-			iamv0.TeamBindingResourceInfo.GroupResource(),
+			iamv0.TeamResourceInfo.GroupResource(),
 			b.unified,
-			legacyTeamBindingSearchClient,
+			team.NewLegacyUserTeamsSearchClient(b.store, b.tracing),
 		)
 
 		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
@@ -595,7 +584,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing, b.features)
 	}
 
 	return nil
@@ -622,7 +611,7 @@ func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo ut
 	return true
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool, enableServiceAccountTokensApi bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
@@ -638,16 +627,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 
 	storage[saResource.StoragePath()] = saUniStore
 
+	var saStore storewrapper.K8sStorage = saUniStore
+
 	if b.saLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
 		if err != nil {
 			return err
 		}
 		storage[saResource.StoragePath()] = dw
+		saStore = dw
 	}
 
 	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, b.tracing)
 	}
 
 	return nil
@@ -757,6 +749,9 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 			}},
 	}
+
+	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
+	serviceaccounttoken.PostProcessOpenAPI(oas)
 
 	if oas.Paths != nil && oas.Paths.Paths != nil {
 		pathsToUpdate := []string{

@@ -172,7 +172,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
@@ -404,7 +403,6 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
@@ -458,7 +456,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSetBase,
 	// Secrets Manager
-	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,

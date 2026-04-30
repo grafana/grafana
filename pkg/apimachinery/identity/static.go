@@ -35,6 +35,7 @@ type StaticRequester struct {
 	IDToken           string
 	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]
 	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims]
+	Groups            []string
 	CacheKey          string
 }
 
@@ -114,7 +115,13 @@ func (u *StaticRequester) GetExtra() map[string][]string {
 }
 
 func (u *StaticRequester) GetGroups() []string {
-	return []string{}
+	if u.Groups != nil {
+		return u.Groups
+	}
+	if u.IDTokenClaims != nil {
+		return []string{} // TODO: the ID token may have the groups
+	}
+	return []string{} // TODO
 }
 
 func (u *StaticRequester) GetName() string {

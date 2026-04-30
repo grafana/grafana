@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -31,10 +30,9 @@ type ClientV2 struct {
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
-	pluginextensionv2.RendererPlugin
 }
 
-func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
+func newClientV2(rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	rawDiagnostics, err := rpcClient.Dispense("diagnostics")
 	if err != nil {
 		return nil, err
@@ -61,11 +59,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawStream, err := rpcClient.Dispense("stream")
-	if err != nil {
-		return nil, err
-	}
-
-	rawRenderer, err := rpcClient.Dispense("renderer")
 	if err != nil {
 		return nil, err
 	}
@@ -104,18 +97,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawStream != nil {
 		if streamClient, ok := rawStream.(grpcplugin.StreamClient); ok {
 			c.StreamClient = streamClient
-		}
-	}
-
-	if rawRenderer != nil {
-		if rendererPlugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
-			c.RendererPlugin = rendererPlugin
-		}
-	}
-
-	if descriptor.startRendererFn != nil {
-		if err := descriptor.startRendererFn(descriptor.pluginID, c.RendererPlugin, logger); err != nil {
-			return nil, err
 		}
 	}
 

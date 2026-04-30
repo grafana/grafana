@@ -91,6 +91,16 @@ class DashboardWatcher {
     this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
   }
 
+  // Suppress save events indefinitely until clearIgnoreSave() is called.
+  // Used by provisioned saves where Git operations can exceed the 5s window.
+  ignoreSaveIndefinitely() {
+    this.ignoreSave = Infinity;
+  }
+
+  clearIgnoreSave() {
+    this.ignoreSave = 0;
+  }
+
   getRecentEditingEvent() {
     if (this.lastEditing && this.lastEditing.timestamp) {
       const elapsed = Date.now() - this.lastEditing.timestamp;

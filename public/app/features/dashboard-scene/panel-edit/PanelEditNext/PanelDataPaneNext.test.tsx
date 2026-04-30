@@ -63,10 +63,6 @@ jest.mock('../../utils/utils', () => ({
   getDashboardSceneFor: (sceneObject: unknown) => mockGetDashboardSceneFor(sceneObject),
 }));
 
-jest.mock('../getPanelFrameOptions', () => ({
-  getUpdatedHoverHeader: jest.fn(() => false),
-}));
-
 // Mock sceneGraph.getTimeRange
 jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({} as ReturnType<typeof sceneGraph.getTimeRange>);
 
@@ -1379,6 +1375,298 @@ describe('PanelDataPaneNext', () => {
 
       await testDataPane.changeDataSource({ uid: 'prom-uid-2', type: 'prometheus' }, 'A');
 
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
+
+  describe('bulk query operations', () => {
+    it('bulkDeleteQueries removes all specified queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.bulkDeleteQueries(['A', 'C']);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queries: [{ refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } }],
+        })
+      );
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleQueriesHide hides the specified queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.bulkToggleQueriesHide(['A', 'B'], true);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [
+          { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+          { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+          { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        ],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleQueriesHide shows hidden queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+      ];
+
+      dataPane.bulkToggleQueriesHide(['A', 'B'], false);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [
+          { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: false },
+          { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: false },
+        ],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
+
+  describe('bulkChangeDataSource', () => {
+    const promSettings: DataSourceInstanceSettings = {
+      uid: 'prom-uid',
+      type: 'prometheus',
+      name: 'Prometheus',
+      access: 'proxy',
+      meta: {
+        id: 'prometheus',
+        name: 'Prometheus',
+        type: 'datasource' as DataSourceInstanceSettings['meta']['type'],
+        info: {
+          author: { name: '' },
+          description: '',
+          links: [],
+          logos: { small: '', large: '' },
+          screenshots: [],
+          updated: '',
+          version: '',
+        },
+        module: '',
+        baseUrl: '',
+      },
+      readOnly: false,
+      jsonData: {},
+    };
+
+    const lokiSettings: DataSourceInstanceSettings = {
+      ...promSettings,
+      uid: 'loki-uid',
+      name: 'Loki',
+      type: 'loki',
+      meta: { ...promSettings.meta, id: 'loki', name: 'Loki' },
+    };
+
+    const promInstance2Settings: DataSourceInstanceSettings = {
+      ...promSettings,
+      uid: 'prom-uid-2',
+      name: 'Prometheus 2',
+    };
+
+    let mockGet: jest.Mock;
+    let testDataPane: PanelDataPaneNext;
+
+    beforeEach(() => {
+      mockGet = jest.fn().mockResolvedValue({});
+
+      jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
+        get: mockGet,
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      testDataPane = new PanelDataPaneNext({
+        panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
+      });
+    });
+
+    it('switches all selected queries to the new datasource (single-datasource panel)', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+        { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+        { refId: 'C', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+      ];
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A', 'B'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      // Same type — no getDefaultQuery call, just datasource ref update
+      const queriesCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
+      expect(queriesCall).toBeDefined();
+      const { queries } = queriesCall![0];
+
+      expect(queries.find((q: DataQuery) => q.refId === 'A').datasource?.uid).toBe('prom-uid-2');
+      expect(queries.find((q: DataQuery) => q.refId === 'B').datasource?.uid).toBe('prom-uid-2');
+      // C was not in the selection — must be unchanged
+      expect(queries.find((q: DataQuery) => q.refId === 'C').datasource?.uid).toBe('prom-uid');
+    });
+
+    it('only switches the selected queries without touching unselected ones (mixed-datasource panel)', async () => {
+      // Panel is already Mixed; only selected queries should change
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+        { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } },
+        { refId: 'C', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+      ];
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A', 'C'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      const queriesCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
+      expect(queriesCall).toBeDefined();
+      const { queries } = queriesCall![0];
+
+      expect(queries.find((q: DataQuery) => q.refId === 'A').datasource?.uid).toBe('prom-uid-2');
+      // B was not selected — stays on loki
+      expect(queries.find((q: DataQuery) => q.refId === 'B').datasource?.uid).toBe('loki-uid');
+      expect(queries.find((q: DataQuery) => q.refId === 'C').datasource?.uid).toBe('prom-uid-2');
+    });
+
+    it('applies getDefaultQuery template when switching to a different datasource type', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' }, expr: 'rate(requests[5m])' },
+        { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' }, expr: 'rate(errors[5m])' },
+      ];
+
+      const lokiApi = { getDefaultQuery: jest.fn().mockReturnValue({ logQL: '', maxLines: 1000 }) };
+      mockGet.mockResolvedValue(lokiApi);
+
+      mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'loki-uid' ? lokiSettings : promSettings;
+      });
+
+      await testDataPane.bulkChangeDataSource(['A', 'B'], { uid: 'loki-uid', type: 'loki' });
+
+      const queriesCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
+      expect(queriesCall).toBeDefined();
+      const { queries } = queriesCall![0];
+
+      // Both selected queries should have the new DS and Loki default fields merged in
+      const queryA = queries.find((q: DataQuery) => q.refId === 'A');
+      const queryB = queries.find((q: DataQuery) => q.refId === 'B');
+
+      expect(queryA.datasource?.uid).toBe('loki-uid');
+      expect(queryA.logQL).toBe('');
+      expect(queryA.maxLines).toBe(1000);
+
+      expect(queryB.datasource?.uid).toBe('loki-uid');
+      expect(queryB.logQL).toBe('');
+      expect(queryB.maxLines).toBe(1000);
+    });
+
+    it('transitions the panel to Mixed mode when it was not Mixed before', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+        { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+      ];
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasource: { type: 'mixed', uid: '-- Mixed --' },
+        })
+      );
+    });
+
+    it('does not re-transition when the panel is already Mixed', async () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+        { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } },
+      ];
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      const mixedTransitionCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(
+        ([args]) => args.datasource?.uid === '-- Mixed --'
+      );
+      expect(mixedTransitionCall).toBeUndefined();
+    });
+
+    it('sets dsError and does not update queries when the target datasource is not found', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValue(undefined); // not found
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+    });
+
+    it('runs queries after a successful datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
+
+  describe('bulk transformation operations', () => {
+    const mockTransformations: DataTransformerConfig[] = [
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+      { id: 'filter', options: {} },
+    ];
+
+    let mockTransformer: SceneDataTransformer;
+
+    beforeEach(() => {
+      mockTransformer = new SceneDataTransformer({
+        transformations: mockTransformations,
+        $data: mockQueryRunner,
+      });
+
+      jest.spyOn(mockTransformer, 'setState');
+      mockPanel.state.$data = mockTransformer;
+    });
+
+    it('bulkDeleteTransformations removes specified transformations by index', () => {
+      dataPane.bulkDeleteTransformations([0, 2]);
+
+      expect(mockTransformer.setState).toHaveBeenCalledWith({
+        transformations: [{ id: 'reduce', options: {} }],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleTransformationsDisabled disables specified transformations', () => {
+      dataPane.bulkToggleTransformationsDisabled([0, 1], true);
+
+      expect(mockTransformer.setState).toHaveBeenCalledWith({
+        transformations: [
+          { id: 'organize', options: {}, disabled: true },
+          { id: 'reduce', options: {}, disabled: true },
+          { id: 'filter', options: {} },
+        ],
+      });
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
     });
   });

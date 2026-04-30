@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
@@ -5,6 +6,7 @@ import { type ReactElement } from 'react';
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
@@ -96,6 +98,11 @@ export const mockActions: QueryEditorActions = {
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
   reorderTransformations: jest.fn(),
+  bulkDeleteQueries: jest.fn(),
+  bulkToggleQueriesHide: jest.fn(),
+  bulkDeleteTransformations: jest.fn(),
+  bulkToggleTransformationsDisabled: jest.fn(),
+  bulkChangeDataSource: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -282,17 +289,19 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   return {
     user: userEvent.setup({ pointerEventsCheck: 0 }),
     ...render(
-      <QueryEditorProvider
-        dsState={defaultDsState}
-        qrState={defaultQrState}
-        panelState={defaultPanelState}
-        uiState={defaultUiState}
-        actions={defaultActions}
-        alertingState={defaultAlertingState}
-        typeConfig={mockTypeConfig}
-      >
-        {children}
-      </QueryEditorProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <QueryEditorProvider
+          dsState={defaultDsState}
+          qrState={defaultQrState}
+          panelState={defaultPanelState}
+          uiState={defaultUiState}
+          actions={defaultActions}
+          alertingState={defaultAlertingState}
+          typeConfig={mockTypeConfig}
+        >
+          {children}
+        </QueryEditorProvider>
+      </OpenFeatureProvider>
     ),
   };
 }
