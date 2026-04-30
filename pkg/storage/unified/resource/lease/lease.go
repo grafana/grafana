@@ -166,7 +166,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			generation: generation,
 			lostCh:     make(chan struct{}),
 		}
-		l.lostTimer = time.AfterFunc(cfg.ttl, l.notifyLoss)
+		l.lostTimer = time.AfterFunc(time.Until(expires), l.notifyLoss)
 		return l, nil
 	}
 }
