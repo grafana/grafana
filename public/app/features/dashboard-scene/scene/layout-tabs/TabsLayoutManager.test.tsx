@@ -140,6 +140,31 @@ describe('TabsLayoutManager', () => {
 
       expect(tabsLayoutManager.state.tabs).toHaveLength(0);
     });
+
+    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      const tabsLayoutManager = new TabsLayoutManager({
+        key: 'test-TabsLayoutManager',
+        tabs: [new TabItem({ title: 'First' })],
+      });
+      const dashboard = new DashboardScene({
+        body: tabsLayoutManager,
+        isEditing: true,
+        editable: true,
+      });
+      dashboard.state.body.editModeChanged?.(true);
+
+      const newTab = tabsLayoutManager.addNewTab();
+      const layout = newTab.getLayout();
+
+      if (layout instanceof DefaultGridLayoutManager) {
+        expect(layout.state.grid.state.isResizable).toBe(true);
+        expect(layout.state.grid.state.isDraggable).toBe(true);
+      } else if (layout instanceof AutoGridLayoutManager) {
+        expect(layout.state.layout.state.isDraggable).toBe(true);
+      } else {
+        throw new Error(`Unexpected layout type for assertion: ${layout.constructor.name}`);
+      }
+    });
   });
 
   describe('removeTab', () => {
