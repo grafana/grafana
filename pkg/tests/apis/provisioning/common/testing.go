@@ -58,6 +58,13 @@ import (
 const (
 	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
+
+	// waitTimeoutCleanup is the per-step budget for CleanupAllResources. Folder
+	// admission validates "folder is empty" against the resource search index,
+	// which is eventually consistent with respect to dashboard deletes. Under
+	// SQLite write contention that lag has been observed to exceed 60s, so
+	// cleanup gets a larger budget than the default per-operation wait.
+	waitTimeoutCleanup = 2 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -1398,7 +1405,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
 //
-// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// Every step uses waitTimeoutCleanup because each one can be blocked by an
 // eventually-consistent signal: repository finalizers draining orphan
 // resources, dashboards freeing their folder reference in the search index,
 // and folder admission rejecting deletion until that index catches up. Under
@@ -1414,7 +1421,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
+		if err := deleteAndWait(ctx, c.client, waitTimeoutCleanup); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
