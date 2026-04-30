@@ -147,6 +147,7 @@ Heading.displayName = 'Heading';
 const getHeadingStyles = (theme: GrafanaTheme2) => ({
   heading: css({
     gridArea: 'Heading',
+    gridColumnEnd: 'Tags',
     justifySelf: 'start',
     display: 'flex',
     justifyContent: 'space-between',
@@ -213,6 +214,7 @@ const getDescriptionStyles = (theme: GrafanaTheme2) => ({
   description: css({
     width: '100%',
     gridArea: 'Description',
+    gridColumnEnd: 'Tags',
     margin: theme.spacing(1, 0, 0),
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.body.lineHeight,
@@ -285,6 +287,7 @@ Meta.displayName = 'Meta';
 const getMetaStyles = (theme: GrafanaTheme2) => ({
   metadata: css({
     gridArea: 'Meta',
+    gridColumnEnd: 'Tags',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
