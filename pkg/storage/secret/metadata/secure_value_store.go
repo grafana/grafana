@@ -669,8 +669,8 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 		SQLTemplate:  sqltemplate.New(s.dialect),
 		LeaseToken:   leaseToken,
 		MaxBatchSize: maxBatchSize,
-		MinAge:       int64((300 * time.Second).Seconds()),
-		LeaseTTL:     int64((300 * time.Second).Seconds()),
+		MinAge:       int64((10 * time.Minute).Seconds()),
+		LeaseTTL:     int64((5 * time.Minute).Seconds()),
 		Now:          s.clock.Now().UTC().Unix(),
 	}
 
@@ -775,6 +775,9 @@ func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secu
 		return nil, fmt.Errorf("adding to secure values gc retry count: %w", err)
 	}
 
+	// NOTE: this read may return stale data when concurrent method calls are made.
+	// this is fine since the method is used only by the gc worker at the moment
+	// and it'll work fine with stale data.
 	secureValues, err := s.fetchByIds(ctx, secureValueIDs)
 	if err != nil {
 		return nil, fmt.Errorf("fetching secure values by ids: %w", err)
