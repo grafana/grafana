@@ -291,8 +291,8 @@ func TestProperty(t *testing.T) {
 			},
 			"cleanup": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
-				minAge := 300 * time.Second
-				leaseTTL := 30 * time.Second
+				minAge := 10 * time.Minute
+				leaseTTL := 5 * time.Minute
 				maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
 				modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
@@ -309,7 +309,7 @@ func TestProperty(t *testing.T) {
 				}
 			},
 			"advanceTime": func(t *rapid.T) {
-				duration := time.Duration(rapid.IntRange(1, 10).Draw(t, "minutes")) * time.Minute
+				duration := time.Duration(rapid.IntRange(1, 60).Draw(t, "minutes")) * time.Minute
 				sut.Clock.AdvanceBy(duration)
 			},
 		})

@@ -29,12 +29,14 @@ var (
 
 	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList                    = mustTemplate("secure_value_list.sql")
+	sqlSecureValueListByIDs               = mustTemplate("secure_value_list_by_ids.sql")
 	sqlSecureValueCreate                  = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId        = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueDelete                  = mustTemplate("secure_value_delete.sql")
 	sqlSecureValueSetInactiveAllFromGroup = mustTemplate("secure_value_set_inactive_all_from_group.sql")
 	sqlSecureValueLeaseInactive           = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken        = mustTemplate("secure_value_list_by_lease_token.sql")
+	sqlSecureValueAddGCRetryCount         = mustTemplate("secure_value_add_gc_retry_count.sql")
 
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
