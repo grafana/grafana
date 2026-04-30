@@ -1,6 +1,6 @@
 {
   extends: ["config:recommended"],
-  enabledManagers: ["npm", "docker-compose"],
+  enabledManagers: ["npm", "docker-compose", "gomod"],
   ignorePresets: [
     "github>grafana/grafana-renovate-config//presets/labels",
   ],
@@ -25,7 +25,7 @@
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
   ],
-  includePaths: ["package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml"],
+  includePaths: ["package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml", "**/go.mod"],
   ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
   postUpdateOptions: ["yarnDedupeHighest"],
@@ -109,6 +109,44 @@
     {
       "matchDepTypes": ["devDependencies"],
       "prPriority": -1
+    },
+    {
+      matchManagers: ["gomod"],
+      labels: ["area/backend", "dependencies", "no-changelog"],
+      minimumReleaseAge: "7 days",
+      postUpgradeTasks: {
+        commands: ["make update-workspace"],
+        fileFilters: ["go.work", "go.work.sum", "**/go.mod", "**/go.sum"],
+        executionMode: "branch",
+      },
+    },
+    {
+      groupName: "aws-sdk-go",
+      minimumReleaseAge: "7 days",
+      matchManagers: ["gomod"],
+      matchPackageNames: ["github.com/aws/aws-sdk-go{/,}**"],
+      postUpgradeTasks: {
+        commands: ["make update-workspace"],
+        fileFilters: ["go.work", "go.work.sum", "**/go.mod", "**/go.sum"],
+        executionMode: "branch",
+      },
+    },
+    {
+      groupName: "opentelemetry-go",
+      minimumReleaseAge: "7 days",
+      matchManagers: ["gomod"],
+      matchPackageNames: ["go.opentelemetry.io/{/,}**"],
+      postUpgradeTasks: {
+        commands: ["make update-workspace"],
+        fileFilters: ["go.work", "go.work.sum", "**/go.mod", "**/go.sum"],
+        executionMode: "branch",
+      },
+    },
+    // k8s.io/* upgrades are done manually due to frequent breaking changes
+    {
+      matchManagers: ["gomod"],
+      matchPackageNames: ["k8s.io/{/,}**"],
+      enabled: false,
     },
   ],
   pin: {
