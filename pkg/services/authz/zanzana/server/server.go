@@ -253,13 +253,12 @@ func (s *Server) Close() {
 	s.store.Close()
 }
 
-// getContextualParts returns base contextual tuples (e.g. for the render user) and optional
-// team#member contextual tuples from auth token groups.
-func (s *Server) getContextualParts(ctx context.Context, subject string) (base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, err error) {
-	var baseKeys []*openfgav1.TupleKey
+// getContextualTuples returns contextual tuples for the request subject.
+func (s *Server) getContextualTuples(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
+	var keys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
-		baseKeys = append(
-			baseKeys,
+		keys = append(
+			keys,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -289,9 +288,6 @@ func (s *Server) getContextualParts(ctx context.Context, subject string) (base *
 			},
 		)
 	}
-	if len(baseKeys) > 0 {
-		base = &openfgav1.ContextualTupleKeys{TupleKeys: baseKeys}
-	}
 
 	seen := make(map[string]struct{})
 	var teamNames []string
@@ -308,7 +304,10 @@ func (s *Server) getContextualParts(ctx context.Context, subject string) (base *
 	}
 	sort.Strings(teamNames)
 	for _, n := range teamNames {
-		teamTuples = append(teamTuples, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
+		keys = append(keys, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
 	}
-	return base, teamTuples, nil
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	return &openfgav1.ContextualTupleKeys{TupleKeys: keys}, nil
 }

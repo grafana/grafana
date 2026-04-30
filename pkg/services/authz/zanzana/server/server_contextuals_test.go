@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,15 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func TestGetContextualParts(t *testing.T) {
+func TestGetContextualTuples(t *testing.T) {
 	srv := &Server{}
 
 	t.Run("render service gets dashboard and folder contextual base tuples", func(t *testing.T) {
-		base, team, err := srv.getContextualParts(t.Context(), "render:0")
+		contextuals, err := srv.getContextualTuples(t.Context(), "render:0")
 		require.NoError(t, err)
-		require.NotNil(t, base)
-		require.Nil(t, team)
-		require.Len(t, base.TupleKeys, 3)
+		require.NotNil(t, contextuals)
+		require.Len(t, contextuals.TupleKeys, 3)
 
 		expectedObjects := []string{
 			common.NewGroupResourceIdent(
@@ -40,7 +40,7 @@ func TestGetContextualParts(t *testing.T) {
 			),
 		}
 
-		for i, tuple := range base.TupleKeys {
+		for i, tuple := range contextuals.TupleKeys {
 			assert.Equal(t, "render:0", tuple.User)
 			assert.Equal(t, common.RelationSetView, tuple.Relation)
 			assert.Equal(t, expectedObjects[i], tuple.Object)
@@ -48,22 +48,45 @@ func TestGetContextualParts(t *testing.T) {
 	})
 
 	t.Run("non-render subject without groups returns no tuples", func(t *testing.T) {
-		base, team, err := srv.getContextualParts(t.Context(), "user:123")
+		contextuals, err := srv.getContextualTuples(t.Context(), "user:123")
 		require.NoError(t, err)
-		assert.Nil(t, base)
-		assert.Nil(t, team)
+		assert.Nil(t, contextuals)
 	})
 
 	t.Run("auth info groups add team member tuples", func(t *testing.T) {
 		ctx := newContextWithGroups("aa", "bb")
-		base, team, err := srv.getContextualParts(ctx, "user:1")
+		contextuals, err := srv.getContextualTuples(ctx, "user:1")
 		require.NoError(t, err)
-		assert.Nil(t, base)
-		require.Len(t, team, 2)
-		assert.Equal(t, "user:1", team[0].User)
-		assert.Equal(t, "user:1", team[1].User)
-		assert.Equal(t, common.RelationTeamMember, team[0].Relation)
-		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "aa"), team[0].Object)
-		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "bb"), team[1].Object)
+		require.NotNil(t, contextuals)
+		require.Len(t, contextuals.TupleKeys, 2)
+		assert.Equal(t, "user:1", contextuals.TupleKeys[0].User)
+		assert.Equal(t, "user:1", contextuals.TupleKeys[1].User)
+		assert.Equal(t, common.RelationTeamMember, contextuals.TupleKeys[0].Relation)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "aa"), contextuals.TupleKeys[0].Object)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "bb"), contextuals.TupleKeys[1].Object)
+	})
+
+	t.Run("auth info groups support one thousand teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("team-%04d", i)
+		}
+
+		ctx := newContextWithGroups(groups...)
+		contextuals, err := srv.getContextualTuples(ctx, "user:1")
+		require.NoError(t, err)
+		require.NotNil(t, contextuals)
+		require.Len(t, contextuals.TupleKeys, len(groups))
+
+		seen := make(map[string]struct{}, len(contextuals.TupleKeys))
+		for _, tuple := range contextuals.TupleKeys {
+			assert.Equal(t, "user:1", tuple.User)
+			assert.Equal(t, common.RelationTeamMember, tuple.Relation)
+			seen[tuple.Object] = struct{}{}
+		}
+
+		for _, group := range groups {
+			assert.Contains(t, seen, common.NewTypedIdent(common.TypeTeam, group))
+		}
 	})
 }
