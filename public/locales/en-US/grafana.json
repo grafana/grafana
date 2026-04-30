@@ -14959,10 +14959,13 @@
       "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "explain-query": "Explain query",

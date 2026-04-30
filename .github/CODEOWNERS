@@ -532,6 +532,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/query-editor.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/return-to-previous.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/splash-screen.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/swagger.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
@@ -1209,7 +1210,6 @@ eslint-suppressions.json @grafanabot
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
 /kinds/ @grafana/grafana-as-code
-kindsv2/ @grafana/dashboards-squad
 
 # Kind system and code generation
 embed.go @grafana/grafana-as-code

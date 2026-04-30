@@ -2551,6 +2551,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryEditorNextMultiSelect",
+			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
 			Stage:        FeatureStageExperimental,
@@ -3068,6 +3076,15 @@ var (
 			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "grafana.meticulousAIRecorder",
+			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{React: true, Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

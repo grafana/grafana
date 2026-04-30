@@ -26,6 +26,7 @@ declare module "@openfeature/core" {
     | "useMTPlugins"
     | "dashboardSectionVariables"
     | "queryEditorNext"
+    | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
@@ -36,7 +37,8 @@ declare module "@openfeature/core" {
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
-    | "assistant.frontend.tools.dashboardTemplates";
+    | "assistant.frontend.tools.dashboardTemplates"
+    | "grafana.meticulousAIRecorder";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
