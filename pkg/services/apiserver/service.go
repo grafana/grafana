@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -204,6 +205,13 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+		// Snapshots are shared via URL with the key, so they are always publicly accessible.
+		// Authorization is enforced by the snapshot authorizer.
+		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+		k8sRoute.Get(snapshotPath, handler)
+		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}

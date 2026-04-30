@@ -140,9 +140,11 @@ export const mockUIStateBase = {
   finalizePendingTransformation: jest.fn(),
   selectedQueryRefIds: [] satisfies readonly string[],
   selectedTransformationIds: [] satisfies readonly string[],
+  multiSelectMode: false,
   toggleQuerySelection: jest.fn(),
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
+  setMultiSelectMode: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -248,8 +250,10 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     selectedTransformation,
     selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
     selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
+    multiSelectMode: false,
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    setMultiSelectMode: jest.fn(),
     toggleQuerySelection: jest.fn(),
     toggleTransformationSelection: jest.fn(),
     clearSelection: jest.fn(),

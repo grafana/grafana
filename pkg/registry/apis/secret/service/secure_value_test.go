@@ -177,6 +177,51 @@ func TestCrud(t *testing.T) {
 		require.NotNil(t, sv)
 	})
 
+	t.Run("inline secure values always use the system keeper, even when a 3rd party keeper is active", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		ns := "ns1"
+
+		// Create a 3rd party keeper and set it as active in the namespace.
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// If not inline, it will use the active keeper.
+		notInlineSv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "not-inline"
+			cfg.Sv.Namespace = ns
+		})
+		require.NoError(t, err)
+		require.Equal(t, keeper.Name, notInlineSv.Status.Keeper)
+
+		// An inline secure value (one with OwnerReferences) must use the `system` keeper.
+		owner := common.ObjectReference{
+			APIGroup:   "prometheus.datasource.grafana.app",
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "test-ds",
+			Namespace:  ns,
+		}
+		inlineSv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "inline"
+			cfg.Sv.Namespace = ns
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.Equal(t, contracts.SystemKeeperName, inlineSv.Status.Keeper)
+	})
+
 	t.Run("delete all from group", func(t *testing.T) {
 		t.Parallel()
 

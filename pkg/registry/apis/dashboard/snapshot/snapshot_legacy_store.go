@@ -3,7 +3,9 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"net/url"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -29,9 +32,10 @@ var (
 )
 
 type SnapshotLegacyStore struct {
-	ResourceInfo utils.ResourceInfo
-	Service      dashboardsnapshots.Service
-	Namespacer   request.NamespaceMapper
+	ResourceInfo          utils.ResourceInfo
+	Service               dashboardsnapshots.Service
+	Namespacer            request.NamespaceMapper
+	ExternalSnapshotToken string
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -65,11 +69,25 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, err
 	}
 
-	// Delete the external one first
+	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
+	// path format, so the new-API branch extracts the domain and rebuilds the URL with
+	// the deleteKey. The legacy-API branch passes the stored URL through to
+	// DeleteExternalDashboardSnapshot, which rebuilds internally.
 	if snap.ExternalDeleteURL != "" {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL)
-		if err != nil {
-			return nil, false, err
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+			parsed, err := url.Parse(snap.ExternalDeleteURL)
+			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
+			}
+			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
+			deleteURL := parsed.Scheme + "://" + parsed.Host + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
+			if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
+				return nil, false, err
+			}
+		} else {
+			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -83,6 +101,21 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 }
 
 func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	// Handle spec.deleteKey field selector: look up by deleteKey via the service
+	if options.FieldSelector != nil {
+		if deleteKey, found := options.FieldSelector.RequiresExactMatch("spec.deleteKey"); found {
+			snap, err := s.Service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{
+				DeleteKey: deleteKey,
+			})
+			if err != nil {
+				return &dashV0.SnapshotList{}, nil
+			}
+			return &dashV0.SnapshotList{
+				Items: []dashV0.Snapshot{*convertSnapshotToK8sResource(snap, s.Namespacer)},
+			}, nil
+		}
+	}
+
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
