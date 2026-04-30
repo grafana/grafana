@@ -80,6 +80,18 @@ export const setUpdateGrafanaRulerRuleNamespaceResolver = (
   );
 };
 
+export const setCreateGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.post<{ namespace: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      resolver
+    )
+  );
+};
+
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {

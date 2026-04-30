@@ -55,6 +55,11 @@ export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
 type EvaluationMode = 'new' | 'legacy';
 
+const collator = new Intl.Collator();
+const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
+  return collator.compare(a.label ?? '', b.label ?? '');
+};
+
 export const namespaceToGroupOptions = (
   rulerNamespace: RulerRulesConfigDTO,
   enableProvisionedGroups: boolean,
@@ -83,13 +88,7 @@ export const namespaceToGroupOptions = (
         isProvisioned: isProvisioned,
       };
     })
-
     .sort(sortByLabel);
-};
-
-const collator = new Intl.Collator();
-const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
-  return collator.compare(a.label ?? '', b.label ?? '');
 };
 
 const forValidationOptions = (getEvaluateEvery: () => string): RegisterOptions<{ evaluateFor: string }> => ({
@@ -165,13 +164,24 @@ export function GrafanaEvaluationBehaviorStep({
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
+  // Stable across `group`/`evaluateEvery` changes — only rebuilt when the ruler API
+  // response or the provisioning gate changes.
+  const baseGroupOptions = useMemo(() => {
+    return rulerNamespace ? namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups) : [];
+  }, [enableProvisionedGroups, rulerNamespace]);
+
+  // Only rebuilds when we actually need to inject a pending group (selected group not yet
+  // returned by the ruler API). Keystrokes in `evaluateEvery` while a known group is selected
+  // short-circuit to the cached `baseGroupOptions`.
   const groupOptions = useMemo(() => {
-    if (!rulerNamespace) {
-      return [];
+    if (!group || baseGroupOptions.some((option) => option.value === group)) {
+      return baseGroupOptions;
     }
-    const pendingGroup = group ? { name: group, interval: evaluateEvery } : undefined;
-    return namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups, pendingGroup);
-  }, [enableProvisionedGroups, rulerNamespace, group, evaluateEvery]);
+    return namespaceToGroupOptions(rulerNamespace ?? {}, enableProvisionedGroups, {
+      name: group,
+      interval: evaluateEvery,
+    });
+  }, [baseGroupOptions, group, evaluateEvery, enableProvisionedGroups, rulerNamespace]);
 
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
@@ -400,7 +410,6 @@ export function GrafanaEvaluationBehaviorStep({
             </Stack>
           </div>
         )}
-        {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && (
           <>
             <Divider />

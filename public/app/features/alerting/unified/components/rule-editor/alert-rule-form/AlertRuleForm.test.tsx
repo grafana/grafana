@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -13,7 +13,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions, mockDataSource } from '../../../mocks';
 import { grafanaRulerGroup, mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
-import { setUpdateGrafanaRulerRuleNamespaceResolver } from '../../../mocks/server/configure';
+import {
+  setCreateGrafanaRuleResolver,
+  setUpdateGrafanaRulerRuleNamespaceResolver,
+} from '../../../mocks/server/configure';
 import { setupDataSources } from '../../../testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -89,11 +92,7 @@ describe('AlertRuleForm submit failure handling', () => {
           HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
         );
       } else {
-        server.use(
-          http.post('/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules', () =>
-            HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
-          )
-        );
+        setCreateGrafanaRuleResolver(async () => HttpResponse.json({ message: 'boom from the api' }, { status: 500 }));
       }
       const replaceSpy = jest.spyOn(locationService, 'replace');
 

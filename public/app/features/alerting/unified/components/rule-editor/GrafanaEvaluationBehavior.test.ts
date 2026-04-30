@@ -1,6 +1,14 @@
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
+
 import { namespaceToGroupOptions } from './GrafanaEvaluationBehavior';
+
+const provisionedRule = {
+  ...grafanaRulerRule,
+  grafana_alert: { ...grafanaRulerRule.grafana_alert, provenance: 'api' },
+};
 
 describe('namespaceToGroupOptions', () => {
   it('excludes virtual ungrouped groups (names prefixed with no_group_for_rule_)', () => {
@@ -69,5 +77,49 @@ describe('namespaceToGroupOptions', () => {
 
     expect(options).toHaveLength(1);
     expect(options[0]).toMatchObject({ label: 'existing' });
+  });
+
+  it('disables provisioned groups when enableProvisionedGroups is false', () => {
+    const namespace: RulerRulesConfigDTO = {
+      'folder-uid': [{ name: 'provisioned-group', interval: '1m', rules: [provisionedRule] }],
+    };
+
+    const options = namespaceToGroupOptions(namespace, false);
+
+    expect(options).toHaveLength(1);
+    expect(options[0]).toMatchObject({
+      label: 'provisioned-group',
+      isProvisioned: true,
+      isDisabled: true,
+    });
+  });
+
+  it('does not disable provisioned groups when enableProvisionedGroups is true', () => {
+    const namespace: RulerRulesConfigDTO = {
+      'folder-uid': [{ name: 'provisioned-group', interval: '1m', rules: [provisionedRule] }],
+    };
+
+    const options = namespaceToGroupOptions(namespace, true);
+
+    expect(options).toHaveLength(1);
+    expect(options[0]).toMatchObject({
+      label: 'provisioned-group',
+      isProvisioned: true,
+      isDisabled: false,
+    });
+  });
+
+  it('falls back to the default evaluation interval when a group has no interval', () => {
+    const namespace: RulerRulesConfigDTO = {
+      'folder-uid': [{ name: 'no-interval', rules: [] }],
+    };
+
+    const options = namespaceToGroupOptions(namespace, false);
+
+    expect(options).toHaveLength(1);
+    expect(options[0]).toMatchObject({
+      label: 'no-interval',
+      description: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    });
   });
 });
