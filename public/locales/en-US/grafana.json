@@ -515,7 +515,8 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
-      "error-title": "Failed to save alert rule"
+      "error-title": "Failed to save alert rule",
+      "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
