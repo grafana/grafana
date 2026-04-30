@@ -6,7 +6,7 @@ import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { getLogger } from '../services/logging/registry';
 
-// 500 covers the ~375 plugins in the catalog available today with headroom. If a session
+// 500 is our best guestimate right now. If a session
 // goes past 500 entries, the LRU evicts the oldest one, at worst a refetch,
 // never a full cache wipe.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
