@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -110,7 +111,19 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	legacysql.NewDatabaseProvider,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
-	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
+	// Pulse is wired into OSS only. Enterprise builds use a pre-generated
+	// enterprise_wire_gen.go whose ProvideBackgroundServiceRegistry call
+	// doesn't know about Pulse; keeping the providers in this file means
+	// the shared wireBasicSet signature stays stable and enterprise CI
+	// doesn't require a companion wire regeneration. ProvidePulseAnchoredRegistry
+	// (pkg/server/oss_pulse_hook.go) is a thin wrapper whose dependency on
+	// pulse.Service is what keeps the Pulse providers alive in the graph;
+	// without an anchored consumer, wire dead-code-strips them.
+	pulse.ProvideService,
+	wire.Bind(new(pulse.Service), new(*pulse.PulseService)),
+	pulse.ProvideChannelPublisher,
+	ProvidePulseAnchoredRegistry,
+	wire.Bind(new(registry.BackgroundServiceRegistry), new(*pulseAnchoredRegistry)),
 	migrations.ProvideOSSMigrations,
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 	authinfoimpl.ProvideOSSUserProtectionService,

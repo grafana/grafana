@@ -2600,18 +2600,6 @@
         }
       }
     },
-    "AddPulseCommand": {
-      "type": "object",
-      "title": "AddPulseCommand adds a pulse (parent or reply) to an existing thread.",
-      "properties": {
-        "body": {
-          "type": "object"
-        },
-        "parentUID": {
-          "type": "string"
-        }
-      }
-    },
     "AddServiceAccountTokenCommand": {
       "type": "object",
       "properties": {
@@ -3092,10 +3080,6 @@
         },
         "Value": {}
       }
-    },
-    "AuthorKind": {
-      "description": "AuthorKind distinguishes human authors from service accounts (agents, port\ntooling, automation). The frontend renders service-account pulses with a\nrobot icon.",
-      "type": "string"
     },
     "CacheConfig": {
       "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
@@ -4037,40 +4021,6 @@
         },
         "name": {
           "type": "string"
-        }
-      }
-    },
-    "CreateThreadCommand": {
-      "description": "CreateThreadCommand creates a new thread on a resource. The thread is\ncreated together with its first pulse to avoid empty threads in the UI.",
-      "type": "object",
-      "properties": {
-        "body": {
-          "type": "object"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "resourceKind": {
-          "$ref": "#/definitions/ResourceKind"
-        },
-        "resourceUID": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        }
-      }
-    },
-    "CreateThreadResult": {
-      "type": "object",
-      "title": "CreateThreadResult is what CreateThread returns.",
-      "properties": {
-        "pulse": {
-          "$ref": "#/definitions/Pulse"
-        },
-        "thread": {
-          "$ref": "#/definitions/Thread"
         }
       }
     },
@@ -6677,117 +6627,6 @@
       "type": "integer",
       "format": "int64"
     },
-    "Pulse": {
-      "description": "Pulse is a single message inside a thread. The first pulse in a thread is\nthe parent. Replies set ParentUID to the parent pulse's UID.",
-      "type": "object",
-      "properties": {
-        "authorAvatarUrl": {
-          "type": "string"
-        },
-        "authorKind": {
-          "$ref": "#/definitions/AuthorKind"
-        },
-        "authorLogin": {
-          "type": "string"
-        },
-        "authorName": {
-          "description": "AuthorName / AuthorLogin / AuthorAvatarURL are populated by the API\nhandler from the user service so the frontend doesn't need a\nseparate user lookup per pulse. The xorm:\"-\" tag keeps these out\nof the table.",
-          "type": "string"
-        },
-        "authorUserId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "body": {
-          "type": "object"
-        },
-        "bodyText": {
-          "type": "string"
-        },
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "deleted": {
-          "type": "boolean"
-        },
-        "edited": {
-          "description": "xorm treats a bare \"deleted\" tag as a soft-delete sentinel and\nauto-filters rows where deleted = true on every Get/Find. We want\nthe soft-delete flag to be visible to the application layer (so it\ncan render \"this message was deleted\" tombstones) and so we\nquote-escape the column name to bypass xorm's magic.",
-          "type": "boolean"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "parentUID": {
-          "type": "string"
-        },
-        "threadUID": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "PulsePulsePage": {
-      "description": "See PulseThreadPage for why generics don't work in swagger",
-      "type": "object",
-      "title": "PulsePulsePage is the swagger-friendly mirror of PageResult[Pulse].",
-      "properties": {
-        "hasMore": {
-          "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Pulse"
-          }
-        },
-        "nextCursor": {
-          "type": "string"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "PulseThreadPage": {
-      "description": "go-swagger 0.30.6 does not understand Go generics (it panics on the\ntype parameter), so we hand-write concrete envelopes for each\nresponse type. The JSON wire format is identical to PageResult[T]\nbecause the field tags line up one-for-one.",
-      "type": "object",
-      "title": "PulseThreadPage is the swagger-friendly mirror of PageResult[Thread].",
-      "properties": {
-        "hasMore": {
-          "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Thread"
-          }
-        },
-        "nextCursor": {
-          "type": "string"
-        },
-        "page": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "QueryDataResponse": {
       "description": "It is the return type of a QueryData call.",
       "type": "object",
@@ -7356,31 +7195,6 @@
             "MUTE_TIMING",
             "PLUGIN"
           ]
-        }
-      }
-    },
-    "ResourceKind": {
-      "description": "v1 supports \"dashboard\". The schema is polymorphic from day one so that\nfuture kinds (folder, alert rule, datasource, etc.) can be added without\nmigrating existing rows.",
-      "type": "string",
-      "title": "ResourceKind is the kind of resource a Pulse thread is attached to."
-    },
-    "ResourceVersion": {
-      "description": "ResourceVersion is returned by the polling fallback endpoint. Clients that\ncannot use Grafana Live poll this every 10s and refetch when version\nchanges.",
-      "type": "object",
-      "properties": {
-        "lastPulseAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "resourceKind": {
-          "$ref": "#/definitions/ResourceKind"
-        },
-        "resourceUID": {
-          "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -8306,86 +8120,6 @@
     },
     "TempUserStatus": {
       "type": "string"
-    },
-    "Thread": {
-      "description": "Thread is a top-level conversation attached to a resource. Threads contain\npulses (replies). Threads are scoped by org and resource; a single resource\nmay have many threads.",
-      "type": "object",
-      "properties": {
-        "authorAvatarUrl": {
-          "type": "string"
-        },
-        "authorLogin": {
-          "type": "string"
-        },
-        "authorName": {
-          "description": "AuthorName / AuthorLogin / AuthorAvatarURL are populated alongside\nPreviewBody so the thread card renders the starter's avatar and\ndisplay name without an N+1 user lookup on the frontend.",
-          "type": "string"
-        },
-        "closed": {
-          "description": "Closed flips when an author or admin closes the thread; replies are\nrejected at the service layer when set. Reopening clears all three\ncolumns and is gated to admins.",
-          "type": "boolean"
-        },
-        "closedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "closedBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lastPulseAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "previewBody": {
-          "description": "PreviewBody is the body AST of the first pulse, populated by the\nAPI handler so the thread list can render the same mention chips\n+ formatting it would inside the thread itself. xorm:\"-\" keeps\nthis out of the table — it's a denormalized read-side projection.",
-          "type": "object"
-        },
-        "pulseCount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "resourceKind": {
-          "$ref": "#/definitions/ResourceKind"
-        },
-        "resourceTitle": {
-          "description": "ResourceTitle is populated on the global Pulse overview only —\nit's the human-readable title of the resource the thread is\nattached to (e.g. the dashboard title), resolved at API time so\nthe frontend can render a rich link without N+1 lookups.",
-          "type": "string"
-        },
-        "resourceUID": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "Threshold": {
       "description": "Threshold a single step on the threshold list",
@@ -10603,59 +10337,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/publicError"
-      }
-    },
-    "pulseAddPulseResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/Pulse"
-      }
-    },
-    "pulseCreateThreadResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/CreateThreadResult"
-      }
-    },
-    "pulseEditPulseResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/Pulse"
-      }
-    },
-    "pulseGenericResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pulseGetThreadResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/Thread"
-      }
-    },
-    "pulseListPulsesResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/PulsePulsePage"
-      }
-    },
-    "pulseListThreadsResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/PulseThreadPage"
-      }
-    },
-    "pulseResourceVersionResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/ResourceVersion"
       }
     },
     "queryMetricsWithExpressionsRespons": {

@@ -38,7 +38,6 @@ import (
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
-	"github.com/grafana/grafana/pkg/services/pulse"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -85,11 +84,6 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration,
-	// pulse.Service is wired here rather than in pkg/server.New so the
-	// enterprise build doesn't need a companion change to its copy of
-	// server.go. This file is OSS-only and shared by both build flavors,
-	// so adding the dependency here keeps both wire graphs in sync.
-	_ pulse.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
