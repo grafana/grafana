@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Save"
-      }
+      },
+      "error-title": "Failed to save alert rule"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1293,7 +1294,8 @@
       "delete": {
         "button": {
           "label": "Delete all rules"
-        }
+        },
+        "error": "Failed to delete folder rules"
       },
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",

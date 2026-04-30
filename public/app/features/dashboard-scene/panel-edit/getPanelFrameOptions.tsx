@@ -4,7 +4,7 @@ import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestio
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
@@ -15,7 +15,6 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 import { dashboardEditActions } from '../edit-pane/shared';
 import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
-import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -257,18 +256,4 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),
   });
-}
-
-export function getUpdatedHoverHeader(title: string, timeRange: SceneTimeRangeLike | undefined): boolean {
-  if (title !== '') {
-    return false;
-  }
-
-  if (timeRange instanceof PanelTimeRange && !timeRange.state.hideTimeOverride) {
-    if (timeRange.state.timeFrom || timeRange.state.timeShift) {
-      return false;
-    }
-  }
-
-  return true;
 }
