@@ -269,6 +269,8 @@ func (s *store) listAllThreads(ctx context.Context, q ListAllThreadsQuery) (Page
 				sb = sb.And("closed = ?", false)
 			case ThreadStatusClosed:
 				sb = sb.And("closed = ?", true)
+			case ThreadStatusAny:
+				// no-op: no closed-state filter applied.
 			}
 			return sb
 		}

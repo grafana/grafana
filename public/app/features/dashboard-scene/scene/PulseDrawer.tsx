@@ -28,15 +28,21 @@ import { type DashboardScene } from './DashboardScene';
  *
  * `DashboardScene` itself is imported as a type, which the
  * circular-dependency checker erases, so we keep this file at the
- * leaves of the dashboard-scene graph.
+ * leaves of the dashboard-scene graph. That also means we can't use
+ * `instanceof DashboardScene` here — we'd have to value-import the
+ * class and that re-closes the cycle — so we lean on a constructor
+ * name check as the type guard.
  */
+function isDashboardSceneRoot(obj: SceneObject): obj is DashboardScene {
+  return obj.constructor.name === 'DashboardScene';
+}
+
 function getRootDashboardScene(sceneObject: SceneObject): DashboardScene {
-  // The scene root is always a DashboardScene in the contexts where
-  // PulseDrawer is mounted (the dashboard `overlay` slot). The cast
-  // matches the runtime invariant; the original helper threw when
-  // mounted elsewhere and we'd want any such bug to be loud and
-  // immediate, but in practice the scenes API guarantees this.
-  return sceneObject.getRoot() as DashboardScene;
+  const root = sceneObject.getRoot();
+  if (!isDashboardSceneRoot(root)) {
+    throw new Error('PulseDrawer mounted outside a DashboardScene');
+  }
+  return root;
 }
 
 function panelIdFromVizPanelKey(panel: SceneObject): number {
