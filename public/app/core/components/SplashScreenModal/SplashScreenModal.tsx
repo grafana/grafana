@@ -94,6 +94,13 @@ export function SplashScreenModal() {
           className={styles.closeButton}
         />
         <SplashScreenSlide feature={activeFeature} footer={footer} />
+        <div aria-live="polite" className="sr-only">
+          {t('splash-screen.slide-announcement', 'Slide {{current}} of {{total}}: {{title}}', {
+            current: activeIndex + 1,
+            total,
+            title: activeFeature.title,
+          })}
+        </div>
       </div>
     </ModalBase>
   );
