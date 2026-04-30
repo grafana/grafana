@@ -965,4 +965,8 @@ const (
 	// FlagGrafanaMeticulousAIRecorder
 	// Enable Meticulous AI session recorder for automated UI test generation
 	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
+
+	// FlagAlertingSyncExternalAlertmanager
+	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 )

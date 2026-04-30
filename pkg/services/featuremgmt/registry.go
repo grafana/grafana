@@ -3086,6 +3086,16 @@ var (
 			HideFromDocs: true,
 			Generate:     Generate{React: true, Go: true},
 		},
+		{
+			Name:            "alerting.syncExternalAlertmanager",
+			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
