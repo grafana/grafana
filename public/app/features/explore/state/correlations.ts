@@ -8,6 +8,7 @@ import { type DataLinkTransformationConfig } from '@grafana/data';
 import { type CorrelationData, getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { type CreateCorrelationParams } from 'app/features/correlations/types';
 import { createCorrelation, generateDefaultLabel, getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
@@ -92,7 +93,7 @@ export function saveCurrentCorrelation(
         };
 
         // the generateName is discarded, but the server returns a 500 without it
-        await dispatch(
+        const response = await dispatch(
           correlationsAPIv0alpha1.endpoints.createCorrelation.initiate({
             correlation: {
               metadata: { generateName: 'correlation-' },
@@ -102,12 +103,21 @@ export function saveCurrentCorrelation(
             },
           })
         );
-        await dispatch(reloadCorrelations(keys[0]));
-        await dispatch(runQueries({ exploreId: keys[0] }));
-        reportInteraction('grafana_explore_correlation_editor_saved', {
-          sourceDatasourceType: sourceDatasource.type,
-          targetDataSourceType: targetDatasource.type,
-        });
+
+        if (response.error === undefined) {
+          dispatch(splitClose(keys[1]));
+          await dispatch(reloadCorrelations(keys[0]));
+          await dispatch(runQueries({ exploreId: keys[0] }));
+          reportInteraction('grafana_explore_correlation_editor_saved', {
+            sourceDatasourceType: sourceDatasource.type,
+            targetDataSourceType: targetDatasource.type,
+          });
+        } else {
+          dispatch(
+            notifyApp(createErrorNotification('Error creating correlation', getMessageFromError(response.error)))
+          );
+          console.error(response.error);
+        }
       } else {
         const correlation: CreateCorrelationParams = {
           sourceUID: sourceDatasource.uid,
