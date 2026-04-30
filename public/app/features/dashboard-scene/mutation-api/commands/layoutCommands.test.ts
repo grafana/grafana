@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -1984,6 +1985,127 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('insufficient permissions');
+    });
+  });
+
+  describe('section variables on row/tab specs', () => {
+    const sectionVariableKind = {
+      kind: 'CustomVariable' as const,
+      spec: {
+        name: 'secVar',
+        query: 'a,b',
+        label: '',
+        current: { text: 'a', value: 'a' },
+        options: [],
+        multi: false,
+        includeAll: false,
+        hide: 'dontHide' as const,
+        skipUrlSync: false,
+        allowCustomValue: true,
+      },
+    };
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('ADD_ROW applies spec.variables when dashboardSectionVariables is enabled', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'With vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as RowsLayoutManager;
+      const newRow = body.state.rows[1];
+      expect(newRow.state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('ADD_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
+      setTestFlags({ dashboardSectionVariables: false });
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: { kind: 'RowsLayoutRow', spec: { title: 'No vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as RowsLayoutManager;
+      expect(body.state.rows[1].state.$variables).toBeUndefined();
+    });
+
+    it('ADD_TAB applies spec.variables when dashboardSectionVariables is enabled', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const scene = buildTabsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'With vars', variables: [sectionVariableKind] } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as TabsLayoutManager;
+      expect(body.state.tabs[1].state.$variables?.getByName('secVar')).toBeDefined();
+    });
+
+    it('UPDATE_ROW clears section variables with variables: [] when flag is on', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const row = new RowItem({
+        title: 'R',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: { path: '/rows/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(row.state.$variables).toBeUndefined();
+    });
+
+    it('UPDATE_TAB clears section variables with variables: [] when flag is on', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
+      const tab = new TabItem({
+        title: 'T',
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+        $variables: new SceneVariableSet({
+          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
+        }),
+      });
+      const body = new TabsLayoutManager({ tabs: [tab] });
+      const scene = buildSceneWithLayoutParent(body);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: { path: '/tabs/0', spec: { variables: [] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(tab.state.$variables).toBeUndefined();
     });
   });
 

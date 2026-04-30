@@ -1,6 +1,9 @@
-import { SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
@@ -260,5 +263,128 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Cannot edit dashboard');
+  });
+
+  describe('parentPath (section variables)', () => {
+    function buildSceneWithRow(): DashboardScene {
+      const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const state: Record<string, unknown> = {
+        uid: 'test-dash',
+        isEditing: true,
+        body,
+        $variables: new SceneVariableSet({ variables: [] }),
+      };
+      const scene = {
+        state,
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+          const vars = partial.$variables;
+          if (vars && typeof (vars as SceneVariableSet).activate === 'function') {
+            (vars as SceneVariableSet).activate();
+          }
+        }),
+      };
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock scene satisfies DashboardScene at runtime
+      return scene as unknown as DashboardScene;
+    }
+
+    it('ADD_VARIABLE with parentPath adds to row scope and uses scoped change path', async () => {
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          variable: { kind: 'CustomVariable', spec: { name: 'rowVar', query: '1,2' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/rows/0/variables/rowVar');
+      const body = scene.state.body as RowsLayoutManager;
+      expect(body.state.rows[0].state.$variables?.getByName('rowVar')).toBeDefined();
+    });
+
+    it('UPDATE_VARIABLE without parentPath errors when variable exists only on a row', async () => {
+      scene = buildSceneWithRow();
+      const body = scene.state.body as RowsLayoutManager;
+      const rowVarSet = new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'onlyRow', query: 'a,b' })],
+      });
+      body.state.rows[0].setState({ $variables: rowVarSet });
+      rowVarSet.activate();
+      client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'UPDATE_VARIABLE',
+        payload: {
+          name: 'onlyRow',
+          variable: { kind: 'CustomVariable', spec: { name: 'onlyRow', query: 'a,b,c' } },
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not on the dashboard');
+      expect(result.error).toContain('parentPath');
+    });
+
+    it('UPDATE_VARIABLE with parentPath updates row variable', async () => {
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          variable: { kind: 'CustomVariable', spec: { name: 'rowVar', query: '1,2' } },
+        },
+      });
+
+      const result = await client.execute({
+        type: 'UPDATE_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          name: 'rowVar',
+          variable: { kind: 'CustomVariable', spec: { name: 'rowVar', query: '1,2,3' } },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.changes[0].path).toBe('/rows/0/variables/rowVar');
+    });
+
+    it('LIST_VARIABLES with parentPath returns only that scope', async () => {
+      scene = buildSceneWithRow();
+      client = new DashboardMutationClient(scene);
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          variable: { kind: 'CustomVariable', spec: { name: 'dashVar', query: 'x,y' } },
+        },
+      });
+      await client.execute({
+        type: 'ADD_VARIABLE',
+        payload: {
+          parentPath: '/rows/0',
+          variable: { kind: 'CustomVariable', spec: { name: 'rowVar', query: '1,2' } },
+        },
+      });
+
+      const dashList = await client.execute({ type: 'LIST_VARIABLES', payload: {} });
+      const rowList = await client.execute({ type: 'LIST_VARIABLES', payload: { parentPath: '/rows/0' } });
+
+      expect(dashList.success).toBe(true);
+      expect(rowList.success).toBe(true);
+      const dashVars = (dashList.data as { variables: Array<{ spec: { name: string } }> }).variables;
+      const rowVars = (rowList.data as { variables: Array<{ spec: { name: string } }> }).variables;
+      expect(dashVars.map((v) => v.spec.name)).toEqual(['dashVar']);
+      expect(rowVars.map((v) => v.spec.name)).toEqual(['rowVar']);
+    });
   });
 });

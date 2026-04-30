@@ -8,6 +8,10 @@ import { type z } from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import {
+  deserializeSectionVariables,
+  serializeSectionVariables,
+} from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
@@ -44,6 +48,7 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         hideHeader: row.state.hideHeader,
         fillScreen: row.state.fillScreen,
         conditionalRendering: row.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(row.state.$variables),
       };
 
       const updates: Record<string, unknown> = {};
@@ -71,12 +76,17 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         row.setState({ conditionalRendering: group });
       }
 
+      if (spec.variables !== undefined) {
+        row.setState({ $variables: deserializeSectionVariables(spec.variables) });
+      }
+
       const currentSpec = {
         title: row.state.title,
         collapse: row.state.collapse,
         hideHeader: row.state.hideHeader,
         fillScreen: row.state.fillScreen,
         conditionalRendering: row.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(row.state.$variables),
       };
 
       return {
