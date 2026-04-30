@@ -3084,7 +3084,7 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 			HideFromDocs: true,
-			Generate:     Generate{React: true, Go: true},
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
