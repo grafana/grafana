@@ -32,6 +32,24 @@ func (_m *MockAuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int6
 	return r0
 }
 
+// DeleteUserAuthInfoByModule provides a mock function with given fields: ctx, userID, authModule
+func (_m *MockAuthInfoStore) DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error {
+	ret := _m.Called(ctx, userID, authModule)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUserAuthInfoByModule")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, userID, authModule)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetAuthInfo provides a mock function with given fields: ctx, query
 func (_m *MockAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	ret := _m.Called(ctx, query)

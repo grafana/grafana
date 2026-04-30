@@ -2258,3 +2258,243 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestUserSync_SyncUserHook_AutoLinkPreprovisionedUser(t *testing.T) {
+	t.Run("Should auto-link pre-provisioned user with no auth connections", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+		preProvUser := &user.User{
+			ID:    100,
+			UID:   "user-uid-100",
+			Login: "preprovisioned",
+			Email: "preprovisioned@example.com",
+			Name:  "Pre Provisioned",
+		}
+
+		// getUser -> lookupByAuthInfo returns not found
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.AuthId == "google-id-123" && q.AuthModule == login.GoogleAuthModule
+		})).Return(nil, user.ErrUserNotFound).Once()
+
+		// getUser -> lookupByOneOf returns not found
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+
+		// auto-link check: find user by email
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(preProvUser, nil).Once()
+
+		// auto-link check: verify no existing auth connections
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.UserId == 100
+		})).Return(nil, user.ErrUserNotFound).Once()
+
+		// upsertAuthConnection -> SetAuthInfo
+		authInfoSrv.On("SetAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.SetAuthInfoCommand) bool {
+			return cmd.UserId == 100 && cmd.AuthModule == login.GoogleAuthModule && cmd.AuthId == "google-id-123"
+		})).Return(nil).Once()
+
+		provider.UsingFlags(t, defaultFeatureFlags)
+
+		cfg := setting.NewCfg()
+		cfg.AutoLinkPreprovisionedUsers = true
+
+		s := ProvideUserSync(
+			userSrv,
+			authinfoimpl.ProvideOSSUserProtectionService(),
+			authInfoSrv,
+			&quotatest.FakeQuotaService{},
+			tracing.NewNoopTracerService(),
+			featuremgmt.WithFeatures(),
+			cfg,
+			nil,
+		)
+
+		email := "preprovisioned@example.com"
+		err := s.SyncUserHook(context.Background(), &authn.Identity{
+			AuthID:          "google-id-123",
+			AuthenticatedBy: login.GoogleAuthModule,
+			Login:           "preprovisioned",
+			Email:           "preprovisioned@example.com",
+			Name:            "Pre Provisioned",
+			ClientParams: authn.ClientParams{
+				SyncUser:    true,
+				AllowSignUp: false, // signup disabled
+				LookUpParams: login.UserLookupParams{
+					Email: &email,
+				},
+			},
+		}, nil)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("Should NOT auto-link user that already has auth connections", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+		existingUser := &user.User{
+			ID:    200,
+			UID:   "user-uid-200",
+			Login: "existing",
+			Email: "existing@example.com",
+			Name:  "Existing User",
+		}
+
+		// getUser -> lookupByAuthInfo returns not found
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.AuthId == "google-id-456" && q.AuthModule == login.GoogleAuthModule
+		})).Return(nil, user.ErrUserNotFound).Once()
+
+		// getUser -> lookupByOneOf returns not found
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+
+		// auto-link check: find user by email
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(existingUser, nil).Once()
+
+		// auto-link check: user HAS existing auth connections
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.UserId == 200
+		})).Return(&login.UserAuth{
+			UserId:     200,
+			AuthModule: login.GithubAuthModule,
+			AuthId:     "github-id-789",
+		}, nil).Once()
+
+		provider.UsingFlags(t, defaultFeatureFlags)
+
+		cfg := setting.NewCfg()
+		cfg.AutoLinkPreprovisionedUsers = true
+
+		s := ProvideUserSync(
+			userSrv,
+			authinfoimpl.ProvideOSSUserProtectionService(),
+			authInfoSrv,
+			&quotatest.FakeQuotaService{},
+			tracing.NewNoopTracerService(),
+			featuremgmt.WithFeatures(),
+			cfg,
+			nil,
+		)
+
+		email := "existing@example.com"
+		err := s.SyncUserHook(context.Background(), &authn.Identity{
+			AuthID:          "google-id-456",
+			AuthenticatedBy: login.GoogleAuthModule,
+			Login:           "existing",
+			Email:           "existing@example.com",
+			Name:            "Existing User",
+			ClientParams: authn.ClientParams{
+				SyncUser:    true,
+				AllowSignUp: false,
+				LookUpParams: login.UserLookupParams{
+					Email: &email,
+				},
+			},
+		}, nil)
+
+		// Should fail with signup disabled error since auto-link was skipped
+		require.Error(t, err)
+		assert.ErrorIs(t, err, errSignupNotAllowed)
+		authInfoSrv.AssertNotCalled(t, "SetAuthInfo", mock.Anything, mock.Anything)
+	})
+
+	t.Run("Should NOT auto-link when no user found by email", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+		// getUser -> lookupByAuthInfo returns not found
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.AuthId == "google-id-789" && q.AuthModule == login.GoogleAuthModule
+		})).Return(nil, user.ErrUserNotFound).Once()
+
+		// getUser -> lookupByOneOf returns not found (called twice: once by lookupByOneOf, once by auto-link)
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound)
+
+		provider.UsingFlags(t, defaultFeatureFlags)
+
+		cfg := setting.NewCfg()
+		cfg.AutoLinkPreprovisionedUsers = true
+
+		s := ProvideUserSync(
+			userSrv,
+			authinfoimpl.ProvideOSSUserProtectionService(),
+			authInfoSrv,
+			&quotatest.FakeQuotaService{},
+			tracing.NewNoopTracerService(),
+			featuremgmt.WithFeatures(),
+			cfg,
+			nil,
+		)
+
+		email := "nobody@example.com"
+		err := s.SyncUserHook(context.Background(), &authn.Identity{
+			AuthID:          "google-id-789",
+			AuthenticatedBy: login.GoogleAuthModule,
+			Login:           "nobody",
+			Email:           "nobody@example.com",
+			Name:            "Nobody",
+			ClientParams: authn.ClientParams{
+				SyncUser:    true,
+				AllowSignUp: false,
+				LookUpParams: login.UserLookupParams{
+					Email: &email,
+				},
+			},
+		}, nil)
+
+		// Should fail with signup disabled error
+		require.Error(t, err)
+		assert.ErrorIs(t, err, errSignupNotAllowed)
+		authInfoSrv.AssertNotCalled(t, "SetAuthInfo", mock.Anything, mock.Anything)
+	})
+
+	t.Run("Should NOT auto-link when feature is disabled", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+		// getUser -> lookupByAuthInfo returns not found
+		authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+			return q.AuthId == "google-id-000" && q.AuthModule == login.GoogleAuthModule
+		})).Return(nil, user.ErrUserNotFound).Once()
+
+		// getUser -> lookupByOneOf returns not found
+		userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
+
+		provider.UsingFlags(t, defaultFeatureFlags)
+
+		cfg := setting.NewCfg()
+		cfg.AutoLinkPreprovisionedUsers = false // disabled (default)
+
+		s := ProvideUserSync(
+			userSrv,
+			authinfoimpl.ProvideOSSUserProtectionService(),
+			authInfoSrv,
+			&quotatest.FakeQuotaService{},
+			tracing.NewNoopTracerService(),
+			featuremgmt.WithFeatures(),
+			cfg,
+			nil,
+		)
+
+		email := "preprov@example.com"
+		err := s.SyncUserHook(context.Background(), &authn.Identity{
+			AuthID:          "google-id-000",
+			AuthenticatedBy: login.GoogleAuthModule,
+			Login:           "preprov",
+			Email:           "preprov@example.com",
+			Name:            "Pre Prov",
+			ClientParams: authn.ClientParams{
+				SyncUser:    true,
+				AllowSignUp: false,
+				LookUpParams: login.UserLookupParams{
+					Email: &email,
+				},
+			},
+		}, nil)
+
+		// Should fail with signup disabled error, no auto-link attempted
+		require.Error(t, err)
+		assert.ErrorIs(t, err, errSignupNotAllowed)
+		authInfoSrv.AssertNotCalled(t, "SetAuthInfo", mock.Anything, mock.Anything)
+	})
+}

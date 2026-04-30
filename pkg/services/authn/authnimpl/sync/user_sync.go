@@ -117,6 +117,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		log:                       log.New("user.sync"),
 		tracer:                    tracer,
 		features:                  features,
+		cfg:                       cfg,
 		lastSeenSF:                &singleflight.Group{},
 		scimUtil:                  scimutil.NewSCIMUtil(k8sClient),
 		staticConfig:              staticConfig,
@@ -133,6 +134,7 @@ type UserSync struct {
 	log                       log.Logger
 	tracer                    tracing.Tracer
 	features                  featuremgmt.FeatureToggles
+	cfg                       *setting.Cfg
 	lastSeenSF                *singleflight.Group
 	scimUtil                  *scimutil.SCIMUtil
 	staticConfig              *StaticSCIMConfig
@@ -299,6 +301,24 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	if errors.Is(err, user.ErrUserNotFound) {
+		// Before rejecting for disabled signup, check for a pre-provisioned user
+		// (admin-created, no existing auth links) matching by email.
+		if s.cfg.AutoLinkPreprovisionedUsers && id.Email != "" {
+			if preProvUsr, lookupErr := s.userService.GetByEmail(ctx, id.Email); lookupErr == nil {
+				// Only auto-link if user has NO existing auth connections
+				_, authErr := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: preProvUsr.ID})
+				if errors.Is(authErr, user.ErrUserNotFound) {
+					s.log.FromContext(ctx).Info("Auto-linking pre-provisioned user on OAuth login",
+						"user_id", preProvUsr.ID, "email", id.Email, "auth_module", id.AuthenticatedBy)
+					if linkErr := s.upsertAuthConnection(ctx, preProvUsr, id, true); linkErr != nil {
+						return errSyncUserInternal.Errorf("unable to link pre-provisioned user: %w", linkErr)
+					}
+					syncUserToIdentity(ctx, preProvUsr, id)
+					return nil
+				}
+			}
+		}
+
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserSignupDisabled.Errorf("%w", errSignupNotAllowed)
