@@ -1,7 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { UserStorage } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -1014,7 +1014,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.orgDashboardTemplates && options.route === DashboardRoutes.Template) {
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardOrgTemplates, false) &&
+        options.route === DashboardRoutes.Template
+      ) {
         const editMode = !!options.editTemplate;
 
         if (options.orgTemplateUid && editMode) {

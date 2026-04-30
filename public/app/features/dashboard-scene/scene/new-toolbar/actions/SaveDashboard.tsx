@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
@@ -9,6 +9,7 @@ import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
+  const isOrgTemplatesFlagEnabled = useFlagDashboardOrgTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
@@ -87,7 +88,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
-            {config.featureToggles.orgDashboardTemplates && getSaveAsTemplateForm() !== null && (
+            {isOrgTemplatesFlagEnabled && getSaveAsTemplateForm() !== null && (
               <Menu.Item
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"

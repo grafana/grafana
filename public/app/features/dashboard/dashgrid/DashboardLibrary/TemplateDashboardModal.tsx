@@ -6,7 +6,8 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
 import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
@@ -35,7 +36,7 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const OrgTemplatesTab = getOrgTemplatesTab();
-  const showOrgTemplates = Boolean(config.featureToggles.orgDashboardTemplates) && OrgTemplatesTab !== null;
+  const showOrgTemplates = useFlagDashboardOrgTemplates() && OrgTemplatesTab !== null;
   const [activeTab, setActiveTab] = useState<TemplateTab>(showOrgTemplates ? 'custom' : 'grafana');
   const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
   const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(

@@ -3,7 +3,8 @@ import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { useFlagDashboardOrgTemplates } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -41,6 +42,7 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
+  const isOrgTemplatesFlagEnabled = useFlagDashboardOrgTemplates();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -152,7 +154,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <TemplateDashboardEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-      {config.featureToggles.orgDashboardTemplates && <TemplateDashboardModal />}
+      {isOrgTemplatesFlagEnabled && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}
