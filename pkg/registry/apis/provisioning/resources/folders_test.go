@@ -469,6 +469,160 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Equal(t, "deep/path/that/exceeds/limit/", depthErr.Path)
 		require.NotEmpty(t, client.updateCalls)
 	})
+
+	t.Run("wraps folder UID-too-long API error as FolderUIDTooLongError", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				// Simulates the post-#123843 form: a structured 400 from
+				// the folder apiserver carrying the legacy public message.
+				// IsFolderUIDTooLongAPIError's substring fallbacks cover
+				// the pre-fix legacy 500 form too; that's covered by the
+				// matcher unit tests in errors_test.go.
+				return nil, apierrors.NewBadRequest("uid too long, max 40 characters")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "a0123456789012345678901234567890123456789",
+			Title: "Bare metal services engineering",
+			Path:  "GMPO/bare-metal-services-engineering/",
+		}, "")
+
+		require.Error(t, err)
+		var uidErr *FolderUIDTooLongError
+		require.True(t, errors.As(err, &uidErr), "should return FolderUIDTooLongError")
+		require.Equal(t, "GMPO/bare-metal-services-engineering/", uidErr.Path)
+		require.Equal(t, "a0123456789012345678901234567890123456789", uidErr.UID)
+		require.NotEmpty(t, client.createCalls)
+	})
+
+	t.Run("wraps folder UID-too-long API error from Update (move) as FolderUIDTooLongError", func(t *testing.T) {
+		// Symmetric with the depth-exceeded Update case above: a managed
+		// folder being moved into a path whose derived UID overflows must
+		// also be classified as UID-too-long so the sync surfaces it as a
+		// warning instead of looping retries.
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("uid too long, max 40 characters")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "a0123456789012345678901234567890123456789",
+			Title: "New Title",
+			Path:  "GMPO/bare-metal-services-engineering/",
+		}, "")
+
+		require.Error(t, err)
+		var uidErr *FolderUIDTooLongError
+		require.True(t, errors.As(err, &uidErr), "Update path should also return FolderUIDTooLongError")
+		require.Equal(t, "GMPO/bare-metal-services-engineering/", uidErr.Path)
+		require.Equal(t, "a0123456789012345678901234567890123456789", uidErr.UID)
+		require.NotEmpty(t, client.updateCalls)
+	})
+
+	t.Run("wraps generic folder validation 4xx as FolderValidationError", func(t *testing.T) {
+		// Any folder-API 400 with a structured "folder.*" message ID that
+		// is not one of the more specific cases above must be wrapped as
+		// FolderValidationError so the sync surfaces it as a warning
+		// rather than retrying. This case simulates the illegal-uid-chars
+		// rejection (e.g. a _folder.json with a UID containing a space).
+		repo, _ := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		genericValidation := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "uid contains illegal characters",
+				Details: &metav1.StatusDetails{
+					UID: "folder.invalid-uid-chars",
+				},
+			},
+		}
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, genericValidation
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "hello world",
+			Title: "Bad title",
+			Path:  "bad-folder/",
+		}, "")
+
+		require.Error(t, err)
+		var validationErr *FolderValidationError
+		require.True(t, errors.As(err, &validationErr), "should return FolderValidationError")
+		require.Equal(t, "bad-folder/", validationErr.Path)
+		// The more-specific wrappers must NOT claim this error.
+		var depthErr *FolderDepthExceededError
+		require.False(t, errors.As(err, &depthErr), "must not be classified as depth-exceeded")
+		var uidErr *FolderUIDTooLongError
+		require.False(t, errors.As(err, &uidErr), "must not be classified as uid-too-long")
+		require.NotEmpty(t, client.createCalls)
+	})
+
+	t.Run("wraps generic folder validation 4xx from Update (move) as FolderValidationError", func(t *testing.T) {
+		// Symmetric with the depth/uid-too-long Update cases above: a
+		// generic folder validation rejection on the Update path must
+		// also be classified as a warning instead of looping retries.
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		genericValidation := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "uid contains illegal characters",
+				Details: &metav1.StatusDetails{
+					UID: "folder.invalid-uid-chars",
+				},
+			},
+		}
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, genericValidation
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "hello world",
+			Title: "New Title",
+			Path:  "bad-folder/",
+		}, "")
+
+		require.Error(t, err)
+		var validationErr *FolderValidationError
+		require.True(t, errors.As(err, &validationErr), "Update path should also return FolderValidationError")
+		require.Equal(t, "bad-folder/", validationErr.Path)
+		require.NotEmpty(t, client.updateCalls)
+	})
 }
 
 type fakeDynamicResourceClient struct {
