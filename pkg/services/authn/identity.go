@@ -146,7 +146,7 @@ func (i *Identity) GetTokenDelegatedPermissions() []string {
 }
 
 func (i *Identity) GetGroups() []string {
-	return []string{}
+	return i.Groups
 }
 
 func (i *Identity) GetExtra() map[string][]string {

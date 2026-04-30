@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -113,6 +116,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
 			idClaims.Rest.DisplayName = id.GetName()
+			// Will be always set for users authenticated via the proxy, but for OAuth/SAML/session/etc it might be empty.
+			idClaims.Rest.Groups = id.GetGroups()
 		}
 
 		if id.GetOrgRole().IsValid() {
@@ -193,9 +198,22 @@ func getAudience(orgID int64) jwt.Audience {
 }
 
 func getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole())
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + hashGroups(ident.GetGroups())
 }
 
 func shouldLogErr(err error) bool {
 	return !errors.Is(err, context.Canceled)
+}
+
+func hashGroups(groups []string) string {
+	sorted := make([]string, len(groups))
+	copy(sorted, groups)
+	sort.Strings(sorted)
+
+	h := xxhash.New()
+	for _, g := range sorted {
+		_, _ = h.WriteString(g)
+		_, _ = h.Write([]byte{0})
+	}
+	return strconv.FormatUint(h.Sum64(), 16)
 }
