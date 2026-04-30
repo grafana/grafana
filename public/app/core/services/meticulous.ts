@@ -1,4 +1,4 @@
-const AUTH_PATH_PREFIXES = ['/login', '/signup', '/invite/', '/verify', '/user/password/'];
+const AUTH_PATH_PREFIXES = ['/login', '/signup', '/invite/', '/verify', '/user/password/', '/profile/password'];
 
 function isAuthPath(pathname: string): boolean {
   return AUTH_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
