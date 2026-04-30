@@ -493,10 +493,10 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 h1:8b2oKd3p+lGwxJOYn5liHtlkBiRKnjLmuL4BpVMk0lc=
 github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
-github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 h1:Dz6EAPvxBi3+vewR83NEO0hgzFtCB4NXfp6glqG7M30=
-github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
-github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 h1:vYkwPeFo9hb/apMfN/GfF6xRbsF/ZnOTjSY6ZnQYFXM=
-github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
+github.com/grafana/authlib v0.0.0-20260430103847-64b3d5d23ff6 h1:0jq2lQdB7NacVTbHV/MMhjhVRt35kcmjrZ1ii1LxExY=
+github.com/grafana/authlib v0.0.0-20260430103847-64b3d5d23ff6/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
+github.com/grafana/authlib/types v0.0.0-20260430103847-64b3d5d23ff6 h1:oY1NUtcmAQOT3QdQRvkMM7tCWL1Pc66titwkJzAALOs=
+github.com/grafana/authlib/types v0.0.0-20260430103847-64b3d5d23ff6/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
 github.com/grafana/dataplane/examples v0.0.1/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=

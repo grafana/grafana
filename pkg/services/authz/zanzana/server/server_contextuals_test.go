@@ -12,14 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func TestGetContextuals(t *testing.T) {
+func TestGetContextualParts(t *testing.T) {
 	srv := &Server{}
 
-	t.Run("render service gets dashboard and folder contextual tuples", func(t *testing.T) {
-		contextuals, err := srv.getContextuals("render:0")
+	t.Run("render service gets dashboard and folder contextual base tuples", func(t *testing.T) {
+		base, team, err := srv.getContextualParts(t.Context(), "render:0")
 		require.NoError(t, err)
-		require.NotNil(t, contextuals)
-		require.Len(t, contextuals.TupleKeys, 3)
+		require.NotNil(t, base)
+		require.Nil(t, team)
+		require.Len(t, base.TupleKeys, 3)
 
 		expectedObjects := []string{
 			common.NewGroupResourceIdent(
@@ -39,16 +40,30 @@ func TestGetContextuals(t *testing.T) {
 			),
 		}
 
-		for i, tuple := range contextuals.TupleKeys {
+		for i, tuple := range base.TupleKeys {
 			assert.Equal(t, "render:0", tuple.User)
 			assert.Equal(t, common.RelationSetView, tuple.Relation)
 			assert.Equal(t, expectedObjects[i], tuple.Object)
 		}
 	})
 
-	t.Run("non-render subject returns nil contextuals", func(t *testing.T) {
-		contextuals, err := srv.getContextuals("user:123")
+	t.Run("non-render subject without groups returns no tuples", func(t *testing.T) {
+		base, team, err := srv.getContextualParts(t.Context(), "user:123")
 		require.NoError(t, err)
-		assert.Nil(t, contextuals)
+		assert.Nil(t, base)
+		assert.Nil(t, team)
+	})
+
+	t.Run("auth info groups add team member tuples", func(t *testing.T) {
+		ctx := newContextWithGroups("aa", "bb")
+		base, team, err := srv.getContextualParts(ctx, "user:1")
+		require.NoError(t, err)
+		assert.Nil(t, base)
+		require.Len(t, team, 2)
+		assert.Equal(t, "user:1", team[0].User)
+		assert.Equal(t, "user:1", team[1].User)
+		assert.Equal(t, common.RelationTeamMember, team[0].Relation)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "aa"), team[0].Object)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "bb"), team[1].Object)
 	})
 }

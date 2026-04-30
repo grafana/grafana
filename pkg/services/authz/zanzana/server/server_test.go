@@ -171,6 +171,21 @@ func newContextWithNamespaceAndPermissions(perms ...string) context.Context {
 	return ctx
 }
 
+type authInfoWithGroups struct {
+	claims.AuthInfo
+	groups []string
+}
+
+func (a authInfoWithGroups) GetGroups() []string {
+	return a.groups
+}
+
+func newContextWithGroups(groups ...string) context.Context {
+	ctx := newContextWithNamespace()
+	info, _ := claims.AuthInfoFrom(ctx)
+	return claims.WithAuthInfo(ctx, authInfoWithGroups{AuthInfo: info, groups: groups})
+}
+
 func newContextWithZanzanaUpdatePermission() context.Context {
 	return newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUpdate)
 }

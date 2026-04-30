@@ -56,7 +56,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	base, teamTuples, err := s.getContextualParts(ctx, r.GetSubject())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -64,7 +64,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	relation := common.VerbMapping[r.GetVerb()]
 	resource := common.NewResourceInfoFromList(r)
 
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check group resource: %w", err)
 	}
@@ -74,13 +74,13 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	if resource.IsGeneric() {
-		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 	}
 
-	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	return s.listTyped(ctx, r.GetSubject(), relation, resource, base, teamTuples, store)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listTyped")
 	defer span.End()
 
@@ -109,8 +109,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -126,8 +125,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		Type:                 resource.Type(),
 		Relation:             listRelation,
 		User:                 subject,
-		ContextualTuples:     contextuals,
-	})
+	}, base, teamTuples)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +136,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listGeneric")
 	defer span.End()
 
@@ -158,8 +156,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -177,8 +174,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             folderListRelation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 
 		if err != nil {
 			return nil, err
@@ -197,8 +193,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             relation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, base, teamTuples)
 		if err != nil {
 			return nil, err
 		}
@@ -212,9 +207,9 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	}, nil
 }
 
-// listObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
+// doOpenFGAListObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
 // aggregating all streamed objects. That avoids unary ListObjects max-result truncation for large sets.
-func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (s *Server) doOpenFGAListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {

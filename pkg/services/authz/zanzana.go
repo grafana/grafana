@@ -275,7 +275,6 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 
 	s := &Zanzana{
 		cfg:           cfg,
-		features:      features,
 		logger:        log.New("zanzana.server"),
 		reg:           reg,
 		tracer:        tracer,
@@ -296,7 +295,6 @@ type Zanzana struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	handle        grpcserver.Provider
-	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
 	storeProvider zStore.StoreProvider
 	reconcileCRDs []schema.GroupVersionResource

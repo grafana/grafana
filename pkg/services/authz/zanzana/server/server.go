@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -35,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/setting"
+
+	authtypes "github.com/grafana/authlib/types"
 )
 
 const cacheCleanInterval = 2 * time.Minute
@@ -250,12 +253,13 @@ func (s *Server) Close() {
 	s.store.Close()
 }
 
-func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
-	contextuals := make([]*openfgav1.TupleKey, 0)
-
+// getContextualParts returns base contextual tuples (e.g. for the render user) and optional
+// team#member contextual tuples from auth token groups.
+func (s *Server) getContextualParts(ctx context.Context, subject string) (base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, err error) {
+	var baseKeys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
-		contextuals = append(
-			contextuals,
+		baseKeys = append(
+			baseKeys,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -265,10 +269,6 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
-		)
-
-		contextuals = append(
-			contextuals,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -278,10 +278,6 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
-		)
-
-		contextuals = append(
-			contextuals,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -293,10 +289,26 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 			},
 		)
 	}
-
-	if len(contextuals) > 0 {
-		return &openfgav1.ContextualTupleKeys{TupleKeys: contextuals}, nil
+	if len(baseKeys) > 0 {
+		base = &openfgav1.ContextualTupleKeys{TupleKeys: baseKeys}
 	}
 
-	return nil, nil
+	seen := make(map[string]struct{})
+	var teamNames []string
+	if c, ok := authtypes.AuthInfoFrom(ctx); ok {
+		for _, g := range c.GetGroups() {
+			if g == "" {
+				continue
+			}
+			if _, dup := seen[g]; !dup {
+				seen[g] = struct{}{}
+				teamNames = append(teamNames, g)
+			}
+		}
+	}
+	sort.Strings(teamNames)
+	for _, n := range teamNames {
+		teamTuples = append(teamTuples, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
+	}
+	return base, teamTuples, nil
 }

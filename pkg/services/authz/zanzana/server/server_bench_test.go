@@ -331,7 +331,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	return tuples
 }
 
-// setupBenchmarkServer creates a server with the benchmark data loaded
+// setupBenchmarkServer creates a server with the benchmark data loaded.
 func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
@@ -695,7 +695,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextuals(deniedUser)
+	base, team, err := srv.getContextualParts(ctx, deniedUser)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
@@ -718,14 +718,15 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 		b.Run(fmt.Sprintf("Depth%d", depth), func(b *testing.B) {
 			b.Run("RelationResourceGet", func(b *testing.B) {
 				b.ResetTimer()
-				for range b.N {
-					res, err := srv.openfgaCheck(
+				for i := 0; i < b.N; i++ {
+					res, err := srv.openfgaCheckWithContextualTeamChunks(
 						ctx,
 						store,
 						deniedUser,
 						common.RelationSubresourceGet,
 						folderIdent,
-						contextuals,
+						base,
+						team,
 						resourceCtx,
 					)
 					if err != nil {
@@ -739,14 +740,11 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 
 			b.Run("RelationCanResourceGet", func(b *testing.B) {
 				b.ResetTimer()
-				for range b.N {
-					res, err := srv.openfgaCheck(
+				for i := 0; i < b.N; i++ {
+					res, err := srv.openfgaCheckWithContextualTeamChunks(
 						ctx,
-						store,
-						deniedUser,
-						common.RelationCanSubresourceGet,
-						folderIdent,
-						contextuals,
+						base,
+						team,
 						resourceCtx,
 					)
 					if err != nil {
