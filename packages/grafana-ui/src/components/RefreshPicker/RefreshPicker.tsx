@@ -1,11 +1,12 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { formatDuration } from 'date-fns/formatDuration';
 import { memo } from 'react';
 
-import { type SelectableValue, parseDuration } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
@@ -22,6 +23,7 @@ export interface Props {
   isLoading?: boolean;
   isLive?: boolean;
   text?: string;
+  loadingText?: string;
   noIntervalPicker?: boolean;
   showAutoInterval?: boolean;
   width?: string;
@@ -60,12 +62,14 @@ const RefreshPickerComponent = memo((props: Props) => {
     isLoading,
     isLive,
     text,
+    loadingText,
     noIntervalPicker,
     showAutoInterval,
     width,
     primary,
     isOnCanvas,
   } = props;
+  const styles = useStyles2(getStyles);
   const currentValue = value || '';
   const options = intervalsToOptions({ intervals, showAutoInterval });
   const option = options.find(({ value }) => value === currentValue);
@@ -113,7 +117,7 @@ const RefreshPickerComponent = memo((props: Props) => {
   return (
     <ButtonGroup className="refresh-picker">
       <ToolbarButton
-        aria-label={text}
+        // aria-label={text}
         tooltip={tooltip}
         onClick={onRefresh}
         variant={variant}
@@ -121,7 +125,22 @@ const RefreshPickerComponent = memo((props: Props) => {
         style={width ? { width } : undefined}
         data-testid={selectors.components.RefreshPicker.runButtonV2}
       >
-        {text}
+        <span className={styles.textWrapper}>
+          <span
+            className={cx(styles.text, {
+              [styles.hideText]: Boolean(loadingText && isLoading),
+            })}
+          >
+            {text}
+          </span>
+          <span
+            className={cx(styles.loadingText, {
+              [styles.hideLoadingText]: !loadingText || !isLoading,
+            })}
+          >
+            {loadingText}
+          </span>
+        </span>
       </ToolbarButton>
       {!noIntervalPicker && (
         <ButtonSelect
@@ -196,3 +215,25 @@ export const intervalsToOptions = ({
   options.unshift(translateOption(offOption.value));
   return options;
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  textWrapper: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gridTemplateRows: '1fr',
+  }),
+  text: css({
+    gridColumnStart: 1,
+    gridRowStart: 1,
+  }),
+  hideText: css({
+    visibility: 'hidden',
+  }),
+  loadingText: css({
+    gridColumnStart: 1,
+    gridRowStart: 1,
+  }),
+  hideLoadingText: css({
+    visibility: 'hidden',
+  }),
+});
