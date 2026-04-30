@@ -26,8 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-const testAppID = "test-app"
 const instanceName = "instance" // the name is always "instance"
+const testAppID = "test-app-with-backend"
 
 var gvrSettings = schema.GroupVersionResource{
 	Group:    testAppID,
@@ -356,8 +356,8 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..")
-	testAppSrc := filepath.Join(repoRoot, "pkg", "plugins", "manager", "testdata", "test-app")
-	testAppDst := filepath.Join(dir, "plugins", "test-app")
+	testAppSrc := filepath.Join(repoRoot, "pkg", "plugins", "manager", "testdata", testAppID)
+	testAppDst := filepath.Join(dir, "plugins", testAppID)
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
