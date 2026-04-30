@@ -2,6 +2,8 @@ import {
   type FieldConfigOptionsRegistry,
   type FieldConfigPropertyItem,
   type FieldConfigSource,
+  type DataFrame,
+  FieldType,
   Registry,
 } from '@grafana/data';
 
@@ -51,6 +53,46 @@ function makeItem(id: string, overrides?: Partial<FieldConfigPropertyItem>): Fie
 }
 
 describe('getFieldOverrideCategories', () => {
+  describe('scope-aware context for DataLink suggestions', () => {
+    it('passes nested frames as context data for nested-scope overrides', () => {
+      const nestedFrame: DataFrame = {
+        fields: [{ name: 'event', type: FieldType.string, config: {}, values: [] }],
+        length: 0,
+      };
+      const topLevelFrame: DataFrame = {
+        fields: [
+          { name: 'time', type: FieldType.time, config: {}, values: [] },
+          { name: 'nested', type: FieldType.nestedFrames, config: {}, values: [[nestedFrame]] },
+        ],
+        length: 1,
+      };
+
+      const registry = makeRegistry([makeItem('links')]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          { matcher: { id: 'byName', options: 'nested', scope: 'nested' }, properties: [{ id: 'links', value: [] }] },
+          { matcher: { id: 'byName', options: 'time' }, properties: [{ id: 'links', value: [] }] },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [topLevelFrame], '', jest.fn());
+
+      function getContextData(categoryIndex: number): DataFrame[] {
+        const propertyItem = categories[categoryIndex].items.find((item) =>
+          item.props.id?.includes('-property-')
+        );
+        const element = propertyItem?.props.render(propertyItem) as React.ReactElement<{
+          context: { data: DataFrame[] };
+        }>;
+        return element.props.context.data;
+      }
+
+      expect(getContextData(0)).toEqual([nestedFrame]);
+      expect(getContextData(1)).toEqual([topLevelFrame]);
+    });
+  });
+
   describe('hideFromOverrides', () => {
     it('excludes items with hideFromOverrides:true from the add override property picker', () => {
       const registry = makeRegistry([
