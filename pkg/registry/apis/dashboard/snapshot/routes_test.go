@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,12 +20,41 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+// allowAllAccessClient is an authlib.AccessClient that grants every check.
+type allowAllAccessClient struct{}
+
+func (a *allowAllAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+
+func (a *allowAllAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (a *allowAllAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
+}
+
+// denyAllAccessClient is an authlib.AccessClient that denies every check.
+type denyAllAccessClient struct{}
+
+func (a *denyAllAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: false}, nil
+}
+
+func (a *denyAllAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, _ string) bool { return false }, authlib.NoopZookie{}, nil
+}
+
+func (a *denyAllAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
+}
 
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	const orgID int64 = 1
@@ -124,7 +154,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			routes := GetRoutes(
 				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
-				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+				&allowAllAccessClient{},
 				map[string]common.OpenAPIDefinition{},
 				tt.setupStorageMock(t),
 				dashboardService,
@@ -154,4 +184,77 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSnapshotRoutesDeniedAccess(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	makeRoutes := func() *builder.APIRoutes {
+		return GetRoutes(
+			dashboardsnapshots.NewMockService(t),
+			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+			&denyAllAccessClient{},
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return nil },
+			dashboards.NewFakeDashboardService(t),
+		)
+	}
+
+	t.Run("create returns 403 when access is denied", func(t *testing.T) {
+		routes := makeRoutes()
+		require.NotEmpty(t, routes.Namespace)
+		handler := routes.Namespace[0].Handler
+
+		body, err := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "some-uid"},
+			"name":      "test",
+		})
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		handler(recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+	})
+
+	t.Run("delete returns 403 when access is denied", func(t *testing.T) {
+		routes := makeRoutes()
+		require.Len(t, routes.Namespace, 3)
+		handler := routes.Namespace[1].Handler
+
+		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/somekey", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace, "deleteKey": "somekey"})
+
+		recorder := httptest.NewRecorder()
+		handler(recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+	})
+
+	t.Run("settings returns 403 when access is denied", func(t *testing.T) {
+		routes := makeRoutes()
+		require.Len(t, routes.Namespace, 3)
+		handler := routes.Namespace[2].Handler
+
+		req := httptest.NewRequest(http.MethodGet, "/snapshots/settings", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		handler(recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+	})
 }

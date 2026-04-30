@@ -19,13 +19,11 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -58,43 +56,44 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	provisioning provisioning.StubProvisioningService
 
-	accessControl accesscontrol.AccessControl
-	log           log.Logger
+	accessClient claims.AccessClient
+	log          log.Logger
 }
 
 func ProvideMigrator(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
-	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 ) Migrator {
-	return NewMigratorAccess(sql, provisioning, accessControl)
+	return NewMigratorAccess(sql, provisioning, accessClient)
 }
 
 func NewMigratorAccess(
 	sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.StubProvisioningService,
-	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 ) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
-		sql:           sql,
-		namespacer:    claims.OrgNamespaceFormatter,
-		provisioning:  provisioning,
-		accessControl: accessControl,
-		log:           log.New("legacy.migrator.accessor"),
+		sql:          sql,
+		namespacer:   claims.OrgNamespaceFormatter,
+		provisioning: provisioning,
+		accessClient: accessClient,
+		log:          log.New("legacy.migrator.accessor"),
 	}
 }
 
-func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
+func NewDashboardSQLAccess(
+	sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	provisioning provisioning.ProvisioningService,
-	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 ) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
-		sql:           sql,
-		namespacer:    namespacer,
-		provisioning:  provisioning,
-		accessControl: accessControl,
-		log:           log.New("legacy.dashboard.accessor"),
+		sql:          sql,
+		namespacer:   namespacer,
+		provisioning: provisioning,
+		accessClient: accessClient,
+		log:          log.New("legacy.dashboard.accessor"),
 	}
 }
 
@@ -641,9 +640,9 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no auth info in request context")
 	}
 
 	helper, err := a.sql(ctx)
@@ -657,7 +656,6 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
 	}
 
-	res := &dashboardV0.LibraryPanelList{}
 	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
@@ -668,45 +666,76 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, err
 	}
 
-	var lastID int64
+	// scan all rows first so we can batch-check permissions in a single call
+	type panelWithItem struct {
+		p    panel
+		item dashboardV0.LibraryPanel
+	}
+	var scanned []panelWithItem
 	for rows.Next() {
 		p := panel{}
-		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
+		if err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
 			&p.Created, &p.CreatedBy,
 			&p.Updated, &p.UpdatedBy,
 			&p.Name, &p.Type, &p.Description, &p.Model, &p.Version,
-		)
-		if err != nil {
-			return res, err
+		); err != nil {
+			return nil, err
 		}
-		lastID = p.ID
-
 		item, err := parseLibraryPanelRow(p)
 		if err != nil {
-			return res, err
+			return nil, err
 		}
+		scanned = append(scanned, panelWithItem{p: p, item: item})
+	}
 
-		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
-			libraryelements.ActionLibraryPanelsRead,
-			libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(item.Name),
-		))
-		if err != nil || !ok {
+	// batch-check permissions for all scanned panels in a single round-trip
+	checks := make([]claims.BatchCheckItem, len(scanned))
+	namespace := a.namespacer(query.OrgID)
+	for i, pw := range scanned {
+		folder := pw.p.FolderUID.String
+		if folder == "" {
+			folder = accesscontrol.GeneralFolderUID
+		}
+		checks[i] = claims.BatchCheckItem{
+			CorrelationID: strconv.Itoa(i),
+			Verb:          utils.VerbGet,
+			Group:         dashboardV0.GROUP,
+			Resource:      dashboardV0.LIBRARY_PANEL_RESOURCE,
+			Name:          pw.item.Name,
+			Folder:        folder,
+		}
+	}
+
+	var batchResp claims.BatchCheckResponse
+	if len(checks) > 0 {
+		batchResp, err = a.accessClient.BatchCheck(ctx, authInfo, claims.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("batch permission check failed: %w", err)
+		}
+	}
+
+	res := &dashboardV0.LibraryPanelList{}
+	for i, pw := range scanned {
+		if result, ok := batchResp.Results[strconv.Itoa(i)]; !ok || !result.Allowed {
 			continue
 		}
-
-		res.Items = append(res.Items, item)
+		res.Items = append(res.Items, pw.item)
 		if len(res.Items) > limit {
-			res.Continue = strconv.FormatInt(lastID, 10)
+			res.Continue = strconv.FormatInt(pw.p.ID, 10)
 			break
 		}
 	}
+
 	if query.UID == "" {
 		rv, err := helper.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
 			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
 	}
-	return res, err
+	return res, nil
 }
 
 func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {

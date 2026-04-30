@@ -2,61 +2,60 @@ package snapshot
 
 import (
 	"context"
+	"fmt"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // NewSnapshotAuthorizer returns an authorizer that maps k8s verbs to snapshot RBAC actions.
-func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
+func NewSnapshotAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
+			authInfo, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "valid user is required", fmt.Errorf("auth info missing from context")
 			}
 
-			// Handle subresources
-			if attr.GetSubresource() != "" {
-				var action string
-				switch attr.GetSubresource() {
+			verb := attr.GetVerb()
+
+			// map subresources to their equivalent verbs
+			if sr := attr.GetSubresource(); sr != "" {
+				switch sr {
 				case "dashboard":
-					action = dashboards.ActionSnapshotsRead
+					verb = utils.VerbGet
 				case "deletekey":
-					action = dashboards.ActionSnapshotsDelete
+					verb = utils.VerbDelete
 				default:
 					return authorizer.DecisionDeny, "unsupported subresource", nil
 				}
-				ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(action))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "access denied", err
+			} else {
+				// normalize list/watch to get — they all require read access
+				switch verb {
+				case "list", "watch":
+					verb = utils.VerbGet
 				}
-				return authorizer.DecisionAllow, "", nil
 			}
 
-			// Map k8s verbs to snapshot RBAC actions
-			var action string
-			switch attr.GetVerb() {
-			case "get", "list":
-				action = dashboards.ActionSnapshotsRead
-			case "create":
-				action = dashboards.ActionSnapshotsCreate
-			case "delete":
-				action = dashboards.ActionSnapshotsDelete
-			default:
-				return authorizer.DecisionDeny, "unsupported verb", nil
+			res, err := accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+				Namespace: attr.GetNamespace(),
+				Verb:      verb,
+				Group:     dashv0.GROUP,
+				Resource:  dashv0.SNAPSHOT_RESOURCE,
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "access check failed", err
 			}
-
-			ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(action))
-			if !ok || err != nil {
-				return authorizer.DecisionDeny, "access denied", err
+			if !res.Allowed {
+				return authorizer.DecisionDeny, "access denied", nil
 			}
 			return authorizer.DecisionAllow, "", nil
 		})

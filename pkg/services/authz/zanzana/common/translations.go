@@ -102,6 +102,25 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
 		},
 	},
+	KindSnapshots: {
+		typ:      TypeResource,
+		group:    dashboardGroup,
+		resource: KindSnapshots,
+		mapping: map[string]actionMappig{
+			"snapshots:read":   newMapping(RelationGet, ""),
+			"snapshots:create": newMapping(RelationCreate, ""),
+			"snapshots:delete": newMapping(RelationDelete, ""),
+		},
+	},
+	KindLibraryPanels: {
+		typ:      TypeResource,
+		group:    dashboardGroup,
+		resource: KindLibraryPanels,
+		mapping: map[string]actionMappig{
+			"library.panels:read":  newMapping(RelationGet, ""),
+			"library.panels:write": newMapping(RelationUpdate, ""),
+		},
+	},
 }
 
 func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.CheckRequest, bool) {

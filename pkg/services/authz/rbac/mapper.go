@@ -213,6 +213,8 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			// Snapshots have no per-resource scope in RBAC — all checks are global actions.
+			"snapshots": newResourceTranslation("snapshots", "uid", false, skipScopeOnAllVerbs),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions
 			"dashboards/annotations": translation{
