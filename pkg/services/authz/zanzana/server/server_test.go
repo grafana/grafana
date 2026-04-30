@@ -72,6 +72,10 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
 		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
 		common.NewGroupResourceTuple("user:19", common.RelationGetPermissions, userGroup, userResource, ""),
+		common.NewResourceTuple("team:ctx-check#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-check-dashboard"),
+		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
+		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),
+		common.NewResourceTuple("team:ctx-1000#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-1000-dashboard"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)

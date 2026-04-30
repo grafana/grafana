@@ -214,6 +214,19 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check2"].GetAllowed())
 	})
 
+	t.Run("user should batch check dashboard access through team groups from auth info", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("allowed", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-batch-dashboard"),
+			newItem("denied", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"),
+		}
+
+		res, err := server.BatchCheck(newContextWithGroups("ctx-batch"), newBatchReq("user:contextual", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["allowed"].GetAllowed())
+		assert.False(t, res.GetResults()["denied"].GetAllowed())
+	})
+
 	t.Run("different verbs in same batch", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),

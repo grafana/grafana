@@ -180,6 +180,14 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
 	})
+
+	t.Run("user should list dashboard access through team groups from auth info", func(t *testing.T) {
+		res, err := server.List(newContextWithGroups("ctx-list"), newList("user:contextual", dashboardGroup, dashboardResource, ""))
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-list-dashboard")
+		assert.NotContains(t, res.GetItems(), "ctx-check-dashboard")
+		assert.False(t, res.GetAll())
+	})
 }
 
 func TestIntegrationServerListStreaming(t *testing.T) {
