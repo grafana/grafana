@@ -10,11 +10,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// stableFolderErrSentinels are folder errors whose legacy /api/folders message are kept stable.
+var stableFolderErrSentinels = []error{
+	folder.ErrTitleEmpty,
+	folder.ErrInvalidUID,
+	folder.ErrFolderCannotBeParentOfItself,
+}
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
@@ -25,34 +33,44 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	// --- 400 Bad Request ---
-	if errors.Is(err, dashboards.ErrFolderTitleEmpty) ||
+	if errors.Is(err, folder.ErrTitleEmpty) ||
 		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
 		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
-		errors.Is(err, folder.ErrMaximumDepthReached) {
+		errors.Is(err, folder.ErrMaximumDepthReached) ||
+		errors.Is(err, folder.ErrInvalidUID) {
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) {
+			for _, s := range stableFolderErrSentinels {
+				if errors.Is(err, s) {
+					return response.Error(http.StatusBadRequest, s.Error(), nil)
+				}
+			}
+		}
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	// --- 403 Forbidden ---
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+	if errors.Is(err, folder.ErrAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	// --- 404 Not Found ---
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
+	if errors.Is(err, folder.ErrFolderNotFound) ||
+		errors.Is(err, dashboards.ErrFolderNotFound) {
 		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
 	// --- 409 Conflict ---
-	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if errors.Is(err, folder.ErrSameUIDExists) {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
 	// --- 412 Precondition Failed ---
-	if errors.Is(err, dashboards.ErrFolderVersionMismatch) ||
+	if errors.Is(err, folder.ErrVersionMismatch) ||
 		k8sErrors.IsAlreadyExists(err) {
-		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
 	// --- Kubernetes status errors ---
@@ -119,5 +137,5 @@ func getDefaultMessageForStatus(statusCode int) string {
 }
 
 func IsForbidden(err error) bool {
-	return k8sErrors.IsForbidden(err) || errors.Is(err, dashboards.ErrFolderAccessDenied)
+	return k8sErrors.IsForbidden(err) || errors.Is(err, folder.ErrAccessDenied)
 }

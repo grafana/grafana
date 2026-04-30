@@ -54,7 +54,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	return newDataStore(setupBadgerKV(t))
+	return newDataStore(setupBadgerKV(t), nil)
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -63,7 +63,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	return newDataStore(setupSqlKV(t))
+	return newDataStore(setupSqlKV(t), nil)
 }
 
 func TestDataKey_String(t *testing.T) {

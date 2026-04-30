@@ -1,10 +1,10 @@
-import { clamp } from 'lodash';
 import React, { useCallback, useContext, useEffect } from 'react';
 import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { clamp } from '../../utils/clamp';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -127,7 +127,8 @@ export function useSidebar({
           return prevWidth;
         }
 
-        return clamp(prevWidth + diff, 100, 500);
+        const maxWidth = Math.max(window.innerWidth * 0.5, 500);
+        return clamp(prevWidth + diff, 100, maxWidth);
       });
     },
     [hasOpenPane, setCompact, setPaneWidth, compact]

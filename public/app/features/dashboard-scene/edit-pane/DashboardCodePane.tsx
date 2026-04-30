@@ -3,21 +3,35 @@ import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
+
+import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
 
 export interface DashboardCodePaneProps {
   initialValue: string;
   onApply: (jsonText: string) => { success: boolean; error?: string };
 }
 
-export function DashboardCodePane({ initialValue, onApply }: DashboardCodePaneProps) {
+export class DashboardCodePane extends SceneObjectBase {
+  public static Component = DashboardCodePaneRenderer;
+  public minWidth = 700;
+
+  public getId() {
+    return 'code' as const;
+  }
+}
+
+export function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
   const styles = useStyles2(getStyles);
+  const dashboard = getDashboardSceneFor(model);
 
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [jsonText, setJsonText] = useState(initialValue);
+  const [jsonText, setJsonText] = useState(() => getDashboardJsonText(dashboard));
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
 
@@ -28,11 +42,12 @@ export function DashboardCodePane({ initialValue, onApply }: DashboardCodePanePr
 
   const handleApply = useCallback(() => {
     setApplyError(null);
-    const result = onApply(jsonText);
+
+    const result = applyJsonToDashboard(dashboard, jsonText);
     if (!result.success) {
       setApplyError(result.error ?? 'Failed to apply changes');
     }
-  }, [onApply, jsonText]);
+  }, [dashboard, jsonText]);
 
   const applyTooltip =
     editorFormat === 'yaml'
@@ -71,7 +86,10 @@ export function DashboardCodePane({ initialValue, onApply }: DashboardCodePanePr
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.code-pane.header', 'Edit as code')} />
+      <Sidebar.PaneHeader
+        title={t('dashboard.code-pane.header', 'Edit as code')}
+        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+      />
       <div className={styles.content}>
         {errorAlert}
         <div className={styles.editorContainer}>

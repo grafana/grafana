@@ -57,10 +57,6 @@ type GetDashboardVersionQuery struct {
 	Version      int64
 }
 
-type DeleteExpiredVersionsCommand struct {
-	DeletedRows int64
-}
-
 // RestoreVersionCommand is used to restore a dashboard version.
 // Only one of DashboardID and DashboardUID are required.
 type RestoreVersionCommand struct {

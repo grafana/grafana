@@ -83,22 +83,28 @@ export interface MonitoringLogger {
   logError: (error: Error, contexts?: LogContext) => void;
   logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) => void;
 }
+
 /**
  * Creates a monitoring logger with five levels of logging methods: `logDebug`, `logInfo`, `logWarning`, `logError`, and `logMeasurement`.
  * These methods use `faro.api.pushX` web SDK methods to report these logs or errors to the Faro collector.
  *
  * @param {string} source - Identifier for the source of the log messages.
  * @param {LogContext} [defaultContext] - Context to be included in every log message.
+ * @param {boolean} [logToConsole] - Message and context to be output to console too.
  *
  * @returns {MonitoringLogger} Logger object with five methods:
  * - `logDebug(message: string, contexts?: LogContext)`: Logs a debug message.
  * - `logInfo(message: string, contexts?: LogContext)`: Logs an informational message.
  * - `logWarning(message: string, contexts?: LogContext)`: Logs a warning message.
  * - `logError(error: Error, contexts?: LogContext)`: Logs an error message.
- * - `logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext)`: Logs a measurement.
+ * - `logMeasurement(type: string, measurement: MeasurementValues, contexts?: LogContext)`: Logs a measurement.
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
-export function createMonitoringLogger(source: string, defaultContext?: LogContext): MonitoringLogger {
+export function createMonitoringLogger(
+  source: string,
+  defaultContext?: LogContext,
+  logToConsole = false
+): MonitoringLogger {
   const createFullContext = (contexts?: LogContext) => ({
     source: source,
     ...defaultContext,
@@ -111,35 +117,61 @@ export function createMonitoringLogger(source: string, defaultContext?: LogConte
      * @param {string} message - The debug message to be logged.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logDebug: (message: string, contexts?: LogContext) => logDebug(message, createFullContext(contexts)),
+    logDebug: (message: string, contexts?: LogContext) => {
+      logDebug(message, createFullContext(contexts));
+      if (logToConsole) {
+        // eslint-disable-next-line no-console
+        console.debug(message, createFullContext(contexts));
+      }
+    },
 
     /**
      * Logs an informational message with optional additional context.
      * @param {string} message - The informational message to be logged.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logInfo: (message: string, contexts?: LogContext) => logInfo(message, createFullContext(contexts)),
+    logInfo: (message: string, contexts?: LogContext) => {
+      logInfo(message, createFullContext(contexts));
+      if (logToConsole) {
+        console.log(message, createFullContext(contexts));
+      }
+    },
 
     /**
      * Logs a warning message with optional additional context.
      * @param {string} message - The warning message to be logged.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logWarning: (message: string, contexts?: LogContext) => logWarning(message, createFullContext(contexts)),
+    logWarning: (message: string, contexts?: LogContext) => {
+      logWarning(message, createFullContext(contexts));
+      if (logToConsole) {
+        console.warn(message, createFullContext(contexts));
+      }
+    },
 
     /**
      * Logs an error with optional additional context.
      * @param {Error} error - The error object to be logged.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logError: (error: Error, contexts?: LogContext) => logError(error, createFullContext(contexts)),
+    logError: (error: Error, contexts?: LogContext) => {
+      logError(error, createFullContext(contexts));
+      if (logToConsole) {
+        console.error(error.message, createFullContext(contexts), error);
+      }
+    },
 
     /**
-     * Logs an measurement with optional additional context.
-     * @param {MeasurementEvent} measurement - The measurement object to be recorded.
+     * Logs a measurement with optional additional context.
+     * @param {string} type - The type to be recorded.
+     * @param {MeasurementValues} measurement - The measurement object to be recorded.
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
-    logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) =>
-      logMeasurement(type, measurement, createFullContext(contexts)),
+    logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) => {
+      logMeasurement(type, measurement, createFullContext(contexts));
+      if (logToConsole) {
+        console.log(type, measurement, createFullContext(contexts));
+      }
+    },
   };
 }

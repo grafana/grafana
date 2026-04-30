@@ -8,6 +8,8 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
+  sceneGraph,
+  type SceneObject,
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
@@ -18,14 +20,30 @@ import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
 
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Excludes internal system variables (e.g. ScopesVariable)
+ */
+export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+}
+
+export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const { variables } = sceneGraph.getVariables(model).useState();
+  return variables.filter(keepOnlyUserDefinedVariables);
+}
+
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
-  const variableObjects = oldModel.templating.list
+  const variables = migrateGroupByVariablesV1(oldModel.templating.list);
+  const variableObjects = variables
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -78,7 +96,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            layout: 'combobox',
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
@@ -177,8 +195,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
-      layout: 'combobox',
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
@@ -309,12 +328,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

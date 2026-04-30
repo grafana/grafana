@@ -2,17 +2,13 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement } from '@grafana/runtime';
-import {
-  type AlertManagerCortexConfig,
-  type AlertmanagerGroup,
-  type Matcher,
-} from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type ThunkResult } from 'app/types/store';
 import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
 import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
-import { deleteAlertManagerConfig, fetchAlertGroups, updateAlertManagerConfig } from '../api/alertmanager';
+import { deleteAlertManagerConfig, updateAlertManagerConfig } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -230,13 +226,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
         successMessage,
       }
     )
-);
-
-export const fetchAlertGroupsAction = createAsyncThunk(
-  'unifiedalerting/fetchAlertGroups',
-  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
-    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
-  }
 );
 
 export const deleteAlertManagerConfigAction = createAsyncThunk(

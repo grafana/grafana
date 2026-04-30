@@ -4325,6 +4325,12 @@
           },
           "subject": {
             "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -4688,9 +4694,6 @@
             "type": "boolean"
           },
           "isSnapshot": {
-            "type": "boolean"
-          },
-          "isStarred": {
             "type": "boolean"
           },
           "provisioned": {
@@ -5752,6 +5755,29 @@
             "type": "string"
           },
           "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FooterItem": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          },
+          "fontWeight": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
             "type": "string"
           }
         },
@@ -7070,17 +7096,6 @@
         },
         "title": "Label is a key/value pair of strings.",
         "type": "object"
-      },
-      "LabelSet": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/LabelValue"
-        },
-        "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-        "type": "object"
-      },
-      "LabelValue": {
-        "title": "A LabelValue is an associated value for a LabelName.",
-        "type": "string"
       },
       "Labels": {
         "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
@@ -9971,6 +9986,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -10108,6 +10129,15 @@
           "embeddedImageTheme": {
             "type": "string"
           },
+          "footerFontFamily": {
+            "type": "string"
+          },
+          "footerItems": {
+            "items": {
+              "$ref": "#/components/schemas/FooterItem"
+            },
+            "type": "array"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -10141,6 +10171,17 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportURLItem": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           }
         },
@@ -11810,80 +11851,6 @@
       },
       "TempUserStatus": {
         "type": "string"
-      },
-      "TestReceiverConfigResult": {
-        "properties": {
-          "error": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiverResult": {
-        "properties": {
-          "grafana_managed_receiver_configs": {
-            "items": {
-              "$ref": "#/components/schemas/TestReceiverConfigResult"
-            },
-            "type": "array"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversConfigAlertParams": {
-        "properties": {
-          "annotations": {
-            "$ref": "#/components/schemas/LabelSet"
-          },
-          "labels": {
-            "$ref": "#/components/schemas/LabelSet"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversConfigBodyParams": {
-        "properties": {
-          "alert": {
-            "$ref": "#/components/schemas/TestReceiversConfigAlertParams"
-          },
-          "receivers": {
-            "items": {
-              "$ref": "#/components/schemas/PostableApiReceiver"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "TestReceiversResult": {
-        "properties": {
-          "alert": {
-            "$ref": "#/components/schemas/TestReceiversConfigAlertParams"
-          },
-          "notified_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "receivers": {
-            "items": {
-              "$ref": "#/components/schemas/TestReceiverResult"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
       },
       "TestRulePayload": {
         "properties": {
@@ -26057,6 +26024,7 @@
     },
     "/v1/provisioning/contact-points": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetContactpoints",
         "parameters": [
           {
@@ -26096,6 +26064,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostContactpoints",
         "parameters": [
           {
@@ -26269,6 +26238,7 @@
     },
     "/v1/provisioning/contact-points/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
           {
@@ -26302,6 +26272,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutContactpoint",
         "parameters": [
           {
@@ -26665,6 +26636,7 @@
     },
     "/v1/provisioning/mute-timings": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTimings",
         "responses": {
           "200": {
@@ -26694,6 +26666,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostMuteTiming",
         "parameters": [
           {
@@ -26850,6 +26823,7 @@
     },
     "/v1/provisioning/mute-timings/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
           {
@@ -26908,6 +26882,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTiming",
         "parameters": [
           {
@@ -26951,6 +26926,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutMuteTiming",
         "parameters": [
           {
@@ -27135,6 +27111,7 @@
     },
     "/v1/provisioning/policies": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteResetPolicyTree",
         "responses": {
           "202": {
@@ -27164,6 +27141,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
@@ -27193,6 +27171,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
@@ -27355,6 +27334,7 @@
     },
     "/v1/provisioning/templates": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -27386,6 +27366,7 @@
     },
     "/v1/provisioning/templates/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
@@ -27437,6 +27418,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -27487,6 +27469,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutTemplate",
         "parameters": [
           {

@@ -215,7 +215,7 @@ describe('DashboardQueryEditor', () => {
         );
       });
 
-      const adhocFiltersToggle = await screen.findByText('AdHoc Filters');
+      const adhocFiltersToggle = await screen.findByText('Filters');
       expect(adhocFiltersToggle).toBeInTheDocument();
     });
   });

@@ -9,12 +9,28 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/services"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
+	unified "github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -135,6 +151,151 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 		require.ErrorIs(t, e, resource.ErrResourceAlreadyExists,
 			"should receive ErrResourceAlreadyExists after resource is created")
 	}
+}
+
+func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("Without RvManager/Local", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		client := newLocalClient(t, backend)
+		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
+	})
+
+	t.Run("Without RvManager/Remote", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		client := newRemoteClient(t, backend)
+		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
+	})
+
+	t.Run("With RvManager/Local", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		client := newLocalClient(t, backend)
+		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
+	})
+
+	t.Run("With RvManager/Remote", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		client := newRemoteClient(t, backend)
+		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
+	})
+}
+
+func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
+	require.NoError(t, err)
+	_, err = server.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
+	require.NoError(t, err)
+	return resource.NewLocalResourceClient(server)
+}
+
+func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
+	cfg := setting.NewCfg()
+	cfg.GRPCServer.Address = "localhost:0"
+	cfg.GRPCServer.Network = "tcp"
+	features := featuremgmt.WithFeatures()
+	reg := prometheus.NewPedanticRegistry()
+
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
+	require.NoError(t, err)
+
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,
+		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
+			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
+			return auth.Authenticate(ctx)
+		}),
+	)
+	require.NoError(t, err)
+
+	ctx := t.Context()
+	require.NoError(t, services.StartAndAwaitRunning(ctx, grpcService))
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+
+	conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = conn.Close()
+		_ = services.StopAndAwaitTerminated(context.Background(), grpcService)
+		_ = services.StopAndAwaitTerminated(context.Background(), svc)
+	})
+
+	return resource.NewLegacyResourceClient(conn, conn)
+}
+
+func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns string) {
+	const concurrency = 10
+	name := "concurrent-create-retry-item"
+
+	u := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "group/v1",
+		"kind":       "resource",
+		"metadata":   map[string]any{"name": name, "namespace": ns},
+		"spec":       map[string]any{"value": "test"},
+	}}
+	value, err := u.MarshalJSON()
+	require.NoError(t, err)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: ns,
+		Group:     "group",
+		Resource:  "resource",
+		Name:      name,
+	}
+
+	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:           types.TypeUser,
+		UserID:         1,
+		UserUID:        "user-uid-1",
+		OrgID:          1,
+		Login:          "testuser",
+		Name:           "Test User",
+		IsGrafanaAdmin: true,
+	})
+
+	type result struct {
+		err           error
+		alreadyExists bool
+		success       bool
+	}
+	results := make([]result, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			if err != nil {
+				results[i] = result{err: err}
+				return
+			}
+			if rsp.Error != nil {
+				results[i] = result{
+					err:           resource.GetError(rsp.Error),
+					alreadyExists: rsp.Error.Reason == string(metav1.StatusReasonAlreadyExists),
+				}
+				return
+			}
+			results[i] = result{success: true}
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var alreadyExistsCount int
+	var unexpectedErrors []error
+	for _, r := range results {
+		switch {
+		case r.success:
+			successes++
+		case r.alreadyExists:
+			alreadyExistsCount++
+		default:
+			unexpectedErrors = append(unexpectedErrors, r.err)
+		}
+	}
+
+	require.Empty(t, unexpectedErrors, "unexpected errors from concurrent creates")
+	require.Equal(t, 1, successes, "exactly one create should succeed")
+	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {

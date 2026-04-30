@@ -59,7 +59,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.adHocFilterDefaultValues) {
+    if (!config.featureToggles.adHocFilterDefaultValues && !config.featureToggles.dashboardUnifiedDrilldownControls) {
       return undefined;
     }
 

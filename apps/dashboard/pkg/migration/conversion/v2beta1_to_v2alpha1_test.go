@@ -262,7 +262,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 				assert.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
 				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
 				require.NotNil(t, panel)
-				assert.Equal(t, float64(1), panel.Spec.Id)
+				assert.Equal(t, int32(1), panel.Spec.Id)
 				assert.Equal(t, "Test Panel", panel.Spec.Title)
 				// Verify datasource was moved from query to panel query spec
 				require.Len(t, panel.Spec.Data.Spec.Queries, 1)

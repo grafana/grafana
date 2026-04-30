@@ -1,29 +1,11 @@
 import { type PluginType } from '@grafana/data';
-import { type LogContext } from '@grafana/faro-web-sdk';
 
-import { createMonitoringLogger, type MonitoringLogger } from '../../utils/logging';
+import { getLogger } from '../logging/registry';
 
-let logger: MonitoringLogger;
-
-function getLogger() {
-  if (!logger) {
-    logger = createMonitoringLogger('pluginMeta-logs');
-  }
-
-  return logger;
+export function logPluginMetaWarning(message: string, type: PluginType): void {
+  getLogger('grafana/runtime.plugins.meta').logWarning(message, { type });
 }
 
-export function logWarning(message: string, type: PluginType): void {
-  const context: LogContext = { type };
-
-  getLogger().logWarning(message, context);
-  console.warn(message);
-}
-
-export function setLogger(override: MonitoringLogger) {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('setLogger function can only be called from tests.');
-  }
-
-  logger = override;
+export function logPluginMetaError(message: string, error: unknown): void {
+  getLogger('grafana/runtime.plugins.meta').logError(new Error(message, { cause: error }));
 }

@@ -142,15 +142,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const datasource = getDatasourceFromQueryRunner(queryRunner);
     const groupByVar = getGroupByVariableFor(dashboard, datasource);
 
-    if (!groupByVar) {
-      return [];
+    let currentValues: string[] = [];
+
+    if (groupByVar) {
+      const val = groupByVar.state.value;
+      currentValues = Array.isArray(val) ? val.map(String) : val ? [String(val)] : [];
+    } else {
+      const adhocVar = getAdHocGroupByVariableFor(dashboard, datasource);
+      if (adhocVar) {
+        currentValues = adhocVar.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
+      }
     }
 
-    const currentValues = Array.isArray(groupByVar.state.value)
-      ? groupByVar.state.value
-      : groupByVar.state.value
-        ? [groupByVar.state.value]
-        : [];
+    if (currentValues.length === 0) {
+      return [];
+    }
 
     return items
       .map((item) => (currentValues.find((key) => key === item.key) ? item : undefined))
@@ -229,6 +235,21 @@ function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null |
   return null;
 }
 
+function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isAdHocVariable(variable) && variable.state.enableGroupBy) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
@@ -246,7 +267,6 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
     datasource: ds,
     supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
-    layout: 'combobox',
   });
 
   // Add it to the scene

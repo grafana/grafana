@@ -3,72 +3,52 @@ package userk8s
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var userGVR = schema.GroupVersionResource{
-	Group:    iamv0alpha1.APIGroup,
-	Version:  iamv0alpha1.APIVersion,
-	Resource: "users",
-}
-
 type UserK8sService struct {
 	logger          log.Logger
 	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
+	clientGenerator resource.ClientGenerator
 	config          *setting.Cfg
 	tracer          tracing.Tracer
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
-func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
+func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, clientGenerator resource.ClientGenerator, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
 		logger:          logger,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
+		clientGenerator: clientGenerator,
 		config:          cfg,
 		tracer:          tracer,
 	}
 }
 
-func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	if s.configProvider == nil {
-		return nil, errors.New("config provider not initialized")
+func (s *UserK8sService) getUserClient() (*iamv0alpha1.UserClient, error) {
+	if s.clientGenerator == nil {
+		return nil, errors.New("client generator not initialized")
 	}
-
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
-	}
-
-	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
-	if err != nil {
-		return nil, err
-	}
-
-	return dyn.Resource(userGVR).Namespace(namespace), nil
+	return iamv0alpha1.NewUserClientFromGenerator(s.clientGenerator)
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -77,19 +57,20 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in Create", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, err := s.getUserClient()
 	if err != nil {
-		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
 	}
 
@@ -107,11 +88,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 		cmd.Email = cmd.Login
 	}
 
-	k8sUser := iamv0alpha1.User{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-			Kind:       "User",
-		},
+	k8sUser := &iamv0alpha1.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      uid,
 			Namespace: namespace,
@@ -128,24 +105,14 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 		},
 	}
 
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&k8sUser)
+	created, err := client.Create(ctx, k8sUser, resource.CreateOptions{})
 	if err != nil {
-		return nil, err
-	}
-
-	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
-	if err != nil {
-		s.logger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+		ctxLogger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
 		span.RecordError(err)
 		return nil, err
 	}
 
-	var created iamv0alpha1.User
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &created); err != nil {
-		return nil, err
-	}
-
-	return toUser(&created, orgID), nil
+	return toUser(created, orgID), nil
 }
 
 func (s *UserK8sService) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -157,7 +124,40 @@ func (s *UserK8sService) Delete(ctx context.Context, cmd *user.DeleteUserCommand
 }
 
 func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in GetByID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.ID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUser(found, orgID), nil
 }
 
 func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
@@ -168,46 +168,50 @@ func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs
 	return nil, errors.New("not implemented")
 }
 
+func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.getByLogin", trace.WithAttributes(
 		attribute.String("loginOrEmail", cmd.LoginOrEmail),
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	loginOrEmail := strings.ToLower(cmd.LoginOrEmail)
 
-	requester, err := identity.GetRequester(ctx)
+	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByLogin", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, err := s.getUserClient()
 	if err != nil {
-		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
 	}
 
 	if strings.Contains(loginOrEmail, "@") {
-		if u, err := s.getByFieldSelector(ctx, client, "spec.email", loginOrEmail, orgID); err != nil {
+		u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", loginOrEmail, namespace, orgID)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			span.RecordError(err)
 			return nil, err
-		} else if u != nil {
+		}
+		if u != nil {
 			return u, nil
 		}
 	}
 
-	u, err := s.getByFieldSelector(ctx, client, "spec.login", loginOrEmail, orgID)
+	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.login", loginOrEmail, namespace, orgID)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
-	}
-	if u == nil {
-		return nil, user.ErrUserNotFound
 	}
 
 	return u, nil
@@ -219,44 +223,202 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context in GetByEmail", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
-	client, err := s.getClient(ctx, namespace)
+	client, err := s.getUserClient()
 	if err != nil {
-		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		return nil, err
 	}
 
-	u, err := s.getByFieldSelector(ctx, client, "spec.email", strings.ToLower(cmd.Email), orgID)
+	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace, orgID)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
-	}
-	if u == nil {
-		return nil, user.ErrUserNotFound
 	}
 
 	return u, nil
 }
 
 func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	return errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.update", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in Update", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	existing, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if cmd.Name != "" {
+		existing.Spec.Title = cmd.Name
+	}
+	if cmd.Email != "" {
+		existing.Spec.Email = strings.ToLower(cmd.Email)
+	}
+	if cmd.Login != "" {
+		existing.Spec.Login = strings.ToLower(cmd.Login)
+	}
+	if cmd.IsDisabled != nil {
+		existing.Spec.Disabled = *cmd.IsDisabled
+	}
+	if cmd.EmailVerified != nil {
+		existing.Spec.EmailVerified = *cmd.EmailVerified
+	}
+	if cmd.IsGrafanaAdmin != nil {
+		existing.Spec.GrafanaAdmin = *cmd.IsGrafanaAdmin
+	}
+	if cmd.IsProvisioned != nil {
+		existing.Spec.Provisioned = *cmd.IsProvisioned
+	}
+
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
+	if err != nil {
+		ctxLogger.Error("k8s user update failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	return errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.updateLastSeenAt", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	namespace := s.namespaceMapper(cmd.OrgID)
+	span.SetAttributes(attribute.Int64("orgID", cmd.OrgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	existing, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if existing.Status.LastSeenAt != 0 {
+		lastSeen := time.Unix(existing.Status.LastSeenAt, 0)
+		if time.Since(lastSeen) <= s.config.UserLastSeenUpdateInterval {
+			return user.ErrLastSeenUpToDate
+		}
+	}
+
+	existing.Status.LastSeenAt = time.Now().Unix()
+
+	// Use a full Update (not UpdateStatus) to avoid a bug in UserClient.UpdateStatus
+	// which constructs a new User with an empty Spec, causing the status subresource
+	// path to persist an empty spec and corrupt the stored user data.
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
+	if err != nil {
+		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID := cmd.OrgID
+	if orgID <= 0 {
+		var err error
+		orgID, err = s.getOrgID(ctx, ctxLogger)
+		if err != nil {
+			ctxLogger.Error("failed to get orgID from context in GetSignedInUser", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient()
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	var found *iamv0alpha1.User
+	var lookupErr error
+	switch {
+	case cmd.UserID > 0:
+		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	case cmd.Login != "":
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.login", strings.ToLower(cmd.Login), namespace)
+	case cmd.Email != "":
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace)
+	default:
+		span.RecordError(user.ErrNoUniqueID)
+		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())
+		return nil, user.ErrNoUniqueID
+	}
+
+	if lookupErr != nil {
+		span.RecordError(lookupErr)
+		span.SetStatus(codes.Error, lookupErr.Error())
+		return nil, lookupErr
+	}
+
+	return toSignedInUser(found, orgID), nil
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
@@ -282,22 +444,90 @@ func getUserID(u *iamv0alpha1.User) int64 {
 	return 0
 }
 
-func (s *UserK8sService) getByFieldSelector(ctx context.Context, client dynamic.ResourceInterface, field, value string, orgID int64) (*user.User, error) {
-	result, err := client.List(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector(field, value).String(),
+func (s *UserK8sService) getOrgID(ctx context.Context, logger log.Logger) (int64, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err == nil {
+		return requester.GetOrgID(), nil
+	}
+
+	logger.Debug("failed to get requester from context, falling back to orgID", "error", err)
+	orgID, ok := identity.OrgIDFrom(ctx)
+	if ok {
+		return orgID, nil
+	}
+
+	return 0, errors.New("failed to get orgID: no requester or orgID in context")
+}
+
+func (s *UserK8sService) getByInternalID(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, userID int64, namespace string) (*iamv0alpha1.User, error) {
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(userID, 10)
+	list, err := client.List(ctx, namespace, resource.ListOptions{
+		LabelFilters: []string{labelSelector},
 	})
 	if err != nil {
-		s.logger.Error("k8s user list failed", "orgID", orgID, "field", field, "value", value, "err", err)
+		logger.Error("k8s user list failed", "namespace", namespace, "userID", userID, "err", err)
 		return nil, err
 	}
-	if len(result.Items) == 0 {
-		return nil, nil
+
+	if len(list.Items) == 0 {
+		return nil, user.ErrUserNotFound
 	}
-	var found iamv0alpha1.User
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Items[0].Object, &found); err != nil {
+
+	if len(list.Items) > 1 {
+		logger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", userID, "count", len(list.Items))
+		return nil, errors.New("multiple users found")
+	}
+
+	return &list.Items[0], nil
+}
+
+func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, field, value, namespace string) (*iamv0alpha1.User, error) {
+	list, err := client.List(ctx, namespace, resource.ListOptions{
+		FieldSelectors: []string{field + "=" + value},
+	})
+	if err != nil {
+		logger.Error("k8s user list failed", "field", field, "value", value, "err", err)
 		return nil, err
 	}
-	return toUser(&found, orgID), nil
+	if len(list.Items) == 0 {
+		return nil, user.ErrUserNotFound
+	}
+	return &list.Items[0], nil
+}
+
+func (s *UserK8sService) getByFieldSelector(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, field, value, namespace string, orgID int64) (*user.User, error) {
+	found, err := s.getByFieldSelectorRaw(ctx, logger, client, field, value, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return toUser(found, orgID), nil
+}
+
+func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
+	userID := getUserID(u)
+
+	signedInUser := &user.SignedInUser{
+		UserID:         userID,
+		UserUID:        u.Name,
+		OrgID:          orgID,
+		Login:          u.Spec.Login,
+		Name:           u.Spec.Title,
+		Email:          u.Spec.Email,
+		EmailVerified:  u.Spec.EmailVerified,
+		IsGrafanaAdmin: u.Spec.GrafanaAdmin,
+		IsDisabled:     u.Spec.Disabled,
+		LastSeenAt:     time.Unix(u.Status.LastSeenAt, 0),
+	}
+
+	role := identity.RoleType(u.Spec.Role)
+	if role.IsValid() {
+		signedInUser.OrgRole = role
+	} else {
+		signedInUser.OrgID = -1
+		signedInUser.OrgName = "Org missing"
+	}
+
+	return signedInUser
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
@@ -314,5 +544,6 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsProvisioned: u.Spec.Provisioned,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
+		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
 	}
 }

@@ -610,24 +610,6 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]alertingModels.Rece
 	return am.mimirClient.GetReceivers(ctx)
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := decryptedGrafanaReceivers(c.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
-	}
-
-	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
-	var alert *alertingModels.TestReceiversConfigAlertParams
-	if c.Alert != nil {
-		alert = &alertingModels.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
-	}
-
-	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
-		Alert:     alert,
-		Receivers: apiReceivers,
-	})
-}
-
 func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
 	decrypted := integrationConfig.Clone()
 	err := decrypted.Decrypt(notifier.DecryptIntegrationSettings(ctx, am.crypto))
@@ -668,7 +650,7 @@ func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string
 	status := alertingModels.IntegrationStatus{
 		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
 		LastNotifyAttemptDuration: model.Duration(duration).String(),
-		Name:                      cfg.Type,
+		Name:                      string(cfg.Type),
 		SendResolved:              false,
 	}
 	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {
@@ -699,30 +681,21 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-// SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state
-// remotely and instead uses the value from the state store.
+// SilenceState returns an empty SilenceState and no error.
+// The source of truth for state should be the remote Alertmanager.
 func (am *Alertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
-	silences, err := am.state.GetSilences(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting silences: %w", err)
-	}
-
-	return alertingNotify.DecodeState(strings.NewReader(silences))
+	return alertingNotify.SilenceState{}, nil
 }
 
 // getFullState returns a base64-encoded protobuf message representing the Alertmanager's internal state.
 func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	var parts []alertingClusterPB.Part
 
-	state, err := am.SilenceState(ctx)
+	silences, err := am.state.GetSilences(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error getting silences: %w", err)
 	}
-	b, err := state.MarshalBinary()
-	if err != nil {
-		return "", fmt.Errorf("error marshalling silences: %w", err)
-	}
-	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: b})
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: []byte(silences)})
 
 	notificationLog, err := am.state.GetNotificationLog(ctx)
 	if err != nil {
@@ -739,7 +712,7 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	fs := alertingClusterPB.FullState{
 		Parts: parts,
 	}
-	b, err = fs.Marshal()
+	b, err := fs.Marshal()
 	if err != nil {
 		return "", fmt.Errorf("error marshaling full state: %w", err)
 	}

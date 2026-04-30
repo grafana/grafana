@@ -23,6 +23,7 @@ import {
   allAnnotations,
   mockAlertingFrame,
   mockAnnotationFrame,
+  mockClusterRegions,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
   mockIRMClusteringAnnotation,
@@ -32,6 +33,8 @@ import { ANNOTATION_LANE_SIZE } from './utils';
 const minTime = 1759388895560;
 const maxTime = 1759390250000 + 1;
 const plotWidth = 600;
+// 2257.4ms per pixel (maxTime - minTime / plotWidth)
+// 108355.2ms per cluster region (2257.4ms * 24px * 2)
 
 jest.mock('uplot', () => {
   const setDataMock = jest.fn();
@@ -113,12 +116,20 @@ describe('AnnotationsPlugin2', () => {
   const setUp = (
     props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2Cluster>>,
     configOverride?: UPlotConfigBuilder,
-    uPlotProps?: Partial<uPlot.Options>
+    uPlotProps?: Partial<uPlot.Options>,
+    callReady = true
   ) => {
     function applyReady() {
       act(() => {
         //@ts-ignore
         hooks.ready(new uPlot(uPlotProps));
+      });
+    }
+
+    function applyDrawAxes() {
+      act(() => {
+        //@ts-ignore
+        hooks.drawAxes(new uPlot(uPlotProps));
       });
     }
 
@@ -155,7 +166,10 @@ describe('AnnotationsPlugin2', () => {
       </div>
     );
 
-    applyReady();
+    if (callReady) {
+      applyReady();
+      applyDrawAxes();
+    }
     return result;
   };
 
@@ -194,7 +208,7 @@ describe('AnnotationsPlugin2', () => {
         await event(firstMarker);
         expect(screen.queryByTestId('mock-annotation-text')).toBeVisible();
         expect(screen.queryByTestId('mock-annotation-text')).toHaveTextContent(
-          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by your mom'
+          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by Batman'
         );
       });
       it.each([userEvent.hover, userEvent.click])('title', async (event) => {
@@ -306,11 +320,6 @@ describe('AnnotationsPlugin2', () => {
             annotations: [frame],
             // newRange sets the wip annotation
             newRange: { from: minTime + 10, to: minTime + 10 },
-          });
-
-          // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
-          await act(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 0));
           });
 
           // WIP edit state should be visible
@@ -557,6 +566,82 @@ describe('AnnotationsPlugin2', () => {
       });
     });
     describe('clustering', () => {
+      // These tests are a bit brittle and linked to the implementation, but will hopefully catch unintentional regression.
+      describe('plot.ready', () => {
+        it.each([24, -1])('plot draws when ready before annos: %s', (clustering) => {
+          uplotMockInstance.redraw.mockClear();
+          const { rerender } = setUp({
+            annotations: [],
+            options: { clustering },
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+          uplotMockInstance.redraw.mockClear();
+
+          act(() => {
+            rerender(
+              <div>
+                <AnnotationsPlugin2Cluster
+                  options={{ clustering }}
+                  config={config}
+                  timeZone={'browser'}
+                  newRange={null}
+                  setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                  replaceVariables={(value) => value}
+                  annotations={[mockAlertingFrame, mockIRMAnnotationRegion]}
+                />
+                <div id="grafana-portal-container"></div>
+              </div>
+            );
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
+          expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
+        });
+        it.each([24, -1])('plot draws when ready after annos: %s', (clustering) => {
+          uplotMockInstance.redraw.mockClear();
+          const { rerender } = setUp(
+            {
+              annotations: [mockClusterRegions],
+              options: { clustering },
+            },
+            undefined,
+            undefined,
+            false
+          );
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+          uplotMockInstance.redraw.mockClear();
+
+          act(() => {
+            rerender(
+              <div>
+                <AnnotationsPlugin2Cluster
+                  options={{ clustering }}
+                  config={config}
+                  timeZone={'browser'}
+                  newRange={null}
+                  setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                  replaceVariables={(value) => value}
+                  annotations={[mockClusterRegions]}
+                />
+                <div id="grafana-portal-container"></div>
+              </div>
+            );
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+
+          act(() => {
+            //@ts-expect-error
+            hooks.ready(new uPlot());
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
+          expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
+        });
+      });
+
       it('should not cluster', async () => {
         // should cluster all points within 48px
         setUp({
@@ -568,8 +653,7 @@ describe('AnnotationsPlugin2', () => {
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers.length).toEqual(4);
       });
-
-      it('should cluster', async () => {
+      it('should cluster points', async () => {
         // should cluster all points within 48px
         setUp({
           annotations: [mockIRMClusteringAnnotation],
@@ -609,6 +693,52 @@ describe('AnnotationsPlugin2', () => {
         expect(texts[0]).toHaveTextContent('(>16MB)');
         expect(texts[1]).toHaveTextContent('(>32MB)');
         expect(texts[2]).toHaveTextContent('Declared by Ada');
+      });
+      it('should cluster regions', async () => {
+        setUp({
+          annotations: [mockClusterRegions],
+          options: {
+            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(1);
+        await userEvent.click(markers[0]);
+
+        // All annos should get clustered, format the dates from the raw frames
+        const startTime = dateTimeFormat(mockClusterRegions.fields[2].values[0], {
+          format: systemDateFormats.fullDate,
+        });
+
+        const endTime = dateTimeFormat(mockClusterRegions.fields[3].values[4], {
+          format: systemDateFormats.fullDate,
+        });
+
+        expect(screen.getByText(`${startTime} - ${endTime}`));
+
+        // Assert the tooltip body contains the title and the text
+        const titles = screen.getAllByTestId('mock-annotation-title');
+        expect(titles).toHaveLength(6);
+        expect(titles[0]).toBeVisible();
+
+        const texts = screen.getAllByTestId('mock-annotation-text');
+        expect(texts).toHaveLength(6);
+        expect(texts[0]).toBeVisible();
+
+        // Assert all of the titles are rolled-up and rendered
+        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
+        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
+        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
+        expect(titles[3]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        expect(titles[4]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        expect(titles[5]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        // Assert all of the text are rolled-up and rendered
+        expect(texts[0]).toHaveTextContent('(>16MB)');
+        expect(texts[1]).toHaveTextContent('(>32MB)');
+        expect(texts[2]).toHaveTextContent('Declared by Ada');
+        expect(texts[3]).toHaveTextContent('Declared by Theo');
+        expect(texts[4]).toHaveTextContent('Declared by Theo');
+        expect(texts[5]).toHaveTextContent('Declared by Theo');
       });
 
       it.each([userEvent.hover, userEvent.click])('clusters should render links and actions', async (event) => {

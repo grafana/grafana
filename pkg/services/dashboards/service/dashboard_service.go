@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -38,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -51,7 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -84,7 +84,7 @@ const (
 type DashboardServiceImpl struct {
 	cfg                    *setting.Cfg
 	log                    log.Logger
-	dashboardStore         dashboards.Store
+	sqlStore               db.DB // solely used to cleanup associated resources after dashboard deletion
 	folderService          folder.Service
 	orgService             org.Service
 	features               featuremgmt.FeatureToggles
@@ -308,7 +308,7 @@ func (dr *DashboardServiceImpl) getLastResourceVersion(ctx context.Context, orgI
 	}
 
 	if !ok {
-		dr.log.Info("No last resource version found, starting from scratch", "orgID", orgID)
+		dr.log.Debug("No last deleted resource version found, skipping", "orgID", orgID)
 		return "0", nil
 	}
 
@@ -398,7 +398,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	dashboardStore dashboards.Store,
+	sqlStore db.DB,
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -416,7 +416,7 @@ func ProvideDashboardServiceImpl(
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
-		dashboardStore:            dashboardStore,
+		sqlStore:                  sqlStore,
 		features:                  features,
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
@@ -501,7 +501,7 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	res, err := dr.k8sclient.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
+	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{
 				{
@@ -512,12 +512,9 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 			},
 		},
 		Limit: listAllDashboardsLimit,
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	results, err := dashboardsearch.ParseResults(res, 0)
+	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
@@ -544,6 +541,21 @@ func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID 
 	}
 
 	return resp.Stats[0].Count, nil
+}
+
+func (dr *DashboardServiceImpl) CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.CountProvisionedDashboardsInOrg")
+	defer span.End()
+
+	dashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:     orgID,
+		ManagedBy: utils.ManagerKindClassicFP, // nolint:staticcheck
+	})
+	if err != nil {
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int("provisioned_dashboards", len(dashs)))
+	return int64(len(dashs)), nil
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
@@ -693,7 +705,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+		return nil, folder.ErrNameExists
 	}
 
 	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash.Data.Get("refresh").MustString("")); err != nil {
@@ -865,11 +877,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsWrite
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersWrite
+		action = folder.ActionFoldersWrite
 	}
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
 	if dash.IsFolder {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }
@@ -877,11 +889,11 @@ func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user ident
 func (dr *DashboardServiceImpl) canCreateDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsCreate
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersCreate
+		action = folder.ActionFoldersCreate
 	}
-	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
+	scope := folder.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
 	if dash.FolderUID == "" {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }
@@ -907,15 +919,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		return err
-	}
-
-	orgIDs := make([]int64, 0, len(orgs))
-	for _, org := range orgs {
-		orgIDs = append(orgIDs, org.ID)
-	}
-
-	if err := dr.DeleteDuplicateProvisionedDashboards(ctx, orgIDs, cmd.Config); err != nil {
-		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
 	}
 
 	currentNames := make([]string, 0, len(cmd.Config))
@@ -952,156 +955,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			}
 		}
 	}
-	return nil
-}
-
-// searchExistingProvisionedData fetches provisioned data for the purposes of
-// duplication cleanup. Returns the set of folder UIDs for folders with the
-// given title, and the set of resources contained in those folders.
-func (dr *DashboardServiceImpl) searchExistingProvisionedData(
-	ctx context.Context, orgID int64, folderTitle string,
-) ([]string, []dashboards.DashboardSearchProjection, error) {
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
-	cmd := folder.SearchFoldersQuery{
-		OrgID:           orgID,
-		SignedInUser:    user,
-		Title:           folderTitle,
-		TitleExactMatch: true,
-	}
-
-	searchResults, err := dr.folderService.SearchFolders(ctx, cmd)
-	if err != nil {
-		return nil, nil, fmt.Errorf("checking if provisioning reset is required: %w", err)
-	}
-
-	var matchingFolders []string //nolint:prealloc
-	for _, result := range searchResults {
-		f, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        orgID,
-			UID:          &result.UID,
-			SignedInUser: user,
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// We are only interested in folders at the top-level of the folder hierarchy.
-		// Cleanup is not performed for provisioned folders that were moved to
-		// a different location.
-		if f.ParentUID != "" {
-			continue
-		}
-
-		matchingFolders = append(matchingFolders, f.UID)
-	}
-
-	if len(matchingFolders) == 0 {
-		// If there are no folders with the same title as the provisioned folder we
-		// are looking for, there is nothing to be cleaned up.
-		return nil, nil, nil
-	}
-
-	resources, err := dr.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
-		SignedInUser: user,
-		FolderUIDs:   matchingFolders,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return matchingFolders, resources, nil
-}
-
-// maybeResetProvisioning will check for duplicated provisioned dashboards in the database. These duplications
-// happen when multiple provisioned dashboards of the same title are found, or multiple provisioned
-// folders are found. In this case, provisioned resources are deleted, allowing the provisioning
-// process to start from scratch after this function returns.
-func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) {
-	if skipReason := canBeAutomaticallyCleanedUp(configs); skipReason != "" {
-		dr.log.Info("not eligible for automated cleanup", "reason", skipReason)
-		return
-	}
-
-	folderTitle := configs[0].Folder
-	provisionedNames := map[string]bool{}
-	for _, c := range configs {
-		provisionedNames[c.Name] = true
-	}
-
-	for _, orgID := range orgs {
-		ctx, user := identity.WithServiceIdentity(ctx, orgID)
-		provFolders, resources, err := dr.searchExistingProvisionedData(ctx, orgID, folderTitle)
-		if err != nil {
-			dr.log.Error("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		steps, err := cleanupSteps(provFolders, resources, provisionedNames)
-		if err != nil {
-			dr.log.Warn("not possible to perform automated duplicate cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		for _, step := range steps {
-			var err error
-
-			switch step.Type {
-			case searchstore.TypeDashboard:
-				err = dr.deleteDashboard(ctx, 0, step.UID, orgID, false)
-			case searchstore.TypeFolder:
-				err = dr.folderService.Delete(ctx, &folder.DeleteFolderCommand{
-					OrgID:        orgID,
-					SignedInUser: user,
-					UID:          step.UID,
-				})
-			}
-
-			if err == nil {
-				dr.log.Info("deleted duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID,
-				)
-			} else {
-				dr.log.Error("failed to delete duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID, "error", err,
-				)
-			}
-		}
-	}
-}
-
-func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) error {
-	// Start from scratch if duplications that cannot be fixed by the logic
-	// below are found in the database.
-	dr.maybeResetProvisioning(ctx, orgs, configs)
-
-	// cleanup duplicate provisioned dashboards (i.e., with the same name and external_id).
-	// Note: only works in modes 1-3. This logic can be removed once mode5 is
-	// enabled everywhere.
-	duplicates, err := dr.dashboardStore.GetDuplicateProvisionedDashboards(ctx)
-	if err != nil {
-		return err
-	}
-
-	type provisioningKey struct {
-		name       string
-		externalID string
-	}
-
-	groups := make(map[provisioningKey][]*dashboards.DashboardProvisioningSearchResults)
-	for _, dash := range duplicates {
-		key := provisioningKey{
-			name:       dash.Provisioner,
-			externalID: dash.ExternalID,
-		}
-		if _, exists := groups[key]; exists {
-			if err = dr.deleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID, false); err != nil {
-				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.UID, "dashboardID", dash.ID)
-			}
-		}
-		groups[key] = append(groups[key], dash)
-	}
-
 	return nil
 }
 
@@ -1324,7 +1177,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 			return err
 		}
 
-		return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
+		return nil
 	}
 
 	return dashboards.ErrDashboardNotFound
@@ -1672,7 +1525,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}
 
 		if hit.Field != nil && query.Sort.Name != "" {
-			fieldName, _, err := legacysearcher.ParseSortName(query.Sort.Name)
+			fieldName, _, err := sort.ParseSortName(query.Sort.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -1839,7 +1692,7 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,
-		Type:         searchstore.TypeDashboard,
+		Type:         model.TypeDashboard,
 		Limit:        100000,
 		OrgId:        orgID,
 		FolderUIDs:   folderUIDs,
@@ -1875,13 +1728,17 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	ctx, span := tracer.Start(ctx, "dashboards.service.CleanUpDashboard")
 	defer span.End()
 
+	if dashboardUID == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	// cleanup things related to dashboards that are not stored in unistore yet
 	var err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
 	if err != nil {
 		return err
 	}
 
-	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID, ID: dashboardID})
+	return dr.cleanupAfterDelete(ctx, orgId, dashboardUID, dashboardID)
 }
 
 // -----------------------------------------------------------------------------------------
@@ -1902,9 +1759,18 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 	}
 
 	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
+	// Temporary debug logging to diagnose unexpected dashboard lookup failures via the k8s API.
+	// Enable by setting log level for "dashboard-service" to debug.
+	// TODO: remove once the root cause is identified.
 	if err != nil && !apierrors.IsNotFound(err) {
+		if dr.log != nil {
+			dr.log.Debug("k8s returned non-404 error for dashboard", "uid", query.UID, "orgID", query.OrgID, "err", err)
+		}
 		return nil, err
 	} else if err != nil || out == nil {
+		if dr.log != nil {
+			dr.log.Debug("k8s returned 404 or nil for dashboard", "uid", query.UID, "orgID", query.OrgID, "k8sErr", err)
+		}
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
@@ -1986,7 +1852,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
-	return dr.k8sclient.DeleteCollection(ctx, orgID)
+	return dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
 }
 
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
@@ -2051,7 +1917,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 	return dashes, nil
 }
 
-func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
+func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.FindPersistedDashboardsQuery) (*resourcepb.ResourceSearchRequest, error) {
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{},
@@ -2081,7 +1947,6 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.FolderUIDs) > 0 {
 		// Grafana frontend issues a call to search for dashboards in "general" folder. General folder doesn't exists and
 		// should return all dashboards without a parent folder.
-		// We do something similar in the old sql search query https://github.com/grafana/grafana/blob/a58564a35efe8c05a21d8190b283af5bc0979d2a/pkg/services/sqlstore/searchstore/filters.go#L103
 		for i := range query.FolderUIDs {
 			if query.FolderUIDs[i] == folder.GeneralFolderUID {
 				query.FolderUIDs[i] = ""
@@ -2185,16 +2050,16 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		if err == nil {
 			federate, err = resource.AsResourceKey(namespace, folderv1.RESOURCE)
 		}
-	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
+	case model.TypeDashboard, model.TypeAnnotation:
 		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0.DASHBOARD_RESOURCE)
-	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
+	case model.TypeFolder, model.TypeAlertFolder:
 		request.Options.Key, err = resource.AsResourceKey(namespace, folderv1.RESOURCE)
 	default:
 		err = fmt.Errorf("bad type request")
 	}
 
 	if err != nil {
-		return dashboardv0.SearchResults{}, err
+		return nil, err
 	}
 
 	if federate != nil {
@@ -2202,9 +2067,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if query.Sort.Name != "" {
-		sortName, isDesc, err := legacysearcher.ParseSortName(query.Sort.Name)
+		sortName, isDesc, err := sort.ParseSortName(query.Sort.Name)
 		if err != nil {
-			return dashboardv0.SearchResults{}, err
+			return nil, err
 		}
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{Field: sortName, Desc: isDesc})
 		// include the sort field in the response so we can populate SortMeta
@@ -2213,12 +2078,36 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		}
 	}
 
+	return request, nil
+}
+
+// searchDashboardsThroughK8sRaw returns a single page of search results,
+// respecting the Page/Limit from the query. Used by FindDashboards (the
+// /api/search endpoint) where the caller controls pagination.
+func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
+	request, err := dr.buildDashboardSearchRequest(query)
+	if err != nil {
+		return dashboardv0.SearchResults{}, err
+	}
+
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 
 	return dashboardsearch.ParseResults(res, 0)
+}
+
+// searchAllDashboardsThroughK8sRaw paginates through all search results,
+// returning every hit. Used by internal callers that need a complete list
+// (e.g. CountInFolders, DeleteInFolders, provisioning).
+func (dr *DashboardServiceImpl) searchAllDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
+	request, err := dr.buildDashboardSearchRequest(query)
+	if err != nil {
+		return dashboardv0.SearchResults{}, err
+	}
+
+	return dashboardsearch.SearchAll(ctx, query.OrgId, request, dr.k8sclient.Search)
 }
 
 type dashboardProvisioningWithUID struct {
@@ -2236,9 +2125,9 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
-	query.Type = searchstore.TypeDashboard
+	query.Type = model.TypeDashboard
 
-	searchResults, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+	searchResults, err := dr.searchAllDashboardsThroughK8sRaw(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -2271,9 +2160,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	if query == nil {
 		return nil, errors.New("query cannot be nil")
 	}
-	query.Type = searchstore.TypeDashboard
+	query.Type = model.TypeDashboard
 
-	response, err := dr.searchDashboardsThroughK8sRaw(ctx, query)
+	response, err := dr.searchAllDashboardsThroughK8sRaw(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -2492,4 +2381,52 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 		}
 	}
 	return slices.Collect(maps.Keys(folderSet))
+}
+
+func (dr *DashboardServiceImpl) cleanupAfterDelete(ctx context.Context, orgID int64, uid string, id int64) error {
+	if uid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
+	type statement struct {
+		SQL  string
+		args []any
+	}
+	sqlStatements := []statement{
+		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{uid, orgID}},
+	}
+	// dashboard_id=0 is used for org/API annotations; never delete by id 0 or we wipe that whole class for the org.
+	if id != 0 {
+		sqlStatements = append(sqlStatements,
+			statement{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
+			statement{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+		)
+	}
+
+	return dr.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		for _, stmnt := range sqlStatements {
+			_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
+			if err != nil {
+				return err
+			}
+		}
+
+		return dr.deleteResourcePermissions(sess, orgID, accesscontrol.GetResourceScopeUID("dashboards", uid))
+	})
+}
+
+// FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
+func (dr *DashboardServiceImpl) deleteResourcePermissions(sess *db.Session, orgID int64, resourceScope string) error {
+	var permissionIDs []int64
+	err := sess.SQL("SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?", resourceScope, orgID).Find(&permissionIDs)
+	if err != nil {
+		return err
+	}
+
+	if len(permissionIDs) == 0 {
+		return nil
+	}
+
+	_, err = sess.In("id", permissionIDs).Delete(&accesscontrol.Permission{})
+	return err
 }

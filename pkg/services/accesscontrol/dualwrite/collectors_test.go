@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/assert"
@@ -218,6 +219,10 @@ func (m *mockZanzanaClient) Read(ctx context.Context, req *authzextv1.ReadReques
 func (m *mockZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	args := m.Called(ctx, req)
 	return args.Error(0)
+}
+
+func (m *mockZanzanaClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return &authzv1.ListResponse{}, nil
 }
 
 // authlib.AccessClient methods

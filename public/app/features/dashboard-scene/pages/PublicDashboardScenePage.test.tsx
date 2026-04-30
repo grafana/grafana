@@ -1,4 +1,4 @@
-import { screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
@@ -129,6 +129,19 @@ describe('PublicDashboardScenePage', () => {
     // // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
+  });
+
+  it('syncs config.publicDashboardAccessToken from the URL and restores the previous value on unmount', async () => {
+    config.publicDashboardAccessToken = 'token-before-navigation';
+    const view = setup('token-from-route');
+
+    await waitFor(() => {
+      expect(config.publicDashboardAccessToken).toBe('token-from-route');
+    });
+
+    view.unmount();
+
+    expect(config.publicDashboardAccessToken).toBe('token-before-navigation');
   });
 
   it('can render public dashboard', async () => {

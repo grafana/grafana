@@ -18,7 +18,7 @@ func createUnmanagedFolder(t *testing.T, helper *common.GitTestHelper, name, tit
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,

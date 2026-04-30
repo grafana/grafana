@@ -102,7 +102,8 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupFolder, nil
 	case *authzextv1.MutateOperation_CreatePermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil
-	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole:
+	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole,
+		*authzextv1.MutateOperation_UpdateServiceAccountOrgRole, *authzextv1.MutateOperation_DeleteServiceAccountOrgRole, *authzextv1.MutateOperation_AddServiceAccountOrgRole:
 		return OperationGroupUserOrgRole, nil
 	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
 		return OperationGroupRoleBinding, nil

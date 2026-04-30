@@ -20,7 +20,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
-import { ElementSelection } from './ElementSelection';
+import { getEditableElementFor } from './shared';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -41,8 +41,7 @@ describe('EditPaneHeader', () => {
   describe('tracking item deletion', () => {
     it('should call DashboardInteractions.trackDeleteDashboardElement when deleting a row', async () => {
       const { row, mockEditPane } = setup('row');
-      const elementSelection = new ElementSelection([['row-test', row!.getRef()]]);
-      const editableElement = elementSelection.createSelectionElement()!;
+      const editableElement = getEditableElementFor(row)!;
       renderEditPaneHeader(editableElement, mockEditPane);
 
       const user = userEvent.setup();
@@ -53,8 +52,7 @@ describe('EditPaneHeader', () => {
 
     it('should call DashboardInteractions.trackDeleteDashboardElement when deleting a tab', async () => {
       const { tab, mockEditPane } = setup('tab');
-      const elementSelection = new ElementSelection([['tab-test', tab!.getRef()]]);
-      const editableElement = elementSelection.createSelectionElement()!;
+      const editableElement = getEditableElementFor(tab)!;
       renderEditPaneHeader(editableElement, mockEditPane);
 
       const user = userEvent.setup();
@@ -66,8 +64,7 @@ describe('EditPaneHeader', () => {
 
   it('should call DashboardInteractions.trackDeleteDashboardElement when deleting a panel', async () => {
     const { panel, mockEditPane } = setup('panel');
-    const elementSelection = new ElementSelection([['panel-test', panel!.getRef()]]);
-    const editableElement = elementSelection.createSelectionElement()!;
+    const editableElement = getEditableElementFor(panel)!;
     renderEditPaneHeader(editableElement, mockEditPane);
 
     const user = userEvent.setup();
@@ -97,6 +94,7 @@ const setup = (
   const mockEditPane = {
     state: { selection: null },
     clearSelection: jest.fn(),
+    getOnGetBackCallback: () => jest.fn(),
   } as unknown as DashboardEditPane;
 
   switch (layout) {

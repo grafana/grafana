@@ -78,6 +78,36 @@
           },
           "additionalProperties": false
         },
+        "tertiary": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "main": {
+              "type": "string"
+            },
+            "shade": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "border": {
+              "type": "string"
+            },
+            "transparent": {
+              "type": "string"
+            },
+            "borderTransparent": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "info": {
           "type": "object",
           "properties": {

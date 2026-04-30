@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppChrome/QuickAdd/utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -50,6 +52,7 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const theme = useTheme2();
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -94,12 +97,16 @@ export default function CreateNewButton({
     }
   };
 
+  const dashboardIconColor = theme.visualization.getColorByName(DASHBOARD_GROUP_COLOR_NAME);
+
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
-        <>
-          <MenuItem
+        <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
+          <Menu.Item
             label={getNewDashboardPhrase()}
+            icon={ITEM_ICONS['dashboards/new']}
+            iconColor={dashboardIconColor}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', {
                 url: buildUrl('/dashboard/new', parentFolder?.uid),
@@ -109,8 +116,10 @@ export default function CreateNewButton({
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
           />
           {renderPreBuiltDashboardAction && (
-            <MenuItem
+            <Menu.Item
               label={getNewTemplateDashboardPhrase()}
+              icon={ITEM_ICONS['browse-template-dashboard']}
+              iconColor={dashboardIconColor}
               onClick={() =>
                 isAnalyticsFrameworkEnabled
                   ? NewDashboardLibraryInteractions.entryPointClicked({
@@ -125,27 +134,39 @@ export default function CreateNewButton({
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />
           )}
-        </>
+          {!isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
+            <Menu.Item
+              label={getImportPhrase()}
+              icon={ITEM_ICONS['dashboards/import']}
+              iconColor={dashboardIconColor}
+              onClick={() =>
+                reportInteraction('grafana_menu_item_clicked', {
+                  url: buildUrl('/dashboard/import', parentFolder?.uid),
+                  from: location.pathname,
+                })
+              }
+              url={buildUrl('/dashboard/import', parentFolder?.uid)}
+            />
+          )}
+        </Menu.Group>
       )}
-      {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
-      {canCreateDashboard && !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
-        <MenuItem
-          label={getImportPhrase()}
-          onClick={() =>
-            reportInteraction('grafana_menu_item_clicked', {
-              url: buildUrl('/dashboard/import', parentFolder?.uid),
-              from: location.pathname,
-            })
-          }
-          url={buildUrl('/dashboard/import', parentFolder?.uid)}
-        />
+      {canCreateFolder && (
+        <>
+          {canCreateDashboard && <Menu.Divider />}
+          <Menu.Item
+            onClick={() => setShowNewFolderDrawer(true)}
+            label={getNewFolderPhrase()}
+            icon={ITEM_ICONS['folder']}
+            // folder action use default grey, so no need to set icon color
+          />
+        </>
       )}
     </Menu>
   );
 
   return (
     <>
-      <Dropdown overlay={newMenu} onVisibleChange={handleVisibleChange}>
+      <Dropdown overlay={newMenu} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <Button
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}

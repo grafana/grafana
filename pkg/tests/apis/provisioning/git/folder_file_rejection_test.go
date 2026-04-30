@@ -16,7 +16,7 @@ import (
 // parser should reject with "cannot declare folders through files".
 func folderJSON(uid, title string) []byte {
 	folder := map[string]interface{}{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
 		"metadata": map[string]interface{}{
 			"name": uid,

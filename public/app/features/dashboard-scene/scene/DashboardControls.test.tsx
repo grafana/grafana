@@ -2,22 +2,24 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneVariableSet,
-  ScopesVariable,
-  TextBoxVariable,
-} from '@grafana/scenes';
+import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasEditPermissionInFolders: false,
+  },
+}));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -179,55 +181,22 @@ describe('DashboardControls', () => {
       jest.restoreAllMocks();
     });
 
-    describe('drilldown wrapper hidden variables', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
+    it('should show loading skeleton when default controls are loading', () => {
+      const scene = buildTestScene();
+      const dashboard = getDashboard(scene);
+      dashboard.setState({ defaultVariablesLoading: true });
 
-      beforeEach(() => {
-        config.featureToggles = {
-          dashboardNewLayouts: true,
-          dashboardAdHocAndGroupByWrapper: true,
-        };
-      });
+      const { container } = render(<scene.Component model={scene} />);
+      expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
+    });
 
-      afterEach(() => {
-        config.featureToggles = originalFeatureToggles;
-      });
+    it('should not show loading skeleton when default controls are done loading', () => {
+      const scene = buildTestScene();
+      const dashboard = getDashboard(scene);
+      dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
 
-      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
-        const adHocVar = new AdHocFiltersVariable({
-          name: 'filters',
-          label: 'filters',
-          filters: [],
-          datasource: { uid: 'devscopes' },
-          applicabilityEnabled: false,
-        });
-        const groupByVar = new GroupByVariable({
-          name: 'query0',
-          value: ['instance'],
-          text: ['instance'],
-          options: [],
-          datasource: { uid: 'devscopes' },
-          hide: VariableHide.hideVariable,
-          applicabilityEnabled: false,
-        });
-
-        const dashboard = new DashboardScene({
-          uid: 'test-dashboard',
-          $variables: new SceneVariableSet({
-            variables: [adHocVar, groupByVar],
-          }),
-          controls: new DashboardControls({}),
-        });
-
-        dashboard.activate();
-        dashboard.setState({ isEditing: true });
-
-        const controls = dashboard.state.controls as DashboardControls;
-        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-        // Hidden variables should still be visible in edit mode.
-        expect(await screen.findByText('query0')).toBeInTheDocument();
-      });
+      const { container } = render(<scene.Component model={scene} />);
+      expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
     });
   });
 
@@ -377,6 +346,14 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch when dashboard has no uid (new dashboard)', async () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -429,21 +406,74 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
+
+  describe('DashboardControlActions save button visibility', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+    const mockedContextSrv = jest.mocked(contextSrv);
+
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+      mockedContextSrv.hasEditPermissionInFolders = false;
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('should show save button when user has canSave permission and is editing', async () => {
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    });
+
+    it('should show save button when user has folder edit permission and is editing', async () => {
+      mockedContextSrv.hasEditPermissionInFolders = true;
+      const controls = buildTestSceneWithEditable({ canSave: false, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByText('Save as copy')).toBeInTheDocument();
+    });
+
+    it('should not show save button when user lacks both canSave and folder edit permission', () => {
+      mockedContextSrv.hasEditPermissionInFolders = false;
+      const controls = buildTestSceneWithEditable({ canSave: false, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+      expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+  });
 });
 
 function buildTestSceneWithEditable(options: {
-  editable: boolean;
+  hasUid?: boolean;
+  editable?: boolean;
+  isEditing?: boolean;
   canEdit?: boolean;
+  canSave?: boolean;
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
 }): DashboardControls {
-  const { editable, canEdit = true, canMakeEditable = false, isSnapshot = false } = options;
+  const {
+    editable = true,
+    isEditing,
+    canEdit = true,
+    canSave,
+    canMakeEditable = false,
+    isSnapshot = false,
+    hasUid = true,
+  } = options;
 
   const dashboard = new DashboardScene({
-    uid: 'test-uid',
+    uid: hasUid ? 'test-uid' : undefined,
     editable,
+    isEditing,
     meta: {
       canEdit,
+      canSave,
       canMakeEditable,
       isSnapshot,
     },
@@ -453,6 +483,10 @@ function buildTestSceneWithEditable(options: {
   dashboard.activate();
 
   return dashboard.state.controls as DashboardControls;
+}
+
+function getDashboard(controls: DashboardControls): DashboardScene {
+  return getDashboardSceneFor(controls);
 }
 
 function buildTestScene(state?: Partial<DashboardControlsState>): DashboardControls {

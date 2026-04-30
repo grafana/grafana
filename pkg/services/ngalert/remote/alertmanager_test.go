@@ -63,8 +63,6 @@ var (
 )
 
 const (
-	testPassword = "test"
-
 	// Valid Grafana Alertmanager configurations.
 	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
 	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test","password":"test"}}]}]}}`
@@ -777,52 +775,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			require.False(t, applied)
 		})
 	}
-}
-
-func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
-	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-
-	var got apimodels.TestReceiversConfigBodyParams
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		w.Header().Add("Content-Type", "application/json")
-		require.NoError(t, json.NewDecoder(r.Body).Decode(&got))
-		require.NoError(t, r.Body.Close())
-		_, err := w.Write([]byte(`{"status": "success"}`))
-		require.NoError(t, err)
-	}))
-
-	cfg := AlertmanagerConfig{
-		OrgID:         1,
-		TenantID:      tenantID,
-		URL:           server.URL,
-		DefaultConfig: defaultGrafanaConfig,
-	}
-
-	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
-
-	var inputCfg apimodels.PostableUserConfig
-	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
-	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
-	require.NoError(t, err)
-
-	params := apimodels.TestReceiversConfigBodyParams{
-		Alert:     &apimodels.TestReceiversConfigAlertParams{},
-		Receivers: inputCfg.AlertmanagerConfig.Receivers,
-	}
-
-	_, _, err = am.TestReceivers(context.Background(), params)
-	require.NoError(t, err)
-
-	expectedSettings, err := json.Marshal(map[string]any{
-		"url":      "http://localhost:8080",
-		"username": "test",
-		"password": testPassword,
-	})
-	require.NoError(t, err)
-	require.EqualValues(t, expectedSettings, got.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].Settings)
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {

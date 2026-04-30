@@ -12,7 +12,7 @@ const server = setupMswServer();
 
 function setInhibitionRulesResponse(items: Array<{ name: string; equal?: string[] }>) {
   const k8sItems = items.map((item) => ({
-    apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
     kind: 'InhibitionRule',
     metadata: { name: item.name, namespace: 'default' },
     spec: { equal: item.equal ?? ['alertname'] },

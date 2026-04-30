@@ -120,6 +120,7 @@ export function InstanceRow({
           <OpenDrawerButton
             aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
             onClick={handleDrawerOpen}
+            text={t('alerting.open-drawer-icon-button.instance-details', 'Instance details')}
           />
         }
         content={
@@ -142,7 +143,12 @@ export function InstanceRow({
             to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
           }}
         >
-          <InstanceDetailsDrawer ruleUID={ruleUID} instanceLabels={instance.labels} onClose={handleDrawerClose} />
+          <InstanceDetailsDrawer
+            ruleUID={ruleUID}
+            instanceLabels={instance.labels}
+            commonLabels={commonLabels}
+            onClose={handleDrawerClose}
+          />
         </SceneContextProvider>
       )}
     </>

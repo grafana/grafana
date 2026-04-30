@@ -364,7 +364,7 @@ async function main(): Promise<void> {
     console.log(`Found ${staleFrs.length} stale feature requests`);
 
     const engagedFrs = frs
-      .filter((fr) => fr.thumbs_up >= 1 || fr.comments >= 1)
+      .filter((fr) => fr.thumbs_up >= 5 || fr.comments >= 5)
       .sort((a, b) => (b.thumbs_up + b.comments) - (a.thumbs_up + a.comments))
       .slice(0, 10);
     console.log(`Found ${engagedFrs.length} engaged feature requests`);

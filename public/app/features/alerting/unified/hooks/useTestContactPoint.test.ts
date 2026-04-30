@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
-import { type CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   type GrafanaManagedContactPoint,
   type GrafanaManagedReceiverConfig,
@@ -30,10 +30,11 @@ interface K8sTestRequestBody {
 
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
-const K8S_TEST_ENDPOINT = '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test';
+const K8S_TEST_ENDPOINT =
+  '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test';
 
 const defaultK8sSuccessResponse: CreateReceiverIntegrationTestResponse = {
-  apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+  apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
   kind: 'CreateReceiverIntegrationTest',
   status: 'success',
   duration: '100ms',

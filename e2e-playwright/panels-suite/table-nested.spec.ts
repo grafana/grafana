@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getCell, waitForTableLoad, getColumnIdx, getCellHeight } from './table-utils';
+import { getCell, waitForTableLoad, getColumnIdx, getCellHeight, getSelectedFilterCount } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 const NESTED_COMPLEX_DASHBOARD_UID = '1846eebb-eb2f-4d86-a17e-f0084118cdad';
@@ -201,6 +201,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     selectors,
     page,
   }) => {
+    test.slow();
+
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -234,20 +236,17 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );
-    await expect(filterContainer).toBeVisible();
-
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
-
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const allMinOptionCount = await getSelectedFilterCount(filterContainer, selectors);
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     await expect(filterContainer).not.toBeVisible();
+
+    // grab the value of the "Select all" checkbox to get the total count of Min options before filtering.
+    const secondNestedInfoColumnIdx = await getColumnIdx(secondNestedTable, 'Info');
+    const secondNestedMinColumnIdx = await getColumnIdx(secondNestedTable, 'Min');
+    const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
+    await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const secondNestedMinOptionCountBefore = await getSelectedFilterCount(filterContainer, selectors);
 
     // sort the info column descending to ensure the "down fast" value is first
     const infoHeader = firstNestedTable.getByRole('columnheader').nth(infoColumnIdx);
@@ -279,14 +278,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
 
     await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
+    const crossFilteredMinOptionCount = await getSelectedFilterCount(filterContainer, selectors);
 
     // With Info filtered to "up", Min options must be a subset of the unfiltered set
     expect(
@@ -299,28 +291,13 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // --- Verify filter is scoped to the first nested table only ---
     // The second nested table should be unaffected by the first nested table's filter.
-    const secondNestedInfoColumnIdx = await getColumnIdx(secondNestedTable, 'Info');
-    const secondNestedMinColumnIdx = await getColumnIdx(secondNestedTable, 'Min');
-
-    const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
     await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
-
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const secondNestedMinOptionCount = parseInt(
-      (
-        (await filterContainer
-          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-          .textContent()) ?? ''
-      ).match(/(\d+) selected/)?.[1] ?? '0',
-      10
-    );
+    const secondNestedMinOptionCountAfter = await getSelectedFilterCount(filterContainer, selectors);
 
     // Second nested table sees its own full set of Min options (not restricted by first table's filter)
-    expect(
-      secondNestedMinOptionCount,
-      'second nested table min option count is greater than cross-filtered min option count'
-    ).toBeGreaterThan(crossFilteredMinOptionCount);
+    expect(secondNestedMinOptionCountBefore, 'second nested table min option count has not changed').toBe(
+      secondNestedMinOptionCountAfter
+    );
 
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     // Verify second nested table still shows all Info values (not filtered)
