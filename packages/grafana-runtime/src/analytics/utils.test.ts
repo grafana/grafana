@@ -2,7 +2,7 @@ import { config } from '../config';
 import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 
-import { MAX_PAGE_URL_LENGTH, TRUNCATION_MARKER, reportPageview } from './utils';
+import { MAX_PAGE_URL_LENGTH, TRUNCATION_MARKER, reportInteraction, reportPageview } from './utils';
 
 jest.mock('../services/EchoSrv');
 jest.mock('../services', () => ({
@@ -68,6 +68,40 @@ describe('reportPageview', () => {
     expect(mockAddEvent).toHaveBeenCalledWith({
       type: EchoEventType.Pageview,
       payload: { page: '/grafana/d/abc' },
+    });
+  });
+});
+
+describe('reportInteraction', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as unknown as ReturnType<typeof getEchoSrv>);
+  });
+
+  it('emits an Interaction event without silent by default', () => {
+    reportInteraction('test_event', { foo: 'bar' });
+
+    expect(mockAddEvent).toHaveBeenCalledWith({
+      type: EchoEventType.Interaction,
+      payload: { interactionName: 'test_event', properties: { foo: 'bar' }, silent: undefined },
+    });
+  });
+
+  it('threads silent: true through to the payload when passed', () => {
+    reportInteraction('test_event', { foo: 'bar' }, { silent: true });
+
+    expect(mockAddEvent).toHaveBeenCalledWith({
+      type: EchoEventType.Interaction,
+      payload: { interactionName: 'test_event', properties: { foo: 'bar' }, silent: true },
+    });
+  });
+
+  it('passes silent: false explicitly when set', () => {
+    reportInteraction('test_event', undefined, { silent: false });
+
+    expect(mockAddEvent).toHaveBeenCalledWith({
+      type: EchoEventType.Interaction,
+      payload: { interactionName: 'test_event', properties: undefined, silent: false },
     });
   });
 });

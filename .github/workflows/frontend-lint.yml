@@ -94,6 +94,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+    - run: yarn run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -118,6 +119,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+    - run: yarn run typecheck:smoke
   lint-frontend-typecheck-tsgo-enterprise:
     needs: detect-changes
     permissions:

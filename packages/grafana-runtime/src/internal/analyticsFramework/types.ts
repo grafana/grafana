@@ -42,3 +42,14 @@ export interface EventData extends Omit<Event, 'properties'> {
   owner?: string;
   properties?: EventPropertySchema[];
 }
+
+/**
+ * Factory-level options for {@link defineFeatureEvents}. `silent: true` marks
+ * every event produced by the factory as silent — dispatched to {@link EchoSrv}
+ * subscribers but not forwarded to analytics backends. Use for high-frequency
+ * UI signals that downstream subscribers (e.g. CUJ instrumentation) care about
+ * but shouldn't pollute the analytics stream.
+ */
+export interface DefineFeatureEventsOptions {
+  silent?: boolean;
+}

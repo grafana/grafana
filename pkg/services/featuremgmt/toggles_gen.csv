@@ -360,3 +360,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-23,assistant.frontend.tools.dashboardTemplates,experimental,@grafana/sharing-squad,false,false,true
 2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-04-28,grafana.meticulousAIRecorder,experimental,@grafana/dataviz-squad,false,false,false
+2026-04-20,cujTracking,experimental,@grafana/dashboards-squad,false,false,true

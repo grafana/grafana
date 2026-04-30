@@ -1479,6 +1479,20 @@
     },
     {
       "metadata": {
+        "name": "cujTracking",
+        "resourceVersion": "1776675040990",
+        "creationTimestamp": "2026-04-20T08:50:40Z"
+      },
+      "spec": {
+        "description": "Enables Critical User Journey (CUJ) tracking",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"
@@ -1545,6 +1559,23 @@
         "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardJourneyTracking",
+        "resourceVersion": "1776076870100",
+        "creationTimestamp": "2026-04-13T00:00:00Z",
+        "deletionTimestamp": "2026-04-20T08:50:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 12:00:00.000000 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Critical User Journey tracking for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },

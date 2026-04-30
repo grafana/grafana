@@ -17,6 +17,7 @@ import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaC
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -106,6 +107,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       reportInteraction('command_palette_action_selected', {
         actionId: action.id,
         actionName: action.name,
+        interactionMode: getCommandPaletteInputMode(),
       });
     };
 
