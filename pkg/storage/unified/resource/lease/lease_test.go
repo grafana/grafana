@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -48,6 +49,36 @@ func TestAcquireNameValidation(t *testing.T) {
 		require.NotNil(t, l)
 		require.NoError(t, m.Release(t.Context(), l))
 	})
+}
+
+func TestAcquireTTLValidation(t *testing.T) {
+	m := lease.NewManager(newMapKV(), "holder-validation")
+
+	testCases := []struct {
+		d       time.Duration
+		isValid bool
+	}{
+		{d: 0, isValid: false},
+		{d: -10, isValid: false},
+		{d: time.Millisecond, isValid: false},
+		{d: 100 * time.Millisecond, isValid: true},
+		{d: time.Minute, isValid: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.d.String(), func(t *testing.T) {
+			l, err := m.Acquire(t.Context(), "ttl-validation", lease.WithTTL(tc.d))
+
+			if tc.isValid {
+				require.NoError(t, err)
+				require.NoError(t, m.Release(t.Context(), l))
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "invalid TTL")
+				require.Nil(t, l)
+			}
+		})
+	}
 }
 
 // mapKV is a thread-safe, in-memory kv.KV implementation scoped to a single

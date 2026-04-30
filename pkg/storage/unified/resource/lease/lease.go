@@ -14,9 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-// defaultTTL is the TTL applied when an Acquire call does not pass WithTTL.
-const defaultTTL = 10 * time.Second
-const maxAcquireAttempts = 3
+const (
+	// TTL applied when an Acquire call does not pass WithTTL.
+	defaultTTL = 10 * time.Second
+
+	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
+	minTTL = 100 * time.Millisecond
+
+	// maximum number of times an Acquire() call will loop to ensure a lease
+	// is already acquired when it cannot create a unique key.
+	maxAcquireAttempts = 3
+)
 
 var (
 	// ErrLeaseAlreadyHeld is returned by Acquire when an unexpired lease for
@@ -104,6 +112,10 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		opt(&cfg)
 	}
 
+	if cfg.ttl < minTTL {
+		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, minTTL)
+	}
+
 	for attempt := 0; ; attempt++ {
 		latestKey, latestGeneration, err := m.latest(ctx, name)
 		if err != nil {
@@ -160,7 +172,7 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 }
 
 // Release releases lease. It is not idempotent: releasing a lease that has
-// already been released (or one that has expired) returns ErrLeaseLost.
+// already been released — or one that has expired — returns ErrLeaseLost.
 func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 	key := leaseKey(lease.name, lease.generation)
 	meta, err := m.read(ctx, key)
