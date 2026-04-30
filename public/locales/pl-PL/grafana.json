@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Edytuj YAML",
         "save": "Zapisz"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nazwa",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Usuń wszystkie reguły"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Usuń",
       "delete-modal-delete-button": "Usuń",
@@ -1583,8 +1585,14 @@
         "update-error": "Nie udało się zaktualizować grupy reguł",
         "update-success": "Pomyślnie zaktualizowano grupę reguł"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Nie można edytować wybranej grupy",
       "group-not-editable-description": "Ta grupa należy do źródła danych, które nie obsługuje edycji.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Edytuj grupę reguł",
       "rule-group-error": "Błąd podczas ładowania grupy reguł"
     },
@@ -4551,6 +4559,8 @@
       "label": {
         "alphabetically-az": "Alfabetycznie (A–Z)",
         "alphabetically-za": "Alfabetycznie (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Usunięte (od najnowszych)",
         "deleted-oldest": "Usunięte (od najstarszych)"
       }
@@ -6550,6 +6560,7 @@
     },
     "transformation-editor": {
       "input-data": "Dane wejściowe",
+      "loading": "",
       "output-data": "Dane wyjściowe",
       "title-debug-transformation": "Debugowanie transformacji"
     },
@@ -8361,6 +8372,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Szukaj"
     },
     "resource-dimension-editor": {
@@ -10236,6 +10248,12 @@
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Wartość RGBA"
     },
@@ -10581,6 +10599,7 @@
     "sidebar": {
       "close": "Zamknij",
       "dock": "Zadokuj",
+      "go-back": "",
       "hide": "Ukryj",
       "show": "Pokaż",
       "undock": "Odepnij"
@@ -12040,8 +12059,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Wszystkie",
-      "title-filtered": "Wszystkie (przefiltrowane)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Wyczyść wszystko"
@@ -13716,6 +13737,7 @@
       "contact-admin": "Skontaktuj się z administratorem usługi Grafana, aby przekształcić ten zasób w lokalny lub usunąć wszystkie zasoby z brakującego repozytorium.",
       "convert-to-local-button": "Przekształć w lokalne",
       "delete-button": "Usuń",
+      "go-to-dashboards": "",
       "job-error": "Podczas przetwarzania osieroconych zasobów wystąpił błąd",
       "job-success": "Osierocone zasoby zostały przetworzone",
       "job-warning": "Niektóre zasoby zostały przetworzone z ostrzeżeniami. Zapoznaj się z wynikami.",
@@ -13978,7 +14000,8 @@
       "make-sure": "Utwórz token z tymi uprawnieniami"
     },
     "validation": {
-      "hidden-characters": "To pole zawiera ukryte znaki, które mogły zostać wprowadzone podczas kopiowania i wklejania. Wprowadź wartość ponownie lub wyczyść zawartość i spróbuj ponownie."
+      "hidden-characters": "To pole zawiera ukryte znaki, które mogły zostać wprowadzone podczas kopiowania i wklejania. Wprowadź wartość ponownie lub wyczyść zawartość i spróbuj ponownie.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Ostrzeżenie",
     "watch-stream": {
@@ -14452,6 +14475,10 @@
     "buttons": {
       "restore": "Przywróć"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Ostatnio nie usunięto żadnych pulpitów.",
       "no-deleted-dashboards-text": "Usunięty pulpit będzie przechowywany w historii przez maksymalnie 12 miesięcy, a następnie zostanie trwale usunięty. Użytkownicy z uprawnieniami do usuwania mogą przywracać usunięte przez siebie pulpity, a administratorzy mogą przywracać pulpity usunięte przez dowolnego użytkownika.",
@@ -14617,6 +14644,10 @@
     },
     "results-table": {
       "datasource-header": "Źródło danych",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Pozostały czas",
       "location-header": "Lokalizacja",
@@ -16194,6 +16225,9 @@
         "grouping-to-matrix": "Grupowanie do macierzy"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Oblicz histogram na podstawie danych wejściowych."
@@ -16528,6 +16562,9 @@
       "label-time-field": "Pole czasu",
       "tooltip-statistic-should-calculated-series": "Statystyka, która powinna zostać obliczona dla tego szeregu czasowego.",
       "tooltip-time-field": "Pole czasu, które będzie używane dla szeregu czasowego. Jeśli nie zostanie wybrane, zostanie użyta pierwsza znaleziona wartość."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nazwa pierwszego pola",

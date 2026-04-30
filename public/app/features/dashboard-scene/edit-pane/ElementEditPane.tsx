@@ -11,6 +11,7 @@ import { getEditableElementForSelection } from './shared';
 
 export class ElementEditPane extends SceneObjectBase {
   public static Component = ElementEditPaneRenderer;
+  protected static _renderBeforeActivation = true;
 
   public getId() {
     return 'element' as const;

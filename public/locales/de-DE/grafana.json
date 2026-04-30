@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bearbeiten",
         "save": "Speichern"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "Name",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle Regeln löschen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Löschen",
       "delete-modal-delete-button": "Löschen",
@@ -1573,8 +1575,14 @@
         "update-error": "Die Regelgruppe konnte nicht aktualisiert werden",
         "update-success": "Regelgruppe erfolgreich aktualisiert"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Die ausgewählte Gruppe kann nicht bearbeitet werden",
       "group-not-editable-description": "Diese Gruppe gehört zu einer Datenquelle, die keine Bearbeitung unterstützt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgruppe bearbeiten",
       "rule-group-error": "Fehler beim Laden der Regelgruppe"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alphabetisch (A–Z)",
         "alphabetically-za": "Alphabetisch (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Gelöscht (neueste zuerst)",
         "deleted-oldest": "Gelöscht (älteste zuerst)"
       }
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Eingabedaten",
+      "loading": "",
       "output-data": "Ausgabedaten",
       "title-debug-transformation": "Transformation debuggen"
     },
@@ -8269,6 +8280,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Suche"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10132,12 @@
     "cascader": {
       "clear-button": "Auswahl löschen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-Wert"
     },
@@ -10465,6 +10483,7 @@
     "sidebar": {
       "close": "Schließen",
       "dock": "Ankoppeln",
+      "go-back": "",
       "hide": "Ausblenden",
       "show": "Anzeigen",
       "undock": "Abkoppeln"
@@ -11908,8 +11927,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefiltert)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles löschen"
@@ -13566,6 +13587,7 @@
       "contact-admin": "Wenden Sie sich an Ihren Grafana-Administrator, um diese Ressource in eine lokale Ressource umzuwandeln oder alle Ressourcen aus dem fehlenden Repository zu löschen.",
       "convert-to-local-button": "In lokal konvertieren",
       "delete-button": "Löschen",
+      "go-to-dashboards": "",
       "job-error": "Bei der Verarbeitung verwaister Ressourcen ist ein Fehler aufgetreten",
       "job-success": "Verwaiste Ressourcen erfolgreich verarbeitet",
       "job-warning": "Einige Ressourcen wurden mit Warnungen verarbeitet. Bitte überprüfen Sie die Ergebnisse.",
@@ -13812,7 +13834,8 @@
       "make-sure": "Token mit diesen Berechtigungen erstellen"
     },
     "validation": {
-      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut."
+      "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Warnung",
     "watch-stream": {
@@ -14274,6 +14297,10 @@
     "buttons": {
       "restore": "Wiederherstellen"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
       "no-deleted-dashboards-text": "Wenn Sie ein Dashboard löschen, wird es bis zu 12 Monate im Verlauf gespeichert, bevor es endgültig gelöscht wird. Nutzer mit Löschberechtigungen können die von ihnen selbst gelöschten Dashboards wiederherstellen und Administratoren können von jedem beliebigen Nutzer gelöschte Dashboards wiederherstellen.",
@@ -14435,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Datenquelle",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 Min.",
       "deleted-remaining-header": "Verbleibende Zeit",
       "location-header": "Standort",
@@ -16008,6 +16039,9 @@
         "grouping-to-matrix": "Gruppierung zu Matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Berechnen Sie ein Histogramm aus Eingabedaten."
@@ -16342,6 +16376,9 @@
       "label-time-field": "Zeitfeld",
       "tooltip-statistic-should-calculated-series": "Die Statistik, die für diese Zeitreihe berechnet werden soll.",
       "tooltip-time-field": "Das Zeitfeld, das für die Zeitreihe verwendet wird. Wenn nichts ausgewählt ist, wird verwendet, was zuerst gefunden wird."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Name des ersten Felds",

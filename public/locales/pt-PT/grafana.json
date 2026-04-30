@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Editar YAML",
         "save": "Guardar"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Eliminar todas as regras"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Eliminar",
       "delete-modal-delete-button": "Eliminar",
@@ -1573,8 +1575,14 @@
         "update-error": "Falha ao atualizar o grupo de regras",
         "update-success": "Grupo de regras atualizado com sucesso"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "O grupo selecionado não pode ser editado",
       "group-not-editable-description": "Este grupo pertence a uma origem de dados que não suporta edição.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Editar grupo de regras",
       "rule-group-error": "Erro ao carregar grupo de regras"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Por ordem alfabética (A–Z)",
         "alphabetically-za": "Por ordem alfabética (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Eliminados (mais recente primeiro)",
         "deleted-oldest": "Eliminados (mais antigo primeiro)"
       }
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Dados de entrada",
+      "loading": "",
       "output-data": "Dados de saída",
       "title-debug-transformation": "Depurar transformação"
     },
@@ -8269,6 +8280,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Pesquisar"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10132,12 @@
     "cascader": {
       "clear-button": "Limpar a seleção"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valor RGBA"
     },
@@ -10465,6 +10483,7 @@
     "sidebar": {
       "close": "Fechar",
       "dock": "Ancorar",
+      "go-back": "",
       "hide": "Ocultar",
       "show": "Mostrar",
       "undock": "Desancorar"
@@ -11908,8 +11927,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Todos",
-      "title-filtered": "Todos (filtrados)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Limpar tudo"
@@ -13566,6 +13587,7 @@
       "contact-admin": "Contacte o seu administrador da Grafana para converter este recurso em local ou para eliminar todos os recursos do repositório em falta.",
       "convert-to-local-button": "Converter para local",
       "delete-button": "Eliminar",
+      "go-to-dashboards": "",
       "job-error": "Ocorreu um erro ao processar recursos órfãos",
       "job-success": "Recursos órfãos processados com sucesso",
       "job-warning": "Alguns recursos foram processados com avisos. Reveja os resultados.",
@@ -13812,7 +13834,8 @@
       "make-sure": "Criar um token com estas permissões"
     },
     "validation": {
-      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido introduzidos ao copiar e colar. Introduza o valor novamente ou limpe-o e tente novamente."
+      "hidden-characters": "Este campo contém caracteres ocultos que podem ter sido introduzidos ao copiar e colar. Introduza o valor novamente ou limpe-o e tente novamente.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Aviso",
     "watch-stream": {
@@ -14274,6 +14297,10 @@
     "buttons": {
       "restore": "Restaurar"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "Não eliminou quaisquer painéis de controlo recentemente.",
       "no-deleted-dashboards-text": "Quando elimina um painel de controlo, este será mantido no histórico até 12 meses antes de ser eliminado permanentemente. Os utilizadores com permissões de eliminação podem restaurar os painéis que eliminaram e os administradores podem restaurar os painéis eliminados por qualquer utilizador.",
@@ -14435,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Origem dos dados",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo restante",
       "location-header": "Localização",
@@ -16008,6 +16039,9 @@
         "grouping-to-matrix": "Agrupar em matriz"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcular um histograma a partir de dados de entrada."
@@ -16342,6 +16376,9 @@
       "label-time-field": "Campo de hora",
       "tooltip-statistic-should-calculated-series": "A estatística que deve ser calculada para esta série temporal.",
       "tooltip-time-field": "O campo de hora que será utilizado para a série temporal. Se não for selecionado, será utilizado o primeiro resultado encontrado."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome do primeiro campo",

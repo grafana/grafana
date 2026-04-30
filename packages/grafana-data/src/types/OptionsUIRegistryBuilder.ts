@@ -21,6 +21,8 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
    */
   editor: ComponentType<TEditorProps>;
 
+  useFieldset?: boolean;
+
   /*
    * @param value
    */

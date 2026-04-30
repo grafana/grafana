@@ -193,6 +193,14 @@ func (ExportJobOptions) OpenAPIModelName() string {
 type MigrateJobOptions struct {
 	// Message to use when committing the changes in a single commit
 	Message string `json:"message,omitempty"`
+
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

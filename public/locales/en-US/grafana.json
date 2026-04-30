@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Save"
-      }
+      },
+      "error-title": "Failed to save alert rule"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Delete all rules"
-        }
+        },
+        "error": "Failed to delete folder rules"
       },
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",
@@ -1573,8 +1575,14 @@
         "update-error": "Failed to update rule group",
         "update-success": "Successfully updated the rule group"
       },
+      "group-federated": "This rule group is federated",
+      "group-federated-description": "Federated rule groups cannot be edited from Grafana.",
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
+      "group-plugin-provided": "This rule group is managed by a plugin",
+      "group-plugin-provided-description": "Rule groups provisioned by a plugin cannot be edited from Grafana. Manage them from the plugin that owns them.",
+      "group-provisioned": "This rule group is provisioned",
+      "group-provisioned-description": "Provisioned rule groups cannot be edited from Grafana. Update the source provisioning configuration instead.",
       "page-title": "Edit rule group",
       "rule-group-error": "Error loading rule group"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
         "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-by-az": "Deleted by (A–Z)",
+        "deleted-by-za": "Deleted by (Z–A)",
         "deleted-newest": "Deleted (newest first)",
         "deleted-oldest": "Deleted (oldest first)"
       }
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Input data",
+      "loading": "Loading editor...",
       "output-data": "Output data",
       "title-debug-transformation": "Debug transformation"
     },
@@ -8269,6 +8280,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "Folder",
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10132,12 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "code-mirror": {
+      "error-label": "CodeMirror editor failed to load",
+      "language-load-failed": "Syntax highlighting failed to load",
+      "language-load-failed-description": "The editor will continue without language-specific features.",
+      "loading-placeholder": "Loading editor"
+    },
     "color-picker": {
       "input-label": "RGBA value"
     },
@@ -10465,6 +10483,7 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "go-back": "Go back",
       "hide": "Hide",
       "show": "Show",
       "undock": "Undock"
@@ -11908,8 +11927,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All",
-      "title-filtered": "All (filtered)"
+      "title-deselect": "Deselect all",
+      "title-deselect-filtered": "Deselect all (filtered)",
+      "title-select": "Select all",
+      "title-select-filtered": "Select all (filtered)"
     },
     "clear": {
       "title": "Clear all"
@@ -13566,6 +13587,7 @@
       "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
       "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
+      "go-to-dashboards": "Go to dashboards",
       "job-error": "An error occurred while processing orphaned resources",
       "job-success": "Orphaned resources processed successfully",
       "job-warning": "Some resources were processed with warnings. Please review the results.",
@@ -13812,7 +13834,8 @@
       "make-sure": "Create a token with these permissions"
     },
     "validation": {
-      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again."
+      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
+      "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
     "warning-title-default": "Warning",
     "watch-stream": {
@@ -14274,6 +14297,10 @@
     "buttons": {
       "restore": "Restore"
     },
+    "limit-banner": {
+      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
+      "at-limit-title": "Deleted dashboards limit reached"
+    },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
       "no-deleted-dashboards-text": "When you delete a dashboard, it will be kept in the history for up to 12 months before being permanently deleted. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
@@ -14435,6 +14462,10 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-by-header": "Deleted by",
+      "deleted-by-removed": "Deleted account",
+      "deleted-by-unknown-short": "<0></0> Unknown",
+      "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
@@ -14928,10 +14959,13 @@
       "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "explain-query": "Explain query",
@@ -16008,6 +16042,9 @@
         "grouping-to-matrix": "Grouping to matrix"
       }
     },
+    "heatmap": {
+      "is-applicable-description": "The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found."
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calculate a histogram from input data."
@@ -16342,6 +16379,9 @@
       "label-time-field": "Time field",
       "tooltip-statistic-should-calculated-series": "The statistic that should be calculated for this time series.",
       "tooltip-time-field": "The time field that will be used for the time series. If not selected the first found will be used."
+    },
+    "transformation-editor": {
+      "loading": "Loading editor..."
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "First field name",

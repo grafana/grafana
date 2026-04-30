@@ -54,8 +54,9 @@ func ValidateJob(job *provisioning.Job) error {
 	case provisioning.JobActionMigrate:
 		if job.Spec.Migrate == nil {
 			list = append(list, field.Required(field.NewPath("spec", "migrate"), "migrate options required for migrate action"))
+		} else {
+			list = append(list, validateMigrateJobOptions(job.Spec.Migrate)...)
 		}
-		// Migrate options are simple - no further validation needed
 
 	case provisioning.JobActionDelete:
 		if job.Spec.Delete == nil {
@@ -116,8 +117,29 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 
 	// Empty Resources is valid: the worker falls back to exporting every
 	// unmanaged resource (legacy behavior).
-	for i, r := range opts.Resources {
-		path := field.NewPath("spec", "push", "resources").Index(i)
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "push", "resources"), opts.Resources)...)
+
+	return list
+}
+
+// validateMigrateJobOptions validates migrate job options
+func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions) field.ErrorList {
+	list := field.ErrorList{}
+
+	// Empty Resources is valid: the worker falls back to migrating every
+	// unmanaged resource (legacy behavior).
+	list = append(list, validateExportResourceRefs(field.NewPath("spec", "migrate", "resources"), opts.Resources)...)
+
+	return list
+}
+
+// validateExportResourceRefs enforces the rules shared by export-style
+// resource lists (push and migrate): name + kind required, only Dashboard is
+// supported, and a non-empty group must match the dashboard group.
+func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef) field.ErrorList {
+	list := field.ErrorList{}
+	for i, r := range refs {
+		path := base.Index(i)
 		if r.Name == "" {
 			list = append(list, field.Required(path.Child("name"), "resource name is required"))
 		}
@@ -141,7 +163,6 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions) field.ErrorLi
 				fmt.Sprintf("only %s is supported for %s export", expectedGroup, r.Kind)))
 		}
 	}
-
 	return list
 }
 

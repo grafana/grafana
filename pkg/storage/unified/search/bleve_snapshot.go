@@ -12,6 +12,8 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -30,7 +32,7 @@ const (
 type snapshotCandidate struct {
 	key     ulid.ULID
 	meta    *IndexMeta
-	version *semver.Version // always non-nil; unparseable entries are dropped earlier
+	version *semver.Version // always non-nil; pickBestSnapshot drops unparseable entries
 	tier    int             // 0 = best, 2 = last resort
 }
 
@@ -49,17 +51,53 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	key resource.NamespacedResource,
 	resourceDir string,
 	logger log.Logger,
-) (bleve.Index, string, int64, error) {
+) (_ bleve.Index, _ string, _ int64, retErr error) {
+	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.download")
+	start := time.Now()
+	outcome := snapshotStatusSuccess
+	var candidate snapshotCandidate
+
+	defer func() {
+		attrs := []attribute.KeyValue{
+			attribute.String("namespace", key.Namespace),
+			attribute.String("group", key.Group),
+			attribute.String("resource", key.Resource),
+			attribute.String("outcome", outcome),
+		}
+		if candidate.key != (ulid.ULID{}) {
+			attrs = append(attrs,
+				attribute.String("snapshot_key", candidate.key.String()),
+				attribute.String("snapshot_version", candidate.version.String()),
+				attribute.Int64("snapshot_rv", candidate.meta.LatestResourceVersion),
+				attribute.Int("snapshot_tier", candidate.tier),
+			)
+		}
+		span.SetAttributes(attrs...)
+		elapsed := time.Since(start)
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+			logger.Warn("Remote index snapshot download failed", "elapsed", elapsed, "outcome", outcome, "err", retErr)
+		} else {
+			logger.Info("Remote index snapshot download completed", "elapsed", elapsed, "outcome", outcome)
+		}
+		span.End()
+	}()
+
+	logger.Info("Remote index snapshot download started")
 	store := b.opts.Snapshot.Store
 
 	all, err := store.ListIndexes(ctx, key)
 	if err != nil {
+		outcome = snapshotStatusDownloadError
 		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
 		return nil, "", 0, fmt.Errorf("listing remote snapshots: %w", err)
 	}
 
-	candidate, ok := b.pickBestSnapshot(all, time.Now())
+	var ok bool
+	candidate, ok = b.pickBestSnapshot(all, time.Now())
 	if !ok {
+		outcome = snapshotStatusEmpty
 		b.recordSnapshotDownloadStatus(snapshotStatusEmpty)
 		return nil, "", 0, nil
 	}
@@ -77,13 +115,19 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	// when creating new file-based indexes.
 	destDir, name, err := b.reserveSnapshotDir(resourceDir)
 	if err != nil {
+		outcome = snapshotStatusDownloadError
 		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
-	start := time.Now()
-	if _, err := store.DownloadIndex(ctx, key, candidate.key, destDir); err != nil {
+	// TODO: retry DownloadIndex on transient errors before falling through to a
+	// from-scratch KV rebuild. The object store is its own fault domain;
+	// a single failed download shouldn't force a full rebuild for large
+	// indexes (e.g. a 1M-doc dashboard index would re-pay every read).
+	downloadedMeta, err := store.DownloadIndex(ctx, key, candidate.key, destDir)
+	if err != nil {
 		_ = os.RemoveAll(destDir)
+		outcome = snapshotStatusDownloadError
 		b.recordSnapshotDownloadStatus(snapshotStatusDownloadError)
 		return nil, "", 0, fmt.Errorf("downloading snapshot: %w", err)
 	}
@@ -91,6 +135,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	idx, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 	if err != nil {
 		_ = os.RemoveAll(destDir)
+		outcome = snapshotStatusValidateError
 		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
 		return nil, "", 0, fmt.Errorf("opening downloaded snapshot: %w", err)
 	}
@@ -99,6 +144,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	if err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
+		outcome = snapshotStatusValidateError
 		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
 		return nil, "", 0, fmt.Errorf("validating downloaded snapshot: %w", err)
 	}
@@ -109,7 +155,20 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(elapsed.Seconds())
 	}
 
-	logger.Info("Downloaded remote index snapshot", "elapsed", elapsed, "rv", rv, "directory", destDir)
+	uploadedAt := candidate.meta.UploadTimestamp
+	if downloadedMeta != nil && !downloadedMeta.UploadTimestamp.IsZero() {
+		uploadedAt = downloadedMeta.UploadTimestamp
+	}
+	// A downloaded snapshot becomes the new upload baseline for this index.
+	if err := writeSnapshotMutationCount(idx, 0); err != nil {
+		_ = idx.Close()
+		_ = os.RemoveAll(destDir)
+		outcome = snapshotStatusValidateError
+		b.recordSnapshotDownloadStatus(snapshotStatusValidateError)
+		return nil, "", 0, fmt.Errorf("resetting snapshot mutation count: %w", err)
+	}
+	b.setUploadTracking(key, uploadedAt)
+
 	return idx, name, rv, nil
 }
 
@@ -129,15 +188,14 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 	var droppedAge, droppedUnparseable int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
-		if m == nil {
-			continue
-		}
 		// Hard filter: age.
 		if maxAge > 0 && now.Sub(m.UploadTimestamp) > maxAge {
 			droppedAge++
 			continue
 		}
-		// Hard filter: unparseable version (we can't tier it).
+		// Hard filter: unparseable version (we can't tier it). Metadata validation
+		// lives here rather than in the store so we don't have to duplicate it
+		// across store implementations.
 		v, err := semver.NewVersion(m.GrafanaBuildVersion)
 		if err != nil {
 			droppedUnparseable++
@@ -189,8 +247,10 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, now time.T
 
 // snapshotTier returns the preference tier of v relative to the configured
 // lower bound (minVersion) and the running Grafana version. Lower = better.
+// running must be non-nil; the caller (NewBleveBackend) enforces this when the
+// snapshot feature is enabled.
 func snapshotTier(v, minVersion, running *semver.Version) int {
-	if running != nil && v.Compare(running) > 0 {
+	if v.Compare(running) > 0 {
 		return 2 // newer than running Grafana: last resort
 	}
 	if minVersion != nil && v.Compare(minVersion) < 0 {

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/dashboard_versions/ # /docs/grafana/next/http_api/dashboard_versions/
-  - ../../../http_api/dashboardversions/ # /docs/grafana/next/http_api/dashboardversions/
-  - ../../../developers/http_api/dashboard_versions/ # /docs/grafana/next/developers/http_api/dashboard_versions/
+  - ../../../../http_api/dashboard_versions/ # /docs/grafana/next/http_api/dashboard_versions/
+  - ../../../../http_api/dashboardversions/ # /docs/grafana/next/http_api/dashboardversions/
+  - ../../../../developers/http_api/dashboard_versions/ # /docs/grafana/next/developers/http_api/dashboard_versions/
   - ../../../../developer-resources/api-reference/http-api/dashboard_versions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/
 description: Grafana Dashboard Versions HTTP API

@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,6 +58,13 @@ import (
 const (
 	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
+
+	// waitTimeoutCleanup is the per-step budget for CleanupAllResources. Folder
+	// admission validates "folder is empty" against the resource search index,
+	// which is eventually consistent with respect to dashboard deletes. Under
+	// SQLite write contention that lag has been observed to exceed 60s, so
+	// cleanup gets a larger budget than the default per-operation wait.
+	waitTimeoutCleanup = 2 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -1006,6 +1014,31 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
 }
 
+// RequireRepoFolderCount polls the folders list until the number of folders
+// managed by the given repo matches the expected count, or the default wait
+// timeout elapses. Like the dashboard variant, this avoids races where the
+// sync job has completed but the folders-list API has not yet observed the
+// newly-created folders or their grafana.app/managerId annotation.
+func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+
+		var count int
+		for _, f := range folders.Items {
+			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repoName {
+				count++
+			}
+		}
+		assert.Equal(c, expectedCount, count, "unexpected number of folders managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
+}
+
 // TriggerConnectionReconciliation forces the controller to re-process a connection
 // by touching its status (aging the health timestamp by 1ms). A merge patch on the
 // status subresource carries no resourceVersion, so it never conflicts with
@@ -1372,7 +1405,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
 //
-// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// Every step uses waitTimeoutCleanup because each one can be blocked by an
 // eventually-consistent signal: repository finalizers draining orphan
 // resources, dashboards freeing their folder reference in the search index,
 // and folder admission rejecting deletion until that index catches up. Under
@@ -1388,7 +1421,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 		{"dashboards", h.DashboardsV1.Resource},
 		{"folders", h.Folders.Resource},
 	} {
-		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
+		if err := deleteAndWait(ctx, c.client, waitTimeoutCleanup); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -3013,11 +3046,13 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 	return data
 }
 
-// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key
-//
-//nolint:gosec // Test RSA private key (base64-encoded, generated for testing purposes only, never used in production)
+// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key.
+// Computed from TestGithubPrivateKeyPEM at runtime so the encoded form is not a
+// source literal — TruffleHog's PrivateKey detector decodes base64 chunks and
+// re-runs detectors on the result, which bypasses inline `trufflehog:ignore`.
+// The trailing newline matches the canonical PEM file format.
 func TestGithubPrivateKeyBase64() string {
-	return "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb1FJQkFBS0NBUUJuMU11TTVoSWZINmQzVE5TdEkxb2ZXdi9nY2pRNGpvaTljRmlqRXdWTHVQWWtGMW5ECktrU2JhTUdGVVdpT1RhQi9IOWZ4bWQvVjJ1MDRObEJZM2F2Nm01VC9zSGZWU2lFV0FFVWJsaDNjQTM0SFZDbUQKY3F5eVZ0eTVITEdKSmxTczJDN1cyeDd5VWM5SW16eURCc3lqcEtPWHVvako5d045YTE3RDJjWVU1V2tYam9EQwo0QkhpZDYxam45V0JUdFBaWFNnT2RpcndhaE56eFpRU0lQN0RBOVQ4eWlad0lXUHA1WWVzZ3NBUHlRTENGUGdNCnM3N3h6L0NFVW5FWVEzNXpJL2svbVFyd0tkUS9aUDh4THdRb2hVSUQwQkl4RTdHNXF1TDA2OVJ1dUNaV1prb0YKb1BpWmJwN0hTcnl6MSsxOWpEM3JGVDdlSEdVWXZBeUNuWG1YQWdNQkFBRUNnZ0VBRFNzNEJjN0lUWm8rS3l0YgpiZm9sM0FRMm44amNSckFOTjdtZ0JFN05SU1ZZVW91RG52VWxibkNDMnQzUVhQd0xkeFFhMTFHa3lnTFNRMmJnCkdlVkRncTFvNEdVSlRjdnhGbEZDY3BVL2hFQU5JL0RRc3hOQVEvNHdVR29MT2xIYU8zSFB2d0JibEhBNzBnR2UKVXgveHBHK2xNQUZBaUIwRUhFd1o0TTBtQ2xCRU9RdjNOemFGVFd1Qkh0SU1TOGVpZDdNMXE1cXo5K3JDZ1pTTApLQkJIbzBPdlViYWpHNENXbDhTTTZMVVlhcEFTR2crVTE3RSs0eEEzbnB3cElkc2srQ2J0WCt2dlgzMjRuNGtuCjBFa3JKcUNqdjhNMUtpQ0tBUCtVeHdQMDB5d3hPZzRQTit4K2RISS9JN3hCdkVLZS94NkJsdFZTZEdBK1BsVUsKMDJ3YWdRS0JnUURGN2dkUUxGSWFnUEg3WDdkQlA2cUVHeGovQ2s5UWR6M1MxZ290UGtWZXErMS9VdFFpallaMQpqNDR1cC8weUIyQjlQNGtXMDkxbitpV2N5Zm9VNVV3QnVhOWRIdkNaUDNRSDA1TFIxWnNjVUh4TEdqRFBCQVN0CmwyeFNxMGhxcU5XQnNwYjFNMGVDWTBZeGk2NWlEa2ozeHNJMmlOMzVCRWIxRmxXZFI1S0d2d0tCZ1FDR1MwY2UKd0FTV2JaSVBVMlVvS0dPUWtJSlU2UW1MeTBLWmJmWWtweWZFOEl4R3R0WVZFUThwdU52REROWldITmYrTFA4NQpjOGlWNlNmbldpTG11MVhrRzJZbUpGQkNDQVdnSjhNcTJYUUQ4RSthL3hjYVczTnFsY0M1K0kyY3pYMzY3ajNyCjY5d1pTeFJielIrRENmT2lJa3Jla0pJbXdOMTgzWll5MmNCYktRS0JnRmo4NklyU01tTzZINUZ0K2owNnU1WkQKZkp5RjdSejNUM053U2drSFd6YnlRNGdnSEVJZ3NSZy8zNlA0WVN6U0JqNnBoeUFkUndrTmZVV2R4WE1KbUgrYQpGVTdmcnpxblBhcWJKQUoxY0JSdDEwUUkxWEx0a3BEZGFKVk9idk9OVHRqT0MzTFlpRWtHQ3pRUlllaXlGWHBaCkFVNTFnSjhKbmtGb3RqdE5SNEtQQW9HQWVoVlJFRGxMY2wwbG5OMFpac3BneVBrMkltNi9pT0E5S1RIM3hCWloKWndXdTRGSXlpSEE3c3BnazRFcDVSMHR0WjlvTUkzU0ljdy9FZ09OR095OHV3L0hNaVB3V0loRWMzQjJKcFJpTwpDVTZiYjdKYWxGRnl1UUJ1ZGlIb3l4VmNZNVBWb3ZXRjMxQ0xyM0RvSnI0VFI5K1k1SC9VL1huellDSW8rdzFOCmV4RUNnWUJGQUdLWVRJZUdBdmhJdkQ1VHBoTHBiQ3llVkxCSXE1aFJ5cmRSWSs2SXdxZHI1UEd2TFBLd2luNSsKKzRDRGhXUFc0c3BxOE1ZUENSaU1ydlJTY3RLdC83RmhWR0wydkUvMFZZM1RjTGsxNHFMQysyKzBsblBWZ25Zbgp1NS93T3l1SHAxY0lCbmplTjQxL3BsdU9XRkJISTl4TFczRXhMdG1ZTWllY0o4VmRSQT09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==" // trufflehog:ignore
+	return base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM + "\n"))
 }
 
 // GetConnectionClientV1Beta1 returns a K8sResourceClient configured for v1beta1 Connections

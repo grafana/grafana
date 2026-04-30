@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "YAML 편집",
         "save": "저장"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "이름",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "모든 규칙 삭제"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
@@ -1568,8 +1570,14 @@
         "update-error": "규칙 그룹 업데이트 실패",
         "update-success": "규칙 그룹 업데이트 완료"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "선택한 그룹은 편집할 수 없습니다.",
       "group-not-editable-description": "이 그룹은 편집을 지원하지 않는 데이터 소스에 속해 있습니다.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "규칙 그룹 편집",
       "rule-group-error": "규칙 그룹 로딩 중 오류 발생"
     },
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "알파벳순(A~Z)",
         "alphabetically-za": "알파벳순(Z~A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "삭제됨(최신순)",
         "deleted-oldest": "삭제됨(오래된 순)"
       }
@@ -6457,6 +6467,7 @@
     },
     "transformation-editor": {
       "input-data": "입력 데이터",
+      "loading": "",
       "output-data": "출력 데이터",
       "title-debug-transformation": "변환 디버그"
     },
@@ -8223,6 +8234,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "검색"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10074,12 @@
     "cascader": {
       "clear-button": "선택 초기화"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 값"
     },
@@ -10407,6 +10425,7 @@
     "sidebar": {
       "close": "닫기",
       "dock": "도킹",
+      "go-back": "",
       "hide": "숨기기",
       "show": "표시",
       "undock": "도킹 해제"
@@ -11842,8 +11861,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "전체",
-      "title-filtered": "전체(필터링됨)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "전체 초기화"
@@ -13491,6 +13512,7 @@
       "contact-admin": "이 리소스를 로컬로 변환하거나 누락된 리포지토리의 모든 리소스를 삭제하려면 Grafana 관리자에게 문의하세요.",
       "convert-to-local-button": "로컬로 변환",
       "delete-button": "삭제",
+      "go-to-dashboards": "",
       "job-error": "분리된 리소스를 처리하는 동안 오류가 발생했습니다.",
       "job-success": "분리된 리소스 처리가 완료되었습니다.",
       "job-warning": "일부 리소스는 경고와 함께 처리되었습니다. 결과를 확인하세요.",
@@ -13729,7 +13751,8 @@
       "make-sure": "이러한 권한으로 토큰 생성"
     },
     "validation": {
-      "hidden-characters": "이 필드에는 복사하여 붙여 넣는 과정에서 발생했을 수 있는 숨겨진 문자가 포함되어 있습니다. 값을 다시 입력하거나 정리한 후 다시 시도해 주세요."
+      "hidden-characters": "이 필드에는 복사하여 붙여 넣는 과정에서 발생했을 수 있는 숨겨진 문자가 포함되어 있습니다. 값을 다시 입력하거나 정리한 후 다시 시도해 주세요.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "경고",
     "watch-stream": {
@@ -14185,6 +14208,10 @@
     "buttons": {
       "restore": "복구"
     },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
+    },
     "page": {
       "no-deleted-dashboards": "최근에 삭제한 대시보드가 없습니다.",
       "no-deleted-dashboards-text": "대시보드를 삭제하면 영구적으로 삭제되기 전에 최대 12개월 동안 기록에 보관됩니다. 삭제 권한이 있는 사용자는 본인이 삭제한 대시보드를, 관리자는 모든 사용자가 삭제한 대시보드를 복원할 수 있습니다.",
@@ -14344,6 +14371,10 @@
     },
     "results-table": {
       "datasource-header": "데이터 소스",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "1분 미만",
       "deleted-remaining-header": "남은 시간",
       "location-header": "위치",
@@ -15915,6 +15946,9 @@
         "grouping-to-matrix": "행렬로 그룹화"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "입력 데이터를 토대로 히스토그램을 계산합니다."
@@ -16249,6 +16283,9 @@
       "label-time-field": "시간 필드",
       "tooltip-statistic-should-calculated-series": "이 시계열에 대해 계산해야 하는 통계입니다.",
       "tooltip-time-field": "시계열에 사용할 시간 필드입니다. 선택하지 않으면 처음 찾은 항목을 사용합니다."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "첫 번째 필드 이름",
