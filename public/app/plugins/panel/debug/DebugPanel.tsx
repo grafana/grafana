@@ -21,14 +21,14 @@ export function DebugPanel(props: Props) {
       <DateTimePicker
         label="Label"
         date={date}
-        showSeconds={false}
+        showSeconds={true}
         clearable={true}
         onChange={(newValue) => {
           setDate(newValue);
         }}
       />
 
-      <TimeOfDayPicker allowEmpty={true} onChange={() => {}} />
+      <TimeOfDayPicker allowEmpty={true} onChange={() => {}} value={date} showSeconds={true} />
     </>
   );
 
