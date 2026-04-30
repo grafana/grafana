@@ -158,6 +158,9 @@ jobs:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
 
+      - name: Pull image from GAR
+        run: docker pull ${{ needs.push-docker-image.outputs.IMAGE }}
+
       - name: Get vault secrets
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
