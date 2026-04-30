@@ -695,7 +695,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextualTuples(ctx, deniedUser)
+	contextuals, err := srv.getContextuals(ctx, deniedUser)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
@@ -718,7 +718,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 		b.Run(fmt.Sprintf("Depth%d", depth), func(b *testing.B) {
 			b.Run("RelationResourceGet", func(b *testing.B) {
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					res, err := srv.openfgaCheck(
 						ctx,
 						store,
@@ -739,7 +739,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 
 			b.Run("RelationCanResourceGet", func(b *testing.B) {
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					res, err := srv.openfgaCheck(
 						ctx,
 						store,

@@ -57,7 +57,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextualTuples(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(ctx, r.GetSubject())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}

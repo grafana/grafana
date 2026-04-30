@@ -58,7 +58,7 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	contextuals, err := s.getContextualTuples(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(ctx, r.GetSubject())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
