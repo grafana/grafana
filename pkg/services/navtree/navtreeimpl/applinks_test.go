@@ -485,6 +485,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 		service.readNavigationSettings()
 
 		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, navtree.NavIDRoot, service.navigationAppConfig["grafana-workflows-app"].SectionID)
+		require.Equal(t, int64(navtree.WeightWorkflows), service.navigationAppConfig["grafana-workflows-app"].SortWeight)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
