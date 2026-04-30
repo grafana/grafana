@@ -30,7 +30,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -88,275 +87,7 @@ func createExternalSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotComma
 	return &result, nil
 }
 
-func handleCreate(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) http.HandlerFunc {
-	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-		signedInUser, ok := requester.(*user.SignedInUser)
-		if !ok {
-			errhttp.Write(ctx, fmt.Errorf("expected SignedInUser identity, got %T", requester), w)
-			return
-		}
-		wrap := &contextmodel.ReqContext{
-			Context: &web.Context{
-				Req:  r,
-				Resp: web.NewResponseWriter(r.Method, w),
-			},
-			SignedInUser: signedInUser,
-		}
-
-		// RBAC check for snapshot creation
-		if ok, err := accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
-			wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
-			return
-		}
-
-		if !options.SnapshotsEnabled {
-			wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
-			return
-		}
-
-		vars := mux.Vars(r)
-		namespace := vars["namespace"]
-		info, err := authlib.ParseNamespace(namespace)
-		if err != nil {
-			wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
-			return
-		}
-		if info.OrgID != signedInUser.GetOrgID() {
-			wrap.JsonApiErr(http.StatusBadRequest,
-				fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, signedInUser.GetOrgID()), nil)
-			return
-		}
-
-		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
-		if err := web.Bind(wrap.Req, &cmd); err != nil {
-			wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
-			return
-		}
-
-		if cmd.External && !options.ExternalEnabled {
-			wrap.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
-			return
-		}
-
-		if cmd.Dashboard == nil {
-			wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
-			return
-		}
-
-		// In public mode, skip dashboard existence validation
-		if !options.PublicMode {
-			// Validate that the dashboard exists
-			dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
-			if dashboardUID == "" {
-				wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
-				return
-			}
-			_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-				UID:   dashboardUID,
-				OrgID: signedInUser.GetOrgID(),
-			})
-			if err != nil {
-				wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
-				return
-			}
-		}
-
-		cmd.OrgID = signedInUser.GetOrgID()
-		cmd.UserID, _ = identity.UserIdentifier(signedInUser.GetID())
-
-		var snapshotURL string
-
-		if cmd.External {
-			resp, err := createExternalSnapshot(&cmd, options)
-			if err != nil {
-				errhttp.Write(ctx, err, w)
-				return
-			}
-
-			cmd.Key = resp.Key
-			cmd.DeleteKey = resp.DeleteKey
-			cmd.ExternalURL = resp.URL
-			cmd.ExternalDeleteURL = resp.DeleteURL
-			cmd.Dashboard = &commonv0.Unstructured{}
-			snapshotURL = resp.URL
-
-			metrics.MApiDashboardSnapshotExternal.Inc()
-		} else {
-			originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
-			if err != nil {
-				errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
-				return
-			}
-
-			snapshotURL, err = dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
-			if err != nil {
-				errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
-				return
-			}
-
-			metrics.MApiDashboardSnapshotCreate.Inc()
-		}
-
-		storage := storageGetter()
-		if storage == nil {
-			errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
-			return
-		}
-
-		creater, ok := storage.(rest.Creater)
-		if !ok {
-			errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support create"), w)
-			return
-		}
-
-		// Convert command to K8s Snapshot
-		snapshot := convertCreateCmdToK8sSnapshot(&cmd, namespace)
-
-		snapshot.SetGenerateName("snapshot-")
-
-		// Set namespace in context for k8s storage layer
-		ctx = k8srequest.WithNamespace(ctx, namespace)
-
-		// Create via storage (dual-write mode decides legacy, unified, or both)
-		// TODO: split creation from Snapshot and the blob
-		_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
-		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-
-		// Build response
-		response := dashv0.DashboardCreateResponse{
-			Key:       snapshot.Name,
-			DeleteKey: cmd.DeleteKey,
-			URL:       snapshotURL,
-			DeleteURL: setting.ToAbsUrl("apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/" + namespace + "/" + prefix + "/delete/" + cmd.DeleteKey),
-		}
-
-		wrap.JSON(http.StatusOK, response)
-	}
-}
-
-func handleDeleteByKey(accessControl ac.AccessControl, storageGetter func() rest.Storage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// RBAC check for snapshot deletion
-		// The service account token is validated by Grafana's auth middleware
-		user, err := identity.GetRequester(ctx)
-		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-		if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
-			w.WriteHeader(http.StatusForbidden)
-			_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
-			return
-		}
-
-		vars := mux.Vars(r)
-		deleteKey := vars["deleteKey"]
-		namespace := vars["namespace"]
-
-		storage := storageGetter()
-		if storage == nil {
-			errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
-			return
-		}
-
-		// Set namespace in context for k8s storage layer
-		ctx = k8srequest.WithNamespace(ctx, namespace)
-
-		// Look up snapshot by deleteKey using field selector
-		lister, ok := storage.(rest.Lister)
-		if !ok {
-			errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support list"), w)
-			return
-		}
-		obj, err := lister.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.OneTermEqualSelector("spec.deleteKey", deleteKey),
-		})
-		if err != nil {
-			errhttp.Write(ctx, fmt.Errorf("failed to look up snapshot: %w", err), w)
-			return
-		}
-		snapList, ok := obj.(*dashv0.SnapshotList)
-		if !ok || len(snapList.Items) == 0 {
-			errhttp.Write(ctx, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), ""), w)
-			return
-		}
-		if len(snapList.Items) > 1 {
-			klog.Warningf("multiple snapshots found for delete key in namespace %q (count=%d); deleting only the first", namespace, len(snapList.Items))
-		}
-		snapshotName := snapList.Items[0].Name
-
-		deleter, ok := storage.(rest.GracefulDeleter)
-		if !ok {
-			errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support delete"), w)
-			return
-		}
-
-		_, _, err = deleter.Delete(ctx, snapshotName, nil, &metav1.DeleteOptions{})
-		if err != nil {
-			errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
-			return
-		}
-		_ = json.NewEncoder(w).Encode(&util.DynMap{
-			"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
-		})
-	}
-}
-
-func handleGetSettings(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
-		signedInUser, ok := requester.(*user.SignedInUser)
-		if !ok {
-			errhttp.Write(ctx, fmt.Errorf("expected SignedInUser identity, got %T", requester), w)
-			return
-		}
-		wrap := &contextmodel.ReqContext{
-			Context: &web.Context{
-				Req:  r,
-				Resp: web.NewResponseWriter(r.Method, w),
-			},
-			SignedInUser: signedInUser,
-		}
-
-		// RBAC check for reading snapshot settings
-		if ok, err := accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
-			wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
-			return
-		}
-
-		vars := mux.Vars(r)
-		info, err := authlib.ParseNamespace(vars["namespace"])
-		if err != nil {
-			wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
-			return
-		}
-		if info.OrgID != signedInUser.GetOrgID() {
-			wrap.JsonApiErr(http.StatusBadRequest,
-				fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, signedInUser.GetOrgID()), nil)
-			return
-		}
-
-		wrap.JSON(http.StatusOK, options)
-	}
-}
-
+// nolint:gocyclo
 func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
@@ -431,7 +162,152 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					},
 				},
-				Handler: handleCreate(service, options, accessControl, storageGetter, dashboardService),
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					ctx := r.Context()
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					wrap := &contextmodel.ReqContext{
+						Context: &web.Context{
+							Req:  r,
+							Resp: web.NewResponseWriter(r.Method, w),
+						},
+					}
+
+					// RBAC check for snapshot creation
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
+					}
+
+					if !options.SnapshotsEnabled {
+						wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+						return
+					}
+
+					vars := mux.Vars(r)
+					namespace := vars["namespace"]
+					info, err := authlib.ParseNamespace(namespace)
+					if err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
+						return
+					}
+					if info.OrgID != user.GetOrgID() {
+						wrap.JsonApiErr(http.StatusBadRequest,
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
+						return
+					}
+
+					cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
+					if err := web.Bind(wrap.Req, &cmd); err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+						return
+					}
+
+					if cmd.External && !options.ExternalEnabled {
+						wrap.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
+						return
+					}
+
+					if cmd.Dashboard == nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
+						return
+					}
+
+					// In public mode, skip dashboard existence validation
+					if !options.PublicMode {
+						// Validate that the dashboard exists
+						dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
+						if dashboardUID == "" {
+							wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
+							return
+						}
+						_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+							UID:   dashboardUID,
+							OrgID: user.GetOrgID(),
+						})
+						if err != nil {
+							wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
+							return
+						}
+					}
+
+					cmd.OrgID = user.GetOrgID()
+					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
+
+					var snapshotURL string
+
+					if cmd.External {
+						resp, err := createExternalSnapshot(&cmd, options)
+						if err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
+
+						cmd.Key = resp.Key
+						cmd.DeleteKey = resp.DeleteKey
+						cmd.ExternalURL = resp.URL
+						cmd.ExternalDeleteURL = resp.DeleteURL
+						cmd.Dashboard = &commonv0.Unstructured{}
+						snapshotURL = resp.URL
+
+						metrics.MApiDashboardSnapshotExternal.Inc()
+					} else {
+						originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+						if err != nil {
+							errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+							return
+						}
+
+						snapshotURL, err = dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
+						if err != nil {
+							errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
+							return
+						}
+
+						metrics.MApiDashboardSnapshotCreate.Inc()
+					}
+
+					storage := storageGetter()
+					if storage == nil {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
+						return
+					}
+
+					creater, ok := storage.(rest.Creater)
+					if !ok {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support create"), w)
+						return
+					}
+
+					// Convert command to K8s Snapshot
+					snapshot := convertCreateCmdToK8sSnapshot(&cmd, namespace)
+
+					snapshot.SetGenerateName("snapshot-")
+
+					// Set namespace in context for k8s storage layer
+					ctx = k8srequest.WithNamespace(ctx, namespace)
+
+					// Create via storage (dual-write mode decides legacy, unified, or both)
+					// TODO: split creation from Snapshot and the blob
+					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+
+					// Build response
+					response := dashv0.DashboardCreateResponse{
+						Key:       snapshot.Name,
+						DeleteKey: cmd.DeleteKey,
+						URL:       snapshotURL,
+						DeleteURL: setting.ToAbsUrl("apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/" + namespace + "/" + prefix + "/delete/" + cmd.DeleteKey),
+					}
+
+					wrap.JSON(http.StatusOK, response)
+				},
 			},
 			{
 				Path: prefix + "/delete/{deleteKey}",
@@ -455,7 +331,73 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					},
 				},
-				Handler: handleDeleteByKey(accessControl, storageGetter),
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					ctx := r.Context()
+
+					// RBAC check for snapshot deletion
+					// The service account token is validated by Grafana's auth middleware
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
+						w.WriteHeader(http.StatusForbidden)
+						_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
+						return
+					}
+
+					vars := mux.Vars(r)
+					deleteKey := vars["deleteKey"]
+					namespace := vars["namespace"]
+
+					storage := storageGetter()
+					if storage == nil {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
+						return
+					}
+
+					// Set namespace in context for k8s storage layer
+					ctx = k8srequest.WithNamespace(ctx, namespace)
+
+					// Look up snapshot by deleteKey using field selector
+					lister, ok := storage.(rest.Lister)
+					if !ok {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support list"), w)
+						return
+					}
+					obj, err := lister.List(ctx, &internalversion.ListOptions{
+						FieldSelector: fields.OneTermEqualSelector("spec.deleteKey", deleteKey),
+					})
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("failed to look up snapshot: %w", err), w)
+						return
+					}
+					snapList, ok := obj.(*dashv0.SnapshotList)
+					if !ok || len(snapList.Items) == 0 {
+						errhttp.Write(ctx, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), ""), w)
+						return
+					}
+					if len(snapList.Items) > 1 {
+						klog.Warningf("multiple snapshots found for delete key in namespace %q (count=%d); deleting only the first", namespace, len(snapList.Items))
+					}
+					snapshotName := snapList.Items[0].Name
+
+					deleter, ok := storage.(rest.GracefulDeleter)
+					if !ok {
+						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support delete"), w)
+						return
+					}
+
+					_, _, err = deleter.Delete(ctx, snapshotName, nil, &metav1.DeleteOptions{})
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
+						return
+					}
+					_ = json.NewEncoder(w).Encode(&util.DynMap{
+						"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+					})
+				},
 			},
 			{
 				Path: prefix + "/settings",
@@ -508,7 +450,40 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					},
 				},
-				Handler: handleGetSettings(options, accessControl),
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					ctx := r.Context()
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					wrap := &contextmodel.ReqContext{
+						Context: &web.Context{
+							Req:  r,
+							Resp: web.NewResponseWriter(r.Method, w),
+						},
+					}
+
+					// RBAC check for reading snapshot settings
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
+					}
+
+					vars := mux.Vars(r)
+					info, err := authlib.ParseNamespace(vars["namespace"])
+					if err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
+						return
+					}
+					if info.OrgID != user.GetOrgID() {
+						wrap.JsonApiErr(http.StatusBadRequest,
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
+						return
+					}
+
+					wrap.JSON(http.StatusOK, options)
+				},
 			},
 		}}
 
