@@ -118,10 +118,6 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
-  if (evalIntervalSeconds !== undefined) {
-    metadata.push(<GroupIntervalIndicator seconds={evalIntervalSeconds} />);
-  }
-
   if (!isPaused) {
     if (lastEvaluation && evaluationInterval) {
       metadata.push(
@@ -188,6 +184,11 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       }
       actions={actions}
       meta={metadata}
+      metaRight={
+        evalIntervalSeconds !== undefined
+          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
+          : undefined
+      }
     />
   );
 };
@@ -234,10 +235,6 @@ export function RecordingRuleListItem({
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
-  if (evalIntervalSeconds !== undefined) {
-    metadata.push(<GroupIntervalIndicator seconds={evalIntervalSeconds} />);
-  }
-
   const ruleHealth = normalizeHealth(health);
 
   return (
@@ -258,6 +255,11 @@ export function RecordingRuleListItem({
       icon={<StateIcon type="recording" health={ruleHealth} isPaused={isPaused} />}
       actions={actions}
       meta={metadata}
+      metaRight={
+        evalIntervalSeconds !== undefined
+          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
+          : undefined
+      }
     />
   );
 }
