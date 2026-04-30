@@ -130,8 +130,8 @@ test.describe(
         await page.getByTestId(selectors.pages.ConfirmModal.input).fill('Delete');
         await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 
-        // Wait for redirect to home after deletion
-        await page.waitForURL('**/');
+        // Wait for redirect to home after deletion (?orgId=N may be appended by locationService)
+        await page.waitForURL((url) => url.pathname === '/');
 
         // Navigate to recently deleted
         await page.goto('/dashboard/recently-deleted');
