@@ -2523,14 +2523,6 @@
       "count": 1
     }
   },
-  "public/app/features/search/state/SearchStateManager.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 16
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/search/utils.ts": {
     "@grafana/no-direct-local-storage-access": {
       "count": 3

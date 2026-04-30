@@ -164,6 +164,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     verticalAlign: 'middle',
     display: 'inline-block',
     fill: 'currentColor',
-    width: '25px',
+    width: '20px',
   }),
 });

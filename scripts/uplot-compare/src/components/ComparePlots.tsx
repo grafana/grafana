@@ -7,9 +7,20 @@ import type { ComparePlotsProps } from '../types.ts';
 import { AssertionStatusBadge } from './AssertionStatusBadge.tsx';
 import { CanvasStack } from './CanvasStack.tsx';
 import { DiffCanvas } from './DiffCanvas.tsx';
+import { JestActionsButtons, JestOutputModal } from './JestActions.tsx';
 import { PlotHeader } from './PlotHeader.tsx';
 
-export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePlotsProps) {
+export function ComparePlots({
+  defaultWidth,
+  defaultHeight,
+  payload,
+  acceptBaselineState,
+  onBackToIndex,
+  nextFailedTestBasename,
+  onGoToNextFailedTest,
+  onRerunTest,
+  onAcceptBaseline,
+}: ComparePlotsProps) {
   const width = payload.width ?? defaultWidth;
   const height = payload.height ?? defaultHeight;
   const actualUPlotRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,6 +32,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
   const [renderExpectedSetupEvents, setRenderExpectedSetupEvents] = useState(true);
   const [renderActualSetupEvents, setRenderActualSetupEvents] = useState(true);
   const [renderDiffSetupEvents, setRenderDiffSetupEvents] = useState(true);
+  const [jestModalDismissed, setJestModalDismissed] = useState(false);
 
   useCanvasEventsEffect(actualUPlotRef, payload.actual, payload.uPlotCanvasEvents, renderActualSetupEvents);
   useCanvasEventsEffect(expectedUPlotRef, payload.expected, payload.uPlotCanvasEvents, renderExpectedSetupEvents);
@@ -55,13 +67,77 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
 
   const showActualOnly = payload.snapshotAssertionPassed === true;
 
+  const jestKind: 'idle' | 'running' | 'success' | 'error' =
+    acceptBaselineState.kind === 'idle'
+      ? 'idle'
+      : acceptBaselineState.kind === 'running'
+        ? 'running'
+        : acceptBaselineState.kind === 'success'
+          ? 'success'
+          : 'error';
+
+  const jestUpdateSnapshot = acceptBaselineState.kind === 'idle' ? undefined : acceptBaselineState.updateSnapshot;
+
+  const jestMessage = acceptBaselineState.kind === 'error' ? acceptBaselineState.message : undefined;
+
+  const jestCommand =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error'
+      ? acceptBaselineState.command
+      : undefined;
+
+  const jestStdout =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error' ? acceptBaselineState.stdout : '';
+
+  const jestStderr =
+    acceptBaselineState.kind === 'success' || acceptBaselineState.kind === 'error' ? acceptBaselineState.stderr : '';
+
+  useEffect(() => {
+    if (acceptBaselineState.kind === 'running') {
+      setJestModalDismissed(false);
+    }
+  }, [acceptBaselineState.kind]);
+
+  const jestModalOpen = acceptBaselineState.kind !== 'idle' && !jestModalDismissed;
+
   return (
     <>
       <div className="compare-title-row">
-        <h3 className="compare-title">Test: {payload.testName}</h3>
+        <div className="compare-title-leading">
+          <button type="button" className="compare-back-btn" onClick={onBackToIndex} aria-label="Back to payload list">
+            ← Back
+          </button>
+          <h3 className="compare-title">Test: {payload.testName}</h3>
+        </div>
         {payload.snapshotAssertionPassed !== undefined ? (
           <AssertionStatusBadge passed={payload.snapshotAssertionPassed} />
         ) : null}
+        <div className="compare-title-actions">
+          {payload.testPath && jestModalDismissed && (jestKind === 'success' || jestKind === 'error') ? (
+            <button type="button" className="jest-view-output-btn" onClick={() => setJestModalDismissed(false)}>
+              View jest output
+            </button>
+          ) : null}
+          <JestActionsButtons
+            passed={payload.snapshotAssertionPassed ?? false}
+            kind={jestKind}
+            onRerunTest={onRerunTest}
+            updateSnapshot={jestUpdateSnapshot}
+            onAcceptBaseline={onAcceptBaseline}
+          />
+          <button
+            type="button"
+            className="compare-next-failed-btn"
+            disabled={nextFailedTestBasename === null}
+            onClick={onGoToNextFailedTest}
+            title={
+              nextFailedTestBasename === null
+                ? 'No other payload with a failing snapshot (or status still loading)'
+                : 'Open the next payload whose snapshot assertion failed'
+            }
+          >
+            Next failed test
+          </button>
+        </div>
       </div>
       <div className={`wrap${showActualOnly ? ' wrap--actual-only' : ''}`}>
         {!showActualOnly ? (
@@ -73,6 +149,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
               mixBlendMode={blendMode}
               onChangeBlendMode={setBlendMode}
               showBlend={showOverlay && hasDiff}
+              hasAxesEvents={!!payload.uPlotCanvasEvents.length}
             />
             <CanvasStack
               uPlotRef={expectedUPlotRef}
@@ -94,6 +171,7 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
             mixBlendMode={blendMode}
             onChangeBlendMode={setBlendMode}
             showBlend={showOverlay && hasDiff}
+            hasAxesEvents={!!payload.uPlotCanvasEvents.length}
           />
           <CanvasStack
             uPlotRef={actualUPlotRef}
@@ -122,6 +200,16 @@ export function ComparePlots({ defaultWidth, defaultHeight, payload }: ComparePl
           </div>
         ) : null}
       </div>
+      <JestOutputModal
+        open={jestModalOpen}
+        onClose={() => setJestModalDismissed(true)}
+        kind={jestKind}
+        updateSnapshot={jestUpdateSnapshot}
+        message={jestMessage}
+        command={jestCommand}
+        stdout={jestStdout}
+        stderr={jestStderr}
+      />
     </>
   );
 }

@@ -35,6 +35,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enable Meticulous AI session recorder for automated UI test generation */
+  GrafanaMeticulousAIRecorder: "grafana.meticulousAIRecorder",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -55,6 +57,8 @@ export const FlagKeys = {
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
+  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
+  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -191,6 +195,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enable Meticulous AI session recorder for automated UI test generation
+ *
+ * **Details:**
+ * - flag key: `grafana.meticulousAIRecorder`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMeticulousAIRecorder = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.meticulousAIRecorder", false, options).value;
+};
+
+/**
  * Whether to use the new SharedPreferences functional component
  *
  * **Details:**
@@ -298,6 +313,17 @@ export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationO
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryEditorNext", false, options).value;
+};
+
+/**
+ * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ *
+ * **Details:**
+ * - flag key: `queryEditorNextMultiSelect`
+ * - default value: `false`
+ */
+export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryEditorNextMultiSelect", false, options).value;
 };
 
 /**
