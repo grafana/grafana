@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Checkbox, Drawer, Field, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, Drawer, Field, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -171,14 +171,76 @@ export function MigrateDrawer({
           <form onSubmit={handleSubmit(submit)}>
             <Stack direction="column" gap={2}>
               <Alert
-                severity="info"
-                title={t('provisioning.stats.migrate-drawer-push-title', 'Smoother migration tip')}
+                severity="warning"
+                title={t(
+                  'provisioning.stats.migrate-drawer-explainer-title',
+                  'Review how migration works before continuing'
+                )}
               >
-                <Trans i18nKey="provisioning.stats.migrate-drawer-push-body">
-                  Enable pushes to <code>main</code> on this repository for a smoother migration. Without
-                  direct push access, the job opens a pull request for every change and you&apos;ll need to
-                  merge them before the dashboards become managed.
-                </Trans>
+                <Stack direction="column" gap={2}>
+                  <Text>
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-intro">
+                      Migration runs as a one-time job. It exports the selected dashboards (and the folders
+                      that contain them) to the connected repository so Git becomes the source of truth.
+                      Once a dashboard is managed, every subsequent change in Grafana is also pushed to the
+                      repository, and pulls from the repository sync back into Grafana. See the{' '}
+                      <TextLink
+                        external
+                        href="https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/intro-git-sync/"
+                      >
+                        Git Sync documentation
+                      </TextLink>{' '}
+                      for the full picture.
+                    </Trans>
+                  </Text>
+                  <ul className={styles.explainerList}>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-edits">
+                        Dashboards can still be edited in Grafana while the job runs, but those changes may
+                        not make it into the export.
+                      </Trans>
+                    </li>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-unsupported">
+                        Alerts and library panels are not supported in provisioned folders. Anything inside
+                        a migrated folder that isn&apos;t a dashboard stays behind in Grafana.
+                      </Trans>
+                    </li>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-folders">
+                        The folder structure is replicated in the repository. The original folders are kept
+                        in Grafana — empty after migration if every dashboard inside them moved.
+                      </Trans>
+                    </li>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-duration">
+                        How long it takes depends on how many dashboards and folders are involved.
+                      </Trans>
+                    </li>
+                  </ul>
+                  <Text weight="medium">
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-title">
+                      How the workflow you pick below changes things:
+                    </Trans>
+                  </Text>
+                  <ul className={styles.explainerList}>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-write">
+                        <strong>Push directly to <code>main</code></strong>: the job writes a single commit
+                        to the default branch. Dashboards become managed as soon as the commit lands —
+                        smoothest experience, but it does mean the change skips review.
+                      </Trans>
+                    </li>
+                    <li>
+                      <Trans i18nKey="provisioning.stats.migrate-drawer-explainer-workflow-branch">
+                        <strong>Push to a branch and open a pull request</strong>: the job pushes to the
+                        branch you pick and opens a PR. Dashboards stay unmanaged until the PR is merged
+                        into <code>main</code>. Pick this when you need review, but expect to manage the
+                        PR before migration completes.
+                      </Trans>
+                    </li>
+                  </ul>
+                </Stack>
               </Alert>
 
               <div className={styles.summary}>
@@ -250,5 +312,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1.25, 1.5),
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.secondary,
+  }),
+  explainerList: css({
+    margin: 0,
+    paddingLeft: theme.spacing(2.5),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    '& code': {
+      fontFamily: theme.typography.fontFamilyMonospace,
+      background: theme.colors.background.canvas,
+      padding: theme.spacing(0, 0.5),
+      borderRadius: theme.shape.radius.default,
+    },
   }),
 });

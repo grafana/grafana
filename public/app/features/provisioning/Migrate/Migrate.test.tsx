@@ -453,7 +453,7 @@ describe('Migrate', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: /select folder payments/i }));
     await userEvent.click(screen.getByRole('button', { name: /migrate selected/i }));
     // Drawer surfaces the migration tip and the delete-originals checkbox (default on → submit reads "Migrate").
-    expect(screen.getByText(/smoother migration tip/i)).toBeInTheDocument();
+    expect(screen.getByText(/review how migration works/i)).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /delete original dashboards/i })).toBeChecked();
     expect(screen.getByRole('button', { name: /^migrate$/i })).toBeInTheDocument();
   });
