@@ -117,7 +117,7 @@ const RefreshPickerComponent = memo((props: Props) => {
   return (
     <ButtonGroup className="refresh-picker">
       <ToolbarButton
-        // aria-label={text}
+        aria-label={loadingText && isLoading ? loadingText : text}
         tooltip={tooltip}
         onClick={onRefresh}
         variant={variant}
@@ -134,8 +134,8 @@ const RefreshPickerComponent = memo((props: Props) => {
             {text}
           </span>
           <span
-            className={cx(styles.loadingText, {
-              [styles.hideLoadingText]: !loadingText || !isLoading,
+            className={cx(styles.text, {
+              [styles.hideText]: !loadingText || !isLoading,
             })}
           >
             {loadingText}
@@ -227,13 +227,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridRowStart: 1,
   }),
   hideText: css({
-    visibility: 'hidden',
-  }),
-  loadingText: css({
-    gridColumnStart: 1,
-    gridRowStart: 1,
-  }),
-  hideLoadingText: css({
     visibility: 'hidden',
   }),
 });
