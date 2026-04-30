@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"sort"
 	"strings"
 	"time"
 
@@ -213,9 +214,37 @@ func (s *Server) listObjects(
 	req *openfgav1.ListObjectsRequest,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (*openfgav1.ListObjectsResponse, error) {
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, nil))
+	}
+	if len(chunks) == 1 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunks[0]))
+	}
+
+	seen := make(map[string]struct{})
+	var objects []string
+	for _, chunk := range chunks {
+		res, err := s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunk))
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range res.GetObjects() {
+			if _, ok := seen[object]; ok {
+				continue
+			}
+			seen[object] = struct{}{}
+			objects = append(objects, object)
+		}
+	}
+	sort.Strings(objects)
+	return &openfgav1.ListObjectsResponse{Objects: objects}, nil
+}
+
+func cloneListObjectsRequestWithContextualTuples(req *openfgav1.ListObjectsRequest, contextuals *openfgav1.ContextualTupleKeys) *openfgav1.ListObjectsRequest {
 	out := proto.Clone(req).(*openfgav1.ListObjectsRequest)
 	out.ContextualTuples = contextuals
-	return s.doOpenFGAListObjects(ctx, out)
+	return out
 }
 
 // doOpenFGAListObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),

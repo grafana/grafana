@@ -41,6 +41,7 @@ import (
 )
 
 const cacheCleanInterval = 2 * time.Minute
+const maxContextualTuplesPerRequest = 100
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
@@ -310,4 +311,25 @@ func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1
 		return nil, nil
 	}
 	return &openfgav1.ContextualTupleKeys{TupleKeys: keys}, nil
+}
+
+func contextualTupleChunks(contextuals *openfgav1.ContextualTupleKeys) []*openfgav1.ContextualTupleKeys {
+	if contextuals == nil || len(contextuals.GetTupleKeys()) == 0 {
+		return nil
+	}
+
+	tuples := contextuals.GetTupleKeys()
+	if len(tuples) <= maxContextualTuplesPerRequest {
+		return []*openfgav1.ContextualTupleKeys{contextuals}
+	}
+
+	chunks := make([]*openfgav1.ContextualTupleKeys, 0, (len(tuples)+maxContextualTuplesPerRequest-1)/maxContextualTuplesPerRequest)
+	for i := 0; i < len(tuples); i += maxContextualTuplesPerRequest {
+		end := i + maxContextualTuplesPerRequest
+		if end > len(tuples) {
+			end = len(tuples)
+		}
+		chunks = append(chunks, &openfgav1.ContextualTupleKeys{TupleKeys: tuples[i:end]})
+	}
+	return chunks
 }

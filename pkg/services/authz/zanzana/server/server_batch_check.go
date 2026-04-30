@@ -774,12 +774,60 @@ func (s *Server) doBatchCheck(
 	if len(checks) == 0 {
 		return nil, nil
 	}
+
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		setBatchCheckItemsContextualTuples(checks, nil)
+		return s.doOpenFGABatchCheck(ctx, store, checks)
+	}
+	if len(chunks) == 1 {
+		setBatchCheckItemsContextualTuples(checks, chunks[0])
+		return s.doOpenFGABatchCheck(ctx, store, checks)
+	}
+
+	var merged map[string]*openfgav1.BatchCheckSingleResult
+	for _, chunk := range chunks {
+		setBatchCheckItemsContextualTuples(checks, chunk)
+		partial, err := s.doOpenFGABatchCheck(ctx, store, checks)
+		if err != nil {
+			return nil, err
+		}
+		if merged == nil {
+			merged = partial
+			continue
+		}
+		for id, result := range partial {
+			merged[id] = orBatchCheckSingleResult(merged[id], result)
+		}
+	}
+	return merged, nil
+}
+
+func setBatchCheckItemsContextualTuples(checks []*openfgav1.BatchCheckItem, contextuals *openfgav1.ContextualTupleKeys) {
 	for _, check := range checks {
 		if check != nil {
 			check.ContextualTuples = contextuals
 		}
 	}
-	return s.doOpenFGABatchCheck(ctx, store, checks)
+}
+
+func orBatchCheckSingleResult(a, b *openfgav1.BatchCheckSingleResult) *openfgav1.BatchCheckSingleResult {
+	if a == nil {
+		return b
+	}
+	if b == nil {
+		return a
+	}
+	if a.GetAllowed() || b.GetAllowed() {
+		return &openfgav1.BatchCheckSingleResult{CheckResult: &openfgav1.BatchCheckSingleResult_Allowed{Allowed: true}}
+	}
+	if a.GetError() != nil {
+		return a
+	}
+	if b.GetError() != nil {
+		return b
+	}
+	return a
 }
 
 // doOpenFGABatchCheck executes a batch check against OpenFGA, splitting into
