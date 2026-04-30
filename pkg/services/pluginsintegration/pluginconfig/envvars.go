@@ -42,6 +42,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 		p.envVar("GF_VERSION", p.cfg.GrafanaVersion),
 	}
 
+	// Enterprise license
 	if p.license != nil {
 		hostEnv = append(
 			hostEnv,
@@ -50,6 +51,16 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 			p.envVar("GF_ENTERPRISE_APP_URL", p.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, p.license.Environment()...)
+	}
+
+	// Marketplace license
+	if p.license != nil {
+		marketplaceLicenseFile, err := p.license.PluginLicensePath(plugin.ID)
+		if err != nil {
+			// TODO: handle err
+		} else {
+			hostEnv = append(hostEnv, p.envVar("GF_MARKETPLACE_LICENSE_PATH", marketplaceLicenseFile))
+		}
 	}
 
 	if plugin.ExternalService != nil {
