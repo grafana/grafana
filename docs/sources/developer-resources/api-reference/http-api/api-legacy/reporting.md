@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/reporting/ # /docs/grafana/next/http_api/reporting/
-  - ../../../developers/http_api/reporting/ # /docs/grafana/next/developers/http_api/reporting/
+  - ../../../../http_api/reporting/ # /docs/grafana/next/http_api/reporting/
+  - ../../../../developers/http_api/reporting/ # /docs/grafana/next/developers/http_api/reporting/
   - ../../../../developer-resources/api-reference/http-api/reporting/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/reporting/
 description: Grafana Enterprise APIs

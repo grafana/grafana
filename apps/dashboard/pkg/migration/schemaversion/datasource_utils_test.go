@@ -67,6 +67,55 @@ func TestGetDataSourceRef(t *testing.T) {
 	}
 }
 
+func TestResolveDatasourceRef(t *testing.T) {
+	datasources := []schemaversion.DataSourceInfo{
+		{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
+		{UID: "existing-target-uid", Type: "elasticsearch", Name: "Existing Target Name", Default: false, APIVersion: "v2"},
+	}
+	index := schemaversion.NewDatasourceIndex(datasources)
+
+	t.Run("nil index returns nil", func(t *testing.T) {
+		assert.Nil(t, schemaversion.ResolveDatasourceRef("anything", nil))
+	})
+
+	t.Run("empty name returns nil", func(t *testing.T) {
+		assert.Nil(t, schemaversion.ResolveDatasourceRef("", index))
+	})
+
+	t.Run("\"default\" sentinel resolves to the configured default datasource", func(t *testing.T) {
+		ds := schemaversion.ResolveDatasourceRef("default", index)
+		if assert.NotNil(t, ds) {
+			assert.Equal(t, "default-ds-uid", ds.UID)
+			assert.Equal(t, "prometheus", ds.Type)
+		}
+	})
+
+	t.Run("\"default\" sentinel falls through to Lookup when no default is configured", func(t *testing.T) {
+		emptyIndex := schemaversion.NewDatasourceIndex([]schemaversion.DataSourceInfo{})
+		assert.Nil(t, schemaversion.ResolveDatasourceRef("default", emptyIndex))
+	})
+
+	t.Run("known name resolves via the index", func(t *testing.T) {
+		ds := schemaversion.ResolveDatasourceRef("Existing Target Name", index)
+		if assert.NotNil(t, ds) {
+			assert.Equal(t, "existing-target-uid", ds.UID)
+			assert.Equal(t, "elasticsearch", ds.Type)
+		}
+	})
+
+	t.Run("known UID resolves via the index", func(t *testing.T) {
+		ds := schemaversion.ResolveDatasourceRef("existing-target-uid", index)
+		if assert.NotNil(t, ds) {
+			assert.Equal(t, "existing-target-uid", ds.UID)
+			assert.Equal(t, "elasticsearch", ds.Type)
+		}
+	})
+
+	t.Run("unknown name returns nil", func(t *testing.T) {
+		assert.Nil(t, schemaversion.ResolveDatasourceRef("unknown-ds", index))
+	})
+}
+
 func TestMigrateDatasourceNameToRef(t *testing.T) {
 	datasources := []schemaversion.DataSourceInfo{
 		{UID: "default-ds-uid", Type: "prometheus", Name: "Default Test Datasource Name", Default: true, APIVersion: "v1"},
@@ -237,6 +286,21 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			result := schemaversion.MigrateDatasourceNameToRef("any-ds", options, emptyIndex)
 			expected := map[string]interface{}{
 				"uid": "any-ds",
+			}
+			assert.Equal(t, expected, result)
+		})
+
+		t.Run("nil input with no default configured returns nil", func(t *testing.T) {
+			emptyIndex := schemaversion.NewDatasourceIndex([]schemaversion.DataSourceInfo{})
+			result := schemaversion.MigrateDatasourceNameToRef(nil, options, emptyIndex)
+			assert.Nil(t, result)
+		})
+
+		t.Run("\"default\" with no default configured preserves as UID-only", func(t *testing.T) {
+			emptyIndex := schemaversion.NewDatasourceIndex([]schemaversion.DataSourceInfo{})
+			result := schemaversion.MigrateDatasourceNameToRef("default", options, emptyIndex)
+			expected := map[string]interface{}{
+				"uid": "default",
 			}
 			assert.Equal(t, expected, result)
 		})
