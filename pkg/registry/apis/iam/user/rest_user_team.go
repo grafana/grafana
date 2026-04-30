@@ -78,7 +78,7 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsApi) {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return
@@ -100,34 +100,35 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		}
 
 		limit := common.DefaultListLimit
-		offset := 0
-		page := 1
 		if queryParams.Has("limit") {
 			limit, _ = strconv.Atoi(queryParams.Get("limit"))
 		}
-		if queryParams.Has("offset") {
-			offset, _ = strconv.Atoi(queryParams.Get("offset"))
-			if offset > 0 {
-				page = (offset / limit) + 1
-			}
-		} else if queryParams.Has("page") {
-			page, _ = strconv.Atoi(queryParams.Get("page"))
-			offset = (page - 1) * limit
-		}
-
 		if limit > common.MaxListLimit {
 			http.Error(w, fmt.Sprintf("limit parameter exceeds maximum of %d", common.MaxListLimit), http.StatusBadRequest)
 			return
 		}
-
 		if limit < 1 {
 			limit = common.DefaultListLimit
 		}
 
+		// Keyset pagination: the caller echoes back the previous response's
+		// metadata.continue token. We sort by team name (deterministic across
+		// requests) and resume after the last team name seen on the previous
+		// page. This is stable under concurrent member changes — unlike
+		// offset/page which silently shift when items insert/delete.
+		var searchAfter []string
+		if cont := queryParams.Get("continue"); cont != "" {
+			token, err := resource.GetContinueToken(cont)
+			if err != nil {
+				http.Error(w, "invalid continue token", http.StatusBadRequest)
+				return
+			}
+			searchAfter = token.SearchAfter
+		}
+
 		span.SetAttributes(attribute.Int("limit", limit),
-			attribute.Int("page", page),
-			attribute.Int("offset", offset),
-			attribute.String("name", name))
+			attribute.String("name", name),
+			attribute.Bool("continue", len(searchAfter) > 0))
 
 		teamGR := iamv0alpha1.TeamResourceInfo.GroupResource()
 		searchRequest := &resourcepb.ResourceSearchRequest{
@@ -143,10 +144,12 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 					Values:   []string{name},
 				}},
 			},
-			Limit:   int64(limit),
-			Offset:  int64(offset),
-			Page:    int64(page),
-			Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+			Limit: int64(limit),
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
+				{Field: resource.SEARCH_FIELD_NAME},
+			},
+			SearchAfter: searchAfter,
+			Explain:     queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		}
 
 		result, err := s.client.Search(ctx, searchRequest)
@@ -163,15 +166,33 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 			return
 		}
 
+		rows := result.Results.Rows
 		permIdx, externalIdx := cellIndexes(result.Results.Columns)
-		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), result.Results.Rows, name, permIdx, externalIdx)
+		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), rows, name, permIdx, externalIdx)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
-		responder.Object(http.StatusOK, &iamv0alpha1.GetUserTeamsResponse{
+
+		response := &iamv0alpha1.GetUserTeamsResponse{
 			GetUserTeamsBody: iamv0alpha1.GetUserTeamsBody{Items: items},
-		})
+		}
+		// Emit a continue token only when we filled the page — that's the
+		// only case the caller should ask for more. The token encodes the
+		// last row's sort_fields, which the search backend will resolve
+		// into a "name > lastSeen" cursor on the next request.
+		if int64(len(rows)) >= int64(limit) {
+			lastSort := rows[len(rows)-1].GetSortFields()
+			if len(lastSort) > 0 {
+				token, err := resource.NewSearchContinueToken(lastSort, result.ResourceVersion)
+				if err != nil {
+					responder.Error(apierrors.NewInternalError(err))
+					return
+				}
+				response.ListMeta.Continue = token
+			}
+		}
+		responder.Object(http.StatusOK, response)
 	}), nil
 }
 

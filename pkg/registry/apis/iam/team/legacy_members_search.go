@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
+	"sort"
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
@@ -59,6 +59,11 @@ func NewLegacyUserTeamsSearchClient(store legacy.LegacyIdentityStore, tracer tra
 
 // Search resolves a `members=<userUID>` filter on the Team resource against
 // the legacy team_member table.
+//
+// Pagination uses the same keyset cursor as the unified-search path: callers
+// pass SearchAfter=[lastSeenTeamUID], we order results by team UID ascending,
+// and emit SortFields=[item.UID] on each row so the caller can build the next
+// continue token. Offset/Page on the request are ignored.
 func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "team.legacy-members-search")
 	defer span.End()
@@ -70,9 +75,6 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 	}
 	if req.Limit < 1 {
 		req.Limit = common.DefaultListLimit
-	}
-	if req.Page > math.MaxInt32 || req.Page < 0 {
-		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
 	userUID := userUIDFilter(req)
@@ -93,17 +95,13 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 		return nil, err
 	}
 
-	limit := int(req.Limit)
-	offset := int(req.Offset)
-	if req.Page > 1 {
-		offset = (int(req.Page) - 1) * limit
-	}
-
-	// legacy.ListUserTeams paginates via a `Continue` cursor (id >= last+1),
-	// not an offset, so we can't ask SQL for the requested page directly.
-	// Walk the cursor, stopping as soon as we have enough rows to satisfy
-	// the requested window, then slice in memory.
-	want := offset + limit
+	// Walk the legacy id-keyed cursor to gather every team this user is in,
+	// then re-sort by UID so the keyset cursor we expose externally is
+	// consistent with the unified-search path. Per-user membership counts are
+	// bounded (capped by MaxListLimit at the API layer), so the in-memory
+	// resort is cheap.
+	// TODO: Consider improving this if there is any performance issues with
+	// this endpoint.
 	const pageSize = 500
 	var items []legacy.UserTeam
 	var continueToken int64
@@ -119,27 +117,36 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 			return nil, fmt.Errorf("list user teams: %w", err)
 		}
 		items = append(items, p.Items...)
-		if p.Continue == 0 || len(items) >= want {
+		if p.Continue == 0 {
 			break
 		}
 		continueToken = p.Continue
 	}
+	sort.Slice(items, func(i, j int) bool { return items[i].UID < items[j].UID })
 
-	start := min(offset, len(items))
-	end := min(start+limit, len(items))
-	window := items[start:end]
+	// SearchAfter contains the last team UID returned on the previous page;
+	// skip everything up to and including it.
+	if len(req.SearchAfter) > 0 {
+		after := req.SearchAfter[0]
+		idx := sort.Search(len(items), func(i int) bool { return items[i].UID > after })
+		items = items[idx:]
+	}
+
+	limit := int(req.Limit)
+	if len(items) > limit {
+		items = items[:limit]
+	}
+
 	logger.Debug("legacy user-teams search resolved",
 		"user", userUID,
 		"namespace", ns.Value,
 		"limit", limit,
-		"offset", offset,
-		"page", req.Page,
-		"fetched", len(items),
-		"returned", len(window),
+		"search_after", req.SearchAfter,
+		"returned", len(items),
 	)
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(window))
-	for _, item := range window {
+	rows := make([]*resourcepb.ResourceTableRow, 0, len(items))
+	for _, item := range items {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key: &resourcepb.ResourceKey{
 				Namespace: req.Options.Key.Namespace,
@@ -151,6 +158,7 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 				[]byte(common.MapTeamPermission(item.Permission)),
 				[]byte(strconv.FormatBool(item.External)),
 			},
+			SortFields: []string{item.UID},
 		})
 	}
 	return &resourcepb.ResourceSearchResponse{

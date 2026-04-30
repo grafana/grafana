@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,12 +27,14 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 	}
 	keyWithNamespace := &resourcepb.ResourceKey{Namespace: "default"}
 
-	t.Run("returns rows with permission and external cells for the member filter", func(t *testing.T) {
+	t.Run("returns rows with permission and external cells, sorted by UID, with SortFields populated", func(t *testing.T) {
+		// The legacy SQL returns by team.id; the adapter must re-sort by UID
+		// so the keyset cursor is consistent with the unified-search path.
 		store := &fakeUserTeamsStore{
 			pages: []*legacy.ListUserTeamsResult{{
 				Items: []legacy.UserTeam{
-					{UID: "team-a", Name: "Team A", Permission: team.PermissionTypeAdmin, External: false},
 					{UID: "team-b", Name: "Team B", Permission: team.PermissionTypeMember, External: true},
+					{UID: "team-a", Name: "Team A", Permission: team.PermissionTypeAdmin, External: false},
 				},
 			}},
 		}
@@ -41,7 +42,6 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 
 		req := &resourcepb.ResourceSearchRequest{
 			Limit:   10,
-			Page:    1,
 			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
 		}
 
@@ -60,12 +60,14 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		require.Equal(t, "default", resp.Results.Rows[0].Key.Namespace)
 		require.Equal(t, "admin", string(resp.Results.Rows[0].Cells[0]))
 		require.Equal(t, "false", string(resp.Results.Rows[0].Cells[1]))
+		require.Equal(t, []string{"team-a"}, resp.Results.Rows[0].SortFields)
 		require.Equal(t, "team-b", resp.Results.Rows[1].Key.Name)
 		require.Equal(t, "member", string(resp.Results.Rows[1].Cells[0]))
 		require.Equal(t, "true", string(resp.Results.Rows[1].Cells[1]))
+		require.Equal(t, []string{"team-b"}, resp.Results.Rows[1].SortFields)
 	})
 
-	t.Run("paginates by walking the Continue cursor", func(t *testing.T) {
+	t.Run("walks every page of the underlying Continue cursor before slicing", func(t *testing.T) {
 		store := &fakeUserTeamsStore{
 			pages: []*legacy.ListUserTeamsResult{
 				{Items: []legacy.UserTeam{{UID: "t1", Permission: team.PermissionTypeMember}}, Continue: 1},
@@ -76,18 +78,47 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		client := NewLegacyUserTeamsSearchClient(store, tracing.InitializeTracerForTest())
 
 		req := &resourcepb.ResourceSearchRequest{
-			Limit:   1,
-			Page:    2,
+			Limit:   10,
 			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
 		}
 
 		resp, err := client.Search(context.Background(), req)
 		require.NoError(t, err)
-		require.Len(t, resp.Results.Rows, 1)
-		require.Equal(t, "t2", resp.Results.Rows[0].Key.Name)
+		require.Len(t, resp.Results.Rows, 3)
+		require.Equal(t, []string{"t1", "t2", "t3"}, []string{
+			resp.Results.Rows[0].Key.Name,
+			resp.Results.Rows[1].Key.Name,
+			resp.Results.Rows[2].Key.Name,
+		})
 	})
 
-	t.Run("returns empty window when offset exceeds available items", func(t *testing.T) {
+	t.Run("SearchAfter skips up to and including the matching UID", func(t *testing.T) {
+		store := &fakeUserTeamsStore{
+			pages: []*legacy.ListUserTeamsResult{{
+				Items: []legacy.UserTeam{
+					{UID: "t1", Permission: team.PermissionTypeMember},
+					{UID: "t2", Permission: team.PermissionTypeMember},
+					{UID: "t3", Permission: team.PermissionTypeMember},
+					{UID: "t4", Permission: team.PermissionTypeMember},
+				},
+			}},
+		}
+		client := NewLegacyUserTeamsSearchClient(store, tracing.InitializeTracerForTest())
+
+		req := &resourcepb.ResourceSearchRequest{
+			Limit:       2,
+			SearchAfter: []string{"t2"},
+			Options:     &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
+		}
+
+		resp, err := client.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.Len(t, resp.Results.Rows, 2)
+		require.Equal(t, "t3", resp.Results.Rows[0].Key.Name)
+		require.Equal(t, "t4", resp.Results.Rows[1].Key.Name)
+	})
+
+	t.Run("returns empty window when SearchAfter is past the last UID", func(t *testing.T) {
 		store := &fakeUserTeamsStore{
 			pages: []*legacy.ListUserTeamsResult{{
 				Items: []legacy.UserTeam{{UID: "only", Permission: team.PermissionTypeMember}},
@@ -96,9 +127,9 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		client := NewLegacyUserTeamsSearchClient(store, tracing.InitializeTracerForTest())
 
 		req := &resourcepb.ResourceSearchRequest{
-			Limit:   10,
-			Page:    5,
-			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
+			Limit:       10,
+			SearchAfter: []string{"only"},
+			Options:     &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
 		}
 
 		resp, err := client.Search(context.Background(), req)
@@ -112,7 +143,6 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 
 		req := &resourcepb.ResourceSearchRequest{
 			Limit:   10,
-			Page:    1,
 			Options: &resourcepb.ListOptions{Key: keyWithNamespace},
 		}
 
@@ -127,7 +157,6 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 
 		req := &resourcepb.ResourceSearchRequest{
 			Limit:   common.MaxListLimit + 1,
-			Page:    1,
 			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
 		}
 
@@ -136,40 +165,11 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit), err.Error())
 	})
 
-	t.Run("returns error if page is negative", func(t *testing.T) {
-		client := NewLegacyUserTeamsSearchClient(&fakeUserTeamsStore{}, tracing.InitializeTracerForTest())
-
-		req := &resourcepb.ResourceSearchRequest{
-			Limit:   10,
-			Page:    -1,
-			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
-		}
-
-		_, err := client.Search(context.Background(), req)
-		require.Error(t, err)
-		require.Equal(t, "invalid page number: -1", err.Error())
-	})
-
-	t.Run("returns error if page is greater than math.MaxInt32", func(t *testing.T) {
-		client := NewLegacyUserTeamsSearchClient(&fakeUserTeamsStore{}, tracing.InitializeTracerForTest())
-
-		req := &resourcepb.ResourceSearchRequest{
-			Limit:   10,
-			Page:    math.MaxInt32 + 1,
-			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
-		}
-
-		_, err := client.Search(context.Background(), req)
-		require.Error(t, err)
-		require.Equal(t, "invalid page number: 2147483648", err.Error())
-	})
-
 	t.Run("returns error when namespace is missing", func(t *testing.T) {
 		client := NewLegacyUserTeamsSearchClient(&fakeUserTeamsStore{}, tracing.InitializeTracerForTest())
 
 		req := &resourcepb.ResourceSearchRequest{
 			Limit:   10,
-			Page:    1,
 			Options: &resourcepb.ListOptions{Fields: memberFilter("alice")},
 		}
 
@@ -184,7 +184,6 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 
 		req := &resourcepb.ResourceSearchRequest{
 			Limit:   10,
-			Page:    1,
 			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: memberFilter("alice")},
 		}
 

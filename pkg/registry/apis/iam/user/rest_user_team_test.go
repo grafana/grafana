@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ import (
 )
 
 func TestUserTeamREST_Connect(t *testing.T) {
-	t.Run("should create handler with default pagination", func(t *testing.T) {
+	t.Run("should create handler with default pagination and stable sort", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
 		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
@@ -45,10 +46,16 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 		require.NotNil(t, mockClient.LastSearchRequest)
 		require.Equal(t, int64(common.DefaultListLimit), mockClient.LastSearchRequest.Limit)
+		// Keyset pagination: offset/page are no longer used.
 		require.Equal(t, int64(0), mockClient.LastSearchRequest.Offset)
-		require.Equal(t, int64(1), mockClient.LastSearchRequest.Page)
+		require.Equal(t, int64(0), mockClient.LastSearchRequest.Page)
+		require.Empty(t, mockClient.LastSearchRequest.SearchAfter)
 		require.False(t, mockClient.LastSearchRequest.Explain)
 		require.Equal(t, "alice", mockClient.LastSearchRequest.Options.Fields[0].Values[0])
+		// Stable sort by name is required for keyset pagination correctness.
+		require.Len(t, mockClient.LastSearchRequest.SortBy, 1)
+		require.Equal(t, resource.SEARCH_FIELD_NAME, mockClient.LastSearchRequest.SortBy[0].Field)
+		require.False(t, mockClient.LastSearchRequest.SortBy[0].Desc)
 	})
 
 	t.Run("should parse limit query parameter", func(t *testing.T) {
@@ -72,7 +79,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.Equal(t, int64(20), mockClient.LastSearchRequest.Limit)
 	})
 
-	t.Run("should parse offset query parameter and calculate page", func(t *testing.T) {
+	t.Run("should pass continue token through as SearchAfter", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
 		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
@@ -84,18 +91,19 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "/teams?limit=10&offset=20", nil)
+		token, err := resource.NewSearchContinueToken([]string{"team-foo"}, 0)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/teams?continue="+url.QueryEscape(token), nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		httpHandler.ServeHTTP(w, req)
 
-		require.Equal(t, int64(10), mockClient.LastSearchRequest.Limit)
-		require.Equal(t, int64(20), mockClient.LastSearchRequest.Offset)
-		require.Equal(t, int64(3), mockClient.LastSearchRequest.Page)
+		require.Equal(t, []string{"team-foo"}, mockClient.LastSearchRequest.SearchAfter)
 	})
 
-	t.Run("should parse page query parameter and calculate offset", func(t *testing.T) {
+	t.Run("should reject malformed continue token", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
 		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
@@ -107,15 +115,90 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "/teams?limit=10&page=2", nil)
+		req := httptest.NewRequest(http.MethodGet, "/teams?continue=not-base64!", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		httpHandler.ServeHTTP(w, req)
 
-		require.Equal(t, int64(10), mockClient.LastSearchRequest.Limit)
-		require.Equal(t, int64(10), mockClient.LastSearchRequest.Offset)
-		require.Equal(t, int64(2), mockClient.LastSearchRequest.Page)
+		require.Equal(t, http.StatusBadRequest, w.Code)
+		require.Nil(t, mockClient.LastSearchRequest, "search should not run on bad token")
+	})
+
+	t.Run("should emit continue token when page is full", func(t *testing.T) {
+		mockClient := &mockSearchClient{
+			Response: &resourcepb.ResourceSearchResponse{
+				ResourceVersion: 42,
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "permission"},
+						{Name: "external"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "team-a"}, Cells: [][]byte{[]byte("admin"), []byte("false")}, SortFields: []string{"team-a"}},
+						{Key: &resourcepb.ResourceKey{Name: "team-b"}, Cells: [][]byte{[]byte("member"), []byte("false")}, SortFields: []string{"team-b"}},
+					},
+				},
+			},
+		}
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Namespace: "test-namespace",
+		})
+		responder := &mockResponder{}
+
+		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/teams?limit=2", nil)
+		req = req.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		httpHandler.ServeHTTP(w, req)
+
+		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
+		require.True(t, ok)
+		require.NotEmpty(t, result.ListMeta.Continue, "continue token should be set when page is full")
+
+		decoded, err := resource.GetContinueToken(result.ListMeta.Continue)
+		require.NoError(t, err)
+		require.Equal(t, []string{"team-b"}, decoded.SearchAfter)
+	})
+
+	t.Run("should not emit continue token when page is partial", func(t *testing.T) {
+		mockClient := &mockSearchClient{
+			Response: &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "permission"},
+						{Name: "external"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "team-a"}, Cells: [][]byte{[]byte("admin"), []byte("false")}, SortFields: []string{"team-a"}},
+					},
+				},
+			},
+		}
+		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Namespace: "test-namespace",
+		})
+		responder := &mockResponder{}
+
+		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/teams?limit=10", nil)
+		req = req.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		httpHandler.ServeHTTP(w, req)
+
+		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
+		require.True(t, ok)
+		require.Empty(t, result.ListMeta.Continue, "continue token should be empty when page is not full")
 	})
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {

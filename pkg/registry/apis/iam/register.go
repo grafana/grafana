@@ -754,47 +754,87 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	serviceaccounttoken.PostProcessOpenAPI(oas)
 
 	if oas.Paths != nil && oas.Paths.Paths != nil {
-		pathsToUpdate := []string{
+		// Team subresources still expose offset/page pagination.
+		offsetPagedPaths := []string{
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/groups",
 			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/members",
-			"/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams",
+		}
+		for _, path := range offsetPagedPaths {
+			p, ok := oas.Paths.Paths[path]
+			if !ok || p.Get == nil {
+				continue
+			}
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "number of results to return",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "page",
+						In:          "query",
+						Description: "page number (starting from 1)",
+						Example:     1,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "offset",
+						In:          "query",
+						Description: "number of results to skip",
+						Example:     0,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+			)
 		}
 
-		for _, path := range pathsToUpdate {
-			if p, ok := oas.Paths.Paths[path]; ok {
-				if p.Get != nil {
-					p.Get.Parameters = append(p.Get.Parameters,
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "limit",
-								In:          "query",
-								Description: "number of results to return",
-								Example:     30,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "page",
-								In:          "query",
-								Description: "page number (starting from 1)",
-								Example:     1,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-						&spec3.Parameter{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "offset",
-								In:          "query",
-								Description: "number of results to skip",
-								Example:     0,
-								Required:    false,
-								Schema:      spec.Int64Property(),
-							},
-						},
-					)
+		// /users/{name}/teams uses keyset pagination: limit + opaque continue
+		// token returned in metadata.continue. offset/page are not honored.
+		userTeamsPath := "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams"
+		if p, ok := oas.Paths.Paths[userTeamsPath]; ok && p.Get != nil {
+			p.Get.Parameters = append(p.Get.Parameters,
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "limit",
+						In:          "query",
+						Description: "maximum number of results to return per page",
+						Example:     30,
+						Required:    false,
+						Schema:      spec.Int64Property(),
+					},
+				},
+				&spec3.Parameter{
+					ParameterProps: spec3.ParameterProps{
+						Name:        "continue",
+						In:          "query",
+						Description: "opaque token from a previous response's metadata.continue; resumes listing after the last team returned",
+						Required:    false,
+						Schema:      spec.StringProperty(),
+					},
+				},
+			)
+
+			// Wire the 200 response to the generated GetUserTeamsResponse
+			// schema (embeds metav1.ListMeta, so metadata.continue is part
+			// of the documented contract).
+			if p.Get.Responses != nil && p.Get.Responses.StatusCodeResponses != nil {
+				if r200, ok := p.Get.Responses.StatusCodeResponses[200]; ok && r200.Content != nil {
+					ref := spec.MustCreateRef("#/components/schemas/" + iamv0.GetUserTeamsResponse{}.OpenAPIModelName())
+					for ct, mt := range r200.Content {
+						mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+						r200.Content[ct] = mt
+					}
+					p.Get.Responses.StatusCodeResponses[200] = r200
 				}
 			}
 		}
