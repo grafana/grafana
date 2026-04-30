@@ -1,26 +1,24 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
-  Button,
-  type Column,
+  Checkbox,
   EmptyState,
   FilterInput,
   Icon,
-  InteractiveTable,
+  IconButton,
   LinkButton,
   Stack,
   Text,
-  Toggletip,
   useStyles2,
 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 
-import { type FolderRow } from './hooks/useFolderLeaderboard';
+import { type FolderPeekDashboard, type FolderRow } from './hooks/useFolderLeaderboard';
 
 function migrateTarget(repos: Repository[]): string {
   if (repos.length === 0) {
@@ -32,93 +30,40 @@ function migrateTarget(repos: Repository[]): string {
   return PROVISIONING_URL;
 }
 
-function migrateButtonLabel(repos: Repository[]): string {
-  if (repos.length === 0) {
-    return t('provisioning.stats.folders-migrate-to-git-sync', 'Migrate to Git Sync');
-  }
-  if (repos.length === 1 && repos[0].metadata?.name) {
-    return t('provisioning.stats.folders-migrate-to-repo', 'Migrate to {{repo}}', {
-      repo: repos[0].metadata.name,
-    });
-  }
-  return t('provisioning.stats.folders-migrate-to-repository', 'Migrate to repository');
-}
-
-function folderBrowseUrl(uid: string): string {
+function folderUrl(uid: string): string {
   return `/dashboards/f/${encodeURIComponent(uid)}`;
 }
 
-function FolderPeek({ folder }: { folder: FolderRow }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.peek}>
-      {folder.subfolders.length === 0 && folder.directDashboards.length === 0 ? (
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="provisioning.stats.folders-peek-empty">
-            This folder is empty. Migrating it creates an empty folder in your repository.
-          </Trans>
-        </Text>
-      ) : (
-        <Stack direction="column" gap={1}>
-          {folder.subfolders.length > 0 && (
-            <Stack direction="column" gap={0.5}>
-              <Text variant="bodySmall" weight="medium">
-                {t('provisioning.stats.folders-peek-subfolders', 'Subfolders ({{count}})', {
-                  count: folder.subfolders.length,
-                })}
-              </Text>
-              {folder.subfolders.map((sub) => (
-                <Stack key={sub.uid} direction="row" gap={1} alignItems="center">
-                  <Icon name="folder" size="sm" />
-                  <a className={styles.peekLink} href={folderBrowseUrl(sub.uid)}>
-                    {sub.title}
-                  </a>
-                  <Text variant="bodySmall" color="secondary">
-                    {t('provisioning.stats.folders-peek-subfolder-count', '· {{count}} dashboards', {
-                      count: sub.dashboardCount,
-                    })}
-                  </Text>
-                </Stack>
-              ))}
-            </Stack>
-          )}
-          {folder.directDashboards.length > 0 && (
-            <Stack direction="column" gap={0.5}>
-              <Text variant="bodySmall" weight="medium">
-                {t('provisioning.stats.folders-peek-dashboards', 'Dashboards ({{count}})', {
-                  count: folder.directDashboards.length,
-                })}
-              </Text>
-              {folder.directDashboards.map((dash) => (
-                <Stack key={dash.uid} direction="row" gap={1} alignItems="center">
-                  <Icon name="apps" size="sm" />
-                  <a className={styles.peekLink} href={dash.url || `/d/${encodeURIComponent(dash.uid)}`}>
-                    {dash.title}
-                  </a>
-                </Stack>
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      )}
-    </div>
-  );
+function dashboardUrl(dash: FolderPeekDashboard): string {
+  return dash.url || `/d/${encodeURIComponent(dash.uid)}`;
 }
 
 interface Props {
   folders: FolderRow[];
   repos: Repository[];
+  selectedFolderUids: Set<string>;
+  selectedDashboardUids: Set<string>;
+  onToggleFolder: (uid: string) => void;
+  onToggleDashboard: (uid: string) => void;
 }
 
 /**
- * Browseable list of folders that aren't managed yet. Already-managed folders
- * are filtered out — the page is scoped to migration targets only. Each row
- * exposes a per-folder Migrate target plus a Browse link into the regular
- * folder view.
+ * Foldable list of unmanaged folders with their direct dashboards. Folders and
+ * individual dashboards can be selected; the bulk "Migrate selected" footer
+ * action picks them up. Already-managed folders are filtered out — the panel
+ * is scoped to migration targets only.
  */
-export function FoldersToMigrate({ folders, repos }: Props) {
+export function FoldersToMigrate({
+  folders,
+  repos,
+  selectedFolderUids,
+  selectedDashboardUids,
+  onToggleFolder,
+  onToggleDashboard,
+}: Props) {
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const unmanagedFolders = useMemo(() => folders.filter((f) => !f.managedBy), [folders]);
   const filtered = useMemo(() => {
@@ -126,80 +71,45 @@ export function FoldersToMigrate({ folders, repos }: Props) {
     if (!q) {
       return unmanagedFolders;
     }
-    return unmanagedFolders.filter((folder) => folder.title.toLowerCase().includes(q));
+    return unmanagedFolders.filter((folder) => {
+      if (folder.title.toLowerCase().includes(q)) {
+        return true;
+      }
+      return folder.directDashboards.some((d) => d.title.toLowerCase().includes(q));
+    });
   }, [unmanagedFolders, search]);
 
   const target = migrateTarget(repos);
-  const ctaLabel = migrateButtonLabel(repos);
+  const totalSelected = selectedFolderUids.size + selectedDashboardUids.size;
 
-  const columns: Array<Column<FolderRow>> = useMemo(
-    () => [
-      {
-        id: 'title',
-        header: t('provisioning.stats.folders-column-name', 'Name'),
-        sortType: 'string',
-        cell: ({ row }) => (
-          <Stack direction="row" gap={1} alignItems="center">
-            <Icon name="folder" />
-            <Stack direction="column" gap={0}>
-              <Text>{row.original.title}</Text>
-              {row.original.parentTitle && (
-                <Text variant="bodySmall" color="secondary">
-                  {row.original.parentTitle}
-                </Text>
-              )}
-            </Stack>
-          </Stack>
-        ),
-      },
-      {
-        id: 'dashboardCount',
-        header: t('provisioning.stats.folders-column-dashboards', 'Dashboards'),
-        sortType: 'number',
-        cell: ({ row }) => <Text>{row.original.dashboardCount.toLocaleString()}</Text>,
-      },
-      {
-        id: 'actions',
-        header: '',
-        disableGrow: true,
-        cell: ({ row }) => (
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end">
-            <LinkButton variant="primary" size="sm" icon="upload" href={target}>
-              {ctaLabel}
-            </LinkButton>
-            <Toggletip
-              content={<FolderPeek folder={row.original} />}
-              title={row.original.title}
-              placement="top-end"
-            >
-              <Button variant="secondary" size="sm" fill="text" icon="eye">
-                <Trans i18nKey="provisioning.stats.folders-peek">Peek</Trans>
-              </Button>
-            </Toggletip>
-          </Stack>
-        ),
-      },
-    ],
-    [target, ctaLabel]
-  );
+  const toggleExpanded = (uid: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) {
+        next.delete(uid);
+      } else {
+        next.add(uid);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className={styles.panel} id="folders-to-migrate">
       <Stack direction="column" gap={0.5}>
         <Text variant="h5">
-          <Trans i18nKey="provisioning.stats.folders-to-migrate-heading">Folders to migrate</Trans>
+          <Trans i18nKey="provisioning.stats.dashboards-to-migrate-heading">Dashboards to migrate</Trans>
         </Text>
         <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.stats.folders-to-migrate-subtitle">
-            Folders that aren&apos;t managed by any provisioning tool yet. Migrate one at a time, or use Browse
-            to jump into a folder and act on individual dashboards.
+          <Trans i18nKey="provisioning.stats.dashboards-to-migrate-subtitle">
+            Pick whole folders or individual dashboards. Selecting a folder migrates everything inside it.
           </Trans>
         </Text>
       </Stack>
 
       <div className={styles.searchInput}>
         <FilterInput
-          placeholder={t('provisioning.stats.folders-to-migrate-search', 'Search folders')}
+          placeholder={t('provisioning.stats.dashboards-to-migrate-search', 'Search folders and dashboards')}
           value={search}
           onChange={setSearch}
         />
@@ -211,34 +121,173 @@ export function FoldersToMigrate({ folders, repos }: Props) {
           message={
             unmanagedFolders.length === 0
               ? t(
-                  'provisioning.stats.folders-to-migrate-all-managed',
+                  'provisioning.stats.dashboards-to-migrate-all-managed',
                   'All folders are already managed.'
                 )
               : t(
-                  'provisioning.stats.folders-to-migrate-empty',
-                  'No folders match the current search.'
+                  'provisioning.stats.dashboards-to-migrate-empty',
+                  'No folders or dashboards match the current search.'
                 )
           }
         />
       ) : (
-        <InteractiveTable columns={columns} data={filtered} getRowId={(row) => row.uid} pageSize={10} />
+        <div className={styles.list}>
+          {filtered.map((folder) => (
+            <FolderEntry
+              key={folder.uid}
+              folder={folder}
+              isExpanded={expanded.has(folder.uid)}
+              isSelected={selectedFolderUids.has(folder.uid)}
+              selectedDashboardUids={selectedDashboardUids}
+              onToggleExpanded={() => toggleExpanded(folder.uid)}
+              onToggleFolder={() => onToggleFolder(folder.uid)}
+              onToggleDashboard={onToggleDashboard}
+            />
+          ))}
+        </div>
       )}
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
         <Text variant="bodySmall" color="secondary">
-          {t('provisioning.stats.folders-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
+          {t('provisioning.stats.dashboards-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
             count: filtered.length,
             total: unmanagedFolders.length,
           })}
         </Text>
         {unmanagedFolders.length > 0 && (
-          <LinkButton variant="primary" icon="upload" href={target}>
-            {t('provisioning.stats.folders-to-migrate-migrate-all', 'Migrate everything ({{count}} folders)', {
-              count: unmanagedFolders.length,
+          <LinkButton variant="primary" icon="upload" href={target} disabled={totalSelected === 0}>
+            {t('provisioning.stats.dashboards-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
+              count: totalSelected,
             })}
           </LinkButton>
         )}
       </Stack>
+    </div>
+  );
+}
+
+interface FolderEntryProps {
+  folder: FolderRow;
+  isExpanded: boolean;
+  isSelected: boolean;
+  selectedDashboardUids: Set<string>;
+  onToggleExpanded: () => void;
+  onToggleFolder: () => void;
+  onToggleDashboard: (uid: string) => void;
+}
+
+function FolderEntry({
+  folder,
+  isExpanded,
+  isSelected,
+  selectedDashboardUids,
+  onToggleExpanded,
+  onToggleFolder,
+  onToggleDashboard,
+}: FolderEntryProps) {
+  const styles = useStyles2(getStyles);
+  const hasContent = folder.directDashboards.length > 0 || folder.subfolders.length > 0;
+  return (
+    <div className={cx(styles.row, isSelected && styles.rowSelected)}>
+      <div className={styles.rowHeader}>
+        <IconButton
+          name={isExpanded ? 'angle-down' : 'angle-right'}
+          aria-label={
+            isExpanded
+              ? t('provisioning.stats.dashboards-collapse', 'Collapse {{folder}}', { folder: folder.title })
+              : t('provisioning.stats.dashboards-expand', 'Expand {{folder}}', { folder: folder.title })
+          }
+          onClick={onToggleExpanded}
+          disabled={!hasContent}
+        />
+        <Checkbox
+          value={isSelected}
+          onChange={onToggleFolder}
+          aria-label={t('provisioning.stats.dashboards-select-folder', 'Select folder {{folder}}', {
+            folder: folder.title,
+          })}
+        />
+        <Icon name="folder" />
+        <Stack direction="column" gap={0} flex={1}>
+          <Text>{folder.title}</Text>
+          <Text variant="bodySmall" color="secondary">
+            {t('provisioning.stats.dashboards-folder-summary', '{{count}} dashboards', {
+              count: folder.dashboardCount,
+            })}
+          </Text>
+        </Stack>
+        <LinkButton
+          variant="secondary"
+          size="sm"
+          fill="text"
+          icon="external-link-alt"
+          href={folderUrl(folder.uid)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
+        </LinkButton>
+      </div>
+      {isExpanded && (
+        <div className={styles.children}>
+          {folder.subfolders.map((sub) => (
+            <div key={`sub-${sub.uid}`} className={styles.childRow}>
+              <Icon name="folder" size="sm" />
+              <Text variant="bodySmall">{sub.title}</Text>
+              <Text variant="bodySmall" color="secondary">
+                {t('provisioning.stats.dashboards-subfolder-count', '· {{count}} dashboards', {
+                  count: sub.dashboardCount,
+                })}
+              </Text>
+              <div className={styles.spacer} />
+              <LinkButton
+                variant="secondary"
+                size="sm"
+                fill="text"
+                icon="external-link-alt"
+                href={folderUrl(sub.uid)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
+              </LinkButton>
+            </div>
+          ))}
+          {folder.directDashboards.map((dash) => {
+            const checked = selectedDashboardUids.has(dash.uid);
+            return (
+              <div key={`dash-${dash.uid}`} className={styles.childRow}>
+                <Checkbox
+                  value={checked}
+                  onChange={() => onToggleDashboard(dash.uid)}
+                  aria-label={dash.title}
+                />
+                <Icon name="apps" size="sm" />
+                <Text variant="bodySmall">{dash.title}</Text>
+                <div className={styles.spacer} />
+                <LinkButton
+                  variant="secondary"
+                  size="sm"
+                  fill="text"
+                  icon="external-link-alt"
+                  href={dashboardUrl(dash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Trans i18nKey="provisioning.stats.dashboards-open">Open</Trans>
+                </LinkButton>
+              </div>
+            );
+          })}
+          {!hasContent && (
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="provisioning.stats.dashboards-folder-empty">
+                This folder is empty. Migrating it creates an empty folder in your repository.
+              </Trans>
+            </Text>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -257,17 +306,48 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 auto',
     minWidth: 200,
   }),
-  peek: css({
-    minWidth: 220,
-    maxWidth: 360,
-    maxHeight: 320,
-    overflowY: 'auto',
+  list: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
   }),
-  peekLink: css({
-    color: theme.colors.text.link,
-    fontSize: theme.typography.bodySmall.fontSize,
+  row: css({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(1, 1.25),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    background: theme.colors.background.primary,
+  }),
+  rowSelected: css({
+    borderColor: theme.colors.primary.border,
+    background: theme.colors.background.secondary,
+  }),
+  rowHeader: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  children: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    paddingLeft: theme.spacing(5),
+    paddingTop: theme.spacing(0.75),
+  }),
+  childRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
     '&:hover': {
-      textDecoration: 'underline',
+      background: theme.colors.background.canvas,
     },
+  }),
+  spacer: css({
+    flex: '1 1 auto',
   }),
 });

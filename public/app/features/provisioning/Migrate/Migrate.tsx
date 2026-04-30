@@ -179,11 +179,15 @@ function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
 }
 
 function aggregateTotals(breakdowns: GroupBreakdown[]) {
+  // The Migrate to GitOps page is dashboard-centric: the KPI row reports
+  // dashboard counts (folders are tracked separately by the gauge card and
+  // the folder list). Skip non-dashboard groups so totals don't double-count.
+  const dashboardBreakdowns = breakdowns.filter((b) => DASHBOARD_GROUPS.includes(b.group));
   let instanceTotal = 0;
   let managed = 0;
   let unmanaged = 0;
   let gitSync = 0;
-  breakdowns.forEach((b) => {
+  dashboardBreakdowns.forEach((b) => {
     instanceTotal += b.total;
     gitSync += b.gitSyncCount;
     managed += b.gitSyncCount + b.otherManagedCount;
@@ -323,25 +327,25 @@ function OverviewStatCards({
     totals.gitSync > 0
       ? t('provisioning.stats.progress-gitops-sub', '{{count}} via Git Sync', { count: totals.gitSync })
       : t('provisioning.stats.progress-gitops-sub-empty', 'Start your migration');
-  const resourcesOf = (value: number) =>
-    t('provisioning.stats.n-of-m-resources', '{{value}} of {{total}} resources', {
+  const dashboardsOf = (value: number) =>
+    t('provisioning.stats.n-of-m-dashboards', '{{value}} of {{total}} dashboards', {
       value,
       total: totals.instanceTotal,
     });
   return (
     <div className={styles.statCardsRow}>
       <StatCard
-        icon="cube"
+        icon="apps"
         tone="info"
         big={totals.instanceTotal.toLocaleString()}
         subLabel={t('provisioning.stats.summary-total-sub', 'Across all providers')}
-        label={t('provisioning.stats.summary-total', 'Total resources')}
+        label={t('provisioning.stats.summary-total', 'Dashboards')}
       />
       <StatCard
         icon="check-circle"
         tone="success"
         big={percent(totals.managed, totals.instanceTotal)}
-        subLabel={resourcesOf(totals.managed)}
+        subLabel={dashboardsOf(totals.managed)}
         label={t('provisioning.stats.managed', 'Managed')}
       />
       <StatCard
@@ -349,7 +353,7 @@ function OverviewStatCards({
         tone="warning"
         emphasized={totals.unmanaged > 0}
         big={percent(totals.unmanaged, totals.instanceTotal)}
-        subLabel={resourcesOf(totals.unmanaged)}
+        subLabel={dashboardsOf(totals.unmanaged)}
         label={t('provisioning.stats.summary-unmanaged', 'Unmanaged')}
       />
       <StatCard
@@ -374,19 +378,18 @@ interface NextStep {
 }
 
 function NextStepsPanel({
-  folders,
+  totals,
   repos,
 }: {
-  folders: FolderRow[];
+  totals: ReturnType<typeof aggregateTotals>;
   repos: Repository[];
 }) {
   const styles = useStyles2(getStyles);
   const hasRepo = repos.length > 0;
 
-  const folderTotal = folders.length;
-  const managedFolders = folders.filter((f) => Boolean(f.managedBy)).length;
-  const unmanagedFolders = folders.filter((f) => !f.managedBy).length;
-  const hasStartedMigrating = managedFolders > 0;
+  const hasStartedMigrating = totals.managed > 0;
+  const hasDashboards = totals.instanceTotal > 0;
+  const everythingManaged = hasDashboards && totals.unmanaged === 0;
 
   const steps: NextStep[] = [
     {
@@ -405,31 +408,30 @@ function NextStepsPanel({
       primary: !hasRepo,
     },
     {
-      key: 'pick-folder',
-      done: hasStartedMigrating || unmanagedFolders === 0,
-      title: t('provisioning.stats.next-step-pick-folder-title', 'Pick a folder to migrate first'),
-      description:
-        unmanagedFolders === 0
-          ? t(
-              'provisioning.stats.next-step-pick-folder-empty',
-              'No unmanaged folders left. New ones will appear here as your instance grows.'
-            )
-          : t(
-              'provisioning.stats.next-step-pick-folder-pending',
-              'Use Quick wins above for high-leverage targets, or pick anything from the folder list.'
-            ),
+      key: 'pick',
+      done: hasStartedMigrating || everythingManaged,
+      title: t('provisioning.stats.next-step-pick-title', 'Pick what to migrate'),
+      description: everythingManaged
+        ? t(
+            'provisioning.stats.next-step-pick-empty',
+            'Nothing left to migrate. New dashboards will appear here as your instance grows.'
+          )
+        : t(
+            'provisioning.stats.next-step-pick-pending',
+            'Use Quick wins for whole folders, or expand a folder below to migrate individual dashboards.'
+          ),
     },
     {
       key: 'track',
-      done: folderTotal > 0 && managedFolders === folderTotal,
-      title: t('provisioning.stats.next-step-track-title', 'Migrate folder by folder'),
+      done: everythingManaged,
+      title: t('provisioning.stats.next-step-track-title', 'Track migration progress'),
       description:
-        folderTotal === 0
-          ? t('provisioning.stats.next-step-track-empty', 'No folders yet — nothing to track.')
+        !hasDashboards
+          ? t('provisioning.stats.next-step-track-empty', 'No dashboards yet — nothing to track.')
           : t(
               'provisioning.stats.next-step-track-progress',
-              '{{count}} of {{total}} folders managed.',
-              { count: managedFolders, total: folderTotal }
+              '{{count}} of {{total}} dashboards managed.',
+              { count: totals.managed, total: totals.instanceTotal }
             ),
     },
   ];
@@ -550,9 +552,22 @@ export function Migrate() {
 
   const { data: folders } = useFolderLeaderboard();
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
+  const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
 
   const toggleFolder = useCallback((uid: string) => {
     setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) {
+        next.delete(uid);
+      } else {
+        next.add(uid);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleDashboard = useCallback((uid: string) => {
+    setSelectedDashboardUids((prev) => {
       const next = new Set(prev);
       if (next.has(uid)) {
         next.delete(uid);
@@ -606,10 +621,17 @@ export function Migrate() {
             onToggle={toggleFolder}
             onSelectAll={selectAllFolders}
           />
-          <FoldersToMigrate folders={folders} repos={repoList} />
+          <FoldersToMigrate
+            folders={folders}
+            repos={repoList}
+            selectedFolderUids={selectedFolderUids}
+            selectedDashboardUids={selectedDashboardUids}
+            onToggleFolder={toggleFolder}
+            onToggleDashboard={toggleDashboard}
+          />
         </div>
         <div className={styles.sideColumn}>
-          <NextStepsPanel folders={folders} repos={repoList} />
+          <NextStepsPanel totals={totals} repos={repoList} />
           <ToolingSupportPanel breakdowns={breakdowns} />
         </div>
       </div>

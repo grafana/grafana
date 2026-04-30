@@ -72,7 +72,7 @@ describe('Migrate', () => {
     expect(screen.getByText(/no provisioned resources yet/i)).toBeInTheDocument();
   });
 
-  it('shows a Migrate everything button at the bottom of Folders to migrate when unmanaged folders exist', () => {
+  it('shows a Migrate selected bulk action at the bottom of Dashboards to migrate', async () => {
     mockUseRepositoryList.mockReturnValue([
       [
         {
@@ -101,11 +101,18 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    const link = screen.getByRole('link', { name: /migrate everything \(2 folders\)/i });
-    expect(link).toHaveAttribute('href', '/admin/provisioning/my-repo');
+    // Disabled before any selection.
+    const initial = screen.getByRole('link', { name: /migrate selected \(0\)/i });
+    expect(initial).toHaveAttribute('aria-disabled', 'true');
+    // Pick folder A — the bulk action becomes enabled and points at the connected repo.
+    // Quick wins shares the same label, so we expect at least two matches.
+    await userEvent.click(screen.getByRole('checkbox', { name: /select folder a/i }));
+    const links = screen.getAllByRole('link', { name: /migrate selected \(1\)/i });
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    expect(links[0]).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
-  it('hides the Migrate everything button when nothing is unmanaged', () => {
+  it('hides the bulk Migrate selected button when nothing is unmanaged', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 5 }],
@@ -126,7 +133,7 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    expect(screen.queryByRole('link', { name: /migrate everything/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
   it('marks the page header with an Experimental feature badge', () => {
@@ -205,11 +212,14 @@ describe('Migrate', () => {
 
     render(<Migrate />);
 
-    expect(screen.getByText('Total resources')).toBeInTheDocument();
+    // "Dashboards" replaces the old "Total resources" label. It also appears
+    // in the Folders managed gauge subtext, so accept multiple matches.
+    expect(screen.getAllByText('Dashboards').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Managed').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Unmanaged').length).toBeGreaterThan(0);
     expect(screen.getByText('Progress to GitOps')).toBeInTheDocument();
-    expect(screen.getByText(/5 via git sync/i)).toBeInTheDocument();
+    // Totals are dashboard-only now; the fixture puts 4 dashboards under Git Sync.
+    expect(screen.getByText(/4 via git sync/i)).toBeInTheDocument();
   });
 
   it('shows Quick wins folder cards when the leaderboard surfaces unmanaged folders', () => {
@@ -260,19 +270,13 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    expect(screen.queryByText(/quick wins/i)).not.toBeInTheDocument();
+    // The Quick wins heading uses Title Case; the next-steps copy mentions
+    // "Quick wins" inside a longer sentence. Assert that the panel heading
+    // (exact match) is gone — that's the signal that the panel is hidden.
+    expect(screen.queryByText('Quick wins')).not.toBeInTheDocument();
   });
 
-  it('renders the Folders to migrate table with per-row Migrate and Peek actions', () => {
-    mockUseRepositoryList.mockReturnValue([
-      [
-        {
-          metadata: { name: 'my-repo' },
-          spec: { type: 'github', sync: { target: 'folder' } },
-        },
-      ] as ReturnType<typeof useRepositoryList>[0],
-      false,
-    ]);
+  it('renders the Dashboards to migrate panel with foldable rows and an Open link to a new tab', () => {
     mockQuery({
       data: {
         instance: [
@@ -289,16 +293,15 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    expect(screen.getByText(/folders to migrate/i)).toBeInTheDocument();
-    // "Payments" appears in both the Quick wins card and the folder list row.
-    expect(screen.getAllByText('Payments').length).toBeGreaterThanOrEqual(2);
-    // Per-row actions: Migrate to {{repo}} and Peek.
-    expect(screen.getByRole('button', { name: /^peek$/i })).toBeInTheDocument();
-    const migrate = screen.getByRole('link', { name: /^migrate to my-repo$/i });
-    expect(migrate).toHaveAttribute('href', '/admin/provisioning/my-repo');
+    expect(screen.getByText(/dashboards to migrate/i)).toBeInTheDocument();
+    // No per-row Migrate; only an Open link that targets a new tab.
+    const open = screen.getByRole('link', { name: /^open$/i });
+    expect(open).toHaveAttribute('href', '/dashboards/f/pay');
+    expect(open).toHaveAttribute('target', '_blank');
+    expect(screen.queryByRole('link', { name: /^migrate to my-repo$/i })).not.toBeInTheDocument();
   });
 
-  it('opens a Peek tooltip listing the folder contents', async () => {
+  it('expands a folder row to show its dashboards and subfolders', async () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }],
@@ -323,13 +326,13 @@ describe('Migrate', () => {
       isError: false,
     });
     render(<Migrate />);
-    await userEvent.click(screen.getByRole('button', { name: /^peek$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^expand payments$/i }));
     expect(screen.getByText('Daily revenue')).toBeInTheDocument();
     expect(screen.getByText('Refund rate')).toBeInTheDocument();
     expect(screen.getByText('EU subteam')).toBeInTheDocument();
   });
 
-  it('hides already-managed folders from the Folders to migrate table', () => {
+  it('hides already-managed folders from the Dashboards to migrate panel', () => {
     mockQuery({
       data: {
         instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 8 }],
