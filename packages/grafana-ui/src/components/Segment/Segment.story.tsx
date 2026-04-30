@@ -1,13 +1,13 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
 
-import { Segment, SegmentSyncProps } from './Segment';
+import { Segment, type SegmentSyncProps } from './Segment';
 import { SegmentSection } from './SegmentSection';
 
 const AddButton = (

@@ -13,13 +13,14 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func addInterval(period string, field *data.Field) error {
@@ -130,7 +131,7 @@ func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasou
 		attribute.String("from", timeRange.From.String()),
 		attribute.String("until", timeRange.To.String()),
 		attribute.Int64("datasource_id", dsInfo.id),
-		attribute.Int64("org_id", req.PluginContext.OrgID),
+		attribute.Int64("org_id", req.PluginContext.OrgID), // nolint:staticcheck
 	))
 	defer span.End()
 	return span

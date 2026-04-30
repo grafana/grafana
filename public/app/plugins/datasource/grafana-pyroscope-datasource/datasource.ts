@@ -1,23 +1,23 @@
 import Prism from 'prismjs';
-import { map, Observable, of } from 'rxjs';
+import { map, type Observable, of } from 'rxjs';
 
 import {
-  AbstractQuery,
-  AdHocVariableFilter,
+  type AbstractQuery,
+  type AdHocVariableFilter,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
-import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
+import { type PyroscopeDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
 import {
   addLabelToQuery,
   extractLabelMatchers,
@@ -130,6 +130,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       profileTypeId: '',
       groupBy: [],
       includeExemplars: false,
+      includeHeatmap: false,
+      heatmapType: 'individual',
     };
   }
 

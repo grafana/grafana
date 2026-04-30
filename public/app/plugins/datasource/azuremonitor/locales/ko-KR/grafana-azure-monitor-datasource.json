@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "클라이언트 인증서",
       "aria-label-client-id": "클라이언트 ID",
       "aria-label-client-secret": "클라이언트 시크릿",
+      "aria-label-private-key": "개인 키",
+      "aria-label-private-key-password": "인증서 비밀번호",
       "aria-label-symbol-client-secret": "클라이언트 시크릿",
       "aria-label-tenant-id": "테넌트 ID",
+      "description-certificate-format": "인증서 형식을 선택하세요(PEM 인증서는 일반 텍스트 PEM 형식이어야 하며, PFX 인증서는 Base64로 인코딩된 PFX 형식이어야 합니다).",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "형식",
+      "label-client-certificate": "클라이언트 인증서",
       "label-client-id": "애플리케이션(클라이언트) ID",
       "label-client-secret": "클라이언트 시크릿",
+      "label-private-key": "개인 키",
       "label-symbol-client-secret": "클라이언트 시크릿",
+      "label-symbol-private-key-password": "인증서 비밀번호",
       "label-tenant-id": "디렉터리(테넌트) ID",
       "placeholder-symbol-client-secret": "구성됨",
       "reset-symbol-client-secret": "재설정"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Azure 서비스에 대한 인증 유형을 선택하세요",
-      "label-authentication": "인증",
+      "label-authentication": "인증 유형",
       "title-authentication": "인증"
     },
     "basic-logs-toggle": {

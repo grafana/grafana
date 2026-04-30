@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
+import { useId } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -38,7 +38,8 @@ export function RadioButtonList<T extends string | number | readonly string[]>({
   disabledOptions = [],
 }: RadioButtonListProps<T>) {
   const styles = useStyles2(getStyles);
-  const internalId = id ?? uniqueId('radiogroup-list-');
+  const generatedId = useId();
+  const internalId = id ?? generatedId;
 
   return (
     <div id={id} className={cx(styles.container, className)} role="radiogroup">

@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { Card } from '../../Card/Card';

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from 'react';
 
 export function useLimit(providedLimit: number): [number, Dispatch<SetStateAction<number>>] {
   const [curLimit, setLimit] = useState(providedLimit);

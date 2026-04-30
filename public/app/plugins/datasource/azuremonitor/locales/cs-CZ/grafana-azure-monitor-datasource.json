@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Certifikát klienta",
       "aria-label-client-id": "ID klienta",
       "aria-label-client-secret": "Tajné heslo klienta",
+      "aria-label-private-key": "Soukromý klíč",
+      "aria-label-private-key-password": "Heslo certifikátu",
       "aria-label-symbol-client-secret": "Tajné heslo klienta",
       "aria-label-tenant-id": "ID tenanta",
+      "description-certificate-format": "Vyberte formát certifikátu (certifikáty PEM by měly být ve formátu PEM s prostým textem, certifikáty PFX by měly být ve formátu PFX kódovaném pomocí Base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formát",
+      "label-client-certificate": "Certifikát klienta",
       "label-client-id": "ID aplikace (klienta)",
       "label-client-secret": "Tajné heslo klienta",
+      "label-private-key": "Soukromý klíč",
       "label-symbol-client-secret": "Tajné heslo klienta",
+      "label-symbol-private-key-password": "Heslo certifikátu",
       "label-tenant-id": "ID adresáře (tenanta)",
       "placeholder-symbol-client-secret": "nastaveno",
       "reset-symbol-client-secret": "Obnovit"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Vyberte typ ověření pro služby Azure",
-      "label-authentication": "Ověření",
+      "label-authentication": "Typ ověření",
       "title-authentication": "Ověření"
     },
     "basic-logs-toggle": {
@@ -147,7 +155,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "Přidat skupinu podle",
+      "aria-label-add-group-by": "Přidat funkci Seřadit podle",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },

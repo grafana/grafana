@@ -2,61 +2,88 @@ module resource
 
 extend type folder
   relations
-    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit or resource_view from parent
-    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin or resource_edit from parent
     define resource_admin: [user, service-account, team#member, role#assignee] or resource_admin from parent
+    define resource_edit: [user, service-account, team#member, role#assignee] or resource_edit from parent
+    define resource_view: [user, service-account, team#member, role#assignee] or resource_view from parent
 
-    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_view or resource_get from parent
-    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit or resource_create from parent
-    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit or resource_update from parent
-    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit or resource_delete from parent
+    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_get from parent
+    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_create from parent
+    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_update from parent
+    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_delete from parent
 
-    define resource_get_permissions: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_admin or resource_get_permissions from parent
-    define resource_set_permissions: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_admin or resource_set_permissions from parent
+    define resource_get_permissions: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_get_permissions from parent
+    define resource_set_permissions: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_set_permissions from parent
+
+    define can_resource_get: resource_get or resource_view or resource_edit or resource_admin
+    define can_resource_create: resource_create or resource_edit or resource_admin
+    define can_resource_update: resource_update or resource_edit or resource_admin
+    define can_resource_delete: resource_delete or resource_edit or resource_admin
+    define can_resource_get_permissions: resource_get_permissions or resource_admin
+    define can_resource_set_permissions: resource_set_permissions or resource_admin
 
 extend type team
   relations
-    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit
-    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin
     define resource_admin: [user, service-account, team#member, role#assignee]
+    define resource_edit: [user, service-account, team#member, role#assignee]
+    define resource_view: [user, service-account, team#member, role#assignee]
 
-    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_view
-    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
+    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+
+    define can_resource_get: resource_get or resource_view or resource_edit or resource_admin
+    define can_resource_create: resource_create or resource_edit or resource_admin
+    define can_resource_update: resource_update or resource_edit or resource_admin
+    define can_resource_delete: resource_delete or resource_edit or resource_admin
 
 extend type user
   relations
-    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit
-    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin
     define resource_admin: [user, service-account, team#member, role#assignee]
+    define resource_edit: [user, service-account, team#member, role#assignee]
+    define resource_view: [user, service-account, team#member, role#assignee]
 
-    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_view
-    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
+    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+
+    define can_resource_get: resource_get or resource_view or resource_edit or resource_admin
+    define can_resource_create: resource_create or resource_edit or resource_admin
+    define can_resource_update: resource_update or resource_edit or resource_admin
+    define can_resource_delete: resource_delete or resource_edit or resource_admin
 
 extend type service-account
   relations
-    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit
-    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin
     define resource_admin: [user, service-account, team#member, role#assignee]
+    define resource_edit: [user, service-account, team#member, role#assignee]
+    define resource_view: [user, service-account, team#member, role#assignee]
 
-    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_view
-    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
+    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+
+    define can_resource_get: resource_get or resource_view or resource_edit or resource_admin
+    define can_resource_create: resource_create or resource_edit or resource_admin
+    define can_resource_update: resource_update or resource_edit or resource_admin
+    define can_resource_delete: resource_delete or resource_edit or resource_admin
 
 extend type role
   relations
-    define resource_view: [user, service-account, team#member, role#assignee] or resource_edit
-    define resource_edit: [user, service-account, team#member, role#assignee] or resource_admin
     define resource_admin: [user, service-account, team#member, role#assignee]
+    define resource_edit: [user, service-account, team#member, role#assignee]
+    define resource_view: [user, service-account, team#member, role#assignee]
 
-    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_view
-    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
-    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter] or resource_edit
+    define resource_get: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_create: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_update: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+    define resource_delete: [user with subresource_filter, service-account with subresource_filter, team#member with subresource_filter, role#assignee with subresource_filter]
+
+    define can_resource_get: resource_get or resource_view or resource_edit or resource_admin
+    define can_resource_create: resource_create or resource_edit or resource_admin
+    define can_resource_update: resource_update or resource_edit or resource_admin
+    define can_resource_delete: resource_delete or resource_edit or resource_admin
 
 condition subresource_filter(subresource: string, subresources: list<string>) {
   subresource in subresources

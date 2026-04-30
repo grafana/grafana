@@ -95,6 +95,9 @@ const createRepositoryJobsHandler = () =>
     HttpResponse.json({ spec: { action: 'pull' }, status: { state: 'success' } })
   );
 
+const listJobsHandler = () =>
+  http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [], metadata: { resourceVersion: '1' } }));
+
 const createConnectionHandler = (response = defaultConnection) =>
   http.post(`${BASE}/connections`, () => HttpResponse.json(response));
 
@@ -127,6 +130,7 @@ const handlers = [
   replaceRepositoryHandler(),
   testRepositoryHandler(),
   createRepositoryJobsHandler(),
+  listJobsHandler(),
   createConnectionHandler(),
   replaceConnectionHandler(),
   listConnectionsHandler(),

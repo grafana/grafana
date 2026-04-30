@@ -14,17 +14,17 @@ type FakePublicDashboardServiceWrapper struct {
 	mock.Mock
 }
 
-// Delete provides a mock function with given fields: ctx, uid
-func (_m *FakePublicDashboardServiceWrapper) Delete(ctx context.Context, uid string) error {
-	ret := _m.Called(ctx, uid)
+// Delete provides a mock function with given fields: ctx, orgId, uid
+func (_m *FakePublicDashboardServiceWrapper) Delete(ctx context.Context, orgId int64, uid string) error {
+	ret := _m.Called(ctx, orgId, uid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, uid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, orgId, uid)
 	} else {
 		r0 = ret.Error(0)
 	}

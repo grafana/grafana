@@ -1,14 +1,14 @@
 import {
   toDataFrame,
-  DataFrame,
+  type DataFrame,
   FieldType,
   toDataFrameDTO,
-  DataFrameDTO,
+  type DataFrameDTO,
   DataFrameType,
   getFrameDisplayName,
 } from '@grafana/data';
 
-import { getPrepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import { getPrepareTimeSeriesTransformer, type PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const ctx = {
   interpolate: (v: string) => v,

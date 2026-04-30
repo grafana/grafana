@@ -1,16 +1,16 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
 import { FieldType } from '@grafana/data';
 import {
   GrafanaAlertStateDecision,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { PREVIEW_URL, PROM_RULES_URL, PreviewResponse } from '../api/alertRuleApi';
+import { PREVIEW_URL, PROM_RULES_URL, type PreviewResponse } from '../api/alertRuleApi';
 import { Annotation } from '../utils/constants';
 
 export function mockPreviewApiResponse(server: SetupServer, result: PreviewResponse) {

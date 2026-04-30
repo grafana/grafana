@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 import { GetStartedWithDataSource } from './GetStartedWithDataSource';
 
@@ -32,8 +32,11 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 describe('GetStartedWithDataSource', () => {

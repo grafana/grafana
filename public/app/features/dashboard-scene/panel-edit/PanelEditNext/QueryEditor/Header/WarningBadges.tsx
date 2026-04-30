@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { capitalize, filter, uniqBy } from 'lodash';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, QueryResultMetaNotice } from '@grafana/data';
+import { type GrafanaTheme2, type QueryResultMetaNotice } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 

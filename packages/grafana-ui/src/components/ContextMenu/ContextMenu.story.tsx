@@ -1,14 +1,14 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 import * as React from 'react';
 
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
-import { ContextMenu, ContextMenuProps } from './ContextMenu';
+import { ContextMenu, type ContextMenuProps } from './ContextMenu';
 import mdx from './ContextMenu.mdx';
 import { renderMenuItems } from './ContextMenuStoryHelper';
-import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
+import { WithContextMenu, type WithContextMenuProps } from './WithContextMenu';
 
 const meta: Meta<typeof ContextMenu> = {
   title: 'Overlays/ContextMenu',

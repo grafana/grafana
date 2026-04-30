@@ -134,8 +134,15 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+      # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
+      # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
+      # workspace (the release-branch checkout). That subtree may lag main and miss the action,
+      # failing the step. Mirror cache-build:false behavior (no GOCACHE; modules via actions/cache).
       - name: Setup Go
-        uses: ./.github/actions/setup-go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Configure git user
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"

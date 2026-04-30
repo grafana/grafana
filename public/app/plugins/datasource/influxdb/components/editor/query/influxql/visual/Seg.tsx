@@ -3,7 +3,7 @@ import debouncePromise from 'debounce-promise';
 import { useEffect, useState, type JSX } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui';
 
 import { useShadowedState } from '../hooks/useShadowedState';

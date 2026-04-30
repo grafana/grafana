@@ -1,6 +1,5 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
@@ -8,7 +7,8 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { type Options, defaultOptions } from './panelcfg.gen';
+import { barGaugePresetsSupplier } from './presets';
 import { barGaugeSugggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(BarGaugePanel)
@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
     const category = [t('bargauge.category-bar-gauge', 'Bar gauge')];
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
-    commonOptionsBuilder.addLegendOptions(builder, true, false, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, false);
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder
@@ -152,4 +152,5 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(barGaugePanelMigrationHandler)
-  .setSuggestionsSupplier(barGaugeSugggestionsSupplier);
+  .setSuggestionsSupplier(barGaugeSugggestionsSupplier)
+  .setPresetsSupplier(barGaugePresetsSupplier);

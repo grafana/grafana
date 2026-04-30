@@ -1,16 +1,16 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   outerJoinDataFrames,
-  TimeRange,
+  type TimeRange,
   applyNullInsertThreshold,
   roundDecimals,
 } from '@grafana/data';
 import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN, nullToUndefThreshold } from '@grafana/data/internal';
 import { GraphDrawStyle } from '@grafana/schema';
 
-import { XYFieldMatchers } from './types';
+import { type XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
   return (

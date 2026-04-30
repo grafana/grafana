@@ -1,16 +1,16 @@
 import { invert } from 'lodash';
-import Prism, { Grammar, Token } from 'prismjs';
+import Prism, { type Grammar, Token } from 'prismjs';
 
 import { createAssistantContextItem } from '@grafana/assistant';
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
-  DataFrame,
-  DataQueryResponse,
-  DataQueryRequest,
+  type DataFrame,
+  type DataQueryResponse,
+  type DataQueryRequest,
 } from '@grafana/data';
 
-import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
+import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
@@ -164,11 +164,12 @@ export function enrichDataFrameWithAssistantContentMapper(
         createAssistantContextItem('structured', {
           title: 'Analyze Flame Graph',
           data: {
-            start: request.range.from.valueOf(),
-            end: request.range.to.valueOf(),
+            start: request.range.from.toISOString(),
+            end: request.range.to.toISOString(),
             profile_type_id: query.profileTypeId,
             label_selector: query.labelSelector,
             operation: 'execute',
+            ...(query.profileIdSelector?.length ? { profile_id: query.profileIdSelector } : {}),
           },
         }),
       ];

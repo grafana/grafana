@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { ConfirmModal } from './ConfirmModal';
 import mdx from './ConfirmModal.mdx';
@@ -18,7 +18,6 @@ const meta: Meta<typeof ConfirmModal> = {
     },
   },
   argTypes: {
-    icon: { control: { type: 'select', options: ['exclamation-triangle', 'power', 'cog', 'lock', 'trash-alt'] } },
     body: { control: { type: 'text' } },
     description: { control: { type: 'text' } },
   },
@@ -43,7 +42,6 @@ export const Basic: StoryFn<typeof ConfirmModal> = ({
   confirmText,
   confirmButtonVariant,
   dismissText,
-  icon,
   isOpen,
 }) => {
   const { onConfirm, onDismiss } = defaultActions;
@@ -56,7 +54,6 @@ export const Basic: StoryFn<typeof ConfirmModal> = ({
       confirmText={confirmText}
       confirmButtonVariant={confirmButtonVariant}
       dismissText={dismissText}
-      icon={icon}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
     />
@@ -76,7 +73,6 @@ Basic.args = {
   confirmText: 'Delete',
   confirmButtonVariant: 'destructive',
   dismissText: 'Cancel',
-  icon: 'exclamation-triangle',
   isOpen: true,
 };
 
@@ -86,7 +82,6 @@ export const AlternativeAction: StoryFn<typeof ConfirmModal> = ({
   description,
   confirmText,
   dismissText,
-  icon,
   alternativeText,
   isOpen,
 }) => {
@@ -100,7 +95,6 @@ export const AlternativeAction: StoryFn<typeof ConfirmModal> = ({
       confirmText={confirmText}
       dismissText={dismissText}
       alternativeText={alternativeText}
-      icon={icon}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
       onAlternative={onAlternative}
@@ -120,7 +114,6 @@ AlternativeAction.args = {
   alternativeText: 'Delete row only',
   confirmText: 'Yes',
   dismissText: 'Cancel',
-  icon: 'trash-alt',
   isOpen: true,
 };
 
@@ -131,7 +124,6 @@ export const WithConfirmation: StoryFn<typeof ConfirmModal> = ({
   confirmationText,
   confirmText,
   dismissText,
-  icon,
   isOpen,
 }) => {
   const { onConfirm, onDismiss } = defaultActions;
@@ -144,7 +136,6 @@ export const WithConfirmation: StoryFn<typeof ConfirmModal> = ({
       description={description}
       confirmText={confirmText}
       dismissText={dismissText}
-      icon={icon}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
     />
@@ -164,7 +155,6 @@ WithConfirmation.args = {
   confirmationText: 'Delete',
   confirmText: 'Delete',
   dismissText: 'Cancel',
-  icon: 'trash-alt',
   isOpen: true,
 };
 

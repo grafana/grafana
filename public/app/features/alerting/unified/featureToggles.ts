@@ -8,12 +8,12 @@ export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alert
 export const shouldUseAlertingListViewV2 = () => {
   const previewToggleValue = getPreviewToggle('alertingListViewV2');
 
-  // If the preview toggle is enabled and has configured value it should take precedence over the feature toggle
-  if (config.featureToggles.alertingListViewV2PreviewToggle && previewToggleValue !== undefined) {
+  // If the user has set a preference via the preview toggle, it takes precedence
+  if (previewToggleValue !== undefined) {
     return previewToggleValue;
   }
 
-  return config.featureToggles.alertingListViewV2;
+  return config.featureToggles.alertingListViewV2 ?? false;
 };
 
 export const shouldAllowRecoveringDeletedRules = () =>
@@ -26,16 +26,6 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
-
-/**
- * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
- */
-export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedSearches ?? false;
-
-/**
- * Saved searches feature for Alert Activity (Triage) page.
- */
-export const shouldUseTriageSavedSearches = () => config.featureToggles.alertingTriageSavedSearches ?? false;
 
 /**
  * Alerts Activity Banner - shows a promotional banner on the Rule List page

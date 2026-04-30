@@ -17,9 +17,10 @@ function render(component: React.ReactNode) {
 const mockListDashboardHistory = jest.fn();
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => ({
-    listDashboardHistory: mockListDashboardHistory,
-  }),
+  getDashboardAPI: () =>
+    Promise.resolve({
+      listDashboardHistory: mockListDashboardHistory,
+    }),
 }));
 
 const mockUseGetDisplayMappingQuery = jest.fn();

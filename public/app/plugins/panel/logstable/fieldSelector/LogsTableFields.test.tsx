@@ -4,9 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import { FIELD_SELECTOR_MIN_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import {
+  DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 
@@ -25,6 +26,7 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTableFields>>) =>
       fields: [
         { name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time, values: [1, 2] },
         { name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2'] },
+        { name: DATAPLANE_SEVERITY_NAME, type: FieldType.string, values: ['info', 'error'] },
         { name: 'service', type: FieldType.string, values: ['service 1', 'service 2'] },
         { name: 'backend', type: FieldType.string, values: ['backend 1', null] },
       ],
@@ -36,7 +38,7 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTableFields>>) =>
     <LogsTableFields
       fieldSelectorWidth={fieldSelectorWidth}
       onFieldSelectorWidthChange={onFieldSelectorWidthChange}
-      displayedFields={[]}
+      displayedFields={[LOGS_DATAPLANE_TIMESTAMP_NAME, DATAPLANE_SEVERITY_NAME, LOGS_DATAPLANE_BODY_NAME]}
       onDisplayedFieldsChange={jest.fn()}
       dataFrame={testLogsDataFrame[0]}
       logsFrame={logsFrame}
@@ -44,6 +46,7 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTableFields>>) =>
       height={height}
       timeFieldName={LOGS_DATAPLANE_TIMESTAMP_NAME}
       bodyFieldName={LOGS_DATAPLANE_BODY_NAME}
+      levelFieldName={DATAPLANE_SEVERITY_NAME}
       {...props}
     />
   );
@@ -55,10 +58,14 @@ describe('LogsTableFields', () => {
     expect(screen.getByText('Selected fields')).toBeVisible();
     expect(screen.getByPlaceholderText(/search fields by name/i)).toBeVisible();
 
-    [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, 'service', 'backend'].forEach((label) => {
-      expect(screen.getByRole('checkbox', { name: label })).toBeInTheDocument();
-      expect(screen.getByText(label)).toBeVisible();
-    });
+    [LOGS_DATAPLANE_TIMESTAMP_NAME, DATAPLANE_SEVERITY_NAME, LOGS_DATAPLANE_BODY_NAME, 'service', 'backend'].forEach(
+      (label) => {
+        expect(screen.getByRole('checkbox', { name: label })).toBeInTheDocument();
+        expect(screen.getByText(label)).toBeVisible();
+      }
+    );
+
+    expect(screen.getByRole('checkbox', { name: DATAPLANE_SEVERITY_NAME })).toBeChecked();
   });
 
   it('Should collapse', async () => {

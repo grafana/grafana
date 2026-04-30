@@ -1,9 +1,9 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } from '@grafana/data';
+import { AbstractLabelOperator, type DataFrame, type TimeRange, dateTime, type ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
 import { LokiQueryType } from './dataquery.gen';
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
 import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
 import { createLokiDatasource } from './mocks/datasource';
@@ -13,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType } from './types';
+import { type DetectedFieldsResult, LabelType } from './types';
 
 jest.mock('./responseUtils');
 

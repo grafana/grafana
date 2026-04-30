@@ -1,4 +1,4 @@
-import { UseFormRegister } from 'react-hook-form';
+import { type UseFormRegister } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
@@ -6,7 +6,7 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alph
 
 import { checkImageRenderer, checkPublicAccess, checkImageRenderingAllowed } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 export interface ConfigFormGithubCollapseProps {
   register: UseFormRegister<RepositoryFormData>;

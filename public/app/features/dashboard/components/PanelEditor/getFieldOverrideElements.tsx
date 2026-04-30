@@ -1,27 +1,40 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import * as React from 'react';
 
 import {
-  FieldConfigOptionsRegistry,
-  SelectableValue,
+  type FieldConfigOptionsRegistry,
+  type SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
-  VariableSuggestionsScope,
-  DynamicConfigValue,
-  ConfigOverrideRule,
-  GrafanaTheme2,
+  type VariableSuggestionsScope,
+  type DynamicConfigValue,
+  type ConfigOverrideRule,
   fieldMatchers,
-  FieldConfigSource,
-  DataFrame,
+  type FieldConfigSource,
+  type DataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { type MatcherScope } from '@grafana/schema';
+import {
+  fieldMatchersUI,
+  getUniqueMatcherScopes,
+  MatcherScopeSelector,
+  buildScopeOptions,
+  useStyles2,
+  ValuePicker,
+  useFieldMatchersOptions,
+} from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+
+const ALLOWED_SCOPES: MatcherScope[] = ['series'];
+if (config.featureToggles.nestedFramesFieldOverrides) {
+  ALLOWED_SCOPES.push('nested');
+}
 
 // [FIXME] Is there something else we need to do in here?
 
@@ -72,6 +85,8 @@ export function getFieldOverrideCategories(
     isOverride: true,
   };
 
+  const uniqueMatcherScopes = getUniqueMatcherScopes(data);
+
   /**
    * Main loop through all override rules
    */
@@ -82,7 +97,17 @@ export function getFieldOverrideCategories(
     });
     const overrideId = `panel-options-override-${idx}`;
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
-    const configPropertiesOptions = getOverrideProperties(registry);
+    const configPropertiesOptions = registry.selectOptions(
+      undefined,
+      (item) => !item.hideFromOverrides,
+      (item) => {
+        let label = item.name;
+        if (item.category) {
+          label = [...item.category, item.name].join(' > ');
+        }
+        return label;
+      }
+    ).options;
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
     const forceOpen = override.properties.length === 0;
@@ -105,8 +130,12 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: unknown) => {
-      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, options } });
+    const onMatcherConfigChange = (options: unknown, scope: MatcherScope | undefined = override.matcher.scope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
+    };
+
+    const onMatcherScopeChange = (scope: MatcherScope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope } });
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
@@ -119,10 +148,34 @@ export function getFieldOverrideCategories(
       onOverrideChange(idx, { ...override, properties });
     };
 
-    /**
-     * Add override matcher UI element
-     */
+    const hasInvalidScope = override.matcher.scope && !uniqueMatcherScopes.has(override.matcher.scope);
+    const scopeOptions = buildScopeOptions(uniqueMatcherScopes, override.matcher.scope, ALLOWED_SCOPES);
+    const shouldShowScopeSelector = scopeOptions.length > 1 || hasInvalidScope;
+
     const htmlId = `${overrideId}-matcher`;
+    if (shouldShowScopeSelector) {
+      const scopeId = `${overrideId}-scope`;
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          id: scopeId,
+          title: t('grafana-ui.field-name-by-regex-matcher.scope', 'Target fields'),
+          // @todo tooltips should be possible to add to an OptionsPanelItemDescriptor
+          // tooltip: t('grafana-ui.field-name-by-regex-matcher.scope-tooltip', 'To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default "dataframe" scope is applied if no scope is selected.'),
+          render: function renderMatcherScopeEditor() {
+            return (
+              <MatcherScopeSelector
+                id={scopeId}
+                value={override.matcher.scope}
+                scopes={uniqueMatcherScopes}
+                onChange={onMatcherScopeChange}
+                allowedScopes={ALLOWED_SCOPES}
+              />
+            );
+          },
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         id: htmlId,
@@ -133,6 +186,7 @@ export function getFieldOverrideCategories(
               id={htmlId}
               matcher={matcherUi.matcher}
               data={data ?? []}
+              scope={override.matcher.scope}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
             />
@@ -232,49 +286,35 @@ export function getFieldOverrideCategories(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
-      customRender: function renderAddButton() {
-        return (
-          <AddOverrideButtonContainer key="Add override">
-            <ValuePicker
-              icon="plus"
-              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
-              variant="secondary"
-              menuPlacement="auto"
-              isFullWidth={true}
-              size="md"
-              options={fieldMatchersUI
-                .list()
-                .filter((o) => !o.excludeFromPicker)
-                .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
-              onChange={(value) => onOverrideAdd(value)}
-            />
-          </AddOverrideButtonContainer>
-        );
-      },
+      customRender: () => <AddButtonWrapper key="Add override" onOverrideAdd={onOverrideAdd} />,
     })
   );
 
   return categories;
 }
 
-function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
-  return registry
-    .list()
-    .filter((o) => !o.hideFromOverrides)
-    .map((item) => {
-      let label = item.name;
-      if (item.category) {
-        label = [...item.category, item.name].join(' > ');
-      }
-      return { label, value: item.id, description: item.description };
-    });
-}
+function AddButtonWrapper({ onOverrideAdd }: { onOverrideAdd: (value: SelectableValue<string>) => void }) {
+  const options = useFieldMatchersOptions();
+  const styles = useStyles2((theme) =>
+    css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: `${theme.spacing(2)}`,
+      display: 'flex',
+    })
+  );
 
-function AddOverrideButtonContainer({ children }: { children: React.ReactNode }) {
-  const styles = useStyles2(getBorderTopStyles);
-  return <div className={styles}>{children}</div>;
-}
-
-function getBorderTopStyles(theme: GrafanaTheme2) {
-  return css({ borderTop: `1px solid ${theme.colors.border.weak}`, padding: `${theme.spacing(2)}`, display: 'flex' });
+  return (
+    <div className={styles}>
+      <ValuePicker
+        icon="plus"
+        label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
+        variant="secondary"
+        menuPlacement="auto"
+        isFullWidth={true}
+        size="md"
+        options={options}
+        onChange={(value) => onOverrideAdd(value)}
+      />
+    </div>
+  );
 }

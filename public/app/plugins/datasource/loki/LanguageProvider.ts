@@ -1,11 +1,18 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import {
+  type AbstractQuery,
+  getDefaultTimeRange,
+  type KeyValue,
+  LanguageProvider,
+  type ScopedVars,
+  type TimeRange,
+} from '@grafana/data';
+import { type BackendSrvRequest, config } from '@grafana/runtime';
 
 import { LokiQueryType } from './dataquery.gen';
-import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, type LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
 import { getStreamSelectorsFromQuery } from './queryUtils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
@@ -14,7 +21,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
+import { type DetectedFieldsResult, LabelType, type LokiQuery, type ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';

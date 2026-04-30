@@ -1,10 +1,10 @@
-import { DataFrame, DataFrameJSON, dataFrameToJSON } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, dataFrameToJSON } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { GrafanaQuery, GrafanaQueryType } from './types';
+import { type GrafanaQuery, GrafanaQueryType } from './types';
 
 /**
  * Will show a confirm modal if the current panel does not have a snapshot query.
@@ -24,7 +24,6 @@ export function onUpdatePanelSnapshotData(panel: PanelModel, frames: DataFrame[]
         title: 'Change to panel embedded data',
         text: 'If you want to change the data shown in this panel Grafana will need to remove the panels current query and replace it with a snapshot of the current data. This enables you to edit the data.',
         yesText: 'Continue',
-        icon: 'pen',
         onConfirm: () => {
           updateSnapshotData(frames, panel);
           resolve(true);

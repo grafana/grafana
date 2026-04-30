@@ -1,4 +1,4 @@
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
 import {
@@ -7,7 +7,6 @@ import {
   getSuggestedFieldsForLogs,
   identifyOTelLanguage,
   identifyOTelLanguages,
-  OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
   OTEL_LANGUAGE_UNKNOWN,
   OTEL_PROBE_FIELD,
 } from './formats';
@@ -70,9 +69,12 @@ describe('getOtelAttributesField', () => {
       labels: {
         aws_something: 'nope',
         k8s_something: 'nope',
+        'k8s.pod.name': 'nope',
         cluster: 'nope',
         namespace: 'nope',
         pod: 'nope',
+        'service.name': 'nope',
+        'host.name': 'nope',
         vcs_ref_head_name: 'main',
         field: 'value',
       },
@@ -90,6 +92,7 @@ describe('getOtelAttributesField', () => {
         cluster: 'nope',
         namespace: 'nope',
         pod: 'nope',
+        'telemetry.sdk.language': 'nope',
         cluster_1: 'yes',
         namespace_2: 'yes',
         pod_3: 'yes',
@@ -119,6 +122,43 @@ describe('getOtelAttributesField', () => {
     });
 
     expect(getOtelAttributesField(log, false)).toEqual('vcs_ref_head_name=main field=value');
+  });
+
+  test('Excludes dot-notation resource attributes the same as underscore-prefixed keys', () => {
+    const log = createLogLine({
+      labels: {
+        'cloud.provider': 'nope',
+        'cloud.region': 'nope',
+        'container.id': 'nope',
+        'deployment.environment': 'nope',
+        'faas.name': 'nope',
+        'gcp.project.id': 'nope',
+        'os.type': 'nope',
+        'process.pid': 'nope',
+        'cluster.uid': 'nope',
+        'namespace.uid': 'nope',
+        custom_attr: 'keep',
+      },
+      entry: 'msg',
+    });
+
+    expect(getOtelAttributesField(log, true)).toEqual('custom_attr=keep');
+  });
+
+  test('Excludes dot-notation OTel log record fields the same as underscore keys', () => {
+    const log = createLogLine({
+      labels: {
+        'observed.timestamp': 'nope',
+        'severity.number': 'nope',
+        'severity.text': 'nope',
+        'span.id': 'nope',
+        'trace.id': 'nope',
+        user_dimension: 'keep',
+      },
+      entry: 'msg',
+    });
+
+    expect(getOtelAttributesField(log, true)).toEqual('user_dimension=keep');
   });
 });
 

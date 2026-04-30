@@ -1,5 +1,5 @@
 import { Chance } from 'chance';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
 import type {
   DescendantCounts,
@@ -311,6 +311,9 @@ const getFolderListHandler = () =>
 
     return HttpResponse.json(response);
   });
+
+export const customCreateFolderHandler = (resolver: HttpResponseResolver) =>
+  http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', resolver);
 
 export default [
   getFolderListHandler(),

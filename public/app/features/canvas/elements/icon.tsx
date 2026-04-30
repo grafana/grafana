@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { type ColorDimensionConfig, type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
-import { LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { type LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
+import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
 
 export interface IconConfig {
   path?: ResourceDimensionConfig;

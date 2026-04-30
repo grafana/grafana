@@ -13,12 +13,13 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
+	prom_model "github.com/prometheus/common/model"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
 )
 
 func TestMain(m *testing.M) {
@@ -53,7 +54,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -151,7 +152,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -236,7 +237,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -288,7 +289,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -346,7 +347,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -398,7 +399,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -434,7 +435,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -488,7 +489,7 @@ func TestIntegrationPatch(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -589,7 +590,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -634,7 +635,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -671,7 +672,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -691,5 +692,90 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, created)
+	})
+}
+
+func TestIntegrationListWithLabelSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewRecordingRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "rr-folder-alpha")
+	common.CreateTestFolder(t, helper, "rr-folder-beta")
+
+	makeRule := func(folder string) *v0alpha1.RecordingRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithAllRecordingRules(),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.RecordingRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.RecordingRuleSpec{
+				Title:  rule.Title,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+				Expressions: v0alpha1.RecordingRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
+							From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
+							To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.RecordingRuleIntervalTrigger{
+					Interval: v0alpha1.RecordingRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+			},
+		}
+	}
+
+	// Create 2 rules in rr-folder-alpha and 2 in rr-folder-beta.
+	// Group selector tests are covered in the compat tests since the k8s API does not
+	// support assigning rules to groups directly.
+	alpha1, err := client.Create(ctx, makeRule("rr-folder-alpha"), v1.CreateOptions{})
+	require.NoError(t, err)
+	alpha2, err := client.Create(ctx, makeRule("rr-folder-alpha"), v1.CreateOptions{})
+	require.NoError(t, err)
+	beta1, err := client.Create(ctx, makeRule("rr-folder-beta"), v1.CreateOptions{})
+	require.NoError(t, err)
+	beta2, err := client.Create(ctx, makeRule("rr-folder-beta"), v1.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = client.Delete(ctx, alpha1.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, alpha2.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, beta1.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, beta2.Name, v1.DeleteOptions{})
+	})
+
+	t.Run("filter by folder label include", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{LabelSelector: "grafana.app/folder=rr-folder-alpha"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, "rr-folder-alpha", item.Labels[v0alpha1.FolderLabelKey])
+		}
+	})
+
+	t.Run("filter by folder label exclude", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{LabelSelector: "grafana.app/folder!=rr-folder-alpha"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, "rr-folder-beta", item.Labels[v0alpha1.FolderLabelKey])
+		}
 	})
 }

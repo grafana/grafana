@@ -15,10 +15,8 @@ userKind: {
 
 userv0alpha1: userKind & {
 	schema: {
-		spec: v0alpha1.UserSpec
-		status: {
-			lastSeenAt: int64 | 0
-		}
+		spec:   v0alpha1.UserSpec
+		status: UserStatus
 	}
 	selectableFields: [
 		"spec.email",
@@ -27,17 +25,27 @@ userv0alpha1: userKind & {
 	routes: {
 		"/teams": {
 			"GET": {
-				name: "getUserTeams",
+				name: "getUserTeams"
 				response: {
 					#UserTeam: {
-						user: string
-						team: string
+						user:       string
+						team:       string
 						permission: string
-						external: bool
+						external:   bool
 					}
 					items: [...#UserTeam]
 				}
 			}
 		}
 	}
+}
+
+UserStatus: {
+	lastSeenAt: int64 | 0
+	teamSync?:  TeamSyncStatus
+}
+
+TeamSyncStatus: {
+	state:      "syncing" | "success" | "error" @cog(kind="enum",memberNames="Syncing|Success|Error")
+	lastSyncAt: int64 | 0
 }

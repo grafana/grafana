@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -11,8 +12,8 @@ import (
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,19 +31,19 @@ type ConnectionClient interface {
 	// as we cannot guarantee which resource the caller intended to get.
 	//
 	// Deprecated: Use /apis/<type>.datasource.grafana.app/v0alpha1/namespaces/{ns}/datasources/{uid} instead.
-	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error)
+	GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error)
 }
 
 var _ ConnectionClient = (*connectionClientImpl)(nil)
 
 // connectionClientImpl implements the ConnectionClient interface.
 type connectionClientImpl struct {
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	clientConfigProvider grafanaapiserver.RestConfigProvider
 	namespaceMapper      request.NamespaceMapper
 }
 
 // NewConnectionClient creates a new ConnectionClient that queries the connections endpoint in the query api group.
-func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.DirectRestConfigProvider) ConnectionClient {
+func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.RestConfigProvider) ConnectionClient {
 	return &connectionClientImpl{
 		clientConfigProvider: provider,
 		namespaceMapper:      request.GetNamespaceMapper(cfg),
@@ -51,19 +52,23 @@ func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.DirectRestC
 
 // GetConnectionByUID queries GET /apis/datasource.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
 // Deprecated: Use GetConnectionByTypeAndUID when type is known.
-func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error) {
-	namespace := cl.namespaceMapper(c.OrgID)
+func (cl *connectionClientImpl) GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error) {
+	namespace := cl.namespaceMapper(orgID)
 
-	cfg := cl.clientConfigProvider.GetDirectRestConfig(c)
-	cfg = dynamic.ConfigFor(cfg) // This sets NegotiatedSerializer, required for RESTClientFor
+	restCfg, err := cl.clientConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rest config: %w", err)
+	}
+
+	cfg := dynamic.ConfigFor(restCfg) // This sets NegotiatedSerializer, required for RESTClientFor
 	cfg.GroupVersion = &dsV0.SchemeGroupVersion
-	rest, err := rest.RESTClientFor(cfg)
+	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rest client: %w", err)
 	}
 
 	var statusCode int
-	result := rest.Get().AbsPath("apis", dsV0.GROUP, dsV0.VERSION, "namespaces", namespace, "connections").Param("name", uid).Do(c.Req.Context()).StatusCode(&statusCode)
+	result := client.Get().AbsPath("apis", dsV0.GROUP, dsV0.VERSION, "namespaces", namespace, "connections").Param("name", uid).Do(ctx).StatusCode(&statusCode)
 	err = result.Error()
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -89,25 +94,25 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 // datasource service just to get the datasource type, then forwarding the request
 // to the new APIs.
 type legacyConnectionClientImpl struct {
-	datasourceService datasources.DataSourceService
+	datasourceService datasourceservice.DataSourceRetriever
 }
 
 var _ ConnectionClient = (*legacyConnectionClientImpl)(nil)
 
 // NewLegacyConnectionClient creates a new ConnectionClient that relies on the legacy datasource service.
-func NewLegacyConnectionClient(datasourceService datasources.DataSourceService) ConnectionClient {
+func NewLegacyConnectionClient(datasourceService datasourceservice.DataSourceRetriever) ConnectionClient {
 	return &legacyConnectionClientImpl{
 		datasourceService: datasourceService,
 	}
 }
 
-func (cl *legacyConnectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error) {
+func (cl *legacyConnectionClientImpl) GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error) {
 	query := datasources.GetDataSourceQuery{
 		UID:   uid,
-		OrgID: c.OrgID,
+		OrgID: orgID,
 	}
 
-	conn, err := cl.datasourceService.GetDataSource(c.Req.Context(), &query)
+	conn, err := cl.datasourceService.GetDataSource(ctx, &query)
 	if err != nil {
 		return nil, err
 	}

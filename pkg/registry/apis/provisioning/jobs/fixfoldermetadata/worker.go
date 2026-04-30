@@ -2,24 +2,37 @@ package fixfoldermetadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-// Worker implements the fix-folder-metadata job type.
-// It creates a marker commit on the specified branch to document when folder metadata was fixed.
-type Worker struct{}
+const keepFileName = ".keep"
 
-func NewWorker() *Worker {
-	return &Worker{}
+// Worker implements the fix-folder-metadata job type.
+// It scans the repository tree and writes a _folder.json metadata file for
+// every directory that does not already have one, using a hash-derived UID.
+// It also removes legacy .keep files from folders that have (or receive)
+// a _folder.json, since the metadata file supersedes the keep marker.
+type Worker struct {
+	folderGVK schema.GroupVersionKind
+}
+
+func NewWorker(folderGVK schema.GroupVersionKind) *Worker {
+	return &Worker{folderGVK: folderGVK}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -46,9 +59,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	ref := options.Ref
 	logger.Info("starting folder metadata fix job")
 	if ref == "" {
-		progress.SetMessage(ctx, "Creating marker commit on default branch")
+		progress.SetMessage(ctx, "Writing folder metadata files on default branch")
 	} else {
-		progress.SetMessage(ctx, fmt.Sprintf("Creating marker commit on branch %s", ref))
+		progress.SetMessage(ctx, fmt.Sprintf("Writing folder metadata files on branch %s", ref))
 	}
 
 	// Configure staging options to commit everything at once
@@ -57,44 +70,82 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		Timeout:               5 * time.Minute,
 		PushOnWrites:          false,
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: fmt.Sprintf("Fix folder metadata\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		CommitOnlyOnceMessage: fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
 	}
 
-	// Create a marker file to document when the fix was run
 	fn := func(stagedRepo repository.Repository, staged bool) error {
 		rw, ok := stagedRepo.(repository.ReaderWriter)
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
 
-		// Write a marker file with timestamp
-		markerPath := fmt.Sprintf(".grafana/folder-metadata-fixed-%d", time.Now().Unix())
-		markerContent := []byte(fmt.Sprintf("Folder metadata fixed by job %s\nTimestamp: %s\n",
-			job.Name,
-			time.Now().UTC().Format(time.RFC3339),
-		))
-		if ref != "" {
-			markerContent = []byte(fmt.Sprintf("Folder metadata fixed by job %s\nTimestamp: %s\nRef: %s\n",
-				job.Name,
-				time.Now().UTC().Format(time.RFC3339),
-				ref,
-			))
+		entries, err := rw.ReadTree(ctx, ref)
+		if err != nil {
+			return fmt.Errorf("read repository tree: %w", err)
 		}
 
-		// Write the marker file
-		// For staged repos, this will be committed and pushed
-		// For local repos, this will be written directly to the filesystem
-		if err := rw.Write(ctx, markerPath, ref, markerContent, "Add folder metadata fix marker"); err != nil {
-			return fmt.Errorf("failed to write marker file: %w", err)
+		repoName := rw.Config().GetName()
+
+		// Collect dirs with existing metadata, track .keep files, and parse all folder entries.
+		hasMetadata := make(map[string]struct{}, len(entries))
+		hasKeepFile := make(map[string]string, len(entries))
+		folders := make([]resources.Folder, 0, len(entries))
+		for _, entry := range entries {
+			if entry.Blob {
+				if resources.IsFolderMetadataFile(entry.Path) {
+					hasMetadata[safepath.Dir(entry.Path)] = struct{}{}
+				} else if isKeepFile(entry.Path) {
+					hasKeepFile[safepath.Dir(entry.Path)] = entry.Path
+				}
+				continue
+			}
+			dirPath := entry.Path
+			if !safepath.IsDir(dirPath) {
+				dirPath += "/"
+			}
+			folders = append(folders, resources.ParseFolder(dirPath, repoName))
 		}
 
-		logger.Info("marker file written", "path", markerPath, "staged", staged)
+		totalMissing := len(folders) - len(hasMetadata)
+		progress.SetTotal(ctx, totalMissing)
+
+		for _, folder := range folders {
+			if _, ok := hasMetadata[folder.Path]; ok {
+				// Folder already has _folder.json; remove stale .keep if present.
+				if keepPath, ok := hasKeepFile[folder.Path]; ok {
+					deleteKeepFile(ctx, rw, keepPath, ref, logger)
+				}
+				continue
+			}
+
+			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), w.folderGVK)
+			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
+				fmt.Sprintf("Add folder metadata for %s", folder.Path))
+
+			rb := jobs.NewFolderResult(folder.Path).
+				WithName(folder.ID).
+				WithAction(repository.FileActionCreated)
+			if writeErr != nil {
+				wrappedErr := fmt.Errorf("writing folder metadata for %s: %w", folder.Path, writeErr)
+				rb.WithError(wrappedErr)
+				progress.Record(ctx, rb.Build())
+				return wrappedErr
+			}
+
+			// _folder.json now exists; remove the legacy .keep if present.
+			if keepPath, ok := hasKeepFile[folder.Path]; ok {
+				deleteKeepFile(ctx, rw, keepPath, ref, logger)
+			}
+
+			progress.Record(ctx, rb.Build())
+		}
+
 		return nil
 	}
 
 	// Execute the staging operation
 	if err := repository.WrapWithStageAndPushIfPossible(ctx, repo, stageOptions, fn); err != nil {
-		logger.Error("failed to create marker commit", "error", err)
+		logger.Error("failed to write folder metadata files", "error", err)
 		progress.SetFinalMessage(ctx, fmt.Sprintf("Failed to fix folder metadata: %s", err.Error()))
 		return err
 	}
@@ -102,7 +153,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	// Set RefURLs if the repository supports it and a ref was used
 	// For empty ref (default branch), we need to get the actual branch name that was used
 	if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
-		// If ref is empty, try to get the default branch to use for URLs
 		actualRef := ref
 		if actualRef == "" {
 			if branchHandler, ok := repo.(repository.BranchHandler); ok {
@@ -130,4 +180,19 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	return nil
+}
+
+func isKeepFile(path string) bool {
+	return strings.HasSuffix(path, keepFileName)
+}
+
+// deleteKeepFile removes a .keep file, logging but not failing on errors
+// (the .keep may already be absent in certain edge cases).
+func deleteKeepFile(ctx context.Context, rw repository.ReaderWriter, keepPath, ref string, logger logging.Logger) {
+	if err := rw.Delete(ctx, keepPath, ref, "Remove legacy .keep replaced by _folder.json"); err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return
+		}
+		logger.Warn("failed to delete .keep file", "path", keepPath, "error", err)
+	}
 }

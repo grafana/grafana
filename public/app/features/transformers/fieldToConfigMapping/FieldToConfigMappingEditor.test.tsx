@@ -1,10 +1,15 @@
-import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
+import { fireEvent, render, screen, getByLabelText, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { toDataFrame, FieldType } from '@grafana/data';
+import { ReducerID, toDataFrame, FieldType } from '@grafana/data';
 
-import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
+import { type Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
+
+beforeAll(() => {
+  comboboxTestSetup();
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -73,16 +78,21 @@ describe('FieldToConfigMappingEditor', () => {
 
     const reducer = await screen.findByTestId('max-reducer');
 
-    expect(getByText(reducer, 'All values')).toBeInTheDocument();
+    expect(within(reducer).getByDisplayValue('All values')).toBeInTheDocument();
   });
 
   it('Can change reducer', async () => {
+    const user = userEvent.setup({ applyAccept: false });
     setup();
 
-    const reducer = await (await screen.findByTestId('max-reducer')).childNodes[0];
+    const reducerCell = await screen.findByTestId('max-reducer');
+    await user.click(within(reducerCell).getByRole('combobox'));
 
-    await fireEvent.keyDown(reducer, { keyCode: 40 });
-    await selectOptionInTest(reducer as HTMLElement, 'Last');
+    await waitFor(() => {
+      expect(document.getElementById(`combobox-option-${ReducerID.last}`)).toBeInTheDocument();
+    });
+
+    await user.click(document.getElementById(`combobox-option-${ReducerID.last}`)!);
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.arrayContaining([{ fieldName: 'max', handlerKey: 'max', reducerId: 'last' }])

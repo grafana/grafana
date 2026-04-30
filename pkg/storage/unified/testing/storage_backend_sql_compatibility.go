@@ -37,6 +37,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	kvOpts := resource.KVBackendOptions{
 		KvStore:        kv,
 		SearchLookback: time.Second,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	if dbConn.DriverName() == "sqlite3" {
@@ -80,6 +82,10 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
 		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 		{"bulk import compatibility", runTestBulkImportCompatibility},
+		{"bulk import large counter CRUD", runTestBulkImportLargeCounterCRUD},
+		{"last import time cross backend", runTestLastImportTimeCrossBackend},
+		{"cluster scoped resources compatibility", runTestClusterScopedResources},
+		{"cross backend rv list compatibility", runTestCrossBackendRVListCompatibility},
 	}
 
 	for _, tc := range cases {
@@ -114,15 +120,15 @@ func newIntegrationTestContext(t *testing.T) context.Context {
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Test SQL backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
 	})
 
 	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
 	})
 }
@@ -284,18 +290,18 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 // runTestSQLBackendFieldsCompatibility tests that KV backend with RvManager populates all SQL backend legacy fields
 func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Create unique namespace for isolation
 	namespace := nsPrefix + "-fields-test"
 
 	// Test SQL backend with 3 resources through complete lifecycle
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, sqlBackend, namespace+"-sql", db, ctx)
 	})
 
 	// Test KV backend with 3 resources through complete lifecycle
 	t.Run("KV Backend Operations", func(t *testing.T) {
+		ctx := newIntegrationTestContext(t)
 		runSQLBackendFieldsTest(t, kvBackend, namespace+"-kv", db, ctx)
 	})
 }
@@ -953,6 +959,224 @@ func runTestBulkImportCompatibility(t *testing.T, sqlBackend, kvBackend resource
 		require.GreaterOrEqual(t, len(records), 1, "Expected at least 1 resource_version record")
 		require.Greater(t, records[0].ResourceVersion, int64(0), "resource_version should be positive")
 	})
+}
+
+// runTestBulkImportLargeCounterCRUD bulk-imports >1000 items via one backend
+// (pushing the bulkRV counter past 999) and then performs CRUD+List through
+// ResourceServers wrapping BOTH backends to verify cross-backend consistency.
+func runTestBulkImportLargeCounterCRUD(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, _ sqldb.DB) {
+	t.Run("import via kv", func(t *testing.T) {
+		bulkImportLargeCounterCRUD(t, kvBackend, sqlBackend, kvBackend, nsPrefix+"-lc-kv")
+	})
+	t.Run("import via sql", func(t *testing.T) {
+		bulkImportLargeCounterCRUD(t, sqlBackend, sqlBackend, kvBackend, nsPrefix+"-lc-sql")
+	})
+}
+
+// bulkImportLargeCounterCRUD bulk-imports 1010 items through importBackend,
+// then verifies that both SQL and KV servers can List and Read the data, mutates
+// through the import server, and confirms both servers see the final state.
+func bulkImportLargeCounterCRUD(t *testing.T, importBackend, sqlBackend, kvBackend resource.StorageBackend, ns string) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+	listKey := &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType}
+
+	const totalItems = 1010
+
+	// Build 1010 ADDED requests so the bulkRV counter exceeds 999.
+	bulkRequests := make([]*resourcepb.BulkRequest, 0, totalItems)
+	for i := 1; i <= totalItems; i++ {
+		name := fmt.Sprintf("pl-%04d", i)
+		bulkRequests = append(bulkRequests, &resourcepb.BulkRequest{
+			Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: name},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value: createPlaylistJSON(PlaylistResourceOptions{
+				Name: name, Namespace: ns, UID: fmt.Sprintf("uid-%04d", i),
+				Generation: 1, Title: fmt.Sprintf("Playlist %d", i),
+			}),
+		})
+	}
+
+	bulk, ok := importBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok)
+	resp := bulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{listKey},
+	}, toBulkIterator(bulkRequests))
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+	importServer := createStorageServer(t, importBackend)
+
+	// Pick 20 items around the spill boundary (counters 990-1009) for targeted CRUD.
+	const spillStart = 990
+	const spillCount = 20
+	spillNames := make([]string, spillCount)
+	for i := range spillNames {
+		spillNames[i] = fmt.Sprintf("pl-%04d", spillStart+i)
+	}
+
+	// Split into update and delete sets, alternating so each straddles the boundary.
+	// Even indices → update, odd indices → delete.
+	var updateNames, deleteNames []string
+	for i, name := range spillNames {
+		if i%2 == 0 {
+			updateNames = append(updateNames, name)
+		} else {
+			deleteNames = append(deleteNames, name)
+		}
+	}
+
+	// --- Phase 1: both backends can List and Read the imported data ---
+	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
+		t.Run(label+" list after import", func(t *testing.T) {
+			list, err := server.List(ctx, &resourcepb.ListRequest{
+				Limit:   totalItems + 1,
+				Options: &resourcepb.ListOptions{Key: listKey},
+			})
+			require.NoError(t, err)
+			require.Nil(t, list.Error)
+			require.Equal(t, totalItems, len(list.Items))
+		})
+
+		t.Run(label+" read spill-boundary items", func(t *testing.T) {
+			for _, name := range spillNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err, "read failed for %s", name)
+				require.Nil(t, readResp.Error, "read error for %s: %v", name, readResp.Error)
+				require.Greater(t, readResp.ResourceVersion, int64(0))
+				require.Equal(t, name, extractResourceNameFromJSON(t, readResp.Value))
+			}
+		})
+	}
+
+	// --- Phase 2: mutate through the import server ---
+	// Read current RVs from the import server
+	rvByName := make(map[string]int64)
+	for _, name := range spillNames {
+		key := createPlaylistKey(ns, name)
+		readResp, err := importServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, readResp.Error)
+		rvByName[name] = readResp.ResourceVersion
+	}
+
+	t.Run("update spill-boundary items", func(t *testing.T) {
+		for _, name := range updateNames {
+			updated := updatePlaylistResource(t, importServer, ctx, PlaylistResourceOptions{
+				Name: name, Namespace: ns, UID: "uid-" + name[3:],
+				Generation: 2, Title: name + " Updated",
+			}, rvByName[name])
+			rvByName[name] = updated.ResourceVersion
+		}
+	})
+
+	t.Run("delete spill-boundary items", func(t *testing.T) {
+		for _, name := range deleteNames {
+			deletePlaylistResource(t, importServer, ctx, ns, name, rvByName[name])
+		}
+	})
+
+	numDeleted := len(deleteNames)
+
+	// --- Phase 3: both backends see the mutations ---
+	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
+		t.Run(label+" list after mutations", func(t *testing.T) {
+			list, err := server.List(ctx, &resourcepb.ListRequest{
+				Limit:   totalItems + 1,
+				Options: &resourcepb.ListOptions{Key: listKey},
+			})
+			require.NoError(t, err)
+			require.Nil(t, list.Error)
+			require.Equal(t, totalItems-numDeleted, len(list.Items),
+				"%d items were deleted, rest should remain", numDeleted)
+		})
+
+		t.Run(label+" verify updated content", func(t *testing.T) {
+			for _, name := range updateNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err, "read-after-update failed for %s", name)
+				require.Nil(t, readResp.Error)
+				require.Contains(t, string(readResp.Value), name+" Updated",
+					"updated title should be present for %s", name)
+			}
+		})
+
+		t.Run(label+" verify deleted items gone", func(t *testing.T) {
+			for _, name := range deleteNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err)
+				require.NotNil(t, readResp.Error, "deleted item %s should return an error", name)
+				require.Equal(t, int32(http.StatusNotFound), readResp.Error.Code,
+					"deleted item %s should be 404", name)
+			}
+		})
+	}
+}
+
+// runTestLastImportTimeCrossBackend verifies that last import times written by one backend
+// can be read by the other backend (SQL → KV and KV → SQL).
+func runTestLastImportTimeCrossBackend(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+
+	buildSingleBulkRequest := func(ns string) []*resourcepb.BulkRequest {
+		return []*resourcepb.BulkRequest{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "lit-playlist-1"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "lit-playlist-1", Namespace: ns, UID: "lit-uid-1", Generation: 1, Title: "LIT Playlist"}),
+			},
+		}
+	}
+
+	// Phase 1: Write via SQL backend, read from both
+	sqlNS := nsPrefix + "-lit-sql"
+	sqlBulk, ok := sqlBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "SQL backend must support BulkProcessingBackend")
+	sqlResp := sqlBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(sqlNS)))
+	require.Nil(t, sqlResp.Error)
+
+	// SQL backend should be able to read its own last import time
+	sqlTimes := collectLastImportedTimes(t, sqlBackend, ctx)
+	sqlNSR := resource.NamespacedResource{Namespace: sqlNS, Group: group, Resource: resourceType}
+	require.Contains(t, sqlTimes, sqlNSR, "SQL backend should return last import time for SQL-written namespace")
+	require.False(t, sqlTimes[sqlNSR].IsZero(), "SQL backend last import time should not be zero")
+
+	// KV backend should also be able to read the SQL-written last import time
+	kvTimes := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes, sqlNSR, "KV backend should return last import time written by SQL backend")
+	require.False(t, kvTimes[sqlNSR].IsZero(), "KV backend last import time for SQL-written namespace should not be zero")
+
+	// Phase 2: Write via KV backend, read from both
+	kvNS := nsPrefix + "-lit-kv"
+	kvBulk, ok := kvBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "KV backend must support BulkProcessingBackend")
+	kvResp := kvBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(kvNS)))
+	require.Nil(t, kvResp.Error)
+
+	// KV backend should be able to read its own last import time
+	kvNSR := resource.NamespacedResource{Namespace: kvNS, Group: group, Resource: resourceType}
+	kvTimes2 := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes2, kvNSR, "KV backend should return last import time for KV-written namespace")
+	require.False(t, kvTimes2[kvNSR].IsZero(), "KV backend last import time should not be zero")
+
+	// SQL backend should also be able to read the KV-written last import time
+	sqlTimes2 := collectLastImportedTimes(t, sqlBackend, ctx)
+	require.Contains(t, sqlTimes2, kvNSR, "SQL backend should return last import time written by KV backend")
+	require.False(t, sqlTimes2[kvNSR].IsZero(), "SQL backend last import time for KV-written namespace should not be zero")
 }
 
 type optimisticResourceState struct {
@@ -1975,6 +2199,223 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
 }
 
+// runTestClusterScopedResources tests cluster-scoped resources (empty namespace)
+// with both SQL and KV backends to verify cross-backend compatibility.
+func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, dbConn sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	clusterKey := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: "",
+			Name:      name,
+		}
+	}
+
+	clusterResourceJSON := func(name, uid, title string) []byte {
+		return fmt.Appendf(nil, `{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "%s",
+				"namespace": "",
+				"uid": "%s",
+				"generation": 1
+			},
+			"spec": {
+				"title": "%s"
+			}
+		}`, name, uid, title)
+	}
+
+	listClusterResources := func(t *testing.T, server resource.ResourceServer) *resourcepb.ListResponse {
+		t.Helper()
+		resp, err := server.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+					Namespace: "",
+				},
+			},
+		})
+		require.NoError(t, err)
+		return resp
+	}
+
+	t.Run("Write to SQL backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-sql-1", "SQL Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "SQL Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		require.JSONEq(t, string(sqlResp.Value), string(kvResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("Write to KV backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-kv-1"
+		created, err := kvServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-kv-1", "KV Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "KV Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		require.JSONEq(t, string(kvResp.Value), string(sqlResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("List from both backends", func(t *testing.T) {
+		sqlList := listClusterResources(t, sqlServer)
+		require.Nil(t, sqlList.Error, "SQL List error: %v", sqlList.Error)
+		kvList := listClusterResources(t, kvServer)
+		require.Nil(t, kvList.Error, "KV List error: %v", kvList.Error)
+		require.Equal(t, len(sqlList.Items), len(kvList.Items), "list count mismatch between backends")
+
+		// Verify items match
+		sqlItems := make(map[string][]byte)
+		for _, item := range sqlList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlItems[name] = item.Value
+		}
+		for _, item := range kvList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlVal, exists := sqlItems[name]
+			require.True(t, exists, "item %s from KV not found in SQL list", name)
+			require.JSONEq(t, string(sqlVal), string(item.Value), "payload mismatch for %s", name)
+		}
+	})
+
+	t.Run("Update and delete cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+
+		resp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+
+		// Update via SQL backend
+		updated, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-sql-1", "Updated SQL Cluster Resource"),
+			ResourceVersion: resp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error, "SQL Update error: %v", updated.Error)
+
+		// Read updated resource from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read after update error: %v", kvResp.Error)
+		require.Contains(t, string(kvResp.Value), "Updated SQL Cluster Resource")
+
+		// Delete via KV backend
+		deleted, err := kvServer.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             clusterKey(name),
+			ResourceVersion: kvResp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error, "KV Delete error: %v", deleted.Error)
+
+		// Verify deleted from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.NotNil(t, sqlResp.Error, "resource should be deleted")
+		require.Equal(t, int32(404), sqlResp.Error.Code)
+	})
+
+	t.Run("List history for cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-history-1"
+
+		// Create resource
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-history-1", "History V1"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "Create error: %v", created.Error)
+
+		// Update twice to build history
+		updated1, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V2"),
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated1.Error, "Update 1 error: %v", updated1.Error)
+
+		updated2, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V3"),
+			ResourceVersion: updated1.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated2.Error, "Update 2 error: %v", updated2.Error)
+
+		historyReq := &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: clusterKey(name),
+			},
+			Source: resourcepb.ListRequest_HISTORY,
+			Limit:  10,
+		}
+
+		// List history from SQL backend
+		sqlHistory, err := sqlServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, sqlHistory.Error, "SQL ListHistory error: %v", sqlHistory.Error)
+		require.Len(t, sqlHistory.Items, 3, "SQL backend should have 3 history entries")
+
+		// List history from KV backend
+		kvHistory, err := kvServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, kvHistory.Error, "KV ListHistory error: %v", kvHistory.Error)
+		require.Len(t, kvHistory.Items, 3, "KV backend should have 3 history entries")
+
+		// Verify both backends return the same history entries (order may differ
+		// between backends, so compare as unordered sets).
+		sqlValues := make([]string, len(sqlHistory.Items))
+		for i, item := range sqlHistory.Items {
+			sqlValues[i] = string(item.Value)
+		}
+		kvValues := make([]string, len(kvHistory.Items))
+		for i, item := range kvHistory.Items {
+			kvValues[i] = string(item.Value)
+		}
+		require.ElementsMatch(t, sqlValues, kvValues, "history entries should match between backends")
+	})
+}
+
 // SearchServerFactory is a function that creates a ResourceServer with search enabled
 type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer
 
@@ -2230,5 +2671,85 @@ func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestCon
 		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
 			alphaName(1), betaName(1),
 		})
+	})
+}
+
+// runTestCrossBackendRVListCompatibility verifies that a ResourceVersion obtained
+// from one backend can be used to list a point-in-time snapshot from the other
+// backend. This exercises cross-format RV handling (microsecond ↔ snowflake).
+func runTestCrossBackendRVListCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, _ sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	// testCrossBackendList creates resources via backend A, captures a
+	// point-in-time RV, creates more resources, then lists from backend B
+	// using A's RV. Backend B must return only the resources that existed at
+	// A's RV — not the ones created afterward. This catches missing RV
+	// format conversions: without conversion, a snowflake RV (very large)
+	// passed to the SQL backend would match all rows via `<= RV`, and a
+	// microsecond RV (very small) passed to the KV backend would match none.
+	testCrossBackendList := func(t *testing.T, serverA, serverB resource.ResourceServer, expectSnowflakeRV bool, ns string) {
+		listOpts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: ns,
+		}}
+
+		// Create 2 resources via backend A.
+		for i := 1; i <= 2; i++ {
+			createPlaylistResource(t, serverA, ctx, PlaylistResourceOptions{
+				Name:       fmt.Sprintf("res-%d", i),
+				Namespace:  ns,
+				UID:        fmt.Sprintf("uid-%d", i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Playlist %d", i),
+			})
+		}
+
+		// List from backend A to capture a point-in-time RV.
+		listA, err := serverA.List(ctx, &resourcepb.ListRequest{Options: listOpts})
+		require.NoError(t, err)
+		require.Nil(t, listA.Error)
+		require.Len(t, listA.Items, 2)
+		rvFromA := listA.ResourceVersion
+		require.Greater(t, rvFromA, int64(0))
+		require.Equal(t, expectSnowflakeRV, resource.IsSnowflake(rvFromA), "RV format should match the producing backend")
+
+		// Create 2 more resources after the captured RV.
+		for i := 3; i <= 4; i++ {
+			createPlaylistResource(t, serverA, ctx, PlaylistResourceOptions{
+				Name:       fmt.Sprintf("res-%d", i),
+				Namespace:  ns,
+				UID:        fmt.Sprintf("uid-%d", i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Playlist %d", i),
+			})
+		}
+
+		// Sanity: listing latest from A should return all 4 items.
+		listAll, err := serverA.List(ctx, &resourcepb.ListRequest{Options: listOpts})
+		require.NoError(t, err)
+		require.Nil(t, listAll.Error)
+		require.Len(t, listAll.Items, 4)
+
+		// List from backend B at A's RV — must return exactly the 2
+		// resources that existed at that point, not all 4.
+		listB, err := serverB.List(ctx, &resourcepb.ListRequest{
+			ResourceVersion: rvFromA,
+			Options:         listOpts,
+		})
+		require.NoError(t, err)
+		require.Nil(t, listB.Error)
+		require.Len(t, listB.Items, 2, "listing with cross-backend RV should return only the resources that existed at that RV")
+	}
+
+	t.Run("SQL to KV", func(t *testing.T) {
+		testCrossBackendList(t, sqlServer, kvServer, false, nsPrefix+"-rv-sql2kv")
+	})
+
+	t.Run("KV to SQL", func(t *testing.T) {
+		testCrossBackendList(t, kvServer, sqlServer, true, nsPrefix+"-rv-kv2sql")
 	})
 }

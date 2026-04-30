@@ -12,10 +12,6 @@ You can use it or regular text input. When used, AutoSizeInput resizes itself to
 
 To add more context to the input, you can add either text or an icon before or after the input using the `prefix` and `suffix`. Here are some examples for you to try in the Preview!
 
-```jsx
-<AutoSizeInput prefix={<Icon name="search" />} />
-```
-
 <ExampleFrame>
   <AutoSizeInput prefix={<Icon name="search" />} />
 </ExampleFrame>
@@ -23,12 +19,6 @@ To add more context to the input, you can add either text or an icon before or a
 ## Usage in forms with Field
 
 Use `AutoSizeInput`with the`Field`component to get labels and descriptions. Also, you can use`AutoSizeInput`with the`required`attribute for validation. See the`Field` component for more information.
-
-```jsx
-<Field label="Important information" description="This information is very important, so you really need to fill it in">
-  <AutoSizeInput name="importantInput" required />
-</Field>
-```
 
 <ExampleFrame>
   <Field label="Important information!" description="Please enter the relevant information.">

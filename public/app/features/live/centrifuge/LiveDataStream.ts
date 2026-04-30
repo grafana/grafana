@@ -1,23 +1,28 @@
-import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
+import { map, Observable, ReplaySubject, type Subject, type Subscriber, type Subscription } from 'rxjs';
 
 import {
-  DataFrameJSON,
-  DataQueryError,
-  Field,
+  type DataFrameJSON,
+  type DataQueryError,
+  type Field,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
   LiveChannelConnectionState,
-  LiveChannelEvent,
-  LiveChannelId,
+  type LiveChannelEvent,
+  type LiveChannelId,
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
 import { getStreamingFrameOptions } from '@grafana/data/internal';
-import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions, toDataQueryError } from '@grafana/runtime';
+import {
+  type LiveDataStreamOptions,
+  StreamingFrameAction,
+  type StreamingFrameOptions,
+  toDataQueryError,
+} from '@grafana/runtime';
 
 import { StreamingResponseDataType } from '../data/utils';
 
-import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';
+import { type DataStreamSubscriptionKey, type StreamingDataQueryResponse } from './service';
 
 const bufferIfNot =
   (canEmitObservable: Observable<boolean>) =>

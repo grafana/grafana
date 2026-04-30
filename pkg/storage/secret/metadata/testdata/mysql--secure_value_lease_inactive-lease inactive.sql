@@ -11,7 +11,7 @@ WHERE `guid` IN (
     FROM `secret_secure_value`
     WHERE
       `active` = FALSE AND
-      10 - `created` > 300 AND
+      10 - `updated` > 300 AND
       10 - `lease_created` > 30
   ) AS sub
   WHERE rn <= 10

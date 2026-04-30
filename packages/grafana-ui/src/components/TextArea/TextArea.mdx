@@ -12,6 +12,22 @@ Use for multi line inputs like descriptions.
 
 <Canvas of={TextAreaStories.Basic} />
 
+### When to use
+
+Use a TextArea when you need users to input longer, free-form text. This could be for capturing descriptions, feedback, or any other information that can't be reasonably contained in a single line input field.
+
+### Placeholder text
+
+The TextArea component supports the `placeholder` prop, which can be used to provide a hint to the user about what kind of input is expected. This should be used sparingly, as it can be confusing to users if the placeholder text disappears when they start typing. If you do use placeholder text, make sure it is very clear what kind of input is expected.
+
+### Invalid state
+
+The TextArea component includes an optional `invalid` prop which can be set to `true` to highlight the TextArea as having an error. This can be used to visually indicate problems, like validation errors or incorrect input.
+
+### HTMLTextAreaElement
+
+In addition to the `invalid` prop, the TextArea component by default accepts all the [standard attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea#attributes) of the `HTMLTextAreaElement` as props. This makes sure that TextArea can be used as a drop-in replacement for the standard HTML `textarea` element.
+
 ### Usage in forms with Field
 
 `TextArea` should be used with the `Field` component to get labels and descriptions. It can also be used for validation by using the `required` attribute. See the `Field` component for more information.

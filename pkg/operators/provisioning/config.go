@@ -92,6 +92,7 @@ type ControllerConfig struct {
 // provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
+// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -554,7 +555,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {

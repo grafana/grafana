@@ -1,5 +1,7 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
+
+import { Field } from '../Field';
 
 import { RadioButtonGroup } from './RadioButtonGroup';
 import mdx from './RadioButtonGroup.mdx';
@@ -43,41 +45,44 @@ export const RadioButtons: StoryFn = (args) => {
   return (
     <div style={{ width: '100%' }}>
       <div style={{ marginBottom: '32px' }}>
-        <h5>Full width</h5>
-        <RadioButtonGroup
-          options={options}
-          disabled={args.disabled}
-          disabledOptions={args.disabledOptions}
-          value={selected}
-          onChange={(v) => setSelected(v!)}
-          size={args.size}
-          fullWidth={args.fullWidth}
-          invalid={args.invalid}
-        />
+        <Field label="Full width">
+          <RadioButtonGroup
+            options={options}
+            disabled={args.disabled}
+            disabledOptions={args.disabledOptions}
+            value={selected}
+            onChange={(v) => setSelected(v!)}
+            size={args.size}
+            fullWidth={args.fullWidth}
+            invalid={args.invalid}
+          />
+        </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
-        <h5>Auto width</h5>
-        <RadioButtonGroup
-          options={options}
-          disabled={args.disabled}
-          disabledOptions={args.disabledOptions}
-          value={selected}
-          onChange={(v) => setSelected(v!)}
-          size={args.size}
-          invalid={args.invalid}
-        />
+        <Field label="Auto width">
+          <RadioButtonGroup
+            options={options}
+            disabled={args.disabled}
+            disabledOptions={args.disabledOptions}
+            value={selected}
+            onChange={(v) => setSelected(v!)}
+            size={args.size}
+            invalid={args.invalid}
+          />
+        </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
-        <h5>With only icons and descriptions</h5>
-        <RadioButtonGroup
-          options={optionsWithOnlyIcons}
-          value={selected}
-          disabled={args.disabled}
-          disabledOptions={args.disabledOptions}
-          onChange={(v) => setSelected(v!)}
-          size={args.size}
-          invalid={args.invalid}
-        />
+        <Field label="With only icons and descriptions">
+          <RadioButtonGroup
+            options={optionsWithOnlyIcons}
+            value={selected}
+            disabled={args.disabled}
+            disabledOptions={args.disabledOptions}
+            onChange={(v) => setSelected(v!)}
+            size={args.size}
+            invalid={args.invalid}
+          />
+        </Field>
       </div>
     </div>
   );

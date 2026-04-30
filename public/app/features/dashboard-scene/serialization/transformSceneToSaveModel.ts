@@ -1,28 +1,28 @@
 import { defaults, isEqual } from 'lodash';
 
-import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
+import { isEmptyObject, type ScopedVars, type TimeRange } from '@grafana/data';
 import {
   behaviors,
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridRow,
   VizPanel,
   SceneDataTransformer,
   SceneVariableSet,
-  LocalValueVariable,
+  type LocalValueVariable,
 } from '@grafana/scenes';
 import {
-  AnnotationQuery,
-  Dashboard,
-  DashboardLink,
-  DataTransformerConfig,
+  type AnnotationQuery,
+  type Dashboard,
+  type DashboardLink,
+  type DataTransformerConfig,
   defaultDashboard,
   defaultTimePickerConfig,
-  FieldConfigSource,
-  GridPos,
-  Panel,
-  RowPanel,
-  TimePickerConfig,
-  VariableModel,
+  type FieldConfigSource,
+  type GridPos,
+  type Panel,
+  type RowPanel,
+  type TimePickerConfig,
+  type VariableModel,
   VariableRefresh,
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -31,18 +31,18 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { RowItem } from '../scene/layout-rows/RowItem';
+import { type RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { TabItem } from '../scene/layout-tabs/TabItem';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';

@@ -3,11 +3,13 @@ package user
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
@@ -183,6 +185,8 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		}
 	}
 
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
+
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
@@ -293,6 +297,35 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	iamUser := toUserItem(&result.User, ns.Value)
 	return &iamUser, nil
+}
+
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
+	if options.LabelSelector == nil {
+		return 0
+	}
+
+	reqs, selectable := options.LabelSelector.Requirements()
+	if !selectable {
+		return 0
+	}
+
+	for _, req := range reqs {
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
+		}
+	}
+
+	return 0
 }
 
 func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {

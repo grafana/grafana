@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import {
-  TempoVariableQuery,
+  type TempoVariableQuery,
   TempoVariableQueryEditor,
-  TempoVariableQueryEditorProps,
+  type TempoVariableQueryEditorProps,
   TempoVariableQueryType,
 } from './VariableQueryEditor';
 import { selectOptionInTest } from './_importedDependencies/test/helpers/selectOptionInTest';

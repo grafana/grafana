@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { StoryFn, Meta } from '@storybook/react';
+import { useArgs } from '@storybook/preview-api';
+import { type StoryFn, type Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { getAvailableIcons } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { TabContent } from '../Tabs/TabContent';
 
@@ -34,12 +34,6 @@ const meta: Meta = {
     amet.`),
   },
   argTypes: {
-    icon: {
-      control: {
-        type: 'select',
-        options: getAvailableIcons(),
-      },
-    },
     title: {
       control: {
         type: 'text',
@@ -49,24 +43,35 @@ const meta: Meta = {
 };
 
 export const Basic: StoryFn = ({ body, title, ...args }) => {
+  const [, updateArgs] = useArgs();
+
+  const setIsOpen = useCallback(
+    (isOpen: boolean) => {
+      updateArgs({ isOpen });
+    },
+    [updateArgs]
+  );
+
   return (
-    <Modal title={title} {...args}>
-      {body}
-      <Modal.ButtonRow>
-        <Button variant="secondary" fill="outline">
-          Cancel
-        </Button>
-        <Button>Button1</Button>
-      </Modal.ButtonRow>
-    </Modal>
+    <>
+      <Button onClick={() => setIsOpen(true)}>Open modal</Button>
+
+      <Modal title={title} {...args} onDismiss={() => setIsOpen(false)}>
+        {body}
+        <Modal.ButtonRow>
+          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button>Button1</Button>
+        </Modal.ButtonRow>
+      </Modal>
+    </>
   );
 };
 Basic.args = {
   title: 'My Modal',
-  icon: 'exclamation-triangle',
   isOpen: true,
-  closeOnEscape: false,
-  iconTooltip: 'icon tooltip',
+  closeOnEscape: true,
 };
 
 const tabs = [
@@ -76,11 +81,14 @@ const tabs = [
 ];
 
 export const WithTabs: StoryFn = (args) => {
+  const [, updateArgs] = useArgs();
   const [activeTab, setActiveTab] = useState('first');
+
+  const setIsOpen = useCallback((isOpen: boolean) => updateArgs({ isOpen }), [updateArgs]);
+
   const modalHeader = (
     <ModalTabsHeader
       title={args.title}
-      icon={args.icon}
       tabs={tabs}
       activeTab={activeTab}
       onChangeTab={(t) => {
@@ -89,23 +97,29 @@ export const WithTabs: StoryFn = (args) => {
     />
   );
   return (
-    <div>
-      <Modal ariaLabel={args.title} title={modalHeader} isOpen={true}>
+    <>
+      <Button onClick={() => setIsOpen(true)}>Open modal</Button>
+      <Modal ariaLabel={args.title} title={modalHeader} {...args} onDismiss={() => setIsOpen(false)}>
         <TabContent>
           {activeTab === tabs[0].value && <div>{args.body}</div>}
           {activeTab === tabs[1].value && <div>Second tab content</div>}
           {activeTab === tabs[2].value && <div>Third tab content</div>}
         </TabContent>
       </Modal>
-    </div>
+    </>
   );
 };
 WithTabs.args = {
   title: 'My Modal',
   icon: 'cog',
+  isOpen: true,
 };
 
 export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
+  const [, updateArgs] = useArgs();
+
+  const setIsOpen = useCallback((isOpen: boolean) => updateArgs({ isOpen }), [updateArgs]);
+
   const override = {
     modalContent: css({
       backgroundColor: 'red',
@@ -113,17 +127,18 @@ export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
     }),
   };
   return (
-    <Modal title={title} {...args} contentClassName={cx(override.modalContent)}>
-      {body}
-    </Modal>
+    <>
+      <Button onClick={() => setIsOpen(true)}>Open modal</Button>
+      <Modal title={title} {...args} contentClassName={cx(override.modalContent)} onDismiss={() => setIsOpen(false)}>
+        {body}
+      </Modal>
+    </>
   );
 };
 UsingContentClassName.args = {
   title: 'Using contentClassName to override background',
-  icon: 'exclamation-triangle',
   isOpen: true,
   closeOnEscape: false,
-  iconTooltip: 'icon tooltip',
 };
 
 export default meta;

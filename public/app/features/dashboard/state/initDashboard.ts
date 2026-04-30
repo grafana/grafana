@@ -1,15 +1,15 @@
-import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
+import { type DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { type KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { type DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv, type TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
@@ -21,13 +21,13 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/toStateKey';
 import {
   DASHBOARD_FROM_LS_KEY,
-  DashboardDTO,
+  type DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
-  HomeDashboardRedirectDTO,
+  type HomeDashboardRedirectDTO,
   isRedirectResponse,
 } from 'app/types/dashboard';
-import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
+import { type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
@@ -36,7 +36,7 @@ import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
-import { PanelModel } from './PanelModel';
+import { type PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 

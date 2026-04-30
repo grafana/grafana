@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, type RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 import { useFirstMountState } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -23,12 +23,12 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import {
   DOCS_URL_NO_DATA_ERROR_HANDLING,
   DOCS_URL_RULE_EVALUATION,
@@ -49,9 +49,6 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-
-export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
-export const MAX_GROUP_RESULTS = 1000;
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
@@ -456,7 +453,7 @@ export function GrafanaEvaluationBehaviorStep({
   );
 }
 
-function EvaluationGroupCreationModal({
+export function EvaluationGroupCreationModal({
   onClose,
   onCreate,
 }: {

@@ -15,6 +15,9 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
     - name: Checkout repository

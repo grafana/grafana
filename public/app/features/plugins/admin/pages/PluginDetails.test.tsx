@@ -1,4 +1,4 @@
-import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import { getDefaultNormalizer, type RenderResult, type SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -7,7 +7,7 @@ import {
   PluginSignatureStatus,
   PluginType,
   dateTimeFormatTimeAgo,
-  WithAccessControlMetadata,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,11 +19,11 @@ import { usePluginConfig } from '../hooks/usePluginConfig';
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import {
-  CatalogPlugin,
-  CatalogPluginDetails,
+  type CatalogPlugin,
+  type CatalogPluginDetails,
   PluginTabIds,
   PluginTabLabels,
-  ReducerState,
+  type ReducerState,
   RequestStatus,
 } from '../types';
 
@@ -261,7 +261,12 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an update button for a plugin that is managed', async () => {
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+      const { queryByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        managed: { enabled: true },
+      });
 
       // Does not display an "update" button
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();

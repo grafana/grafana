@@ -1,19 +1,19 @@
-import { Geometry } from 'ol/geom';
+import { type Geometry } from 'ol/geom';
 
 import {
-  FieldMatcher,
+  type FieldMatcher,
   getFieldMatcher,
   FieldMatcherID,
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   getFieldDisplayName,
   FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
+import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 
 import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
-import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
+import { getGazetteer, type Gazetteer } from '../gazetteer/gazetteer';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
 

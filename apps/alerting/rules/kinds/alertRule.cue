@@ -30,7 +30,8 @@ alertRulev0alpha1: alertRuleKind & {
 		"spec.paused",
 		"spec.panelRef.dashboardUID",
 		"spec.panelRef.panelID",
-		"spec.notificationSettings.receiver",
+		// TODO: make selectableFields play nicely with union types
+		// "spec.notificationSettings.receiver",
 		// TODO: add status fields for filtering
 	]
 

@@ -1,18 +1,18 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
+import { getDataSourceSrv, type FetchResponse, type CorrelationData, type CorrelationsData } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
-  Correlation,
-  CreateCorrelationParams,
-  CreateCorrelationResponse,
-  GetCorrelationsParams,
-  RemoveCorrelationParams,
-  RemoveCorrelationResponse,
-  UpdateCorrelationParams,
-  UpdateCorrelationResponse,
+  type Correlation,
+  type CreateCorrelationParams,
+  type CreateCorrelationResponse,
+  type GetCorrelationsParams,
+  type RemoveCorrelationParams,
+  type RemoveCorrelationResponse,
+  type UpdateCorrelationParams,
+  type UpdateCorrelationResponse,
 } from './types';
 import { correlationsLogger } from './utils';
 

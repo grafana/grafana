@@ -246,15 +246,21 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		rawSecret := "test-value"
 		secret := common.NewSecretValue(rawSecret)
 
+		desc := "custom desc"
+
 		serviceIdentity := "service-identity"
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), serviceIdentity, owner.Namespace, nil, nil)
 
 		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
-		createdName, err := svc.CreateInline(createAuthCtx, owner, secret)
+		createdName, err := svc.CreateInline(createAuthCtx, owner, secret, &desc)
 		require.NoError(t, err)
 		require.NotEmpty(t, createdName)
+
+		sv, err := tu.SecureValueService.Read(t.Context(), xkube.Namespace(owner.Namespace), createdName)
+		require.NoError(t, err)
+		require.Equal(t, desc, sv.Spec.Description)
 
 		decryptedValues, err := tu.DecryptService.Decrypt(t.Context(), serviceIdentity, owner.Namespace, createdName)
 		require.NoError(t, err)
@@ -289,7 +295,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		t.Parallel()
 
 		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
-		_, err := svc.CreateInline(t.Context(), common.ObjectReference{}, "")
+		_, err := svc.CreateInline(t.Context(), common.ObjectReference{}, "", nil)
 		require.Error(t, err)
 	})
 
@@ -300,7 +306,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		createAuthCtx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", defaultNs, nil)
 
-		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "")
+		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "", nil)
 		require.Error(t, err)
 	})
 
@@ -312,7 +318,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 		reqNs := "org-2345"
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", reqNs, nil, nil)
 
-		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		_, err := svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 	})
 
@@ -323,7 +329,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
 
-		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "")
+		_, err := svc.CreateInline(createAuthCtx, common.ObjectReference{}, "", nil)
 		require.Error(t, err)
 	})
 
@@ -338,24 +344,24 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
 
-		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		_, err := svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 
 		owner.APIGroup = "prometheus.datasource.grafana.app"
-		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		_, err = svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 
 		owner.APIVersion = "v1alpha1"
-		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		_, err = svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 
 		owner.Kind = "DataSourceConfig"
-		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		_, err = svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 		owner.Kind = ""
 
 		owner.Name = "test-datasource"
-		_, err = svc.CreateInline(createAuthCtx, owner, "")
+		_, err = svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 	})
 
@@ -366,7 +372,7 @@ func TestIntegration_InlineSecureValue_CreateInline(t *testing.T) {
 
 		createAuthCtx := testutils.CreateOBOAuthContext(t.Context(), "service-identity", defaultNs, nil, nil)
 
-		_, err := svc.CreateInline(createAuthCtx, owner, "")
+		_, err := svc.CreateInline(createAuthCtx, owner, "", nil)
 		require.Error(t, err)
 	})
 }
@@ -556,5 +562,53 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		sv, err := tu.SecureValueService.Read(ctx, xkube.Namespace(owner.Namespace), sv1)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 		require.Nil(t, sv)
+	})
+
+	t.Run("delete all values from an owner", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{
+			"securevalues:read": {"securevalues:uid:*"},
+		})
+
+		createdSv1, err := tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv1"
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		createdSv1, err = tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv2"
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = nil // no owner
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		names, err := tu.ListSv(ctx, xkube.Namespace(defaultNs))
+		require.NoError(t, err)
+		require.Equal(t, []string{"sv1", "sv2"}, names)
+
+		// Use the helper function
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		// Called once before migrating a datasource
+		// This will ensure we cleanup the previous values
+		err = svc.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
+			APIGroup:   owner.APIGroup,
+			APIVersion: owner.APIVersion,
+			Namespace:  defaultNs,
+			Kind:       owner.Kind,
+			Name:       "*",
+			UID:        "*",
+		}, "*") // remove everything from this owner
+		require.NoError(t, err)
+
+		names, err = tu.ListSv(ctx, xkube.Namespace(defaultNs))
+		require.NoError(t, err)
+		require.Equal(t, []string{"sv2"}, names) // sv1 was removed
 	})
 }

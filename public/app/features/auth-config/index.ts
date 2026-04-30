@@ -1,6 +1,6 @@
-import { Settings, SettingsSection } from 'app/types/settings';
+import { type Settings, type SettingsSection } from 'app/types/settings';
 
-import { AuthProviderInfo, GetStatusHook, AuthProviderStatus } from './types';
+import { type AuthProviderInfo, type GetStatusHook, type AuthProviderStatus } from './types';
 
 const registeredAuthProviders: AuthProviderInfo[] = [];
 const authProvidersConfigHooks: Record<string, GetStatusHook> = {};

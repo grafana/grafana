@@ -1,11 +1,11 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_BANNER_FEEDBACK_URL } from '../../constants';
+import { startIntercomSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function ExperimentalFeedbackButton() {
@@ -14,7 +14,7 @@ export function ExperimentalFeedbackButton() {
   const styles = useStyles2(getStyles);
 
   // Track whether the banner was visible when this component first mounted.
-  // If it was, the user dismissed it in this session — animate the button in.
+  // If it was, the user dismissed it - animate the button in.
   // If it wasn't (already dismissed on load), skip the animation.
   const bannerWasInitiallyVisible = useRef(showVersionBanner);
   const shouldAnimate = bannerWasInitiallyVisible.current && !showVersionBanner;
@@ -27,14 +27,16 @@ export function ExperimentalFeedbackButton() {
     <Menu>
       <Menu.Item
         label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
-        icon="external-link-alt"
-        url={QUERY_EDITOR_BANNER_FEEDBACK_URL}
-        target="_blank"
+        icon="comment-alt-message"
+        onClick={() => startIntercomSurvey()}
       />
       <Menu.Item
         label={t('query-editor-next.experimental-button.back-to-classic', 'Go back to classic editor')}
         icon="arrow-left"
-        onClick={onSwitchToClassic}
+        onClick={() => {
+          startIntercomSurvey();
+          onSwitchToClassic?.();
+        }}
       />
     </Menu>
   );

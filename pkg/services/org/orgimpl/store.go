@@ -43,6 +43,7 @@ type store interface {
 	GetByID(context.Context, *org.GetOrgByIDQuery) (*org.Org, error)
 	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmails(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
@@ -52,7 +53,7 @@ type store interface {
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
-	//TODO: moved to service
+	// TODO: moved to service
 	log     log.Logger
 	deletes []string
 	cfg     *setting.Cfg
@@ -204,11 +205,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		// After migration to unified storage, playlist tables may have been
-		// renamed to <table>_legacy or removed entirely.
-		playlistTbl := ss.findTable("playlist")
-		playlistItemTbl := ss.findTable("playlist_item")
-
 		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
 			"DELETE FROM dashboard_tag WHERE org_id = ?",
@@ -233,13 +229,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM team_role WHERE org_id = ?",
 			"DELETE FROM user_role WHERE org_id = ?",
 			"DELETE FROM builtin_role WHERE org_id = ?",
-		}
-
-		if playlistItemTbl != "" && playlistTbl != "" {
-			deletes = append(deletes, "DELETE FROM "+playlistItemTbl+" WHERE playlist_id IN (SELECT id FROM "+playlistTbl+" WHERE org_id = ?)")
-		}
-		if playlistTbl != "" {
-			deletes = append(deletes, "DELETE FROM "+playlistTbl+" WHERE org_id = ?")
 		}
 
 		deletes = append(deletes, ss.deletes...)
@@ -652,6 +641,62 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 	return &result, nil
 }
 
+func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	result := make([]*org.OrgUserDTO, 0)
+	if len(query.Emails) == 0 {
+		return result, nil
+	}
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		emailArgs := make([]any, len(query.Emails))
+		for i, e := range query.Emails {
+			emailArgs[i] = strings.ToLower(e)
+		}
+		placeholders := strings.Repeat("?,", len(query.Emails))
+		placeholders = placeholders[:len(placeholders)-1]
+
+		whereConditions := []string{
+			"org_user.org_id = ?",
+			fmt.Sprintf("u.email IN (%s)", placeholders),
+			"u.is_service_account = ?",
+		}
+		whereParams := append([]any{query.OrgID}, emailArgs...)
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
+
+		if query.ExcludeHiddenUsers && ss.cfg != nil {
+			cond, params := buildHiddenUsersFilter(nil, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
+		sess := dbSession.Table("org_user").
+			Join("INNER", []string{ss.dialect.Quote("user"), "u"}, "org_user.user_id=u.id").
+			Where(strings.Join(whereConditions, " AND "), whereParams...).
+			Cols(
+				"org_user.org_id",
+				"org_user.user_id",
+				"u.email",
+				"u.uid",
+				"u.name",
+				"u.login",
+				"org_user.role",
+				"u.last_seen_at",
+				"u.created",
+				"u.updated",
+				"u.is_disabled",
+				"u.is_provisioned",
+			).Asc("u.login", "u.email")
+
+		return sess.Find(&result)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
 	var orga org.Org
 	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -838,23 +883,6 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
-}
-
-// findTable returns the actual table name for a base name that may have been
-// renamed to <base>_legacy after unified storage migration. Returns "" if
-// neither variant exists.
-func (ss *sqlStore) findTable(base string) string {
-	for _, name := range []string{base, base + "_legacy"} {
-		exists, err := ss.db.GetEngine().IsTableExist(name)
-		if err != nil {
-			ss.log.Warn("Failed to check table existence", "table", name, "error", err)
-			continue
-		}
-		if exists {
-			return name
-		}
-	}
-	return ""
 }
 
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.

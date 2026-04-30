@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "İstemci Sertifikası",
       "aria-label-client-id": "İstemci kimliği",
       "aria-label-client-secret": "İstemci gizli anahtarı",
+      "aria-label-private-key": "Gizli Anahtar",
+      "aria-label-private-key-password": "Sertifika Parolası",
       "aria-label-symbol-client-secret": "İstemci gizli anahtarı",
       "aria-label-tenant-id": "Kiracı kimliği",
+      "description-certificate-format": "Sertifikanın biçimini seçin (PEM sertifikaları düz metin PEM biçiminde olmalı, PFX sertifikaları base64 kodlu PFX biçiminde olmalıdır)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Biçim",
+      "label-client-certificate": "İstemci Sertifikası",
       "label-client-id": "Uygulama (istemci) kimliği",
       "label-client-secret": "İstemci gizli anahtarı",
+      "label-private-key": "Gizli Anahtar",
       "label-symbol-client-secret": "İstemci gizli anahtarı",
+      "label-symbol-private-key-password": "Sertifika Parolası",
       "label-tenant-id": "Dizin (kiracı) kimliği",
       "placeholder-symbol-client-secret": "yapılandırılmış",
       "reset-symbol-client-secret": "Sıfırla"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Azure hizmetleri için kimlik doğrulama türünü seçin",
-      "label-authentication": "Kimlik doğrulama",
+      "label-authentication": "Kimlik doğrulama türü",
       "title-authentication": "Kimlik doğrulama"
     },
     "basic-logs-toggle": {
@@ -277,7 +285,7 @@
       "tooltip-time-range": "<0>Sorgu için kullanılacak zaman aralığını belirtir. <1>Sorgu</1> seçeneği yalnızca sorguda belirtilen zaman aralıklarını kullanacaktır. <3>Pano</3> yalnızca Grafana zaman aralığını kullanacaktır.</0>"
     },
     "top-field": {
-      "label-top": "En Üst"
+      "label-top": "Üst"
     },
     "trace-type-field": {
       "label-event-type": "Olay Türü",

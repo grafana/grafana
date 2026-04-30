@@ -6,7 +6,7 @@ import { Dropdown, ToolbarButton } from '@grafana/ui';
 
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
-import { ExtensionDropdownProps } from './types';
+import { type ExtensionDropdownProps } from './types';
 
 export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
   const { links, setSelectedExtension, setIsModalOpen, isModalOpen, noQueriesInPane } = props;

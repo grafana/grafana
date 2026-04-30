@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Klientcertifikat",
       "aria-label-client-id": "Kund-ID",
       "aria-label-client-secret": "Kundhemlighet",
+      "aria-label-private-key": "Privat nyckel",
+      "aria-label-private-key-password": "Certifikatlösenord",
       "aria-label-symbol-client-secret": "Kundhemlighet",
       "aria-label-tenant-id": "Tenant ID",
+      "description-certificate-format": "Välj formatet för certifikatet (PEM-certifikat ska vara i PEM-format med oformaterad text, PFX-certifikat ska vara i base64-kodat PFX-format)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Format",
+      "label-client-certificate": "Klientcertifikat",
       "label-client-id": "Program- (klient-) ID",
       "label-client-secret": "Kundhemlighet",
+      "label-private-key": "Privat nyckel",
       "label-symbol-client-secret": "Kundhemlighet",
+      "label-symbol-private-key-password": "Certifikatlösenord",
       "label-tenant-id": "Katalog- (klientorganisations-) ID",
       "placeholder-symbol-client-secret": "konfigurerad",
       "reset-symbol-client-secret": "Återställ"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Välj typ av autentisering till Azure-tjänster",
-      "label-authentication": "Autentisering",
+      "label-authentication": "Behörighetskontrolltyp",
       "title-authentication": "Autentisering"
     },
     "basic-logs-toggle": {
@@ -277,7 +285,7 @@
       "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall.</0>"
     },
     "top-field": {
-      "label-top": "Topp"
+      "label-top": "Överst"
     },
     "trace-type-field": {
       "label-event-type": "Händelsetyp",

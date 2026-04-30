@@ -1,4 +1,4 @@
-import { Registry, RegistryItem } from './Registry';
+import { Registry, type RegistryItem } from './Registry';
 
 export enum UnaryOperationID {
   Abs = 'abs',

@@ -27,6 +27,24 @@ For buttons at the bottom of the modal you should always use:
 - Modal.ButtonRow - this makes sure the Buttons are right aligned
 - If you have a Cancel button use fill="outline" and variant="secondary" and place it on the left side of any other button.
 
+## When to use
+
+- There is a need for an immediate response from the user.
+- Notify the user of urgent information concerning their current work.
+- Confirm a user decision.
+
+## When not to use
+
+- Avoid using a modal when the task should be repeatedly done by the user.
+- Do not use modals for non-essential information that is not related to the current workflow.
+
+## Accessibility
+
+Follow the [W3C Dialog (Modal) Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) when building a modal. We have noticed that when the content is overflowing, the user cannot scroll it unless:
+
+- The modal contains interactive elements, such as buttons, on the bottom.
+- The content has `tabIndex = 0`, and therefore, it can be keyboard-focusable.
+
 <ArgTypes of={Modal} />
 
 # ModalTabsHeader

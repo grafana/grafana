@@ -1,0 +1,119 @@
+name: Report Frontend Coverage to Bench
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  setup:
+    name: Setup opted-in teams
+    runs-on: ubuntu-x64-small
+    outputs:
+      opted-in-teams: >-
+        [
+          "@grafana/datapro",
+          "@grafana/dataviz-squad",
+          "@grafana/grafana-frontend-navigation",
+          "@grafana/grafana-operator-experience-squad"
+        ]
+    steps:
+      - name: Define opted-in teams
+        run: echo "Opted-in teams defined in job outputs"
+
+  coverage-to-bench:
+    name: Report coverage to Bench - ${{ matrix.codeowner }}
+    needs: setup
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Get Grafana version
+        id: version
+        run: |
+          GRAFANA_VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "version=$GRAFANA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Grafana version: $GRAFANA_VERSION"
+
+      - name: Run coverage for ${{ matrix.codeowner }}
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+          GITHUB_SHA: ${{ github.sha }}
+
+      - name: Verify coverage summary exists
+        run: |
+          if [ ! -f coverage-summary.json ]; then
+            echo "❌ coverage-summary.json not found"
+            exit 1
+          fi
+          echo "✅ coverage-summary.json generated"
+          cat coverage-summary.json
+
+      - name: Setup Grafana Bench
+        uses: grafana/grafana-bench/.github/actions/setup-grafana-bench@c681398158d5ba840b7493cb6a087e69f44f67a7
+        with:
+          version: 'v1.0.6'
+
+      - name: Get Vault secrets
+        id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            PROMETHEUS_URL=frontend_perf_tests:prometheus_push_url
+            PROMETHEUS_USER=frontend_perf_tests:prometheus_user
+            PROMETHEUS_TOKEN=frontend_perf_tests:prometheus_token
+
+      - name: Report coverage to Bench
+        id: bench-report
+        continue-on-error: true
+        env:
+          PROMETHEUS_URL: ${{ env.PROMETHEUS_URL }}
+          PROMETHEUS_USER: ${{ env.PROMETHEUS_USER }}
+          PROMETHEUS_PASSWORD: ${{ env.PROMETHEUS_TOKEN }}
+        run: |
+          grafana-bench report \
+            --report-input jscoverage \
+            --report-output log \
+            --prometheus-metrics \
+            --service jscoverage \
+            --service-version "${{ steps.version.outputs.version }}" \
+            --suite-name grafana/grafana \
+            --js-coverage-codeowner "${{ matrix.codeowner }}" \
+            --js-coverage-package "@grafana/grafana" \
+            --run-stage ci \
+            --log-level DEBUG \
+            coverage-summary.json
+
+      - name: Check Bench report status
+        env:
+          BENCH_OUTCOME: ${{ steps.bench-report.outcome }}
+        run: |
+          echo "Bench report outcome: $BENCH_OUTCOME"
+
+          if [[ "$BENCH_OUTCOME" != "success" ]]; then
+            echo "❌ Failed to report coverage to Bench for ${{ matrix.codeowner }}"
+            exit 1
+          fi
+
+          echo "✅ Successfully reported coverage to Bench for ${{ matrix.codeowner }}"

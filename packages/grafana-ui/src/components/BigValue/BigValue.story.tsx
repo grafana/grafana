@@ -1,6 +1,6 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
-import { FieldSparkline, FieldType } from '@grafana/data';
+import { type FieldSparkline, FieldType } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -10,7 +10,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  Props,
+  type Props,
 } from './BigValue';
 import mdx from './BigValue.mdx';
 

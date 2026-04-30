@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, AdHocFiltersController } from '@grafana/scenes';
+import { type AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, type AdHocFiltersController } from '@grafana/scenes';
 import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { type Silence } from 'app/plugins/datasource/alertmanager/types';
 
 import { prometheusExpressionBuilder } from '../../triage/scene/expressionBuilder';
 import { matcherToOperator } from '../../utils/alertmanager';

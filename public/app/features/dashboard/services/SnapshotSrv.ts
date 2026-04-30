@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { getAPINamespace } from '../../../api/utils';
 
@@ -152,6 +152,7 @@ class K8sAPI implements DashboardSnapshotSrv {
       dashboard: dashboardResponse.data.spec,
       meta: {
         isSnapshot: true,
+        version: 0,
         k8s: snapshotResponse.data.metadata,
       },
     };

@@ -30,6 +30,8 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
 
       - name: Extract current commit hash of alerting module
         id: current-commit

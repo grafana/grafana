@@ -76,13 +76,16 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				continue
 			}
 			if !val.Create.IsZero() {
-				n, err := store.CreateInline(ctx, v.ref, val.Create)
+				n, err := store.CreateInline(ctx, v.ref, val.Create, val.Description)
 				if err != nil {
 					return err
 				}
 				v.createdSecureValues = append(v.createdSecureValues, n)
 				v.hasChanged = true
 				secure[k] = common.InlineSecureValue{Name: n}
+
+				// Avoid exposing a raw secret in the kubectl metadata
+				obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "")
 				continue
 			}
 			return fmt.Errorf("invalid secure value state: %s", k)

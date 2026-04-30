@@ -43,7 +43,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
 		},
@@ -234,7 +234,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		  { "refId": "A",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
-			},{ 
+			},{
 			  "refId": "B",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
@@ -266,6 +266,31 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				Namespace("default").
 				Resource("datasources").
 				Name("test"). // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			qdr := &backend.QueryDataResponse{}
+			err = json.Unmarshal(raw, qdr)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+
+		// Use the deprecated connections path
+		// NOTE: remove after this is deployed to hosted grafana
+		t.Run("deprecated connections path", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("connections"). // <<<<< should rewrite to datasources
+				Name("test").            // datasource UID
 				SubResource("query").
 				SetHeader("Content-type", "application/json").
 				Body(body).

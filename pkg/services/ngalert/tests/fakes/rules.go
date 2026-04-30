@@ -378,6 +378,19 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
+		if len(q.ExcludeNamespaceUIDs) > 0 && slices.Contains(q.ExcludeNamespaceUIDs, r.NamespaceUID) {
+			continue
+		}
+		if len(q.ExcludeRuleGroups) > 0 && slices.Contains(q.ExcludeRuleGroups, r.RuleGroup) {
+			continue
+		}
+		if q.RuleGroupExists != nil {
+			hasGroup := r.RuleGroup != ""
+			if *q.RuleGroupExists != hasGroup {
+				continue
+			}
+		}
+
 		copyR := models.CopyRule(r)
 		ruleList = append(ruleList, copyR)
 	}

@@ -10,7 +10,7 @@ import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
 import { GrafanaRouteLoading } from './GrafanaRouteLoading';
-import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
+import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
@@ -40,7 +40,8 @@ export function GrafanaRoute(props: Props) {
     cleanupDOM();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', props);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.location.pathname, props.location.search, props.location.hash]);
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 

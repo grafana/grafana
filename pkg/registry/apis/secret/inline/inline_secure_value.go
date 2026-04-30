@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -173,7 +174,7 @@ func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, 
 	return authInfo, nil
 }
 
-func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error) {
+func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue, desc *string) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CreateInline", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),
@@ -203,6 +204,14 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 		decrypters = append(decrypters, serviceIdentity[0])
 	}
 
+	description := fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIGroup, owner.APIVersion)
+	if desc != nil {
+		trim := strings.TrimSpace(*desc)
+		if len(trim) > 0 {
+			description = trim
+		}
+	}
+
 	obj := &secretv1beta1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:    "inline-",
@@ -210,7 +219,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		},
 		Spec: secretv1beta1.SecureValueSpec{
-			Description: fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIGroup, owner.APIVersion),
+			Description: description,
 			Value:       &secret,
 			Decrypters:  decrypters,
 		},
@@ -237,6 +246,15 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 
 	if _, err := s.verifyOwnerAndAuth(ctx, owner); err != nil {
 		return err
+	}
+
+	// TEMPORARY: Enable migration of data sources, without needing breaking changes on the API contract.
+	if len(names) == 1 && names[0] == "*" {
+		if err := s.secureValueService.DeleteAllFromGroup(ctx, xkube.Namespace(owner.Namespace), owner.APIGroup); err != nil {
+			return fmt.Errorf("deleting all from group %q in namespace %q: %w", owner.APIGroup, owner.Namespace, err)
+		}
+
+		return nil
 	}
 
 	for _, name := range names {

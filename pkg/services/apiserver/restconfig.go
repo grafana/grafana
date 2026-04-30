@@ -37,9 +37,22 @@ type DirectRestConfigProvider interface {
 
 	// This can be used to rewrite incoming requests to path now supported under /apis
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
+
+	// IsReady returns true if the apiserver has completed startup and is ready
+	// to serve requests. This is non-blocking — returns false immediately if
+	// the apiserver hasn't started yet.
+	IsReady() bool
 }
 
 func ProvideEventualRestConfigProvider() *eventualRestConfigProvider {
+	return &eventualRestConfigProvider{
+		ready: make(chan struct{}),
+	}
+}
+
+// ProvideDirectRestConfigProvider provides a DirectRestConfigProvider for use in
+// CLI wire sets that don't start the full apiserver.
+func ProvideDirectRestConfigProvider() DirectRestConfigProvider {
 	return &eventualRestConfigProvider{
 		ready: make(chan struct{}),
 	}
@@ -87,5 +100,14 @@ func (e *eventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r 
 		e.cfg.DirectlyServeHTTP(w, r)
 	case <-r.Context().Done():
 		// Do nothing: the request has been cancelled.
+	}
+}
+
+func (e *eventualRestConfigProvider) IsReady() bool {
+	select {
+	case <-e.ready:
+		return true
+	default:
+		return false
 	}
 }

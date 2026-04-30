@@ -2,6 +2,7 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v1beta1"
 )
 
 inhibitionRuleKind: {
@@ -12,5 +13,11 @@ inhibitionRuleKind: {
 inhibitionRulev0alpha1: inhibitionRuleKind & {
 	schema: {
 		spec: v0alpha1.InhibitionRuleSpec
+	}
+}
+
+inhibitionRulev1beta1: inhibitionRuleKind & {
+	schema: {
+		spec: v1beta1.InhibitionRuleSpec
 	}
 }

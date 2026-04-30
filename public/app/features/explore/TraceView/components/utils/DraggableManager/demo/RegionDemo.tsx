@@ -14,9 +14,9 @@
 
 import { PureComponent } from 'react';
 
-import TNil from '../../../types/TNil';
+import type TNil from '../../../types/TNil';
 import DraggableManager from '../DraggableManager';
-import { DraggableBounds, DraggingUpdate } from '../types';
+import { type DraggableBounds, type DraggingUpdate } from '../types';
 
 import './RegionDemo.css';
 

@@ -5,12 +5,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
-import { RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { type RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
@@ -22,7 +22,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { isFederatedRuleGroup, isProvisionedRuleGroup } from '../utils/rules';
+import { getRulerGroupReadOnlyStatus } from '../utils/rules';
 import { formatPrometheusDuration } from '../utils/time';
 
 import { Title } from './Title';
@@ -192,15 +192,9 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder, rulerGroup }
   const isGrafanaSource = dsFeatures.uid === GRAFANA_RULES_SOURCE_NAME;
   const canSaveInFolder = isGrafanaSource ? Boolean(folder?.canSave) : true;
 
-  const isFederated = rulerGroup ? isFederatedRuleGroup(rulerGroup) : false;
-  const isProvisioned = rulerGroup ? isProvisionedRuleGroup(rulerGroup) : false;
+  const readOnly = rulerGroup ? getRulerGroupReadOnlyStatus(rulerGroup).readOnly : false;
 
-  const canEdit =
-    Boolean(dsFeatures.rulerConfig) &&
-    canEditRules(dsFeatures.name) &&
-    canSaveInFolder &&
-    !isFederated &&
-    !isProvisioned;
+  const canEdit = Boolean(dsFeatures.rulerConfig) && canEditRules(dsFeatures.name) && canSaveInFolder && !readOnly;
 
   return (
     <>

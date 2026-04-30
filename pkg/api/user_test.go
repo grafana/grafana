@@ -91,7 +91,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		hs.userService = userSvc
@@ -166,7 +166,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
@@ -198,7 +198,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
@@ -493,7 +493,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -724,7 +724,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 

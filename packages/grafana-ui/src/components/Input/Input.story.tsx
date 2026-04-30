@@ -1,7 +1,7 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { useId, useState } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react';
+import { useState } from 'react';
 
-import { KeyValue } from '@grafana/data';
+import { type KeyValue } from '@grafana/data';
 
 import { getAvailableIcons } from '../../types/icon';
 import { Button } from '../Button/Button';
@@ -71,12 +71,10 @@ export const Simple: StoryFn = (args) => {
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
   const prefix = parseAccessory(args.prefixVisible);
   const suffix = parseAccessory(args.suffixVisible);
-  const id = useId();
 
   return (
     <Field label="Simple input">
       <Input
-        id={id}
         disabled={args.disabled}
         width={args.width}
         prefix={prefix}
@@ -100,12 +98,11 @@ Simple.args = {
 
 export const WithFieldValidation: StoryFn = (args) => {
   const [value, setValue] = useState('');
-  const id = useId();
 
   return (
     <div>
       <Field invalid={value === ''} error={value === '' ? 'This input is required' : ''} label="Input with validation">
-        <Input id={id} value={value} onChange={(e) => setValue(e.currentTarget.value)} {...args} />
+        <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} {...args} />
       </Field>
     </div>
   );

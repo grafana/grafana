@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Certificado do cliente",
       "aria-label-client-id": "ID do cliente",
       "aria-label-client-secret": "Segredo do cliente",
+      "aria-label-private-key": "Chave privada",
+      "aria-label-private-key-password": "Palavra-passe do certificado",
       "aria-label-symbol-client-secret": "Segredo do cliente",
       "aria-label-tenant-id": "ID do inquilino",
+      "description-certificate-format": "Escolha o formato do certificado (os certificados PEM devem estar no formato PEM de texto simples, os certificados PFX devem estar no formato PFX codificado em base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Formato",
+      "label-client-certificate": "Certificado do cliente",
       "label-client-id": "ID (de cliente) da aplicação",
       "label-client-secret": "Segredo do cliente",
+      "label-private-key": "Chave privada",
       "label-symbol-client-secret": "Segredo do cliente",
+      "label-symbol-private-key-password": "Palavra-passe do certificado",
       "label-tenant-id": "ID (de locatário) do diretório",
       "placeholder-symbol-client-secret": "configurado",
       "reset-symbol-client-secret": "Redefinir"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Escolha o tipo de autenticação para os serviços do Azure",
-      "label-authentication": "Autenticação",
+      "label-authentication": "Tipo de autenticação",
       "title-authentication": "Autenticação"
     },
     "basic-logs-toggle": {

@@ -2,152 +2,164 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"log/slog"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Please, when reviewing or working on this file have the following cheat-sheet
-// in mind:
-//	1. A channel type in Go has one of three directions: send-only (chan<- T),
-//	   receive-only (<-chan T) or bidirctional (chan T). Each of them are a
-//	   different type. A bidirectional type can be converted to any of the other
-//	   two types and is automatic, any other conversion attempt results in a
-//	   panic.
-//	2. There are three operations you can do on a channel: send, receive and
-//	   close. Availability of operation for each channel direction:
-//		          |            Channel direction
-//		Operation | Receive-only | Send-only  | Bidirectional
-//		----------+--------------+------------+--------------
-//		Receive   | Yes          | No (panic) | Yes
-//		Send      | No (panic)   | Yes        | Yes
-//		Close     | No (panic)   | Yes        | Yes
-//	3. A channel of any type also has one of three states: nil (zero value),
-//	   closed, or open (technically called "non-nil, not-closed channel",
-//	   created with the `make` builtin). Nil and closed channels are also
-//	   useful, but you have to know and care for how you use them. Outcome of
-//	   each operation on a channel depending on its state, assuming the
-//	   operation is available to the channel given its direction:
-//		          |                 Channel state
-//		Operation | Nil           | Closed        | Open
-//		----------+---------------+---------------+------------------
-//		Receive   | Block forever | Block forever | Receive/Block until receive
-//		Send      | Block forever | Panic         | Send/Block until send
-//		Close     | Panic         | Panic         | Close the channel
-//	4. A `select` statement has zero or more `case` branches, each one of them
-//	   containing either a send or a receive channel operation. A `select` with
-//	   no branches blocks forever. At most one branch will be executed, which
-//	   means it behaves similar to a `switch`. If more than one branch can be
-//	   executed then one of them is picked AT RANDOM (i.e. not the one first in
-//	   the list). A `select` statement can also have a (single and optional)
-//	   `default` branch that is executed if all the other branches are
-//	   operations that are blocked at the time the `select` statement is
-//	   reached. This means that having a `default` branch causes the `select`
-//	   statement to never block.
-//	5. A receive operation on a closed channel never blocks (as said before),
-//	   but it will always yield a zero value. As it is also valid to send a zero
-//	   value to the channel, you can receive from channels in two forms:
-//		v := <-c // get a zero value if closed
-//		v2, ok := <-c // `ok` is set to false iif the channel is closed
-//	6. The `make` builtin is used to create open channels (and is the only way
-//	   to get them). It has an optional second parameter to specify the amount
-//	   of items that can buffered. After that, a send operation will block
-//	   waiting for another goroutine to receive from it (which would make room
-//	   for the new item). When the second argument is not passed to `make`, then
-//	   all operations are fully synchronized, meaning that a send will block
-//	   until a receive in another goroutine is performed, and vice versa. Less
-//	   interestingly, `make` can also create send-only or receive-only channel.
-//
-// The sources are the Go Specs, Effective Go and Go 101, which are already
-// linked in the contributing guide for the backend or elsewhere in Grafana, but
-// this file exploits so many of these subtleties that it's worth keeping a
-// refresher about them at all times. The above is unlikely to change in the
-// foreseeable future, so it's zero maintenance as well. We exclude patterns for
-// using channels and other concurrency patterns since that's a way longer
-// topic for a refresher.
-
-// ConnectFunc is used to initialize the watch implementation. It should do very
-// basic work and checks and it has the chance to return an error. After that,
-// it should fork to a different goroutine with the provided channel and send to
-// it all the new events from the backing database. It is also responsible for
-// closing the provided channel under all circumstances, included returning an
-// error. The caller of this function will only receive from this channel (i.e.
-// it is guaranteed to never send to it or close it), hence providing a safe
-// separation of concerns and preventing panics.
-//
-// FIXME: this signature suffers from inversion of control. It would also be
-// much simpler if NewBroadcaster receives a context.Context and a <-chan T
-// instead. That would also reduce the scope of the broadcaster to only
-// broadcast to subscribers what it receives on the provided <-chan T. The
-// context.Context is still needed to provide additional values in case we want
-// to add observability into the broadcaster, which we want. The broadcaster
-// should still terminate on either the context being done or the provided
-// channel being closed.
-type ConnectFunc[T any] func(chan<- T) error
-
 type Broadcaster[T any] interface {
-	Subscribe(context.Context) (<-chan T, error)
+	Subscribe(ctx context.Context, name string) (<-chan T, error)
 	Unsubscribe(<-chan T)
 }
 
-func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadcaster[T], error) {
-	b := &broadcaster[T]{
-		started: make(chan struct{}),
+type BroadcasterMetrics struct {
+	Subscribers          prometheus.Gauge
+	SubscriptionsTotal   *prometheus.CounterVec
+	UnsubscriptionsTotal *prometheus.CounterVec
+	EventsReceivedTotal  prometheus.Counter
+	OverflowEventsTotal  prometheus.Counter
+}
+
+func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
+	return &BroadcasterMetrics{
+		Subscribers: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "storage_server_broadcaster_subscribers",
+			Help: "Current number of active broadcaster subscribers.",
+		}),
+		SubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_subscriptions_total",
+			Help: "Total number of broadcaster subscription attempts by result.",
+		}, []string{"result"}),
+		UnsubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_unsubscriptions_total",
+			Help: "Total number of broadcaster unsubscriptions by reason.",
+		}, []string{"reason"}),
+		EventsReceivedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_events_received_total",
+			Help: "Total number of events received by the broadcaster.",
+		}),
+		OverflowEventsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "storage_server_broadcaster_overflow_events_total",
+			Help: "Total number of events appended to subscriber overflow buffers.",
+		}),
 	}
-	err := b.init(ctx, connect)
-	if err != nil {
-		return nil, err
+}
+
+// NewBroadcaster creates a broadcaster that fans out items received on input to
+// all active subscribers. The caller owns the input channel and is responsible
+// for closing it when no more data will be sent. The broadcaster terminates
+// when either ctx is cancelled or input is closed.
+func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics) Broadcaster[T] {
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics)
+}
+
+// newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics) *broadcaster[T] {
+	if metrics == nil {
+		metrics = newBroadcasterMetrics(nil)
+	}
+	b := &broadcaster[T]{
+		shouldTerminate: ctx.Done(),
+		cache:           newRingBuffer[T](defaultCacheSize),
+		subscribe:       make(chan *subscription[T], internalChanSize),
+		unsubscribe:     make(chan (<-chan T), internalChanSize),
+		subs:            make(map[<-chan T]*subscription[T]),
+		terminated:      make(chan struct{}),
+		metrics:         metrics,
+		watchBufSize:    subBufSize,
+		overflowCap:     ovfCap,
 	}
 
-	return b, nil
+	go b.stream(input)
+
+	return b
+}
+
+type subscription[T any] struct {
+	name     string
+	ch       chan T
+	overflow []T // pending items when channel is full, nil when not overflowing
 }
 
 type broadcaster[T any] struct {
 	// lifecycle management
 
-	started, terminated chan struct{}
-	shouldTerminate     <-chan struct{}
+	terminated      chan struct{}
+	shouldTerminate <-chan struct{}
 
 	// subscription management
 
-	cache       channelCache[T]
-	subscribe   chan chan T
+	cache       ringBuffer[T]
+	subscribe   chan *subscription[T]
 	unsubscribe chan (<-chan T)
-	subs        map[<-chan T]chan T
+	subs        map[<-chan T]*subscription[T]
+	metrics     *BroadcasterMetrics
+
+	// configuration
+
+	watchBufSize    int
+	overflowCap     int
+	lastOverflowLog time.Time
+	overflowCount   int64 // overflow events since last log
 }
 
-func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
+const (
+	subscriptionResultOK           = "ok"
+	subscriptionResultCtxCanceled  = "ctx_canceled"
+	subscriptionResultTerminated   = "terminated"
+	subscriptionResultReplayFailed = "replay_failed"
+
+	unsubscriptionReasonClient      = "client"
+	unsubscriptionReasonOverflowCap = "overflow_cap"
+	unsubscriptionReasonShutdown    = "shutdown"
+)
+
+const (
+	// internalChanSize is the buffer for internal subscribe/unsubscribe coordination channels.
+	internalChanSize = 100
+
+	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
+	defaultCacheSize = 500
+
+	// watchChanSize is the per-subscriber event delivery channel buffer.
+	// Must be larger than defaultCacheSize so that readInto never fills the
+	// channel completely, leaving headroom for new events.
+	watchChanSize = 1000
+
+	// defaultOverflowCap is the maximum number of items in a subscriber's overflow
+	// buffer before the subscriber is disconnected.
+	defaultOverflowCap = 50_000
+
+	// drainInterval controls how often the stream loop drains overflow buffers
+	// during idle periods (no incoming events).
+	drainInterval = 100 * time.Millisecond
+
+	// overflowLogInterval rate-limits "overflow started" log messages.
+	overflowLogInterval = 10 * time.Second
+)
+
+func (b *broadcaster[T]) Subscribe(ctx context.Context, name string) (<-chan T, error) {
+	sub := &subscription[T]{name: name, ch: make(chan T, b.watchBufSize)}
+
 	select {
 	case <-ctx.Done(): // client canceled
-		return nil, ctx.Err()
-	case <-b.started: // wait for broadcaster to start
-	}
-
-	// create the subscription
-	sub := make(chan T, 100)
-
-	select {
-	case <-ctx.Done(): // client canceled
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultCtxCanceled).Inc()
 		return nil, ctx.Err()
 	case <-b.terminated: // no more data
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultTerminated).Inc()
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
-		return sub, nil
+		return sub.ch, nil
 	}
 }
 
 func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
-	// wait for broadcaster to start. In practice, the only way to reach
-	// Unsubscribe is by first having called Subscribe, which means we have
-	// already started. But a malfunctioning caller may call Unsubscribe freely,
-	// which would cause us to block forever the goroutine of the caller when
-	// trying to send to a nil `b.unsubscribe` or receive from a nil
-	// `b.terminated` if we haven't yet initialized those values. This would
-	// mean leaking that malfunctioninig caller's goroutine, so we rather make
-	// Unsubscribe safe in any possible case
 	if sub == nil {
 		return
 	}
-	<-b.started // wait for broadcaster to start
 
 	select {
 	case b.unsubscribe <- sub: // success submitting unsubscription
@@ -155,33 +167,23 @@ func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
 	}
 }
 
-const chanBufferLen = 100
-
-// init initializes the broadcaster. It should not be run more than once.
-func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error {
-	// create the stream that will connect us with the watch implementation and
-	// send it to them so they initialize and start sending data
-	stream := make(chan T, chanBufferLen)
-	if err := connect(stream); err != nil {
-		return err
+// drainOverflow moves items from sub.overflow into sub.ch without blocking.
+// Nils the overflow slice when fully drained to release memory.
+func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
+	if len(sub.overflow) == 0 {
+		return
 	}
-
-	// initialize our internal state
-	b.shouldTerminate = ctx.Done()
-	b.cache = newChannelCache[T](ctx, 100)
-	b.subscribe = make(chan chan T, chanBufferLen)
-	b.unsubscribe = make(chan (<-chan T), chanBufferLen)
-	b.subs = make(map[<-chan T]chan T)
-	b.terminated = make(chan struct{})
-
-	// start handling incoming data from the watch implementation. If data came
-	// in until now, it will be buffered in `stream`
-	go b.stream(stream)
-
-	// unblock any Subscribe/Unsubscribe calls since we are ready to handle them
-	close(b.started)
-
-	return nil
+	i := 0
+	for i < len(sub.overflow) {
+		select {
+		case sub.ch <- sub.overflow[i]:
+			i++
+		default:
+			sub.overflow = sub.overflow[i:]
+			return
+		}
+	}
+	sub.overflow = nil
 }
 
 // stream acts a message broker between the watch implementation that receives a
@@ -192,22 +194,29 @@ func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error
 // (as with any other channel) will always be of the sending side. Hence, the
 // watch implementation should do it.
 func (b *broadcaster[T]) stream(input <-chan T) {
+	drainTicker := time.NewTicker(drainInterval)
+	defer drainTicker.Stop()
+
 	// make sure we unconditionally cleanup upon return
 	defer func() {
 		// prevent new subscriptions and make sure to discard unsubscriptions
 		close(b.terminated)
-		// terminate all subscirptions and clean the map
-		for _, sub := range b.subs {
-			close(sub)
-			delete(b.subs, sub)
+		// terminate all subscriptions
+		for recv := range b.subs {
+			b.removeSubscriber(recv, unsubscriptionReasonShutdown)
 		}
 	}()
 
-	unsubscribe := func(recv <-chan T) {
-		if sub, ok := b.subs[recv]; ok {
-			close(sub)
-			delete(b.subs, sub)
+	addSubscriber := func(sub *subscription[T]) {
+		// send initial batch of cached items
+		if !b.cache.readInto(sub.ch) {
+			b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultReplayFailed).Inc()
+			close(sub.ch)
+			return
 		}
+		b.subs[sub.ch] = sub
+		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultOK).Inc()
+		b.metrics.Subscribers.Inc()
 	}
 
 	for {
@@ -216,162 +225,127 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			// send initial batch of cached items
-			err := b.cache.ReadInto(sub)
-			if err != nil {
-				close(sub)
-				continue
-			}
-			b.subs[sub] = sub
+			addSubscriber(sub)
 
 		case recv := <-b.unsubscribe: // unsubscribe
-			unsubscribe(recv)
+			// Drain pending subscribes so we don't miss one that was
+			// buffered before this unsubscribe.
+			for drained := false; !drained; {
+				select {
+				case sub := <-b.subscribe:
+					addSubscriber(sub)
+				default:
+					drained = true
+				}
+			}
+			b.removeSubscriber(recv, unsubscriptionReasonClient)
 
 		case item, ok := <-input: // data arrived, send to subscribers
 			// input closed, drain subscribers and exit
 			if !ok {
 				return
 			}
-			b.cache.Add(item)
+			b.metrics.EventsReceivedTotal.Inc()
+			b.cache.add(item)
 
 			var slow []<-chan T
 			for _, sub := range b.subs {
-				select {
-				case sub <- item:
-				default:
-					slow = append(slow, sub)
+				b.drainOverflow(sub)
+
+				if len(sub.overflow) > 0 {
+					// Still overflowing — append to overflow
+					sub.overflow = append(sub.overflow, item)
+					b.metrics.OverflowEventsTotal.Inc()
+					b.overflowCount++
+					if len(sub.overflow) > b.overflowCap {
+						slog.Warn("disconnecting subscriber: overflow cap exceeded",
+							"subscriber", sub.name,
+							"overflowSize", len(sub.overflow))
+						slow = append(slow, sub.ch)
+					}
+				} else {
+					// Try direct send
+					select {
+					case sub.ch <- item:
+					default:
+						sub.overflow = append(sub.overflow, item)
+						b.metrics.OverflowEventsTotal.Inc()
+						b.overflowCount++
+						now := time.Now()
+						if now.Sub(b.lastOverflowLog) > overflowLogInterval {
+							slog.Warn("subscriber overflow",
+								"subscriber", sub.name,
+								"overflowSize", len(sub.overflow),
+								"overflowsSinceLastLog", b.overflowCount)
+							b.lastOverflowLog = now
+							b.overflowCount = 0
+						}
+					}
 				}
 			}
-			// Instead of sending subscribers to a b.unsubscribe channel, we unsubscribe directly.
+			// Instead of sending subscribers to b.unsubscribe channel, we unsubscribe directly.
 			// Sending to b.unsubscribe could lead to deadlock, if there are too many elements in the
 			// channel buffer already.
 			for _, recv := range slow {
-				unsubscribe(recv)
+				b.removeSubscriber(recv, unsubscriptionReasonOverflowCap)
+			}
+
+		case <-drainTicker.C: // periodically drain overflow for idle periods
+			for _, sub := range b.subs {
+				b.drainOverflow(sub)
 			}
 		}
 	}
 }
 
-const defaultCacheSize = 100
-
-type channelCache[T any] interface {
-	Len() int
-	Add(item T)
-	Get(i int) T
-	Range(f func(T) error) error
-	Slice() []T
-	ReadInto(dst chan T) error
+func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
+	sub, ok := b.subs[recv]
+	if !ok {
+		return
+	}
+	sub.overflow = nil
+	delete(b.subs, recv)
+	b.metrics.Subscribers.Dec()
+	b.metrics.UnsubscriptionsTotal.WithLabelValues(reason).Inc()
+	close(sub.ch)
 }
 
-type localCache[T any] struct {
-	cache     []T
-	size      int
-	cacheZero int
-	cacheLen  int
-	add       chan T
-	read      chan chan T
-	ctx       context.Context
+// ringBuffer is a fixed-size circular buffer. It is not safe for concurrent
+// use — the broadcaster's single stream() goroutine is the only caller.
+type ringBuffer[T any] struct {
+	buf  []T
+	zero int // index of the oldest item
+	len  int // number of items currently stored
 }
 
-func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
-	c := &localCache[T]{}
-
-	c.ctx = ctx
+func newRingBuffer[T any](size int) ringBuffer[T] {
 	if size <= 0 {
 		size = defaultCacheSize
 	}
-	c.size = size
-	c.cache = make([]T, c.size)
-
-	c.add = make(chan T)
-	c.read = make(chan chan T)
-
-	go c.run()
-
-	return c
+	return ringBuffer[T]{
+		buf: make([]T, size),
+	}
 }
 
-func (c *localCache[T]) Len() int {
-	return c.cacheLen
+func (r *ringBuffer[T]) add(item T) {
+	i := (r.zero + r.len) % len(r.buf)
+	r.buf[i] = item
+	if r.len < len(r.buf) {
+		r.len++
+	} else {
+		r.zero = (r.zero + 1) % len(r.buf)
+	}
 }
 
-func (c *localCache[T]) Add(item T) {
-	c.add <- item
-}
-
-func (c *localCache[T]) run() {
-	for {
+// readInto sends all cached items to dst without blocking. Returns true if all
+// items were sent, false if dst's buffer was full (slow consumer).
+func (r *ringBuffer[T]) readInto(dst chan T) bool {
+	for i := 0; i < r.len; i++ {
 		select {
-		case <-c.ctx.Done():
-			return
-		case item := <-c.add:
-			i := (c.cacheZero + c.cacheLen) % len(c.cache)
-			c.cache[i] = item
-			if c.cacheLen < len(c.cache) {
-				c.cacheLen++
-			} else {
-				c.cacheZero = (c.cacheZero + 1) % len(c.cache)
-			}
-		case r := <-c.read:
-		read:
-			for i := 0; i < c.cacheLen; i++ {
-				select {
-				case r <- c.cache[(c.cacheZero+i)%len(c.cache)]:
-				// don't wait for slow consumers
-				default:
-					break read
-				}
-			}
-			close(r)
-		}
-	}
-}
-
-func (c *localCache[T]) Get(i int) T {
-	r := make(chan T, c.size)
-	c.read <- r
-	idx := 0
-	for item := range r {
-		if idx == i {
-			return item
-		}
-		idx++
-	}
-	var zero T
-	return zero
-}
-
-func (c *localCache[T]) Range(f func(T) error) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		err := f(item)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *localCache[T]) Slice() []T {
-	s := make([]T, 0, c.size)
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		s = append(s, item)
-	}
-	return s
-}
-
-func (c *localCache[T]) ReadInto(dst chan T) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		select {
-		case dst <- item:
+		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
 		default:
-			return fmt.Errorf("slow consumer")
+			return false
 		}
 	}
-	return nil
+	return true
 }

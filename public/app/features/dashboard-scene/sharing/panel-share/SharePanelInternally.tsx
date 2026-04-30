@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
-import { ShareLinkTab, ShareLinkTabState } from '../ShareLinkTab';
+import { ShareLinkTab, type ShareLinkTabState } from '../ShareLinkTab';
 
 import { SharePanelPreview } from './SharePanelPreview';
 

@@ -8,15 +8,15 @@ import { useMemo } from 'react';
 import {
   API_GROUP,
   API_VERSION,
-  Receiver as K8sReceiver,
+  type Receiver as K8sReceiver,
   generatedAPI,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { receiverConfigToK8sIntegration, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
-import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';

@@ -8,16 +8,16 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { CloudChannelMap, CloudChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { type CloudChannelMap, type CloudChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { cloudReceiverToFormValues, formValuesToCloudReceiver } from '../../../utils/receiver-form';
 
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 interface Props {
   alertManagerSourceName: string;
@@ -56,16 +56,12 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
 
-    try {
-      if (editMode && contactPoint) {
-        await updateContactPoint.execute({ contactPoint: newReceiver, originalName: contactPoint.name });
-      } else {
-        await createContactPoint.execute({ contactPoint: newReceiver });
-      }
-      locationService.push('/alerting/notifications');
-    } catch (error) {
-      // React form validation will handle this for us
+    if (editMode && contactPoint) {
+      await updateContactPoint.execute({ contactPoint: newReceiver, originalName: contactPoint.name });
+    } else {
+      await createContactPoint.execute({ contactPoint: newReceiver });
     }
+    locationService.push('/alerting/notifications');
   };
 
   // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one

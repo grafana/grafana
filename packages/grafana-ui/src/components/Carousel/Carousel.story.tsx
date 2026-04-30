@@ -1,6 +1,6 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
-import { Carousel, CarouselProps } from './Carousel';
+import { Carousel, type CarouselProps } from './Carousel';
 import mdx from './Carousel.mdx';
 
 // Sample images for the stories

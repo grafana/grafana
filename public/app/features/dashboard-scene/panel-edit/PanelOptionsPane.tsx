@@ -3,32 +3,33 @@ import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   filterFieldConfigOverrides,
-  GrafanaTheme2,
+  getPanelOptionsWithDefaults,
+  type GrafanaTheme2,
   isStandardFieldProp,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   restoreCustomOverrideRules,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
-  DeepPartial,
-  SceneComponentProps,
+  type DeepPartial,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -107,8 +108,29 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     if (options.fieldConfig) {
+      const presetDefaults = options.fieldConfig.defaults;
+
+      // if the preset doesn't specify a color, derive it from the plugin's preferred scheme
+      const plugin = panel.getPlugin();
+      const color =
+        presetDefaults?.color ??
+        (plugin
+          ? getPanelOptionsWithDefaults({
+              plugin,
+              currentOptions: panel.state.options,
+              currentFieldConfig: { defaults: {}, overrides: [] },
+              isAfterPluginChange: true,
+            }).fieldConfig.defaults.color
+          : undefined) ??
+        panel.state.fieldConfig.defaults.color;
+
       const fieldConfigWithOverrides = {
-        ...options.fieldConfig,
+        defaults: {
+          ...newFieldConfig.defaults,
+          color,
+          custom: presetDefaults?.custom ?? {},
+          ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
+        },
         overrides: newFieldConfig.overrides,
       };
       panel.onFieldConfigChange(fieldConfigWithOverrides, true);

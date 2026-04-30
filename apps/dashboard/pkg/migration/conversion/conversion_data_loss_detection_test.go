@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -403,7 +403,7 @@ func TestCountPanelsV2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			count := countPanelsV2(tt.elements)
+			count := countPanelsV2alpha1(tt.elements)
 			assert.Equal(t, tt.expected, count)
 		})
 	}
@@ -1768,10 +1768,10 @@ func extractPanelInfoV2alpha1(spec dashv2alpha1.DashboardSpec) ([]float64, []str
 
 	for _, element := range spec.Elements {
 		if element.PanelKind != nil {
-			ids = append(ids, element.PanelKind.Spec.Id)
+			ids = append(ids, float64(element.PanelKind.Spec.Id))
 			types = append(types, element.PanelKind.Spec.VizConfig.Kind)
 		} else if element.LibraryPanelKind != nil {
-			ids = append(ids, element.LibraryPanelKind.Spec.Id)
+			ids = append(ids, float64(element.LibraryPanelKind.Spec.Id))
 			types = append(types, "LibraryPanel")
 		}
 	}
@@ -1786,10 +1786,10 @@ func extractPanelInfoV2beta1(spec dashv2beta1.DashboardSpec) ([]float64, []strin
 
 	for _, element := range spec.Elements {
 		if element.PanelKind != nil {
-			ids = append(ids, element.PanelKind.Spec.Id)
+			ids = append(ids, float64(element.PanelKind.Spec.Id))
 			types = append(types, element.PanelKind.Spec.VizConfig.Kind)
 		} else if element.LibraryPanelKind != nil {
-			ids = append(ids, element.LibraryPanelKind.Spec.Id)
+			ids = append(ids, float64(element.LibraryPanelKind.Spec.Id))
 			types = append(types, "LibraryPanel")
 		}
 	}
@@ -1880,7 +1880,7 @@ func extractQueryInfoV2alpha1(spec dashv2alpha1.DashboardSpec) []queryInfo {
 
 	for _, element := range spec.Elements {
 		if element.PanelKind != nil {
-			panelID := element.PanelKind.Spec.Id
+			panelID := float64(element.PanelKind.Spec.Id)
 			for _, query := range element.PanelKind.Spec.Data.Spec.Queries {
 				refID := query.Spec.RefId
 				dsType := query.Kind
@@ -1902,7 +1902,7 @@ func extractQueryInfoV2beta1(spec dashv2beta1.DashboardSpec) []queryInfo {
 
 	for _, element := range spec.Elements {
 		if element.PanelKind != nil {
-			panelID := element.PanelKind.Spec.Id
+			panelID := float64(element.PanelKind.Spec.Id)
 			for _, query := range element.PanelKind.Spec.Data.Spec.Queries {
 				refID := query.Spec.RefId
 				dsType := query.Kind
@@ -2285,7 +2285,7 @@ func createV2DashboardWithSimpleTabs() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        float64(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Tab %d", i, tabNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2360,7 +2360,7 @@ func createV2DashboardWithRowsCollapsed() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        float64(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Row %d (collapsed)", i, rowNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2438,7 +2438,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        float64(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d - Row %d (expanded)", i, rowNum),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{
@@ -2508,7 +2508,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 
 func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{} {
 	panels := make([]interface{}, numPanels)
-	for i := 0; i < numPanels; i++ {
+	for i := range numPanels {
 		targets := make([]interface{}, queriesPerPanel)
 		for q := 0; q < queriesPerPanel; q++ {
 			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
@@ -2881,7 +2881,7 @@ func createV2ComplexNestedDashboard() *dashv2alpha1.Dashboard {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:        float64(i),
+					Id:        int32(i),
 					Title:     fmt.Sprintf("Panel %d", i),
 					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
 					Data: dashv2alpha1.DashboardQueryGroupKind{

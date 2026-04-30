@@ -8,7 +8,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
-  DisplayList,
+  type DisplayList,
   iamAPIv0alpha1,
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
@@ -22,13 +22,13 @@ import {
   useSaveFolderMutation as useLegacySaveFolderMutation,
   useMoveFolderMutation as useMoveFolderMutationLegacy,
   useGetAffectedItemsQuery as useLegacyGetAffectedItemsQuery,
-  MoveFoldersArgs,
-  DeleteFoldersArgs,
-  MoveFolderArgs,
+  type MoveFoldersArgs,
+  type DeleteFoldersArgs,
+  type MoveFolderArgs,
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { FolderDTO, NewFolder } from 'app/types/folders';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
 import kbn from '../../../../core/utils/kbn';
@@ -39,7 +39,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  ManagerKind,
+  type ManagerKind,
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
@@ -57,20 +57,20 @@ import {
   useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
-  Folder,
-  CreateFolderApiArg,
-  UpdateFolderApiArg,
+  type Folder,
+  type CreateFolderApiArg,
+  type UpdateFolderApiArg,
   useGetAffectedItemsQuery,
-  FolderInfo,
-  ObjectMeta,
-  OwnerReference,
+  type FolderInfo,
+  type ObjectMeta,
+  type OwnerReference,
 } from './index';
 
-function getFolderUrl(uid: string, title: string): string {
-  // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
-  // Not the same slugify as on the backend https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L86
-  // Probably does not matter as it seems to be only for better human readability.
-  const slug = kbn.slugifyForUrl(title);
+export function getFolderUrl(uid: string, title: string): string {
+  // slugifyForUrl strips non-ASCII characters, so for titles composed entirely of non-Latin
+  // characters (CJK, Cyrillic, Arabic, etc.) the slug is empty. Fall back to uid to avoid
+  // double-slash URLs that break route matching.
+  const slug = kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '') || uid;
   return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
 }
 
@@ -433,9 +433,11 @@ export function useCreateFolder() {
     };
 
     const result = await createFolder(apiPayload);
-    refresh({ childrenOf: folder.parentUid });
-    deletedDashboardsCache.clear();
-    invalidateQuotaUsage(dispatch);
+    if (!result.error) {
+      refresh({ childrenOf: folder.parentUid });
+      deletedDashboardsCache.clear();
+      invalidateQuotaUsage(dispatch);
+    }
 
     return {
       ...result,

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/http"
-
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
@@ -10,17 +8,14 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	"github.com/grafana/grafana/pkg/api/response"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 //go:generate mockery --name K8sClients --structname MockK8sClients --inpackage --filename client_mock.go --with-expecter
 type K8sClients interface {
-	GetDashboardID(c *contextmodel.ReqContext, uid string) (int64, response.Response)
 	GetStars(c *contextmodel.ReqContext) ([]string, error)
 	AddStar(c *contextmodel.ReqContext, uid string) error
 	RemoveStar(c *contextmodel.ReqContext, uid string) error
@@ -34,24 +29,6 @@ type k8sClients struct {
 var (
 	_ K8sClients = (*k8sClients)(nil)
 )
-
-// GetDashboardID implements the K8sClients interface.
-func (k *k8sClients) GetDashboardID(c *contextmodel.ReqContext, uid string) (int64, response.Response) {
-	dyn, err := dynamic.NewForConfig(k.configProvider.GetDirectRestConfig(c))
-	if err != nil {
-		return 0, response.Error(http.StatusInternalServerError, "client config", err)
-	}
-	client := dyn.Resource(dashboardsV1.GroupVersion.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(k.namespacer(c.OrgID))
-	obj, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
-	if err != nil {
-		return 0, response.Error(http.StatusNotFound, "Dashboard not found", err)
-	}
-	dash, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return 0, response.Error(http.StatusInternalServerError, "invalid object", err)
-	}
-	return dash.GetDeprecatedInternalID(), nil // nolint:staticcheck
-}
 
 // GetStars implements K8sClients.
 func (k *k8sClients) GetStars(c *contextmodel.ReqContext) ([]string, error) {

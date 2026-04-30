@@ -1,6 +1,7 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataFrame, RegistryItem, FieldMatcherInfo } from '@grafana/data';
+import { type DataFrame, type RegistryItem, type FieldMatcherInfo } from '@grafana/data';
+import { type MatcherScope } from '@grafana/schema';
 
 export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {
   component: React.ComponentType<MatcherUIProps<TOptions>>;
@@ -14,5 +15,6 @@ export interface MatcherUIProps<T> {
   id?: string;
   data: DataFrame[];
   options: T;
-  onChange: (options: T) => void;
+  scope?: MatcherScope;
+  onChange: (options: T, scope?: MatcherScope) => void;
 }

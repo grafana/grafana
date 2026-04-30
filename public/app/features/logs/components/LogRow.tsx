@@ -1,20 +1,20 @@
 import { debounce } from 'lodash';
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   dateTimeFormat,
-  LogRowContextOptions,
-  LogRowModel,
-  LogsSortOrder,
-  TimeRange,
+  type LogRowContextOptions,
+  type LogRowModel,
+  type LogsSortOrder,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
-import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
+import { Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -22,7 +22,7 @@ import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, type LogRowStyles } from './getLogRowStyles';
 
 export interface Props {
   row: LogRowModel;

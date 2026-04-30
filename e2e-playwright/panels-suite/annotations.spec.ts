@@ -1,10 +1,10 @@
-import { Locator } from 'playwright';
+import { type Locator } from 'playwright';
 
-import { DashboardPage, E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'ad7p5pj';
 
-test.use({ viewport: { width: 1000, height: 1440 } });
+test.use({ viewport: { width: 1000, height: 1440 }, featureToggles: { annotationsClustering: true } });
 
 test.describe('Panels test: Annotations', { tag: ['@panels', '@annotations'] }, () => {
   test('Annotations should split into multiple rows if multi-lane panel option is set', async ({

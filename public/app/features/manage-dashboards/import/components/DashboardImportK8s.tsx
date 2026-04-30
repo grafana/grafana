@@ -6,11 +6,11 @@ import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
-import { DashboardInputs, DashboardSource } from '../../types';
+import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
 
 import { ImportOverview } from './ImportOverview';
@@ -26,6 +26,7 @@ type Props = GrafanaRouteComponentProps<RouteParams, QueryParams>;
 type ImportState = {
   status: LoadingState;
   dashboard: unknown;
+  dashboardUid?: string;
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
@@ -35,6 +36,7 @@ type ImportState = {
 const initialState: ImportState = {
   status: LoadingState.NotStarted,
   dashboard: {},
+  dashboardUid: undefined,
   inputs: { dataSources: [], constants: [], libraryPanels: [] },
   meta: { updatedAt: '', orgName: '' },
   source: DashboardSource.Json,
@@ -68,6 +70,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
       setState({
         status: LoadingState.Done,
         dashboard,
+        dashboardUid: undefined,
         inputs,
         meta: { updatedAt: response.updatedAt, orgName: response.orgName },
         source: DashboardSource.Gcom,
@@ -115,14 +118,17 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     try {
       const format = detectExportFormat(json);
+      const isV2Resource = isDashboardV2Resource(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
-      const dashboard = isDashboardV2Resource(json) || isDashboardV1Resource(json) ? json.spec : json;
+      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
+      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
       const inputs =
         format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,
         dashboard,
+        dashboardUid,
         inputs,
         meta: { updatedAt: '', orgName: '' },
         source: DashboardSource.Json,
@@ -183,6 +189,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
         {state.status === LoadingState.Done && (
           <ImportOverview
             dashboard={state.dashboard}
+            dashboardUid={state.dashboardUid}
             inputs={state.inputs}
             meta={state.meta}
             source={state.source}

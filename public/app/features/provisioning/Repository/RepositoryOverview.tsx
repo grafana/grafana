@@ -1,16 +1,17 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
-import { useRepoMetadataStatus } from '../hooks/useRepoMetadataStatus';
+import { hasMissingFolderMetadata } from '../utils/folderMetadata';
+import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -28,12 +29,12 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
-  const showFolderMetadataCheck = config.featureToggles.provisioningFolderMetadata;
-  const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
+  const showFolderMetadataCheck = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const status = repo.status;
+  const { conditions, quota } = status ?? {};
   const webhookURL = getWebhookURL(repo);
-  const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
+  const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -59,7 +60,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {showFolderMetadataCheck && folderMetadataStatus === 'missing' && (
+        {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
@@ -69,16 +70,18 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
               <Card.Description>
-                {repo.status?.stats ? (
+                {status?.stats ? (
                   <InteractiveTable
                     columns={resourceColumns}
-                    data={repo.status.stats}
+                    data={status.stats}
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
-                <Box paddingTop={2}>
-                  <FreeTierLimitNote limitType="resource" />
-                </Box>
+                {isQuotaReachedOrExceeded(conditions, 'ResourceQuota') && (
+                  <Box paddingTop={2}>
+                    <QuotaLimitNote maxResourcesPerRepository={quota?.maxResourcesPerRepository} />
+                  </Box>
+                )}
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
@@ -88,14 +91,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </Card>
           </div>
 
-          {repo.status?.health && (
+          {status?.health && (
             <div className={styles.cardContainer}>
               <RepositoryHealthCard repo={repo} />
             </div>
           )}
 
           {/* Webhook */}
-          {repo.status?.webhook && (
+          {status?.webhook && (
             <div className={styles.cardContainer}>
               <Card noMargin className={styles.card}>
                 <Card.Heading>
@@ -144,7 +147,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <div
             className={cx(
               styles.pullStatusCard,
-              repo.status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
+              status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
             )}
           >
             <RepositoryPullStatusCard repo={repo} />

@@ -1,8 +1,8 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
-import { Alert, PopoverContent, Select } from '@grafana/ui';
+import { Alert, type PopoverContent, Select } from '@grafana/ui';
 
-import { VariableQueryType } from '../../types';
+import { type VariableQueryType } from '../../types';
 import { removeMarginBottom } from '../styles';
 
 interface VariableQueryFieldProps<T> {

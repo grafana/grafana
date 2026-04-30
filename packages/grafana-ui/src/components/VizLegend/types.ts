@@ -1,8 +1,8 @@
-import * as React from 'react';
-import type { JSX } from 'react';
+import type * as React from 'react';
+import type { JSX, ReactNode } from 'react';
 
-import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
+import { type DataFrameFieldIndex, type DisplayValue } from '@grafana/data';
+import { type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
@@ -28,6 +28,7 @@ export interface VizLegendBaseProps<T> {
   ) => void;
   readonly?: boolean;
   limit?: number;
+  filterAction?: ReactNode;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

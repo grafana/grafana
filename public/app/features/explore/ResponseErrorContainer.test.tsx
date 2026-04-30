@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataQueryError, LoadingState } from '@grafana/data';
+import { type DataQueryError, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { configureStore } from '../../store/configureStore';

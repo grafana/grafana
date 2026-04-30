@@ -1,40 +1,47 @@
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  VizPanel,
+  type SceneObjectUrlValues,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
+type TabsPlaceholder = {
+  width: number;
+  height: number;
+  index: number;
+};
+
 interface TabsLayoutManagerState extends SceneObjectState {
   tabs: TabItem[];
   currentTabSlug?: string;
+  isDropTarget?: boolean;
+  placeholder?: TabsPlaceholder;
 }
 
 export class TabsLayoutManager
@@ -79,6 +86,10 @@ export class TabsLayoutManager
     const gen = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
     const newTabs = this.state.tabs.map((tab) => tab.duplicate(gen));
     return this.clone({ tabs: newTabs, key: undefined });
+  }
+
+  public getAllGridTypes(): string[] {
+    return this.state.tabs.flatMap((tab) => tab.getLayout().getAllGridTypes());
   }
 
   public duplicateTab(tab: TabItem) {
@@ -137,6 +148,16 @@ export class TabsLayoutManager
     }, []);
   }
 
+  public setPlaceholder(placeholder: TabsPlaceholder) {
+    this.setState({ placeholder });
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    this.setState({
+      isDropTarget,
+    });
+  }
+
   public addPanel(vizPanel: VizPanel) {
     const tab = this.getCurrentTab() ?? this.state.tabs[0];
 
@@ -177,7 +198,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({});
+    const newTab = tab ?? new TabItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
@@ -214,10 +235,6 @@ export class TabsLayoutManager
     this.addNewTab(tab);
   }
 
-  public shouldUngroup(): boolean {
-    return this.state.tabs.length === 1;
-  }
-
   public convertAllGridLayouts(gridLayoutType: GridLayoutType) {
     for (const tab of this.state.tabs) {
       switch (gridLayoutType) {
@@ -237,7 +254,7 @@ export class TabsLayoutManager
 
   public ungroupTabs() {
     const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
-    const gridTypes = new Set(findAllGridTypes(this));
+    const gridTypes = new Set(this.getAllGridTypes());
 
     showUngroupConfirmation({
       hasNonGridLayout,
@@ -440,19 +457,6 @@ export class TabsLayoutManager
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
-  public forceSelectTab(tabKey: string) {
-    const tabIndex = this.getTabsIncludingRepeats().findIndex((tab) => tab.state.key === tabKey);
-    const tab = this.getTabsIncludingRepeats()[tabIndex];
-
-    if (!tab) {
-      return;
-    }
-
-    const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
-    this.setState({ currentTabSlug: tab.getSlug() });
-  }
-
   public static createEmpty(): TabsLayoutManager {
     const tab = new TabItem();
     return new TabsLayoutManager({ tabs: [tab] });
@@ -486,6 +490,7 @@ export class TabsLayoutManager
             title: newTitle,
             conditionalRendering,
             repeatByVariable: row.state.repeatByVariable,
+            $variables: row.state.$variables,
           })
         );
       }

@@ -1,9 +1,11 @@
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardViewItem } from 'app/features/search/types';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import type * as useGetResourceRepositoryViewModule from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { FolderRepo } from './FolderRepo';
 
@@ -17,9 +19,15 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 }));
 
 const mockUseGetResourceRepositoryView = jest.fn();
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: () => mockUseGetResourceRepositoryView(),
-}));
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
+  const actual = jest.requireActual<typeof useGetResourceRepositoryViewModule>(
+    'app/features/provisioning/hooks/useGetResourceRepositoryView'
+  );
+  return {
+    ...actual,
+    useGetResourceRepositoryView: () => mockUseGetResourceRepositoryView(),
+  };
+});
 
 function mockSettings(items: Array<Partial<RepositoryView>>) {
   mockUseGetFrontendSettingsQuery.mockReturnValue({ data: { items } });
@@ -29,12 +37,19 @@ function mockRepoView({
   isReadOnlyRepo = false,
   repoType = 'github',
   repository,
+  status = RepoViewStatus.Ready,
 }: {
   isReadOnlyRepo?: boolean;
   repoType?: string;
   repository?: { title?: string; name?: string };
+  status?: RepoViewStatus;
 } = {}) {
-  mockUseGetResourceRepositoryView.mockReturnValue({ isReadOnlyRepo, repoType, repository });
+  mockUseGetResourceRepositoryView.mockReturnValue({
+    isReadOnlyRepo,
+    repoType,
+    repository,
+    status,
+  });
 }
 
 const MOCK_FOLDER: DashboardViewItem = {
@@ -51,7 +66,12 @@ function setup({
   settingsMock = [],
 }: {
   folder?: DashboardViewItem;
-  repoViewMock?: { isReadOnlyRepo?: boolean; repoType?: string; repository?: { title?: string; name?: string } };
+  repoViewMock?: {
+    isReadOnlyRepo?: boolean;
+    repoType?: string;
+    repository?: { title?: string; name?: string };
+    status?: RepoViewStatus;
+  };
   settingsMock?: Array<Partial<RepositoryView>>;
 }) {
   mockSettings(settingsMock);
@@ -127,5 +147,28 @@ describe('FolderRepo', () => {
     await user.hover(provisionedBadge);
     const tooltip = await screen.findByRole('tooltip');
     expect(tooltip).toHaveTextContent('Managed by: Repository');
+  });
+
+  it('renders orphaned badge when repository status is orphaned and query is settled', async () => {
+    const user = userEvent.setup();
+    setup({
+      folder: MOCK_FOLDER,
+      repoViewMock: { status: RepoViewStatus.Orphaned },
+    });
+
+    const orphanedBadge = screen.getByTestId('icon-exclamation-triangle');
+    expect(orphanedBadge).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+
+    await user.hover(orphanedBadge);
+    expect(await screen.findByText('Repository not found')).toBeInTheDocument();
+  });
+
+  it('does not render orphaned badge while repository query is loading', () => {
+    setup({
+      folder: MOCK_FOLDER,
+      repoViewMock: { status: RepoViewStatus.Loading },
+    });
+    expect(screen.queryByTestId('icon-exclamation-triangle')).not.toBeInTheDocument();
   });
 });

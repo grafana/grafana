@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const cardStyle = (theme: GrafanaTheme2, complete: boolean) => {
   const completeGradient = 'linear-gradient(to right, #5182CC 0%, #245BAF 100%)';

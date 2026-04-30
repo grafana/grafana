@@ -1,17 +1,17 @@
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
-import { RuleHealth } from 'app/types/unified-alerting';
+import { type RuleHealth } from 'app/types/unified-alerting';
 import {
-  GrafanaPromRuleGroupDTO,
-  PromAlertingRuleState,
-  PromRuleDTO,
-  PromRuleGroupDTO,
+  type GrafanaPromRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {

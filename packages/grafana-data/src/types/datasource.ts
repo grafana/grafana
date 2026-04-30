@@ -1,27 +1,27 @@
-import { ComponentType } from 'react';
-import { Observable } from 'rxjs';
+import { type ComponentType } from 'react';
+import { type Observable } from 'rxjs';
 
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { throwIfAngular } from '../utils/throwIfAngular';
 
-import { ScopedVars } from './ScopedVars';
-import { WithAccessControlMetadata } from './accesscontrol';
-import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
-import { CoreApp } from './app';
-import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
-import { DataFrame, DataFrameDTO } from './dataFrame';
-import { PanelData } from './panel';
-import { GrafanaPlugin, PluginMeta } from './plugin';
-import { DataQuery } from './query';
-import { Scope } from './scopes';
-import { AdHocVariableFilter } from './templateVars';
-import { RawTimeRange, TimeRange } from './time';
-import { UserStorage } from './userStorage';
-import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { type ScopedVars } from './ScopedVars';
+import { type WithAccessControlMetadata } from './accesscontrol';
+import { type AnnotationEvent, type AnnotationQuery, type AnnotationSupport } from './annotations';
+import { type CoreApp } from './app';
+import { type KeyValue, type LoadingState, type TableData, type TimeSeries } from './data';
+import { type DataFrame, type DataFrameDTO } from './dataFrame';
+import { type PanelData } from './panel';
+import { GrafanaPlugin, type PluginMeta } from './plugin';
+import { type DataQuery } from './query';
+import { type Scope } from './scopes';
+import { type AdHocVariableFilter } from './templateVars';
+import { type RawTimeRange, type TimeRange } from './time';
+import { type UserStorage } from './userStorage';
+import { type CustomVariableSupport, type DataSourceVariableSupport, type StandardVariableSupport } from './variables';
 
 export interface DataSourceConfigValidationAPI {
   registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;

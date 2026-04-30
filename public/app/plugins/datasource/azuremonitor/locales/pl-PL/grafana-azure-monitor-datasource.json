@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Chmura Azure",
+      "aria-label-client-certificate": "Certyfikat klienta",
       "aria-label-client-id": "Identyfikator klienta",
       "aria-label-client-secret": "Klucz tajny klienta",
+      "aria-label-private-key": "Klucz prywatny",
+      "aria-label-private-key-password": "Hasło do certyfikatu",
       "aria-label-symbol-client-secret": "Klucz tajny klienta",
       "aria-label-tenant-id": "Identyfikator najemcy",
+      "description-certificate-format": "Wybierz format certyfikatu (certyfikaty PEM powinny być w formacie PEM z tekstem zwykłym, a certyfikaty PFX – w formacie PFX z kodowaniem base64)",
       "label-azure-cloud": "Chmura Azure",
+      "label-certificate-format": "Formatowanie",
+      "label-client-certificate": "Certyfikat klienta",
       "label-client-id": "Identyfikator aplikacji (klienta)",
       "label-client-secret": "Klucz tajny klienta",
+      "label-private-key": "Klucz prywatny",
       "label-symbol-client-secret": "Klucz tajny klienta",
+      "label-symbol-private-key-password": "Hasło do certyfikatu",
       "label-tenant-id": "Identyfikator katalogu (najemcy)",
       "placeholder-symbol-client-secret": "skonfigurowano",
       "reset-symbol-client-secret": "Zresetuj"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Wybierz typ uwierzytelniania w usługach Azure",
-      "label-authentication": "Uwierzytelnienie",
+      "label-authentication": "Typ uwierzytelniania",
       "title-authentication": "Uwierzytelnienie"
     },
     "basic-logs-toggle": {

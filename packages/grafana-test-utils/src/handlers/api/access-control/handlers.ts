@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
 const searchTeamRolesHandler = () =>
   http.post('/api/access-control/teams/roles/search', async () => {
@@ -6,6 +6,12 @@ const searchTeamRolesHandler = () =>
     return HttpResponse.json([]);
   });
 
-const handlers = [searchTeamRolesHandler()];
+const setTeamRolesHandler = () =>
+  http.put('/api/access-control/teams/:teamId/roles', () => HttpResponse.json({ message: 'Roles updated' }));
+
+export const customSetTeamRolesHandler = (resolver: HttpResponseResolver) =>
+  http.put('/api/access-control/teams/:teamId/roles', resolver);
+
+const handlers = [searchTeamRolesHandler(), setTeamRolesHandler()];
 
 export default handlers;

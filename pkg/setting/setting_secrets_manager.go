@@ -24,6 +24,19 @@ type SecretsManagerSettings struct {
 	// If empty, a random key will be generated for each Grafana process at startup.
 	// If running in HA mode (i.e. with Redis cache enabled), this value must be set to the same value for all Grafana processes.
 	DataKeysCacheEncryptionKey string
+	// DataKeysRedisURL is the Redis connection URL for the data key cache.
+	DataKeysRedisURL string
+	// DataKeysRedisPrefix is the key prefix for DEK entries in that Redis.
+	DataKeysRedisPrefix string
+
+	// Whether to use a Redis cache for secure value metadata reads.
+	SecureValueMetadataCacheUseRedis bool
+	// The time to live for cached secure value metadata entries.
+	SecureValueMetadataCacheTTL time.Duration
+	// SecureValueMetadataCacheRedisURL is the Redis connection URL for the secure value metadata cache.
+	SecureValueMetadataCacheRedisURL string
+	// SecureValueMetadataCacheRedisPrefix is the key prefix for secure value metadata entries in Redis.
+	SecureValueMetadataCacheRedisPrefix string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
@@ -91,12 +104,24 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.DataKeysCacheUseRedis = secretsMgmt.Key("data_keys_cache_use_redis").MustBool(false)
 	cfg.SecretsManagement.DataKeysCacheTTL = secretsMgmt.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
-	// If empty, a random key will be generated at startup for encrypting cached data keys.
+	// Required when Redis cache is enabled. If empty, the OSS cache will generate a random key at startup.
 	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
+	cfg.SecretsManagement.DataKeysRedisURL = secretsMgmt.Key("data_keys_redis_url").MustString("redis://127.0.0.1:6379/0")
+	cfg.SecretsManagement.DataKeysRedisPrefix = secretsMgmt.Key("data_keys_redis_prefix").MustString("gsm")
 
 	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
 		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
 		cfg.SecretsManagement.DataKeysCacheUseRedis = false
+	}
+
+	cfg.SecretsManagement.SecureValueMetadataCacheUseRedis = secretsMgmt.Key("secure_value_metadata_cache_use_redis").MustBool(false)
+	cfg.SecretsManagement.SecureValueMetadataCacheTTL = secretsMgmt.Key("secure_value_metadata_cache_ttl").MustDuration(15 * time.Minute)
+	cfg.SecretsManagement.SecureValueMetadataCacheRedisURL = secretsMgmt.Key("secure_value_metadata_cache_redis_url").MustString("redis://127.0.0.1:6379/0")
+	cfg.SecretsManagement.SecureValueMetadataCacheRedisPrefix = secretsMgmt.Key("secure_value_metadata_cache_redis_prefix").MustString("gsm")
+
+	if cfg.SecretsManagement.SecureValueMetadataCacheUseRedis && cfg.SecretsManagement.SecureValueMetadataCacheTTL <= 0 {
+		cfg.Logger.Error("SecureValueMetadataCacheTTL must be > 0 when using Redis cache for secure value metadata. Disabling the cache.")
+		cfg.SecretsManagement.SecureValueMetadataCacheUseRedis = false
 	}
 
 	// Extract available KMS providers from configuration sections

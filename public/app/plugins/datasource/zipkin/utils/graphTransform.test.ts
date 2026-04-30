@@ -1,4 +1,4 @@
-import { ZipkinSpan } from '../types';
+import { type ZipkinSpan } from '../types';
 
 import { createGraphFrames } from './graphTransform';
 import {

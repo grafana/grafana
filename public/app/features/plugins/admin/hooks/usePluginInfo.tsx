@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { type GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { PageInfoItem } from '../../../../core/components/Page/types';
+import { type PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges/PluginDisabledBadge';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
 import { getLatestCompatibleVersion } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   const info: PageInfoItem[] = [];
@@ -39,13 +39,14 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
       }
     };
 
+    const isManagedPlugin = plugin.managed.enabled;
     if (plugin.isInstalled) {
-      const installedVersionValue = plugin.isManaged ? managedVersionText : installedVersion;
+      const installedVersionValue = isManagedPlugin ? managedVersionText : installedVersion;
       addInfo('installedVersion', installedVersionValue);
     }
 
     let latestVersionValue;
-    if (plugin.isManaged) {
+    if (isManagedPlugin) {
       latestVersionValue = managedVersionText;
     } else if (plugin.isPreinstalled?.withVersion) {
       latestVersionValue = `${latestVersion} (preinstalled)`;

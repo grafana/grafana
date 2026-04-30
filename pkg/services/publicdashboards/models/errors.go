@@ -25,4 +25,5 @@ var (
 	ErrPublicDashboardAccessTokenExists    = errutil.BadRequest("publicdashboards.accessTokenExists", errutil.WithPublicMessage("Dashboard Access Token already exists"))
 
 	ErrPublicDashboardNotEnabled = errutil.Forbidden("publicdashboards.notEnabled", errutil.WithPublicMessage("Dashboard paused"))
+	ErrPublicDashboardWrongOrg   = errutil.Forbidden("publicdashboards.wrongOrg", errutil.WithPublicMessage("Public dashboard does not belong to this organization"))
 )

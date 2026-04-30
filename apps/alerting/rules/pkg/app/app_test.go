@@ -2,13 +2,15 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
-	appsdk "github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	appsdk "github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
@@ -18,10 +20,20 @@ import (
 
 func makeDefaultRuntimeConfig() config.RuntimeConfig {
 	return config.RuntimeConfig{
-		FolderValidator:               func(ctx context.Context, folderUID string) (bool, error) { return folderUID == "f1", nil },
-		BaseEvaluationInterval:        60 * time.Second, // seconds
-		ReservedLabelKeys:             map[string]struct{}{"__reserved__": {}, "grafana_folder": {}},
-		NotificationSettingsValidator: func(ctx context.Context, receiver string) (bool, error) { return receiver == "notif-ok", nil },
+		FolderValidator:        func(ctx context.Context, folderUID string) (bool, error) { return folderUID == "f1", nil },
+		BaseEvaluationInterval: 60 * time.Second, // seconds
+		ReservedLabelKeys:      map[string]struct{}{"__reserved__": {}, "grafana_folder": {}},
+		NotificationSettingsValidator: func(ctx context.Context, notificationSettings v1.AlertRuleNotificationSettings) error {
+			if notificationSettings.NamedRoutingTree != nil && notificationSettings.NamedRoutingTree.RoutingTree == "policy-ok" {
+				return nil
+			}
+
+			if notificationSettings.SimplifiedRouting != nil && notificationSettings.SimplifiedRouting.Receiver == "notif-ok" {
+				return nil
+			}
+
+			return errors.New("validation error")
+		},
 	}
 }
 
@@ -33,12 +45,31 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
 	r.Labels = map[string]string{}
 	r.Spec = v1.AlertRuleSpec{
-		Title:                "ok",
-		Trigger:              v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
-		Expressions:          v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
-		NoDataState:          v1.DefaultNoDataState,
-		ExecErrState:         v1.DefaultExecErrState,
-		NotificationSettings: &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "notif-ok"},
+		Title:        "ok",
+		Trigger:      v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
+		Expressions:  v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
+		NoDataState:  v1.DefaultNoDataState,
+		ExecErrState: v1.DefaultExecErrState,
+		NotificationSettings: &v1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v1.AlertRuleSimplifiedRouting{
+				Type:     v1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "notif-ok",
+			},
+		},
+	}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := alertrule.NewValidator(makeDefaultRuntimeConfig())
+	require.NoError(t, validator.Validate(context.Background(), req))
+}
+
+func TestAlertRuleValidation_SuccessWithNamedRoutingTree(t *testing.T) {
+	r := baseAlertRule()
+	r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{
+		NamedRoutingTree: &v1.AlertRuleNamedRoutingTree{
+			Type:        v1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+			RoutingTree: "policy-ok",
+		},
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
@@ -140,8 +171,29 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Annotations[v1.FolderAnnotationKey] = "bad" }), "want folder not exist error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Trigger.Interval = v1.AlertRulePromDuration("30s") }), "want base interval multiple error")
 	assert.Error(t, mk(func(r *v1.AlertRule) {
-		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "bad"}
+		r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v1.AlertRuleSimplifiedRouting{
+				Type:     v1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "bad",
+			},
+		}
 	}), "want invalid receiver error")
+	assert.Error(t, mk(func(r *v1.AlertRule) {
+		r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v1.AlertRuleNamedRoutingTree{
+				Type:        v1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "bad-policy",
+			},
+		}
+	}), "want invalid routing tree error")
+	assert.Error(t, mk(func(r *v1.AlertRule) {
+		r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v1.AlertRuleNamedRoutingTree{
+				Type:        v1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "",
+			},
+		}
+	}), "want empty routing tree error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Labels[v1.GroupLabelKey] = "grp" }), "want group set on create error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("-10s") }), "want for>=0 error")
 	assert.Error(t, mk(func(r *v1.AlertRule) {

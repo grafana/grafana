@@ -1,13 +1,18 @@
 import { groupBy } from 'lodash';
-import { FC, type JSX, useCallback, useMemo, useState } from 'react';
+import { type FC, type JSX, useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Button, Icon, Modal, type ModalProps, Spinner, Stack } from '@grafana/ui';
+import {
+  AlertState,
+  type AlertmanagerGroup,
+  type ObjectMatcher,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../../types/amroutes';
-import { MatcherFormatter } from '../../utils/matchers';
-import { InsertPosition } from '../../utils/routeTree';
+import { type FormAmRoute } from '../../types/amroutes';
+import { type MatcherFormatter } from '../../utils/matchers';
+import { type InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
 import { AlertGroupsSummary } from './AlertGroupsSummary';

@@ -1,5 +1,5 @@
-import { Meta, StoryFn } from '@storybook/react';
-import { useState, useCallback, useId } from 'react';
+import { type Meta, type StoryFn } from '@storybook/react';
+import { useState, useCallback } from 'react';
 import * as React from 'react';
 
 import { Field } from '../Forms/Field';
@@ -35,7 +35,7 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
           <InlineField label="My switch" invalid={args.invalid} disabled={args.disabled}>
-            <InlineSwitch value={args.value} id="my-switch" />
+            <InlineSwitch value={args.value} />
           </InlineField>
         </InlineFieldRow>
       </div>
@@ -61,10 +61,9 @@ export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  const id = useId();
   return (
     <Field label="Uncontrolled switch" disabled={args.disabled} invalid={args.invalid}>
-      <Switch id={id} value={checked} onChange={onChange} />
+      <Switch value={checked} onChange={onChange} />
     </Field>
   );
 };

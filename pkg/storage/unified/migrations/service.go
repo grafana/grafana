@@ -3,7 +3,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -56,21 +55,10 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
-func isTargetEligibleForMigrations(targets []string) bool {
-	return slices.Contains(targets, "all") || slices.Contains(targets, "core")
-}
-
-func (p *UnifiedStorageMigrationServiceImpl) shouldRunMigrations() bool {
-	return !p.cfg.DisableDataMigrations &&
-		p.cfg.UnifiedStorageType() == "unified" &&
-		isTargetEligibleForMigrations(p.cfg.Target)
-}
-
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	if !p.shouldRunMigrations() {
+	if !p.cfg.ShouldRunMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping",
-			"disableDataMigrations", p.cfg.DisableDataMigrations,
 			"unifiedStorageType", p.cfg.UnifiedStorageType(),
 			"target", p.cfg.Target,
 		)
@@ -84,6 +72,14 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 // EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
 func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+	exists, err := sqlStore.GetEngine().IsTableExist(migrationLogTableName)
+	if err != nil {
+		return fmt.Errorf("failed to check migration log table existence: %w", err)
+	}
+	if exists {
+		return nil
+	}
+
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 	sec := cfg.Raw.Section("database")

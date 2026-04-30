@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const snapshotDir = "testdata"
@@ -39,7 +38,7 @@ func declareFixedRolesForTest(t *testing.T) []accesscontrol.RoleRegistration {
 		captured = append(captured, registrations...)
 		return nil
 	}
-	require.NoError(t, DeclareFixedRoles(svc, featuremgmt.WithFeatures()))
+	require.NoError(t, DeclareFixedRoles(svc))
 	require.NotEmpty(t, captured, "DeclareFixedRoles should register at least one role")
 	return captured
 }
@@ -233,12 +232,12 @@ func allAlertingActions() []string {
 		accesscontrol.ActionAlertingReceiversPermissionsWrite,
 		accesscontrol.ActionAlertingRoutesRead,
 		accesscontrol.ActionAlertingRoutesWrite,
-		// accesscontrol.ActionAlertingManagedRoutesRead,
-		// accesscontrol.ActionAlertingManagedRoutesWrite,
-		// accesscontrol.ActionAlertingManagedRoutesCreate,
-		// accesscontrol.ActionAlertingManagedRoutesDelete,
-		// accesscontrol.ActionAlertingRoutesPermissionsRead,
-		// accesscontrol.ActionAlertingRoutesPermissionsWrite,
+		accesscontrol.ActionAlertingManagedRoutesRead,
+		accesscontrol.ActionAlertingManagedRoutesWrite,
+		accesscontrol.ActionAlertingManagedRoutesCreate,
+		accesscontrol.ActionAlertingManagedRoutesDelete,
+		accesscontrol.ActionAlertingRoutesPermissionsRead,
+		accesscontrol.ActionAlertingRoutesPermissionsWrite,
 		accesscontrol.ActionAlertingRuleExternalWrite,
 		accesscontrol.ActionAlertingRuleExternalRead,
 		accesscontrol.ActionAlertingInstancesExternalWrite,

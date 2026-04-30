@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
-  GetRepositoryFilesApiResponse,
-  GetResourceStatsApiResponse,
-  ManagerStats,
-  RepositoryView,
-  ResourceCount,
+  type GetRepositoryFilesApiResponse,
+  type GetResourceStatsApiResponse,
+  type ManagerStats,
+  type RepositoryView,
+  type ResourceCount,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';

@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState, useCallback } from 'react';
 import * as React from 'react';
 
@@ -65,7 +65,7 @@ export const StackedList = () => {
 export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
     <Field {...args}>
-      <Checkbox name="hide" id="hide" defaultChecked={true} />
+      <Checkbox name="hide" defaultChecked={true} />
     </Field>
   );
 };

@@ -1,15 +1,15 @@
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeMatcher,
-  RoutingTreeRoute,
-  RoutingTreeSpec,
+  type RoutingTree,
+  type RoutingTreeMatcher,
+  type RoutingTreeRoute,
+  type RoutingTreeSpec,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, MatcherOperator, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 /**
  * Normalise matchers from config Route object -> what the k8s API expects to be returning

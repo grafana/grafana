@@ -1,28 +1,28 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   arrayToDataFrame,
-  DataFrame,
-  DataQueryResponse,
+  type DataFrame,
+  type DataQueryResponse,
   DataTopic,
   dateTime,
-  EventBus,
+  type EventBus,
   getFrameDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   LoadingState,
-  LogRowModel,
+  type LogRowModel,
   shallowCompare,
-  SplitOpen,
-  TimeRange,
-  TimeZone,
+  type SplitOpen,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, type SeriesVisibilityChangeMode } from '@grafana/ui';
 
 import {
   mergeLogsVolumeDataFrames,
@@ -118,6 +118,7 @@ export const LogsVolumePanelList = ({
   }, [logs, logsVolumeData?.data]);
 
   const styles = useStyles2(getStyles);
+  const lokiShardSplittingEnabled = useBooleanFlagValue('lokiShardSplitting', false);
 
   const numberOfLogVolumes = Object.keys(logVolumes).length;
 
@@ -126,8 +127,7 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const canShowPartialData =
-    config.featureToggles.lokiShardSplitting && logsVolumeData && logsVolumeData.data.length > 0;
+  const canShowPartialData = lokiShardSplittingEnabled && logsVolumeData && logsVolumeData.data.length > 0;
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
   const maxBytesError = isMaxBytesErrorResponse(logsVolumeData);
   const queryTooLargeError = timeoutError || maxBytesError;

@@ -6,7 +6,7 @@ import { formattedValueToString } from '@grafana/data';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
-import { AutoCellProps, TableCellStyles } from '../types';
+import { type AutoCellProps, type TableCellStyles } from '../types';
 
 export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const displayValue = field.display!(value);

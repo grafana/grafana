@@ -376,7 +376,7 @@ func waitForClusterSettled(t *testing.T, grafanas []*haGrafana) {
 			pos := getPeerPosition(t, g.Addr)
 			positions[pos] = true
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			assert.True(c, positions[i], "Position %d should be assigned", i)
 		}
 	}, 30*time.Second, 1*time.Second)

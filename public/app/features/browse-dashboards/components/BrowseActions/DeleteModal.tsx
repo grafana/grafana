@@ -5,7 +5,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
 import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
 import { DescendantCount } from './DescendantCount';

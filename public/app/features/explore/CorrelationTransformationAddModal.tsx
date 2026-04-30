@@ -3,14 +3,14 @@ import { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
-import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
+import { type DataLinkTransformationConfig, type ScopedVars } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
   getSupportedTransTypeDetails,
   getTransformOptions,
-  TransformationFieldDetails,
+  type TransformationFieldDetails,
 } from '../correlations/Forms/types';
 import { getTransformationVars } from '../correlations/transformations';
 

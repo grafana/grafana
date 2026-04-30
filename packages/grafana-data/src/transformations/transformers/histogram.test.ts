@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
+import { type Field, FieldType } from '../../types/dataFrame';
 import { DataFrameType } from '../../types/dataFrameTypes';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
@@ -7,7 +7,7 @@ import {
   histogramTransformer,
   buildHistogram,
   histogramFieldsToFrame,
-  HistogramFields,
+  type HistogramFields,
   joinHistograms,
   getHistogramFields,
 } from './histogram';

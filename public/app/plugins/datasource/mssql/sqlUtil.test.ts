@@ -1,4 +1,4 @@
-import { SQLQuery, QueryEditorExpressionType } from '@grafana/sql';
+import { type SQLQuery, QueryEditorExpressionType } from '@grafana/sql';
 
 import { toRawSql } from './sqlUtil';
 

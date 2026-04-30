@@ -1,7 +1,7 @@
-import { DataFrameType, DataQueryRequest, dateTime, FieldType } from '@grafana/data';
+import { DataFrameType, type DataQueryRequest, dateTime, FieldType } from '@grafana/data';
 
 import { randomWalk } from './randomWalk';
-import { GrafanaQuery, GrafanaQueryType } from './types';
+import { type GrafanaQuery, GrafanaQueryType } from './types';
 
 function makeRequest(overrides?: Partial<DataQueryRequest<GrafanaQuery>>): DataQueryRequest<GrafanaQuery> {
   return {

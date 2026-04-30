@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 

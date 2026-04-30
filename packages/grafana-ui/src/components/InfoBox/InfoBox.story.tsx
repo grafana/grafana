@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { FeatureState } from '@grafana/data';
 
 import { Stack } from '../Layout/Stack/Stack';
 
-import { FeatureInfoBox, FeatureInfoBoxProps } from './FeatureInfoBox';
+import { FeatureInfoBox, type FeatureInfoBoxProps } from './FeatureInfoBox';
 import { InfoBox } from './InfoBox';
 import mdx from './InfoBox.mdx';
 

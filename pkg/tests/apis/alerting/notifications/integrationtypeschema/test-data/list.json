@@ -1,8 +1,8 @@
 {
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "items": [
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "LINE",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "dingding",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "discord",
@@ -889,7 +889,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "email",
@@ -1256,7 +1256,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "googlechat",
@@ -1360,7 +1360,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "jira",
@@ -2394,7 +2394,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "kafka",
@@ -2558,7 +2558,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "mqtt",
@@ -2838,7 +2838,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "oncall",
@@ -3018,7 +3018,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "opsgenie",
@@ -4090,7 +4090,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pagerduty",
@@ -5160,7 +5160,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "prometheus-alertmanager",
@@ -5232,7 +5232,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "pushover",
@@ -6489,7 +6489,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sensugo",
@@ -6625,7 +6625,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "slack",
@@ -8003,7 +8003,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "sns",
@@ -9008,7 +9008,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "teams",
@@ -10334,7 +10334,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "telegram",
@@ -11187,7 +11187,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "threema",
@@ -11291,7 +11291,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "victorops",
@@ -12081,7 +12081,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webex",
@@ -12780,7 +12780,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "webhook",
@@ -14066,7 +14066,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wechat",
@@ -14801,7 +14801,7 @@
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "kind": "IntegrationTypeSchema",
       "metadata": {
         "name": "wecom",

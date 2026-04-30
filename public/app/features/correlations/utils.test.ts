@@ -1,19 +1,19 @@
 import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   FieldType,
   SupportedTransformationType,
   toDataFrame,
 } from '@grafana/data';
-import { config, CorrelationData } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { config, type CorrelationData } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema/dist/esm/index';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 
-import { EditFormDTO } from './Forms/types';
-import { Correlation } from './types';
+import { type EditFormDTO } from './Forms/types';
+import { type Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
 

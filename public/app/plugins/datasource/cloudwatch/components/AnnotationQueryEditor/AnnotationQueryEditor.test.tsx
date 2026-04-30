@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../../dataquery.gen';
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchAnnotationQuery, type CloudWatchMetricsQuery } from '../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../datasource';
 import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
-import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 

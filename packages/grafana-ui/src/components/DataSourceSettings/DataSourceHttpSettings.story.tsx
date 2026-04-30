@@ -1,10 +1,10 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
-import { HttpSettingsProps } from './types';
+import { type HttpSettingsProps } from './types';
 
 const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
   id: 4,

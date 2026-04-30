@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { OrgRole, renderMarkdown } from '@grafana/data';
+import { type OrgRole, renderMarkdown } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { StoreState } from 'app/types/store';
-import { OrgUser } from 'app/types/user';
+import { type StoreState } from 'app/types/store';
+import { type OrgUser } from 'app/types/user';
 
 import { OrgUsersTable } from '../admin/Users/OrgUsersTable';
 import InviteesTable from '../invites/InviteesTable';

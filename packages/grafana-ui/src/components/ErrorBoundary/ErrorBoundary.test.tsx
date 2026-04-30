@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { FC } from 'react';
+import { type FC } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 

@@ -1,10 +1,8 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type GetUsageResponse, useGetUsageQuery } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { config } from '@grafana/runtime';
 
 const WARNING_THRESHOLD = 0.85;
 
@@ -39,11 +37,8 @@ function buildResourceStatus(data: GetUsageResponse | undefined, kind: ResourceS
 }
 
 export function useQuotaLimits() {
-  const featureEnabled = Boolean(config.featureToggles.kubernetesUnifiedStorageQuotas);
-  const dashboardQuery = useGetUsageQuery(
-    featureEnabled ? { group: DASHBOARD_API_GROUP, resource: 'dashboards' } : skipToken
-  );
-  const folderQuery = useGetUsageQuery(featureEnabled ? { group: FOLDER_API_GROUP, resource: 'folders' } : skipToken);
+  const dashboardQuery = useGetUsageQuery({ group: DASHBOARD_API_GROUP, resource: 'dashboards' });
+  const folderQuery = useGetUsageQuery({ group: FOLDER_API_GROUP, resource: 'folders' });
 
   const isLoading = dashboardQuery.isLoading || folderQuery.isLoading;
   const allQueriesFailed = Boolean(dashboardQuery.error && folderQuery.error);
@@ -55,5 +50,5 @@ export function useQuotaLimits() {
         .filter((r): r is ResourceStatus => r !== null),
     [dashboardQuery.data, folderQuery.data]
   );
-  return { resources, isLoading, allQueriesFailed, featureEnabled };
+  return { resources, isLoading, allQueriesFailed };
 }

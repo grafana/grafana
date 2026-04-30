@@ -1,26 +1,26 @@
 import { css, cx } from '@emotion/css';
-import BaseLayer from 'ol/layer/Base';
+import type BaseLayer from 'ol/layer/Base';
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import {
   getMinMaxAndDelta,
-  DataFrame,
+  type DataFrame,
   formattedValueToString,
   getFieldColorModeForField,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, VizLegendItem } from '@grafana/ui';
+import { useStyles2, type VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
-import { DimensionSupplier } from 'app/features/dimensions/types';
+import { type DimensionSupplier } from 'app/features/dimensions/types';
 
-import { StyleConfigState } from '../style/types';
-import { MapLayerState } from '../types';
+import { type StyleConfigState } from '../style/types';
+import { type MapLayerState } from '../types';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;

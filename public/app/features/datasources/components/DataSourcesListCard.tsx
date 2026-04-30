@@ -1,22 +1,27 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
-import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
+import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
+
+import { BuildDashboardButton } from './BuildDashboardButton';
+import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  failure?: DatasourceFailureDetails;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -31,26 +36,14 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          failure?.severity && (
+            <DataSourceFailureBadge key="unhealthy-badge" severity={failure.severity} message={failure.message} />
+          ),
         ]}
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <LinkButton
-          icon="apps"
-          fill="outline"
-          variant="secondary"
-          href={`dashboard/new-with-ds/${dataSource.uid}`}
-          onClick={() => {
-            trackCreateDashboardClicked({
-              grafana_version: config.buildInfo.version,
-              datasource_uid: dataSource.uid,
-              plugin_name: dataSource.typeName,
-              path: window.location.pathname,
-            });
-          }}
-        >
-          <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
-        </LinkButton>
+        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
 
         {/* Explore */}
         {hasExploreRights && (

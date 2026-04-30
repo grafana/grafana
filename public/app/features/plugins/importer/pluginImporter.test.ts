@@ -1,12 +1,12 @@
 import {
   AppPlugin,
-  AppPluginMeta,
+  type AppPluginMeta,
   DataSourcePlugin,
-  DataSourcePluginMeta,
+  type DataSourcePluginMeta,
   PanelPlugin,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   PluginType,
 } from '@grafana/data';
 
@@ -216,9 +216,9 @@ describe('pluginImporter', () => {
     it('should throw error if module is missing exported plugin', async () => {
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
 
-      expect(async () => {
-        await pluginImporter.importDataSource({ ...dataSourcePlugin });
-      }).rejects.toThrow(new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export'));
+      await expect(pluginImporter.importDataSource({ ...dataSourcePlugin })).rejects.toThrow(
+        new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
+      );
 
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',

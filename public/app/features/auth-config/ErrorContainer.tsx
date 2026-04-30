@@ -1,8 +1,8 @@
 import type { JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { Alert } from '@grafana/ui';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { resetError, resetWarning } from './state/reducers';
 

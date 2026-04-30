@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Field, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelCard } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
-import { LibraryElementDTO } from '../../../library-panels/types';
-import { LibraryPanelInput, LibraryPanelInputState } from '../../types';
+import { type LibraryElementDTO } from '../../../library-panels/types';
+import { type LibraryPanelInput, LibraryPanelInputState } from '../../types';
 
 interface Props {
   inputs: LibraryPanelInput[];

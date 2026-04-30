@@ -1,10 +1,17 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { groupIntoRow, groupIntoTab, saveDashboard, selectRow, toggleRow } from './utils';
+import {
+  groupIntoRow,
+  groupIntoTab,
+  saveDashboard,
+  selectRow,
+  stripMetadataNameFromImportJson,
+  toggleRow,
+} from './utils';
 
 test.use({
   featureToggles: {
@@ -25,10 +32,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // Helper functions
     async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
       await page.goto(selectors.pages.ImportDashboard.url);
-      await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
+      await page
+        .getByTestId(selectors.components.DashboardImportPage.textarea)
+        .fill(stripMetadataNameFromImportJson(JSON.stringify(testV2Dashboard)));
       await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
       await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
       await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();

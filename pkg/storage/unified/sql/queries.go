@@ -41,6 +41,7 @@ var (
 	sqlResourceHistoryRead                 = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryReadLatestRV         = mustTemplate("resource_history_read_latest_rv.sql")
 	sqlResourceHistoryInsert               = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryInsertBulk           = mustTemplate("resource_history_insert_bulk.sql")
 	sqlResourceHistoryPoll                 = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet                  = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete               = mustTemplate("resource_history_delete.sql")
@@ -89,6 +90,26 @@ type sqlResourceRequest struct {
 
 func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
+}
+
+type sqlBulkResourceHistoryInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Rows []sqlResourceRequest
+}
+
+func (r sqlBulkResourceHistoryInsertRequest) Validate() error {
+	if len(r.Rows) == 0 {
+		return fmt.Errorf("missing rows")
+	}
+	for _, row := range r.Rows {
+		if row.WriteEvent.Key == nil {
+			return fmt.Errorf("missing key")
+		}
+		if row.ResourceVersion <= 0 {
+			return fmt.Errorf("missing resource version")
+		}
+	}
+	return nil
 }
 
 type sqlResourceInsertFromHistoryRequest struct {
@@ -323,9 +344,6 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 	}
 	if r.Key == nil {
 		return fmt.Errorf("missing key")
-	}
-	if r.Key.Namespace == "" {
-		return fmt.Errorf("missing namespace")
 	}
 	if r.Key.Group == "" {
 		return fmt.Errorf("missing group")

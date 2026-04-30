@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { sceneGraph, SceneGridRow, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneGridRow, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -64,7 +64,6 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
           'Are you sure you want to remove this row and all its panels?'
         ),
         altActionText: t('dashboard.default-layout.row-actions.modal.alt-action', 'Delete row only'),
-        icon: 'trash-alt',
         onConfirm: () => this.removeRow(true),
         onAltAction: () => this.removeRow(),
       })

@@ -1,8 +1,8 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
+import { type CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
 
-import { CloudWatchDatasource } from './../datasource';
+import { type CloudWatchDatasource } from './../datasource';
 
 export const toOption = (value: string) => ({ label: value, value });
 

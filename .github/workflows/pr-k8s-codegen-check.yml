@@ -16,6 +16,8 @@ jobs:
   check:
     name: K8s Codegen Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout repository
@@ -25,6 +27,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update k8s codegen
       run: ./hack/update-codegen.sh

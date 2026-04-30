@@ -1,4 +1,4 @@
-import { FeatureToggles } from '../types/featureToggles.gen';
+import { type FeatureToggles } from '../types/featureToggles.gen';
 
 type FeatureToggleName = keyof FeatureToggles;
 

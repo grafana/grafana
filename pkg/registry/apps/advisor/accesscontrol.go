@@ -32,8 +32,8 @@ var (
 	ScopeAllAdvisorRegister   = ScopeProviderAdvisorRegister.GetResourceAllScope()
 )
 
-func registerAccessControlRoles(service accesscontrol.Service) error {
-	// Check
+// FixedRoleRegistrations returns the advisor role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	checkReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:advisor.checks:reader",
@@ -140,11 +140,15 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return service.DeclareFixedRoles(
+	return []accesscontrol.RoleRegistration{
 		checkReader,
 		checkWriter,
 		checkTypesReader,
 		checkTypesWriter,
 		registerWriter,
-	)
+	}
+}
+
+func registerAccessControlRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

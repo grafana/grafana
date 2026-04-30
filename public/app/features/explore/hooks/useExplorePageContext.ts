@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 
-import { createAssistantContextItem, ChatContextItem, useProvidePageContext } from '@grafana/assistant';
-import { DataSourceApi } from '@grafana/data';
+import { createAssistantContextItem, type ChatContextItem, useProvidePageContext } from '@grafana/assistant';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { ExploreItemState } from 'app/types/explore';
+import { type DataQuery } from '@grafana/schema';
+import { type ExploreItemState } from 'app/types/explore';
 
 export function useExplorePageContext(panes: Array<[string, ExploreItemState]>): void {
   const setContext = useProvidePageContext(/^\/explore/);
@@ -26,7 +26,8 @@ function buildContext(panes: Array<[string, ExploreItemState]>): ChatContextItem
       return buildMixedContext(pane.queries);
     }
 
-    return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, pane.queries, ds);
+    const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
+    return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
   });
 }
 
@@ -93,10 +94,20 @@ const METADATA_FIELDS = new Set([
   'direction',
 ]);
 
+/** Safely calls ds.getQueryDisplayText, returning undefined if unavailable or on error. */
+function getDisplayText(query: DataQuery, ds?: DataSourceApi): string | undefined {
+  try {
+    return ds?.getQueryDisplayText?.(query);
+  } catch (error) {
+    console.error(error);
+    return undefined;
+  }
+}
+
 function summarizeQuery(query: DataQuery, ds?: DataSourceApi): Record<string, unknown> {
   const summary: Record<string, unknown> = { refId: query.refId };
 
-  const displayText = ds?.getQueryDisplayText?.(query);
+  const displayText = getDisplayText(query, ds);
   if (displayText) {
     summary.expression = displayText;
   }
@@ -114,8 +125,9 @@ function summarizeQuery(query: DataQuery, ds?: DataSourceApi): Record<string, un
 }
 
 function isQueryEmpty(query: DataQuery, ds?: DataSourceApi): boolean {
-  if (ds?.getQueryDisplayText) {
-    return !ds.getQueryDisplayText(query)?.trim();
+  const displayText = getDisplayText(query, ds);
+  if (displayText?.trim()) {
+    return false;
   }
   const { refId, datasource, ...rest } = query;
   return Object.keys(rest).length === 0;

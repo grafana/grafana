@@ -2,32 +2,32 @@ import { cloneDeep, defaults as _defaults, filter, indexOf, isEqual, map, maxBy,
 import { Subscription } from 'rxjs';
 
 import {
-  AnnotationQuery,
-  AppEvent,
-  DashboardCursorSync,
+  type AnnotationQuery,
+  type AppEvent,
+  type DashboardCursorSync,
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  DateTimeInput,
-  EventBusExtended,
+  type DateTimeInput,
+  type EventBusExtended,
   EventBusSrv,
-  PanelModel as IPanelModel,
-  TimeRange,
-  TimeZone,
-  TypedVariableModel,
-  UrlQueryValue,
+  type PanelModel as IPanelModel,
+  type TimeRange,
+  type TimeZone,
+  type TypedVariableModel,
+  type UrlQueryValue,
 } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Dashboard, DashboardLink, VariableModel } from '@grafana/schema';
+import { type Dashboard, type DashboardLink, type VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
-import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { type DashboardMeta } from 'app/types/dashboard';
 import {
   DashboardMetaChangedEvent,
   DashboardPanelsChangedEvent,
@@ -39,17 +39,17 @@ import { appEvents } from '../../../core/app_events';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
-  VariablesChangedEvent,
+  type VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
 } from '../../variables/types';
 import { isAllVariable } from '../../variables/utils';
 import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+import { mergePanels, type PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
 import { PanelModel } from './PanelModel';
-import { TimeModel } from './TimeModel';
+import { type TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
 export interface CloneOptions {
@@ -67,9 +67,6 @@ export interface ScopeMeta {
 }
 
 export class DashboardModel implements TimeModel {
-  /** @deprecated use UID */
-  id?: any;
-
   // TODO: use proper type and fix all the places where uid is set to null
   uid: any;
   title: string;
@@ -144,7 +141,6 @@ export class DashboardModel implements TimeModel {
       targetSchemaVersion?: number;
     }
   ) {
-    this.id = data.id;
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     // UID is not there for newly created dashboards

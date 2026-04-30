@@ -1,8 +1,13 @@
-import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type SelectableValue } from '@grafana/data';
+import {
+  MatcherOperator,
+  type ObjectMatcher,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../types/amroutes';
-import { MatcherFieldValue } from '../types/silence-form';
+import { type FormAmRoute } from '../types/amroutes';
+import { type MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';

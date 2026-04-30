@@ -2,10 +2,10 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { Button, type ButtonProps, Stack } from '@grafana/ui';
 
 import {
-  ViewExperienceToggleEventPayload,
+  type ViewExperienceToggleEventPayload,
   trackViewExperienceToggleClick,
   trackViewExperienceToggleConfirmed,
 } from '../Analytics';
@@ -26,16 +26,22 @@ export function RuleListPageTitle({ title }: { title: string }) {
     targetView: listViewV2Enabled ? 'v1' : 'v2',
   });
 
+  const alertingTriageEnabled = config.featureToggles.alertingTriage ?? false;
+
   const handleToggleClick = () => {
     trackViewExperienceToggleClick({
       ...getEventPayload(),
       action: 'clicked',
     });
 
-    // Only show confirmation when switching from NEW to OLD
-    // When switching from OLD to NEW, just do it directly
     if (listViewV2Enabled) {
-      setShowConfirmModal(true);
+      // Only show the "try Alert Activity" confirmation modal if alertingTriage is enabled.
+      // Otherwise just revert directly — no point mentioning a feature that isn't available.
+      if (alertingTriageEnabled) {
+        setShowConfirmModal(true);
+      } else {
+        revertToPreviousExperience();
+      }
     } else {
       // Switching to new experience - no confirmation needed
       switchToNewExperience();
@@ -59,13 +65,7 @@ export function RuleListPageTitle({ title }: { title: string }) {
     }
   };
 
-  const handleRevert = () => {
-    trackViewExperienceToggleClick({
-      ...getEventPayload(),
-      action: 'confirmed',
-    });
-    setShowConfirmModal(false);
-
+  const revertToPreviousExperience = () => {
     try {
       setPreviewToggle('alertingListViewV2', false);
       trackViewExperienceToggleConfirmed({
@@ -79,6 +79,15 @@ export function RuleListPageTitle({ title }: { title: string }) {
         preferenceSaved: false,
       });
     }
+  };
+
+  const handleRevert = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'confirmed',
+    });
+    setShowConfirmModal(false);
+    revertToPreviousExperience();
   };
 
   const handleSeeAlertActivity = () => {

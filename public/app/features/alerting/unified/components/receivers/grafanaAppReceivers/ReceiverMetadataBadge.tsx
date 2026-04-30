@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, LinkButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ReceiverPluginMetadata } from './useReceiversMetadata';
+import { type ReceiverPluginMetadata } from './useReceiversMetadata';
 
 interface Props {
   metadata: ReceiverPluginMetadata;

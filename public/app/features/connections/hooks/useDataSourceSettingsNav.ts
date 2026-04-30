@@ -1,6 +1,6 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { NavModel, NavModelItem } from '@grafana/data';
+import { type NavModel, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNavModel } from 'app/core/selectors/navModel';

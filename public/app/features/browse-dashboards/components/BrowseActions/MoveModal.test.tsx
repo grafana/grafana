@@ -5,7 +5,7 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { MoveModal, Props } from './MoveModal';
+import { MoveModal, type Props } from './MoveModal';
 
 const [_, { folderA, folderB }] = getFolderFixtures();
 

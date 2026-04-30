@@ -238,7 +238,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					if idx > 0 {
 						parent := copy.Paths.Paths[path[:idx+6]]
 						if parent != nil && parent.Get != nil {
-							for _, op := range GetPathOperations(spec) {
+							for _, op := range GetPathOperations(&spec.PathProps) {
 								action, ok := op.Extensions.GetString("x-kubernetes-action")
 								if ok && action == "connect" {
 									op.Tags = parent.Get.Tags
@@ -253,7 +253,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 				}
 				// Remove protobuf from all paths (including routes added by addBuilderRoutes)
 				for _, path := range result.Paths.Paths {
-					allOps := GetPathOperations(path)
+					allOps := GetPathOperations(&path.PathProps)
 					for _, op := range allOps {
 						if op == nil {
 							continue
@@ -288,7 +288,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 }
 
 // GetPathOperations returns the set of non-nil operations defined on a path
-func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+func GetPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
 	ops := make(map[string]*spec3.Operation)
 	if path.Get != nil {
 		ops[http.MethodGet] = path.Get

@@ -7,58 +7,44 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	// Create two repositories with folder targets and separate paths to avoid file conflicts
 	const repo1 = "pulljob-repo-1"
 	const repo2 = "pulljob-repo-2"
 
-	// create both repos concurrently to reduce duration of this test
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo1,
-			Path:   path.Join(helper.ProvisioningPath, "repo1"),
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/all-panels.json": "dashboard1.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo2,
-			Path:   path.Join(helper.ProvisioningPath, "repo2"),
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/timeline-demo.json": "dashboard2.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	wg.Wait()
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo1,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo1"),
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "dashboard1.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo2,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo2"),
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/timeline-demo.json": "dashboard2.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
@@ -173,4 +159,93 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.Equal(t, repo1, persistentRepo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
 		require.Equal(t, repo1Dashboard.GetGeneration(), persistentRepo1Dashboard.GetGeneration(), "repo1's resource should not be modified by repo2 pull")
 	})
+}
+
+// Reproduces the "Delete and keep resources" → reconnect-with-same-name flow
+// for a folder-target repository. The first repo's release finalizer strips
+// manager annotations from the root folder; the second repo (same name) then
+// collides with that orphan. The pull job must surface the conflict as a
+// per-resource validation warning so operators can see the cause, instead of
+// hard-failing the whole job. The orphan must not be silently adopted.
+func TestIntegrationProvisioning_PullJobUnmanagedRootConflict(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "unmanaged-root-repo"
+	repoPath := path.Join(helper.ProvisioningPath, "unmanaged-root-repo-data")
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:            repo,
+		LocalPath:       repoPath,
+		SyncTarget:      "folder",
+		ExpectedFolders: 1,
+	})
+
+	rootFolder, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	require.NoError(t, err, "root folder should exist after initial sync")
+	require.Equal(t, repo, rootFolder.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+		"root folder should be managed by the repo")
+
+	// Mimic "Delete and keep resources" from the UI: ensure the
+	// release-orphan-resources finalizer is set, then delete the repo.
+	_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err, "should patch finalizers")
+
+	require.NoError(t, helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}))
+	helper.WaitForRepositoryDeleted(t, ctx, repo)
+	common.WaitForResourcesReleased(t, ctx, helper.Folders.Resource, "folders")
+
+	orphan, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	require.NoError(t, err, "orphan root folder should still exist after release")
+	require.NotContains(t, orphan.GetAnnotations(), utils.AnnoKeyManagerIdentity,
+		"orphan folder must have manager annotations stripped")
+	require.NotContains(t, orphan.GetAnnotations(), utils.AnnoKeyManagerKind,
+		"orphan folder must have manager annotations stripped")
+
+	// Recreate a repository with the same name. SkipSync so we can trigger
+	// and inspect the pull job ourselves rather than racing the helper's
+	// initial sync.
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		LocalPath:              repoPath,
+		SyncTarget:             "folder",
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+	t.Logf("Job state: %s", jobObj.Status.State)
+	t.Logf("Job warnings: %v", jobObj.Status.Warnings)
+	t.Logf("Job errors: %v", jobObj.Status.Errors)
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"unmanaged-root conflict should be a warning, not a hard failure")
+	require.Empty(t, jobObj.Status.Errors, "no hard errors expected")
+	require.NotEmpty(t, jobObj.Status.Warnings, "should record a warning describing the conflict")
+
+	found := false
+	for _, w := range jobObj.Status.Warnings {
+		if strings.Contains(w, repo) && strings.Contains(w, "already exists and is not managed") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found, "warning should describe the unmanaged conflict on the root folder")
+
+	// Defensive: the orphan folder must not have been silently adopted by
+	// the recreated repository. The whole point of the existing guard is
+	// that takeover requires explicit migration.
+	orphan, err = helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+	require.NoError(t, err, "orphan root folder should still exist")
+	require.NotContains(t, orphan.GetAnnotations(), utils.AnnoKeyManagerIdentity,
+		"orphan folder must not be silently adopted by the recreated repo")
 }

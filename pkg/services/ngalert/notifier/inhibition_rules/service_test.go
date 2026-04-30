@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
 var (
@@ -330,7 +331,7 @@ func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 	}
-	return NewService(store, logger, ff), store
+	return NewService(store, logger, ff, validation.ValidateProvenanceRelaxed), store
 }
 
 func createTestConfig(t *testing.T, grafanaRules, importedRules []definitions.InhibitionRule) *legacy_storage.ConfigRevision {

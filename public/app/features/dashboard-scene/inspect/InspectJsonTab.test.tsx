@@ -4,7 +4,7 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PanelPlugin,
   PluginType,
   standardTransformersRegistry,
@@ -12,14 +12,20 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  SceneCanvasText,
+  SceneDataTransformer,
+  type SceneGridLayout,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';

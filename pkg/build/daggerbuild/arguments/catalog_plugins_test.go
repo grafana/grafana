@@ -256,6 +256,26 @@ func TestMergeCatalogPluginSpecs(t *testing.T) {
 			},
 		},
 		{
+			name: "empty version overridden by pinned version",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: ""},
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+			want: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+		},
+		{
+			name: "pinned version kept when second has empty version",
+			input: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+				{ID: "grafana-clock-panel", Version: ""},
+			},
+			want: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+		},
+		{
 			name: "conflicting versions fail",
 			input: []CatalogPluginSpec{
 				{ID: "grafana-clock-panel", Version: "1.3.1"},
@@ -292,6 +312,9 @@ func TestMergeCatalogPluginSpecs(t *testing.T) {
 func TestGetCatalogPlugins_WithWrappedState(t *testing.T) {
 	state := &pipeline.State{
 		CLIContext: &fakeCLIContext{
+			boolValues: map[string]bool{
+				"no-default-catalog-plugins": true,
+			},
 			stringSliceValues: map[string][]string{
 				"bundle-catalog-plugins": {"grafana-clock-panel:1.3.1,grafana-clock-panel:1.3.1"},
 			},
@@ -313,6 +336,126 @@ func TestGetCatalogPlugins_WithWrappedState(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)
+	}
+}
+
+func TestCatalogPluginsValueFunc_IncludesDefaults(t *testing.T) {
+	state := &pipeline.State{
+		CLIContext: &fakeCLIContext{},
+	}
+
+	wrapped := pipeline.StateWithLogger(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		state,
+	)
+
+	got, err := GetCatalogPlugins(context.Background(), wrapped)
+	if err != nil {
+		t.Fatalf("GetCatalogPlugins() error = %v", err)
+	}
+
+	if !reflect.DeepEqual(got, DefaultCatalogPlugins) {
+		t.Fatalf("GetCatalogPlugins() with no flags = %#v, want defaults %#v", got, DefaultCatalogPlugins)
+	}
+}
+
+func TestCatalogPluginsValueFunc_NoDefaultsFlag(t *testing.T) {
+	state := &pipeline.State{
+		CLIContext: &fakeCLIContext{
+			boolValues: map[string]bool{
+				"no-default-catalog-plugins": true,
+			},
+		},
+	}
+
+	wrapped := pipeline.StateWithLogger(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		state,
+	)
+
+	got, err := GetCatalogPlugins(context.Background(), wrapped)
+	if err != nil {
+		t.Fatalf("GetCatalogPlugins() error = %v", err)
+	}
+
+	if got != nil {
+		t.Fatalf("GetCatalogPlugins() with --no-default-catalog-plugins = %#v, want nil", got)
+	}
+}
+
+func TestCatalogPluginsValueFunc_DefaultsMergedWithCLI(t *testing.T) {
+	state := &pipeline.State{
+		CLIContext: &fakeCLIContext{
+			stringSliceValues: map[string][]string{
+				"bundle-catalog-plugins": {"grafana-clock-panel:1.3.1"},
+			},
+		},
+	}
+
+	wrapped := pipeline.StateWithLogger(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		state,
+	)
+
+	got, err := GetCatalogPlugins(context.Background(), wrapped)
+	if err != nil {
+		t.Fatalf("GetCatalogPlugins() error = %v", err)
+	}
+
+	want := append([]CatalogPluginSpec{}, DefaultCatalogPlugins...)
+	want = append(want, CatalogPluginSpec{ID: "grafana-clock-panel", Version: "1.3.1"})
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)
+	}
+}
+
+func TestCatalogPluginsValueFunc_CLIPinsDefaultPluginVersion(t *testing.T) {
+	state := &pipeline.State{
+		CLIContext: &fakeCLIContext{
+			stringSliceValues: map[string][]string{
+				"bundle-catalog-plugins": {"elasticsearch:5.0.0"},
+			},
+		},
+	}
+
+	wrapped := pipeline.StateWithLogger(
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		state,
+	)
+
+	got, err := GetCatalogPlugins(context.Background(), wrapped)
+	if err != nil {
+		t.Fatalf("GetCatalogPlugins() error = %v", err)
+	}
+
+	want := []CatalogPluginSpec{
+		{ID: "elasticsearch", Version: "5.0.0"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)
+	}
+}
+
+func TestHasCatalogPlugins_DefaultsPresent(t *testing.T) {
+	opts := &pipeline.ArgumentOpts{
+		CLIContext: &fakeCLIContext{},
+	}
+	if !HasCatalogPlugins(context.Background(), opts) {
+		t.Fatal("HasCatalogPlugins() = false, want true (defaults exist)")
+	}
+}
+
+func TestHasCatalogPlugins_DefaultsDisabled(t *testing.T) {
+	opts := &pipeline.ArgumentOpts{
+		CLIContext: &fakeCLIContext{
+			boolValues: map[string]bool{
+				"no-default-catalog-plugins": true,
+			},
+		},
+	}
+	if HasCatalogPlugins(context.Background(), opts) {
+		t.Fatal("HasCatalogPlugins() = true, want false (defaults disabled, no CLI flags)")
 	}
 }
 

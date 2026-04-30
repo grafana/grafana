@@ -2,39 +2,40 @@ import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
   dateTime,
   FieldType,
-  PanelData,
-  standardTransformersRegistry,
-  StandardVariableQuery,
+  type PanelData,
+  type PanelPluginMeta,
+  type StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
+import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   CustomVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
   sceneGraph,
   SceneGridLayout,
-  SceneGridRow,
+  type SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
@@ -56,7 +57,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
+mockTransformationsRegistry([reduceTransformer]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -143,9 +144,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      text: { skipDataQuery: true },
-    },
     featureToggles: {
       dataTrails: false,
     },
@@ -171,6 +169,14 @@ jest.mock('@grafana/scenes', () => ({
     registerVariableMacro: jest.fn(),
   },
 }));
+
+beforeEach(() => {
+  setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with custom settings', () => {

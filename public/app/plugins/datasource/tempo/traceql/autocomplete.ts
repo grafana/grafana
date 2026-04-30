@@ -1,12 +1,12 @@
-import { IMarkdownString, languages } from 'monaco-editor';
+import { type IMarkdownString, languages } from 'monaco-editor';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import TempoLanguageProvider from '../language_provider';
+import type TempoLanguageProvider from '../language_provider';
 
-import { getSituation, Situation } from './situation';
+import { getSituation, type Situation } from './situation';
 import { scopes } from './traceql';
 
 type MinimalCompletionItem = {

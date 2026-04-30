@@ -14,6 +14,11 @@ permissions:
   contents: read
   statuses: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # If a new commit is applied, just give up.
+  cancel-in-progress: true
+
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:

@@ -1,6 +1,11 @@
-import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  MatcherOperator,
+  ROUTES_META_SYMBOL,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../types/amroutes';
+import { type FormAmRoute } from '../types/amroutes';
 
 import { GRAFANA_DATASOURCE_NAME } from './datasource';
 import {

@@ -15,9 +15,13 @@ import (
 )
 
 type ListTeamBindingsQuery struct {
-	UID        string
-	OrgID      int64
-	TeamUID    string
+	UID     string
+	OrgID   int64
+	TeamUID string
+	// TeamUIDs lets callers fetch bindings for many teams in one query.
+	// Mutually exclusive with TeamUID — if both are set the single-UID
+	// filter wins (see team_bindings_query.sql).
+	TeamUIDs   []string
 	UserUID    string
 	External   *bool
 	Pagination common.Pagination
@@ -89,7 +93,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +192,7 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +280,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +359,7 @@ func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.Namespa
 	now := time.Now().UTC()
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +394,60 @@ type DeleteTeamMemberCommand struct {
 	UID string
 }
 
+// DeleteTeamMembersBulkCommand removes multiple team_member rows by binding
+// UID in a single SQL DELETE. OrgID scopes the DELETE so a UID from another
+// org cannot be deleted even if it happens to collide.
+type DeleteTeamMembersBulkCommand struct {
+	OrgID int64
+	UIDs  []string
+}
+
+// CreateTeamMembersBulkCommand inserts multiple team_member rows in a single
+// multi-row INSERT. Each member must be fully populated (TeamID/TeamUID/UserID
+// already resolved, OrgID set, timestamps filled).
+type CreateTeamMembersBulkCommand struct {
+	Members []CreateTeamMemberCommand
+}
+
 var sqlDeleteTeamMemberQuery = mustTemplate("delete_team_member_query.sql")
+var sqlDeleteTeamMembersBulkQuery = mustTemplate("delete_team_members_bulk.sql")
+var sqlCreateTeamMembersBulkQuery = mustTemplate("create_team_members_bulk.sql")
+
+type deleteTeamMembersBulkQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *DeleteTeamMembersBulkCommand
+}
+
+func (r deleteTeamMembersBulkQuery) Validate() error {
+	return nil
+}
+
+func newDeleteTeamMembersBulk(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMembersBulkCommand) deleteTeamMembersBulkQuery {
+	return deleteTeamMembersBulkQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type createTeamMembersBulkQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *CreateTeamMembersBulkCommand
+}
+
+func (r createTeamMembersBulkQuery) Validate() error {
+	return nil
+}
+
+func newCreateTeamMembersBulk(sql *legacysql.LegacyDatabaseHelper, cmd *CreateTeamMembersBulkCommand) createTeamMembersBulkQuery {
+	return createTeamMembersBulkQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
 
 func newDeleteTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMemberCommand) deleteTeamMemberQuery {
 	return deleteTeamMemberQuery{
@@ -411,7 +468,7 @@ func (r deleteTeamMemberQuery) Validate() error {
 }
 
 func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamMemberCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}
@@ -444,9 +501,22 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 func scanMember(rows *stdsql.Rows) (TeamMember, error) {
 	m := TeamMember{}
 	var nullableExternal stdsql.NullBool
-	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	var name, email, username stdsql.NullString
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &name, &email, &username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	if err != nil {
+		return m, err
+	}
 	if nullableExternal.Valid {
 		m.External = nullableExternal.Bool
 	}
-	return m, err
+	if name.Valid {
+		m.Name = name.String
+	}
+	if email.Valid {
+		m.Email = email.String
+	}
+	if username.Valid {
+		m.Username = username.String
+	}
+	return m, nil
 }

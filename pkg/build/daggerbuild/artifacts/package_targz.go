@@ -220,7 +220,7 @@ func NewTarball(
 
 func (t *Tarball) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	container := opts.Client.Container().
-		From("alpine:3.23.3").
+		From("alpine:3.23.4").
 		WithExec([]string{"apk", "add", "--update", "tar"})
 
 	return container, nil
@@ -375,7 +375,7 @@ func verifyTarball(
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("ubuntu:22.04").
+	}).From("ubuntu:24.04").
 		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates"}).
 		WithDirectory("/src", archive).

@@ -1,5 +1,5 @@
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { StateIcon } from './StateIcon';
 import mdx from './StateIcon.mdx';

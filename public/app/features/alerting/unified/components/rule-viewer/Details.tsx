@@ -1,23 +1,26 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isEmpty, isUndefined } from 'lodash';
 import { Fragment } from 'react/jsx-runtime';
 
-import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
-import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type CombinedRule } from 'app/types/unified-alerting';
+import { type GrafanaAlertingRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { makeEditTimeIntervalLink } from '../../utils/misc';
+import { notificationPolicies } from '../../utils/navigation';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { Tokenize } from '../Tokenize';
 import { DetailText } from '../common/DetailText';
 import { TimingOptionsMeta } from '../notification-policies/Policy';
+import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { ContactPointLink } from './ContactPointLink';
 import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
@@ -197,9 +200,8 @@ export const Details = ({ rule }: DetailsProps) => {
 
       {/* show simplified routing information for Grafana managed alert rules */}
       {rulerRuleType.grafana.alertingRule(rule.rulerRule) &&
-        !isEmpty(rule.rulerRule.grafana_alert.notification_settings) && (
-          <NotificationSettings rulerRule={rule.rulerRule} />
-        )}
+        (!isEmpty(rule.rulerRule.grafana_alert.notification_settings) ||
+          config.featureToggles.alertingPolicyRoutingSettings) && <NotificationSettings rulerRule={rule.rulerRule} />}
 
       {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
@@ -267,18 +269,61 @@ interface NotificationSettingsProps {
 }
 
 const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
+  const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
   const notificationSettings = rulerRule.grafana_alert.notification_settings;
+
+  // When flag is ON and no notification_settings: legacy label-routed rules show the label
+  // value; rules with no routing at all show "Default policy".
   if (!notificationSettings) {
-    return null;
+    if (!usePolicyRoutingSettings) {
+      return null;
+    }
+    const legacyPolicyName = rulerRule.labels?.[NAMED_ROOT_LABEL_NAME];
+    return (
+      <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
+        <DetailText
+          id="notification-policy"
+          label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
+          value={
+            <TextLink href={notificationPolicies.policyLink(legacyPolicyName)} inline={false}>
+              {legacyPolicyName ?? t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+            </TextLink>
+          }
+        />
+      </DetailGroup>
+    );
   }
+
+  // Only show the policy name when the flag is ON; otherwise fall back to the contact-point
+  const routingRow = (() => {
+    if (notificationSettings.policy && usePolicyRoutingSettings) {
+      return (
+        <DetailText
+          id="notification-policy"
+          label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
+          value={
+            <TextLink href={notificationPolicies.policyLink(notificationSettings.policy)} inline={false}>
+              {notificationSettings.policy}
+            </TextLink>
+          }
+        />
+      );
+    }
+    if (notificationSettings.receiver) {
+      return (
+        <DetailText
+          id="receiver"
+          label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
+          value={<ContactPointLink name={notificationSettings.receiver} />}
+        />
+      );
+    }
+    return null;
+  })();
 
   return (
     <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
-      <DetailText
-        id="receiver"
-        label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
-        value={<ContactPointLink name={notificationSettings.receiver} />}
-      />
+      {routingRow}
 
       {notificationSettings.mute_time_intervals && (
         <DetailText

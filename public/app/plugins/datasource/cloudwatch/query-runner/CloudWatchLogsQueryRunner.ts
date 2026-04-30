@@ -17,37 +17,42 @@ import {
 } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryError,
+  type DataFrame,
+  type DataQueryError,
   DataQueryErrorType,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  Field,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type Field,
   FieldType,
   LoadingState,
-  LogRowContextOptions,
+  type LogRowContextOptions,
   LogRowContextQueryDirection,
-  LogRowModel,
-  ScopedVars,
+  type LogRowModel,
+  type ScopedVars,
   getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
-import { CloudWatchLogsQuery, LogsMode, CloudWatchLogsAnomaliesQuery, LogsQueryLanguage } from '../dataquery.gen';
 import {
-  CloudWatchJsonData,
+  type CloudWatchLogsQuery,
+  LogsMode,
+  type CloudWatchLogsAnomaliesQuery,
+  LogsQueryLanguage,
+} from '../dataquery.gen';
+import {
+  type CloudWatchJsonData,
   CloudWatchLogsQueryStatus,
-  CloudWatchLogsRequest,
-  CloudWatchQuery,
-  GetLogEventsRequest,
-  LogAction,
-  QueryParam,
-  StartQueryRequest,
+  type CloudWatchLogsRequest,
+  type CloudWatchQuery,
+  type GetLogEventsRequest,
+  type LogAction,
+  type QueryParam,
+  type StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
 import { LOG_GROUP_ACCOUNT_MAX, LOG_GROUP_PREFIX_MAX } from '../utils/logGroupsConstants';

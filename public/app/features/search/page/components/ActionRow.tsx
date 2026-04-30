@@ -1,16 +1,19 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
-import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { TagFilter, type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { SearchLayout, SearchState } from '../../types';
+import { SearchLayout, type SearchState } from '../../types';
+import { needsListLayout } from '../../utils';
+
+import { OwnersFilter } from './OwnersFilter';
 
 function getLayoutOptions() {
   return [
@@ -39,16 +42,15 @@ interface ActionRowProps {
   onPanelTypeChange: (pt?: string) => void;
   onSetIncludePanels: (v: boolean) => void;
   onCreatedByChange?: (createdBy?: string) => void;
+  onOwnerReferenceChange?: (ownerReference: string[]) => void;
 }
 
-export function getValidQueryLayout(q: SearchState): SearchLayout {
+function getValidQueryLayout(q: SearchState): SearchLayout {
   const layout = q.layout ?? SearchLayout.Folders;
 
   // Folders is not valid when a query exists
-  if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort || q.starred || q.tag.length > 0 || q.createdBy) {
-      return SearchLayout.List;
-    }
+  if (layout === SearchLayout.Folders && needsListLayout(q)) {
+    return SearchLayout.List;
   }
 
   return layout;
@@ -69,27 +71,26 @@ export const ActionRow = ({
   onPanelTypeChange,
   onSetIncludePanels,
   onCreatedByChange,
+  onOwnerReferenceChange,
 }: ActionRowProps) => {
   const styles = useStyles2(getStyles);
 
   const layout = getValidQueryLayout(state);
-  const isCreatedByMeSearchFilterEnabled = useBooleanFlagValue('createdByMeSearchFilter', false);
-  // Created by me search filter is only available if the unified search is enabled
-  const showCreatedByMeSearchFilter = isCreatedByMeSearchFilterEnabled && config.featureToggles.unifiedStorageSearchUI;
+  const showCreatedByMeSearchFilter = useBooleanFlagValue('createdByMeSearchFilter', false);
 
   // Disabled folder layout option when query is present
-  const disabledOptions =
-    state.tag.length || state.starred || state.query || state.datasource || state.panel_type || state.createdBy
-      ? [SearchLayout.Folders]
-      : [];
+  const disabledOptions = needsListLayout(state) ? [SearchLayout.Folders] : [];
 
   const createdByMe = `user:${contextSrv.user.uid}`;
   const isFilteredByMe = state.createdBy === createdByMe;
 
   return (
-    <Stack justifyContent="space-between" alignItems="center">
+    <Stack justifyContent="space-between" alignItems="center" wrap={true}>
       <Stack alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        {config.featureToggles.teamFolders && onOwnerReferenceChange && (
+          <OwnersFilter values={state.ownerReference ?? []} onChange={onOwnerReferenceChange} />
+        )}
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
             data-testid="include-panels"
@@ -135,7 +136,7 @@ export const ActionRow = ({
         )}
       </Stack>
 
-      <Stack gap={2}>
+      <Stack gap={2} wrap={true}>
         {showLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}

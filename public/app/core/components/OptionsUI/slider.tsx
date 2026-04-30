@@ -3,7 +3,7 @@ import { Global } from '@emotion/react';
 import Slider from '@rc-component/slider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
+import { type StandardEditorProps, type GrafanaTheme2, type SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { getSliderStyles } from '@grafana/ui/internal';
 

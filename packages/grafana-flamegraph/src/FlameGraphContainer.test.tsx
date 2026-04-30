@@ -11,6 +11,7 @@ import { MIN_WIDTH_FOR_SPLIT_VIEW, MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAP
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: false,
     openAssistant: undefined,
   }),

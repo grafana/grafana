@@ -16,13 +16,10 @@ import (
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -312,13 +309,10 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
-
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
 		IntervalMs:    int64(1),
@@ -344,7 +338,7 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 				"targets": []interface{}{hiddenQuery},
 			}}
 
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
+		dashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
@@ -725,10 +719,8 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 func TestIntegrationGetMetricRequest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
+	dashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
 
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
@@ -767,12 +759,10 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
-	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
+	publicDashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
+	nonPublicDashboard := createTestDashboard(t, "testNonPublicDashie", 1, "", true, []map[string]any{}, nil)
 	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
 
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(publicDashboard, nil)
@@ -893,7 +883,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 				"targets": []interface{}{hiddenQuery, nonHiddenQuery},
 			}}
 
-		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
+		publicDashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
 			publicDashboard,
@@ -1399,4 +1389,145 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 		},
 		"timezone": timezone,
 	})
+}
+
+func TestSanitizeDataV2(t *testing.T) {
+	t.Run("removes expr, query, rawSql from query specs", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"expr":       "go_goroutines{job=\"grafana\"}",
+													"refId":      "A",
+													"datasource": "prometheus",
+												},
+											},
+										},
+									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawSql": "SELECT * FROM metrics",
+													"refId":  "B",
+													"format": "time_series",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"panel-2": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"query": "buckets()",
+													"refId": "A",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeDataV2(data)
+
+		elements := data.Get("elements").MustMap()
+
+		panel1Queries := simplejson.NewFromAny(elements["panel-1"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, panel1Queries, 2)
+
+		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q1spec.Get("expr").MustString())
+		assert.Equal(t, "A", q1spec.Get("refId").MustString())
+		assert.Equal(t, "prometheus", q1spec.Get("datasource").MustString())
+
+		q2spec := simplejson.NewFromAny(panel1Queries[1]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q2spec.Get("rawSql").MustString())
+		assert.Equal(t, "B", q2spec.Get("refId").MustString())
+		assert.Equal(t, "time_series", q2spec.Get("format").MustString())
+
+		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, panel2Queries, 1)
+		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q3spec.Get("query").MustString())
+		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+	})
+
+	t.Run("does not panic when queries key is missing", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{},
+						},
+					},
+				},
+			},
+		})
+		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+
+	t.Run("does not panic when spec.query is missing from a query entry", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+}
+
+func TestIsDashboardV2(t *testing.T) {
+	tests := []struct {
+		apiVersion string
+		expected   bool
+	}{
+		{"", false},
+		{"v0alpha1", false},
+		{"v1alpha1", false},
+		{"v2alpha1", true},
+		{"v2beta1", true},
+		{"v3alpha1", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.apiVersion, func(t *testing.T) {
+			assert.Equal(t, tt.expected, isDashboardV2(&dashboards.Dashboard{APIVersion: tt.apiVersion}))
+		})
+	}
 }

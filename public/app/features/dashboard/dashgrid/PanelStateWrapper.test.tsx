@@ -3,15 +3,15 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { EventBusSrv, getDefaultTimeRange, LoadingState, type PanelData, type PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
+import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { setTimeSrv, type TimeSrv } from '../services/TimeSrv';
+import { type DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
-import { PanelStateWrapper, Props } from './PanelStateWrapper';
+import { PanelStateWrapper, type Props } from './PanelStateWrapper';
 
 jest.mock('app/core/profiler', () => ({
   profiler: {

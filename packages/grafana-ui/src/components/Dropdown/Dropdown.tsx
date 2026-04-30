@@ -12,14 +12,14 @@ import { useCallback, useRef, useState } from 'react';
 import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { renderOrCallToRender } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
-import { TooltipPlacement } from '../Tooltip/types';
+import { type TooltipPlacement } from '../Tooltip/types';
 
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);

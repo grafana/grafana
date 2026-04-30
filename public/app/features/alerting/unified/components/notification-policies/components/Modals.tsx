@@ -1,17 +1,25 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { type FC, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, type ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
-import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
-import { FormAmRoute } from '../../../types/amroutes';
+import { type RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
+import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
+import {
+  trackNotificationPolicyCreateError,
+  trackNotificationPolicyCreated,
+  trackNotificationPolicyDeleteError,
+  trackNotificationPolicyDeleted,
+  trackNotificationPolicyReset,
+  trackNotificationPolicyResetError,
+} from '../notificationPolicyAnalytics';
 
 export interface DeleteModalProps {
   isOpen: boolean;
@@ -33,9 +41,13 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName
     setIsDeleting(true);
     onConfirm()
       .then(() => {
+        trackNotificationPolicyDeleted();
         onDeleteDismiss();
       })
-      .catch(setError)
+      .catch((err) => {
+        trackNotificationPolicyDeleteError({ error: stringifyErrorLike(err) });
+        setError(err);
+      })
       .finally(() => {
         setIsDeleting(false);
       });
@@ -104,9 +116,13 @@ export const ResetModal = React.memo(
       setIsResetting(true);
       onConfirm()
         .then(() => {
+          trackNotificationPolicyReset();
           onResetDismiss();
         })
-        .catch(setError)
+        .catch((err) => {
+          trackNotificationPolicyResetError({ error: stringifyErrorLike(err) });
+          setError(err);
+        })
         .finally(() => {
           setIsResetting(false);
         });
@@ -189,9 +205,14 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
       setError(undefined);
       onConfirm(newRoute)
         .then(() => {
+          trackNotificationPolicyCreated({
+            hasCustomTimings: newRoute.overrideTimings ?? false,
+            hasCustomGrouping: newRoute.overrideGrouping ?? false,
+          });
           onCreateDismiss();
         })
         .catch((err) => {
+          trackNotificationPolicyCreateError({ error: stringifyErrorLike(err) });
           setError(err);
         })
         .finally(() => {

@@ -11,12 +11,14 @@ import (
 	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -58,6 +60,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -67,6 +71,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
@@ -85,6 +91,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -96,15 +104,38 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
-		// Noop for V2
+	case *dashboardV2.Dashboard:
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV2.DashboardGridLayoutSpec{},
+			}
+		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
+		resourceInfo = dashboardV2.DashboardResourceInfo
+
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
 	}
 
 	if internalID != 0 {
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
+	}
+
+	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+}
+
+// validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
+func (b *DashboardsAPIBuilder) validateDashboardIfStrict(ctx context.Context, a admission.Attributes, migrationErr error, resourceInfo utils.ResourceInfo) error {
+	obj := a.GetObject()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
 	}
 
 	fieldValidationMode := getFieldValidationMode(a)

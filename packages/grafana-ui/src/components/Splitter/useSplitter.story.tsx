@@ -1,9 +1,9 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Box } from '../Layout/Box/Box';
 
-import { UseSplitterOptions, useSplitter } from './useSplitter';
+import { type UseSplitterOptions, useSplitter } from './useSplitter';
 import mdx from './useSplitter.mdx';
 
 const meta: Meta = {

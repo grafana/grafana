@@ -122,7 +122,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			break
 		}
 
-		c, err := correlations.ToResource(orig, s.namespacer)
+		c, err := correlations.ToResource(orig)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +144,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	return correlations.ToResource(c, s.namespacer)
+	return correlations.ToResource(c)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -219,7 +219,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
+	return nil, fmt.Errorf("DeleteCollection for correlation not implemented")
 }
 
 type continueToken struct {

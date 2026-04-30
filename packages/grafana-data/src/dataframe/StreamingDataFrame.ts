@@ -1,12 +1,12 @@
-import { AlignedData } from 'uplot';
+import { type AlignedData } from 'uplot';
 
 import { join } from '../transformations/transformers/joinDataFrames';
-import { Labels, QueryResultMeta } from '../types/data';
-import { FieldDTO, DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type Labels, type QueryResultMeta } from '../types/data';
+import { type FieldDTO, type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
-import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { type DataFrameJSON, decodeFieldValueEntities, type FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**

@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import { getFieldDisplayName } from '@grafana/data';
 
 import {
-  TableSortByFieldState,
-  GrafanaTableColumn,
-  GrafanaTableState,
-  TableStateReducerProps,
-  TableRTProps,
+  type TableSortByFieldState,
+  type GrafanaTableColumn,
+  type GrafanaTableState,
+  type TableStateReducerProps,
+  type TableRTProps,
 } from './types';
 
 export interface ActionType {

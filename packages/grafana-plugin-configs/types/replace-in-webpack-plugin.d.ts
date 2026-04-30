@@ -1,5 +1,5 @@
 declare module 'replace-in-file-webpack-plugin' {
-  import { Compiler, Plugin } from 'webpack';
+  import { type Compiler, Plugin } from 'webpack';
 
   interface ReplaceRule {
     search: string | RegExp;

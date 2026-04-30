@@ -1,7 +1,9 @@
-import { Folder } from 'app/api/clients/folder/v1beta1';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { WorkflowOption } from 'app/features/provisioning/types';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type WorkflowOption } from 'app/features/provisioning/types';
+
+import { joinPath } from '../utils/path';
 
 export type BulkActionFormData = {
   comment: string;
@@ -76,8 +78,7 @@ export function getNestedFolderPath(targetFolder?: Folder): string | undefined {
   const folderAnnotations = targetFolder?.metadata?.annotations || {};
   const sourcePath = folderAnnotations[AnnoKeySourcePath] || '';
 
-  // Ensure path ends with slash
-  return sourcePath ? `${sourcePath}/` : '/';
+  return sourcePath ? joinPath(sourcePath, '') : '/';
 }
 
 export function getResourceTargetPath(currentPath: string, targetFolderPath: string): string {
@@ -89,7 +90,7 @@ export function getResourceTargetPath(currentPath: string, targetFolderPath: str
     throw new Error(`Invalid path: ${currentPath}`);
   }
 
-  // For folders, add back the trailing slash
   const isFolder = currentPath.endsWith('/');
-  return isFolder ? `${targetFolderPath}/${filename}/` : `${targetFolderPath}/${filename}`;
+  const basePath = joinPath(targetFolderPath, filename);
+  return isFolder ? `${basePath}/` : basePath;
 }

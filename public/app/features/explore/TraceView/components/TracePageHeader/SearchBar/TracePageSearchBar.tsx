@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { memo, Dispatch, SetStateAction } from 'react';
+import { memo, type Dispatch, type SetStateAction } from 'react';
 
-import { GrafanaTheme2, TraceSearchProps } from '@grafana/data';
+import { type GrafanaTheme2, type TraceSearchProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { Trace } from '../../types/trace';
+import { type Trace } from '../../types/trace';
 
 import NextPrevResult from './NextPrevResult';
 

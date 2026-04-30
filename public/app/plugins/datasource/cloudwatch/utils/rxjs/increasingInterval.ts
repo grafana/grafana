@@ -1,4 +1,4 @@
-import { SchedulerLike, Observable, SchedulerAction, Subscriber, asyncScheduler } from 'rxjs';
+import { type SchedulerLike, Observable, type SchedulerAction, type Subscriber, asyncScheduler } from 'rxjs';
 
 /**
  * Creates an Observable that emits sequential numbers after increasing intervals of time

@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/react';
 
 import { AlertState } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';
 import { renderWithQueryEditorProvider } from '../../testUtils';
-import { AlertRule, EMPTY_ALERT, Transformation } from '../../types';
+import { type AlertRule, EMPTY_ALERT, type Transformation } from '../../types';
 
 import { SidebarFooter } from './SidebarFooter';
 

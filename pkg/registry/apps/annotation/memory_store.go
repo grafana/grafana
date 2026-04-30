@@ -30,7 +30,7 @@ func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotat
 	key := namespace + "/" + name
 	anno, ok := m.data[key]
 	if !ok {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	return anno.DeepCopy(), nil
@@ -175,7 +175,7 @@ func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; !exists {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	updated := anno.DeepCopy()
@@ -191,7 +191,7 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 	key := namespace + "/" + name
 
 	if _, exists := m.data[key]; !exists {
-		return fmt.Errorf("annotation not found")
+		return ErrNotFound
 	}
 
 	delete(m.data, key)

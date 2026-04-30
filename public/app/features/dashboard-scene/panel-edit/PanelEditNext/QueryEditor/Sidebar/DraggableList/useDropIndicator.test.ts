@@ -1,4 +1,4 @@
-import { DragStart, DragUpdate, DropResult } from '@hello-pangea/dnd';
+import { type DragStart, type DragUpdate, type DropResult } from '@hello-pangea/dnd';
 import { act, renderHook } from '@testing-library/react';
 
 import { useDropIndicator } from './useDropIndicator';

@@ -6,21 +6,14 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
+	"sync"
 
+	authtypes "github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -31,11 +24,10 @@ import (
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -45,46 +37,54 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg        *setting.Cfg
-	k8sAdapter *k8sRESTAdapter
+	k8sAdapter    *k8sRESTAdapter
+	cleanupCancel context.CancelFunc
+	cleanupWg     sync.WaitGroup
+	logger        log.Logger
 }
 
-// RegisterAppInstaller Layers (from bottom to top):
-//  1. annotations.Repository - old Grafana annotation service
-//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
-//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+// RegisterAppInstaller is the wire entry point for the ST server.
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
+) (*AppInstaller, error) {
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient)
+}
+
+// NewAppInstaller Layers (from bottom to top):
+//  1. annotations.Repository - old Grafana annotation service
+//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
+//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+func NewAppInstaller(
+	cfg Config,
+	service annotations.Repository,
+	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
-		cfg: cfg,
+		logger: log.New("annotation.app"),
 	}
 
-	mapper := grafrequest.GetNamespaceMapper(cfg)
+	ctx := context.Background()
 
-	// Choose storage backend based on configuration
-	var store Store
-	var err error
-	switch cfg.AnnotationAppPlatform.StoreBackend {
-	case "grpc":
-		store, err = newGRPCStore(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
-		}
-	case "sql":
-		// sql is the default, but we allow explicitly specifying it for clarity
-		fallthrough
-	default:
-		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
-		store = NewSQLAdapter(service, cleaner, mapper, cfg)
+	// Create the appropriate store backend
+	store, err := createStore(ctx, cfg, service, cleaner)
+	if err != nil {
+		return nil, err
 	}
 
-	// Layer 2→3: Wrap Store interface with K8s REST adapter
+	// Start background cleanup if the store supports lifecycle management
+	if lifecycleMgr, ok := store.(LifecycleManager); ok {
+		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
+	}
+
+	// Create K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
-		store:  store,
-		mapper: mapper,
+		store:        store,
+		accessClient: accessClient,
+		installer:    installer,
 	}
 
 	// Create the tags handler
@@ -96,7 +96,7 @@ func RegisterAppInstaller(
 	tagHandler := newTagsHandler(tagProvider)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(store)
+	searchHandler := newSearchHandler(store, accessClient)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -117,9 +117,27 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func newGRPCStore(cfg *setting.Cfg) (Store, error) {
+// createStore creates the appropriate store backend based on configuration
+func createStore(ctx context.Context, cfg Config, service annotations.Repository, cleaner annotations.Cleaner) (Store, error) {
+	switch cfg.StoreBackend {
+	case "memory":
+		return NewMemoryStore(), nil
+	case "grpc":
+		return newGRPCStore(cfg)
+	case "postgres":
+		return newPostgresStore(ctx, cfg)
+	case "legacy-sql":
+		// legacy-sql is the default, but we allow explicitly specifying it for clarity
+		fallthrough
+	default:
+		// Wrap old annotations.Repository with sqlAdapter (implements Store interface)
+		return NewSQLAdapter(service, cleaner, cfg.CleanupSettings), nil
+	}
+}
+
+func newGRPCStore(cfg Config) (Store, error) {
 	var dialOpts []grpc.DialOption
-	if cfg.AnnotationAppPlatform.GRPCUseTLS {
+	if cfg.GRPCUseTLS {
 		tlsConfig, err := loadTLSConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS config: %w", err)
@@ -130,20 +148,20 @@ func newGRPCStore(cfg *setting.Cfg) (Store, error) {
 	}
 
 	grpcConn, err := grpc.NewClient(
-		cfg.AnnotationAppPlatform.GRPCAddress,
+		cfg.GRPCAddress,
 		dialOpts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
-			cfg.AnnotationAppPlatform.GRPCAddress, err)
+			cfg.GRPCAddress, err)
 	}
 	return NewStoreGRPC(grpcConn), nil
 }
 
-func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
+func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	tlsConfig := &tls.Config{}
-	if cfg.AnnotationAppPlatform.GRPCTLSCAFile != "" {
-		caCert, err := os.ReadFile(cfg.AnnotationAppPlatform.GRPCTLSCAFile)
+	if cfg.GRPCTLSCAFile != "" {
+		caCert, err := os.ReadFile(cfg.GRPCTLSCAFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read CA file: %w", err)
 		}
@@ -155,24 +173,29 @@ func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
 		tlsConfig.RootCAs = caCertPool
 	}
 
-	if cfg.AnnotationAppPlatform.GRPCTLSSkipVerify {
+	if cfg.GRPCTLSSkipVerify {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
 	return tlsConfig, nil
 }
 
-func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(func(
-		ctx context.Context, attr authorizer.Attributes,
-	) (authorized authorizer.Decision, reason string, err error) {
-		if !attr.IsResourceRequest() {
-			return authorizer.DecisionNoOpinion, "", nil
-		}
+func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
+	if cfg.PostgresConnectionString == "" {
+		return nil, fmt.Errorf("postgres connection string is required")
+	}
 
-		// Any authenticated user can access the API
-		return authorizer.DecisionAllow, "", nil
-	})
+	pgCfg := PostgreSQLStoreConfig{
+		ConnectionString: cfg.PostgresConnectionString,
+		MaxConnections:   cfg.PostgresMaxConnections,
+		MaxIdleConns:     cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
+		RetentionTTL:     cfg.RetentionTTL,
+		TagCacheTTL:      cfg.PostgresTagCacheTTL,
+		TagCacheSize:     cfg.PostgresTagCacheSize,
+	}
+
+	return NewPostgreSQLStore(ctx, pgCfg)
 }
 
 // GetLegacyStorage returns the K8s REST storage implementation for the annotation resource.
@@ -209,192 +232,4 @@ func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) a
 	)
 
 	return a.k8sAdapter
-}
-
-var (
-	_ rest.Scoper               = (*k8sRESTAdapter)(nil)
-	_ rest.SingularNameProvider = (*k8sRESTAdapter)(nil)
-	_ rest.Getter               = (*k8sRESTAdapter)(nil)
-	_ rest.Storage              = (*k8sRESTAdapter)(nil)
-	_ rest.Creater              = (*k8sRESTAdapter)(nil)
-	_ rest.Updater              = (*k8sRESTAdapter)(nil)
-	_ rest.GracefulDeleter      = (*k8sRESTAdapter)(nil)
-)
-
-// k8sRESTAdapter adapts the Store interface to Kubernetes REST storage interface.
-// This layer handles K8s API conventions (fieldSelectors, ListOptions, runtime.Object, etc.)
-// and delegates actual storage operations to the Store interface.
-type k8sRESTAdapter struct {
-	store          Store
-	mapper         grafrequest.NamespaceMapper
-	tableConverter rest.TableConvertor
-}
-
-func (s *k8sRESTAdapter) New() runtime.Object {
-	return annotationV0.AnnotationKind().ZeroValue()
-}
-
-func (s *k8sRESTAdapter) Destroy() {}
-
-func (s *k8sRESTAdapter) NamespaceScoped() bool {
-	return true // namespace == org
-}
-
-func (s *k8sRESTAdapter) GetSingularName() string {
-	return strings.ToLower(annotationV0.AnnotationKind().Kind())
-}
-
-func (s *k8sRESTAdapter) NewList() runtime.Object {
-	return annotationV0.AnnotationKind().ZeroListValue()
-}
-
-func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
-}
-
-func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
-
-	opts := ListOptions{}
-	if options.FieldSelector != nil {
-		// Parse K8s field selectors into Store ListOptions
-		for _, r := range options.FieldSelector.Requirements() {
-			switch r.Field {
-			case "spec.dashboardUID":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					opts.DashboardUID = r.Value
-				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.dashboardUID (only = supported)", r.Operator)
-				}
-
-			case "spec.panelID":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					panelID, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
-					}
-					opts.PanelID = panelID
-				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.panelID (only = supported)", r.Operator)
-				}
-			case "spec.time":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					from, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
-					}
-					opts.From = from
-				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.from (only = supported)", r.Operator)
-				}
-			case "spec.timeEnd":
-				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
-					to, err := strconv.ParseInt(r.Value, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
-					}
-					opts.To = to
-				} else {
-					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
-				}
-			default:
-				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
-			}
-		}
-	}
-
-	opts.Limit = 100
-	if options.Limit > 0 {
-		opts.Limit = options.Limit
-	}
-
-	// Extract continue token from request
-	if options.Continue != "" {
-		opts.Continue = options.Continue
-	}
-
-	result, err := s.store.List(ctx, namespace, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return list with continue token for pagination
-	return &annotationV0.AnnotationList{
-		Items:    result.Items,
-		ListMeta: metav1.ListMeta{Continue: result.Continue},
-	}, nil
-}
-
-func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	namespace := request.NamespaceValue(ctx)
-	return s.store.Get(ctx, namespace, name)
-}
-
-func (s *k8sRESTAdapter) Create(ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-) (runtime.Object, error) {
-	resource, ok := obj.(*annotationV0.Annotation)
-	if !ok {
-		return nil, fmt.Errorf("expected annotation")
-	}
-
-	// Validate either name or generateName is provided
-	if resource.Name == "" && resource.GenerateName == "" {
-		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
-	}
-
-	// If a name is empty and generateName is not, generate a unique name using the provided prefix
-	if resource.Name == "" && resource.GenerateName != "" {
-		resource.Name = resource.GenerateName + util.GenerateShortUID()
-	}
-
-	return s.store.Create(ctx, resource)
-}
-
-func (s *k8sRESTAdapter) Update(ctx context.Context,
-	name string,
-	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
-	namespace := request.NamespaceValue(ctx)
-
-	obj, err := objInfo.UpdatedObject(ctx, nil)
-	if err != nil {
-		return nil, false, err
-	}
-
-	resource, ok := obj.(*annotationV0.Annotation)
-	if !ok {
-		return nil, false, fmt.Errorf("expected annotation")
-	}
-
-	if resource.Name != name {
-		return nil, false, fmt.Errorf("name in URL does not match name in body")
-	}
-
-	if resource.Namespace != namespace {
-		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
-	}
-
-	updated, err := s.store.Update(ctx, resource)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return updated, false, nil
-}
-
-func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
-	return nil, false, err
-}
-
-func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
 }

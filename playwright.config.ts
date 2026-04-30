@@ -1,7 +1,7 @@
-import { defineConfig, devices, PlaywrightTestConfig, Project } from '@playwright/test';
+import { defineConfig, devices, type PlaywrightTestConfig, type Project } from '@playwright/test';
 import path, { dirname } from 'path';
 
-import { PluginOptions } from '@grafana/plugin-e2e';
+import { type PluginOptions } from '@grafana/plugin-e2e';
 
 export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
@@ -43,6 +43,11 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
+    // Preserve legacy dashboard layout behavior in E2E unless a test overrides this (shallow merge on
+    // `featureToggles` would otherwise drop toggles when a spec sets only a subset).
+    featureToggles: {
+      dashboardNewLayouts: false,
+    },
   },
 };
 
@@ -91,10 +96,6 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['createUserAndAuthenticate'],
     },
-    withAuth({
-      name: 'elasticsearch',
-      testDir: path.join(pluginDirRoot, '/elasticsearch'),
-    }),
     withAuth({
       name: 'mysql',
       testDir: path.join(pluginDirRoot, '/mysql'),

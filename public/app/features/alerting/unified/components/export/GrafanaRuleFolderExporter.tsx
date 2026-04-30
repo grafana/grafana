@@ -2,13 +2,13 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from './providers';
+import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaRuleFolderExporterProps {
   folder: FolderDTO;
