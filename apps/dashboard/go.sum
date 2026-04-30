@@ -30,8 +30,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dlclark/regexp2 v1.11.4 h1:rPYF9/LECdNymJufQKmri9gV604RvvABwgOA8un7yAo=
-github.com/dlclark/regexp2 v1.11.4/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
+github.com/dlclark/regexp2 v1.11.5 h1:Q/sSnsKerHeCkc/jSTNq1oCm7KiVgUMZRDUoRu0JQZQ=
+github.com/dlclark/regexp2 v1.11.5/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/emicklei/go-restful/v3 v3.13.0 h1:C4Bl2xDndpU6nJ4bc1jXd+uTmYPVUwkD6bFY/oTyCes=
 github.com/emicklei/go-restful/v3 v3.13.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/emicklei/proto v1.14.2 h1:wJPxPy2Xifja9cEMrcA/g08art5+7CGJNFNk35iXC1I=
@@ -115,8 +115,8 @@ github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2 h1:Dz6EAPvxBi3+vew
 github.com/grafana/authlib v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2 h1:vYkwPeFo9hb/apMfN/GfF6xRbsF/ZnOTjSY6ZnQYFXM=
 github.com/grafana/authlib/types v0.0.0-20260427145542-9c256e2dbcb2/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
-github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e h1:zP30ZbtnWjy0KJxToqCLARauAtgFD+TAEB/sk4IBb9s=
-github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e/go.mod h1:Tl9i4F2CPp3cOiXo06JObTh05tENG/NV/ombn2XOY7Y=
+github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 h1:/m/qmt7Ay+HK+GVbIvXrJIRHC07xFM6nWFMmyePmAUs=
+github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3/go.mod h1:6zFIzal2FCd0JC1pE0ZTb2ftC0Jr/zsQR4zRNRdDfZA=
 github.com/grafana/grafana-app-sdk v0.54.0 h1:sO2TKsfJ0pT5Lyx/ronZM/TrSrQG3EVYbhW5r0la+y8=
 github.com/grafana/grafana-app-sdk v0.54.0/go.mod h1:sct5XtHBWMTOUUi9/XG2ehRr56iNAWWqOGVBr5W9rFA=
 github.com/grafana/grafana-app-sdk/logging v0.53.2 h1:FFbPvto2WwWdVElHr9o1SGlOVLWF1n1l7p/YY5zkQ6E=
