@@ -447,21 +447,36 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
-			name: "migrate action with non-Dashboard kind",
+			name: "migrate action with Folder kind is allowed",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionMigrate,
 					Repository: "test-repo",
 					Migrate: &provisioning.MigrateJobOptions{
-						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder"}},
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder", Group: "folder.grafana.app"}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate action with unsupported kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "panel-1", Kind: "LibraryPanel"}},
 					},
 				},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.migrate.resources[0].kind")
-				require.Contains(t, err.Error(), "only Dashboard is supported")
+				require.Contains(t, err.Error(), "Dashboard")
+				require.Contains(t, err.Error(), "Folder")
 			},
 		},
 		{
