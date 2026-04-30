@@ -368,6 +368,21 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
+  describe('interval variables', () => {
+    it('should handle $___auto value', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const intervalVar = dashboard.spec.variables.find((v) => v.kind === 'IntervalVariable') as IntervalVariableKind;
+      intervalVar.spec.current.value = '$__auto';
+      intervalVar.spec.auto = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const variable = scene.state.$variables?.getByName('intervalVar') as IntervalVariable;
+
+      expect(variable.state.value).toBe('$__auto');
+    });
+  });
+
   describe('adhoc variables', () => {
     it('should convert empty defaultKeys array to undefined', () => {
       const dashboard = cloneDeep(defaultDashboard);
