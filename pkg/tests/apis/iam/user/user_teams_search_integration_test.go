@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -241,7 +242,9 @@ func findTeam(res userTeamsResponse, teamName string) (out struct {
 func getUserTeamsWithContinue(t *testing.T, helper *apis.K8sTestHelper, userName string, limit int, cont string) userTeamsResponse {
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams?limit=%d", userName, limit)
 	if cont != "" {
-		path += "&continue=" + cont
+		// Continue tokens are base64 — escape so '+' / '/' / '=' survive
+		// the round-trip (otherwise '+' silently decodes to a space on the server).
+		path += "&continue=" + url.QueryEscape(cont)
 	}
 
 	var res userTeamsResponse

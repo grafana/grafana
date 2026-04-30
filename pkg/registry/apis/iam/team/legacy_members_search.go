@@ -145,6 +145,10 @@ func (c *LegacyUserTeamsSearchClient) Search(ctx context.Context, req *resourcep
 		"returned", len(items),
 	)
 
+	// SortFields contract: SortFields[0] is the team's metadata.name (== UID).
+	// The unified-search path sorts by SEARCH_FIELD_NAME (also metadata.name)
+	// and emits the same value, so continue tokens minted in either mode are
+	// portable across legacy/unified — important during dual-writer cutovers.
 	rows := make([]*resourcepb.ResourceTableRow, 0, len(items))
 	for _, item := range items {
 		rows = append(rows, &resourcepb.ResourceTableRow{
