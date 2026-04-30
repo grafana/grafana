@@ -51,6 +51,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyFolderTitle,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
@@ -160,6 +161,7 @@ export function transformSaveModelSchemaV2ToScene(
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
