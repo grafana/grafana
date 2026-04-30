@@ -17,14 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// stableFolderErrSentinels are folder errors whose legacy /api/folders message are kept stable.
+// stableFolderErrSentinels are folder errors whose legacy /api/folders messages are kept stable.
 var stableFolderErrSentinels = []error{
 	folder.ErrTitleEmpty,
 	folder.ErrInvalidUID,
 	folder.ErrFolderCannotBeParentOfItself,
 }
 
-// stableDashboardErrSentinels are dashboard errors whose legacy /api/folders message are kept stable.
+// stableDashboardErrSentinels are dashboard errors whose legacy /api/folders messages are kept stable.
 var stableDashboardErrSentinels = []error{
 	dashboards.ErrDashboardInvalidUid,
 	dashboards.ErrDashboardUidTooLong,
