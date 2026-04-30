@@ -2,7 +2,8 @@ import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/consta
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
-import { listDashboards, listFolders, listTeamFolders, PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
+import { listDashboards, listFolders, listTeamFolders } from '../api/services';
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
 import { addTeamFolderPrefix, removeTeamFolderPrefix } from '../utils/dashboards';
 

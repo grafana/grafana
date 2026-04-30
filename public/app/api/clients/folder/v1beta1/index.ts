@@ -1,7 +1,7 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config } from '@grafana/runtime';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
 import { type DescendantCount } from 'app/types/folders';

@@ -20,7 +20,7 @@ import {
   teamOwnerRef,
 } from '../utils/dashboards';
 
-export const PAGE_SIZE = 50;
+import { PAGE_SIZE } from './constants';
 
 async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
   const backendSrv = getBackendSrv();

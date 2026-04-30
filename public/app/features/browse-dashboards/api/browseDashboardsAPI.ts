@@ -36,8 +36,8 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 
+import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
-import { PAGE_SIZE } from './services';
 
 async function refreshTeamFolders() {
   if (!config.featureToggles.teamFolders) {
