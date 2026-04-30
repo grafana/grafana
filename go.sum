@@ -1610,10 +1610,10 @@ github.com/grafana/loki/v3 v3.5.11 h1:cIO1FYgg0o2aj8zIpXz6kFOUxW0AWU3Yk/AZqtwbzo
 github.com/grafana/loki/v3 v3.5.11/go.mod h1:vT/ZnjX2++rBwKSdsjzNELU+66PWkop5KetzeALZH5Y=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
-github.com/grafana/nanogit v0.13.0 h1:E1YV8YYLOxoZTl6J7KqsReQ90Ww1lVfmd6kqhhUWYfA=
-github.com/grafana/nanogit v0.13.0/go.mod h1:s8TBdDiUZ9ZWEF/nsAP9HYwJXtLUYpgoQwF2uTTz9ZE=
-github.com/grafana/nanogit/gittest v0.10.2 h1:2+e/zvmBCjpTN/8AeHS7OIjEI6FnzqyNs5RmiJYcJdY=
-github.com/grafana/nanogit/gittest v0.10.2/go.mod h1:qewV4AZOErVbxBMYLj9yAv5ITs/VOc+t/Ko/2w3pSfo=
+github.com/grafana/nanogit v1.0.0 h1:q19appiMcyilAg3+brGqBSakZtYxD65l9W/BWVucXXQ=
+github.com/grafana/nanogit v1.0.0/go.mod h1:6s6CCTpyMOHPpcUZaLGI+rgBEKdmxVbhqSGgCK13j7Y=
+github.com/grafana/nanogit/gittest v0.15.0 h1:xqgD1dAg5Pt6q6vwXuCy1q/Oh9MYerhX5fGk9UjETAs=
+github.com/grafana/nanogit/gittest v0.15.0/go.mod h1:lmaY9NLslTxdpoIKF7LzKd3uIVYJ2krpgKd6JFhP2no=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c h1:xE7mhc2gIi1iWNCLctz9YjaiEsJ+A/hws8kwt3l7F94=
