@@ -442,7 +442,9 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(tooltip, 'data link tooltip appears after clicking Info cell').toBeVisible();
 
     const googleHref = await tooltip.getByRole('link', { name: 'Google this term' }).getAttribute('href');
-    expect(googleHref, '"Google this term" href contains the Info cell value').toContain(`q=${encodeURIComponent(infoCellValue)}`);
+    expect(googleHref, '"Google this term" href contains the Info cell value').toContain(
+      `q=${encodeURIComponent(infoCellValue)}`
+    );
 
     // --- Part 2: Data Link column resolves ${__data.fields.Min.numeric} from nested row context ---
     // The "Table - Nested Kitchen Sink" panel groups by Info; nested rows have a "Data Link" column

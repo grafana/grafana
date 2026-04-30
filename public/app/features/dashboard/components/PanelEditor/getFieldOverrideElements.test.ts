@@ -79,9 +79,7 @@ describe('getFieldOverrideCategories', () => {
       const categories = getFieldOverrideCategories(fieldConfig, registry, [topLevelFrame], '', jest.fn());
 
       function getContextData(categoryIndex: number): DataFrame[] {
-        const propertyItem = categories[categoryIndex].items.find((item) =>
-          item.props.id?.includes('-property-')
-        );
+        const propertyItem = categories[categoryIndex].items.find((item) => item.props.id?.includes('-property-'));
         const element = propertyItem?.props.render(propertyItem) as React.ReactElement<{
           context: { data: DataFrame[] };
         }>;
