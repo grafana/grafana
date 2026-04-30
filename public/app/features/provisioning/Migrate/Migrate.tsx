@@ -662,7 +662,7 @@ export function Migrate() {
       {migrateDrawerOpen && (
         <MigrateDrawer
           folders={folders}
-          repos={repoList}
+          repositoryName={repoList[0]?.metadata?.name}
           selectedFolderUids={selectedFolderUids}
           selectedDashboardUids={selectedDashboardUids}
           onClose={() => setMigrateDrawerOpen(false)}

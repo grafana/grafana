@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -8,12 +9,57 @@ import { useRepositoryList } from '../hooks/useRepositoryList';
 import { Migrate } from './Migrate';
 import { type FolderRow, useFolderLeaderboard } from './hooks/useFolderLeaderboard';
 
+jest.mock('app/api/clients/folder/v1beta1', () => ({
+  useGetFolderQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
+}));
+
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  useGetResourceRepositoryView: jest.fn(() => ({
+    repository: {
+      name: 'my-repo',
+      type: 'github',
+      target: 'folder',
+      workflows: ['write', 'branch'],
+    },
+    isLoading: false,
+    isReadOnlyRepo: false,
+    isInstanceManaged: false,
+    status: 'ready',
+  })),
+}));
+
+// The shared form pulls in branch/refs/folder queries that need a redux store
+// + router. The tests cover behavior at the drawer's outer level (heading,
+// tip, bulk-action wiring); the form internals have their own coverage.
+jest.mock('app/features/provisioning/components/Shared/ResourceEditFormSharedFields', () => ({
+  ResourceEditFormSharedFields: () => null,
+}));
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(() => [
     jest.fn(() => ({ unwrap: () => Promise.resolve({}) })),
     { isLoading: false },
   ]),
+  useGetFrontendSettingsQuery: jest.fn(() => ({
+    data: {
+      items: [
+        {
+          name: 'my-repo',
+          type: 'github',
+          target: 'folder',
+          workflows: ['write', 'branch'],
+        },
+      ],
+    },
+    isLoading: false,
+    error: undefined,
+  })),
+  useGetRepositoryRefsQuery: jest.fn(() => ({
+    data: { items: [] },
+    isLoading: false,
+    error: undefined,
+  })),
 }));
 
 jest.mock('../hooks/useRepositoryList', () => ({

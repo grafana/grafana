@@ -1,24 +1,18 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Drawer,
-  Field,
-  Input,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
-import {
-  type Repository,
-  useCreateRepositoryJobsMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Button, Checkbox, Drawer, Field, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
+
+import { type BulkActionFormData } from '../components/BulkActions/utils';
+import { ResourceEditFormSharedFields } from '../components/Shared/ResourceEditFormSharedFields';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
+import { generateTimestamp } from '../components/utils/timestamp';
+import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 
 import { type FolderRow } from './hooks/useFolderLeaderboard';
 
@@ -30,7 +24,7 @@ interface ResourceRef {
 
 interface Props {
   folders: FolderRow[];
-  repos: Repository[];
+  repositoryName?: string;
   selectedFolderUids: Set<string>;
   selectedDashboardUids: Set<string>;
   onClose: () => void;
@@ -38,9 +32,8 @@ interface Props {
 
 /**
  * Resolves the union of explicitly-selected dashboard UIDs and the dashboards
- * that live inside any selected folder, deduplicated. Folders aren't directly
- * supported by the Job API, so they always cascade to their descendant
- * dashboard refs.
+ * that live inside any selected folder. Folders aren't directly supported by
+ * the Job API, so they always cascade to their descendant dashboard refs.
  */
 function resolveSelectedDashboards(
   folders: FolderRow[],
@@ -67,19 +60,18 @@ function resolveSelectedDashboards(
 
 export function MigrateDrawer({
   folders,
-  repos,
+  repositoryName,
   selectedFolderUids,
   selectedDashboardUids,
   onClose,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
+  const { repository, isReadOnlyRepo, isLoading: isLoadingRepo } = useGetResourceRepositoryView({
+    name: repositoryName,
+  });
+  const [createJob, { isLoading: isSubmitting }] = useCreateRepositoryJobsMutation();
   const [deleteOriginals, setDeleteOriginals] = useState(true);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState<string | undefined>();
-
-  const repository = repos[0];
-  const repoName = repository?.metadata?.name;
 
   const dashboards = useMemo(
     () => resolveSelectedDashboards(folders, selectedFolderUids, selectedDashboardUids),
@@ -88,12 +80,26 @@ export function MigrateDrawer({
   const dashboardCount = dashboards.length;
   const folderCount = selectedFolderUids.size;
 
-  const submitLabel = deleteOriginals
-    ? t('provisioning.stats.migrate-drawer-submit-migrate', 'Migrate')
-    : t('provisioning.stats.migrate-drawer-submit-export', 'Export');
+  const initialValues: BulkActionFormData = useMemo(
+    () => ({
+      comment: '',
+      ref: `migrate-to-gitops/${generateTimestamp()}`,
+      workflow: getDefaultWorkflow(repository),
+    }),
+    [repository]
+  );
 
-  const handleSubmit = async () => {
-    if (!repoName) {
+  const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
+  const { handleSubmit, reset } = methods;
+
+  if (initialValues.workflow !== methods.getValues('workflow')) {
+    reset(initialValues);
+  }
+
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
+
+  const submit = async (data: BulkActionFormData) => {
+    if (!repository?.name) {
       setError(
         t(
           'provisioning.stats.migrate-drawer-no-repo',
@@ -103,27 +109,22 @@ export function MigrateDrawer({
       return;
     }
     setError(undefined);
+    const ref = data.workflow === 'write' ? undefined : data.ref;
+    const message = data.comment?.trim() || undefined;
     try {
       if (deleteOriginals) {
         // The Migrate job currently doesn't accept a per-resource scope —
-        // it migrates every unmanaged folder and dashboard at once. The
-        // selection above is informational; the call below moves the lot.
+        // it migrates every unmanaged folder and dashboard at once.
         await createJob({
-          name: repoName,
-          jobSpec: {
-            action: 'migrate',
-            migrate: { message: message.trim() || undefined },
-          },
+          name: repository.name,
+          jobSpec: { action: 'migrate', migrate: { message } },
         }).unwrap();
       } else {
         await createJob({
-          name: repoName,
+          name: repository.name,
           jobSpec: {
             action: 'push',
-            push: {
-              message: message.trim() || undefined,
-              resources: dashboards,
-            },
+            push: { message, branch: ref, resources: dashboards },
           },
         }).unwrap();
       }
@@ -146,87 +147,100 @@ export function MigrateDrawer({
         </Text>
       }
       subtitle={
-        repoName
-          ? t('provisioning.stats.migrate-drawer-subtitle', 'Pushing to {{repo}}', { repo: repoName })
+        repository?.name
+          ? t('provisioning.stats.migrate-drawer-subtitle', 'Pushing to {{repo}}', { repo: repository.name })
           : t('provisioning.stats.migrate-drawer-subtitle-empty', 'No repository connected')
       }
       onClose={onClose}
       size="md"
     >
-      <Stack direction="column" gap={2}>
-        <Alert severity="info" title={t('provisioning.stats.migrate-drawer-push-title', 'Smoother migration tip')}>
-          <Trans i18nKey="provisioning.stats.migrate-drawer-push-body">
-            Enable pushes to <code>main</code> on this repository for a smoother migration. Without direct
-            push access, the job has to open a pull request for every change and you&apos;ll need to merge
-            them before the dashboards become managed.
+      {isLoadingRepo ? null : !repository || isReadOnlyRepo ? (
+        <Alert
+          severity="warning"
+          title={t(
+            'provisioning.stats.migrate-drawer-readonly-title',
+            'This repository cannot accept changes from Grafana'
+          )}
+        >
+          <Trans i18nKey="provisioning.stats.migrate-drawer-readonly-body">
+            Connect a writable repository or update this one&apos;s permissions and try again.
           </Trans>
         </Alert>
+      ) : (
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(submit)}>
+            <Stack direction="column" gap={2}>
+              <Alert
+                severity="info"
+                title={t('provisioning.stats.migrate-drawer-push-title', 'Smoother migration tip')}
+              >
+                <Trans i18nKey="provisioning.stats.migrate-drawer-push-body">
+                  Enable pushes to <code>main</code> on this repository for a smoother migration. Without
+                  direct push access, the job opens a pull request for every change and you&apos;ll need to
+                  merge them before the dashboards become managed.
+                </Trans>
+              </Alert>
 
-        <div className={styles.summary}>
-          <Text variant="bodySmall" color="secondary">
-            <Trans
-              i18nKey="provisioning.stats.migrate-drawer-summary"
-              values={{ folders: folderCount, dashboards: dashboardCount }}
-              defaults="You picked {{folders}} folders and {{dashboards}} dashboards. Folder selections include every dashboard inside them."
-            />
-          </Text>
-        </div>
+              <div className={styles.summary}>
+                <Text variant="bodySmall" color="secondary">
+                  <Trans
+                    i18nKey="provisioning.stats.migrate-drawer-summary"
+                    values={{ folders: folderCount, dashboards: dashboardCount }}
+                    defaults="You picked {{folders}} folders and {{dashboards}} dashboards. Folder selections include every dashboard inside them."
+                  />
+                </Text>
+              </div>
 
-        <Field
-          noMargin
-          label={t('provisioning.stats.migrate-drawer-message-label', 'Commit message')}
-          description={t(
-            'provisioning.stats.migrate-drawer-message-description',
-            'Optional. Used as the message for the single commit that introduces these dashboards to Git.'
-          )}
-        >
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.currentTarget.value)}
-            placeholder={t(
-              'provisioning.stats.migrate-drawer-message-placeholder',
-              'Migrate dashboards to GitOps'
-            )}
-          />
-        </Field>
+              <ResourceEditFormSharedFields
+                resourceType="dashboard"
+                isNew={false}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
+                repository={repository}
+                hiddenFields={['path']}
+              />
 
-        <Field
-          noMargin
-          description={t(
-            'provisioning.stats.migrate-drawer-delete-description',
-            'When enabled, the originals are removed from Grafana and the repository takes over them. Disable it to copy them into Git while keeping the originals untouched.'
-          )}
-        >
-          <Checkbox
-            value={deleteOriginals}
-            onChange={(e) => setDeleteOriginals(e.currentTarget.checked)}
-            label={t(
-              'provisioning.stats.migrate-drawer-delete-label',
-              'Delete original dashboards after pushing them to Git'
-            )}
-          />
-        </Field>
+              <Field
+                noMargin
+                description={t(
+                  'provisioning.stats.migrate-drawer-delete-description',
+                  'When enabled, the originals are removed from Grafana and the repository takes over them. Disable it to copy them into Git while keeping the originals untouched.'
+                )}
+              >
+                <Checkbox
+                  value={deleteOriginals}
+                  onChange={(e) => setDeleteOriginals(e.currentTarget.checked)}
+                  label={t(
+                    'provisioning.stats.migrate-drawer-delete-label',
+                    'Delete original dashboards after pushing them to Git'
+                  )}
+                />
+              </Field>
 
-        {error && <Alert severity="error" title={error} />}
+              {error && <Alert severity="error" title={error} />}
 
-        <Stack direction="row" gap={1} justifyContent="flex-end">
-          <Button variant="secondary" fill="outline" onClick={onClose} disabled={isLoading}>
-            <Trans i18nKey="provisioning.stats.migrate-drawer-cancel">Cancel</Trans>
-          </Button>
-          <Button
-            variant="primary"
-            icon="upload"
-            onClick={handleSubmit}
-            disabled={!repoName || (!deleteOriginals && dashboardCount === 0)}
-          >
-            {isLoading ? (
-              <Trans i18nKey="provisioning.stats.migrate-drawer-submitting">Starting…</Trans>
-            ) : (
-              submitLabel
-            )}
-          </Button>
-        </Stack>
-      </Stack>
+              <Stack direction="row" gap={1} justifyContent="flex-end">
+                <Button variant="secondary" fill="outline" onClick={onClose} disabled={isSubmitting}>
+                  <Trans i18nKey="provisioning.stats.migrate-drawer-cancel">Cancel</Trans>
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  icon="upload"
+                  disabled={isSubmitting || (!deleteOriginals && dashboardCount === 0)}
+                >
+                  {isSubmitting ? (
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-submitting">Starting…</Trans>
+                  ) : deleteOriginals ? (
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-submit-migrate">Migrate</Trans>
+                  ) : (
+                    <Trans i18nKey="provisioning.stats.migrate-drawer-submit-export">Export</Trans>
+                  )}
+                </Button>
+              </Stack>
+            </Stack>
+          </form>
+        </FormProvider>
+      )}
     </Drawer>
   );
 }
