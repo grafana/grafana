@@ -269,6 +269,7 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // @grafana/grafana-search-and-storage
 )
 
 // Replace references to internal workspaces
@@ -305,6 +306,7 @@ replace (
 	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
 	github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ./pkg/storage/unified/resourcepb
 )
 
 // Indirect references
