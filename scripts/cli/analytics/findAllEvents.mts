@@ -2,8 +2,8 @@ import { Node, type SourceFile } from 'ts-morph';
 
 import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
-import { parseEvents } from './eventParser.mts';
-import { getMetadataFromJSDocs, getMetadataFromPropertyComments, resolveType } from './typeResolution.mts';
+import { parseEventsFromFile } from './eventParser.mts';
+import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
   const eventMap = new Map<string, EventData>();
@@ -15,9 +15,13 @@ export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: stri
     }
 
     const eventNamespaces = findEventNamespaces(file, createEventFactoryImportedName);
-    const events = parseEvents(file, eventNamespaces);
+    const events = parseEventsFromFile(file, eventNamespaces);
 
     for (const event of events) {
+      if (eventMap.has(event.fullEventName)) {
+        throw new Error(`Duplicate event name ${event.fullEventName} found in ${file.getFilePath()}`);
+      }
+
       eventMap.set(event.fullEventName, event);
     }
   }
@@ -91,11 +95,12 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
       defaultProperties = defaultPropsType.getProperties().map((prop) => {
         const decl = prop.getDeclarations()[0];
         const propType = decl ? prop.getTypeAtLocation(decl) : prop.getDeclaredType();
-        const description = decl && Node.isPropertySignature(decl)
-          ? getMetadataFromJSDocs(decl.getJsDocs()).description
-          : decl && Node.isPropertyAssignment(decl)
-            ? getMetadataFromPropertyComments(decl).description
-            : undefined;
+        const description =
+          decl && Node.isPropertySignature(decl)
+            ? getMetadataFromJSDocs(decl.getJsDocs()).description
+            : decl && Node.isPropertyAssignment(decl)
+              ? getMetadataFromJSDocs(getJsDocsFromNode(decl)).description
+              : undefined;
         return {
           name: prop.getName(),
           type: resolveType(propType),

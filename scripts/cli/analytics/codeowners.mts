@@ -11,7 +11,7 @@ const getEngine = (): { calcFileOwnership(filePath: string): string[] } => {
 };
 
 /**
- * Returns the owners for the given file path (relative to repo root, no leading slash).
+ * Returns the owners for the given file path.
  * Uses the same OwnershipEngine as the CI/CD codeowners tooling.
  * Returns undefined when no rule matches.
  */
