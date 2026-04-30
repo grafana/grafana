@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -69,29 +68,27 @@ type Server struct {
 	logger  log.Logger
 	tracer  tracing.Tracer
 	metrics *metrics
-	// features is optional; if nil, feature-gated zanzana behavior (e.g. contextual team tuples) is off.
-	features featuremgmt.FeatureToggles
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, features featuremgmt.FeatureToggles) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, features)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, features featuremgmt.FeatureToggles) (*Server, error) {
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, features)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, features featuremgmt.FeatureToggles) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -108,7 +105,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		logger:        logger,
 		tracer:        tracer,
 		metrics:       newZanzanaServerMetrics(reg),
-		features:      features,
 	}
 
 	var clientFactory resources.ClientFactory
@@ -246,15 +242,8 @@ func (s *Server) Close() {
 	s.store.Close()
 }
 
-// contextualTeamsEnabled is true when the zanzanaContextualTeams feature is on
-// and a [featuremgmt.FeatureToggles] was wired into the server.
-func (s *Server) contextualTeamsEnabled() bool {
-	return s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagZanzanaContextualTeams)
-}
-
 // getContextualParts returns base contextual tuples (e.g. for the render user) and optional
-// team#member contextual tuples from auth token groups and [common.ContextWithTeams]. Team
-// tuples are only added when [Server.contextualTeamsEnabled] is true.
+// team#member contextual tuples from auth token groups.
 func (s *Server) getContextualParts(ctx context.Context, subject string) (base *openfgav1.ContextualTupleKeys, teamTuples []*openfgav1.TupleKey, err error) {
 	var baseKeys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
@@ -292,24 +281,15 @@ func (s *Server) getContextualParts(ctx context.Context, subject string) (base *
 	if len(baseKeys) > 0 {
 		base = &openfgav1.ContextualTupleKeys{TupleKeys: baseKeys}
 	}
-	if !s.contextualTeamsEnabled() {
-		return base, nil, nil
-	}
 
 	seen := make(map[string]struct{})
 	var teamNames []string
 	if c, ok := authtypes.AuthInfoFrom(ctx); ok {
 		for _, g := range c.GetGroups() {
-			if n, ok2 := common.ParseTeamGroup(g); ok2 {
-				if _, dup := seen[n]; !dup {
-					seen[n] = struct{}{}
-					teamNames = append(teamNames, n)
-				}
+			n, ok := strings.CutPrefix(g, common.TypeTeamPrefix)
+			if !ok || n == "" {
+				continue
 			}
-		}
-	}
-	for _, g := range common.TeamsFromContext(ctx) {
-		if n, ok2 := common.ParseTeamGroup(g); ok2 {
 			if _, dup := seen[n]; !dup {
 				seen[n] = struct{}{}
 				teamNames = append(teamNames, n)

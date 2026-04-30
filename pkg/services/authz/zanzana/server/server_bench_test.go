@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -333,8 +332,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 }
 
 // setupBenchmarkServer creates a server with the benchmark data loaded.
-// features, if non-nil, is passed to [NewEmbeddedZanzanaServer] (e.g. for contextual-teams benches).
-func setupBenchmarkServer(b *testing.B, features featuremgmt.FeatureToggles) (*Server, *benchmarkData) {
+func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
 		b.Skip("skipping benchmark in short mode")
@@ -355,7 +353,7 @@ func setupBenchmarkServer(b *testing.B, features featuremgmt.FeatureToggles) (*S
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, features)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -455,7 +453,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -490,7 +488,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 
 // BenchmarkCheck measures the performance of Check requests
 func BenchmarkCheck(b *testing.B) {
-	srv, data := setupBenchmarkServer(b, nil)
+	srv, data := setupBenchmarkServer(b)
 	ctx := newContextWithNamespace()
 
 	// Helper to create check requests
@@ -767,7 +765,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 
 // BenchmarkList measures the performance of List requests (Compile equivalent)
 func BenchmarkList(b *testing.B) {
-	srv, data := setupBenchmarkServer(b, nil)
+	srv, data := setupBenchmarkServer(b)
 	baseCtx := newContextWithNamespace()
 
 	// Helper to create list requests
@@ -950,7 +948,7 @@ func BenchmarkList(b *testing.B) {
 
 // BenchmarkBatchCheck measures the performance of BatchCheck requests
 func BenchmarkBatchCheck(b *testing.B) {
-	srv, data := setupBenchmarkServer(b, nil)
+	srv, data := setupBenchmarkServer(b)
 	ctx := newContextWithNamespace()
 
 	// Helper to create batch check requests

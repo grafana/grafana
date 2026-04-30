@@ -407,10 +407,6 @@ const (
 	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
-	// FlagZanzanaContextualTeams
-	// When enabled, zanzana passes team#member relations as contextual tuples from the auth token groups and/or ContextWithTeams instead of only from stored tuples.
-	FlagZanzanaContextualTeams = "zanzanaContextualTeams"
-
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"

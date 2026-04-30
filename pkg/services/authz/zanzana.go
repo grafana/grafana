@@ -102,7 +102,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, features)
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -275,7 +275,6 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 
 	s := &Zanzana{
 		cfg:           cfg,
-		features:      features,
 		logger:        log.New("zanzana.server"),
 		reg:           reg,
 		tracer:        tracer,
@@ -296,7 +295,6 @@ type Zanzana struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	handle        grpcserver.Provider
-	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
 	storeProvider zStore.StoreProvider
 	reconcileCRDs []schema.GroupVersionResource
@@ -308,7 +306,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, z.features)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}

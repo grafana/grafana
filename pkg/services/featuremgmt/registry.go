@@ -1235,15 +1235,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "zanzanaContextualTeams",
-			Description:  "When enabled, zanzana passes team#member relations as contextual tuples from the auth token groups and/or ContextWithTeams instead of only from stored tuples.",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "reloadDashboardsOnParamsChange",
 			Description:     "Enables reload of dashboards on scopes, time range and variables changes",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},

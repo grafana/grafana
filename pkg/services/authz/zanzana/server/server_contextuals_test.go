@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,35 +10,7 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
-
-// testFeatureToggles is a minimal [featuremgmt.FeatureToggles] for unit tests.
-type testFeatureToggles struct {
-	enabled map[string]bool
-}
-
-func (t *testFeatureToggles) IsEnabled(_ context.Context, flag string) bool {
-	if t == nil || t.enabled == nil {
-		return false
-	}
-	return t.enabled[flag]
-}
-
-func (t *testFeatureToggles) IsEnabledGlobally(flag string) bool {
-	if t == nil || t.enabled == nil {
-		return false
-	}
-	return t.enabled[flag]
-}
-
-func (t *testFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
-	if t == nil {
-		return nil
-	}
-	return t.enabled
-}
 
 func TestGetContextualParts(t *testing.T) {
 	srv := &Server{}
@@ -76,22 +47,16 @@ func TestGetContextualParts(t *testing.T) {
 		}
 	})
 
-	t.Run("non-render subject with feature off returns no tuples", func(t *testing.T) {
+	t.Run("non-render subject without groups returns no tuples", func(t *testing.T) {
 		base, team, err := srv.getContextualParts(t.Context(), "user:123")
 		require.NoError(t, err)
 		assert.Nil(t, base)
 		assert.Nil(t, team)
 	})
 
-	t.Run("ContextWithTeams adds team member tuples when feature is on", func(t *testing.T) {
-		s := &Server{
-			cfg: setting.ZanzanaServerSettings{ContextualTeamsChunkSize: 25},
-			features: &testFeatureToggles{enabled: map[string]bool{
-				featuremgmt.FlagZanzanaContextualTeams: true,
-			}},
-		}
-		ctx := common.ContextWithTeams(t.Context(), []string{"team:aa", "team:bb"})
-		base, team, err := s.getContextualParts(ctx, "user:1")
+	t.Run("auth info groups add team member tuples", func(t *testing.T) {
+		ctx := newContextWithGroups("team:aa", "team:bb")
+		base, team, err := srv.getContextualParts(ctx, "user:1")
 		require.NoError(t, err)
 		assert.Nil(t, base)
 		require.Len(t, team, 2)

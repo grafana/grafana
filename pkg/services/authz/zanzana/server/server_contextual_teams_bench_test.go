@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +27,7 @@ const contextualTeamBenchNS = "ctx-team-bench"
 
 // setupContextualTeamListLargeServer builds a multi-level folder tree (so largestRootFolder has many
 // descendants), grants team:0 view on that root folder, and optionally persists user:1#member#team:0.
-func setupContextualTeamListLargeServer(b *testing.B, toggles featuremgmt.FeatureToggles, withStoredUserTeam bool) (*Server, *benchmarkData) {
+func setupContextualTeamListLargeServer(b *testing.B, withStoredUserTeam bool) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
 		b.Skip("skipping benchmark in short mode")
@@ -42,7 +41,7 @@ func setupContextualTeamListLargeServer(b *testing.B, toggles featuremgmt.Featur
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, toggles)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(b, err)
 
 	// 2 children/level, 5 levels deep => >60 folders; largest root has a large descendant count.
@@ -74,10 +73,8 @@ func setupContextualTeamListLargeServer(b *testing.B, toggles featuremgmt.Featur
 }
 
 // setupContextualTeamBenchServer creates a small folder tree, grants team:0 view on a folder, and
-// when withStoredUserTeam is true, persists user:1 -> member -> team:0. For contextual-only benches
-// (withStoredUserTeam false), the user must be granted access through [common.ContextWithTeams] when
-// the zanzanaContextualTeams feature is enabled.
-func setupContextualTeamBenchServer(b *testing.B, toggles featuremgmt.FeatureToggles, withStoredUserTeam bool) (*Server, *benchmarkData) {
+// when withStoredUserTeam is true, persists user:1 -> member -> team:0.
+func setupContextualTeamBenchServer(b *testing.B, withStoredUserTeam bool) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
 		b.Skip("skipping benchmark in short mode")
@@ -91,7 +88,7 @@ func setupContextualTeamBenchServer(b *testing.B, toggles featuremgmt.FeatureTog
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, toggles)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(b, err)
 
 	folderTuples, data := generateFolderHierarchy(1, 1)
@@ -112,7 +109,7 @@ func setupContextualTeamBenchServer(b *testing.B, toggles featuremgmt.FeatureTog
 	_, err = srv.openFGAClient.Write(ctxW, &openfgav1.WriteRequest{
 		StoreId:              st.ID,
 		AuthorizationModelId: st.ModelID,
-		Writes: &openfgav1.WriteRequestWrites{TupleKeys: perm, OnDuplicate: "ignore"},
+		Writes:               &openfgav1.WriteRequestWrites{TupleKeys: perm, OnDuplicate: "ignore"},
 	})
 	require.NoError(b, err)
 	generateResources(data, 10)
@@ -121,12 +118,11 @@ func setupContextualTeamBenchServer(b *testing.B, toggles featuremgmt.FeatureTog
 }
 
 func newBenchCtxWithTeams(nTeams int) context.Context {
-	ctx := newContextWithNamespace()
 	teams := make([]string, 0, nTeams)
 	for i := 0; i < nTeams; i++ {
 		teams = append(teams, fmt.Sprintf("team:%d", i))
 	}
-	return common.ContextWithTeams(ctx, teams)
+	return newContextWithGroups(teams...)
 }
 
 // BenchmarkContextualTeamCheck measures Check when team membership is stored vs contextual (same effective teams).
@@ -134,7 +130,7 @@ func BenchmarkContextualTeamCheck(b *testing.B) {
 	teamSizes := []int{1, 10, 50, 100}
 	for _, n := range teamSizes {
 		b.Run(fmt.Sprintf("Teams_%d/Stored", n), func(b *testing.B) {
-			srv, d := setupContextualTeamBenchServer(b, nil, true)
+			srv, d := setupContextualTeamBenchServer(b, true)
 			_ = n
 			ctx := newContextWithNamespace()
 			folder := d.folders[0]
@@ -159,8 +155,7 @@ func BenchmarkContextualTeamCheck(b *testing.B) {
 	for _, n := range teamSizes {
 		n := n
 		b.Run(fmt.Sprintf("Teams_%d/Contextual_WarmCache", n), func(b *testing.B) {
-			toggles := &testFeatureToggles{enabled: map[string]bool{featuremgmt.FlagZanzanaContextualTeams: true}}
-			srv, d := setupContextualTeamBenchServer(b, toggles, false)
+			srv, d := setupContextualTeamBenchServer(b, false)
 			ctx := newBenchCtxWithTeams(n)
 			folder := d.folders[0]
 			name := d.resources[0]
@@ -194,8 +189,7 @@ func BenchmarkContextualTeamCheck(b *testing.B) {
 			}
 		})
 		b.Run(fmt.Sprintf("Teams_%d/Contextual_ColdCache", n), func(b *testing.B) {
-			toggles := &testFeatureToggles{enabled: map[string]bool{featuremgmt.FlagZanzanaContextualTeams: true}}
-			srv, d := setupContextualTeamBenchServer(b, toggles, false)
+			srv, d := setupContextualTeamBenchServer(b, false)
 			ctx := newBenchCtxWithTeams(n)
 			folder := d.folders[0]
 			name := d.resources[0]
@@ -224,8 +218,7 @@ func BenchmarkContextualTeamList(b *testing.B) {
 	for _, n := range []int{1, 10, 50, 100} {
 		n := n
 		b.Run(fmt.Sprintf("Root_Teams_%d", n), func(b *testing.B) {
-			toggles := &testFeatureToggles{enabled: map[string]bool{featuremgmt.FlagZanzanaContextualTeams: true}}
-			srv, _ := setupContextualTeamBenchServer(b, toggles, false)
+			srv, _ := setupContextualTeamBenchServer(b, false)
 			ctx := newBenchCtxWithTeams(n)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -250,8 +243,7 @@ func BenchmarkContextualTeamListLargeTree(b *testing.B) {
 	for _, n := range []int{1, 100} {
 		n := n
 		b.Run(fmt.Sprintf("Teams_%d", n), func(b *testing.B) {
-			toggles := &testFeatureToggles{enabled: map[string]bool{featuremgmt.FlagZanzanaContextualTeams: true}}
-			srv, _ := setupContextualTeamListLargeServer(b, toggles, false)
+			srv, _ := setupContextualTeamListLargeServer(b, false)
 			ctx := newBenchCtxWithTeams(n)
 			_, err := srv.List(ctx, &authzv1.ListRequest{
 				Namespace: contextualTeamBenchNS,
@@ -285,8 +277,7 @@ func BenchmarkContextualTeamBatchCheck(b *testing.B) {
 	for _, n := range []int{1, 10, 50, 100} {
 		n := n
 		b.Run(fmt.Sprintf("Teams_%d", n), func(b *testing.B) {
-			toggles := &testFeatureToggles{enabled: map[string]bool{featuremgmt.FlagZanzanaContextualTeams: true}}
-			srv, data := setupContextualTeamBenchServer(b, toggles, false)
+			srv, data := setupContextualTeamBenchServer(b, false)
 			ctx := newBenchCtxWithTeams(n)
 			var items []*authzv1.BatchCheckItem
 			for i, name := range data.resources {
