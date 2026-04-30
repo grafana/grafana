@@ -537,40 +537,31 @@ describe('EditDataSourceActions', () => {
   });
 
   describe('Default Actions', () => {
-    it('should render make default button when data source is not default', () => {
+    it('should render make default button when data source is not default and editable', () => {
       mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
 
       render(<EditDataSourceActions uid="test-uid" />);
 
       expect(screen.getByText('Make default')).toBeInTheDocument();
-      expect(screen.queryByText('Default')).not.toBeInTheDocument();
+      expect(screen.queryByText('Remove default')).not.toBeInTheDocument();
     });
 
-    it('should render default badge when data source is default', () => {
+    it('should render remove default button when data source is default and editable', () => {
       mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      expect(screen.getByText('Default')).toBeInTheDocument();
+      expect(screen.getByText('Remove default')).toBeInTheDocument();
       expect(screen.queryByText('Make default')).not.toBeInTheDocument();
     });
 
-    it('should disable make default button for read-only users', () => {
+    it('should not render make default button when data source is not default but not editable', () => {
       mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: false });
       mockUseDataSourceRights.mockReturnValue({ hasWriteRights: false, readOnly: true });
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      expect(screen.getByText('Make default').closest('button')).toHaveAttribute('aria-disabled', 'true');
-    });
-
-    it('should render remove default button when data source is default and editable', () => {
-      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
-      mockUseDataSourceRights.mockReturnValue({ hasWriteRights: true, readOnly: false });
-
-      render(<EditDataSourceActions uid="test-uid" />);
-
-      expect(screen.getByLabelText('Remove default')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Make default')).not.toBeInTheDocument();
     });
 
     it('should not render remove default button when data source is default but not editable', () => {
@@ -580,6 +571,15 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       expect(screen.queryByLabelText('Remove default')).not.toBeInTheDocument();
+    });
+
+    it('should render default badge when data source is default but not editable', () => {
+      mockUseDataSource.mockReturnValue({ ...mockDataSource, isDefault: true });
+      mockUseDataSourceRights.mockReturnValue({ hasWriteRights: true, readOnly: true });
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      expect(screen.getByText('Default')).toBeInTheDocument();
     });
   });
 });
