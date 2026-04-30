@@ -3,7 +3,7 @@ name: "MT Service Compatibility"
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches: [main, test/frontend-backend-separation-action]
+    branches: [main]
 
 permissions:
   contents: read
@@ -14,6 +14,8 @@ jobs:
     outputs:
       frontend-strict: ${{ steps.changed-files.outputs.frontend_strict_any_changed }}
       backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
+      frontend-strict-files: ${{ steps.changed-files.outputs.frontend_strict_all_changed_files }}
+      backend-strict-files: ${{ steps.changed-files.outputs.backend_strict_all_changed_files }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -29,9 +31,6 @@ jobs:
             frontend_strict:
               - 'public/**'
               - 'packages/**'
-              - '!public/**/*.gen.ts'
-              - '!packages/**/*.gen.ts'
-              - '!packages/grafana-openapi/**'
               - 'scripts/webpack/**'
               - '.eslintrc*'
               - '.prettierrc*'
@@ -42,6 +41,8 @@ jobs:
               - '.betterer*'
               - 'jest.config*'
               - 'playwright**'
+              - '!**/*.gen.ts'
+              - '!**/*.gen.d.ts'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'
@@ -54,6 +55,11 @@ jobs:
               - 'scripts/drone/**'
               - 'scripts/go/**'
               - '.air.toml'
+              - '!pkg/services/featuremgmt/registry.go'
+              - '!pkg/services/featuremgmt/toggles_gen.csv'
+              - '!pkg/services/featuremgmt/toggles_gen.go'
+              - '!pkg/services/featuremgmt/toggles_gen.json'
+
 
   check-separation:
     needs: detect-changes
@@ -80,6 +86,7 @@ jobs:
             echo "• Split this PR into two separate PRs (recommended):"
             echo "  - One PR for frontend changes (public/, packages/, *.ts, *.tsx)"
             echo "  - One PR for backend changes (pkg/, *.go, go.mod)"
+            echo "• Ensure that these two changes are independently compatible without the other"
             echo ""
             echo "Exception process (if changes MUST be coupled):"
             echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
@@ -87,6 +94,12 @@ jobs:
             echo ""
             echo "For more details, see: https://enghub.grafana-ops.net/docs/default/component/deployment-tools/grafana-frontend-service/#guide-for-development-process-in-a-decoupled-deployment"
             echo "If you need help or have feedback, reach us in #proj-mt-frontend"
+            echo ""
+            echo "Frontend changed files:"
+            echo "${{ needs.detect-changes.outputs.frontend-strict-files }}" | tr ' ' '\n' | sed 's/^/- /'
+            echo ""
+            echo "Backend changed files:"
+            echo "${{ needs.detect-changes.outputs.backend-strict-files }}" | tr ' ' '\n' | sed 's/^/- /'
             exit 1
           fi
         env:
