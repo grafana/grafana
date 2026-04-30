@@ -21,7 +21,7 @@ const meta: Meta<typeof RefreshPicker> = {
     isLive: false,
     width: 'auto',
     text: 'Refresh time picker',
-    // tooltip: 'My tooltip text goes here',
+    tooltip: 'My tooltip text goes here',
     value: '1h',
     primary: false,
     noIntervalPicker: false,
