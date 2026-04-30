@@ -482,9 +482,11 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
 			},
 			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-				// Pre-fix Grafanas surface this as a 500 with "uid too long, max 40 characters"
-				// in the body. Post-fix Grafanas surface it as a structured 400 with the same
-				// public message; either form should classify as UID-too-long.
+				// Simulates the post-#123843 form: a structured 400 from
+				// the folder apiserver carrying the legacy public message.
+				// IsFolderUIDTooLongAPIError's substring fallbacks cover
+				// the pre-fix legacy 500 form too; that's covered by the
+				// matcher unit tests in errors_test.go.
 				return nil, apierrors.NewBadRequest("uid too long, max 40 characters")
 			},
 		}

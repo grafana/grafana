@@ -303,11 +303,34 @@ func IsFolderUIDTooLongAPIError(err error) bool {
 		strings.Contains(msg, folderUIDTooLongMessageID)
 }
 
-// folderMessageIDPrefix matches every errutil base declared in
-// pkg/services/folder/model.go and pkg/registry/apis/folders/errors.go. Any
-// message ID with this prefix is, by construction, a folder-API validation
-// rejection that the sync cannot fix by retrying.
-const folderMessageIDPrefix = "folder."
+// folderValidationMessageIDs is the explicit allow-list of folder.* errutil
+// message IDs that represent user-fixable validation rejections from the
+// folder API. Errors with these IDs come from a user-controlled input
+// (path, _folder.json, dashboard parent annotation) and re-running the
+// sync without the user fixing the input will fail again — the warning
+// classification is what stops the retry loop.
+//
+// We deliberately allow-list rather than match every "folder." prefix so
+// internal-only errutil errors that happen to live in the folder package —
+// notably folder.ErrBadRequest ("folder.bad-request"), raised on
+// programmer faults like a missing signed-in user — are NOT silently
+// downgraded to sync warnings. Those are real bugs that must surface as
+// errors so they get noticed.
+//
+// When new user-fixable folder validations are added, extend this map.
+// New folder.* errutil errors that are server-side faults must NOT be
+// added here.
+var folderValidationMessageIDs = map[string]struct{}{
+	"folder.title-empty":                {},
+	"folder.invalid-uid":                {},
+	"folder.invalid-uid-chars":          {},
+	"folder.uid-too-long":               {},
+	"folder.cannot-be-parent-of-itself": {},
+	"folder.maximum-depth-reached":      {},
+	"folder.cannot-be-moved-to-k6":      {},
+	"folder.name-exists":                {},
+	"folder.circular-reference":         {},
+}
 
 // ErrFolderValidation is a sentinel for any user-actionable 4xx rejection
 // from the folder API that does not match a more specific sentinel above
@@ -348,20 +371,24 @@ func NewFolderValidationError(path string, err error) *FolderValidationError {
 }
 
 // IsFolderValidationAPIError reports whether err is a 4xx rejection from the
-// folder API caused by a validation rule the sync cannot fix by retrying.
+// folder API caused by a user-fixable validation rule.
 //
 // It returns true for:
 //   - any of the more specific sentinels (depth, uid-too-long), so callers
 //     can use a single check when they don't care about the subtype;
-//   - any K8s StatusError whose code is 400 and whose Details.UID has the
-//     "folder." messageID prefix — covers every existing and future folder
-//     errutil sentinel post-#123709;
+//   - any K8s StatusError whose code is 400 and whose Details.UID is on
+//     the folderValidationMessageIDs allow-list — covers every folder
+//     errutil sentinel landed via #123709 / #123843 that represents a
+//     user-fixable repository-side input problem;
 //   - the in-process errutil.Error itself (it implements APIStatus and the
 //     above branch matches it via errors.As).
 //
 // It does NOT match:
 //   - 5xx errors (genuinely retryable transient failures);
-//   - 4xx errors with no folder messageID (likely caller bugs we want to
+//   - 4xx errors with a folder.* message ID that is NOT user-fixable
+//     (e.g. folder.bad-request raised on programmer faults like a missing
+//     signed-in user) — those must keep surfacing as hard errors;
+//   - 4xx errors with no message ID at all (likely caller bugs we want to
 //     keep visible so we can debug them);
 //   - 401/403/404, where retry semantics differ and the existing
 //     ResourceOwnershipConflictError / ResourceUnmanagedConflictError
@@ -385,8 +412,10 @@ func IsFolderValidationAPIError(err error) bool {
 	var statusErr apierrors.APIStatus
 	if errors.As(err, &statusErr) {
 		s := statusErr.Status()
-		if s.Code == 400 && s.Details != nil && strings.HasPrefix(string(s.Details.UID), folderMessageIDPrefix) {
-			return true
+		if s.Code == 400 && s.Details != nil {
+			if _, ok := folderValidationMessageIDs[string(s.Details.UID)]; ok {
+				return true
+			}
 		}
 	}
 

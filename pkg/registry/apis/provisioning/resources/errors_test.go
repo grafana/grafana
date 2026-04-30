@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
@@ -654,6 +655,65 @@ func TestIsFolderValidationAPIError(t *testing.T) {
 			},
 		}
 		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("does not match folder.bad-request (internal request-context fault)", func(t *testing.T) {
+		// folder.ErrBadRequest is the errutil base used for programmer
+		// faults like a missing signed-in user in folder service Create/
+		// Update. It is a 400 with a folder.* message ID, but it is NOT
+		// user-fixable from the repository content. Treating it as a
+		// warning would hide real provisioning bugs as
+		// "CompletedWithWarnings". The allow-list keeps these surfacing
+		// as hard errors.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "missing signed in user",
+				Details: &metav1.StatusDetails{
+					UID: "folder.bad-request",
+				},
+			},
+		}
+		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("does not match an unknown folder.* message ID", func(t *testing.T) {
+		// Future folder.* errutil errors must not be auto-classified as
+		// warnings: each new validation must be explicitly added to
+		// folderValidationMessageIDs after the team confirms the failure
+		// is user-fixable. This guards the allow-list contract.
+		statusErr := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    400,
+				Message: "Bad Request",
+				Details: &metav1.StatusDetails{
+					UID: "folder.future-validation-error-not-yet-classified",
+				},
+			},
+		}
+		require.False(t, IsFolderValidationAPIError(statusErr))
+	})
+
+	t.Run("matches every entry in the allow-list", func(t *testing.T) {
+		// Guards drift between folderValidationMessageIDs and the matcher.
+		for id := range folderValidationMessageIDs {
+			id := id
+			t.Run(id, func(t *testing.T) {
+				statusErr := &apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    400,
+						Message: "validation failed",
+						Details: &metav1.StatusDetails{
+							UID: types.UID(id),
+						},
+					},
+				}
+				require.True(t, IsFolderValidationAPIError(statusErr), "matcher must accept %q", id)
+			})
+		}
 	})
 
 	t.Run("does not match a 5xx with a folder message ID", func(t *testing.T) {

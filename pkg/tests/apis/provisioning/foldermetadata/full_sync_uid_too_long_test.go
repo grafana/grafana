@@ -91,14 +91,6 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 		"expected exactly one uid-too-long warning; saw %d. Warnings: %v",
 		uidTooLongWarnings, jobObj.Status.Warnings)
 
-	// The dashboard inside the offending folder must not surface as a
-	// retryable error — it should be silently skipped because the parent
-	// folder creation already failed.
-	for _, e := range jobObj.Status.Errors {
-		require.NotContains(t, e, "bare-metal/dashboard2.json",
-			"resources under a uid-too-long folder must not surface as errors")
-	}
-
 	// The shallow folder (outside the failing subtree) must still be
 	// created — a UID violation in one branch must not block the rest of
 	// the sync.

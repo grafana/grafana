@@ -388,8 +388,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return NewFolderDepthExceededError(folder.Path, err)
 		}
 		// Same reasoning as depth above: a UID longer than the folder
-		// API's 40-character limit (typically a _folder.json stable UID
-		// or a path segment that overflowed) is a permanent rejection.
+		// API's 40-character limit is a permanent rejection. Path-derived
+		// UIDs are always truncated to <=40 by appendHashSuffix, so this
+		// only fires for user-supplied UIDs (typically a _folder.json
+		// stable UID, but also any future caller-provided UID source).
 		// Surface it as a typed warning so the sync moves on.
 		if IsFolderUIDTooLongAPIError(err) {
 			return NewFolderUIDTooLongError(folder.Path, folder.ID, err)

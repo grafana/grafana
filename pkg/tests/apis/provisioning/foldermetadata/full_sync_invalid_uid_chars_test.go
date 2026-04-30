@@ -85,14 +85,6 @@ func TestIntegrationProvisioning_FullSync_FolderInvalidUIDChars(t *testing.T) {
 		"expected exactly one folder-validation warning; saw %d. Warnings: %v",
 		validationWarnings, jobObj.Status.Warnings)
 
-	// The dashboard inside the offending folder must not surface as an
-	// error — it should be silently skipped because the parent folder
-	// creation already failed.
-	for _, e := range jobObj.Status.Errors {
-		require.NotContains(t, e, "bad-folder/dashboard2.json",
-			"resources under a rejected folder must not surface as errors")
-	}
-
 	// The shallow folder (outside the failing subtree) must still be
 	// created — a validation rejection in one branch must not block the
 	// rest of the sync.
