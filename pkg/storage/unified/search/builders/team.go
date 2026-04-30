@@ -14,6 +14,7 @@ const (
 	TEAM_SEARCH_EMAIL        = "email"
 	TEAM_SEARCH_PROVISIONED  = "provisioned"
 	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
+	TEAM_SEARCH_MEMBERS      = "members"
 )
 
 // TeamSortableExtraFields are the additional fields that can be used for sorting team search results.
@@ -37,6 +38,15 @@ var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColum
 		Name:        TEAM_SEARCH_EXTERNAL_UID,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "External UID of the team",
+	},
+	TEAM_SEARCH_MEMBERS: {
+		Name:        TEAM_SEARCH_MEMBERS,
+		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+		IsArray:     true,
+		Description: "UIDs of users that are members of the team",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
+		},
 	},
 }
 
@@ -76,6 +86,13 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 	}
 	if team.Spec.ExternalUID != "" {
 		doc.Fields[TEAM_SEARCH_EXTERNAL_UID] = team.Spec.ExternalUID
+	}
+	if len(team.Spec.Members) > 0 {
+		uids := make([]string, 0, len(team.Spec.Members))
+		for _, m := range team.Spec.Members {
+			uids = append(uids, m.Name)
+		}
+		doc.Fields[TEAM_SEARCH_MEMBERS] = uids
 	}
 
 	return doc, nil

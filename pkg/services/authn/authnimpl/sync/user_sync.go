@@ -9,11 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
-	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -376,7 +377,8 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 	}
 
 	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
-		usr.Teams = nil
+		usr.TeamIDs = nil // nolint:staticcheck
+		usr.TeamUIDs = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
@@ -743,6 +745,8 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
+// id.Groups must not be overridden as part of this function as it is used to store group information from the auth module
+// which is needed for role mapping in the case of SAML or for team sync.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.UID = usr.UserUID
 	id.Name = usr.Name
@@ -752,7 +756,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
 	id.HelpFlags1 = usr.HelpFlags1
-	id.Teams = usr.Teams
+	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.LastSeenAt = usr.LastSeenAt
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin

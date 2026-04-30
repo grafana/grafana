@@ -333,14 +333,19 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		quotaWarningCount := 0
 		for _, w := range jobObj.Status.Warnings {
 			// TODO: Using contains for now, this will be easier once jobs contain top-level warning reasons.
-			if strings.Contains(w, "resource quota exceeded") {
+			// A nested resource whose parent folder failed quota check is recorded with the generic
+			// "parent folder could not be created" wording, so it counts toward the quota cascade as well.
+			if strings.Contains(w, "resource quota exceeded") ||
+				strings.Contains(w, "parent folder could not be created") {
 				quotaWarningCount++
 			}
 		}
 		require.Equal(t, 3, quotaWarningCount,
-			"should have 3 quota warnings: 1 skipped folder + 2 skipped dashboards")
+			"should have 3 quota-related warnings: 1 skipped folder + 1 dashboard skipped by quota + 1 dashboard skipped due to failed parent folder")
 
-		// Step 5: Verify no new dashboards were created (both skipped because the new folder consumed the last quota slot)
+		// Step 5: Verify no new dashboards were created. One new folder consumes the last quota slot,
+		// so its sibling dashboard is skipped due to quota. The other folder fails creation,
+		// so its child dashboard is skipped because the parent folder could not be created.
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if !assert.NoError(collect, err) {
