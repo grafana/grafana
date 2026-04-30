@@ -39,26 +39,15 @@ describe('SQL editor completion utils', () => {
     expect(getQualifiedColumnContext('SELECT value')).toBeUndefined();
   });
 
-  it.each([
-    ['direct table refs', 'SELECT A. FROM A', 'SELECT A.'.length, 'A'],
-    ['AS aliases', 'SELECT a. FROM A AS a', 'SELECT a.'.length, 'A'],
-    ['bare aliases', 'SELECT a. FROM A a', 'SELECT a.'.length, 'A'],
-    ['joined aliases', 'SELECT b. FROM A a JOIN B b ON a.time = b.time', 'SELECT b.'.length, 'B'],
-  ])('resolves columns for %s in qualified column completions', async (_name, sql, pos, table) => {
+  it('resolves columns for direct table refs in qualified column completions', async () => {
     const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
     const result = await getCompletionResult(
-      {
-        tables: () => [
-          { label: 'A', insertText: 'A' },
-          { label: 'B', insertText: 'B' },
-        ],
-        columns,
-      },
-      sql,
-      pos
+      { tables: () => [{ label: 'A', insertText: 'A' }], columns },
+      'SELECT A. FROM A',
+      'SELECT A.'.length
     );
 
-    expect(columns).toHaveBeenCalledWith({ table });
+    expect(columns).toHaveBeenCalledWith({ table: 'A' });
     expect(result).toEqual(
       expect.objectContaining({
         options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
