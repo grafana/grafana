@@ -292,6 +292,18 @@ type ListThreadsQuery struct {
 	Cursor       string       `json:"-"`
 }
 
+// ThreadStatusFilter narrows ListAllThreads to a subset of threads by
+// their close state. Empty (the zero value) returns every thread; the
+// non-empty variants are exhaustive and any other string is rejected
+// at the API boundary so the SQL layer never sees an invalid status.
+type ThreadStatusFilter string
+
+const (
+	ThreadStatusAny    ThreadStatusFilter = ""
+	ThreadStatusOpen   ThreadStatusFilter = "open"
+	ThreadStatusClosed ThreadStatusFilter = "closed"
+)
+
 // ListAllThreadsQuery returns threads across every resource in an org,
 // ordered by most recent activity. Powers the global Pulse overview page
 // in the main nav. The caller's UserID is required when MineOnly is true
@@ -302,12 +314,13 @@ type ListThreadsQuery struct {
 // the overview page is a browsing surface, not a chronological replay
 // stream, and the table allows arbitrary jumps between pages.
 type ListAllThreadsQuery struct {
-	OrgID    int64  `json:"-"`
-	UserID   int64  `json:"-"`
-	Query    string `json:"-"` // optional: matches thread title and pulse body_text
-	MineOnly bool   `json:"-"` // optional: scope to threads the caller participates in
-	Page     int    `json:"-"`
-	Limit    int    `json:"-"`
+	OrgID    int64              `json:"-"`
+	UserID   int64              `json:"-"`
+	Query    string             `json:"-"` // optional: matches thread title and pulse body_text
+	MineOnly bool               `json:"-"` // optional: scope to threads the caller participates in
+	Status   ThreadStatusFilter `json:"-"` // optional: open / closed / any (default)
+	Page     int                `json:"-"`
+	Limit    int                `json:"-"`
 }
 
 // ListPulsesQuery returns pulses inside a thread, oldest first by default

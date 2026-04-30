@@ -14116,8 +14116,10 @@
       "title-panel": "Pulse · panel #{{id}}"
     },
     "overview": {
+      "author-unknown": "Unknown",
       "closed": "Closed",
       "column": {
+        "author": "Author",
         "dashboard": "Dashboard",
         "last-activity": "Last activity",
         "replies": "Replies",
@@ -14140,6 +14142,11 @@
         "mine": "My threads"
       },
       "search-placeholder": "Search by thread content or dashboard title",
+      "status": {
+        "all": "All",
+        "closed": "Closed",
+        "open": "Open"
+      },
       "subtitle": "Browse every Pulse thread across your dashboards. Open a thread to jump straight into the conversation.",
       "untitled": "Untitled thread"
     },

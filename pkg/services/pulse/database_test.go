@@ -263,6 +263,39 @@ func TestIntegrationPulseStore_ListAllThreads(t *testing.T) {
 		require.Equal(t, []string{"aaaaaaaaaaaaaa"}, threadUIDs(page.Items))
 	})
 
+	t.Run("status filter narrows to open or closed threads", func(t *testing.T) {
+		// Close thread B for the duration of this subtest. Reopen at
+		// the end so subsequent subtests still see all three threads
+		// open (preserves previous behaviour).
+		require.NoError(t, st.setThreadClosed(ctx, 1, "bbbbbbbbbbbbbb", true, 1))
+		t.Cleanup(func() {
+			require.NoError(t, st.setThreadClosed(ctx, 1, "bbbbbbbbbbbbbb", false, 1))
+		})
+
+		// Default (any) returns every thread, regardless of state.
+		page, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.Len(t, page.Items, 3)
+
+		// Open hides the closed thread.
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Status: ThreadStatusOpen})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"aaaaaaaaaaaaaa", "cccccccccccccc"}, threadUIDs(page.Items))
+
+		// Closed isolates the thread we just locked.
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Status: ThreadStatusClosed})
+		require.NoError(t, err)
+		require.Equal(t, []string{"bbbbbbbbbbbbbb"}, threadUIDs(page.Items))
+
+		// Composes with mineOnly: user 1 owns A (open) and B (closed),
+		// so "mine + open" should drop B but keep A.
+		page, err = st.listAllThreads(ctx, ListAllThreadsQuery{
+			OrgID: 1, UserID: 1, MineOnly: true, Status: ThreadStatusOpen,
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"aaaaaaaaaaaaaa"}, threadUIDs(page.Items))
+	})
+
 	t.Run("offset pagination splits results across pages", func(t *testing.T) {
 		page1, err := st.listAllThreads(ctx, ListAllThreadsQuery{OrgID: 1, Limit: 2, Page: 1})
 		require.NoError(t, err)

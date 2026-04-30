@@ -2,7 +2,6 @@ package pulse
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -13,23 +12,19 @@ import (
 // these actions. The actions themselves gate Pulse-specific behaviour
 // independently of dashboard write/edit permissions: a viewer can leave
 // a comment without needing to edit the dashboard.
+//
+// These are scopeless org-level gates: per-thread / per-dashboard
+// authorization is enforced by the dashboard guardian and service-layer
+// ownership checks (e.g. authors may always delete their own pulses).
+// Keeping them scopeless avoids registering a "pulse" kind in the
+// permission registry and matches how the API middleware evaluates
+// them via ac.EvalPermission(action).
 const (
 	ActionRead   = "pulse:read"
 	ActionWrite  = "pulse:write"
 	ActionDelete = "pulse:delete"
 	ActionAdmin  = "pulse:admin"
 )
-
-// ScopeAll is the broadest scope a Pulse permission can take. Most checks
-// defer to the parent dashboard's scope; ScopeAll is granted to fixed
-// roles so RBAC can route the action to the right org role.
-const ScopeAll = "pulse:*"
-
-// ParentDashboardScope returns the dashboard scope that must be readable for
-// a caller to interact with a thread attached to that dashboard.
-func ParentDashboardScope(dashboardUID string) string {
-	return dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID)
-}
 
 var (
 	// pulseReaderRole is granted to every org role: anyone who can sign
@@ -41,7 +36,7 @@ var (
 		Description: "Read pulse threads attached to dashboards.",
 		Group:       "Pulse",
 		Permissions: []accesscontrol.Permission{
-			{Action: ActionRead, Scope: ScopeAll},
+			{Action: ActionRead},
 		},
 	}
 
@@ -55,9 +50,9 @@ var (
 		Description: "Read and write pulse threads on dashboards.",
 		Group:       "Pulse",
 		Permissions: []accesscontrol.Permission{
-			{Action: ActionRead, Scope: ScopeAll},
-			{Action: ActionWrite, Scope: ScopeAll},
-			{Action: ActionDelete, Scope: ScopeAll},
+			{Action: ActionRead},
+			{Action: ActionWrite},
+			{Action: ActionDelete},
 		},
 	}
 
@@ -70,10 +65,10 @@ var (
 		Description: "Manage pulse threads — close, reopen, and delete on behalf of others.",
 		Group:       "Pulse",
 		Permissions: []accesscontrol.Permission{
-			{Action: ActionRead, Scope: ScopeAll},
-			{Action: ActionWrite, Scope: ScopeAll},
-			{Action: ActionDelete, Scope: ScopeAll},
-			{Action: ActionAdmin, Scope: ScopeAll},
+			{Action: ActionRead},
+			{Action: ActionWrite},
+			{Action: ActionDelete},
+			{Action: ActionAdmin},
 		},
 	}
 )

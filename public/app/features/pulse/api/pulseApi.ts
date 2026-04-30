@@ -29,9 +29,17 @@ interface ListPulsesArgs {
   limit?: number;
 }
 
+/**
+ * Open / closed are the only valid wire values for the status filter;
+ * a missing field is the "any" default. Mirrors the backend's
+ * ThreadStatusFilter so a typo in the union catches at compile time.
+ */
+export type ThreadStatusFilter = 'open' | 'closed';
+
 interface ListAllThreadsArgs {
   q?: string;
   mine?: boolean;
+  status?: ThreadStatusFilter;
   page?: number;
   limit?: number;
 }
@@ -80,13 +88,18 @@ export const pulseApi = createApi({
     }),
 
     listAllThreads: builder.query<PageResult<PulseThread>, ListAllThreadsArgs>({
-      query: ({ q, mine, page, limit }) => {
+      query: ({ q, mine, status, page, limit }) => {
         const params: Record<string, string> = {};
         if (q) {
           params.q = q;
         }
         if (mine) {
           params.mine = 'true';
+        }
+        if (status) {
+          // Only "open" and "closed" reach the wire; "all" is encoded
+          // by omitting the parameter entirely so the URL stays clean.
+          params.status = status;
         }
         if (page !== undefined) {
           params.page = String(page);

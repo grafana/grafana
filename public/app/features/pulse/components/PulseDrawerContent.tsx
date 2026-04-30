@@ -376,14 +376,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // running prose so it reads as state rather than as more metadata.
   // The lock icon reinforces the affordance and matches the lock /
   // unlock IconButtons used inside the thread view.
+  //
+  // Uses an outlined neutral palette (border + secondary text) instead
+  // of the warning palette so the pill never collides visually with
+  // `#panel` mention chips, which themselves render in warning colour
+  // inside the preview.
   closedTag: css({
     display: 'inline-flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
     padding: theme.spacing(0.25, 0.75),
     borderRadius: theme.shape.radius.pill,
-    background: theme.colors.warning.transparent,
-    color: theme.colors.warning.text,
+    background: 'transparent',
+    color: theme.colors.text.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
     textTransform: 'uppercase',

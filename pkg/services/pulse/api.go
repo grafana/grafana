@@ -222,7 +222,9 @@ func (s *PulseService) populateThreadPreviews(ctx context.Context, orgID int64, 
 // Optional query parameters:
 //   - q: text search across thread titles and pulse body text (case-insensitive)
 //   - mine: when "true", restrict to threads the caller authored or is subscribed to
-//   - limit, cursor: cursor-paginated like /pulse/threads
+//   - status: "open" or "closed" to filter by close state; absent / any other
+//     value returns every thread regardless of state
+//   - page, limit: 1-indexed offset pagination (defaults: page=1, limit=25, max=100)
 //
 // Each item is decorated with `resourceTitle` (e.g. dashboard title), the
 // thread starter's display fields, and the first pulse's body for preview.
@@ -239,6 +241,7 @@ func (s *PulseService) listAllThreadsHandler(c *contextmodel.ReqContext) respons
 		UserID:   s.actorUserID(c),
 		Query:    strings.TrimSpace(c.Query("q")),
 		MineOnly: c.QueryBool("mine"),
+		Status:   parseStatusFilter(c.Query("status")),
 		Page:     int(c.QueryInt64("page")),
 		Limit:    int(c.QueryInt64("limit")),
 	}
@@ -249,6 +252,21 @@ func (s *PulseService) listAllThreadsHandler(c *contextmodel.ReqContext) respons
 	s.populateThreadPreviews(c.Req.Context(), c.GetOrgID(), res.Items)
 	s.populateResourceTitles(c.Req.Context(), c.GetOrgID(), res.Items)
 	return response.JSON(http.StatusOK, res)
+}
+
+// parseStatusFilter coerces the raw ?status= query value into a typed
+// filter. Anything outside the {open,closed} allowlist becomes the
+// "any" zero value so a typo never silently filters the listing — the
+// user just sees every thread, which is a safe default.
+func parseStatusFilter(raw string) ThreadStatusFilter {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case string(ThreadStatusOpen):
+		return ThreadStatusOpen
+	case string(ThreadStatusClosed):
+		return ThreadStatusClosed
+	default:
+		return ThreadStatusAny
+	}
 }
 
 // populateResourceTitles backfills Thread.ResourceTitle for the global

@@ -10,6 +10,7 @@ import {
   Box,
   EmptyState,
   FilterInput,
+  Icon,
   type Column,
   InteractiveTable,
   LoadingPlaceholder,
@@ -22,7 +23,7 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useListAllThreadsQuery } from './api/pulseApi';
+import { useListAllThreadsQuery, type ThreadStatusFilter } from './api/pulseApi';
 import { PulseRenderer } from './components/PulseRenderer';
 import { type PulseThread } from './types';
 import { bodyToText } from './utils/body';
@@ -34,6 +35,13 @@ import { bodyToText } from './utils/body';
 const PAGE_SIZE = 25;
 
 type Scope = 'all' | 'mine';
+
+/**
+ * StatusOption mirrors the backend's ThreadStatusFilter plus an explicit
+ * "all" sentinel for the UI. The radio group sends "all" → undefined
+ * over the wire so the API treats it as the default no-op filter.
+ */
+type StatusOption = 'all' | ThreadStatusFilter;
 
 /**
  * PulsePage is the org-wide overview of every Pulse thread the user can
@@ -53,6 +61,7 @@ export default function PulsePage() {
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [scope, setScope] = useState<Scope>('all');
+  const [status, setStatus] = useState<StatusOption>('all');
   const [page, setPage] = useState(1);
 
   // Debounce search to avoid hammering the API on every keystroke. The
@@ -70,12 +79,18 @@ export default function PulsePage() {
   const { data, isLoading, isFetching, error } = useListAllThreadsQuery({
     q: searchQuery || undefined,
     mine: scope === 'mine',
+    // "all" is encoded as an absent param so the request URL doesn't
+    // grow noise on the default view.
+    status: status === 'all' ? undefined : status,
     page,
     limit: PAGE_SIZE,
   });
 
   const threads = data?.items ?? [];
   const totalPages = data?.totalCount ? Math.max(1, Math.ceil(data.totalCount / PAGE_SIZE)) : 1;
+  // Any filter that's not at its default counts as "active" — drives
+  // the empty-state copy from "no threads yet" to "no matches".
+  const hasActiveFilters = scope === 'mine' || status !== 'all' || searchQuery !== '';
 
   const columns = useMemo<Array<Column<PulseThread>>>(
     () => [
@@ -88,6 +103,12 @@ export default function PulsePage() {
         id: 'dashboard',
         header: t('pulse.overview.column.dashboard', 'Dashboard'),
         cell: ({ row: { original } }) => <DashboardCell thread={original} />,
+      },
+      {
+        id: 'author',
+        header: t('pulse.overview.column.author', 'Author'),
+        cell: ({ row: { original } }) => <AuthorCell thread={original} />,
+        disableGrow: true,
       },
       {
         id: 'replies',
@@ -131,6 +152,18 @@ export default function PulsePage() {
                 onChange={setSearchInput}
               />
             </div>
+            <RadioButtonGroup<StatusOption>
+              value={status}
+              options={[
+                { label: t('pulse.overview.status.all', 'All'), value: 'all' },
+                { label: t('pulse.overview.status.open', 'Open'), value: 'open' },
+                { label: t('pulse.overview.status.closed', 'Closed'), value: 'closed' },
+              ]}
+              onChange={(value) => {
+                setStatus(value);
+                setPage(1);
+              }}
+            />
             <RadioButtonGroup<Scope>
               value={scope}
               options={[
@@ -167,13 +200,13 @@ export default function PulsePage() {
             <EmptyState
               variant="not-found"
               message={
-                scope === 'mine' || searchQuery
+                hasActiveFilters
                   ? t('pulse.overview.empty.filtered', 'No matching threads')
                   : t('pulse.overview.empty.all', 'No threads yet')
               }
             >
               <Text color="secondary">
-                {scope === 'mine' || searchQuery ? (
+                {hasActiveFilters ? (
                   <Trans i18nKey="pulse.overview.empty.filtered-hint">
                     Try clearing the search or switching back to all threads.
                   </Trans>
@@ -221,24 +254,22 @@ function ThreadCell({ thread }: { thread: PulseThread }): React.ReactElement {
   // back to the thread title or a graceful placeholder.
   const previewText = thread.previewBody ? bodyToText(thread.previewBody) : (thread.title ?? '');
   return (
-    <Stack direction="row" alignItems="flex-start" gap={1}>
-      {thread.authorAvatarUrl && <Avatar src={thread.authorAvatarUrl} alt="" width={3} height={3} />}
-      <Stack direction="column" gap={0.5}>
-        <TextLink href={href} weight="medium" inline={false} color="primary">
-          {thread.title ||
-            (previewText.length > 0 ? truncate(previewText, 80) : t('pulse.overview.untitled', 'Untitled thread'))}
-        </TextLink>
-        {thread.previewBody ? (
-          <div className={styles.preview}>
-            <PulseRenderer body={thread.previewBody} />
-          </div>
-        ) : null}
-        {thread.closed && (
-          <Text variant="bodySmall" color="warning" italic>
-            <Trans i18nKey="pulse.overview.closed">Closed</Trans>
-          </Text>
-        )}
-      </Stack>
+    <Stack direction="column" gap={0.5}>
+      <TextLink href={href} weight="medium" inline={false} color="primary">
+        {thread.title ||
+          (previewText.length > 0 ? truncate(previewText, 80) : t('pulse.overview.untitled', 'Untitled thread'))}
+      </TextLink>
+      {thread.previewBody ? (
+        <div className={styles.preview}>
+          <PulseRenderer body={thread.previewBody} />
+        </div>
+      ) : null}
+      {thread.closed && (
+        <span className={styles.closedTag}>
+          <Icon name="lock" size="xs" />
+          <Trans i18nKey="pulse.overview.closed">Closed</Trans>
+        </span>
+      )}
     </Stack>
   );
 }
@@ -250,6 +281,22 @@ function DashboardCell({ thread }: { thread: PulseThread }): React.ReactElement 
     <TextLink href={href} inline={false}>
       {label}
     </TextLink>
+  );
+}
+
+function AuthorCell({ thread }: { thread: PulseThread }): React.ReactElement {
+  // Server-resolved name has the most context; login is a sensible
+  // fallback (it's always populated for real users), and we end with a
+  // neutral placeholder so a row never renders empty if the lookup
+  // fails (e.g. a deleted user).
+  const name = thread.authorName?.trim() || thread.authorLogin?.trim() || t('pulse.overview.author-unknown', 'Unknown');
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      {thread.authorAvatarUrl ? (
+        <Avatar src={thread.authorAvatarUrl} alt="" width={2.5} height={2.5} />
+      ) : null}
+      <Text variant="bodySmall">{name}</Text>
+    </Stack>
   );
 }
 
@@ -301,6 +348,27 @@ function getStyles(theme: GrafanaTheme2) {
     refreshing: css({
       textAlign: 'center',
       paddingTop: theme.spacing(1),
+    }),
+    // Closed-thread pill — outlined neutral palette so it reads as
+    // "state" and never collides visually with `#panel` or `@user`
+    // mention chips inside the rendered preview, which use the warning
+    // and primary palettes respectively. Mirrors the closed pill in
+    // PulseDrawerContent so the affordance looks the same in both
+    // surfaces.
+    closedTag: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.pill,
+      background: 'transparent',
+      color: theme.colors.text.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      alignSelf: 'flex-start',
     }),
   };
 }

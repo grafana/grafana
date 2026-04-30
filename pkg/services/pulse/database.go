@@ -260,6 +260,16 @@ func (s *store) listAllThreads(ctx context.Context, q ListAllThreadsQuery) (Page
 					q.UserID, q.OrgID, q.UserID, q.OrgID, q.UserID,
 				)
 			}
+			// Status filter: closed is a plain bool column, so the
+			// comparison is direct. We accept the zero value as
+			// "any" (no condition added) so an absent query string
+			// never accidentally clamps the result set.
+			switch q.Status {
+			case ThreadStatusOpen:
+				sb = sb.And("closed = ?", false)
+			case ThreadStatusClosed:
+				sb = sb.And("closed = ?", true)
+			}
 			return sb
 		}
 
