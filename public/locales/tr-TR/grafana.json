@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML düzenle",
         "save": "Kaydet"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "ad",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Tüm kuralları sil"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Sil",
       "delete-modal-delete-button": "Sil",
@@ -1573,8 +1575,14 @@
         "update-error": "Kural grubu güncellenemedi ",
         "update-success": "Kural grubu başarıyla güncellendi"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Seçilen grup düzenlenemez",
       "group-not-editable-description": "Bu grup, düzenlemeyi desteklemeyen bir veri kaynağına aittir.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Kural grubunu düzenle",
       "rule-group-error": "Kural grubu yüklenirken hata oluştu"
     },
@@ -13826,7 +13834,8 @@
       "make-sure": "Bu izinlere sahip bir belirteç oluşturun"
     },
     "validation": {
-      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin."
+      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Uyarı",
     "watch-stream": {
