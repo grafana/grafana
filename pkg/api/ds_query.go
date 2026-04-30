@@ -25,6 +25,9 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
+	if errors.Is(err, datasources.ErrAssistantAccessDenied) {
+		return response.Error(http.StatusForbidden, "Assistant access denied to data source", err)
+	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
@@ -70,6 +73,22 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	reqDTO := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	// Check if request is from Assistant and if assistant access is denied
+	fromAssistant := c.Req.Header.Get("X-Grafana-From-Assistant") == "true"
+	if fromAssistant && hs.DatasourcePermissionsService != nil {
+		for _, uid := range reqDTO.GetUniqueDatasourceUIDs() {
+			hasDeny, err := hs.DatasourcePermissionsService.HasAssistantDeny(c.Req.Context(), c.SignedInUser, uid)
+			if err != nil {
+				hs.log.Warn("Failed to check assistant deny permission", "uid", uid, "error", err)
+				continue
+			}
+			if hasDeny {
+				hs.log.Info("Assistant access denied to datasource", "uid", uid, "user", c.SignedInUser.GetLogin())
+				return hs.handleQueryMetricsError(datasources.ErrAssistantAccessDenied)
+			}
+		}
 	}
 
 	handleTimeInQuery := c.Req.Header.Get("X-Query-V2") == "true"

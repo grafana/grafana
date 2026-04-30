@@ -191,9 +191,10 @@ type HTTPServer struct {
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
 	Csrf                         csrf.Service
-	folderPermissionsService     accesscontrol.FolderPermissionsService
-	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
-	dashboardVersionService      dashver.Service
+	folderPermissionsService        accesscontrol.FolderPermissionsService
+	dashboardPermissionsService     accesscontrol.DashboardPermissionsService
+	DatasourcePermissionsService    accesscontrol.DatasourcePermissionsService
+	dashboardVersionService         dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	apiKeyService                apikey.Service
@@ -265,7 +266,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
+	dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsService secrets.Service,
@@ -349,9 +352,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
 		Csrf:                         csrfService,
-		folderPermissionsService:     folderPermissionsService,
-		dashboardPermissionsService:  dashboardPermissionsService,
-		dashboardVersionService:      dashboardVersionService,
+		folderPermissionsService:        folderPermissionsService,
+		dashboardPermissionsService:     dashboardPermissionsService,
+		DatasourcePermissionsService:    datasourcePermissionsService,
+		dashboardVersionService:         dashboardVersionService,
 		starService:                  starService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,

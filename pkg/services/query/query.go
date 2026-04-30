@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -32,15 +33,16 @@ import (
 )
 
 const (
-	HeaderPluginID       = "X-Plugin-Id"       // can be used for routing
-	HeaderDatasourceUID  = "X-Datasource-Uid"  // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"   // mainly useful for debugging slow queries
-	HeaderPanelID        = "X-Panel-Id"        // mainly useful for debugging slow queries
-	HeaderDashboardTitle = "X-Dashboard-Title" // used for identifying the dashboard with heavy query load
-	HeaderPanelTitle     = "X-Panel-Title"     // used for identifying the panel with heavy query load
-	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
-	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
-	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
+	HeaderPluginID        = "X-Plugin-Id"            // can be used for routing
+	HeaderDatasourceUID   = "X-Datasource-Uid"       // can be used for routing/ load balancing
+	HeaderDashboardUID    = "X-Dashboard-Uid"        // mainly useful for debugging slow queries
+	HeaderPanelID         = "X-Panel-Id"             // mainly useful for debugging slow queries
+	HeaderDashboardTitle  = "X-Dashboard-Title"      // used for identifying the dashboard with heavy query load
+	HeaderPanelTitle      = "X-Panel-Title"          // used for identifying the panel with heavy query load
+	HeaderPanelPluginId   = "X-Panel-Plugin-Id"
+	HeaderQueryGroupID    = "X-Query-Group-Id"       // mainly useful for finding related queries with query chunking
+	HeaderFromExpression  = "X-Grafana-From-Expr"    // used by datasources to identify expression queries
+	HeaderFromAssistant   = "X-Grafana-From-Assistant" // used to identify requests from Grafana Assistant
 )
 
 func ProvideService(
@@ -51,6 +53,7 @@ func ProvideService(
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
 	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder,
+	ac accesscontrol.AccessControl,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -62,6 +65,7 @@ func ProvideService(
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
+		ac:                         ac,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -91,6 +95,7 @@ type ServiceImpl struct {
 	log                        log.Logger
 	concurrentQueryLimit       int
 	qsDatasourceClientBuilder  dsquerierclient.QSDatasourceClientBuilder
+	ac                         accesscontrol.AccessControl
 	headers                    map[string]string
 }
 
@@ -103,11 +108,47 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocaltimeRange bool) (*backend.QueryDataResponse, error) {
 	fromAlert := false
+	fromAssistant := false
+
+	// Check headers from service field (set for alerts, etc.)
 	for header, val := range s.headers {
 		if header == models.FromAlertHeaderName && val == "true" {
 			fromAlert = true
 		}
+		if header == HeaderFromAssistant && val == "true" {
+			fromAssistant = true
+		}
 	}
+
+	// Also check headers from HTTP request context
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil {
+		headerVal := reqCtx.Req.Header.Get(HeaderFromAssistant)
+		s.log.Debug("Checking assistant header from request context", "header", HeaderFromAssistant, "value", headerVal)
+		if headerVal == "true" {
+			fromAssistant = true
+		}
+	} else {
+		s.log.Debug("No request context available for header check")
+	}
+
+	s.log.Debug("Assistant access check", "fromAssistant", fromAssistant, "hasAC", s.ac != nil)
+
+	// If request is from Assistant, check if any datasource has assistant access denied
+	if fromAssistant && s.ac != nil {
+		for _, uid := range reqDTO.GetUniqueDatasourceUIDs() {
+			scope := datasources.ScopePrefix + uid
+			hasDeny, err := s.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(datasources.ActionAssistantDeny, scope))
+			if err != nil {
+				s.log.Warn("Failed to evaluate assistant deny permission", "uid", uid, "error", err)
+				continue
+			}
+			if hasDeny {
+				s.log.Info("Assistant access denied to datasource", "uid", uid, "user", user.GetLogin())
+				return nil, datasources.ErrAssistantAccessDenied
+			}
+		}
+	}
+
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, supportLocaltimeRange)
 	if err != nil {

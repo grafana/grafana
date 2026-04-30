@@ -136,6 +136,8 @@ type DashboardPermissionsService interface {
 
 type DatasourcePermissionsService interface {
 	PermissionsService
+	// HasAssistantDeny checks if the assistant deny permission is set for a datasource
+	HasAssistantDeny(ctx context.Context, user identity.Requester, datasourceUID string) (bool, error)
 }
 
 type ServiceAccountPermissionsService interface {

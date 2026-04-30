@@ -212,6 +212,23 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 	return resourcePermissions, nil
 }
 
+// GetPermissionsWithActions queries permissions for a resource with specific actions.
+// Unlike GetPermissions, this allows querying for actions outside the service's configured action set.
+func (s *Service) GetPermissionsWithActions(ctx context.Context, user identity.Requester, resourceID string, actions []string) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionsWithActions")
+	defer span.End()
+
+	return s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
+		User:                 user,
+		Actions:              actions,
+		Resource:             s.scopeResource(),
+		ResourceID:           resourceID,
+		ResourceAttribute:    s.options.ResourceAttribute,
+		OnlyManaged:          true,
+		EnforceAccessControl: false,
+	})
+}
+
 func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserPermission")
 	defer span.End()
@@ -312,6 +329,23 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
 	}, s.options.OnSetBuiltInRole)
+}
+
+// SetBuiltInRolePermissionRaw sets permission for managed builtin role on a resource using raw actions.
+// Unlike SetBuiltInRolePermission, this method takes actions directly instead of a permission name.
+func (s *Service) SetBuiltInRolePermissionRaw(ctx context.Context, orgID int64, builtInRole string, cmd SetResourcePermissionCommand) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInRolePermissionRaw")
+	defer span.End()
+
+	if err := s.validateBuiltinRole(ctx, builtInRole); err != nil {
+		return nil, err
+	}
+
+	if err := s.validateResource(ctx, orgID, cmd.ResourceID); err != nil {
+		return nil, err
+	}
+
+	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, cmd, s.options.OnSetBuiltInRole)
 }
 
 func (s *Service) SetPermissions(
