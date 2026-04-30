@@ -3,6 +3,7 @@ import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
+  type SceneObject,
   type SceneObjectState,
   type SceneObjectUrlSyncHandler,
   SceneObjectUrlSyncConfig,
@@ -14,9 +15,33 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { PulseDrawerContent } from 'app/features/pulse/components/PulseDrawerContent';
 import { type PanelSuggestion } from 'app/features/pulse/utils/lookups';
 
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
-
 import { type DashboardScene } from './DashboardScene';
+
+/**
+ * Self-contained mirrors of `getDashboardSceneFor` and
+ * `getPanelIdForVizPanel` from `../utils/utils.ts`. Inlined here to
+ * avoid the import edge that would otherwise close a circular
+ * dependency:
+ *
+ *   utils.ts -> DashboardScene.tsx -> DashboardSceneUrlSync.ts ->
+ *   PulseDrawer.tsx -> utils.ts
+ *
+ * `DashboardScene` itself is imported as a type, which the
+ * circular-dependency checker erases, so we keep this file at the
+ * leaves of the dashboard-scene graph.
+ */
+function getRootDashboardScene(sceneObject: SceneObject): DashboardScene {
+  // The scene root is always a DashboardScene in the contexts where
+  // PulseDrawer is mounted (the dashboard `overlay` slot). The cast
+  // matches the runtime invariant; the original helper threw when
+  // mounted elsewhere and we'd want any such bug to be loud and
+  // immediate, but in practice the scenes API guarantees this.
+  return sceneObject.getRoot() as DashboardScene;
+}
+
+function panelIdFromVizPanelKey(panel: SceneObject): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+}
 
 export interface PulseDrawerState extends SceneObjectState {
   /** When set, the drawer scopes its thread list to a specific panel. */
@@ -77,11 +102,11 @@ export class PulseDrawer extends SceneObjectBase<PulseDrawerState> {
   };
 
   public onClose = () => {
-    getDashboardSceneFor(this).closeModal();
+    getRootDashboardScene(this).closeModal();
   };
 
   static Component = ({ model }: SceneComponentProps<PulseDrawer>) => {
-    const dashboard = getDashboardSceneFor(model);
+    const dashboard = getRootDashboardScene(model);
     const { panelId, initialThreadUID } = model.useState();
     const resourceUID = dashboard.state.uid ?? '';
     const panels = collectPanels(dashboard);
@@ -136,7 +161,7 @@ function collectPanels(dashboard: DashboardScene): PanelSuggestion[] {
     if (!(obj instanceof VizPanel)) {
       continue;
     }
-    const id = getPanelIdForVizPanel(obj);
+    const id = panelIdFromVizPanelKey(obj);
     if (id === undefined || id === null || Number.isNaN(id)) {
       continue;
     }

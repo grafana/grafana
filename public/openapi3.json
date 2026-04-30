@@ -9606,7 +9606,7 @@
         "type": "object"
       },
       "PulsePulsePage": {
-        "description": "See PulseThreadPage for why generics don't work in swagger annotations.",
+        "description": "See PulseThreadPage for why generics don't work in swagger",
         "properties": {
           "hasMore": {
             "type": "boolean"

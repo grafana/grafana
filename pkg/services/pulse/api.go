@@ -845,7 +845,9 @@ type PulseCreateThreadResponse struct {
 // response type. The JSON wire format is identical to PageResult[T]
 // because the field tags line up one-for-one.
 //
-// swagger:model
+// No swagger:model directive: the type is only reachable through the
+// alpha-tagged Pulse responses, so leaving the type unannotated keeps
+// it out of the public spec until Pulse leaves experimental.
 type PulseThreadPage struct {
 	Items      []Thread `json:"items"`
 	NextCursor string   `json:"nextCursor,omitempty"`
@@ -867,9 +869,8 @@ type PulseGetThreadResponse struct {
 }
 
 // PulsePulsePage is the swagger-friendly mirror of PageResult[Pulse].
-// See PulseThreadPage for why generics don't work in swagger annotations.
-//
-// swagger:model
+// See PulseThreadPage for why generics don't work in swagger
+// annotations and why we deliberately omit swagger:model here.
 type PulsePulsePage struct {
 	Items      []Pulse `json:"items"`
 	NextCursor string  `json:"nextCursor,omitempty"`

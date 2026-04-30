@@ -19752,7 +19752,7 @@
       }
     },
     "PulsePulsePage": {
-      "description": "See PulseThreadPage for why generics don't work in swagger annotations.",
+      "description": "See PulseThreadPage for why generics don't work in swagger",
       "type": "object",
       "title": "PulsePulsePage is the swagger-friendly mirror of PageResult[Pulse].",
       "properties": {
