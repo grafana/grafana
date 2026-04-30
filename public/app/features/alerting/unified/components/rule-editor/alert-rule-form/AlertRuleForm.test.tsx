@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -40,14 +40,20 @@ setupDataSources(dataSources.default);
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
-const fillNewGrafanaRule = async (user: ReturnType<typeof renderRuleEditor>['user']) => {
+type EvaluationMode = 'new' | 'legacy';
+
+const fillRuleBasics = async (user: ReturnType<typeof renderRuleEditor>['user']) => {
   await user.type(await ui.inputs.name.find(), 'my new rule');
   await user.click(await screen.findByRole('button', { name: /select folder/i }));
   await user.click(await screen.findByLabelText('Folder A'));
+  await user.type(ui.inputs.annotationValue(1).get(), 'some description');
+};
+
+const selectLegacyGroup = async (user: ReturnType<typeof renderRuleEditor>['user']) => {
+  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
   const groupInput = await ui.inputs.group.find();
   await user.click(await byRole('combobox').find(groupInput));
   await clickSelectOption(groupInput, grafanaRulerGroup.name);
-  await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 };
 
 describe('AlertRuleForm submit failure handling', () => {
@@ -72,23 +78,40 @@ describe('AlertRuleForm submit failure handling', () => {
     mockPreviewApiResponse(server, []);
   });
 
-  it('surfaces a form-level error notification when creating a rule fails and does not redirect', async () => {
-    setUpdateGrafanaRulerRuleNamespaceResolver(async () =>
-      HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
-    );
-    const replaceSpy = jest.spyOn(locationService, 'replace');
+  it.each<{ mode: EvaluationMode; label: string }>([
+    { mode: 'new', label: 'no group (new evaluation mode)' },
+    { mode: 'legacy', label: 'with selected group (legacy evaluation mode)' },
+  ])(
+    'surfaces a form-level error notification when creating a rule fails and does not redirect — $label',
+    async ({ mode }) => {
+      if (mode === 'legacy') {
+        setUpdateGrafanaRulerRuleNamespaceResolver(async () =>
+          HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
+        );
+      } else {
+        server.use(
+          http.post('/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules', () =>
+            HttpResponse.json({ message: 'boom from the api' }, { status: 500 })
+          )
+        );
+      }
+      const replaceSpy = jest.spyOn(locationService, 'replace');
 
-    const { user } = renderRuleEditor();
+      const { user } = renderRuleEditor();
 
-    await fillNewGrafanaRule(user);
-    await user.click(ui.buttons.save.get());
+      await fillRuleBasics(user);
+      if (mode === 'legacy') {
+        await selectLegacyGroup(user);
+      }
+      await user.click(ui.buttons.save.get());
 
-    expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Rule added successfully/i)).not.toBeInTheDocument();
+      expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Rule added successfully/i)).not.toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(ui.buttons.save.get()).toBeEnabled();
-    });
-    expect(replaceSpy).not.toHaveBeenCalled();
-  });
+      await waitFor(() => {
+        expect(ui.buttons.save.get()).toBeEnabled();
+      });
+      expect(replaceSpy).not.toHaveBeenCalled();
+    }
+  );
 });
