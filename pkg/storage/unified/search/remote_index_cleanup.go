@@ -290,11 +290,12 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 			return ctx.Err()
 		}
 		if err := store.DeleteIndex(ctx, res, key); err != nil {
-			logger.Warn("deleting snapshot", "resource", res, "snapshot", key.String(), "err", err)
+			logger.Warn("deleting index snapshot", "resource", res, "snapshot", key.String(), "err", err)
 			b.recordSnapshotDeleted(snapshotDeleteOutcomeError)
 			deleteFailures++
 			continue
 		}
+		logger.Info("deleted index snapshot", "resource", res, "snapshot", key.String(), "uploaded", metas[key].UploadTimestamp, "age", time.Since(metas[key].UploadTimestamp))
 		b.recordSnapshotDeleted(snapshotDeleteOutcomeSuccess)
 	}
 
