@@ -205,7 +205,12 @@ describe('PanelDataTransformationsTab', () => {
       const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
       await userEvent.click(confirmButton);
 
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      // CUJ tracking emits a silent grafana_panel_edit_next_interaction alongside
+      // the analytics event - filter to assert only the analytics call.
+      const analyticsCalls = jest
+        .mocked(reportInteraction)
+        .mock.calls.filter((c) => c[0] === 'grafana_panel_transformations_clicked');
+      expect(analyticsCalls).toHaveLength(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
         context: 'transformations_list',
         type: 'calculateField',

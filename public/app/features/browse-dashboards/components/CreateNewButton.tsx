@@ -154,7 +154,12 @@ export default function CreateNewButton({
         <>
           {canCreateDashboard && <Menu.Divider />}
           <Menu.Item
-            onClick={() => setShowNewFolderDrawer(true)}
+            onClick={() => {
+              reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {
+                from: location.pathname,
+              });
+              setShowNewFolderDrawer(true);
+            }}
             label={getNewFolderPhrase()}
             icon={ITEM_ICONS['folder']}
             // folder action use default grey, so no need to set icon color

@@ -1,0 +1,181 @@
+import { BehaviorSubject } from 'rxjs';
+
+import type { JourneyHandle, JourneyTracker } from '@grafana/runtime';
+
+import type { JourneyRegistryImpl } from '../services/JourneyRegistryImpl';
+
+import {
+  interactionCallbacks,
+  simulateInteraction,
+  createMockHandle,
+  createMockTracker,
+  setupJourneyTest,
+} from './__test-utils__/journeyTestHarness';
+
+const locationSubject = new BehaviorSubject<{ pathname: string }>({ pathname: '/d/abc' });
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    onInteraction: (name: string, callback: (properties: Record<string, unknown>) => void) => {
+      let set = interactionCallbacks.get(name);
+      if (!set) {
+        set = new Set();
+        interactionCallbacks.set(name, set);
+      }
+      set.add(callback);
+      return () => {
+        set!.delete(callback);
+        if (set!.size === 0) {
+          interactionCallbacks.delete(name);
+        }
+      };
+    },
+    locationService: {
+      getLocationObservable: () => locationSubject.asObservable(),
+    },
+  };
+});
+
+function setLocation(pathname: string) {
+  Object.defineProperty(window, 'location', { value: { pathname }, writable: true });
+  locationSubject.next({ pathname });
+}
+
+describe('dashboardEdit journey wiring', () => {
+  let mockTracker: jest.Mocked<JourneyTracker>;
+  let mockHandle: jest.Mocked<JourneyHandle>;
+  let registry: JourneyRegistryImpl;
+
+  beforeEach(() => {
+    mockHandle = createMockHandle('dashboard_edit');
+    mockTracker = createMockTracker();
+    mockTracker.startJourney.mockReturnValue(mockHandle);
+    registry = setupJourneyTest(mockTracker);
+  });
+
+  afterEach(() => {
+    registry.destroy();
+  });
+
+  function loadWiring() {
+    jest.isolateModules(() => {
+      require('./dashboardEdit');
+    });
+  }
+
+  it('should start journey when edit button is clicked', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', {
+      dashboardUid: 'abc123',
+      outlineExpanded: false,
+    });
+
+    expect(mockTracker.startJourney).toHaveBeenCalledTimes(1);
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'dashboard_edit',
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          dashboardUID: 'abc123',
+        }),
+      })
+    );
+  });
+
+  it('should end journey with success when dashboard is saved', () => {
+    loadWiring();
+
+    // Start journey
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+
+    // Save dashboard
+    simulateInteraction('grafana_dashboard_saved', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('success');
+  });
+
+  it('should end journey with success when new dashboard is created', () => {
+    loadWiring();
+
+    // Start journey
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: '' });
+
+    // Create dashboard
+    simulateInteraction('grafana_dashboard_created', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('success');
+  });
+
+  it('should end journey with discarded when edit is discarded', () => {
+    loadWiring();
+
+    // Start journey
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+
+    // Discard edit
+    simulateInteraction('dashboards_edit_discarded', {});
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded');
+  });
+
+  // The wiring no longer guards end() with isActive - it trusts the idempotent
+  // end() contract. On the real handle a second end() is a no-op; Faro sees only
+  // one journey_complete measurement per journey. This test now just verifies
+  // the happy path: one save -> one end('success').
+  it('should end exactly once on save', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+    simulateInteraction('grafana_dashboard_saved', {});
+
+    expect(mockHandle.end).toHaveBeenCalledTimes(1);
+    expect(mockHandle.end).toHaveBeenCalledWith('success');
+  });
+
+  it('should ignore unrelated interactions', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
+    simulateInteraction('command_palette_opened', {});
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('should start journey on dashboards_new_dashboard_init (auto edit mode for /dashboard/new)', () => {
+    loadWiring();
+
+    simulateInteraction('dashboards_new_dashboard_init', {});
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'dashboard_edit',
+      expect.objectContaining({
+        attributes: expect.objectContaining({ source: 'new_dashboard', dashboardUID: '' }),
+      })
+    );
+  });
+
+  it('should end as abandoned when navigating to a different pathname mid-edit', () => {
+    setLocation('/d/abc/my-dash');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc' });
+    locationSubject.next({ pathname: '/explore' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/explore' });
+  });
+
+  it('should not abandon when /dashboard/new transitions to /d/<uid> after a save', () => {
+    setLocation('/dashboard/new');
+    Object.defineProperty(mockHandle, 'isActive', { value: true, writable: true });
+    loadWiring();
+
+    simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: '' });
+    locationSubject.next({ pathname: '/d/new-uid/new-slug' });
+
+    expect(mockHandle.end).not.toHaveBeenCalledWith('abandoned', expect.anything());
+  });
+});

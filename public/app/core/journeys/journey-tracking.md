@@ -206,15 +206,18 @@ User searches for a resource via command palette and navigates to it.
 
 User navigates the browse dashboards page, drills into folders, and opens a resource.
 
-| Event         | Trigger                                                       | Action                                      |
-| ------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| Start         | `grafana_browse_dashboards_page_view` (first)                 | Journey starts                              |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (folder)     | `navigate_folder` step starts               |
-| Step end      | `grafana_browse_dashboards_page_view` (subsequent)            | `navigate_folder` step ends (folder loaded) |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (non-folder) | `select_resource` step starts               |
-| End (success) | `dashboards_init_dashboard_completed`                         | `select_resource` step ends, journey ends   |
+| Event           | Trigger                                                              | Action                                                                       |
+| --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Start           | `grafana_browse_dashboards_page_view` (first)                        | Journey starts                                                               |
+| Step            | `grafana_browse_dashboards_page_click_list_item` (folder)            | `navigate_folder` step starts                                                |
+| Step end        | `grafana_browse_dashboards_page_view` (subsequent)                   | `navigate_folder` step ends (folder loaded)                                  |
+| Step            | `grafana_browse_dashboards_page_click_list_item` (non-folder)        | `select_resource` step starts                                                |
+| Step            | `grafana_browse_dashboards_new_folder_drawer_opened`                 | `create_folder` step starts (user opens the new-folder drawer)               |
+| Step end        | `grafana_manage_dashboards_folder_created`                           | `create_folder` step ends (`outcome: success`, `isSubfolder`, `folderDepth`) |
+| End (success)   | `dashboards_init_dashboard_completed`                                | `select_resource` step ends, journey ends                                    |
+| End (abandoned) | SPA route change to a path outside `/dashboards`/`/dashboard/`/`/d/` | Journey ends with `abandoned` and `abandonedAt: <pathname>`                  |
 
-**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts.
+**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. `create_folder` measures drawer-open-to-folder-created — captures user effort filling the form, not just API latency. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts. After a successful folder creation the post-create page reload re-fires `page_view` and updates the journey's `folderUID` attribute, so the user can keep browsing after creating a folder. If the user dismisses the new-folder drawer without creating, the framework backstop closes the step as `unended` at journey end.
 
 **Concurrent with search:** If the user opens the command palette mid-browse, both `browse_to_resource` and `search_to_resource` run concurrently. Both end on `dashboards_init_dashboard_completed`. The concurrent journey attributes and OTel span links capture the relationship.
 
@@ -224,13 +227,15 @@ User navigates the browse dashboards page, drills into folders, and opens a reso
 
 User enters dashboard edit mode, makes changes, and saves or discards.
 
-| Event           | Trigger                                                  | Action         |
-| --------------- | -------------------------------------------------------- | -------------- |
-| Start           | `dashboards_edit_button_clicked`                         | Journey starts |
-| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created` | Journey ends   |
-| End (discarded) | `dashboards_edit_discarded`                              | Journey ends   |
+| Event           | Trigger                                                                  | Action                                                      |
+| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Start           | `dashboards_edit_button_clicked` (existing dashboard)                    | Journey starts with `source: edit_button`                   |
+| Start           | `dashboards_new_dashboard_init` (auto edit mode for `/dashboard/new`)    | Journey starts with `source: new_dashboard`                 |
+| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created`                 | Journey ends                                                |
+| End (discarded) | `dashboards_edit_discarded`                                              | Journey ends                                                |
+| End (abandoned) | SPA route change to a different pathname (`/explore`, another dashboard) | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected).
+**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; any change abandons the journey, except `/dashboard/new` → `/d/<new-uid>` which is allowed (the `_created` interaction races with the route change). Two start triggers because `/dashboard/new` auto-enters edit mode and bypasses the Edit button — the `dashboards_new_dashboard_init` silent interaction is emitted from `DashboardScene`'s activation handler in that case.
 
 ### panel_edit
 
@@ -238,15 +243,16 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 
 User opens a panel in edit mode and configures queries, transformations, or visualization.
 
-| Event           | Trigger                                                                       | Action                              |
-| --------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
-| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                      |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                    |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step           |
-| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                  |
-| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action         |
-| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close |
-| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                    |
+| Event           | Trigger                                                                       | Action                                                      |
+| --------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                                              |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                                            |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step                                   |
+| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                                          |
+| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action                                 |
+| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close                         |
+| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                                            |
+| End (abandoned) | SPA route change to a different pathname                                      | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
 **Silent interactions added by this journey:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates), `panel_edit_discarded` (emitted when the user hits Discard).
 
