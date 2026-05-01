@@ -78,7 +78,7 @@ export const TimeOfDayPicker = ({
           container: cx(styles.picker, POPUP_CLASS_NAME),
         },
       }}
-      defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
+      defaultValue={restProps.allowEmpty ? undefined : (dateTimeAsMoment() as unknown as Moment)}
       disabled={disabled}
       disabledTime={() => ({
         disabledHours,
@@ -101,7 +101,7 @@ export const TimeOfDayPicker = ({
       showNow={false}
       needConfirm={false}
       suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value ? dateTimeAsMoment(value) : value}
+      value={value ? (dateTimeAsMoment(value) as unknown as Moment) : value}
     />
   );
 };

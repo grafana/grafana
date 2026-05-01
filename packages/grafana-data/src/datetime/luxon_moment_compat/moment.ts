@@ -100,21 +100,32 @@ export interface MomentLike {
   locale(value: string): MomentLike;
   utc(keepLocalTime?: boolean): MomentLike;
   local(): MomentLike;
-  tz(): string | undefined;
-  tz(zone: string, keepLocalTime?: boolean): MomentLike;
+  tz(zone?: string, keepLocalTime?: boolean): string | MomentLike | undefined;
   clone(): MomentLike;
-  year(value?: number): number | MomentLike;
-  month(value?: number): number | MomentLike;
-  date(value?: number): number | MomentLike;
-  day(value?: number): number | MomentLike;
-  weekday(value?: number): number | MomentLike;
-  isoWeekday(value?: number): number | MomentLike;
-  week(value?: number): number | MomentLike;
-  isoWeek(value?: number): number | MomentLike;
-  hour(value?: number): number | MomentLike;
-  minute(value?: number): number | MomentLike;
-  second(value?: number): number | MomentLike;
-  millisecond(value?: number): number | MomentLike;
+  year(): number;
+  year(value: number): MomentLike;
+  month(): number;
+  month(value: number): MomentLike;
+  date(): number;
+  date(value: number): MomentLike;
+  day(): number;
+  day(value: number): MomentLike;
+  weekday(): number;
+  weekday(value: number): MomentLike;
+  isoWeekday(): number;
+  isoWeekday(value: number): MomentLike;
+  week(): number;
+  week(value: number): MomentLike;
+  isoWeek(): number;
+  isoWeek(value: number): MomentLike;
+  hour(): number;
+  hour(value: number): MomentLike;
+  minute(): number;
+  minute(value: number): MomentLike;
+  second(): number;
+  second(value: number): MomentLike;
+  millisecond(): number;
+  millisecond(value: number): MomentLike;
   isValid(): boolean;
   isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
   isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
@@ -129,9 +140,10 @@ export interface MomentLike {
   toLocaleString(): string;
   utcOffset(): number;
   format(template?: FormatArg): string;
-  fromNow(withoutSuffix?: boolean): string | null;
-  toNow(withoutSuffix?: boolean): string | null;
-  from(input: MomentInput, withoutSuffix?: boolean): string | null;
+  fromNow(withoutSuffix?: boolean): string;
+  toNow(withoutSuffix?: boolean): string;
+  from(input: MomentInput, withoutSuffix?: boolean): string;
+  isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity?: string): boolean;
 }
 
 export interface MomentDurationLike {
@@ -199,7 +211,6 @@ const START_END_UNIT_MAP: Record<StartEndUnit, DateTimeUnit> = {
 };
 
 const DEFAULT_LOCALE = 'en';
-const DEFAULT_MOMENT_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const ISO_8601 = 'ISO_8601' as unknown as MomentBuiltinFormat;
 
 let currentLocale = DEFAULT_LOCALE;
@@ -590,7 +601,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.setZone('local'));
     },
 
-    tz(zone?: string, keepLocalTime = false) {
+    tz(zone, keepLocalTime: boolean = false) {
       if (zone == null) {
         return dt.zoneName ?? undefined;
       }
@@ -653,8 +664,6 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.plus({ weeks: value - dt.weekNumber }));
     },
 
-
-
     isValid() {
       return dt.isValid;
     },
@@ -687,6 +696,24 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       }
 
       return dt.toMillis() === b.toMillis();
+    },
+
+    isBetween(a, b, unit, inclusivity = '()') {
+      const dateA = normalizeInput(a);
+      const dateB = normalizeInput(b);
+
+      const leftBase = dateA.toMillis();
+      const rightBase = dateB.toMillis();
+      const [left, right] = leftBase <= rightBase ? [leftBase, rightBase] : [rightBase, leftBase];
+      const value = unit ? dt.startOf(unit).toMillis() : dt.toMillis();
+
+      const includeStart = inclusivity.startsWith('[');
+      const includeEnd = inclusivity.endsWith(']');
+
+      const afterStart = includeStart ? value >= left : value > left;
+      const beforeEnd = includeEnd ? value <= right : value < right;
+
+      return afterStart && beforeEnd;
     },
 
     diff(other, unit) {
@@ -741,7 +768,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       });
 
       if (!withoutSuffix || relative == null) {
-        return relative ?? null;
+        return relative ?? '';
       }
 
       return stripRelativeAffixes(relative);
@@ -755,7 +782,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       });
 
       if (!withoutSuffix || relative == null) {
-        return relative ?? null;
+        return relative ?? '';
       }
 
       return stripRelativeAffixes(relative);
@@ -770,7 +797,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       });
 
       if (!withoutSuffix || relative == null) {
-        return relative ?? null;
+        return relative ?? '';
       }
 
       return stripRelativeAffixes(relative);

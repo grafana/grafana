@@ -134,11 +134,12 @@ export const dateTimeForTimeZone = (
 ): DateTime => {
   if (timezone && timezone !== 'browser') {
     let result: Moment;
+    const normalizedInput: MomentInput = isDateTime(input) ? input.valueOf() : (input as MomentInput);
 
     if (typeof input === 'string' && formatInput) {
       result = moment.tz(input, formatInput, timezone);
     } else {
-      result = moment.tz(input, timezone);
+      result = moment.tz(normalizedInput, timezone);
     }
 
     if (isDateTime(result)) {

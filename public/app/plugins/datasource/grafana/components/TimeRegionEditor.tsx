@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type ChangeEvent, useState } from 'react';
 
 import {
-  dateTimeAsMoment,
+  dateTime,
   type DateTime,
   getTimeZoneInfo,
   type GrafanaTheme2,
@@ -56,7 +56,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
       return undefined;
     }
 
-    const date = dateTimeAsMoment();
+    const date = dateTime();
 
     if (time) {
       const match = time.split(':');
