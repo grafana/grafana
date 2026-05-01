@@ -63,11 +63,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(
-        sourceElement as ElementState,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
 
       // Verify sourceOriginal was updated
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -95,11 +91,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(
-        targetElement as ElementState,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterIndividualMove(targetElement as ElementState, connectionStates, mockCalculateCoords);
 
       // Verify sourceOriginal was NOT updated
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -128,11 +120,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(
-        targetElement as ElementState,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterIndividualMove(targetElement as ElementState, connectionStates, mockCalculateCoords);
 
       // Verify vertex was recalculated
       const vertex = sourceElement.options?.connections?.[0].vertices?.[0];
@@ -162,11 +150,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       expect(() => {
-        updateConnectionsAfterIndividualMove(
-          sourceElement as ElementState,
-          connectionStates,
-          mockCalculateCoords
-        );
+        updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
       }).not.toThrow();
 
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -194,11 +178,7 @@ describe('connectionMovementUtils', () => {
       ];
 
       expect(() => {
-        updateConnectionsAfterIndividualMove(
-          sourceElement as ElementState,
-          connectionStates,
-          mockCalculateCoords
-        );
+        updateConnectionsAfterIndividualMove(sourceElement as ElementState, connectionStates, mockCalculateCoords);
       }).not.toThrow();
     });
 
@@ -223,11 +203,7 @@ describe('connectionMovementUtils', () => {
         },
       ];
 
-      updateConnectionsAfterIndividualMove(
-        otherElement as ElementState,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterIndividualMove(otherElement as ElementState, connectionStates, mockCalculateCoords);
 
       // Coordinates should remain unchanged
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -259,12 +235,7 @@ describe('connectionMovementUtils', () => {
       const selectedTargets = [sourceElement.div!, targetElement.div!];
       const movedElements = [sourceElement as ElementState, targetElement as ElementState];
 
-      updateConnectionsAfterGroupMove(
-        movedElements,
-        selectedTargets,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
       // Both should be updated
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
@@ -294,12 +265,7 @@ describe('connectionMovementUtils', () => {
       const selectedTargets = [sourceElement.div!];
       const movedElements = [sourceElement as ElementState];
 
-      updateConnectionsAfterGroupMove(
-        movedElements,
-        selectedTargets,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
       // Coordinates should remain unchanged
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -329,12 +295,7 @@ describe('connectionMovementUtils', () => {
       const selectedTargets = [targetElement.div!];
       const movedElements = [targetElement as ElementState];
 
-      updateConnectionsAfterGroupMove(
-        movedElements,
-        selectedTargets,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
       // Coordinates should remain unchanged
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -369,12 +330,7 @@ describe('connectionMovementUtils', () => {
       const selectedTargets = [sourceElement.div!, targetElement.div!, mockConnectionSVG];
       const movedElements = [sourceElement as ElementState, targetElement as ElementState];
 
-      updateConnectionsAfterGroupMove(
-        movedElements,
-        selectedTargets,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
       // Coordinates should remain unchanged
       expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 50, y: 50 });
@@ -420,12 +376,7 @@ describe('connectionMovementUtils', () => {
       const selectedTargets = [element1.div!, element2.div!];
       const movedElements = [element1 as ElementState, element2 as ElementState];
 
-      updateConnectionsAfterGroupMove(
-        movedElements,
-        selectedTargets,
-        connectionStates,
-        mockCalculateCoords
-      );
+      updateConnectionsAfterGroupMove(movedElements, selectedTargets, connectionStates, mockCalculateCoords);
 
       // First connection should be updated
       expect(element1.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });

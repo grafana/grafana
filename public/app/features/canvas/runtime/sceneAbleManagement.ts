@@ -163,12 +163,12 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       // Since rotation affects positioning, update all connection endpoints
       const elementsToUpdate = new Set<ElementState>();
 
-      scene.connections.state.forEach(connectionState => {
+      scene.connections.state.forEach((connectionState) => {
         elementsToUpdate.add(connectionState.source);
         elementsToUpdate.add(connectionState.target);
       });
 
-      elementsToUpdate.forEach(element => {
+      elementsToUpdate.forEach((element) => {
         scene.connections.updateConnectionsAfterIndividualMove?.(element);
       });
       scene.connections.updateState();
@@ -228,7 +228,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     .on('dragGroup', (e) => {
       let needsUpdate = false;
       const movedElements: ElementState[] = [];
-      
+
       for (let event of e.events) {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
@@ -242,12 +242,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
 
       if (needsUpdate) {
         // Update connection coordinates during group drag for real-time visual feedback
-        scene.connections.updateConnectionsAfterGroupMove?.(
-          movedElements,
-          scene.selecto?.getSelectedTargets() || []
-        );
+        scene.connections.updateConnectionsAfterGroupMove?.(movedElements, scene.selecto?.getSelectedTargets() || []);
         scene.connections.updateState();
-        
+
         if (scene.moveableActionCallback) {
           scene.moveableActionCallback(true);
         }
@@ -255,7 +252,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     })
     .on('dragGroupEnd', (e) => {
       // Get all moved elements in the group
-      const movedElements = e.events.map(event => findElementByTarget(event.target, scene.root.elements)).filter((el): el is ElementState => el !== undefined);
+      const movedElements = e.events
+        .map((event) => findElementByTarget(event.target, scene.root.elements))
+        .filter((el): el is ElementState => el !== undefined);
 
       // Update connection original coordinates when both source and target are moved together
       scene.connections.updateConnectionsAfterGroupMove?.(movedElements, scene.selecto?.getSelectedTargets() || []);

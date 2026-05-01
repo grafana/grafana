@@ -663,7 +663,10 @@ export class Connections2 {
   };
 
   // Update connection coordinates based on what's selected in a group move
-  updateConnectionsAfterGroupMove = (movedElements: ElementState[], selectedTargets: Array<HTMLElement | SVGElement>) => {
+  updateConnectionsAfterGroupMove = (
+    movedElements: ElementState[],
+    selectedTargets: Array<HTMLElement | SVGElement>
+  ) => {
     // Adapter for calculateCoordinates2 to match the shared utility signature
     const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
       return calculateCoordinates2(source, target, connectionState.info);

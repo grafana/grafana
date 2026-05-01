@@ -56,7 +56,7 @@ const createMockElement = (name: string, connections?: CanvasConnection[]): Part
     y: 100,
     toJSON: () => {},
   }));
-  
+
   const mockParent = document.createElement('div');
   Object.defineProperty(mockDiv, 'parentElement', {
     value: mockParent,
@@ -116,7 +116,7 @@ describe('Connections2', () => {
 
       // Verify calculateCoordinates2 was called
       expect(calculateCoordinates2).toHaveBeenCalled();
-      
+
       // Verify it was called with the expected parameters (source, target, info)
       const call = calculateCoordinates2.mock.calls[0];
       expect(call[0]).toBe(sourceElement); // source parameter
