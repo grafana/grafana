@@ -36,7 +36,8 @@
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types",
-    "public/boot/**/*.ts*"
+    "public/boot/**/*.ts*",
+    "apps/**/zod-schemas/**/*.ts"
   ],
   "exclude": ["public/app/**/webpack.config.ts"]
 }

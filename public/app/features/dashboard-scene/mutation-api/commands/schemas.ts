@@ -4,13 +4,19 @@
  * This file contains two layers:
  *
  * 1. BUILDING-BLOCK SCHEMAS -- v2beta1 data structures (VariableKind, etc.)
- *    used internally by core code.
+ *    used internally by core code. Most are now re-exports of the CUE-derived
+ *    bundle at `apps/dashboard/zod-schemas/v2beta1`, with mutation-API-specific
+ *    overrides applied via `.extend()` / `.omit()`. See MIGRATION_NOTES.md
+ *    (temporary, intended for the PR description) for per-schema migration
+ *    notes labelled `MIGRATION T1/T2/T4`.
  *
  * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation
  *    command, accessible via DashboardMutationAPI.getPayloadSchema().
+ *    These are mutation-API contracts and stay manual.
  *
- * This file only depends on Zod, keeping it safe for import from any
- * internal module without pulling in the DashboardScene dependency tree.
+ * This file only depends on Zod and the generated bundle, keeping it safe
+ * for import from any internal module without pulling in the DashboardScene
+ * dependency tree.
  *
  * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
  * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
@@ -22,78 +28,41 @@
 
 import { z } from 'zod';
 
-import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-export const dataQueryKindSchema = z.object({
-  kind: z.literal('DataQuery').optional().default('DataQuery'),
-  group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
-  version: z.string().optional().default('v0'),
-  datasource: z
-    .object({
-      name: z.string().optional(),
-    })
-    .optional(),
+import {
+  autoGridLayoutItemKindSchema as autoGridLayoutItemKindSchemaBundle,
+  conditionalRenderingGroupKindSchema,
+  dataLinkSchema,
+  dataQueryKindSchema as dataQueryKindSchemaBase,
+  elementReferenceSchema,
+  gridLayoutItemKindSchema as gridLayoutItemKindSchemaBase,
+  gridLayoutItemSpecSchema,
+  panelKindSchema as panelKindSchemaBase,
+  panelQueryKindSchema as panelQueryKindSchemaBase,
+  panelSpecSchema,
+  queryGroupKindSchema as queryGroupKindSchemaBase,
+  queryGroupSpecSchema,
+  queryOptionsSpecSchema as queryOptionsSpecSchemaBundle,
+  rowRepeatOptionsSchema,
+  rowsLayoutRowSpecSchema as rowsLayoutRowSpecSchemaBase,
+  tabRepeatOptionsSchema,
+  tabsLayoutTabSpecSchema as tabsLayoutTabSpecSchemaBase,
+  variableHideSchema,
+  variableOptionSchema,
+  variableRefreshSchema,
+  variableSortSchema as variableSortSchemaBase,
+  vizConfigKindSchema as vizConfigKindSchemaBase,
+} from '../../../../../../apps/dashboard/zod-schemas/v2beta1';
+
+const variableSortSchema = variableSortSchemaBase.default('disabled');
+
+// MIGRATION T2: re-export from bundle, swap `spec: z.object({})` for the
+// LLM-friendly `z.record(z.string(), z.unknown())`. Bundle additionally exposes
+// `labels`; we accept it (silently ignored downstream) — see MIGRATION_NOTES.md.
+export const dataQueryKindSchema = dataQueryKindSchemaBase.extend({
   spec: z.record(z.string(), z.unknown()).describe('Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)'),
 });
-
-// Variable building-block schemas (v2beta1)
-
-export const variableOptionSchema = z.object({
-  selected: z.boolean().optional().describe('Flag indicating if the value is selected'),
-  text: z.string().or(z.array(z.string())).describe('The text or list of texts of the current value'),
-  value: z.string().or(z.array(z.string())).describe('The value or list of values of the current value'),
-  properties: z.record(z.string(), z.string()).optional().describe('Additional properties for multi-props variables'),
-});
-
-const variableHideSchema = z
-  .enum(['dontHide', 'hideLabel', 'hideVariable', 'inControlsMenu'])
-  .optional()
-  .default('dontHide')
-  .describe(
-    `Flag indicating if the variable should be:
-- "dontHide": show label and value (visible)
-- "hideLabel": show value only (label hidden)
-- "hideVariable": show nothing (fully hidden)
-- "inControlsMenu": show in a drop-down menu`
-  );
-
-const variableRefreshSchema = z
-  .enum(['never', 'onDashboardLoad', 'onTimeRangeChanged'])
-  .optional()
-  .default('never')
-  .describe(
-    `Options to config when to refresh a variable:
-- "never": Never refresh the variable
-- "onDashboardLoad": Queries the data source every time the dashboard loads
-- "onTimeRangeChanged": Queries the data source when the dashboard time range changes`
-  );
-
-const variableSortSchema = z
-  .enum([
-    'disabled',
-    'alphabeticalAsc',
-    'alphabeticalDesc',
-    'numericalAsc',
-    'numericalDesc',
-    'alphabeticalCaseInsensitiveAsc',
-    'alphabeticalCaseInsensitiveDesc',
-    'naturalAsc',
-    'naturalDesc',
-  ])
-  .optional()
-  .default('disabled')
-  .describe(
-    `Sort variable options. Accepted values are:
-- "disabled": No sorting
-- "alphabeticalAsc": Alphabetical ASC
-- "alphabeticalDesc": Alphabetical DESC
-- "numericalAsc": Numerical ASC
-- "numericalDesc": Numerical DESC
-- "alphabeticalCaseInsensitiveAsc": Alphabetical Case Insensitive ASC
-- "alphabeticalCaseInsensitiveDesc": Alphabetical Case Insensitive DESC
-- "naturalAsc": Natural ASC
-- "naturalDesc": Natural DESC`
-  );
 
 const adHocFilterSchema = z.object({
   key: z.string().describe('Filter key (dimension name)'),
@@ -415,12 +384,7 @@ export const variableKindSchema = z.discriminatedUnion('kind', [
 
 export const emptyPayloadSchema = z.object({}).strict();
 
-// Layout building-block schemas (v2beta1)
-
-export const elementReferenceSchema = z.object({
-  kind: z.literal('ElementReference').optional().default('ElementReference'),
-  name: z.string().describe('Element key in the dashboard elements map'),
-});
+// Mutation-API-only layout helpers (no equivalent in CUE).
 
 export const layoutPathSchema = z
   .string()
@@ -439,76 +403,21 @@ export const gridPositionSchema = z
   })
   .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
 
-export const rowRepeatOptionsSchema = z
-  .object({
-    mode: z.literal('variable'),
-    value: z.string().describe('Variable name to repeat by'),
-  })
-  .describe('Repeat options matching v2beta1 RowRepeatOptions');
+// CUE-derived layout building blocks (re-exports / extensions of the bundle).
+// `rowRepeatOptionsSchema`, `tabRepeatOptionsSchema`, `repeatOptionsSchema` and
+// `conditionalRendering*` kinds are imported above and used as-is.
 
-export const tabRepeatOptionsSchema = z
-  .object({
-    mode: z.literal('variable'),
-    value: z.string().describe('Variable name to repeat by'),
-  })
-  .describe('Repeat options matching v2beta1 TabRepeatOptions');
-
-export const repeatOptionsSchema = z
-  .object({
-    mode: z.literal('variable'),
-    value: z.string().describe('Variable name to repeat by'),
-    direction: z.enum(['h', 'v']).optional().describe('Repeat direction: horizontal or vertical'),
-    maxPerRow: z.number().optional().describe('Maximum panels per row when direction is "h"'),
-  })
-  .describe('Repeat options matching v2beta1 RepeatOptions');
-
-const conditionalRenderingVariableKindSchema = z.object({
-  kind: z.literal('ConditionalRenderingVariable'),
-  spec: z.object({
-    variable: z.string().describe('Name of the dashboard template variable'),
-    operator: z.enum(['equals', 'notEquals', 'matches', 'notMatches']),
-    value: z.string().describe('Value to compare against. For matches/notMatches this is a regex.'),
-  }),
-});
-
-const conditionalRenderingDataKindSchema = z.object({
-  kind: z.literal('ConditionalRenderingData'),
-  spec: z.object({
-    value: z.boolean().describe('true = "has data", false = "no data"'),
-  }),
-});
-
-const conditionalRenderingTimeRangeSizeKindSchema = z.object({
-  kind: z.literal('ConditionalRenderingTimeRangeSize'),
-  spec: z.object({
-    value: z.string().describe('Duration threshold (e.g. "5m", "1h", "7d", "6M", "1y")'),
-  }),
-});
-
-export const conditionalRenderingGroupKindSchema = z.object({
-  kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
-  spec: z.object({
-    visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
-    condition: z.enum(['and', 'or']).describe('"and" = match all rules; "or" = match any rule'),
-    items: z
-      .array(
-        z.discriminatedUnion('kind', [
-          conditionalRenderingVariableKindSchema,
-          conditionalRenderingDataKindSchema,
-          conditionalRenderingTimeRangeSizeKindSchema,
-        ])
-      )
-      .describe('List of conditions. Pass an empty array to remove all rules.'),
-  }),
-});
-
-export const rowsLayoutRowSpecSchema = z.object({
-  title: z.string().optional().describe('Row heading title'),
-  collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
-  hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
-  fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
-  repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
-  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
+// MIGRATION T2: re-export bundle schema with two adjustments:
+// 1. .omit({ layout, variables }) — `layout` is required in CUE because rows always
+//    contain a layout, but the mutation API ADD_ROW creates rows without specifying
+//    layout (it's chosen by the parent container). `variables` is row-scoped and
+//    not part of the mutation surface.
+// 2. .extend with .default(false) on collapse/hideHeader/fillScreen so LLM tools
+//    can omit boilerplate booleans.
+export const rowsLayoutRowSpecSchema = rowsLayoutRowSpecSchemaBase.omit({ layout: true, variables: true }).extend({
+  collapse: z.boolean().optional().default(false),
+  hideHeader: z.boolean().optional().default(false),
+  fillScreen: z.boolean().optional().default(false),
 });
 
 export const partialRowSpecSchema = z
@@ -526,11 +435,9 @@ export const partialRowSpecSchema = z
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
-export const tabsLayoutTabSpecSchema = z.object({
-  title: z.string().optional().describe('Tab title'),
-  repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
-  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
-});
+// MIGRATION T2: re-export bundle schema, .omit({ layout, variables }) for the
+// same reason as rowsLayoutRowSpecSchema above.
+export const tabsLayoutTabSpecSchema = tabsLayoutTabSpecSchemaBase.omit({ layout: true, variables: true });
 
 export const partialTabSpecSchema = z
   .object({
@@ -654,25 +561,25 @@ export const autoGridOptionsSchema = z
 
 // Panel building-block schemas (v2beta1)
 
-export const dataLinkSchema = z.object({
-  title: z.string().describe('Link title'),
-  url: z.string().describe('Link URL'),
-  targetBlank: z.boolean().optional().describe('Open link in new tab'),
+// MIGRATION T2: re-export bundle schema, override `spec` to:
+// 1. point at our locally-extended `dataQueryKindSchema` (LLM-friendly record spec)
+// 2. drop bundle's `refId.default('A')` — mutation API requires an explicit refId
+// 3. make `hidden` optional+default(false) for LLM ergonomics
+export const panelQueryKindSchema = panelQueryKindSchemaBase.extend({
+  spec: z.object({
+    query: dataQueryKindSchema,
+    refId: z.string(),
+    hidden: z.boolean().optional().default(false),
+  }),
 });
-
-export const panelQueryKindSchema = z
-  .object({
-    kind: z.literal('PanelQuery').optional().default('PanelQuery'),
-    spec: z.object({
-      query: dataQueryKindSchema.describe('The data query (DataQueryKind)'),
-      refId: z.string().describe('Unique query reference ID (e.g., "A", "B")'),
-      hidden: z.boolean().optional().default(false).describe('Whether this query is hidden from the panel'),
-    }),
-  })
-  .describe('A single panel query wrapping a DataQueryKind with refId and hidden flag');
 
 export type PanelQueryKind = z.infer<typeof panelQueryKindSchema>;
 
+// MIGRATION T4: kept manual. The mutation API uses a different transformation
+// protocol than CUE: `kind` is the constant 'Transformation' and the transformer
+// ID lives on a separate `group` field. CUE puts the transformer ID directly in
+// `kind` (`kind: z.string()`). These two protocols cannot be reconciled without
+// a breaking API change. See MIGRATION_NOTES.md for follow-up.
 export const transformationKindSchema = z
   .object({
     kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
@@ -697,19 +604,17 @@ export const transformationKindSchema = z
 
 export type TransformationKind = z.infer<typeof transformationKindSchema>;
 
-export const queryOptionsSpecSchema = z
-  .object({
-    timeFrom: z.string().optional().describe('Relative time override (e.g., "1h", "6h")'),
-    maxDataPoints: z.number().optional().describe('Maximum data points to return'),
-    timeShift: z.string().optional().describe('Time shift (e.g., "1h", "1d")'),
-    queryCachingTTL: z.number().optional().describe('Query caching TTL in milliseconds'),
-    interval: z.string().optional().describe('Min interval (e.g., "10s", "1m")'),
-    cacheTimeout: z.string().optional().describe('Cache timeout'),
-    hideTimeOverride: z.boolean().optional().describe('Hide time override info in panel header'),
-    timeCompare: z.string().optional().describe('Time comparison offset (e.g., "1d", "7d")'),
-  })
-  .describe('Query options for time range overrides and data point limits');
+// MIGRATION T1: re-export from bundle. Behavior change: `maxDataPoints` and
+// `queryCachingTTL` are now `z.int()` instead of `z.number()` — fractional inputs
+// will be rejected (semantically correct for both fields).
+export const queryOptionsSpecSchema = queryOptionsSpecSchemaBundle;
 
+// MIGRATION T4: kept manual. Bundle's name `fieldConfigSchema` refers to a
+// per-field configuration (displayName, color, etc.); the equivalent
+// "defaults + overrides" container is `fieldConfigSourceSchema` and is fully
+// typed with the per-field schema. The mutation API needs a permissive container
+// (record-typed defaults, free-form override properties) so LLM tools can submit
+// arbitrary plugin-specific shapes without rejection.
 export const fieldConfigSchema = z
   .object({
     defaults: z
@@ -738,62 +643,51 @@ export const fieldConfigSchema = z
   })
   .describe('Field configuration (defaults and overrides)');
 
-export const vizConfigKindSchema = z
-  .object({
-    kind: z.literal('VizConfig').optional().default('VizConfig'),
-    group: z
-      .string()
-      .min(1)
-      .describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
-    version: z.string().optional().default(''),
-    spec: z
-      .object({
-        options: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .default({})
-          .describe('Panel-specific visualization options'),
-        fieldConfig: fieldConfigSchema
-          .optional()
-          .default({ defaults: {}, overrides: [] })
-          .describe('Field configuration'),
-      })
-      .optional()
-      .default({ options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
-  })
-  .describe('Visualization configuration (plugin + options + field config)');
+// MIGRATION T2: re-export bundle schema with overrides:
+// - version: optional+default('')
+// - spec: rewrite as the mutation-API-shaped permissive object (record options +
+//   loose fieldConfig with defaults). Lost: bundle's strict `vizConfigSpecSchema`.
+// Behavior change: `group` no longer has `.min(1)` validation — empty plugin IDs
+// are now accepted at parse time (handlers reject them downstream).
+export const vizConfigKindSchema = vizConfigKindSchemaBase.extend({
+  version: z.string().optional().default(''),
+  spec: z
+    .object({
+      options: z.record(z.string(), z.unknown()).optional().default({}),
+      fieldConfig: fieldConfigSchema.optional().default({ defaults: {}, overrides: [] }),
+    })
+    .optional()
+    .default({ options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
+});
 
-export const queryGroupKindSchema = z
-  .object({
-    kind: z.literal('QueryGroup').optional().default('QueryGroup'),
-    spec: z.object({
-      queries: z.array(panelQueryKindSchema).describe('Array of panel queries'),
-      transformations: z
-        .array(transformationKindSchema)
-        .optional()
-        .default([])
-        .describe('Data transformations to apply after queries'),
-      queryOptions: queryOptionsSpecSchema
-        .optional()
-        .default({})
-        .describe('Query options (time overrides, max data points)'),
-    }),
-  })
-  .describe('Query group containing queries, transformations, and query options');
+// MIGRATION T2: re-export bundle schema, override spec to:
+// - point at locally-extended `panelQueryKindSchema` (LLM-friendly query spec)
+// - point at locally-kept `transformationKindSchema` (different protocol than CUE)
+// - make `transformations`/`queryOptions` optional+default for LLM ergonomics
+export const queryGroupKindSchema = queryGroupKindSchemaBase.extend({
+  spec: queryGroupSpecSchema.extend({
+    queries: z.array(panelQueryKindSchema),
+    transformations: z.array(transformationKindSchema).optional().default([]),
+    queryOptions: queryOptionsSpecSchema.optional().default({}),
+  }),
+});
 
-export const panelKindSchema = z
-  .object({
-    kind: z.literal('Panel').optional().default('Panel'),
-    spec: z.object({
-      title: z.string().describe('Panel title'),
-      description: z.string().optional().default('').describe('Panel description'),
-      links: z.array(dataLinkSchema).optional().default([]).describe('Panel header links'),
-      data: queryGroupKindSchema.describe('Query group (queries, transformations, query options)'),
-      vizConfig: vizConfigKindSchema.describe('Visualization configuration (plugin type, options, field config)'),
-      transparent: z.boolean().optional().default(false).describe('Whether the panel background is transparent'),
-    }),
-  })
-  .describe('A dashboard panel element (v2beta1 PanelKind)');
+// MIGRATION T2: re-export bundle schema with spec overrides:
+// - .omit({ id: true }) — bundle has required `id`; mutation API auto-assigns
+//   panel IDs and the field is documented as ignored.
+// - description: optional+default('') for LLM ergonomics
+// - links: optional+default([]) for LLM ergonomics
+// - data/vizConfig: point at locally-extended versions
+// - transparent: optional+default(false) for LLM ergonomics
+export const panelKindSchema = panelKindSchemaBase.extend({
+  spec: panelSpecSchema.omit({ id: true }).extend({
+    description: z.string().optional().default(''),
+    links: z.array(dataLinkSchema).optional().default([]),
+    data: queryGroupKindSchema,
+    vizConfig: vizConfigKindSchema,
+    transparent: z.boolean().optional().default(false),
+  }),
+});
 
 export const partialPanelKindSchema = z
   .object({
@@ -835,35 +729,28 @@ export const partialPanelKindSchema = z
   })
   .describe('Partial panel update (all fields optional, only provided fields are applied)');
 
-// Layout item schemas (v2beta1)
-// Canonical schemas match the generated v2beta1 types exactly (validated via `satisfies`).
-// The input schema (`layoutItemInputSchema`) is derived with relaxed constraints for callers.
+// Layout item schemas (v2beta1) — see MIGRATION_NOTES.md.
+// `layoutItemInputSchema` is a mutation-API-only input variant derived from the
+// canonical `gridLayoutItemKindSchema` (relaxed: optional kind, partial spec,
+// extra `conditionalRendering` field for AutoGridLayout targets).
 
-export const gridLayoutItemKindSchema = z.object({
-  kind: z.literal('GridLayoutItem').optional().default('GridLayoutItem'),
-  spec: z.object({
-    x: z.number().describe('Column position (0-23 in a 24-column grid)'),
-    y: z.number().describe('Row position'),
-    width: z.number().describe('Width in grid columns (1-24)'),
-    height: z.number().describe('Height in grid units'),
-    element: elementReferenceSchema,
-    repeat: repeatOptionsSchema.optional().describe('Repeat for each value of a variable'),
+// MIGRATION T2: re-export bundle schema with z.int() → z.number() on x/y/width/height
+// so LLM tools can submit fractional positions without rejection. Bundle's int()
+// rejects floats; mutation API has historically been permissive here.
+export const gridLayoutItemKindSchema = gridLayoutItemKindSchemaBase.extend({
+  spec: gridLayoutItemSpecSchema.extend({
+    x: z.number(),
+    y: z.number(),
+    width: z.number(),
+    height: z.number(),
   }),
 }) satisfies z.ZodType<GridLayoutItemKind>;
 
-export const autoGridLayoutItemKindSchema = z.object({
-  kind: z.literal('AutoGridLayoutItem').optional().default('AutoGridLayoutItem'),
-  spec: z.object({
-    element: elementReferenceSchema,
-    repeat: z
-      .object({
-        mode: z.literal('variable'),
-        value: z.string().describe('Variable name to repeat by'),
-      })
-      .optional()
-      .describe('Repeat for each value of a variable'),
-  }),
-}) satisfies z.ZodType<AutoGridLayoutItemKind>;
+// MIGRATION T1: re-export as-is. Behavior change: bundle's spec exposes an
+// optional `conditionalRendering` field that the manual schema didn't. LLM
+// tools may now provide it inline; mutation-API handlers ignore it (the
+// canonical place for conditionalRendering on a panel is at the payload level).
+export const autoGridLayoutItemKindSchema = autoGridLayoutItemKindSchemaBundle;
 
 export const layoutItemInputSchema = z
   .object({
