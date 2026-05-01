@@ -1,0 +1,6 @@
+[tools]
+go = "1.26.2"
+
+[settings]
+node.corepack = true
+idiomatic_version_file_enable_tools = ["node"]
