@@ -23,7 +23,7 @@ const (
 
 	// maximum tolerated clock skew across hosts when deciding whether an
 	// existing lease is still held by another process.
-	defaultMaxClockSkew = 100 * time.Millisecond
+	defaultMaxClockSkew = 500 * time.Millisecond
 
 	// maximum number of times an Acquire() call will loop to ensure a lease
 	// is already acquired when it cannot create a unique key.
