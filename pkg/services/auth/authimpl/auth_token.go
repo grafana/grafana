@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -36,22 +37,28 @@ const SkipRotationTime = 5 * time.Second
 
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
-func ProvideUserAuthTokenService(sqlStore db.DB,
+func ProvideUserAuthTokenService(ctx context.Context, sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service,
-	cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	cfgProvider configprovider.ConfigProvider, tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
 		serverLockService: serverLockService,
-		cfg:               cfg,
+		cfgProvider:       cfgProvider,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 		features:          features,
 		tracer:            tracer,
 	}
+
 	s.externalSessionStore = provideExternalSessionStore(sqlStore, secretService, tracer)
 
+	cfg, err := cfgProvider.Get(ctx)
+	if err != nil {
+		return s, err
+	}
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return s, err
@@ -71,7 +78,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 type UserAuthTokenService struct {
 	sqlStore             db.DB
 	serverLockService    *serverlock.ServerLockService
-	cfg                  *setting.Cfg
+	cfgProvider          configprovider.ConfigProvider
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
@@ -83,7 +90,12 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.Create
 	ctx, span := s.tracer.Start(ctx, "authtoken.CreateToken")
 	defer span.End()
 
-	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	token, hashedToken, err := generateAndHashToken(cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -142,10 +154,14 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	ctx, span := s.tracer.Start(ctx, "authtoken.LookupToken")
 	defer span.End()
 
-	hashedToken := hashToken(s.cfg.SecretKey, unhashedToken)
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedToken := hashToken(cfg.SecretKey, unhashedToken)
 	var model userAuthToken
 	var exists bool
-	var err error
 	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err = dbSession.Where("(auth_token = ? OR prev_auth_token = ?)",
 			hashedToken,
@@ -172,7 +188,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
-	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
+	if model.CreatedAt <= s.createdAfterParam(cfg) || model.RotatedAt <= s.rotatedAfterParam(cfg) {
 		ctxLogger.Debug("User token has expired", "userID", model.UserId, "tokenID", model.Id, "createdAt", model.CreatedAt, "rotatedAt", model.RotatedAt)
 		return nil, &auth.TokenExpiredError{
 			UserID:  model.UserId,
@@ -352,7 +368,12 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 		clientIPStr = clientIP.String()
 	}
 
-	newToken, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	newToken, hashedToken, err := generateAndHashToken(cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -555,13 +576,18 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	ctx, span := s.tracer.Start(ctx, "authtoken.GetUserTokens")
 	defer span.End()
 
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	result := []*auth.UserToken{}
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var tokens []*userAuthToken
 		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0",
 			userId,
-			s.createdAfterParam(),
-			s.rotatedAfterParam()).
+			s.createdAfterParam(cfg),
+			s.rotatedAfterParam(cfg)).
 			Find(&tokens)
 		if err != nil {
 			return err
@@ -590,10 +616,15 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 		return 0, errUserIDInvalid
 	}
 
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+
 	var count int64
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query := `SELECT COUNT(*) FROM user_auth_token WHERE created_at > ? AND rotated_at > ? AND revoked_at = 0`
-		args := []interface{}{s.createdAfterParam(), s.rotatedAfterParam()}
+		args := []interface{}{s.createdAfterParam(cfg), s.rotatedAfterParam(cfg)}
 		if userID != nil {
 			query += " AND user_id = ?"
 			args = append(args, *userID)
@@ -669,12 +700,12 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 	return u, err
 }
 
-func (s *UserAuthTokenService) createdAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxLifetime).Unix()
+func (s *UserAuthTokenService) createdAfterParam(cfg *setting.Cfg) int64 {
+	return getTime().Add(-cfg.LoginMaxLifetime).Unix()
 }
 
-func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	return getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()
+func (s *UserAuthTokenService) rotatedAfterParam(cfg *setting.Cfg) int64 {
+	return getTime().Add(-cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func createToken() (string, error) {
