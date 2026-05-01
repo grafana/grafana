@@ -7,7 +7,7 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 ## Steps to adding a feature flag
 
 1. Define the feature flag in [registry.go](../pkg/services/featuremgmt/registry.go).
-   - New flags must be named with a prefix, separated by a dot. e.g `grafana.newPreferencesPage`. The prefix is the name of the standalone service that owns this feature flag. For flags that are single-tenant Grafana-only, with no plans for a standalone deployment in the future, use `grafana.` as a prefix. 
+   - New flags must be named with a prefix, separated by a dot. e.g `grafana.newPreferencesPage`. The prefix is the name of the standalone service that owns this feature flag. For flags that are single-tenant Grafana-only, with no plans for a standalone deployment in the future, use `grafana.` as a prefix.
    - Set the `Generate` field to control which clients are generated for your flag (see [Generation targets](#generation-targets) below).
    - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go).
    - If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
