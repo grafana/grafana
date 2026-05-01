@@ -100,32 +100,21 @@ export interface MomentLike {
   locale(value: string): MomentLike;
   utc(keepLocalTime?: boolean): MomentLike;
   local(): MomentLike;
-  tz(zone?: string, keepLocalTime?: boolean): string | MomentLike | undefined;
+  tz(): string | undefined;
+  tz(zone: string, keepLocalTime?: boolean): MomentLike;
   clone(): MomentLike;
-  year(): number;
-  year(value: number): MomentLike;
-  month(): number;
-  month(value: number): MomentLike;
-  date(): number;
-  date(value: number): MomentLike;
-  day(): number;
-  day(value: number): MomentLike;
-  weekday(): number;
-  weekday(value: number): MomentLike;
-  isoWeekday(): number;
-  isoWeekday(value: number): MomentLike;
-  week(): number;
-  week(value: number): MomentLike;
-  isoWeek(): number;
-  isoWeek(value: number): MomentLike;
-  hour(): number;
-  hour(value: number): MomentLike;
-  minute(): number;
-  minute(value: number): MomentLike;
-  second(): number;
-  second(value: number): MomentLike;
-  millisecond(): number;
-  millisecond(value: number): MomentLike;
+  year(value?: number): number | MomentLike;
+  month(value?: number): number | MomentLike;
+  date(value?: number): number | MomentLike;
+  day(value?: number): number | MomentLike;
+  weekday(value?: number): number | MomentLike;
+  isoWeekday(value?: number): number | MomentLike;
+  week(value?: number): number | MomentLike;
+  isoWeek(value?: number): number | MomentLike;
+  hour(value?: number): number | MomentLike;
+  minute(value?: number): number | MomentLike;
+  second(value?: number): number | MomentLike;
+  millisecond(value?: number): number | MomentLike;
   isValid(): boolean;
   isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
   isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
@@ -540,6 +529,14 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     return api;
   };
 
+  const setZone: MomentLike['tz'] = ((zone?: string, keepLocalTime: boolean = false) => {
+    if (zone == null) {
+      return dt.zoneName ?? undefined;
+    }
+
+    return setDt(dt.setZone(zone, { keepLocalTime }));
+  }) as MomentLike['tz'];
+
   const api: MomentLike = {
     add(value, unit) {
       const duration = normalizeDurationInput(value, unit);
@@ -601,33 +598,27 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.setZone('local'));
     },
 
-    tz(zone, keepLocalTime: boolean = false) {
-      if (zone == null) {
-        return dt.zoneName ?? undefined;
-      }
-
-      return setDt(dt.setZone(zone, { keepLocalTime }));
-    },
+    tz: setZone,
 
     clone() {
       return makeMoment(dt);
     },
 
-    year: (value?) => (value == null ? dt.year : setDt(dt.set({ year: value }))),
+    year: (value?: number) => (value == null ? dt.year : setDt(dt.set({ year: value }))),
 
-    month: (value?) => (value == null ? dt.month - 1 : setDt(dt.set({ month: value + 1 }))),
+    month: (value?: number) => (value == null ? dt.month - 1 : setDt(dt.set({ month: value + 1 }))),
 
-    date: (value?) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
+    date: (value?: number) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
 
-    hour: (value?) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
+    hour: (value?: number) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
 
-    minute: (value?) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
+    minute: (value?: number) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
 
-    second: (value?) => (value == null ? dt.second : setDt(dt.set({ second: value }))),
+    second: (value?: number) => (value == null ? dt.second : setDt(dt.set({ second: value }))),
 
-    millisecond: (value?) => (value == null ? dt.millisecond : setDt(dt.set({ millisecond: value }))),
+    millisecond: (value?: number) => (value == null ? dt.millisecond : setDt(dt.set({ millisecond: value }))),
 
-    day(value?) {
+    day(value?: number) {
       const current = toMomentDay(dt.weekday);
       if (value == null) {
         return current;
@@ -636,11 +627,11 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.plus({ days: value - current }));
     },
 
-    weekday(value?) {
+    weekday(value?: number) {
       return api.day(value);
     },
 
-    isoWeekday(value?) {
+    isoWeekday(value?: number) {
       if (value == null) {
         return dt.weekday;
       }
@@ -648,7 +639,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.plus({ days: value - dt.weekday }));
     },
 
-    week(value?) {
+    week(value?: number) {
       if (value == null) {
         return dt.weekNumber;
       }
@@ -656,13 +647,15 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.plus({ weeks: value - dt.weekNumber }));
     },
 
-    isoWeek(value?) {
+    isoWeek(value?: number) {
       if (value == null) {
         return dt.weekNumber;
       }
 
       return setDt(dt.plus({ weeks: value - dt.weekNumber }));
     },
+
+
 
     isValid() {
       return dt.isValid;
