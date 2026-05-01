@@ -14243,6 +14243,8 @@
       "alerts-loading": "Waarschuwingen",
       "card-click": "Kaart {{id}} selecteren",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
@@ -14959,10 +14961,13 @@
       "title": "Maak snel dashboards aan met suggesties en sjablonen"
     },
     "nav": {
+      "counter": "",
       "go-to": "Naar slide {{number}}",
-      "next": "Volgende",
-      "prev": "Vorige"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Query uitleggen",
