@@ -180,6 +180,7 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, 
   async addToRichHistory(
     newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
+    await this.ensureMigrated();
     const db = await this.dbPromise;
 
     // Dedup check: only compares against the most recent entry to prevent

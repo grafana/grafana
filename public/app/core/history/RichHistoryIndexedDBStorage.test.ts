@@ -119,7 +119,7 @@ describe('RichHistoryIndexedDBStorage', () => {
       expect(richHistory).toHaveLength(2);
     });
 
-    it('should allow same queries with different key/refId (dedup ignores key and refId)', async () => {
+    it('should detect duplicate when queries differ only by key/refId', async () => {
       await storage.addToRichHistory({
         ...mockItem,
         queries: [{ refId: 'A', key: 'key1', query: 'same-query' } as MockQuery],

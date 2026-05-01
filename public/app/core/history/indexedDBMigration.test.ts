@@ -208,7 +208,7 @@ describe('migrateToIndexedDB', () => {
         source: 'localStorage',
         itemCount: 2,
         itemsWritten: 2,
-        duplicatesSkipped: 0,
+        invalidEntriesSkipped: 0,
       })
     );
   });
