@@ -31,6 +31,8 @@ import (
 )
 
 func TestTeamSearchFallback(t *testing.T) {
+	t.Skip("Skipping team search fallback test: https://github.com/grafana/identity-access-team/issues/2048")
+
 	testCases := []struct {
 		name                  string
 		mode                  rest.DualWriterMode

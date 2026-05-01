@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "編輯 YAML",
         "save": "儲存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名稱",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "刪除所有規則"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "刪除",
       "delete-modal-delete-button": "刪除",
@@ -1568,8 +1570,14 @@
         "update-error": "無法更新規則群組",
         "update-success": "已成功更新規則群組"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "無法編輯所選群組",
       "group-not-editable-description": "此群組屬於不支援編輯的資料來源。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "編輯規則群組",
       "rule-group-error": "載入規則群組時發生錯誤"
     },
@@ -13743,7 +13751,8 @@
       "make-sure": "使用以下權限建立權杖"
     },
     "validation": {
-      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。"
+      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14148,6 +14157,8 @@
       "alerts-loading": "警示",
       "card-click": "選取卡片 {{id}}",
       "data": "資料",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新 {{type}}",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14858,10 +14869,13 @@
       "title": "利用建議和範本快速建立儀表板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往投影片 {{number}}",
-      "next": "下一個",
-      "prev": "上一個"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解釋查詢",

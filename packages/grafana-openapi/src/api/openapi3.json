@@ -4229,6 +4229,12 @@
           },
           "subject": {
             "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -9785,6 +9791,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ReportURLItem"
+            },
+            "type": "array"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -9964,6 +9976,17 @@
             "type": "string"
           },
           "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportURLItem": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           }
         },

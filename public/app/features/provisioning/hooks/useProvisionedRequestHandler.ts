@@ -11,7 +11,7 @@ import {
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { type Resource } from 'app/features/apiserver/types';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';

@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "YAMLを編集",
         "save": "保存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名前",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "すべてのルールを削除"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "削除",
       "delete-modal-delete-button": "削除",
@@ -1568,8 +1570,14 @@
         "update-error": "ルールグループの更新に失敗しました",
         "update-success": "ルールグループが正常に更新されました"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "選択したグループは編集できません",
       "group-not-editable-description": "このグループは、編集をサポートしていないデータソースに属しています。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "ルールグループを編集",
       "rule-group-error": "ルールグループの読み込み中にエラーが発生しました"
     },
@@ -13743,7 +13751,8 @@
       "make-sure": "これらの権限を持つトークンを作成する"
     },
     "validation": {
-      "hidden-characters": "このフィールドには、コピー＆ペーストによって挿入された可能性のある非表示の文字が含まれています。値を再入力するか、削除してから再試行してください。"
+      "hidden-characters": "このフィールドには、コピー＆ペーストによって挿入された可能性のある非表示の文字が含まれています。値を再入力するか、削除してから再試行してください。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14148,6 +14157,8 @@
       "alerts-loading": "アラート",
       "card-click": "カード{{id}}を選択",
       "data": "データ",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新規{{type}} ",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
@@ -14858,10 +14869,13 @@
       "title": "おすすめやテンプレートを活用して、ダッシュボードの作成をスムーズに開始できます"
     },
     "nav": {
+      "counter": "",
       "go-to": "スライド{{number}}へ移動",
-      "next": "次へ",
-      "prev": "前へ"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "クエリを説明",
