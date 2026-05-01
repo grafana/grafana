@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -61,6 +62,9 @@ function setup(props: Partial<Props> = {}) {
     }),
     state: {
       title: 'Test Dashboard',
+      meta: {
+        uid: 'dashboard-uid',
+      },
     },
   } as unknown as DashboardScene;
 
@@ -239,5 +243,33 @@ describe('MoveProvisionedDashboardForm', () => {
     await user.click(cancelButton);
 
     expect(props.onDismiss).toHaveBeenCalled();
+  });
+
+  it('does not submit a move job when the dashboard is already at the target path', async () => {
+    const createJob = jest.fn();
+    (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([createJob, mockCreateRequest]);
+    (useGetFolderQuery as jest.Mock).mockReturnValue({
+      data: {
+        metadata: {
+          annotations: {
+            [AnnoKeySourcePath]: 'folder1',
+          },
+        },
+      },
+      isLoading: false,
+    });
+
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+
+    expect(createJob).not.toHaveBeenCalled();
+    expect(getAppEvents().publish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: [
+        'Failed to move dashboard',
+        'Dashboard is already in the selected folder.',
+      ],
+    });
   });
 });
