@@ -1,5 +1,5 @@
 [tools]
-go = "1.26.2"
+go = { template = "{{ exec(command='grep -E \"^go [0-9]\" go.mod | awk \"{print $2}\"') }}" }
 
 [settings]
 node.corepack = true
