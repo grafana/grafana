@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Upravit YAML",
         "save": "Uložit"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "název",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Odstranit všechna pravidla"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Odstranit",
       "delete-modal-delete-button": "Odstranit",
@@ -1583,8 +1585,14 @@
         "update-error": "Skupinu pravidel se nepodařilo aktualizovat",
         "update-success": "Skupina pravidel byla úspěšně aktualizována"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Vybranou skupinu nelze upravit",
       "group-not-editable-description": "Tato skupina patří ke zdroji dat, který nepodporuje úpravy.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Upravit skupinu pravidel",
       "rule-group-error": "Chyba při načítání skupiny pravidel"
     },
@@ -4551,6 +4559,8 @@
       "label": {
         "alphabetically-az": "Abecedně (A–Z)",
         "alphabetically-za": "Abecedně (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Odstraněno (od nejnovějších)",
         "deleted-oldest": "Odstraněno (od nejstarších)"
       }
@@ -13727,6 +13737,7 @@
       "contact-admin": "Chcete-li tento zdroj převést na místní nebo odstranit všechny zdroje z chybějícího úložiště, obraťte se na správce Grafany.",
       "convert-to-local-button": "Převést na místní",
       "delete-button": "Odstranit",
+      "go-to-dashboards": "",
       "job-error": "Při zpracování osiřelých zdrojů došlo k chybě",
       "job-success": "Osiřelé zdroje byly úspěšně zpracovány",
       "job-warning": "Některé zdroje byly zpracovány s varováními. Zkontrolujte výsledky.",
@@ -13989,7 +14000,8 @@
       "make-sure": "Vytvořit token s těmito oprávněními"
     },
     "validation": {
-      "hidden-characters": "Toto pole obsahuje skryté znaky, které mohly být vloženy při kopírování a vkládání. Zadejte hodnotu znovu nebo ji vymažte a zkuste to znovu."
+      "hidden-characters": "Toto pole obsahuje skryté znaky, které mohly být vloženy při kopírování a vkládání. Zadejte hodnotu znovu nebo ji vymažte a zkuste to znovu.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Varování",
     "watch-stream": {
@@ -14403,6 +14415,8 @@
       "alerts-loading": "Výstrahy",
       "card-click": "Vybrat kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nový {{type}}",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
@@ -14462,6 +14476,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Obnovit"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "V poslední době jste neodstranili žádné nástěnky.",
@@ -14628,6 +14646,10 @@
     },
     "results-table": {
       "datasource-header": "Zdroj dat",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min.",
       "deleted-remaining-header": "Zbývající čas",
       "location-header": "Poloha",
@@ -15123,10 +15145,13 @@
       "title": "Vytvářejte nástěnky rychleji díky návrhům a šablonám"
     },
     "nav": {
+      "counter": "",
       "go-to": "Přejít na snímek {{number}}",
-      "next": "Další",
-      "prev": "Předchozí"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Vysvětlit dotaz",

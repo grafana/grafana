@@ -1,8 +1,11 @@
 import { defineFeatureEvents } from '@grafana/runtime/internal';
 
+import { isSuggestedDashboardAssistantEnabled, isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
+
 import {
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
+  type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
@@ -14,14 +17,13 @@ import {
 const SCHEMA_VERSION = 1;
 
 const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard_library', {
+  /** Version of the event schema, used to handle breaking changes in the properties contract. */
   schema_version: SCHEMA_VERSION,
 });
 
 /**
  * Analytics events for the Dashboard Library feature.
- * @owner grafana-dashboards
  */
-
 export const NewDashboardLibraryInteractions = {
   /** Fired when the library panel finishes rendering and its items are visible. */
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
@@ -39,6 +41,9 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckTriggered: newDashboardLibraryInteraction<CompatibilityCheckTriggeredProperties>(
     'compatibility_check_triggered'
   ),
+  /** Fired when the user chooses to start a new dashboard from scratch instead of using a library item. */
+  createFromScratchClicked:
+    newDashboardLibraryInteraction<CreateFromScratchClickedProperties>('create_from_scratch_clicked'),
   /** Fired when a dashboard compatibility check finishes and results are ready for display. */
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
@@ -47,12 +52,34 @@ export const NewDashboardLibraryInteractions = {
 
 /**
  * Dashboard Library events scoped to the Template Dashboards variant.
- * @owner grafana-dashboards
  */
 export const NewTemplateDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
-  /** Fired when the user selects an item in the Template Dashboards view. */
-  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
-  /** Fired when the Template Dashboards view finishes loading. */
-  loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
+
+  loaded: async (properties: LoadedProperties) => {
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+    NewDashboardLibraryInteractions.loaded({ ...properties, isDashboardTemplatesAssistantEnabled });
+  },
+
+  itemClicked: async (properties: ItemClickedProperties) => {
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+    NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
+  },
+};
+
+/**
+ * Dashboard Library events scoped to the Suggested Dashboards variant.
+ */
+export const NewSuggestedDashboardInteractions = {
+  ...NewDashboardLibraryInteractions,
+
+  itemClicked: async (properties: ItemClickedProperties & { action: 'use_dashboard' | 'assistant' }) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    NewDashboardLibraryInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+  },
+
+  loaded: async (properties: LoadedProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    NewDashboardLibraryInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
+  },
 };
