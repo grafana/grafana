@@ -1,10 +1,10 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 import { lowerCase } from 'lodash';
-import moment from 'moment-timezone';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
+import moment from './luxon_moment_compat/moment';
 import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
 
 /**

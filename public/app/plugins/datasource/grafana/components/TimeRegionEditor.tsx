@@ -1,8 +1,14 @@
 import { css } from '@emotion/css';
-import moment, { type Moment } from 'moment/moment';
 import { type ChangeEvent, useState } from 'react';
 
-import { dateTimeAsMoment, getTimeZoneInfo, type GrafanaTheme2, isDateTime, type SelectableValue } from '@grafana/data';
+import {
+  dateTimeAsMoment,
+  type DateTime,
+  getTimeZoneInfo,
+  type GrafanaTheme2,
+  isDateTime,
+  type SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   Button,
@@ -45,12 +51,12 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     setEditing(!isEditing);
   };
 
-  const getTime = (time: string | undefined): Moment | undefined => {
+  const getTime = (time: string | undefined): DateTime | undefined => {
     if (!time) {
       return undefined;
     }
 
-    const date = moment();
+    const date = dateTimeAsMoment();
 
     if (time) {
       const match = time.split(':');
@@ -85,7 +91,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     return timezone;
   };
 
-  const onTimeChange = (v: Moment | undefined, field: string) => {
+  const onTimeChange = (v: DateTime | undefined, field: string) => {
     const time = v ? v.format('HH:mm') : undefined;
     if (field === 'from') {
       onChange({ ...value, from: time });
@@ -186,7 +192,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               />
               <TimeOfDayPicker
                 value={isDateTime(from) ? from : undefined}
-                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
+                onChange={(v) => onTimeChange(v, 'from')}
                 allowEmpty={true}
                 placeholder="HH:mm"
                 size="sm"
@@ -207,7 +213,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               )}
               <TimeOfDayPicker
                 value={isDateTime(to) ? to : undefined}
-                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'to')}
+                onChange={(v) => onTimeChange(v, 'to')}
                 allowEmpty={true}
                 placeholder="HH:mm"
                 size="sm"
