@@ -481,7 +481,8 @@ export type CorrelationSpec = {
   description?: string;
   label: string;
   source: CorrelationDataSourceRef;
-  target?: CorrelationDataSourceRef;
+  /** null is for PATCH/edit when we want to clear the value */
+  target?: CorrelationDataSourceRef | null;
   type: CorrelationCorrelationType;
 };
 export type Correlation = {
