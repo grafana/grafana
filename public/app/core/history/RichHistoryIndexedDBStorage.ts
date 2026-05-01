@@ -103,7 +103,7 @@ function matchesSearchFilter(query: RichHistoryQuery, searchFilter: string): boo
   }
 
   return query.queries.some((q) =>
-    Object.values(omit(q, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value) =>
+    Object.values(omit(q, ['datasource', 'key', 'refId', 'hide'])).some((value) =>
       value?.toString().includes(searchFilter)
     )
   );
