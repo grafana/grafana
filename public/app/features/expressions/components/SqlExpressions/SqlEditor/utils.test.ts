@@ -1,42 +1,74 @@
 import { CompletionContext } from '@codemirror/autocomplete';
+import { sql as sqlLanguage } from '@codemirror/lang-sql';
 import { EditorState } from '@codemirror/state';
 
-import {
-  getFromTables,
-  getQualifiedColumnContext,
-  getSqlCompletionSource,
-  isClauseCompletionPosition,
-  isTableCompletionPosition,
-  type SqlCompletionProvider,
-} from './utils';
+import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
 const getCompletionResult = (completionProvider: SqlCompletionProvider, sql: string, pos = sql.length) => {
   const completionSource = getSqlCompletionSource(completionProvider);
-  const context = new CompletionContext(EditorState.create({ doc: sql }), pos, true);
+  const context = new CompletionContext(EditorState.create({ doc: sql, extensions: [sqlLanguage()] }), pos, true);
 
   return completionSource(context);
 };
 
 describe('SQL editor completion utils', () => {
-  it('finds table refs in from and join clauses', () => {
-    expect(getFromTables('SELECT * FROM A AS a JOIN B b ON a.time = b.time WHERE a.value > 0')).toEqual(['A', 'B']);
+  it('suggests tables in FROM and comma-separated FROM list positions', async () => {
+    const completionProvider = {
+      tables: () => [
+        { label: 'A', insertText: 'A' },
+        { label: 'B', insertText: 'B' },
+      ],
+    };
+
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM ')).resolves.toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([
+          expect.objectContaining({ label: 'A' }),
+          expect.objectContaining({ label: 'B' }),
+        ]),
+      })
+    );
+
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A, ')).resolves.toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'B' })]),
+      })
+    );
   });
 
-  it('detects table completion positions', () => {
-    expect(isTableCompletionPosition('SELECT * FROM ')).toBe(true);
-    expect(isTableCompletionPosition('SELECT * FROM A, ')).toBe(true);
-    expect(isTableCompletionPosition('SELECT * FROM A WHERE ')).toBe(false);
+  it('does not suggest tables after a comma outside the FROM/JOIN section', async () => {
+    const result = await getCompletionResult(
+      {
+        tables: () => [{ label: 'A', insertText: 'A' }],
+      },
+      'SELECT * FROM A WHERE value, '
+    );
+
+    expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'A' })]));
   });
 
-  it('detects clause completion positions after a table ref', () => {
-    expect(isClauseCompletionPosition('SELECT * FROM A ')).toBe(true);
-    expect(isClauseCompletionPosition('SELECT * FROM ')).toBe(false);
-    expect(isClauseCompletionPosition('SELECT * FROM A WHERE ')).toBe(false);
-  });
+  it('suggests clauses after a table ref', async () => {
+    const completionProvider = {
+      clauses: () => [{ label: 'NEXT_CLAUSE' }],
+    };
 
-  it('finds qualified column completion context', () => {
-    expect(getQualifiedColumnContext('SELECT A.')).toEqual({ table: 'A', from: 9 });
-    expect(getQualifiedColumnContext('SELECT value')).toBeUndefined();
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A ')).resolves.toEqual(
+      expect.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
+      })
+    );
+
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM ')).resolves.toEqual(
+      expect.not.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
+      })
+    );
+
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A WHERE ')).resolves.toEqual(
+      expect.not.objectContaining({
+        options: expect.arrayContaining([expect.objectContaining({ label: 'NEXT_CLAUSE' })]),
+      })
+    );
   });
 
   it('resolves columns for direct table refs in qualified column completions', async () => {
