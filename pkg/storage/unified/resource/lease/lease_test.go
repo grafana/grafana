@@ -52,7 +52,8 @@ func TestAcquireNameValidation(t *testing.T) {
 }
 
 func TestAcquireTTLValidation(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-validation")
+	const minTTL = 100 * time.Millisecond
+	m := lease.NewManager(newMapKV(), "holder-validation", lease.WithInternalMinTTL(minTTL))
 
 	testCases := []struct {
 		d       time.Duration

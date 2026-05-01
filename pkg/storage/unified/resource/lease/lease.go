@@ -19,7 +19,11 @@ const (
 	defaultTTL = 10 * time.Second
 
 	// minimum TTL accepted. Returns an error if the caller passes a lower duration.
-	minTTL = 100 * time.Millisecond
+	defaultMinTTL = 10 * time.Second
+
+	// maximum tolerated clock skew across hosts when deciding whether an
+	// existing lease is still held by another process.
+	defaultMaxClockSkew = 100 * time.Millisecond
 
 	// maximum number of times an Acquire() call will loop to ensure a lease
 	// is already acquired when it cannot create a unique key.
@@ -74,14 +78,38 @@ func (meta *leaseMetadata) ValidAsOf(ts time.Time) bool {
 
 // Manager acquires and releases leases backed by a KV store.
 type Manager struct {
-	store  kv.KV
-	holder string
+	store        kv.KV
+	holder       string
+	minTTL       time.Duration
+	maxClockSkew time.Duration
 }
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
-func NewManager(store kv.KV, holder string) *Manager {
-	return &Manager{store: store, holder: holder}
+func NewManager(store kv.KV, holder string, opts ...ManagerOption) *Manager {
+	m := &Manager{
+		store:        store,
+		holder:       holder,
+		minTTL:       defaultMinTTL,
+		maxClockSkew: defaultMaxClockSkew,
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// ManagerOption configures a lease Manager.
+type ManagerOption func(*Manager)
+
+// WithInternalMinTTL overrides the minimum TTL accepted by a Manager and
+// disables clock-skew compensation. This is intended only for tests that need
+// short lease durations.
+func WithInternalMinTTL(d time.Duration) ManagerOption {
+	return func(m *Manager) {
+		m.minTTL = d
+		m.maxClockSkew = 0
+	}
 }
 
 // AcquireOption configures a single Acquire call.
@@ -112,8 +140,8 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 		opt(&cfg)
 	}
 
-	if cfg.ttl < minTTL {
-		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, minTTL)
+	if cfg.ttl < m.minTTL {
+		return nil, fmt.Errorf("invalid TTL: %s < %s", cfg.ttl, m.minTTL)
 	}
 
 	for attempt := 0; ; attempt++ {
@@ -128,7 +156,9 @@ func (m *Manager) Acquire(ctx context.Context, name string, opts ...AcquireOptio
 			if err != nil {
 				return nil, err
 			}
-			if latest.ValidAsOf(now) {
+			// Bias acquisition toward treating a remote lease as still held
+			// to tolerate clock skew between hosts.
+			if latest.ValidAsOf(now.Add(-m.maxClockSkew)) {
 				return nil, ErrLeaseAlreadyHeld
 			}
 		}
