@@ -71,6 +71,15 @@ describe('SQL editor completion utils', () => {
     );
   });
 
+  it('does not suggest clauses after a terminated statement', async () => {
+    const completionProvider = {
+      clauses: () => [{ label: 'NEXT_CLAUSE' }],
+    };
+
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A;')).resolves.toEqual(null);
+    await expect(getCompletionResult(completionProvider, 'SELECT * FROM A;\n')).resolves.toEqual(null);
+  });
+
   it('resolves columns for direct table refs in qualified column completions', async () => {
     const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
     const result = await getCompletionResult(

@@ -13,6 +13,7 @@ const SQL_FROM_KEYWORD = 'FROM';
 const SQL_JOIN_KEYWORD = 'JOIN';
 const SQL_AS_KEYWORD = 'AS';
 const SQL_ON_KEYWORD = 'ON';
+const SQL_STATEMENT_TERMINATOR = ';';
 
 const SQL_FROM_SECTION_END_KEYWORDS = new Set([
   'WHERE',
@@ -69,6 +70,10 @@ export function getSqlCompletionSituation(
   }
 
   const completionFrom = word?.from ?? context.pos;
+
+  if (statement && isAfterStatementTerminator(context, statement, completionFrom)) {
+    return { type: 'none' };
+  }
 
   if (statement && isTableCompletionPosition(context, statement, completionFrom)) {
     return { type: 'table', from: completionFrom };
@@ -314,11 +319,19 @@ function isClauseCompletionPosition(
   const previousNode = getPreviousStatementChild(statement, completionFrom);
   const previousKeyword = getKeywordText(context, previousNode);
 
-  if (SQL_CLAUSE_BLOCKING_KEYWORDS.has(previousKeyword) || isComma(context, previousNode)) {
+  if (
+    SQL_CLAUSE_BLOCKING_KEYWORDS.has(previousKeyword) ||
+    isComma(context, previousNode) ||
+    isStatementTerminator(context, previousNode)
+  ) {
     return false;
   }
 
   return true;
+}
+
+function isAfterStatementTerminator(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {
+  return isStatementTerminator(context, getPreviousStatementChild(statement, pos));
 }
 
 function isInFromSection(context: CodeMirrorCompletionContext, statement: SyntaxNode, pos: number): boolean {
@@ -379,6 +392,10 @@ function isIdentifierLike(node: SyntaxNode | undefined): node is SyntaxNode {
 
 function isComma(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {
   return node?.name === SQL_PUNCTUATION_NODE_NAME && getNodeText(context, node) === ',';
+}
+
+function isStatementTerminator(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {
+  return node ? getNodeText(context, node) === SQL_STATEMENT_TERMINATOR : false;
 }
 
 function getKeywordText(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): string {
