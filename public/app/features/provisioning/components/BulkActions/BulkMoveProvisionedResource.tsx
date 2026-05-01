@@ -30,7 +30,12 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { type BulkActionFormData, type BulkActionProvisionResourceProps, getTargetFolderPathInRepo, isSameFolderPath } from './utils';
+import {
+  type BulkActionFormData,
+  type BulkActionProvisionResourceProps,
+  getTargetFolderPathInRepo,
+  isSameFolderPath,
+} from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -39,7 +44,14 @@ interface FormProps extends BulkActionProvisionResourceProps {
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, folderPath, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  selectedItems,
+  repository,
+  canPushToConfiguredBranch,
+  folderPath,
+  onDismiss,
+}: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();

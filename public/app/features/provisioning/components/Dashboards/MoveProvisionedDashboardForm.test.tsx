@@ -266,10 +266,7 @@ describe('MoveProvisionedDashboardForm', () => {
     expect(createJob).not.toHaveBeenCalled();
     expect(getAppEvents().publish).toHaveBeenCalledWith({
       type: AppEvents.alertError.name,
-      payload: [
-        'Failed to move dashboard',
-        'Dashboard is already in the selected folder.',
-      ],
+      payload: ['Failed to move dashboard', 'Dashboard is already in the selected folder.'],
     });
   });
 });

@@ -126,7 +126,12 @@ export function MoveProvisionedDashboardForm({
 
     const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
     if (currentSourcePath && isResourceAlreadyInTarget(currentSourcePath, targetFolderPath)) {
-      showError(t('dashboard-scene.move-provisioned-dashboard-form.already-in-folder', 'Dashboard is already in the selected folder.'));
+      showError(
+        t(
+          'dashboard-scene.move-provisioned-dashboard-form.already-in-folder',
+          'Dashboard is already in the selected folder.'
+        )
+      );
       return;
     }
 

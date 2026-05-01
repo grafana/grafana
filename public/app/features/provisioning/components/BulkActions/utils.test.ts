@@ -1,6 +1,11 @@
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-import { getTargetFolderPathInRepo, getNestedFolderPath, getResourceTargetPath, isResourceAlreadyInTarget } from './utils';
+import {
+  getTargetFolderPathInRepo,
+  getNestedFolderPath,
+  getResourceTargetPath,
+  isResourceAlreadyInTarget,
+} from './utils';
 
 const MOCK_FOLDER = {
   metadata: { annotations: { [AnnoKeySourcePath]: 'path/to/folder' } },
