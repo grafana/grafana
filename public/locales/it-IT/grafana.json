@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifica YAML",
         "save": "Salva"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nome",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Elimina tutte le regole"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Elimina",
       "delete-modal-delete-button": "Elimina",
@@ -1573,8 +1575,14 @@
         "update-error": "Impossibile aggiornare il gruppo di regole",
         "update-success": "Gruppo di regole aggiornato correttamente"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Il gruppo selezionato non può essere modificato",
       "group-not-editable-description": "Questo gruppo appartiene a un'origine dati che non supporta la modifica.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifica gruppo di regole",
       "rule-group-error": "Errore durante il caricamento del gruppo di regole"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "In ordine alfabetico (A-Z)",
         "alphabetically-za": "In ordine alfabetico (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Elementi eliminati (prima il più recente)",
         "deleted-oldest": "Elementi eliminati (prima il meno recente)"
       }
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Dati di input",
+      "loading": "",
       "output-data": "Dati di uscita",
       "title-debug-transformation": "Esegui il debug della trasformazione"
     },
@@ -8269,6 +8280,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cerca"
     },
     "resource-dimension-editor": {
@@ -10120,6 +10132,12 @@
     "cascader": {
       "clear-button": "Cancella selezione"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Valore RGBA"
     },
@@ -10465,6 +10483,7 @@
     "sidebar": {
       "close": "Chiudi",
       "dock": "Aggancia",
+      "go-back": "",
       "hide": "Nascondi",
       "show": "Mostra",
       "undock": "Sgancia"
@@ -11908,8 +11927,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Tutti",
-      "title-filtered": "Tutti (filtrati)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Cancella tutto"
@@ -13566,6 +13587,7 @@
       "contact-admin": "Contatta l'amministratore di Grafana per convertire questa risorsa in locale o per eliminare tutte le risorse dal repository mancante.",
       "convert-to-local-button": "Converti in risorsa locale",
       "delete-button": "Elimina",
+      "go-to-dashboards": "",
       "job-error": "Si è verificato un errore durante l'elaborazione delle risorse non gestite",
       "job-success": "Risorse non gestite elaborate correttamente",
       "job-warning": "Alcune risorse sono state elaborate con avvisi. Rivedi i risultati.",
@@ -13812,7 +13834,8 @@
       "make-sure": "Crea un token con queste autorizzazioni"
     },
     "validation": {
-      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova."
+      "hidden-characters": "Questo campo contiene caratteri nascosti che potrebbero essere stati introdotti durante l'operazione di copia e incolla. Digita nuovamente il valore oppure cancellalo e riprova.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Attenzione",
     "watch-stream": {
@@ -14220,6 +14243,8 @@
       "alerts-loading": "Avvisi",
       "card-click": "Seleziona scheda {{id}}",
       "data": "Dati",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
@@ -14273,6 +14298,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Ripristina"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Non hai eliminato nessun dashboard di recente.",
@@ -14435,6 +14464,10 @@
     },
     "results-table": {
       "datasource-header": "Sorgente dati",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "<1 min",
       "deleted-remaining-header": "Tempo rimanente",
       "location-header": "Posizione",
@@ -14928,10 +14961,13 @@
       "title": "Crea rapidamente dashboard grazie a suggerimenti e modelli"
     },
     "nav": {
+      "counter": "",
       "go-to": "Vai alla diapositiva {{number}}",
-      "next": "Avanti",
-      "prev": "Precedente"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Spiega query",
@@ -16008,6 +16044,9 @@
         "grouping-to-matrix": "Raggruppamento in matrice"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Calcola un istogramma dai dati di input."
@@ -16342,6 +16381,9 @@
       "label-time-field": "Campo dell'ora",
       "tooltip-statistic-should-calculated-series": "La statistica che dovrebbe essere calcolata per questa serie temporale.",
       "tooltip-time-field": "Il campo temporale che verrà utilizzato per la serie temporale. Se non selezionato, verrà utilizzato il primo trovato."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nome del primo campo",

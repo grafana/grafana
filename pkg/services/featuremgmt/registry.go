@@ -545,15 +545,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourcesQuerierRawOutput",
-			Description:     "use raw output mode for the data source querier",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: false,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -799,6 +790,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "stateTimeline.nameAboveBars",
+			Description: "Enables option to position series names above bars in the state timeline panel",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStagePublicPreview,
@@ -986,7 +985,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -2552,6 +2551,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryEditorNextMultiSelect",
+			Description: "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
 			Stage:        FeatureStageExperimental,
@@ -3061,6 +3068,31 @@ var (
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.correlationsSkipLegacy",
+			Description: "Route any calls to legacy correlations endpoints to call through to app platform",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:         "grafana.meticulousAIRecorder",
+			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "datasources.useNewStackInfoToSettingsCache",
+			Description: "Use the new cache for datasource.StackInfoToSettings, backend flag",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

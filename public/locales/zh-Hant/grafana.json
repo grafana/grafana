@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "編輯 YAML",
         "save": "儲存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "名稱",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "刪除所有規則"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "刪除",
       "delete-modal-delete-button": "刪除",
@@ -1568,8 +1570,14 @@
         "update-error": "無法更新規則群組",
         "update-success": "已成功更新規則群組"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "無法編輯所選群組",
       "group-not-editable-description": "此群組屬於不支援編輯的資料來源。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "編輯規則群組",
       "rule-group-error": "載入規則群組時發生錯誤"
     },
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
         "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已刪除（最新排前）",
         "deleted-oldest": "已刪除（最舊排前）"
       }
@@ -6457,6 +6467,7 @@
     },
     "transformation-editor": {
       "input-data": "輸入資料",
+      "loading": "",
       "output-data": "輸出資料",
       "title-debug-transformation": "偵錯轉換"
     },
@@ -8223,6 +8234,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜尋"
     },
     "resource-dimension-editor": {
@@ -10062,6 +10074,12 @@
     "cascader": {
       "clear-button": "清空選項"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10407,6 +10425,7 @@
     "sidebar": {
       "close": "關閉",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隱藏",
       "show": "顯示",
       "undock": "取消停靠"
@@ -11842,8 +11861,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已篩選）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13491,6 +13512,7 @@
       "contact-admin": "請聯絡您的 Grafana 管理員，以將此資源轉換為本機資源，或刪除缺失的儲存庫中的所有資源。",
       "convert-to-local-button": "轉換為本機資源",
       "delete-button": "刪除",
+      "go-to-dashboards": "",
       "job-error": "處理孤立的資源時發生錯誤",
       "job-success": "孤立的資源已成功處理",
       "job-warning": "某些資源在處理時出現警告。請檢查結果。",
@@ -13729,7 +13751,8 @@
       "make-sure": "使用以下權限建立權杖"
     },
     "validation": {
-      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。"
+      "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14134,6 +14157,8 @@
       "alerts-loading": "警示",
       "card-click": "選取卡片 {{id}}",
       "data": "資料",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新 {{type}}",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14184,6 +14209,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "還原"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
@@ -14344,6 +14373,10 @@
     },
     "results-table": {
       "datasource-header": "資料來源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分鐘",
       "deleted-remaining-header": "剩餘時間",
       "location-header": "位置",
@@ -14836,10 +14869,13 @@
       "title": "利用建議和範本快速建立儀表板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往投影片 {{number}}",
-      "next": "下一個",
-      "prev": "上一個"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解釋查詢",
@@ -15915,6 +15951,9 @@
         "grouping-to-matrix": "分組到矩陣"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "從輸入資料計算直方圖。"
@@ -16249,6 +16288,9 @@
       "label-time-field": "時間欄位",
       "tooltip-statistic-should-calculated-series": "應該為此時間系列計算的統計資料。",
       "tooltip-time-field": "將用於時間系列的時間欄位。如果未選擇，將使用第一個找到的欄位。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一個欄位名稱",

@@ -1679,15 +1679,15 @@
     {
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
-        "resourceVersion": "1775213461656",
+        "resourceVersion": "1777451091484",
         "creationTimestamp": "2026-03-09T18:40:15Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 10:51:01.656487 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-29 08:24:51.48419 +0000 UTC"
         }
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
@@ -1905,6 +1905,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.useNewStackInfoToSettingsCache",
+        "resourceVersion": "1777558060067",
+        "creationTimestamp": "2026-04-30T14:07:40Z"
+      },
+      "spec": {
+        "description": "Use the new cache for datasource.StackInfoToSettings, backend flag",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpoint",
         "resourceVersion": "1772118749630",
         "creationTimestamp": "2026-02-26T15:12:29Z"
@@ -2004,7 +2017,8 @@
       "metadata": {
         "name": "datasourcesQuerierRawOutput",
         "resourceVersion": "1774855676428",
-        "creationTimestamp": "2026-03-30T07:27:56Z"
+        "creationTimestamp": "2026-03-30T07:27:56Z",
+        "deletionTimestamp": "2026-04-28T09:16:40Z"
       },
       "spec": {
         "description": "use raw output mode for the data source querier",
@@ -2551,6 +2565,36 @@
         "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
         "codeowner": "@grafana/frontend-ops",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.correlationsSkipLegacy",
+        "resourceVersion": "1777299668594",
+        "creationTimestamp": "2026-04-27T14:21:08Z"
+      },
+      "spec": {
+        "description": "Route any calls to legacy correlations endpoints to call through to app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.meticulousAIRecorder",
+        "resourceVersion": "1777401759422",
+        "creationTimestamp": "2026-04-28T17:20:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-28 18:42:39.422606 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable Meticulous AI session recorder for automated UI test generation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4710,6 +4754,20 @@
     },
     {
       "metadata": {
+        "name": "queryEditorNextMultiSelect",
+        "resourceVersion": "1777462601515",
+        "creationTimestamp": "2026-04-29T11:36:41Z"
+      },
+      "spec": {
+        "description": "Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryFetchConfigFromSettingsService",
         "resourceVersion": "1773659793759",
         "creationTimestamp": "2026-03-16T11:16:33Z"
@@ -5432,6 +5490,35 @@
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "stateTimeline.nameAboveBars",
+        "resourceVersion": "1776910622317",
+        "creationTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "stateTimelineNameAboveBars",
+        "resourceVersion": "1774329986283",
+        "creationTimestamp": "2026-03-24T05:26:26Z",
+        "deletionTimestamp": "2026-04-23T02:17:02Z"
+      },
+      "spec": {
+        "description": "Enables option to position series names above bars in the state timeline panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
