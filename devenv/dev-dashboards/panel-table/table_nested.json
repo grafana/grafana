@@ -622,6 +622,104 @@
       ],
       "type": "table"
     }
+  ,{
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "maxDataPoints": 100,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "showHeader": true
+      },
+      "pluginVersion": "13.0.0-local",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        }
+      ],
+      "title": "Nested - Expand by default",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {
+              "A": 5,
+              "Info": 2,
+              "Max": 4,
+              "Min": 3,
+              "State": 1,
+              "Time": 0
+            },
+            "renameByName": {}
+          }
+        },
+        {
+          "id": "groupToNestedTable",
+          "options": {
+            "expandNestedRowsByDefault": true,
+            "showSubframeHeaders": true,
+            "rules": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "State"
+                },
+                "operation": "groupby",
+                "aggregations": []
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    }
   ],
   "preload": false,
   "refresh": "",
@@ -635,6 +733,6 @@
   },
   "timezone": "browser",
   "title": "Panel Tests - Table - Nested",
-  "version": 1,
+  "version": 2,
   "uid": "1846eebb-eb2f-4d86-a17e-f0084118cdad"
 }

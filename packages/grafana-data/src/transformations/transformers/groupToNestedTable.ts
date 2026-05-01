@@ -15,6 +15,7 @@ import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
 export const SHOW_NESTED_HEADERS_DEFAULT = true;
+export const EXPAND_NESTED_ROWS_DEFAULT = false;
 const MINIMUM_FIELDS_REQUIRED = 2;
 
 // ---------------------------------------------------------------------------
@@ -27,6 +28,7 @@ const MINIMUM_FIELDS_REQUIRED = 2;
  */
 export interface GroupToNestedTableTransformerOptions {
   showSubframeHeaders?: boolean;
+  expandNestedRowsByDefault?: boolean;
   fields: Record<string, GroupByFieldOptions>;
 }
 
@@ -52,6 +54,8 @@ export interface GroupToNestedTableMatcherConfig {
 
 export interface GroupToNestedTableTransformerOptionsV2 {
   showSubframeHeaders?: boolean;
+  /** When true, all nested rows are expanded by default when the panel loads. */
+  expandNestedRowsByDefault?: boolean;
   /** Ordered list of matcher rules. First matching rule for a field wins. */
   rules: GroupToNestedTableMatcherConfig[];
 }
@@ -89,6 +93,7 @@ export function migrateGroupToNestedTableOptions(
 
   return {
     showSubframeHeaders: options.showSubframeHeaders,
+    expandNestedRowsByDefault: options.expandNestedRowsByDefault,
     rules,
   };
 }
@@ -252,7 +257,9 @@ export const groupToNestedTable: DataTransformerInfo<
             values: subFrames,
           });
 
+          const expandAllRows = options.expandNestedRowsByDefault ?? EXPAND_NESTED_ROWS_DEFAULT;
           processed.push({
+            meta: expandAllRows ? { custom: { expandAllRows: true } } : undefined,
             fields,
             length: valuesByGroupKey.size,
           });

@@ -252,7 +252,12 @@ export function TableNG(props: TableNGProps) {
     },
     [getCellActions]
   );
-  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(() => {
+    if (data.meta?.custom?.expandAllRows) {
+      return new Set(Array.from({ length: data.length }, (_, i) => i));
+    }
+    return new Set();
+  });
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing

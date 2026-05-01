@@ -10,6 +10,7 @@ import {
   isV1GroupToNestedTableOptions,
   migrateGroupToNestedTableOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
+  EXPAND_NESTED_ROWS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
@@ -166,6 +167,9 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
   const showHeaders =
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
+  const expandByDefault =
+    options.expandNestedRowsByDefault === undefined ? EXPAND_NESTED_ROWS_DEFAULT : options.expandNestedRowsByDefault;
+
   const hasGrouping = options.rules.some((r) => r.operation === GroupByOperationID.groupBy);
   const hasAggregation = options.rules.some(
     (r) => r.operation === GroupByOperationID.aggregate && r.aggregations.length > 0
@@ -220,6 +224,31 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
               ...options,
               showSubframeHeaders:
                 options.showSubframeHeaders === undefined ? !SHOW_NESTED_HEADERS_DEFAULT : !options.showSubframeHeaders,
+            })
+          }
+        />
+      </Field>
+
+      <Field
+        label={t(
+          'transformers.group-to-nested-table-transformer-editor.label-expand-nested-rows-by-default',
+          'Expand nested rows by default'
+        )}
+        description={t(
+          'transformers.group-to-nested-table-transformer-editor.description-expand-nested-rows',
+          'If enabled, all nested rows will be expanded when the panel loads'
+        )}
+        noMargin
+      >
+        <Switch
+          value={expandByDefault}
+          onChange={() =>
+            onChange({
+              ...options,
+              expandNestedRowsByDefault:
+                options.expandNestedRowsByDefault === undefined
+                  ? !EXPAND_NESTED_ROWS_DEFAULT
+                  : !options.expandNestedRowsByDefault,
             })
           }
         />
