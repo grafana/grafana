@@ -157,6 +157,16 @@ func TestNewObjectStorageLock_Validation(t *testing.T) {
 			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: 100 * time.Millisecond, HeartbeatInterval: 75 * time.Millisecond},
 			wantErr: "at least 2x HeartbeatInterval",
 		},
+		{
+			name:    "negative HeartbeatUpdateTimeout",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: time.Second, HeartbeatInterval: 100 * time.Millisecond, HeartbeatUpdateTimeout: -1 * time.Millisecond},
+			wantErr: "HeartbeatUpdateTimeout must be positive",
+		},
+		{
+			name:    "negative ReleaseDeleteTimeout",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: time.Second, HeartbeatInterval: 100 * time.Millisecond, ReleaseDeleteTimeout: -1 * time.Millisecond},
+			wantErr: "ReleaseDeleteTimeout must be positive",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -303,6 +313,60 @@ func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	case <-time.After(500 * time.Millisecond):
 		t.Fatal("expected immediate lock loss on errLockHeld, but it was not detected")
 	}
+}
+
+// TestObjectStorageLock_HeartbeatUpdateTimeoutHonored asserts that the
+// configured HeartbeatUpdateTimeout caps each heartbeat Update call. Without
+// a configurable knob this defaulted to 30s, which made Release block up to
+// 30s on shutdown if a heartbeat tick was in flight.
+func TestObjectStorageLock_HeartbeatUpdateTimeoutHonored(t *testing.T) {
+	inner := newFakeBackend(newConditionalBucket())
+	backend := &ctxRespectingBlockingBackend{
+		lockBackend:    inner,
+		updateDuration: make(chan time.Duration, 1),
+	}
+
+	configuredTimeout := 100 * time.Millisecond
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:                backend,
+		Key:                    "test-lock",
+		Owner:                  "instance-1",
+		TTL:                    1 * time.Second,
+		HeartbeatInterval:      50 * time.Millisecond,
+		HeartbeatUpdateTimeout: configuredTimeout,
+	})
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	require.NoError(t, lock.Acquire(ctx))
+	t.Cleanup(func() { _ = lock.Release() })
+
+	select {
+	case d := <-backend.updateDuration:
+		// Heartbeat Update returned within the configured timeout, not the 30s default.
+		require.GreaterOrEqual(t, d, configuredTimeout-20*time.Millisecond)
+		require.Less(t, d, configuredTimeout+200*time.Millisecond)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected heartbeat Update to return within configured timeout")
+	}
+}
+
+// ctxRespectingBlockingBackend blocks Update on ctx.Done() and reports the
+// elapsed time on updateDuration. Used to verify that callers honor the
+// timeout context they pass in.
+type ctxRespectingBlockingBackend struct {
+	lockBackend
+	updateDuration chan time.Duration
+}
+
+func (b *ctxRespectingBlockingBackend) Update(ctx context.Context, _ string, _ lockInfo) error {
+	start := time.Now()
+	<-ctx.Done()
+	select {
+	case b.updateDuration <- time.Since(start):
+	default:
+	}
+	return ctx.Err()
 }
 
 // failingUpdateBackend wraps a lockBackend and fails Update calls

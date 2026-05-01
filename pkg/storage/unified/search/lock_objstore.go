@@ -52,11 +52,13 @@ var errInvalidLockKey = errors.New("invalid lock key")
 // goroutine only touches immutable config and closes lostCh.
 type objectStorageLock struct {
 	// Immutable after construction.
-	backend           lockBackend
-	key               string
-	owner             string
-	ttl               time.Duration
-	heartbeatInterval time.Duration
+	backend                lockBackend
+	key                    string
+	owner                  string
+	ttl                    time.Duration
+	heartbeatInterval      time.Duration
+	heartbeatUpdateTimeout time.Duration
+	releaseDeleteTimeout   time.Duration
 
 	held     bool
 	hbCancel context.CancelFunc
@@ -73,6 +75,14 @@ type objectStorageLockConfig struct {
 	Owner             string
 	TTL               time.Duration // Default: 180s
 	HeartbeatInterval time.Duration // Default: 60s
+	// HeartbeatUpdateTimeout caps each heartbeat Update call. It also bounds how
+	// long Release blocks waiting for an in-flight Update to complete (the
+	// heartbeat uses context.Background() for the Update itself to avoid a GCS
+	// conditional-write race; see runHeartbeat). Default: 30s.
+	HeartbeatUpdateTimeout time.Duration
+	// ReleaseDeleteTimeout caps the conditional Delete call performed by
+	// Release. Default: 30s.
+	ReleaseDeleteTimeout time.Duration
 }
 
 // newObjectStorageLock creates a new distributed lock.
@@ -82,6 +92,12 @@ func newObjectStorageLock(cfg objectStorageLockConfig) (*objectStorageLock, erro
 	}
 	if cfg.HeartbeatInterval == 0 {
 		cfg.HeartbeatInterval = 60 * time.Second
+	}
+	if cfg.HeartbeatUpdateTimeout == 0 {
+		cfg.HeartbeatUpdateTimeout = 30 * time.Second
+	}
+	if cfg.ReleaseDeleteTimeout == 0 {
+		cfg.ReleaseDeleteTimeout = 30 * time.Second
 	}
 	if cfg.Backend == nil {
 		return nil, fmt.Errorf("backend must not be nil")
@@ -101,13 +117,21 @@ func newObjectStorageLock(cfg objectStorageLockConfig) (*objectStorageLock, erro
 	if cfg.TTL < 2*cfg.HeartbeatInterval {
 		return nil, fmt.Errorf("TTL (%s) must be at least 2x HeartbeatInterval (%s)", cfg.TTL, cfg.HeartbeatInterval)
 	}
+	if cfg.HeartbeatUpdateTimeout <= 0 {
+		return nil, fmt.Errorf("HeartbeatUpdateTimeout must be positive, got %s", cfg.HeartbeatUpdateTimeout)
+	}
+	if cfg.ReleaseDeleteTimeout <= 0 {
+		return nil, fmt.Errorf("ReleaseDeleteTimeout must be positive, got %s", cfg.ReleaseDeleteTimeout)
+	}
 	return &objectStorageLock{
-		backend:           cfg.Backend,
-		key:               cfg.Key,
-		owner:             cfg.Owner,
-		ttl:               cfg.TTL,
-		heartbeatInterval: cfg.HeartbeatInterval,
-		lostCh:            make(chan struct{}),
+		backend:                cfg.Backend,
+		key:                    cfg.Key,
+		owner:                  cfg.Owner,
+		ttl:                    cfg.TTL,
+		heartbeatInterval:      cfg.HeartbeatInterval,
+		heartbeatUpdateTimeout: cfg.HeartbeatUpdateTimeout,
+		releaseDeleteTimeout:   cfg.ReleaseDeleteTimeout,
+		lostCh:                 make(chan struct{}),
 	}, nil
 }
 
@@ -154,7 +178,7 @@ func (l *objectStorageLock) Release() error {
 	l.hbCancel()
 	<-l.hbDone
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), l.releaseDeleteTimeout)
 	defer cancel()
 	err := l.backend.Delete(ctx, l.key, l.owner)
 	if err == nil || errors.Is(err, errLockNotFound) || errors.Is(err, errLockHeld) {
@@ -190,11 +214,11 @@ func (l *objectStorageLock) runHeartbeat(ctx context.Context, done chan struct{}
 			// GCS, a cancelled-but-committed Update can leave the object at a new
 			// ETag server-side, which would then mismatch Release's conditional
 			// Delete and surface as errPreconditionFailed. Tradeoff: hbCancel() +
-			// <-hbDone in Release can block up to the 30s timeout below if a tick
+			// <-hbDone in Release can block up to heartbeatUpdateTimeout if a tick
 			// is in flight. See also the ctx.Err() != nil guard below, which
 			// prevents the goroutine from signalling Lost when Release is the
 			// reason we're exiting.
-			updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			updateCtx, updateCancel := context.WithTimeout(context.Background(), l.heartbeatUpdateTimeout)
 			err := l.backend.Update(updateCtx, l.key, info)
 			updateCancel()
 			if err != nil {
