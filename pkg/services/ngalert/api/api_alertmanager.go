@@ -11,7 +11,6 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type receiversAuthz interface {
@@ -146,28 +144,17 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RoutePostAMAlerts(c *contextmodel.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RoutePostAMAlerts(c *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
 	if errResp != nil {
 		return errResp
 	}
 
-	alerts := []amv2.PostableAlert{}
-	if err := web.Bind(c.Req, &alerts); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	fmt.Println(alerts)
-
-	if err := am.PutAlerts(c.Req.
-		Context(),
-		apimodels.PostableAlerts{
-			PostableAlerts: alerts,
-		}); err != nil {
+	if err := am.PutAlerts(c.Req.Context(), body); err != nil {
 		return response.Error(http.StatusInternalServerError, "could not put alerts", err)
 	}
 
-	return response.JSON(http.StatusCreated, alerts)
+	return response.JSON(http.StatusCreated, body)
 }
 
 func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
