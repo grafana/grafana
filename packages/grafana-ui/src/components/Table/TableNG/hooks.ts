@@ -396,6 +396,7 @@ interface UseRowHeightOptions {
   nestedRows: NestedRowEntry[];
   nestedFields: Field[];
   nestedColWidths: number[];
+  nestedFooterHeight?: number;
 }
 
 const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - (2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT));
@@ -414,6 +415,7 @@ export function useRowHeight({
   nestedFields,
   nestedColWidths,
   visibleNestedRowCounts,
+  nestedFooterHeight = 0,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const nestedMeasurers = useMemo(
     () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
@@ -509,7 +511,7 @@ export function useRowHeight({
 
         // if expanded with no rows, height === no data height
         if (visibleNestedRowCount === 0) {
-          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight;
         }
 
         const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
@@ -518,7 +520,7 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? 16 : 0;
-        return nestedRowsHeight + nestedHeaderHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
+        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
@@ -530,6 +532,7 @@ export function useRowHeight({
     defaultNestedHeight,
     hasNestedFrames,
     hasWrappedCols,
+    nestedFooterHeight,
     nestedHasOverflow,
     nestedRows,
     nestedData,
