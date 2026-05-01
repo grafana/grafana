@@ -14243,6 +14243,8 @@
       "alerts-loading": "Alertas",
       "card-click": "Selecionar cartão {{id}}",
       "data": "Dados",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Novo {{type}}",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
@@ -14959,10 +14961,13 @@
       "title": "Crie painéis de controlo rapidamente com sugestões e modelos"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ir para o diapositivo {{number}}",
-      "next": "Seguinte",
-      "prev": "Anterior"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Explicar a consulta",

@@ -14243,6 +14243,8 @@
       "alerts-loading": "Larm",
       "card-click": "Välj kort {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Ny {{type}}",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
@@ -14959,10 +14961,13 @@
       "title": "Kom igång med instrumentpaneler snabbt med hjälp av förslag och mallar"
     },
     "nav": {
+      "counter": "",
       "go-to": "Gå till bilden {{number}}",
-      "next": "Nästa",
-      "prev": "Föregående"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Förklara fråga",

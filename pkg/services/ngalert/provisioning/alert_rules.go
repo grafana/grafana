@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -93,22 +94,34 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType      models.RuleTypeFilter
-	Limit         int64
-	ContinueToken string
-	GroupFilter   ListRuleStringFilter
-	FolderFilter  ListRuleStringFilter
+	RuleType        models.RuleTypeFilter
+	Limit           int64
+	ContinueToken   string
+	GroupFilter     ListRuleStringFilter
+	FolderFilter    ListRuleStringFilter
+	TitleFilter     ListRuleStringFilter
+	PausedFilter    ListRuleBoolFilter
+	DashboardFilter ListRuleStringFilter
+	PanelIDFilter   ListRuleStringFilter
 	// TODO: add the following filters
-	// title filter - string
-	// paused filter - bool
-	// dashboard filter - string
-	// panel filter - string
 	// receiver filter - string
 	// metric filter - string
 	// targetDatasourceUID filter - string
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
+	titleExact := ""
+	if len(opts.TitleFilter.Include) > 0 {
+		titleExact = opts.TitleFilter.Include[0]
+	}
+	dashboardUID := ""
+	if len(opts.DashboardFilter.Include) > 0 {
+		dashboardUID = opts.DashboardFilter.Include[0]
+	}
+	panelID := int64(0)
+	if len(opts.PanelIDFilter.Include) > 0 {
+		panelID, _ = strconv.ParseInt(opts.PanelIDFilter.Include[0], 10, 64)
+	}
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
 			OrgID:                user.GetOrgID(),
@@ -116,6 +129,10 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
 			RuleGroupExists:      opts.GroupFilter.Exists,
 			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
+			TitleExact:           titleExact,
+			IsPaused:             opts.PausedFilter.Value,
+			DashboardUID:         dashboardUID,
+			PanelID:              panelID,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
