@@ -47,7 +47,10 @@ type InputObject = Partial<{
 type InputArray = ReadonlyArray<string | number>;
 
 export type MomentInput = MomentLike | DateTime | Date | number | string | InputObject | InputArray | undefined | null;
-type MomentFormat = string | string[];
+export interface MomentBuiltinFormat {
+  __momentBuiltinFormatBrand: any;
+}
+type MomentFormat = string | string[] | MomentBuiltinFormat;
 type FormatArg = string | undefined;
 type UnitGetter = MomentUnit | DateTimeUnit | 'date' | 's' | 'm' | 'h' | 'd' | 'M' | 'y' | 'w';
 
@@ -80,7 +83,7 @@ interface MomentTimeZoneInfo {
 
 interface MomentTzFactory {
   (input?: MomentInput, zone?: string): MomentLike;
-  (input?: MomentInput, format?: string, zone?: string): MomentLike;
+  (input?: MomentInput, format?: MomentFormat, zone?: string): MomentLike;
   guess(ignoreCache?: boolean): string;
   zone(name: string): MomentTimeZoneInfo | null;
   names(): string[];
@@ -97,6 +100,7 @@ export interface MomentLike {
   locale(value: string): MomentLike;
   utc(keepLocalTime?: boolean): MomentLike;
   local(): MomentLike;
+  tz(): string | undefined;
   tz(zone: string, keepLocalTime?: boolean): MomentLike;
   clone(): MomentLike;
   year(value?: number): number | MomentLike;
@@ -196,7 +200,7 @@ const START_END_UNIT_MAP: Record<StartEndUnit, DateTimeUnit> = {
 
 const DEFAULT_LOCALE = 'en';
 const DEFAULT_MOMENT_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
-const ISO_8601 = 'ISO_8601';
+const ISO_8601 = 'ISO_8601' as unknown as MomentBuiltinFormat;
 
 let currentLocale = DEFAULT_LOCALE;
 const localeWeekStart: Record<string, number> = {};
@@ -341,7 +345,7 @@ function parseWithFormats(value: string, format: MomentFormat, options?: MomentO
     const parsed =
       fmt === ISO_8601
         ? DateTime.fromISO(value, options)
-        : DateTime.fromFormat(value, convertMomentToLuxonWithOrdinal(fmt), options);
+        : DateTime.fromFormat(value, convertMomentToLuxonWithOrdinal(fmt as string), options);
     if (parsed.isValid) {
       return parsed;
     }
@@ -586,7 +590,11 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.setZone('local'));
     },
 
-    tz(zone, keepLocalTime = false) {
+    tz(zone?: string, keepLocalTime = false) {
+      if (zone == null) {
+        return dt.zoneName ?? undefined;
+      }
+
       return setDt(dt.setZone(zone, { keepLocalTime }));
     },
 
