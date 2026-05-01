@@ -14157,6 +14157,8 @@
       "alerts-loading": "Peringatan",
       "card-click": "Pilih kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} baru",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
@@ -14867,10 +14869,13 @@
       "title": "Mulai membuat dasbor dengan saran dan templat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Buka slide {{number}}",
-      "next": "Berikutnya",
-      "prev": "Sebelumnya"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Jelaskan kueri",
