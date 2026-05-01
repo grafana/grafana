@@ -217,6 +217,12 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, err)
 	}
 
+	// Note that we're not guaranteed to return ErrLeaseLost if two managers for
+	// the same holder attempt to release the same lease concurrently due to
+	// the lack of a conditional update primitive in the KV interface.
+	//
+	// Given that this use-case is quite contrived, this is an acceptable tradeoff
+	// at this time.
 	if meta.Holder != m.holder || !meta.ValidAsOf(time.Now()) {
 		return fmt.Errorf("releasing %s/%d: %w", lease.name, lease.generation, ErrLeaseLost)
 	}
