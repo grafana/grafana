@@ -406,7 +406,7 @@ func validateManifestPaths(files map[string]int64) error {
 // downloadFile creates localPath and streams the remote object into it,
 // capping the transfer at expectedSize+1 bytes so a misadvertised manifest
 // size or a bucket object that's grown out of band fails fast before we
-// transfer unbounded data. meta.json uses the same pattern.
+// transfer unbounded data. The snapshot manifest uses the same pattern.
 func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string, expectedSize int64) error {
 	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
 	if err != nil {

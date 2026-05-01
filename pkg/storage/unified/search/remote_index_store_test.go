@@ -281,8 +281,9 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 }
 
 func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
-	// A bucket object that exceeds the size advertised in meta.json must fail
-	// fast — we should not transfer unbounded bytes to disk before noticing.
+	// A bucket object that exceeds the size advertised in the snapshot manifest
+	// must fail fast — we should not transfer unbounded bytes to disk before
+	// noticing.
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
@@ -298,9 +299,9 @@ func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
 	}
 	metaBytes, err := json.Marshal(meta)
 	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, metaBytes, nil))
 
-	// Plant a file far larger than what meta.json claims.
+	// Plant a file far larger than what the snapshot manifest claims.
 	oversized := bytes.Repeat([]byte("x"), advertised*1000)
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", oversized, nil))
 
