@@ -850,11 +850,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 					// Log conflict errors when creating resources to monitor potential
 					// case mismatches between the resource_history's `key_path` column and
 					// the resource table's `name` column.
-					k.log.Warn("conflict when creating resource",
+					k.log.Warn("conflict when applying compatibility changes",
 						"namespace", event.Key.Namespace,
 						"group", event.Key.Group,
 						"resource", event.Key.Resource,
 						"name", event.Key.Name,
+						"action", action,
 					)
 				}
 				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
