@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML szerkesztése",
         "save": "Mentés"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "név",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Összes szabály törlése"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Törlés",
       "delete-modal-delete-button": "Törlés",
@@ -1573,8 +1575,14 @@
         "update-error": "A szabálycsoport frissítése sikertelen volt",
         "update-success": "Szabálycsoport sikeresen frissítve"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "A kijelölt csoport nem szerkeszthető",
       "group-not-editable-description": "Ez a csoport olyan adatforráshoz tartozik, amely nem támogatja a szerkesztést.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Szabálycsoport szerkesztése",
       "rule-group-error": "Hiba történt a szabálycsoport betöltésekor"
     },
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Betűrendben (A–Z)",
         "alphabetically-za": "Betűrendben (Z–A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Törölve (legújabb elöl)",
         "deleted-oldest": "Törölve (legrégebbi elöl)"
       }
@@ -13577,6 +13587,7 @@
       "contact-admin": "Vegye fel a kapcsolatot Grafana-rendszergazdájával, hogy ezt az erőforrást helyi erőforrássá alakítsa, vagy törölje az összes erőforrást a hiányzó adattárból.",
       "convert-to-local-button": "Konvertálás helyi erőforrássá",
       "delete-button": "Törlés",
+      "go-to-dashboards": "",
       "job-error": "Hiba történt az árva erőforrások feldolgozása során",
       "job-success": "Az árva erőforrások feldolgozása sikeres volt",
       "job-warning": "Bizonyos erőforrások feldolgozása figyelmeztetésekkel fejeződött be. Tekintse át az eredményeket.",
@@ -13823,7 +13834,8 @@
       "make-sure": "Token létrehozása ezekkel az engedélyekkel"
     },
     "validation": {
-      "hidden-characters": "Ez a mező rejtett karaktereket tartalmaz, amelyek másolással és beillesztéssel kerülhettek bele. Írja be újra, vagy törölje az értéket, és próbálkozzon újra."
+      "hidden-characters": "Ez a mező rejtett karaktereket tartalmaz, amelyek másolással és beillesztéssel kerülhettek bele. Írja be újra, vagy törölje az értéket, és próbálkozzon újra.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Figyelmeztetés",
     "watch-stream": {
@@ -14231,6 +14243,8 @@
       "alerts-loading": "Riasztások",
       "card-click": "{{id}} kártya kiválasztása",
       "data": "Adatok",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Új {{type}}",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
@@ -14284,6 +14298,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Visszaállítás"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Mostanában nem törölt irányítópultokat.",
@@ -14446,6 +14464,10 @@
     },
     "results-table": {
       "datasource-header": "Adatforrás",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 perc",
       "deleted-remaining-header": "Hátralévő idő",
       "location-header": "Hely",
@@ -14939,10 +14961,13 @@
       "title": "Javaslatokkal és sablonokkal gyorsan elindíthat irányítópultokat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ugrás a(z) {{number}}. diára",
-      "next": "Következő",
-      "prev": "Előző"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Lekérdezés magyarázata",

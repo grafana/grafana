@@ -63,10 +63,6 @@ jest.mock('../../utils/utils', () => ({
   getDashboardSceneFor: (sceneObject: unknown) => mockGetDashboardSceneFor(sceneObject),
 }));
 
-jest.mock('../getPanelFrameOptions', () => ({
-  getUpdatedHoverHeader: jest.fn(() => false),
-}));
-
 // Mock sceneGraph.getTimeRange
 jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({} as ReturnType<typeof sceneGraph.getTimeRange>);
 

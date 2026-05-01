@@ -11,6 +11,7 @@ import {
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
+  FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -36,7 +37,19 @@ if (config.featureToggles.nestedFramesFieldOverrides) {
   ALLOWED_SCOPES.push('nested');
 }
 
-// [FIXME] Is there something else we need to do in here?
+function getFramesForMatcherScope(data: DataFrame[], scope?: MatcherScope): DataFrame[] {
+  if (scope !== 'nested') {
+    return data;
+  }
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.nestedFrames && field.values.length > 0) {
+        return field.values[0];
+      }
+    }
+  }
+  return data;
+}
 
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
@@ -79,12 +92,6 @@ export function getFieldOverrideCategories(
     });
   };
 
-  const context = {
-    data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-    isOverride: true,
-  };
-
   const uniqueMatcherScopes = getUniqueMatcherScopes(data);
 
   /**
@@ -92,6 +99,12 @@ export function getFieldOverrideCategories(
    */
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
+    const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
+    const context = {
+      data: overrideData,
+      getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
+      isOverride: true,
+    };
     const overrideName = t('dashboard.get-field-override-categories.override-name', 'Override {{overrideNum}}', {
       overrideNum: idx + 1,
     });
