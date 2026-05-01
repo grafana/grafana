@@ -223,6 +223,13 @@ describe('DashboardControls', () => {
 
     it.each([
       {
+        title: 'should include only viewed panel ancestor section variables in panel view mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelViewVariablesScene,
+        expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
+        expectedHidden: ['otherSectionVar'],
+      },
+      {
         title: 'should include only edited panel ancestor section variables in panel edit mode',
         featureFlags: { dashboardSectionVariables: true },
         sceneBuilder: buildPanelEditVariablesScene,
@@ -651,6 +658,38 @@ function buildPanelEditVariablesScene() {
   });
 }
 
+function buildPanelViewVariablesScene() {
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: 'panel-view-variables',
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $variables: new SceneVariableSet({
+          variables: [
+            new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' }),
+            new TextBoxVariable({ name: 'dupVar', value: 'from-ancestor' }),
+          ],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $variables: new SceneVariableSet({
+          variables: [new TextBoxVariable({ name: 'otherSectionVar', value: 'other' })],
+        }),
+      }),
+    ],
+    dashboardVariables: [
+      new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }),
+      new TextBoxVariable({ name: 'dupVar', value: 'from-dashboard' }),
+    ],
+  });
+
+  dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+
+  return { controls };
+}
+
 function buildPanelEditSceneWithRepeatVariable() {
   return buildPanelEditControlsScene({
     uid: 'panel-edit-repeat',
@@ -709,5 +748,5 @@ function buildPanelEditControlsScene({
   dashboard.setState({ editPanel: buildPanelEditScene(editedPanel) });
   dashboard.activate();
 
-  return { dashboard, controls: dashboard.state.controls as DashboardControls };
+  return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel };
 }

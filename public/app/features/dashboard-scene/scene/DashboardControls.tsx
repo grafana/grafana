@@ -30,6 +30,7 @@ import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/C
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor } from '../utils/utils';
 import { keepOnlyUserDefinedVariables } from '../utils/variables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -50,7 +51,11 @@ function getPanelEditVariables(
   dashboard: DashboardScene,
   sectionVariablesEnabled: boolean
 ): SceneVariable[] | undefined {
-  const panel = dashboard.state.editPanel?.state.panelRef.resolve();
+  const viewPanelKey = dashboard.state.viewPanel;
+  const panel =
+    dashboard.state.editPanel?.state.panelRef.resolve() ??
+    (viewPanelKey ? findVizPanelByPathId(dashboard, viewPanelKey) : null) ??
+    undefined;
 
   if (!panel || !sectionVariablesEnabled) {
     return undefined;
