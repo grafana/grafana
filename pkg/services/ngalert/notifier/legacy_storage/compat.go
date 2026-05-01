@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"strings"
 
@@ -168,7 +169,8 @@ func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.Mimir
 	}
 
 	return &definition.PostableGrafanaReceiver{
-		UID:                   fmt.Sprintf("%s-%d", models.NameToUid(receiverName), idx),
+		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
+		UID:                   mimirIntegrationUID(receiverName, idx),
 		Name:                  receiverName,
 		Type:                  string(config.Schema.Type()),
 		Version:               string(config.Schema.Version),
@@ -176,6 +178,12 @@ func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.Mimir
 		Settings:              raw,
 		SecureSettings:        nil,
 	}, nil
+}
+
+func mimirIntegrationUID(receiverName string, idx int) string {
+	h := fnv.New64a()
+	_, _ = fmt.Fprintf(h, "%s-%d", receiverName, idx)
+	return fmt.Sprintf("%016x", h.Sum64())
 }
 
 func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {

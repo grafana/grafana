@@ -63,7 +63,7 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		converted := result.GrafanaManagedReceivers[0]
 		assert.Equal(t, "test-receiver", result.Name)
 		assert.Equal(t, "test-receiver", converted.Name)
-		assert.Equal(t, fmt.Sprintf("%s-0", models.NameToUid("test-receiver")), converted.UID)
+		assert.Equal(t, mimirIntegrationUID("test-receiver", 0), converted.UID)
 		assert.JSONEq(t, string(expectedJSON), string(converted.Settings))
 		assert.False(t, converted.DisableResolveMessage)
 		assert.Nil(t, converted.SecureSettings)
@@ -111,10 +111,8 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result.GrafanaManagedReceivers, 2)
 
-		uid0 := fmt.Sprintf("%s-0", models.NameToUid("multi-receiver"))
-		uid1 := fmt.Sprintf("%s-1", models.NameToUid("multi-receiver"))
-		assert.Equal(t, uid0, result.GrafanaManagedReceivers[0].UID)
-		assert.Equal(t, uid1, result.GrafanaManagedReceivers[1].UID)
+		assert.Equal(t, mimirIntegrationUID("multi-receiver", 0), result.GrafanaManagedReceivers[0].UID)
+		assert.Equal(t, mimirIntegrationUID("multi-receiver", 1), result.GrafanaManagedReceivers[1].UID)
 	})
 }
 
