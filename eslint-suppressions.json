@@ -2123,11 +2123,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/Logs/LogsContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
