@@ -3,6 +3,7 @@ import { type CodeMirrorCompletionSource } from '@grafana/ui/unstable';
 export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | 'table';
 
 const SQL_CLAUSE_BOUNDARY_PATTERN = /\b(?:where|group\s+by|order\s+by|having|limit|union|except|intersect)\b/i;
+const SQL_ALIAS_STOP_WORDS = new Set(['as', 'join', 'on', 'where', 'group', 'order', 'having', 'limit']);
 
 export interface SqlCompletionItem {
   label: string;
@@ -29,6 +30,11 @@ export interface QualifiedColumnContext {
   table: string;
 }
 
+interface TableRef {
+  table: string;
+  alias?: string;
+}
+
 export function getSqlCompletionSource(completionProvider: SqlCompletionProvider): CodeMirrorCompletionSource {
   return async (context) => {
     const word = context.matchBefore(/[\w$]*/);
@@ -38,13 +44,14 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
 
     if (qualifiedColumnContext) {
       const tables = await resolveTables(completionProvider);
-      const isKnownTable = tables.some((t) => getCompletionInsertText(t) === qualifiedColumnContext.table);
+      const table = resolveQualifiedTable(sql, qualifiedColumnContext.table);
+      const isKnownTable = tables.some((t) => getCompletionInsertText(t) === table);
 
       if (!isKnownTable) {
         return null;
       }
 
-      const columns = await resolveColumns(completionProvider, { table: qualifiedColumnContext.table });
+      const columns = await resolveColumns(completionProvider, { table });
 
       return context.aborted
         ? null
@@ -160,13 +167,8 @@ async function resolveColumnsForTables(
   completionProvider: SqlCompletionProvider,
   tables: string[]
 ): Promise<SqlCompletionItem[]> {
-  const columns: SqlCompletionItem[] = [];
-
-  for (const table of tables) {
-    columns.push(...(await resolveColumns(completionProvider, { table })));
-  }
-
-  return columns;
+  const columns = await Promise.all(tables.map((table) => resolveColumns(completionProvider, { table })));
+  return columns.flat();
 }
 
 function getCompletionInsertText(item: SqlCompletionItem): string {
@@ -187,39 +189,68 @@ export function getQualifiedColumnContext(sqlBeforeCursor: string): QualifiedCol
 }
 
 export function getFromTables(sql: string): string[] {
+  return [...new Set(getTableRefs(sql).map(({ table }) => table))];
+}
+
+function getTableRefs(sql: string): TableRef[] {
   const queryBeforeClause = getQueryBeforeClause(sql);
-  const tables: string[] = [];
+  const tableRefs: TableRef[] = [];
 
   for (const fromMatch of queryBeforeClause.matchAll(/\bfrom\s+([\s\S]*?)(?=\bjoin\b|$)/gi)) {
-    tables.push(...getTableRefsFromList(fromMatch[1]));
+    tableRefs.push(...getTableRefsFromList(fromMatch[1]));
   }
 
-  for (const joinMatch of queryBeforeClause.matchAll(/\bjoin\s+([A-Za-z_][\w$]*)/gi)) {
-    tables.push(joinMatch[1]);
+  for (const joinMatch of queryBeforeClause.matchAll(
+    /\bjoin\s+([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/gi
+  )) {
+    tableRefs.push(toTableRef(joinMatch[1], joinMatch[2]));
   }
 
-  return [...new Set(tables)];
+  return tableRefs;
 }
 
 function getQueryBeforeClause(sql: string): string {
   return sql.split(SQL_CLAUSE_BOUNDARY_PATTERN)[0];
 }
 
-function getTableRefsFromList(tableList: string): string[] {
+function getTableRefsFromList(tableList: string): TableRef[] {
   return tableList
     .split(',')
-    .map((table) => table.trim().match(/^[A-Za-z_][\w$]*/)?.[0])
-    .filter((table): table is string => Boolean(table));
+    .map((table) => {
+      const match = table.trim().match(/^([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/i);
+      return match ? toTableRef(match[1], match[2]) : undefined;
+    })
+    .filter((tableRef): tableRef is TableRef => Boolean(tableRef));
+}
+
+function toTableRef(table: string, alias?: string): TableRef {
+  if (!alias || SQL_ALIAS_STOP_WORDS.has(alias.toLowerCase())) {
+    return { table };
+  }
+
+  return { table, alias };
+}
+
+function resolveQualifiedTable(sql: string, tableOrAlias: string): string {
+  const tableRefs = getTableRefs(sql);
+  const exactTableRef = tableRefs.find(({ table }) => table === tableOrAlias);
+
+  if (exactTableRef) {
+    return exactTableRef.table;
+  }
+
+  const aliasedTableRef = tableRefs.find(({ alias }) => alias === tableOrAlias);
+  return aliasedTableRef?.table ?? tableOrAlias;
 }
 
 export function isTableCompletionPosition(sqlBeforeCursor: string): boolean {
-  const textBeforeCurrentWord = sqlBeforeCursor.replace(/[A-Za-z_][\w$]*$/, '').trimEnd();
+  const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 
   return /\b(?:from|join)$/i.test(textBeforeCurrentWord) || /\bfrom\s+[\w\s,$]+,$/i.test(textBeforeCurrentWord);
 }
 
 export function isClauseCompletionPosition(sqlBeforeCursor: string): boolean {
-  const textBeforeCurrentWord = sqlBeforeCursor.replace(/[A-Za-z_][\w$]*$/, '').trimEnd();
+  const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 
   if (!/\bfrom\s+[A-Za-z_][\w$]*/i.test(textBeforeCurrentWord)) {
     return false;
@@ -231,4 +262,8 @@ export function isClauseCompletionPosition(sqlBeforeCursor: string): boolean {
 
   const afterLastFrom = textBeforeCurrentWord.slice(textBeforeCurrentWord.toLowerCase().lastIndexOf('from') + 4);
   return !SQL_CLAUSE_BOUNDARY_PATTERN.test(afterLastFrom);
+}
+
+function getTextBeforeCurrentWord(sqlBeforeCursor: string): string {
+  return sqlBeforeCursor.replace(/[A-Za-z_][\w$]*$/, '').trimEnd();
 }
