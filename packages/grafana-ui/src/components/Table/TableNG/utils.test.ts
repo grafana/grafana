@@ -27,6 +27,7 @@ import {
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
   compileFrameToRecords,
   computeColWidths,
@@ -1533,6 +1534,43 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('buildNestedColumnWidthsMap', () => {
+    it('maps field display names to ColumnWidth entries', () => {
+      const fields: Field[] = [
+        { name: 'Time', type: FieldType.time, values: [], config: {}, state: { displayName: 'Time' } },
+        { name: 'Value', type: FieldType.number, values: [], config: {}, state: { displayName: 'Value' } },
+      ];
+      const widths = [120, 200];
+
+      const result = buildNestedColumnWidthsMap(fields, widths);
+
+      expect(result.get('Time')).toEqual({ type: 'resized', width: 120 });
+      expect(result.get('Value')).toEqual({ type: 'resized', width: 200 });
+      expect(result.size).toBe(2);
+    });
+
+    it('uses the field display name (from state.displayName) as the map key', () => {
+      const fields: Field[] = [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values: [],
+          config: {},
+          state: { displayName: 'Pretty Name' },
+        },
+      ];
+
+      const result = buildNestedColumnWidthsMap(fields, [150]);
+
+      expect(result.has('Pretty Name')).toBe(true);
+      expect(result.has('raw_name')).toBe(false);
+    });
+
+    it('returns an empty map for empty inputs', () => {
+      expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
     });
   });
 

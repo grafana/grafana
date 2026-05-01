@@ -18,6 +18,7 @@ import {
 import {
   Cell,
   type CellRendererProps,
+  type ColumnWidths,
   DataGrid,
   type DataGridHandle,
   type DataGridProps,
@@ -90,6 +91,7 @@ import {
   type TableSummaryRow,
 } from './types';
 import {
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
   canFieldBeColorized,
   compileFrameToRecords,
@@ -299,6 +301,26 @@ export function TableNG(props: TableNGProps) {
   );
 
   const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+
+  const [nestedColWidths, setNestedColWidths] = useState<ColumnWidths>(() =>
+    buildNestedColumnWidthsMap(nestedVisibleFields, nestedFieldWidths)
+  );
+
+  // Re-initialise when field schema or panel-configured widths change.
+  // Serialise both names and widths so the effect fires for either change, but NOT during a
+  // user drag (drag writes to `nestedColWidths` via onColumnWidthsChange without touching
+  // nestedFieldWidths, so the key stays stable and the live state is not overwritten).
+  const nestedFieldsStateKey = nestedVisibleFields
+    .map((f, idx) => `${getDisplayName(f)}:${nestedFieldWidths[idx]}`)
+    .join('\0');
+  useEffect(() => {
+    setNestedColWidths(buildNestedColumnWidthsMap(nestedVisibleFields, nestedFieldWidths));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nestedFieldsStateKey]);
+
+  const handleNestedColumnWidthsChange = useCallback((widths: ColumnWidths) => {
+    setNestedColWidths(widths);
+  }, []);
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
@@ -529,6 +551,8 @@ export function TableNG(props: TableNGProps) {
               rows={expandedRecords}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
+              columnWidths={nestedColWidths}
+              onColumnWidthsChange={handleNestedColumnWidthsChange}
             />
           </div>
         );
@@ -553,6 +577,8 @@ export function TableNG(props: TableNGProps) {
       noValue,
       onCellClick,
       uniqueId,
+      nestedColWidths,
+      handleNestedColumnWidthsChange,
     ]
   );
 
