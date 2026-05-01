@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML szerkesztése",
         "save": "Mentés"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "név",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Összes szabály törlése"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Törlés",
       "delete-modal-delete-button": "Törlés",
@@ -1573,8 +1575,14 @@
         "update-error": "A szabálycsoport frissítése sikertelen volt",
         "update-success": "Szabálycsoport sikeresen frissítve"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "A kijelölt csoport nem szerkeszthető",
       "group-not-editable-description": "Ez a csoport olyan adatforráshoz tartozik, amely nem támogatja a szerkesztést.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Szabálycsoport szerkesztése",
       "rule-group-error": "Hiba történt a szabálycsoport betöltésekor"
     },
@@ -13826,7 +13834,8 @@
       "make-sure": "Token létrehozása ezekkel az engedélyekkel"
     },
     "validation": {
-      "hidden-characters": "Ez a mező rejtett karaktereket tartalmaz, amelyek másolással és beillesztéssel kerülhettek bele. Írja be újra, vagy törölje az értéket, és próbálkozzon újra."
+      "hidden-characters": "Ez a mező rejtett karaktereket tartalmaz, amelyek másolással és beillesztéssel kerülhettek bele. Írja be újra, vagy törölje az értéket, és próbálkozzon újra.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Figyelmeztetés",
     "watch-stream": {
@@ -14234,6 +14243,8 @@
       "alerts-loading": "Riasztások",
       "card-click": "{{id}} kártya kiválasztása",
       "data": "Adatok",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Új {{type}}",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
@@ -14950,10 +14961,13 @@
       "title": "Javaslatokkal és sablonokkal gyorsan elindíthat irányítópultokat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Ugrás a(z) {{number}}. diára",
-      "next": "Következő",
-      "prev": "Előző"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Lekérdezés magyarázata",

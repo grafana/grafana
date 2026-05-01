@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "Modifier le fichier YAML",
         "save": "Enregistrer"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nom",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Supprimer toutes les règles"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Supprimer",
       "delete-modal-delete-button": "Supprimer",
@@ -1573,8 +1575,14 @@
         "update-error": "Échec de la mise à jour du groupe de règles",
         "update-success": "Le groupe de règles a bien été mis à jour"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Le groupe sélectionné ne peut pas être modifié",
       "group-not-editable-description": "Ce groupe appartient à une source de données qui ne prend pas en charge la modification.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Modifier le groupe de règles",
       "rule-group-error": "Erreur lors du chargement du groupe de règles"
     },
@@ -13826,7 +13834,8 @@
       "make-sure": "Créer un jeton avec ces autorisations"
     },
     "validation": {
-      "hidden-characters": "Ce champ contient des caractères cachés qui ont peut-être été introduits par copier-coller. Veuillez ressaisir ou nettoyer la valeur, puis réessayer."
+      "hidden-characters": "Ce champ contient des caractères cachés qui ont peut-être été introduits par copier-coller. Veuillez ressaisir ou nettoyer la valeur, puis réessayer.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Avertissement",
     "watch-stream": {
@@ -14234,6 +14243,8 @@
       "alerts-loading": "Alertes",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "Données",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
@@ -14950,10 +14961,13 @@
       "title": "Créez rapidement des tableaux de bord à l’aide de suggestions et de modèles"
     },
     "nav": {
+      "counter": "",
       "go-to": "Accéder à la diapositive {{number}}",
-      "next": "Suivant",
-      "prev": "Précédent"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Expliquer la requête",

@@ -520,7 +520,8 @@
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
         "save": "Сохранить"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "имя",
@@ -1300,7 +1301,8 @@
       "delete": {
         "button": {
           "label": "Удалить все правила"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Удалить",
       "delete-modal-delete-button": "Удалить",
@@ -1583,8 +1585,14 @@
         "update-error": "Не удалось обновить группу правил",
         "update-success": "Группа правил обновлена"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Редактирование группы правил",
       "rule-group-error": "Ошибка при загрузке группы правил"
     },
@@ -13992,7 +14000,8 @@
       "make-sure": "Создать токен с этими разрешениями"
     },
     "validation": {
-      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку."
+      "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Предупреждение",
     "watch-stream": {
@@ -14406,6 +14415,8 @@
       "alerts-loading": "Оповещения",
       "card-click": "Выбрать карту {{id}}",
       "data": "Данные",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Новый {{type}}",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
@@ -15134,10 +15145,13 @@
       "title": "Оперативно создавайте дашборды с помощью рекомендаций и шаблонов"
     },
     "nav": {
+      "counter": "",
       "go-to": "Перейти к слайду {{number}}",
-      "next": "Далее",
-      "prev": "Назад"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Объяснить запрос",

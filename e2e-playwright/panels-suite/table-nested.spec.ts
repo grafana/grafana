@@ -406,6 +406,73 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(firstNestedTable.getByRole('columnheader', { name: 'Gauge' })).toBeVisible();
   });
 
+  test('datalinks resolve field variables in nested table context', async ({ gotoDashboardPage, selectors, page }) => {
+    // --- Part 1: Info column "Google this term" link interpolates ${__value:percentencode} ---
+    // Panel 4 groups by State; Info is a nested field with 1 link + 1 action (→ tooltip on click).
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '4' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Nested tables'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .last()
+      .click();
+
+    const firstNestedTableKs = page.locator('.rdg').nth(1);
+    const infoIdx = await getColumnIdx(firstNestedTableKs, 'Info');
+    const infoCell = getCell(firstNestedTableKs, 1, infoIdx);
+    const infoCellValue = (await infoCell.textContent())?.trim() ?? '';
+    expect(infoCellValue, 'Info cell has a non-empty value').not.toBe('');
+
+    // 1 link + 1 action renders as <a aria-haspopup="menu"> — click to open the tooltip.
+    await infoCell.locator('a[aria-haspopup]').click();
+
+    const tooltip = page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+    await expect(tooltip, 'data link tooltip appears after clicking Info cell').toBeVisible();
+
+    const googleHref = await tooltip.getByRole('link', { name: 'Google this term' }).getAttribute('href');
+    expect(googleHref, '"Google this term" href contains the Info cell value').toContain(
+      `q=${encodeURIComponent(infoCellValue)}`
+    );
+
+    // --- Part 2: Data Link column resolves ${__data.fields.Min.numeric} from nested row context ---
+    // The "Table - Nested Kitchen Sink" panel groups by Info; nested rows have a "Data Link" column
+    // with a "Min param" link whose URL contains ${__data.fields.Min.numeric}.
+    const nestedDashboardPage = await gotoDashboardPage({
+      uid: NESTED_COMPLEX_DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await waitForTableLoad(page);
+
+    await nestedDashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+
+    const firstNestedTable = page.locator('.rdg').nth(1);
+    const dataLinkIdx = await getColumnIdx(firstNestedTable, 'Data Link');
+
+    // The "Min param" link is rendered directly in the DataLinksCell as an <a> tag.
+    const minParamLink = getCell(firstNestedTable, 1, dataLinkIdx).getByRole('link', { name: 'Min param' });
+    const minParamHref = await minParamLink.getAttribute('href');
+
+    expect(minParamHref, '"Min param" href is not null').not.toBeNull();
+    expect(minParamHref, '"Min param" href does not contain unresolved template variable').not.toContain('${');
+    expect(minParamHref, '"Min param" href contains min= with a numeric value').toMatch(/min=[\d.]+/);
+  });
+
   test('tooltip from field', async ({ gotoPanelEditPage, page, selectors }) => {
     const panelEditPage = await gotoPanelEditPage({
       dashboard: {

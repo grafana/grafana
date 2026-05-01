@@ -1,8 +1,6 @@
 import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
-import type { BootData } from '@grafana/data';
-
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';
@@ -175,17 +173,7 @@ describe('XAxisInteractionAreaPlugin', () => {
   });
 
   describe('event listeners', () => {
-    let prevBootData: typeof window.grafanaBootData;
-
-    beforeEach(() => {
-      prevBootData = window.grafanaBootData;
-      window.grafanaBootData = {
-        settings: { featureToggles: { timeRangePan: true } },
-      } as BootData;
-    });
-
     afterEach(() => {
-      window.grafanaBootData = prevBootData;
       document.body.innerHTML = '';
     });
 
