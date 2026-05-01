@@ -93,46 +93,109 @@ type ListRuleBoolFilter struct {
 	Value *bool
 }
 
+// splitStringFilterInclude maps the include slice from a ListRuleStringFilter to a (scalar, slice)
+// pair: when the include set has exactly one value, it is returned as the scalar so the store can
+// use the existing exact-match codepath; otherwise the full slice is returned for an IN clause.
+func splitStringFilterInclude(include []string) (string, []string) {
+	switch len(include) {
+	case 0:
+		return "", nil
+	case 1:
+		return include[0], nil
+	default:
+		return "", include
+	}
+}
+
+// parseInt64Slice parses a list of decimal int64 strings, returning an error if any element fails
+// to parse. Used for the panel-id filter, whose underlying field selector values arrive as strings.
+func parseInt64Slice(values []string) ([]int64, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+	out := make([]int64, 0, len(values))
+	for _, v := range values {
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid int64 value %q: %w", v, err)
+		}
+		out = append(out, n)
+	}
+	return out, nil
+}
+
 type ListAlertRulesOptions struct {
-	RuleType        models.RuleTypeFilter
-	Limit           int64
-	ContinueToken   string
-	GroupFilter     ListRuleStringFilter
-	FolderFilter    ListRuleStringFilter
-	TitleFilter     ListRuleStringFilter
-	PausedFilter    ListRuleBoolFilter
-	DashboardFilter ListRuleStringFilter
-	PanelIDFilter   ListRuleStringFilter
-	// TODO: add the following filters
-	// receiver filter - string
-	// metric filter - string
-	// targetDatasourceUID filter - string
+	RuleType                  models.RuleTypeFilter
+	Limit                     int64
+	ContinueToken             string
+	GroupFilter               ListRuleStringFilter
+	FolderFilter              ListRuleStringFilter
+	TitleFilter               ListRuleStringFilter
+	PausedFilter              ListRuleBoolFilter
+	DashboardFilter           ListRuleStringFilter
+	PanelIDFilter             ListRuleStringFilter
+	NotificationTypeFilter    ListRuleStringFilter
+	ReceiverFilter            ListRuleStringFilter
+	RoutingTreeFilter         ListRuleStringFilter
+	MetricFilter              ListRuleStringFilter
+	TargetDatasourceUIDFilter ListRuleStringFilter
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
-	titleExact := ""
-	if len(opts.TitleFilter.Include) > 0 {
-		titleExact = opts.TitleFilter.Include[0]
+	titleExact, titleIn := splitStringFilterInclude(opts.TitleFilter.Include)
+	dashboardUID, dashboardIn := splitStringFilterInclude(opts.DashboardFilter.Include)
+	panelIDs, err := parseInt64Slice(opts.PanelIDFilter.Include)
+	if err != nil {
+		return nil, nil, "", err
 	}
-	dashboardUID := ""
-	if len(opts.DashboardFilter.Include) > 0 {
-		dashboardUID = opts.DashboardFilter.Include[0]
+	excludedPanelIDs, err := parseInt64Slice(opts.PanelIDFilter.Exclude)
+	if err != nil {
+		return nil, nil, "", err
 	}
-	panelID := int64(0)
-	if len(opts.PanelIDFilter.Include) > 0 {
-		panelID, _ = strconv.ParseInt(opts.PanelIDFilter.Include[0], 10, 64)
+	var panelID int64
+	var panelIn []int64
+	if len(panelIDs) == 1 {
+		panelID = panelIDs[0]
+	} else {
+		panelIn = panelIDs
 	}
+	notifType, notifTypeIn := splitStringFilterInclude(opts.NotificationTypeFilter.Include)
+	receiverName, receiverIn := splitStringFilterInclude(opts.ReceiverFilter.Include)
+	routingPolicy, routingPolicyIn := splitStringFilterInclude(opts.RoutingTreeFilter.Include)
+	metricExact, metricIn := splitStringFilterInclude(opts.MetricFilter.Include)
+	targetUIDExact, targetUIDIn := splitStringFilterInclude(opts.TargetDatasourceUIDFilter.Include)
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID:                user.GetOrgID(),
-			RuleGroups:           opts.GroupFilter.Include,
-			ExcludeRuleGroups:    opts.GroupFilter.Exclude,
-			RuleGroupExists:      opts.GroupFilter.Exists,
-			ExcludeNamespaceUIDs: opts.FolderFilter.Exclude,
-			TitleExact:           titleExact,
-			IsPaused:             opts.PausedFilter.Value,
-			DashboardUID:         dashboardUID,
-			PanelID:              panelID,
+			OrgID:                          user.GetOrgID(),
+			RuleGroups:                     opts.GroupFilter.Include,
+			ExcludeRuleGroups:              opts.GroupFilter.Exclude,
+			RuleGroupExists:                opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs:           opts.FolderFilter.Exclude,
+			TitleExact:                     titleExact,
+			TitleIn:                        titleIn,
+			TitleNotIn:                     opts.TitleFilter.Exclude,
+			IsPaused:                       opts.PausedFilter.Value,
+			DashboardUID:                   dashboardUID,
+			DashboardUIDIn:                 dashboardIn,
+			DashboardUIDNotIn:              opts.DashboardFilter.Exclude,
+			PanelID:                        panelID,
+			PanelIDIn:                      panelIn,
+			PanelIDNotIn:                   excludedPanelIDs,
+			NotificationSettingsType:       notifType,
+			NotificationSettingsTypeIn:     notifTypeIn,
+			NotificationSettingsTypeNotIn:  opts.NotificationTypeFilter.Exclude,
+			ReceiverName:                   receiverName,
+			ReceiverNameIn:                 receiverIn,
+			ReceiverNameNotIn:              opts.ReceiverFilter.Exclude,
+			RoutingPolicyExact:             routingPolicy,
+			RoutingPolicyIn:                routingPolicyIn,
+			RoutingPolicyNotIn:             opts.RoutingTreeFilter.Exclude,
+			RecordMetricExact:              metricExact,
+			RecordMetricIn:                 metricIn,
+			RecordMetricNotIn:              opts.MetricFilter.Exclude,
+			RecordTargetDatasourceUIDExact: targetUIDExact,
+			RecordTargetDatasourceUIDIn:    targetUIDIn,
+			RecordTargetDatasourceUIDNotIn: opts.TargetDatasourceUIDFilter.Exclude,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,

@@ -5,7 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 func TestParseLabelSelectorFilter(t *testing.T) {
@@ -107,5 +111,50 @@ func TestParseLabelSelectorFilter(t *testing.T) {
 		assert.Nil(t, filter.Exists)
 		assert.Empty(t, filter.Include)
 		assert.Empty(t, filter.Exclude)
+	})
+}
+
+func TestAccumulateFieldSelectorFilter(t *testing.T) {
+	t.Run("Equals appends to Include", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"a"}, f.Include)
+		assert.Empty(t, f.Exclude)
+	})
+
+	t.Run("DoubleEquals appends to Include", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.DoubleEquals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"a"}, f.Include)
+	})
+
+	t.Run("NotEquals appends to Exclude", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.NotEquals, Value: "a"}, nil)
+		require.NoError(t, err)
+		assert.Empty(t, f.Include)
+		assert.Equal(t, []string{"a"}, f.Exclude)
+	})
+
+	t.Run("multiple Equals on same field bucket into Include (IN semantics)", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		require.NoError(t, AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "a"}, nil))
+		require.NoError(t, AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.Equals, Value: "b"}, nil))
+		assert.ElementsMatch(t, []string{"a", "b"}, f.Include)
+	})
+
+	t.Run("validate is invoked on the value", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.foo", Operator: selection.Equals, Value: "x"}, ValidateOneOf("spec.foo", []string{"y"}))
+		require.Error(t, err)
+		assert.Empty(t, f.Include)
+	})
+
+	t.Run("In operator is rejected (field selectors do not support it)", func(t *testing.T) {
+		f := provisioning.ListRuleStringFilter{}
+		err := AccumulateFieldSelectorFilter(&f, fields.Requirement{Field: "spec.title", Operator: selection.In, Value: "a"}, nil)
+		require.Error(t, err)
 	})
 }

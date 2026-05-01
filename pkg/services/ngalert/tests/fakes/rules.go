@@ -330,20 +330,42 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
-		if q.DashboardUID != "" {
-			if r.DashboardUID == nil || *r.DashboardUID != q.DashboardUID {
-				continue
-			}
+		ruleDashUID := ""
+		if r.DashboardUID != nil {
+			ruleDashUID = *r.DashboardUID
 		}
-		if q.PanelID != 0 {
-			if r.PanelID == nil || *r.PanelID != q.PanelID {
-				continue
-			}
+		if q.DashboardUID != "" && ruleDashUID != q.DashboardUID {
+			continue
+		}
+		if len(q.DashboardUIDIn) > 0 && !slices.Contains(q.DashboardUIDIn, ruleDashUID) {
+			continue
+		}
+		if len(q.DashboardUIDNotIn) > 0 && slices.Contains(q.DashboardUIDNotIn, ruleDashUID) {
+			continue
+		}
+		var rulePanelID int64
+		if r.PanelID != nil {
+			rulePanelID = *r.PanelID
+		}
+		if q.PanelID != 0 && rulePanelID != q.PanelID {
+			continue
+		}
+		if len(q.PanelIDIn) > 0 && !slices.Contains(q.PanelIDIn, rulePanelID) {
+			continue
+		}
+		if len(q.PanelIDNotIn) > 0 && slices.Contains(q.PanelIDNotIn, rulePanelID) {
+			continue
 		}
 		if q.IsPaused != nil && r.IsPaused != *q.IsPaused {
 			continue
 		}
 		if q.TitleExact != "" && r.Title != q.TitleExact {
+			continue
+		}
+		if len(q.TitleIn) > 0 && !slices.Contains(q.TitleIn, r.Title) {
+			continue
+		}
+		if len(q.TitleNotIn) > 0 && slices.Contains(q.TitleNotIn, r.Title) {
 			continue
 		}
 		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
@@ -361,7 +383,72 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		if cpr := r.ContactPointRouting(); q.ReceiverName != "" && (cpr == nil || cpr.Receiver != q.ReceiverName) {
+		ruleReceiver := ""
+		if cpr := r.ContactPointRouting(); cpr != nil {
+			ruleReceiver = cpr.Receiver
+		}
+		if q.ReceiverName != "" && ruleReceiver != q.ReceiverName {
+			continue
+		}
+		if len(q.ReceiverNameIn) > 0 && !slices.Contains(q.ReceiverNameIn, ruleReceiver) {
+			continue
+		}
+		if len(q.ReceiverNameNotIn) > 0 && slices.Contains(q.ReceiverNameNotIn, ruleReceiver) {
+			continue
+		}
+
+		ruleNotifType := ""
+		switch {
+		case r.ContactPointRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeSimplifiedRouting
+		case r.PolicyRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeNamedRoutingTree
+		}
+		if q.NotificationSettingsType != "" && ruleNotifType != q.NotificationSettingsType {
+			continue
+		}
+		if len(q.NotificationSettingsTypeIn) > 0 && !slices.Contains(q.NotificationSettingsTypeIn, ruleNotifType) {
+			continue
+		}
+		if len(q.NotificationSettingsTypeNotIn) > 0 && slices.Contains(q.NotificationSettingsTypeNotIn, ruleNotifType) {
+			continue
+		}
+
+		rulePolicy := ""
+		if pr := r.PolicyRouting(); pr != nil {
+			rulePolicy = pr.Policy
+		}
+		if q.RoutingPolicyExact != "" && rulePolicy != q.RoutingPolicyExact {
+			continue
+		}
+		if len(q.RoutingPolicyIn) > 0 && !slices.Contains(q.RoutingPolicyIn, rulePolicy) {
+			continue
+		}
+		if len(q.RoutingPolicyNotIn) > 0 && slices.Contains(q.RoutingPolicyNotIn, rulePolicy) {
+			continue
+		}
+
+		ruleMetric, ruleTargetUID := "", ""
+		if r.Record != nil {
+			ruleMetric = r.Record.Metric
+			ruleTargetUID = r.Record.TargetDatasourceUID
+		}
+		if q.RecordMetricExact != "" && ruleMetric != q.RecordMetricExact {
+			continue
+		}
+		if len(q.RecordMetricIn) > 0 && !slices.Contains(q.RecordMetricIn, ruleMetric) {
+			continue
+		}
+		if len(q.RecordMetricNotIn) > 0 && slices.Contains(q.RecordMetricNotIn, ruleMetric) {
+			continue
+		}
+		if q.RecordTargetDatasourceUIDExact != "" && ruleTargetUID != q.RecordTargetDatasourceUIDExact {
+			continue
+		}
+		if len(q.RecordTargetDatasourceUIDIn) > 0 && !slices.Contains(q.RecordTargetDatasourceUIDIn, ruleTargetUID) {
+			continue
+		}
+		if len(q.RecordTargetDatasourceUIDNotIn) > 0 && slices.Contains(q.RecordTargetDatasourceUIDNotIn, ruleTargetUID) {
 			continue
 		}
 

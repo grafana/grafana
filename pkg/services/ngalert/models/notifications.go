@@ -20,6 +20,13 @@ const GroupByAll = "..."
 const DefaultRoutingTreeName = "user-defined"
 const NamedRouteLabel = "__grafana_managed_route__"
 
+// NotificationSettingsTypeSimplifiedRouting and NotificationSettingsTypeNamedRoutingTree
+// are the values used to filter alert rules by the type of notification settings configured.
+const (
+	NotificationSettingsTypeSimplifiedRouting = "SimplifiedRouting"
+	NotificationSettingsTypeNamedRoutingTree  = "NamedRoutingTree"
+)
+
 // DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 

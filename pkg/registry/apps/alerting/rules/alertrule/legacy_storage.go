@@ -23,6 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
+var validNotificationSettingsTypes = []string{
+	ngmodels.NotificationSettingsTypeSimplifiedRouting,
+	ngmodels.NotificationSettingsTypeNamedRoutingTree,
+}
+
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
@@ -76,42 +81,55 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter     provisioning.ListRuleStringFilter
-		pausedFilter    provisioning.ListRuleBoolFilter
-		dashboardFilter provisioning.ListRuleStringFilter
-		panelIDFilter   provisioning.ListRuleStringFilter
+		titleFilter            provisioning.ListRuleStringFilter
+		pausedFilter           provisioning.ListRuleBoolFilter
+		dashboardFilter        provisioning.ListRuleStringFilter
+		panelIDFilter          provisioning.ListRuleStringFilter
+		notificationTypeFilter provisioning.ListRuleStringFilter
+		receiverFilter         provisioning.ListRuleStringFilter
+		routingTreeFilter      provisioning.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
-			isEq := r.Operator == selection.Equals || r.Operator == selection.DoubleEquals
 			switch r.Field {
 			case "spec.title":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.title (only = supported)")
+				if err := common.AccumulateFieldSelectorFilter(&titleFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				titleFilter.Include = []string{r.Value}
 			case "spec.paused":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.paused (only = supported)")
-				}
 				v, err := strconv.ParseBool(r.Value)
 				if err != nil {
 					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.paused: %s", r.Value))
 				}
-				pausedFilter.Value = &v
+				switch r.Operator {
+				case selection.Equals, selection.DoubleEquals:
+					pausedFilter.Value = &v
+				case selection.NotEquals:
+					negated := !v
+					pausedFilter.Value = &negated
+				default:
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("unsupported operator %q for spec.paused (only =, ==, != are supported)", r.Operator))
+				}
 			case "spec.panelRef.dashboardUID":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.panelRef.dashboardUID (only = supported)")
+				if err := common.AccumulateFieldSelectorFilter(&dashboardFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				dashboardFilter.Include = []string{r.Value}
 			case "spec.panelRef.panelID":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.panelRef.panelID (only = supported)")
+				if err := common.AccumulateFieldSelectorFilter(&panelIDFilter, r, common.ValidateInt64String("spec.panelRef.panelID")); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				if _, err := strconv.ParseInt(r.Value, 10, 64); err != nil {
-					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.panelRef.panelID: %s", r.Value))
+			case "spec.notificationSettings.type":
+				if err := common.AccumulateFieldSelectorFilter(&notificationTypeFilter, r, common.ValidateOneOf("spec.notificationSettings.type", validNotificationSettingsTypes)); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				panelIDFilter.Include = []string{r.Value}
+			case "spec.notificationSettings.receiver":
+				if err := common.AccumulateFieldSelectorFilter(&receiverFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			case "spec.notificationSettings.routingTree":
+				if err := common.AccumulateFieldSelectorFilter(&routingTreeFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
 			default:
 				return nil, k8serrors.NewBadRequest(fmt.Sprintf("unknown field selector: %s", r.Field))
 			}
@@ -119,15 +137,18 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
-		RuleType:        ngmodels.RuleTypeFilterAlerting,
-		Limit:           opts.Limit,
-		ContinueToken:   opts.Continue,
-		GroupFilter:     groupFilter,
-		FolderFilter:    folderFilter,
-		TitleFilter:     titleFilter,
-		PausedFilter:    pausedFilter,
-		DashboardFilter: dashboardFilter,
-		PanelIDFilter:   panelIDFilter,
+		RuleType:               ngmodels.RuleTypeFilterAlerting,
+		Limit:                  opts.Limit,
+		ContinueToken:          opts.Continue,
+		GroupFilter:            groupFilter,
+		FolderFilter:           folderFilter,
+		TitleFilter:            titleFilter,
+		PausedFilter:           pausedFilter,
+		DashboardFilter:        dashboardFilter,
+		PanelIDFilter:          panelIDFilter,
+		NotificationTypeFilter: notificationTypeFilter,
+		ReceiverFilter:         receiverFilter,
+		RoutingTreeFilter:      routingTreeFilter,
 	})
 	if err != nil {
 		return nil, err

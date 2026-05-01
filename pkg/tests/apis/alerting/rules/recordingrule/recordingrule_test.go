@@ -894,4 +894,61 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("filter by spec.metric", func(t *testing.T) {
+		matchMetric := "rr_match_metric_unique"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.Metric = v0alpha1.RecordingRuleMetricName(matchMetric)
+		r3 := baseRule("rr-fs-folder") // different unique metric from baseRule
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.metric=" + matchMetric})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, matchMetric, string(item.Spec.Metric))
+		}
+	})
+
+	t.Run("filter by spec.targetDatasourceUID", func(t *testing.T) {
+		matchUID := "rr-target-ds-unique-uid"
+		r1 := baseRule("rr-fs-folder")
+		r1.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r2 := baseRule("rr-fs-folder")
+		r2.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID(matchUID)
+		r3 := baseRule("rr-fs-folder")
+		r3.Spec.TargetDatasourceUID = v0alpha1.RecordingRuleDatasourceUID("rr-target-ds-other-uid")
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.targetDatasourceUID=" + matchUID})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, matchUID, string(item.Spec.TargetDatasourceUID))
+		}
+	})
 }
