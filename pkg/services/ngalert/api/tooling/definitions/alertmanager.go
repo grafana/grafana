@@ -115,6 +115,15 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route POST /alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route POST /alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts

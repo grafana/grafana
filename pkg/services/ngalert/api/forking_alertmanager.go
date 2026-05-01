@@ -145,6 +145,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetGrafanaAMAlerts(ctx *contextmodel
 	return f.GrafanaSvc.RouteGetAMAlerts(ctx)
 }
 
+func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAMAlerts(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaSvc.RoutePostAMAlerts(ctx)
+}
+
 func (f *AlertmanagerApiHandler) handleRouteGetGrafanaAMAlertGroups(ctx *contextmodel.ReqContext) response.Response {
 	return f.GrafanaSvc.RouteGetAMAlertGroups(ctx)
 }
