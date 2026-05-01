@@ -332,11 +332,6 @@
       "count": 1
     }
   },
-  "packages/grafana-runtime/src/components/DataSourcePicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-runtime/src/config.ts": {
     "@grafana/no-direct-local-storage-access": {
       "count": 1
