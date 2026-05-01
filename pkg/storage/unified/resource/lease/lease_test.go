@@ -36,10 +36,10 @@ func TestAcquireNameValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("trailing slash is rejected", func(t *testing.T) {
-		l, err := m.Acquire(t.Context(), "validation/trailing/")
+	t.Run("tilde is rejected", func(t *testing.T) {
+		l, err := m.Acquire(t.Context(), "validation/with~tilde")
 		require.Error(t, err)
-		require.ErrorContains(t, err, "trailing slash")
+		require.ErrorContains(t, err, "is reserved")
 		require.Nil(t, l)
 	})
 

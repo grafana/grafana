@@ -28,6 +28,13 @@ const (
 	// maximum number of times an Acquire() call will loop to ensure a lease
 	// is already acquired when it cannot create a unique key.
 	maxAcquireAttempts = 3
+
+	// generationSeparator joins a lease's name and its generation in the
+	// persisted KV key (e.g. "my/lease~00000000000000000001"). This separator
+	// is not allowed in lease names and ensures that we are able to do
+	// range queries for the particular lease being requested without risk
+	// of conflicting with other leases names that share the same prefix.
+	generationSeparator = "~"
 )
 
 var (
@@ -225,7 +232,7 @@ func (m *Manager) Release(ctx context.Context, lease *Lease) error {
 }
 
 func (m *Manager) latest(ctx context.Context, name string) (string, int64, error) {
-	prefix := name + "/"
+	prefix := name + generationSeparator
 	opts := kv.ListOptions{
 		Sort:     kv.SortOrderDesc,
 		StartKey: prefix,
@@ -292,21 +299,21 @@ func (m *Manager) save(ctx context.Context, key string, state leaseMetadata) err
 // leaseKey generates a 20-digit generation suffix so leases sort
 // lexicographically in generation order.
 func leaseKey(name string, generation int64) string {
-	return fmt.Sprintf("%s/%020d", name, generation)
+	return fmt.Sprintf("%s%s%020d", name, generationSeparator, generation)
 }
 
 func validateLeaseName(name string) error {
 	if !kv.IsValidKey(name) {
 		return fmt.Errorf("invalid lease name %q", name)
 	}
-	if strings.HasSuffix(name, "/") {
-		return fmt.Errorf("invalid lease name %q: trailing slash is not allowed", name)
+	if strings.Contains(name, generationSeparator) {
+		return fmt.Errorf("invalid lease name %q: %q is reserved", name, generationSeparator)
 	}
 	return nil
 }
 
 func parseGeneration(name, key string) (int64, error) {
-	suffix, ok := strings.CutPrefix(key, name+"/")
+	suffix, ok := strings.CutPrefix(key, name+generationSeparator)
 	if !ok {
 		// Should not happen in practice unless we get an invalid key from
 		// the underlying KV store.
