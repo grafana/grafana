@@ -149,4 +149,30 @@ describe('SQL editor completion utils', () => {
       })
     );
   });
+
+  it('prioritizes generic SQL keywords over matching function names', async () => {
+    const result = await getCompletionResult(
+      {
+        functions: () => [{ label: 'from_unixtime', kind: 'function' }],
+      },
+      'SELECT A.__metric_name__\nfrom'
+    );
+    const fromKeyword = result?.options.find((option) => option.label === 'FROM');
+    const fromFunction = result?.options.find((option) => option.label === 'from_unixtime');
+
+    expect(fromKeyword).toEqual(
+      expect.objectContaining({
+        boost: expect.any(Number),
+        section: { name: 'Keywords', rank: 2 },
+        type: 'keyword',
+      })
+    );
+    expect(fromFunction).toEqual(
+      expect.objectContaining({
+        section: { name: 'Functions', rank: 3 },
+        type: 'function',
+      })
+    );
+    expect(fromKeyword?.boost ?? 0).toBeGreaterThan(fromFunction?.boost ?? 0);
+  });
 });

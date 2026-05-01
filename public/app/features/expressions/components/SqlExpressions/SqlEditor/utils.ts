@@ -20,6 +20,19 @@ const SQL_ALIAS_STOP_WORDS = new Set([
   'right',
   'where',
 ]);
+// Include common SQL keywords in the generic completion set so accepting a completion does not prefer niche functions.
+const DEFAULT_SQL_KEYWORDS: SqlCompletionItem[] = [
+  'SELECT',
+  'FROM',
+  'WHERE',
+  'JOIN',
+  'LEFT JOIN',
+  'INNER JOIN',
+  'GROUP BY',
+  'ORDER BY',
+  'HAVING',
+  'LIMIT',
+].map((label) => ({ label, kind: 'keyword', boost: 50 }));
 
 export interface SqlCompletionItem {
   label: string;
@@ -107,6 +120,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
       return null;
     }
 
+    const keywords = DEFAULT_SQL_KEYWORDS;
     const columns = await resolveColumnsForTables(completionProvider, getFromTables(sql));
     const functions = (await completionProvider.functions?.()) ?? [];
 
@@ -116,6 +130,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
           from: word.from,
           options: [
             ...columns.map((item) => toCodeMirrorCompletion(item, 'column')),
+            ...keywords.map((item) => toCodeMirrorCompletion(item, 'keyword')),
             ...functions.map((item) => toCodeMirrorCompletion(item, 'function')),
           ],
           validFor: /^[\w$]*$/,
@@ -161,7 +176,7 @@ function getCompletionSection(kind: SqlCompletionKind) {
     case 'function':
       return { name: 'Functions', rank: 3 };
     case 'keyword':
-      return { name: 'Keywords', rank: 4 };
+      return { name: 'Keywords', rank: 2 };
     case 'table':
       return { name: 'Tables', rank: 0 };
   }
