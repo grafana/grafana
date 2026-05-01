@@ -92,6 +92,18 @@ export const setCreateGrafanaRuleResolver = (
   );
 };
 
+export const setReplaceGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string; name: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      resolver
+    )
+  );
+};
+
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {

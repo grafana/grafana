@@ -13,14 +13,17 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  getRuleUID,
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
   isGrafanaManagedRuleByType,
   isPausedRule,
   isRecordingRuleByType,
+  isUngroupedRuleGroup,
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { useDispatch } from 'app/types/store';
 import { type RuleGroupIdentifier, type RuleWithLocation } from 'app/types/unified-alerting';
 import { type PostableRuleGrafanaRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -40,6 +43,7 @@ import {
   type RulerGroupUpdatedResponse,
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
+import { alertingApi } from '../../../api/alertingApi';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import {
   defaultFormValuesForRuleType,
@@ -85,6 +89,7 @@ type Props = {
 export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
+  const dispatch = useDispatch();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const uidFromParams = routeParams.id;
@@ -171,19 +176,21 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
+    const targetIsUngrouped = !values.group?.trim() || isUngroupedRuleGroup(values.group);
+
     let saveResult: RulerGroupUpdatedResponse | undefined;
     try {
       if (!existing) {
         // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
         storeInLocalStorageValues(values);
 
-        const hasGroup = Boolean(values.group?.trim());
-        if (grafanaTypeRule && !hasGroup) {
+        if (grafanaTypeRule && targetIsUngrouped) {
           const createdUid = await createGrafanaRuleWithoutGroup(values, isRecordingRuleByType(type));
           if (!createdUid) {
             throw new Error('The rule was created but the UID is missing.');
           }
 
+          dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(createdUid)));
           notifyApp.success(t('alerting.alert-rule-form.no-group-success', 'Rule added successfully'));
           redirectToGrafanaRuleByUid(createdUid);
         } else {
@@ -203,6 +210,19 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         }
       } else {
         // when updating an existing rule
+        if (grafanaTypeRule && targetIsUngrouped) {
+          // Save an ungrouped Grafana-managed rule via the new app-platform PUT endpoint.
+          // The legacy ruler API can't represent an empty/synthetic group name.
+          const uid = getRuleUID(existing.rule);
+          if (!uid) {
+            throw new Error('Cannot update rule without a UID');
+          }
+          await updateGrafanaRuleWithoutGroup(values, uid, isRecordingRuleByType(type));
+          dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(uid)));
+          notifyApp.success(t('alerting.rules.update-rule.success', 'Rule updated successfully'));
+          redirectToGrafanaRuleByUid(uid);
+          return;
+        }
         const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
         saveResult = await updateRuleInRuleGroup.execute(
           ruleGroupIdentifier,
@@ -513,6 +533,45 @@ async function createGrafanaRuleWithoutGroup(
   return response.metadata?.name;
 }
 
+// PUT body must include metadata.name so the URL path matches the resource.
+type AppPlatformPutRuleBody = AppPlatformRuleResource & { metadata: { name: string } };
+
+// Tags from the legacy alertingApi cache that the new app-platform write paths
+// don't invalidate on their own. After a create-without-group POST or replace PUT,
+// dispatch invalidation for these so list, details, and group views refetch.
+function legacyRuleCacheTagsForUid(uid: string) {
+  return [
+    'CombinedAlertRule' as const,
+    'RuleNamespace' as const,
+    'RuleGroup' as const,
+    'GrafanaPrometheusGroups' as const,
+    { type: 'GrafanaRulerRule' as const, id: uid },
+    { type: 'GrafanaRulerRuleVersion' as const, id: uid },
+  ];
+}
+
+async function updateGrafanaRuleWithoutGroup(
+  values: RuleFormValues,
+  uid: string,
+  isRecordingRule: boolean
+): Promise<void> {
+  // Mirrors createGrafanaRuleWithoutGroup: raw HTTP avoids the generated mutation's
+  // narrow body types, which reject `RuleFormValues`'s wider state-decision enum
+  // values without compromising the wire shape we already build.
+  const namespace = config.namespace;
+  const endpoint = isRecordingRule ? 'recordingrules' : 'alertrules';
+  const baseResource = isRecordingRule ? buildRecordingRuleResource(values) : buildAlertRuleResource(values);
+  const body = {
+    ...baseResource,
+    metadata: { ...baseResource.metadata, name: uid },
+  } satisfies AppPlatformPutRuleBody;
+
+  await getBackendSrv().put(
+    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${endpoint}/${uid}`,
+    body
+  );
+}
+
 function toRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
   return items.reduce<Record<string, string>>((acc, item) => {
     acc[item.key] = item.value;
@@ -552,6 +611,7 @@ type AppPlatformRuleResource = {
   apiVersion: string;
   kind: 'AlertRule' | 'RecordingRule';
   metadata: {
+    name?: string;
     annotations?: Record<string, string>;
     labels?: Record<string, string>;
   };
