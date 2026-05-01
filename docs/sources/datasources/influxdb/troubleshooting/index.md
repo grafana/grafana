@@ -17,12 +17,13 @@ labels:
     - oss
 menuTitle: Troubleshooting
 title: Troubleshoot InfluxDB data source issues
-weight: 600
+weight: 700
+review_date: 2026-05-01
 ---
 
 # Troubleshoot InfluxDB data source issues
 
-This document provides troubleshooting guidance for common errors you may encounter when using the InfluxDB data source in Grafana.
+This document provides solutions to common issues you may encounter when configuring or using the InfluxDB data source. For configuration instructions, refer to [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/).
 
 ## Connection errors
 
@@ -275,13 +276,29 @@ The following issues don't produce specific error messages but are commonly enco
 1. Ensure InfluxDB has finished writing the data.
 1. Check for clock synchronization issues between Grafana and InfluxDB.
 
+## Enable debug logging
+
+To capture detailed error information for troubleshooting:
+
+1. Set the Grafana log level to `debug` in the configuration file:
+
+   ```ini
+   [log]
+   level = debug
+   ```
+
+1. Review logs in `/var/log/grafana/grafana.log` (or your configured log location).
+1. Look for InfluxDB-specific entries that include request and response details.
+1. Reset the log level to `info` after troubleshooting to avoid excessive log volume.
+
 ## Get additional help
 
-If you continue to experience issues after following this troubleshooting guide:
+If you've tried the solutions in this guide and still encounter issues:
 
 1. Check the [InfluxDB documentation](https://docs.influxdata.com/) for API-specific guidance.
 1. Review the [Grafana community forums](https://community.grafana.com/) for similar issues.
-1. Contact Grafana Support if you're an Enterprise, Cloud Pro or Cloud Contracted user.
+1. Review [InfluxDB data source issues on GitHub](https://github.com/grafana/grafana/issues?q=is%3Aissue+influxdb) for known bugs.
+1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
    - Grafana version
    - InfluxDB version and product (OSS, Cloud, Enterprise)
