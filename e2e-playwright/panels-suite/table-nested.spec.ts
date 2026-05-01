@@ -485,9 +485,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // With expandAllRows: true the expander buttons should report aria-expanded=true
     // and nested rows should be visible without any user interaction.
-    const expanders = panelEditPage.getByGrafanaSelector(
-      selectors.components.Panels.Visualization.TableNG.RowExpander
-    );
+    const expanders = panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander);
 
     await expect(expanders.first()).toBeVisible();
 

@@ -167,8 +167,7 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
   const showHeaders =
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
-  const expandByDefault =
-    options.expandAllRows === undefined ? EXPAND_ALL_ROWS_DEFAULT : options.expandAllRows;
+  const expandByDefault = options.expandAllRows === undefined ? EXPAND_ALL_ROWS_DEFAULT : options.expandAllRows;
 
   const hasGrouping = options.rules.some((r) => r.operation === GroupByOperationID.groupBy);
   const hasAggregation = options.rules.some(
@@ -245,10 +244,7 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
           onChange={() =>
             onChange({
               ...options,
-              expandAllRows:
-                options.expandAllRows === undefined
-                  ? !EXPAND_ALL_ROWS_DEFAULT
-                  : !options.expandAllRows,
+              expandAllRows: options.expandAllRows === undefined ? !EXPAND_ALL_ROWS_DEFAULT : !options.expandAllRows,
             })
           }
         />
