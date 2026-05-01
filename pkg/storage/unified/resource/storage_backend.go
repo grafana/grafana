@@ -847,7 +847,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 			if err := k.dataStore.applyBackwardsCompatibleChanges(txnCtx, tx, event, dataKey); err != nil {
 				if apierrors.IsConflict(err) {
-					// Log conflict errors when creating resources to monitor potential
+					// Log conflict errors when applying compatibility changes to monitor potential
 					// case mismatches between the resource_history's `key_path` column and
 					// the resource table's `name` column.
 					k.log.Warn("conflict when applying compatibility changes",
