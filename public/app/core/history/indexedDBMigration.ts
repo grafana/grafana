@@ -150,7 +150,7 @@ async function migrateFromLocalStorage(
 
   const startTime = Date.now();
   let itemsWritten = 0;
-  let duplicatesSkipped = 0;
+  let invalidEntriesSkipped = 0;
 
   try {
     const db = await indexedDBStorage.getDB();
@@ -176,7 +176,7 @@ async function migrateFromLocalStorage(
     }
     await tx.done;
 
-    duplicatesSkipped = itemCount - validEntries.length;
+    invalidEntriesSkipped = itemCount - validEntries.length;
 
     // Migrate settings
     await migrateSettings(indexedDBStorage);
@@ -190,7 +190,7 @@ async function migrateFromLocalStorage(
       itemCount,
       itemsWritten,
       durationMs,
-      duplicatesSkipped,
+      invalidEntriesSkipped,
     });
   } catch (error) {
     reportInteraction('grafana_query_history_migration_failed', {
