@@ -1,7 +1,11 @@
-import moment, { type Moment, type MomentInput, type DurationInputArg1, type DurationInputArg2 } from 'moment';
-import { tz } from 'moment-timezone';
-
 import { type TimeZone } from '../types/time';
+
+import moment, {
+  type MomentInput,
+  type MomentLike as Moment,
+  type MomentDurationLike as DurationInputArg1,
+} from './luxon_moment_compat/moment';
+
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
@@ -111,7 +115,7 @@ export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTim
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
   // moment built-in types are a bit flaky, for example `isoWeek` is not in the type definition but it's present in the js source.
-  return moment.duration(input as DurationInputArg1, unit as DurationInputArg2) as DateTimeDuration;
+  return moment.duration(input as DurationInputArg1, unit as DurationUnit) as DateTimeDuration;
 };
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
@@ -128,12 +132,12 @@ export const dateTimeForTimeZone = (
   formatInput?: FormatInput
 ): DateTime => {
   if (timezone && timezone !== 'browser') {
-    let result: moment.Moment;
+    let result: Moment;
 
     if (typeof input === 'string' && formatInput) {
-      result = tz(input, formatInput, timezone);
+      result = moment.tz(input, formatInput, timezone);
     } else {
-      result = tz(input, timezone);
+      result = moment.tz(input, timezone);
     }
 
     if (isDateTime(result)) {
