@@ -1893,22 +1893,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/containers/DashboardPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/PublicDashboardPage.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardGrid.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
