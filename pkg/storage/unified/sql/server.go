@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -31,6 +32,7 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	Backend          resource.StorageBackend
 	VectorBackend    vector.VectorBackend
+	Embedder         *embedder.Embedder
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -62,6 +64,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withMaxPageSizeBytes,
 		withBackend,
 		withVectorBackend,
+		withEmbedder,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
@@ -96,6 +99,7 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withAccessClient,
 		withBackend,
 		withVectorBackend,
+		withEmbedder,
 		withSearch,
 	)
 	if err != nil {
@@ -189,6 +193,13 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 // allowed; callers fall back to non-vector search paths when it's absent.
 func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.VectorBackend = opts.VectorBackend
+	return nil
+}
+
+// withEmbedder propagates the optional Embedder through. nil is allowed;
+// the VectorSearch handler returns Unimplemented when it's absent.
+func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Embedder = opts.Embedder
 	return nil
 }
 

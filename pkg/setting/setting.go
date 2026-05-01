@@ -695,6 +695,15 @@ type Cfg struct {
 	VectorDBSSLMode                   string
 	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
 	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
+	// Embedding provider used by the VectorSearch RPC. "" = disabled.
+	EmbeddingProvider                 string // "vertex" | "bedrock" | ""
+	VertexProjectID                   string
+	VertexLocation                    string // default "us-central1"
+	VertexModel                       string // default "gemini-embedding-001"
+	VertexDimensions                  int    // default 768
+	BedrockRegion                     string // default "us-east-1"
+	BedrockModel                      string // default "cohere.embed-v4:0"
+	BedrockDimensions                 int    // default 1024
 	OverridesFilePath                 string
 	OverridesReloadInterval           time.Duration
 	EnforcedQuotaResources            []string

@@ -18,6 +18,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -25,9 +27,11 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
@@ -140,6 +144,7 @@ type searchServer struct {
 	log           log.Logger
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
+	embedder      *embedder.Embedder
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
 	access        types.AccessClient
@@ -187,7 +192,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -211,6 +216,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		access:         access,
 		storage:        storage,
 		vectorBackend:  vectorBackend,
+		embedder:       embedder,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
@@ -490,6 +496,156 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	}
 
 	return idx.Search(ctx, s.access, req, federate, stats)
+}
+
+// Default and ceiling for VectorSearch.Limit. Zero on the request becomes
+// the default; anything above the ceiling is clamped down so a misconfigured
+// caller can't run away with the embedding API.
+const (
+	defaultVectorSearchLimit = 50
+	maxVectorSearchLimit     = 200
+)
+
+// VectorSearch implements ResourceIndexServer. Embeds the query string with
+// the configured embedding model, runs a nearest-neighbor search against
+// the vector backend, and returns results in ascending-distance order
+// (lower score = closer match — passes through pgvector's <=> output).
+//
+// Returns Unimplemented when no embedding provider or vector backend is configured
+func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
+	defer span.End()
+
+	if s.embedder == nil || s.vectorBackend == nil {
+		return nil, status.Error(codes.Unimplemented, "vector search not configured")
+	}
+
+	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}, nil
+	}
+	if strings.TrimSpace(req.Query) == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query must not be empty"),
+		}, nil
+	}
+
+	limit := int(req.Limit)
+	switch {
+	case limit <= 0:
+		limit = defaultVectorSearchLimit
+	case limit > maxVectorSearchLimit:
+		limit = maxVectorSearchLimit
+	}
+
+	span.SetAttributes(
+		attribute.String("namespace", req.Key.Namespace),
+		attribute.String("group", req.Key.Group),
+		attribute.String("resource", req.Key.Resource),
+		attribute.Int("limit", limit),
+	)
+
+	// Embed the query as a retrieval *query* (different task hint than the
+	// retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{req.Query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+
+	filters := translateVectorSearchFilters(req.Filters)
+
+	results, err := s.vectorBackend.Search(ctx,
+		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+		out.Embeddings[0].Dense, limit, filters...)
+	if err != nil {
+		s.log.Error("vector search: backend", "err", err)
+		return nil, status.Error(codes.Internal, "vector search backend")
+	}
+
+	// Authz post-filter: drop rows the caller can't access. Same pattern as
+	// the bleve Search handler (which delegates the per-row check to
+	// idx.Search) and grafana-assistant-app's FilterAccessibleDashboards
+	// (which post-filters via per-UID Grafana search calls). Done here
+	// instead of pushed into the SQL because pgvector has no concept of
+	// AccessClient and authz state isn't expressible as a simple WHERE
+	// clause.
+	//
+	// Caveat: under-fill. If the user can see only K of the N rows pgvector
+	// returned, the response has K results — we can't backfill from ranks
+	// N+1.. without a second backend round-trip. Acceptable for v1
+	// (workloads with elevated claims aren't affected; restricted callers
+	// see the closest accessible matches, not nothing).
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented (matches existing usage in server.go)
+	checker, _, err := s.access.Compile(ctx, user, types.ListRequest{
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+		Namespace: req.Key.Namespace,
+		Verb:      utils.VerbGet,
+	})
+	if err != nil {
+		s.log.Error("vector search: authz compile", "err", err)
+		return nil, status.Error(codes.Internal, "authz compile")
+	}
+	if checker == nil {
+		// No access to anything — return an empty result set rather than an
+		// error, mirroring how a regular search would surface "no hits."
+		return &resourcepb.VectorSearchResponse{}, nil
+	}
+
+	resp := &resourcepb.VectorSearchResponse{
+		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
+	}
+	for _, r := range results {
+		if !checker(r.UID, r.Folder) {
+			continue
+		}
+		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
+			Name:        r.UID,
+			Title:       r.Title,
+			Subresource: r.Subresource,
+			Content:     r.Content,
+			Score:       r.Score, // raw cosine distance — pass-through
+			Folder:      r.Folder,
+			Metadata:    r.Metadata,
+		})
+	}
+	return resp, nil
+}
+
+// translateVectorSearchFilters maps the proto Requirement shape into the
+// vector backend's SearchFilter shape. The backend recognizes "uid" and
+// "folder" as first-class columns; any other key is treated as a JSONB
+// metadata containment filter.
+func translateVectorSearchFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
+	if len(reqs) == 0 {
+		return nil
+	}
+	out := make([]vector.SearchFilter, 0, len(reqs))
+	for _, r := range reqs {
+		if r == nil || r.Key == "" {
+			continue
+		}
+		out = append(out, vector.SearchFilter{
+			Field:  r.Key,
+			Values: r.Values,
+		})
+	}
+	return out
 }
 
 // GetStats implements ResourceServer.

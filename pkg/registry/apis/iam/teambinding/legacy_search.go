@@ -36,6 +36,12 @@ func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer t
 	}
 }
 
+// VectorSearch is not supported on the legacy team binding store; vector
+// search only exists on the unified storage path.
+func (c *LegacyTeamBindingSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, fmt.Errorf("vector search not supported on legacy team binding store")
+}
+
 func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "teambinding.legacysearch")
 	defer span.End()

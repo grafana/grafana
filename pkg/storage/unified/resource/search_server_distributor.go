@@ -125,6 +125,20 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 	return client.GetStats(ctx, r)
 }
 
+func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.VectorSearch")
+	defer span.End()
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, ns, "VectorSearch")
+	if err != nil {
+		return nil, err
+	}
+	return client.VectorSearch(ctx, r)
+}
+
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
 	defer span.End()
