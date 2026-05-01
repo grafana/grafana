@@ -1,5 +1,5 @@
 [tools]
-go = { template = "{{ exec(command='grep -E \"^go [0-9]\" go.mod | awk \"{print $2}\"') }}" }
+go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
 
 [settings]
 node.corepack = true
