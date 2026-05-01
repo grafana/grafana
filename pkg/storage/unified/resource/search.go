@@ -573,19 +573,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
 
-	// Authz post-filter: drop rows the caller can't access. Same pattern as
-	// the bleve Search handler (which delegates the per-row check to
-	// idx.Search) and grafana-assistant-app's FilterAccessibleDashboards
-	// (which post-filters via per-UID Grafana search calls). Done here
-	// instead of pushed into the SQL because pgvector has no concept of
-	// AccessClient and authz state isn't expressible as a simple WHERE
-	// clause.
-	//
-	// Caveat: under-fill. If the user can see only K of the N rows pgvector
-	// returned, the response has K results — we can't backfill from ranks
-	// N+1.. without a second backend round-trip. Acceptable for v1
-	// (workloads with elevated claims aren't affected; restricted callers
-	// see the closest accessible matches, not nothing).
+	// Using authz post-filtering for now
+	// Downside is that the results could be lower than expected
+	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
 	user, ok := types.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
