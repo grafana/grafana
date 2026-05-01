@@ -686,15 +686,15 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	// Vector storage (separate pgvector database)
-	EnableVectorBackend               bool
-	VectorDBHost                      string
-	VectorDBPort                      string
-	VectorDBName                      string
-	VectorDBUser                      string
-	VectorDBPassword                  string
-	VectorDBSSLMode                   string
-	VectorPromotionThreshold          int           // row count per tenant to trigger leaf promotion
-	VectorPromoterInterval            time.Duration // promoter tick interval; 0 disables
+	EnableVectorBackend      bool
+	VectorDBHost             string
+	VectorDBPort             string
+	VectorDBName             string
+	VectorDBUser             string
+	VectorDBPassword         string
+	VectorDBSSLMode          string
+	VectorPromotionThreshold int           // row count per tenant to trigger leaf promotion
+	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
 	EmbeddingProvider                 string // "vertex" | "bedrock" | ""
 	VertexProjectID                   string

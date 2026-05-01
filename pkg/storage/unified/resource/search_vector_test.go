@@ -262,7 +262,7 @@ func TestVectorSearch_EmptyQueryReturnsBadRequestError(t *testing.T) {
 func TestVectorSearch_MissingKeyReturnsBadRequestError(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
 	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
-		Key: &resourcepb.ResourceKey{Namespace: "ns"}, // missing group/resource
+		Key:   &resourcepb.ResourceKey{Namespace: "ns"}, // missing group/resource
 		Query: "q",
 	})
 	require.NoError(t, err)
