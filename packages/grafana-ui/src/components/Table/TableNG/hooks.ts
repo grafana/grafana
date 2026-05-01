@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
-import { type Column, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
+import { type Column, type ColumnWidths, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
 import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
@@ -32,6 +32,7 @@ import {
   getColumnTypes,
   getRowHeight,
   computeColWidths,
+  buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
   IS_SAFARI_26,
@@ -637,6 +638,66 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   }, [ref, height, updateScrollbarDimensions]);
 
   return scrollbarWidth;
+}
+
+interface UseNestedColWidthsOptions {
+  nestedVisibleFields: Field[];
+  availableWidth: number;
+}
+
+interface UseNestedColWidthsResult {
+  nestedFieldWidths: number[];
+  nestedColWidths: ColumnWidths;
+  handleNestedColumnWidthsChange: (newColWidths: ColumnWidths) => void;
+}
+
+/**
+ * Manages per-column widths for nested tables.
+ *
+ * nestedFieldWidths (number[]) is the source of truth; nestedColWidths (ColumnWidths Map)
+ * is derived from it for react-data-grid. The state key detects schema/config changes
+ * without re-firing during user drags, which update nestedFieldWidths directly via
+ * handleNestedColumnWidthsChange without touching the schema-derived widths.
+ */
+export function useNestedColWidths({ nestedVisibleFields, availableWidth }: UseNestedColWidthsOptions): UseNestedColWidthsResult {
+  // before we do anything, figure out what the widths are based on the panel configuration.
+  const configuredWidths = useMemo(
+    () => computeColWidths(nestedVisibleFields, availableWidth),
+    [nestedVisibleFields, availableWidth]
+  );
+
+  // Serialize field names + configured widths so the effect fires on panel changes,
+  // but NOT during user drags (drags write to nestedFieldWidths without touching configuredWidths).
+  const nestedFieldsStateKey = nestedVisibleFields
+    .map((f, idx) => `${getDisplayName(f)}:${configuredWidths[idx]}`)
+    .join('\0');
+
+  const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
+
+  useEffect(() => {
+    setNestedFieldWidths(computeColWidths(nestedVisibleFields, availableWidth));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nestedFieldsStateKey]);
+
+  const nestedColWidths = useMemo(
+    () => buildNestedColumnWidthsMap(nestedVisibleFields, nestedFieldWidths),
+    [nestedVisibleFields, nestedFieldWidths]
+  );
+
+  const handleNestedColumnWidthsChange = useCallback(
+    (newColWidths: ColumnWidths) => {
+      setNestedFieldWidths(
+        nestedVisibleFields.map((f, idx) => {
+          const entry = newColWidths.get(getDisplayName(f));
+          // ColumnWidth always has a width property (both 'resized' and 'measured' variants)
+          return entry != null ? entry.width : nestedFieldWidths[idx];
+        })
+      );
+    },
+    [nestedVisibleFields, nestedFieldWidths]
+  );
+
+  return { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange };
 }
 
 export function useColWidths(

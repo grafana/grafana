@@ -1023,11 +1023,9 @@ export function computeColWidths(fields: Field[], availWidth: number) {
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
-  const map = new Map<string, ColumnWidth>();
-  fields.forEach((field, idx) => {
-    map.set(getDisplayName(field), { type: 'resized', width: widths[idx] });
-  });
-  return map;
+  return new Map<string, ColumnWidth>(
+    fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])
+  );
 }
 
 /**
