@@ -414,7 +414,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 		}
 		indexKey, err := ulid.Parse(keyStr)
 		if err != nil {
-			s.log.Warn("skipping index with non-ULID key", "key", keyStr, "err", err)
+			s.log.Warn("skipping index snapshot with non-ULID key", "key", keyStr, "err", err)
 			continue
 		}
 
@@ -430,7 +430,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 			continue
 		}
 		if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-			s.log.Warn("skipping index with invalid manifest", "key", obj.Key)
+			s.log.Warn("skipping index snapshot with invalid manifest", "key", obj.Key)
 			continue
 		}
 		result[indexKey] = &meta

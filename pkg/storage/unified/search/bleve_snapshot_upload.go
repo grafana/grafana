@@ -68,7 +68,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 		if releaseErr := lock.Release(); releaseErr != nil {
 			span.AddEvent("snapshot.lock.release.failed", oteltrace.WithAttributes(lockAttrs...))
 			// A release failure after UploadIndex succeeds does not make the uploaded snapshot invalid.
-			logger.Warn("releasing snapshot upload lock", "err", releaseErr)
+			logger.Warn("releasing index snapshot upload lock", "err", releaseErr)
 			return
 		}
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
