@@ -161,7 +161,7 @@ describe('PieChartPanel', () => {
         // Mirror what `applyFieldOverrides` would set: a supplier that returns
         // resolved `LinkModel`s for the given row.
         frame.fields[0].getLinks = () =>
-          links.map((l) => ({ href: l.url, title: l.title, target: undefined, origin: {} }));
+          links.map((l) => ({ href: l.url, title: l.title, target: undefined, origin: frame.fields[0] }));
         return frame;
       };
 

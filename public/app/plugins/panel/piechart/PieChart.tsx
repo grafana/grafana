@@ -74,7 +74,6 @@ export const PieChart = ({
     detectBounds: true,
     scroll: true,
   });
-  const { eventBus } = usePanelContext();
 
   const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
 
