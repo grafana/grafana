@@ -758,51 +758,20 @@
     "api_url": {
      "$ref": "#/definitions/URL"
     },
-    "custom_fields": {
-     "additionalProperties": {},
-     "type": "object"
-    },
-    "description": {
-     "type": "string"
-    },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
-    "issue_type": {
+    "message": {
      "type": "string"
     },
-    "labels": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "priority": {
-     "type": "string"
-    },
-    "project": {
-     "type": "string"
-    },
-    "reopen_duration": {
-     "$ref": "#/definitions/Duration"
-    },
-    "reopen_transition": {
-     "type": "string"
-    },
-    "resolve_transition": {
+    "room_id": {
      "type": "string"
     },
     "send_resolved": {
      "type": "boolean"
-    },
-    "summary": {
-     "type": "string"
-    },
-    "wont_fix_resolution": {
-     "type": "string"
     }
    },
-   "title": "Config configures notifications via JIRA.",
+   "title": "Config configures notifications via Webex.",
    "type": "object"
   },
   "ContactPointExport": {
@@ -3999,6 +3968,7 @@
    "type": "object"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -4040,6 +4010,12 @@
      },
      "type": "array"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "receiver": {
      "type": "string"
     },
@@ -4053,7 +4029,6 @@
      "type": "array"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
@@ -4382,19 +4357,19 @@
   "SigV4Config": {
    "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
    "properties": {
-    "AccessKey": {
+    "access_key": {
      "type": "string"
     },
-    "Profile": {
+    "profile": {
      "type": "string"
     },
-    "Region": {
+    "region": {
      "type": "string"
     },
-    "RoleARN": {
+    "role_arn": {
      "type": "string"
     },
-    "SecretKey": {
+    "secret_key": {
      "$ref": "#/definitions/Secret"
     }
    },

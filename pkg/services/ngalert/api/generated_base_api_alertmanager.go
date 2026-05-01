@@ -159,7 +159,12 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
 func (f *AlertmanagerApiHandler) RoutePostGrafanaAMAlerts(ctx *contextmodel.ReqContext) response.Response {
-	return f.handleRoutePostGrafanaAMAlerts(ctx)
+	// Parse Request Body
+	conf := apimodels.PostableAlerts{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostGrafanaAMAlerts(ctx, conf)
 }
 func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
