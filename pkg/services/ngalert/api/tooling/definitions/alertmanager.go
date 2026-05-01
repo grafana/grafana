@@ -618,6 +618,13 @@ type PostableAlerts struct {
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
+func (pa *PostableAlerts) UnmarshalJSON(b []byte) error {
+	inner := []amv2.PostableAlert{}
+	res := json.Unmarshal(b, &inner)
+	pa.PostableAlerts = inner
+	return res
+}
+
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
