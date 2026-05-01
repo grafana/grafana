@@ -48,7 +48,8 @@ const (
 )
 
 var sourceCommandRegex = regexp.MustCompile(`(?i)^\s*source\s+`)
-var pplSourceCommandRegex = regexp.MustCompile(`(?i)^\s*source\s*=`)
+var pplSourceCommandRegex = regexp.MustCompile(`(?im)(^|\|)\s*(--[^\n]*(\n|$)\s*)*(search\s+)?source\s*=`)
+var dataSourceIdentifierPartRegex = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 type AWSError struct {
 	Code    string
@@ -232,7 +233,10 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 	}
 
 	logGroupIdentifiers := buildLogGroupIdentifiers(logsQuery.LogGroups, isMonitoringAccount)
-	dataSourceIdentifiers := buildDataSourceIdentifiers(logsQuery.LogDataSources)
+	dataSourceIdentifiers, err := buildDataSourceIdentifiers(logsQuery.LogDataSources)
+	if err != nil {
+		return nil, backend.DownstreamError(err)
+	}
 	if len(dataSourceIdentifiers) > maxDataSourceSelections {
 		return nil, backend.DownstreamError(fmt.Errorf("maximum of %d data sources allowed, got %d", maxDataSourceSelections, len(dataSourceIdentifiers)))
 	}
@@ -313,9 +317,9 @@ func buildLogGroupIdentifiers(logGroups []dataquery.LogGroup, isMonitoringAccoun
 	return logGroupIdentifiers
 }
 
-func buildDataSourceIdentifiers(dataSources []dataquery.LogDataSource) []string {
+func buildDataSourceIdentifiers(dataSources []dataquery.LogDataSource) ([]string, error) {
 	if len(dataSources) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	seen := make(map[string]struct{}, len(dataSources))
@@ -323,7 +327,13 @@ func buildDataSourceIdentifiers(dataSources []dataquery.LogDataSource) []string 
 
 	for _, ds := range dataSources {
 		if ds.Name == "" || ds.Type == "" {
-			continue
+			return nil, fmt.Errorf("data source selection must include both name and type")
+		}
+		if err := validateDataSourceIdentifierPart("name", ds.Name); err != nil {
+			return nil, err
+		}
+		if err := validateDataSourceIdentifierPart("type", ds.Type); err != nil {
+			return nil, err
 		}
 		identifier := fmt.Sprintf("%s.%s", ds.Name, ds.Type)
 		if _, exists := seen[identifier]; exists {
@@ -333,7 +343,7 @@ func buildDataSourceIdentifiers(dataSources []dataquery.LogDataSource) []string 
 		identifiers = append(identifiers, identifier)
 	}
 
-	return identifiers
+	return identifiers, nil
 }
 
 func buildStartQueryPlan(
@@ -580,9 +590,6 @@ func expandSQLLogGroupsMacro(queryString string, logGroupIdentifiers []string) (
 	if !strings.Contains(queryString, logGroupsMacro) {
 		return queryString, nil
 	}
-	if len(logGroupIdentifiers) == 0 {
-		return "", backend.DownstreamError(fmt.Errorf("query contains %s but no log groups are selected", logGroupsMacro))
-	}
 
 	quoted := make([]string, len(logGroupIdentifiers))
 	for i, id := range logGroupIdentifiers {
@@ -599,9 +606,6 @@ func expandSQLSourceMacro(
 ) (string, error) {
 	if !strings.Contains(queryString, sourceMacro) {
 		return queryString, nil
-	}
-	if len(logGroupIdentifiers) == 0 && len(dataSourceIdentifiers) == 0 {
-		return "", backend.DownstreamError(fmt.Errorf("query contains %s but no log groups or data sources are selected", sourceMacro))
 	}
 
 	parts := make([]string, 0, 2)
@@ -624,6 +628,9 @@ func validateSQLMacroSelections(
 	hasSourceMacro := strings.Contains(queryString, sourceMacro)
 	if !hasLogGroupsMacro && !hasSourceMacro {
 		return nil
+	}
+	if strings.Count(queryString, sourceMacro) > 1 {
+		return backend.DownstreamError(fmt.Errorf("query contains multiple %s macros; only one is supported", sourceMacro))
 	}
 
 	hasLogGroupSelection := len(logGroupIdentifiers) > 0
@@ -668,6 +675,13 @@ func validateLogGroupPrefixes(prefixes []string) error {
 func validateAccountIdentifiers(accounts []string) error {
 	if len(accounts) > maxSourceAccountIdentifiers {
 		return fmt.Errorf("maximum of %d account identifiers allowed, got %d", maxSourceAccountIdentifiers, len(accounts))
+	}
+	return nil
+}
+
+func validateDataSourceIdentifierPart(kind string, value string) error {
+	if !dataSourceIdentifierPartRegex.MatchString(value) {
+		return fmt.Errorf("data source %s %q must contain only letters, numbers, hyphens, or underscores", kind, value)
 	}
 	return nil
 }

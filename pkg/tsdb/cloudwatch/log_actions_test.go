@@ -1199,6 +1199,32 @@ func Test_expandSourceMacro(t *testing.T) {
 		assert.Equal(t, "SELECT * FROM `dataSource(['amazon_vpc.flow'])`", *cli.calls.startQuery[0].QueryString)
 	})
 
+	t.Run("returns error when query contains more than one $__source macro", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__source`" + ` UNION SELECT * FROM ` + "`$__source`" + `",
+						"logDataSources":[{"name": "amazon_vpc", "type": "flow"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "query contains multiple $__source macros")
+		assert.Empty(t, cli.calls.startQuery)
+	})
+
 	t.Run("expands $__source macro with only log groups selected", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		ds := newTestDatasource()
@@ -1363,8 +1389,24 @@ func TestContainsPPLSourceCommand(t *testing.T) {
 			query:    "  source = [ds:`amazon_vpc.flow`] | fields `@message`",
 			expected: true,
 		},
-		"source in middle": {
+		"source after leading comment": {
+			query:    "-- selected explicitly\nsource=[ds:`amazon_vpc.flow`] | fields `@message`",
+			expected: true,
+		},
+		"source after pipe stage": {
 			query:    "fields `@message` | source=[ds:`amazon_vpc.flow`]",
+			expected: true,
+		},
+		"search source at start": {
+			query:    "search source=[ds:`amazon_vpc.flow`] | fields `@message`",
+			expected: true,
+		},
+		"where filters source field": {
+			query:    "where source = 'application' | fields `@message`",
+			expected: false,
+		},
+		"eval assigns source field": {
+			query:    "eval source = 'application' | fields source",
 			expected: false,
 		},
 	}
@@ -2120,6 +2162,134 @@ func TestQuery_StartQuery_WithDataSources(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Contains(t, resp.Responses["A"].Error.Error(), "query cannot contain source= when source is injected automatically")
+	})
+
+	t.Run("allows manually provided PPL source= when data sources are not selected", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "PPL",
+						"queryString":"source=[ds:` + "`amazon_vpc.flow`" + `] | fields ` + "`@message`" + `"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "source=[ds:`amazon_vpc.flow`] | fields `@message`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("returns error when a selected data source is missing name or type", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message",
+						"logDataSources":[{"name": "amazon_vpc"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "data source selection must include both name and type")
+	})
+
+	t.Run("returns error when a data source name contains unsupported characters", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message",
+						"logDataSources":[{"name": "amazon vpc", "type": "flow"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "data source name")
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "must contain only letters, numbers, hyphens, or underscores")
+	})
+
+	t.Run("allows hyphens in data source names", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`$__source`" + `",
+						"logDataSources":[{"name": "admin-server-java", "type": "Default"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `dataSource(['admin-server-java.Default'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("returns error when a data source type contains unsupported characters", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+							"type":    "logAction",
+							"subtype": "StartQuery",
+							"queryLanguage": "CWLI",
+							"queryString":"fields @message",
+							"logDataSources":[{"name": "amazon_vpc", "type": "flow logs"}]
+						}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "data source type")
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "must contain only letters, numbers, hyphens, or underscores")
 	})
 
 	t.Run("returns error when more than 10 data sources are selected", func(t *testing.T) {
