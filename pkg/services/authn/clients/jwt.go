@@ -77,6 +77,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id := &authn.Identity{
 		AuthenticatedBy: login.JWTModule,
 		AuthID:          sub,
+		OrgID:           r.OrgID, // re-grounded by FetchSyncedUserHook against org_user membership
 		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
@@ -136,14 +137,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
-	}
-
-	// Honour the org requested via ?orgId query param so that OrgRedirect middleware
-	// does not see a mismatch and cause an infinite redirect loop. Downstream sync
-	// hooks and RBAC permission checks still verify membership in id.OrgID; this
-	// only sets the active-org selector for the session.
-	if r.OrgID > 0 {
-		id.OrgID = r.OrgID
 	}
 
 	if id.Login == "" && id.Email == "" {
