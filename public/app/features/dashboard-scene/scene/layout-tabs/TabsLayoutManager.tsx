@@ -209,7 +209,13 @@ export class TabsLayoutManager
     dashboardEditActions.addElement({
       addedObject: newTab,
       source: this,
-      perform: () => this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() }),
+      perform: () => {
+        this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() });
+        const dashboard = getDashboardSceneFor(this);
+        if (dashboard.state.isEditing) {
+          newTab.getLayout().editModeChanged?.(true);
+        }
+      },
       undo: () => {
         this.setState({
           tabs: this.state.tabs.filter((t) => t !== newTab),
