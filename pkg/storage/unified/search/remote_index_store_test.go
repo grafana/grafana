@@ -62,7 +62,14 @@ func newTestRemoteIndexStore(t *testing.T, bucket resource.CDKBucket) *BucketRem
 
 func newTestRemoteIndexStoreWithLockOwner(t *testing.T, bucket resource.CDKBucket, backend lockBackend, owner string) *BucketRemoteIndexStore {
 	t.Helper()
-	return NewBucketRemoteIndexStore(bucket, backend, owner, 5*time.Second, 500*time.Millisecond)
+	opts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	return NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: backend,
+		LockOwner:   owner,
+		BuildLock:   opts,
+		CleanupLock: opts,
+	})
 }
 
 // createTestBleveIndex creates a real bleve index with sample documents.
@@ -913,4 +920,40 @@ func TestRemoteIndexStore_LockNamespaceForCleanup_DistinctFromBuildLock(t *testi
 	require.NoError(t, buildLock.Release())
 
 	require.NotEqual(t, cleanupLockKey(ns.Namespace), buildIndexLockKey(ns))
+}
+
+// Smoke-tests the LockOptions plumbing. Only TTL is observable in lockInfo;
+// HeartbeatUpdateTimeout behaviour is covered separately on objectStorageLock.
+func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T) {
+	ctx := context.Background()
+	backend := newFakeBackend(newConditionalBucket())
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+
+	buildTTL := 1 * time.Second
+	cleanupTTL := 5 * time.Second
+	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: backend,
+		LockOwner:   "instance-1",
+		BuildLock:   LockOptions{TTL: buildTTL, HeartbeatInterval: 200 * time.Millisecond},
+		CleanupLock: LockOptions{TTL: cleanupTTL, HeartbeatInterval: 200 * time.Millisecond},
+	})
+	ns := newTestNsResource()
+
+	buildLock, err := store.LockBuildIndex(ctx, ns)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = buildLock.Release() })
+
+	info, err := backend.Read(ctx, buildIndexLockKey(ns))
+	require.NoError(t, err)
+	require.Equal(t, buildTTL, info.TTL)
+
+	cleanupLock, err := store.LockNamespaceForCleanup(ctx, ns.Namespace)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cleanupLock.Release() })
+
+	info, err = backend.Read(ctx, cleanupLockKey(ns.Namespace))
+	require.NoError(t, err)
+	require.Equal(t, cleanupTTL, info.TTL)
 }
