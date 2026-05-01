@@ -107,6 +107,20 @@ func splitStringFilterInclude(include []string) (string, []string) {
 	}
 }
 
+// toEnumSlice converts a slice of strings to a slice of typed enum values E. Values are not
+// validated here; callers (e.g. the legacy storage layer) are expected to validate enum values
+// before they reach the query.
+func toEnumSlice[E ~string](values []string) []E {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]E, len(values))
+	for i, v := range values {
+		out[i] = E(v)
+	}
+	return out
+}
+
 // parseInt64Slice parses a list of decimal int64 strings, returning an error if any element fails
 // to parse. Used for the panel-id filter, whose underlying field selector values arrive as strings.
 func parseInt64Slice(values []string) ([]int64, error) {
@@ -142,7 +156,6 @@ type ListAlertRulesOptions struct {
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
-	titleExact, titleIn := splitStringFilterInclude(opts.TitleFilter.Include)
 	dashboardUID, dashboardIn := splitStringFilterInclude(opts.DashboardFilter.Include)
 	panelIDs, err := parseInt64Slice(opts.PanelIDFilter.Include)
 	if err != nil {
@@ -159,43 +172,34 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	} else {
 		panelIn = panelIDs
 	}
-	notifType, notifTypeIn := splitStringFilterInclude(opts.NotificationTypeFilter.Include)
 	receiverName, receiverIn := splitStringFilterInclude(opts.ReceiverFilter.Include)
-	routingPolicy, routingPolicyIn := splitStringFilterInclude(opts.RoutingTreeFilter.Include)
-	metricExact, metricIn := splitStringFilterInclude(opts.MetricFilter.Include)
-	targetUIDExact, targetUIDIn := splitStringFilterInclude(opts.TargetDatasourceUIDFilter.Include)
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID:                          user.GetOrgID(),
-			RuleGroups:                     opts.GroupFilter.Include,
-			ExcludeRuleGroups:              opts.GroupFilter.Exclude,
-			RuleGroupExists:                opts.GroupFilter.Exists,
-			ExcludeNamespaceUIDs:           opts.FolderFilter.Exclude,
-			TitleExact:                     titleExact,
-			TitleIn:                        titleIn,
-			TitleNotIn:                     opts.TitleFilter.Exclude,
-			IsPaused:                       opts.PausedFilter.Value,
-			DashboardUID:                   dashboardUID,
-			DashboardUIDIn:                 dashboardIn,
-			DashboardUIDNotIn:              opts.DashboardFilter.Exclude,
-			PanelID:                        panelID,
-			PanelIDIn:                      panelIn,
-			PanelIDNotIn:                   excludedPanelIDs,
-			NotificationSettingsType:       notifType,
-			NotificationSettingsTypeIn:     notifTypeIn,
-			NotificationSettingsTypeNotIn:  opts.NotificationTypeFilter.Exclude,
-			ReceiverName:                   receiverName,
-			ReceiverNameIn:                 receiverIn,
-			ReceiverNameNotIn:              opts.ReceiverFilter.Exclude,
-			RoutingPolicyExact:             routingPolicy,
-			RoutingPolicyIn:                routingPolicyIn,
-			RoutingPolicyNotIn:             opts.RoutingTreeFilter.Exclude,
-			RecordMetricExact:              metricExact,
-			RecordMetricIn:                 metricIn,
-			RecordMetricNotIn:              opts.MetricFilter.Exclude,
-			RecordTargetDatasourceUIDExact: targetUIDExact,
-			RecordTargetDatasourceUIDIn:    targetUIDIn,
-			RecordTargetDatasourceUIDNotIn: opts.TargetDatasourceUIDFilter.Exclude,
+			OrgID:                             user.GetOrgID(),
+			RuleGroups:                        opts.GroupFilter.Include,
+			ExcludeRuleGroups:                 opts.GroupFilter.Exclude,
+			RuleGroupExists:                   opts.GroupFilter.Exists,
+			ExcludeNamespaceUIDs:              opts.FolderFilter.Exclude,
+			Titles:                            opts.TitleFilter.Include,
+			ExcludeTitles:                     opts.TitleFilter.Exclude,
+			IsPaused:                          opts.PausedFilter.Value,
+			DashboardUID:                      dashboardUID,
+			DashboardUIDIn:                    dashboardIn,
+			DashboardUIDNotIn:                 opts.DashboardFilter.Exclude,
+			PanelID:                           panelID,
+			PanelIDIn:                         panelIn,
+			PanelIDNotIn:                      excludedPanelIDs,
+			NotificationSettingsTypes:         toEnumSlice[models.NotificationSettingsType](opts.NotificationTypeFilter.Include),
+			ExcludeNotificationSettingsTypes:  toEnumSlice[models.NotificationSettingsType](opts.NotificationTypeFilter.Exclude),
+			ReceiverName:                      receiverName,
+			ReceiverNameIn:                    receiverIn,
+			ReceiverNameNotIn:                 opts.ReceiverFilter.Exclude,
+			RoutingPolicies:                   opts.RoutingTreeFilter.Include,
+			ExcludeRoutingPolicies:            opts.RoutingTreeFilter.Exclude,
+			RecordMetrics:                     opts.MetricFilter.Include,
+			ExcludeRecordMetrics:              opts.MetricFilter.Exclude,
+			RecordTargetDatasourceUIDs:        opts.TargetDatasourceUIDFilter.Include,
+			ExcludeRecordTargetDatasourceUIDs: opts.TargetDatasourceUIDFilter.Exclude,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,

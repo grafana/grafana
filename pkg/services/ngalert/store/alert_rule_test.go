@@ -3274,8 +3274,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:      orgID,
-				TitleExact: matchTitle,
+				OrgID:  orgID,
+				Titles: []string{matchTitle},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3427,8 +3427,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                    orgID,
-				NotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
+				OrgID:                     orgID,
+				NotificationSettingsTypes: []models.NotificationSettingsType{models.NotificationSettingsTypeSimplifiedRouting},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3457,8 +3457,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                    orgID,
-				NotificationSettingsType: models.NotificationSettingsTypeNamedRoutingTree,
+				OrgID:                     orgID,
+				NotificationSettingsTypes: []models.NotificationSettingsType{models.NotificationSettingsTypeNamedRoutingTree},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3486,8 +3486,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:              orgID,
-				RoutingPolicyExact: matchPolicy,
+				OrgID:           orgID,
+				RoutingPolicies: []string{matchPolicy},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3515,8 +3515,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:             orgID,
-				RecordMetricExact: matchMetric,
+				OrgID:         orgID,
+				RecordMetrics: []string{matchMetric},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3552,8 +3552,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                          orgID,
-				RecordTargetDatasourceUIDExact: matchUID,
+				OrgID:                      orgID,
+				RecordTargetDatasourceUIDs: []string{matchUID},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)

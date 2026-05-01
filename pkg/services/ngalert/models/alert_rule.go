@@ -1072,44 +1072,28 @@ type ListAlertRulesQuery struct {
 	// IsPaused filters rules by their paused state.
 	// nil means no filter; true means only paused rules; false means only non-paused rules.
 	IsPaused *bool
-	// TitleExact filters rules to those with an exact title match (case-sensitive).
-	// Empty string means no filter.
-	TitleExact string
-	// TitleIn / TitleNotIn filter rules to those whose title is (or is not) in the given set.
-	// Combined with TitleExact via AND.
-	TitleIn    []string
-	TitleNotIn []string
 
-	// NotificationSettingsType filters rules by the type of notification settings configured.
-	// Valid values are NotificationSettingsTypeSimplifiedRouting and NotificationSettingsTypeNamedRoutingTree.
-	// Empty string means no filter.
-	NotificationSettingsType string
-	// NotificationSettingsTypeIn / NotificationSettingsTypeNotIn filter rules whose notification
-	// settings type is (or is not) in the given set. Combined with NotificationSettingsType via AND.
-	NotificationSettingsTypeIn    []string
-	NotificationSettingsTypeNotIn []string
-	// RoutingPolicyExact filters rules to those whose named routing policy matches exactly.
-	// Empty string means no filter.
-	RoutingPolicyExact string
-	// RoutingPolicyIn / RoutingPolicyNotIn filter rules whose named routing policy is
-	// (or is not) in the given set. Combined with RoutingPolicyExact via AND.
-	RoutingPolicyIn    []string
-	RoutingPolicyNotIn []string
-	// RecordMetricExact filters recording rules by their target metric name (exact match).
-	// Empty string means no filter.
-	RecordMetricExact string
-	// RecordMetricIn / RecordMetricNotIn filter recording rules whose target metric name is
-	// (or is not) in the given set. Combined with RecordMetricExact via AND.
-	RecordMetricIn    []string
-	RecordMetricNotIn []string
-	// RecordTargetDatasourceUIDExact filters recording rules by their target data source UID (exact match).
-	// Empty string means no filter.
-	RecordTargetDatasourceUIDExact string
-	// RecordTargetDatasourceUIDIn / RecordTargetDatasourceUIDNotIn filter recording rules
-	// whose target data source UID is (or is not) in the given set. Combined with the
-	// scalar variant via AND.
-	RecordTargetDatasourceUIDIn    []string
-	RecordTargetDatasourceUIDNotIn []string
+	// Titles / ExcludeTitles filter rules whose title is (or is not) in the given set.
+	// Empty slice means no filter.
+	Titles        []string
+	ExcludeTitles []string
+
+	// NotificationSettingsTypes / ExcludeNotificationSettingsTypes filter rules whose notification
+	// settings type is (or is not) in the given set. Empty slice means no filter.
+	NotificationSettingsTypes        []NotificationSettingsType
+	ExcludeNotificationSettingsTypes []NotificationSettingsType
+	// RoutingPolicies / ExcludeRoutingPolicies filter rules whose named routing policy is (or is
+	// not) in the given set. Empty slice means no filter.
+	RoutingPolicies        []string
+	ExcludeRoutingPolicies []string
+	// RecordMetrics / ExcludeRecordMetrics filter recording rules whose target metric name is
+	// (or is not) in the given set. Empty slice means no filter.
+	RecordMetrics        []string
+	ExcludeRecordMetrics []string
+	// RecordTargetDatasourceUIDs / ExcludeRecordTargetDatasourceUIDs filter recording rules
+	// whose target data source UID is (or is not) in the given set. Empty slice means no filter.
+	RecordTargetDatasourceUIDs        []string
+	ExcludeRecordTargetDatasourceUIDs []string
 
 	ReceiverName string
 	// ReceiverNameIn / ReceiverNameNotIn filter rules whose contact-point receiver name is

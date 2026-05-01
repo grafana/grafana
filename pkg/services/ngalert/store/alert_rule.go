@@ -954,8 +954,8 @@ func matchesReceiverFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertR
 // matchesRecordFilters returns false if the rule has record-related filters set in the query
 // and the rule's Record does not match them exactly.
 func matchesRecordFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
-	if query.RecordMetricExact == "" && len(query.RecordMetricIn) == 0 && len(query.RecordMetricNotIn) == 0 &&
-		query.RecordTargetDatasourceUIDExact == "" && len(query.RecordTargetDatasourceUIDIn) == 0 && len(query.RecordTargetDatasourceUIDNotIn) == 0 {
+	if len(query.RecordMetrics) == 0 && len(query.ExcludeRecordMetrics) == 0 &&
+		len(query.RecordTargetDatasourceUIDs) == 0 && len(query.ExcludeRecordTargetDatasourceUIDs) == 0 {
 		return true
 	}
 	metric, target := "", ""
@@ -963,22 +963,16 @@ func matchesRecordFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRul
 		metric = rule.Record.Metric
 		target = rule.Record.TargetDatasourceUID
 	}
-	if query.RecordMetricExact != "" && metric != query.RecordMetricExact {
+	if len(query.RecordMetrics) > 0 && !slices.Contains(query.RecordMetrics, metric) {
 		return false
 	}
-	if len(query.RecordMetricIn) > 0 && !slices.Contains(query.RecordMetricIn, metric) {
+	if len(query.ExcludeRecordMetrics) > 0 && slices.Contains(query.ExcludeRecordMetrics, metric) {
 		return false
 	}
-	if len(query.RecordMetricNotIn) > 0 && slices.Contains(query.RecordMetricNotIn, metric) {
+	if len(query.RecordTargetDatasourceUIDs) > 0 && !slices.Contains(query.RecordTargetDatasourceUIDs, target) {
 		return false
 	}
-	if query.RecordTargetDatasourceUIDExact != "" && target != query.RecordTargetDatasourceUIDExact {
-		return false
-	}
-	if len(query.RecordTargetDatasourceUIDIn) > 0 && !slices.Contains(query.RecordTargetDatasourceUIDIn, target) {
-		return false
-	}
-	if len(query.RecordTargetDatasourceUIDNotIn) > 0 && slices.Contains(query.RecordTargetDatasourceUIDNotIn, target) {
+	if len(query.ExcludeRecordTargetDatasourceUIDs) > 0 && slices.Contains(query.ExcludeRecordTargetDatasourceUIDs, target) {
 		return false
 	}
 	return true
@@ -1178,66 +1172,48 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	if query.IsPaused != nil {
 		q = q.Where("is_paused = ?", *query.IsPaused)
 	}
-	if query.TitleExact != "" {
-		q = q.Where("title = ?", query.TitleExact)
-	}
-	if len(query.TitleIn) > 0 {
-		args, in := getINSubQueryArgs(query.TitleIn)
+	if len(query.Titles) > 0 {
+		args, in := getINSubQueryArgs(query.Titles)
 		q = q.Where(fmt.Sprintf("title IN (%s)", strings.Join(in, ",")), args...)
 	}
-	if len(query.TitleNotIn) > 0 {
-		args, notIn := getINSubQueryArgs(query.TitleNotIn)
+	if len(query.ExcludeTitles) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeTitles)
 		q = q.Where(fmt.Sprintf("title NOT IN (%s)", strings.Join(notIn, ",")), args...)
 	}
 	q, err = st.filterByNotificationSettingsType(q, query)
 	if err != nil {
 		return nil, groupsSet, err
 	}
-	if query.RoutingPolicyExact != "" {
-		q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
-	}
-	if len(query.RoutingPolicyIn) > 0 {
-		args, in := getINSubQueryArgs(query.RoutingPolicyIn)
+	if len(query.RoutingPolicies) > 0 {
+		args, in := getINSubQueryArgs(query.RoutingPolicies)
 		q = q.Where(fmt.Sprintf("alert_routing_policy IN (%s)", strings.Join(in, ",")), args...)
 	}
-	if len(query.RoutingPolicyNotIn) > 0 {
-		args, notIn := getINSubQueryArgs(query.RoutingPolicyNotIn)
+	if len(query.ExcludeRoutingPolicies) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeRoutingPolicies)
 		// alert_routing_policy is nullable; NOT IN excludes NULL by default in SQL, so include
 		// rules without a routing policy explicitly to match expected k8s `!=` semantics.
 		q = q.Where(fmt.Sprintf("(alert_routing_policy IS NULL OR alert_routing_policy NOT IN (%s))", strings.Join(notIn, ",")), args...)
 	}
-	if query.RecordMetricExact != "" {
-		q, err = st.filterByContentInRecord("Metric", []string{query.RecordMetricExact}, false, q)
+	if len(query.RecordMetrics) > 0 {
+		q, err = st.filterByContentInRecord("Metric", query.RecordMetrics, false, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
 	}
-	if len(query.RecordMetricIn) > 0 {
-		q, err = st.filterByContentInRecord("Metric", query.RecordMetricIn, false, q)
+	if len(query.ExcludeRecordMetrics) > 0 {
+		q, err = st.filterByContentInRecord("Metric", query.ExcludeRecordMetrics, true, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
 	}
-	if len(query.RecordMetricNotIn) > 0 {
-		q, err = st.filterByContentInRecord("Metric", query.RecordMetricNotIn, true, q)
+	if len(query.RecordTargetDatasourceUIDs) > 0 {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.RecordTargetDatasourceUIDs, false, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
 	}
-	if query.RecordTargetDatasourceUIDExact != "" {
-		q, err = st.filterByContentInRecord("TargetDatasourceUID", []string{query.RecordTargetDatasourceUIDExact}, false, q)
-		if err != nil {
-			return nil, groupsSet, err
-		}
-	}
-	if len(query.RecordTargetDatasourceUIDIn) > 0 {
-		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.RecordTargetDatasourceUIDIn, false, q)
-		if err != nil {
-			return nil, groupsSet, err
-		}
-	}
-	if len(query.RecordTargetDatasourceUIDNotIn) > 0 {
-		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.RecordTargetDatasourceUIDNotIn, true, q)
+	if len(query.ExcludeRecordTargetDatasourceUIDs) > 0 {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.ExcludeRecordTargetDatasourceUIDs, true, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
@@ -1834,16 +1810,16 @@ func (st DBstore) filterByAnyContentInNotificationSettings(values []string, excl
 	return sess.And("("+strings.Join(clauses, " OR ")+")", params...), nil
 }
 
-// filterByNotificationSettingsType applies SQL filters for the NotificationSettingsType,
-// NotificationSettingsTypeIn, and NotificationSettingsTypeNotIn fields. SimplifiedRouting takes
-// precedence over NamedRoutingTree on rules that have both, so the filters here account for that.
+// filterByNotificationSettingsType applies SQL filters for the NotificationSettingsTypes and
+// ExcludeNotificationSettingsTypes enum fields. SimplifiedRouting takes precedence over
+// NamedRoutingTree on rules that have both, so the filters here account for that.
 func (st DBstore) filterByNotificationSettingsType(sess *xorm.Session, query *ngmodels.ListAlertRulesExtendedQuery) (*xorm.Session, error) {
 	const simplifiedSet = "notification_settings IS NOT NULL AND notification_settings <> '' AND notification_settings <> 'null' AND notification_settings <> '[]'"
 	const simplifiedUnset = "(notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')"
-	apply := func(values []string, exclude bool, s *xorm.Session) (*xorm.Session, error) {
-		if len(values) == 0 {
-			return s, nil
-		}
+	// matchClause returns a SQL predicate that matches rules whose effective notification settings
+	// type is in `values`. Effective type is SimplifiedRouting when notification_settings is set,
+	// otherwise NamedRoutingTree when alert_routing_policy is set.
+	matchClause := func(values []ngmodels.NotificationSettingsType) (string, error) {
 		hasSimplified, hasNamed := false, false
 		for _, v := range values {
 			switch v {
@@ -1852,41 +1828,32 @@ func (st DBstore) filterByNotificationSettingsType(sess *xorm.Session, query *ng
 			case ngmodels.NotificationSettingsTypeNamedRoutingTree:
 				hasNamed = true
 			default:
-				return nil, fmt.Errorf("unsupported notification settings type %q", v)
+				return "", fmt.Errorf("unsupported notification settings type %q", v)
 			}
 		}
-		// Build the predicate matching rules whose effective type is in `values`.
-		// Effective type is SimplifiedRouting when notification_settings is set,
-		// otherwise NamedRoutingTree when alert_routing_policy is set.
-		var clause string
 		switch {
 		case hasSimplified && hasNamed:
-			clause = "(" + simplifiedSet + ") OR (alert_routing_policy IS NOT NULL AND " + simplifiedUnset + ")"
+			return "(" + simplifiedSet + ") OR (alert_routing_policy IS NOT NULL AND " + simplifiedUnset + ")", nil
 		case hasSimplified:
-			clause = simplifiedSet
+			return simplifiedSet, nil
 		case hasNamed:
-			clause = "alert_routing_policy IS NOT NULL AND " + simplifiedUnset
+			return "alert_routing_policy IS NOT NULL AND " + simplifiedUnset, nil
 		}
-		if exclude {
-			clause = "NOT (" + clause + ")"
-		}
-		return s.Where(clause), nil
+		return "", nil
 	}
-	if query.NotificationSettingsType != "" {
-		var err error
-		sess, err = apply([]string{query.NotificationSettingsType}, false, sess)
+	if len(query.NotificationSettingsTypes) > 0 {
+		clause, err := matchClause(query.NotificationSettingsTypes)
 		if err != nil {
 			return nil, err
 		}
+		sess = sess.Where(clause)
 	}
-	var err error
-	sess, err = apply(query.NotificationSettingsTypeIn, false, sess)
-	if err != nil {
-		return nil, err
-	}
-	sess, err = apply(query.NotificationSettingsTypeNotIn, true, sess)
-	if err != nil {
-		return nil, err
+	if len(query.ExcludeNotificationSettingsTypes) > 0 {
+		clause, err := matchClause(query.ExcludeNotificationSettingsTypes)
+		if err != nil {
+			return nil, err
+		}
+		sess = sess.Where("NOT (" + clause + ")")
 	}
 	return sess, nil
 }

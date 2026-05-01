@@ -2246,7 +2246,7 @@ func TestListAlertRules(t *testing.T) {
 		t.Run("SimplifiedRouting should return only rules with contact point routing", func(t *testing.T) {
 			service := initWithNotifTypeData(t)
 			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
-				NotificationTypeFilter: ListRuleStringFilter{Include: []string{models.NotificationSettingsTypeSimplifiedRouting}},
+				NotificationTypeFilter: ListRuleStringFilter{Include: []string{string(models.NotificationSettingsTypeSimplifiedRouting)}},
 			})
 			require.NoError(t, err)
 			require.Len(t, rules, 2)
@@ -2258,7 +2258,7 @@ func TestListAlertRules(t *testing.T) {
 		t.Run("NamedRoutingTree should return only rules with policy routing", func(t *testing.T) {
 			service := initWithNotifTypeData(t)
 			rules, _, _, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
-				NotificationTypeFilter: ListRuleStringFilter{Include: []string{models.NotificationSettingsTypeNamedRoutingTree}},
+				NotificationTypeFilter: ListRuleStringFilter{Include: []string{string(models.NotificationSettingsTypeNamedRoutingTree)}},
 			})
 			require.NoError(t, err)
 			require.Len(t, rules, 3)

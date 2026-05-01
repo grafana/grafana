@@ -24,8 +24,8 @@ import (
 )
 
 var validNotificationSettingsTypes = []string{
-	ngmodels.NotificationSettingsTypeSimplifiedRouting,
-	ngmodels.NotificationSettingsTypeNamedRoutingTree,
+	string(ngmodels.NotificationSettingsTypeSimplifiedRouting),
+	string(ngmodels.NotificationSettingsTypeNamedRoutingTree),
 }
 
 var (

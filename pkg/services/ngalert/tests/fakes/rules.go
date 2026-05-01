@@ -359,13 +359,10 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 		if q.IsPaused != nil && r.IsPaused != *q.IsPaused {
 			continue
 		}
-		if q.TitleExact != "" && r.Title != q.TitleExact {
+		if len(q.Titles) > 0 && !slices.Contains(q.Titles, r.Title) {
 			continue
 		}
-		if len(q.TitleIn) > 0 && !slices.Contains(q.TitleIn, r.Title) {
-			continue
-		}
-		if len(q.TitleNotIn) > 0 && slices.Contains(q.TitleNotIn, r.Title) {
+		if len(q.ExcludeTitles) > 0 && slices.Contains(q.ExcludeTitles, r.Title) {
 			continue
 		}
 		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
@@ -397,20 +394,17 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			continue
 		}
 
-		ruleNotifType := ""
+		var ruleNotifType models.NotificationSettingsType
 		switch {
 		case r.ContactPointRouting() != nil:
 			ruleNotifType = models.NotificationSettingsTypeSimplifiedRouting
 		case r.PolicyRouting() != nil:
 			ruleNotifType = models.NotificationSettingsTypeNamedRoutingTree
 		}
-		if q.NotificationSettingsType != "" && ruleNotifType != q.NotificationSettingsType {
+		if len(q.NotificationSettingsTypes) > 0 && !slices.Contains(q.NotificationSettingsTypes, ruleNotifType) {
 			continue
 		}
-		if len(q.NotificationSettingsTypeIn) > 0 && !slices.Contains(q.NotificationSettingsTypeIn, ruleNotifType) {
-			continue
-		}
-		if len(q.NotificationSettingsTypeNotIn) > 0 && slices.Contains(q.NotificationSettingsTypeNotIn, ruleNotifType) {
+		if len(q.ExcludeNotificationSettingsTypes) > 0 && slices.Contains(q.ExcludeNotificationSettingsTypes, ruleNotifType) {
 			continue
 		}
 
@@ -418,13 +412,10 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 		if pr := r.PolicyRouting(); pr != nil {
 			rulePolicy = pr.Policy
 		}
-		if q.RoutingPolicyExact != "" && rulePolicy != q.RoutingPolicyExact {
+		if len(q.RoutingPolicies) > 0 && !slices.Contains(q.RoutingPolicies, rulePolicy) {
 			continue
 		}
-		if len(q.RoutingPolicyIn) > 0 && !slices.Contains(q.RoutingPolicyIn, rulePolicy) {
-			continue
-		}
-		if len(q.RoutingPolicyNotIn) > 0 && slices.Contains(q.RoutingPolicyNotIn, rulePolicy) {
+		if len(q.ExcludeRoutingPolicies) > 0 && slices.Contains(q.ExcludeRoutingPolicies, rulePolicy) {
 			continue
 		}
 
@@ -433,22 +424,16 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			ruleMetric = r.Record.Metric
 			ruleTargetUID = r.Record.TargetDatasourceUID
 		}
-		if q.RecordMetricExact != "" && ruleMetric != q.RecordMetricExact {
+		if len(q.RecordMetrics) > 0 && !slices.Contains(q.RecordMetrics, ruleMetric) {
 			continue
 		}
-		if len(q.RecordMetricIn) > 0 && !slices.Contains(q.RecordMetricIn, ruleMetric) {
+		if len(q.ExcludeRecordMetrics) > 0 && slices.Contains(q.ExcludeRecordMetrics, ruleMetric) {
 			continue
 		}
-		if len(q.RecordMetricNotIn) > 0 && slices.Contains(q.RecordMetricNotIn, ruleMetric) {
+		if len(q.RecordTargetDatasourceUIDs) > 0 && !slices.Contains(q.RecordTargetDatasourceUIDs, ruleTargetUID) {
 			continue
 		}
-		if q.RecordTargetDatasourceUIDExact != "" && ruleTargetUID != q.RecordTargetDatasourceUIDExact {
-			continue
-		}
-		if len(q.RecordTargetDatasourceUIDIn) > 0 && !slices.Contains(q.RecordTargetDatasourceUIDIn, ruleTargetUID) {
-			continue
-		}
-		if len(q.RecordTargetDatasourceUIDNotIn) > 0 && slices.Contains(q.RecordTargetDatasourceUIDNotIn, ruleTargetUID) {
+		if len(q.ExcludeRecordTargetDatasourceUIDs) > 0 && slices.Contains(q.ExcludeRecordTargetDatasourceUIDs, ruleTargetUID) {
 			continue
 		}
 
