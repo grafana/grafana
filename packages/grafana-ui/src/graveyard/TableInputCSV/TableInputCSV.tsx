@@ -9,8 +9,8 @@ import { t, Trans } from '@grafana/i18n';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { type Themeable2 } from '../../types/theme';
-import { Icon } from '../Icon/Icon';
-import { TextArea } from '../TextArea/TextArea';
+import { Icon } from '../../components/Icon/Icon';
+import { TextArea } from '../../components/TextArea/TextArea';
 
 interface Props extends Themeable2 {
   config?: CSVConfig;
