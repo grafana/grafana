@@ -552,7 +552,7 @@ approval_rules:
         paths:
           - ^\.github\/workflows\/pr-mt-service-compatibility\.yml$
       targets_branch:
-        pattern: (^main$|^test\/frontend-backend-separation-action$)
+        pattern: (^main$)
     requires:
       conditions:
         has_workflow_result:
