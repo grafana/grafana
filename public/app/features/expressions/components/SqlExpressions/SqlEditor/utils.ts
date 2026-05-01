@@ -3,7 +3,23 @@ import { type CodeMirrorCompletionSource } from '@grafana/ui/unstable';
 export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | 'table';
 
 const SQL_CLAUSE_BOUNDARY_PATTERN = /\b(?:where|group\s+by|order\s+by|having|limit|union|except|intersect)\b/i;
-const SQL_ALIAS_STOP_WORDS = new Set(['as', 'join', 'on', 'where', 'group', 'order', 'having', 'limit']);
+const SQL_ALIAS_STOP_WORDS = new Set([
+  'as',
+  'cross',
+  'full',
+  'group',
+  'having',
+  'inner',
+  'join',
+  'left',
+  'limit',
+  'natural',
+  'on',
+  'order',
+  'outer',
+  'right',
+  'where',
+]);
 
 export interface SqlCompletionItem {
   label: string;
@@ -35,6 +51,9 @@ interface TableRef {
   alias?: string;
 }
 
+/**
+ * Builds the CodeMirror completion source and selects the suggestion set from the cursor context.
+ */
 export function getSqlCompletionSource(completionProvider: SqlCompletionProvider): CodeMirrorCompletionSource {
   return async (context) => {
     const word = context.matchBefore(/[\w$]*/);
@@ -167,6 +186,7 @@ async function resolveColumnsForTables(
   completionProvider: SqlCompletionProvider,
   tables: string[]
 ): Promise<SqlCompletionItem[]> {
+  // Load columns concurrently because each table lookup is independent.
   const columns = await Promise.all(tables.map((table) => resolveColumns(completionProvider, { table })));
   return columns.flat();
 }
@@ -175,6 +195,9 @@ function getCompletionInsertText(item: SqlCompletionItem): string {
   return item.insertText ?? item.label;
 }
 
+/**
+ * Finds completions after a qualified reference like `A.` or `alias.columnPrefix`.
+ */
 export function getQualifiedColumnContext(sqlBeforeCursor: string): QualifiedColumnContext | undefined {
   const match = sqlBeforeCursor.match(/([A-Za-z_][\w$]*)\.([\w$]*)$/);
 
@@ -188,10 +211,16 @@ export function getQualifiedColumnContext(sqlBeforeCursor: string): QualifiedCol
   };
 }
 
+/**
+ * Returns unique table identifiers from FROM/JOIN clauses, ignoring aliases.
+ */
 export function getFromTables(sql: string): string[] {
   return [...new Set(getTableRefs(sql).map(({ table }) => table))];
 }
 
+/**
+ * Extracts table refs and aliases from the query before filtering/grouping clauses begin.
+ */
 function getTableRefs(sql: string): TableRef[] {
   const queryBeforeClause = getQueryBeforeClause(sql);
   const tableRefs: TableRef[] = [];
@@ -224,6 +253,7 @@ function getTableRefsFromList(tableList: string): TableRef[] {
 }
 
 function toTableRef(table: string, alias?: string): TableRef {
+  // The alias regex is permissive, so drop SQL keywords that are part of the next clause.
   if (!alias || SQL_ALIAS_STOP_WORDS.has(alias.toLowerCase())) {
     return { table };
   }
@@ -233,6 +263,7 @@ function toTableRef(table: string, alias?: string): TableRef {
 
 function resolveQualifiedTable(sql: string, tableOrAlias: string): string {
   const tableRefs = getTableRefs(sql);
+  // Prefer exact table refs so aliases cannot shadow real table identifiers.
   const exactTableRef = tableRefs.find(({ table }) => table === tableOrAlias);
 
   if (exactTableRef) {
@@ -243,12 +274,18 @@ function resolveQualifiedTable(sql: string, tableOrAlias: string): string {
   return aliasedTableRef?.table ?? tableOrAlias;
 }
 
+/**
+ * Detects positions where the next completion should be a table reference.
+ */
 export function isTableCompletionPosition(sqlBeforeCursor: string): boolean {
   const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 
   return /\b(?:from|join)$/i.test(textBeforeCurrentWord) || /\bfrom\s+[\w\s,$]+,$/i.test(textBeforeCurrentWord);
 }
 
+/**
+ * Detects positions after a table reference where SQL clauses like WHERE or GROUP BY are useful.
+ */
 export function isClauseCompletionPosition(sqlBeforeCursor: string): boolean {
   const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 

@@ -93,6 +93,24 @@ describe('SQL editor completion utils', () => {
     );
   });
 
+  it('does not treat join modifiers as aliases in qualified column completions', async () => {
+    const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+    const result = await getCompletionResult(
+      {
+        tables: () => [
+          { label: 'A', insertText: 'A' },
+          { label: 'B', insertText: 'B' },
+        ],
+        columns,
+      },
+      'SELECT left. FROM A LEFT JOIN B b ON A.time = B.time',
+      'SELECT left.'.length
+    );
+
+    expect(columns).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
   it('resolves columns for from tables in parallel', async () => {
     let resolveA: (items: Array<{ label: string }>) => void = () => {};
     const tableAColumns = new Promise<Array<{ label: string }>>((resolve) => {
