@@ -259,6 +259,22 @@ describe('RichHistoryIndexedDBStorage', () => {
       expect(richHistory).toHaveLength(1);
     });
 
+    it('should filter by search text in queryType', async () => {
+      await storage.addToRichHistory({
+        ...mockItem,
+        queries: [{ refId: 'A', queryType: 'randomWalk' } as MockQuery],
+      });
+      dateNowSpy.mockReturnValue(nowMs + 1);
+      await storage.addToRichHistory({
+        ...mockItem2,
+        queries: [{ refId: 'B', queryType: 'instant' } as MockQuery],
+      });
+
+      const { richHistory } = await storage.getRichHistory(filtersWithTimeRange({ search: 'rand' }));
+      expect(richHistory).toHaveLength(1);
+      expect(richHistory[0].queries[0].queryType).toBe('randomWalk');
+    });
+
     it('should filter unstarred queries by time range but always include starred', async () => {
       await storage.addToRichHistory(mockItem);
 
