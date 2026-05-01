@@ -207,7 +207,7 @@ export function setupExplore(options?: SetupOptions): {
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <Provider store={storeState}>
         <GrafanaContext.Provider value={contextMock}>
-          <Router history={history}>
+          <Router history={location.getHistory()}>
             <QueriesDrawerContextProvider>
               <FinalProvider>
                 {options?.withAppChrome ? (

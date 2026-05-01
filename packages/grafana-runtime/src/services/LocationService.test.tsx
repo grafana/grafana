@@ -62,62 +62,67 @@ describe('LocationService', () => {
   });
 
   describe('appendOrgId', () => {
+    const wrapper = locationService as HistoryWrapper;
+
     beforeEach(() => {
-      locationService.setOrgIdGetter(() => 7);
+      wrapper.setOrgIdGetter(() => 7);
     });
 
     afterAll(() => {
-      // disable the getter so other tests in this file aren't affected
-      locationService.setOrgIdGetter(() => 0);
+      wrapper.setOrgIdGetter(() => 0);
     });
 
     it('returns input unchanged when getter returns 0 / negative / NaN', () => {
-      locationService.setOrgIdGetter(() => 0);
-      expect(locationService.appendOrgId('/p')).toBe('/p');
-      locationService.setOrgIdGetter(() => -1);
-      expect(locationService.appendOrgId('/p')).toBe('/p');
-      locationService.setOrgIdGetter(() => NaN);
-      expect(locationService.appendOrgId('/p')).toBe('/p');
+      wrapper.setOrgIdGetter(() => 0);
+      expect(wrapper.appendOrgId('/p')).toBe('/p');
+      wrapper.setOrgIdGetter(() => -1);
+      expect(wrapper.appendOrgId('/p')).toBe('/p');
+      wrapper.setOrgIdGetter(() => NaN);
+      expect(wrapper.appendOrgId('/p')).toBe('/p');
     });
 
     it('appends orgId to a bare string path', () => {
-      expect(locationService.appendOrgId('/p')).toBe('/p?orgId=7');
+      expect(wrapper.appendOrgId('/p')).toEqual({ pathname: '/p', search: '?orgId=7', hash: '' });
     });
 
     it('appends orgId with & when the string path already has a query', () => {
-      expect(locationService.appendOrgId('/p?a=1')).toBe('/p?a=1&orgId=7');
+      expect(wrapper.appendOrgId('/p?a=1')).toEqual({ pathname: '/p', search: '?a=1&orgId=7', hash: '' });
     });
 
-    it('places orgId before the fragment on a bare string path', () => {
-      expect(locationService.appendOrgId('/p#h')).toBe('/p?orgId=7#h');
+    it('preserves the fragment on a bare string path', () => {
+      expect(wrapper.appendOrgId('/p#h')).toEqual({ pathname: '/p', search: '?orgId=7', hash: '#h' });
     });
 
-    it('places orgId before the fragment when the string path has a query', () => {
-      expect(locationService.appendOrgId('/p?a=1#h')).toBe('/p?a=1&orgId=7#h');
+    it('preserves the fragment when the string path has a query', () => {
+      expect(wrapper.appendOrgId('/p?a=1#h')).toEqual({ pathname: '/p', search: '?a=1&orgId=7', hash: '#h' });
     });
 
     it('leaves a string path unchanged when orgId is already present', () => {
-      expect(locationService.appendOrgId('/p?orgId=3')).toBe('/p?orgId=3');
+      expect(wrapper.appendOrgId('/p?orgId=3')).toBe('/p?orgId=3');
     });
 
     it('does not false-match notOrgId=', () => {
-      expect(locationService.appendOrgId('/p?notOrgId=5')).toBe('/p?notOrgId=5&orgId=7');
+      expect(wrapper.appendOrgId('/p?notOrgId=5')).toEqual({
+        pathname: '/p',
+        search: '?notOrgId=5&orgId=7',
+        hash: '',
+      });
     });
 
     it('floors fractional orgId', () => {
-      locationService.setOrgIdGetter(() => 7.9);
-      expect(locationService.appendOrgId('/p')).toBe('/p?orgId=7');
+      wrapper.setOrgIdGetter(() => 7.9);
+      expect(wrapper.appendOrgId('/p')).toEqual({ pathname: '/p', search: '?orgId=7', hash: '' });
     });
 
     it('appends orgId to a LocationDescriptor without a search property', () => {
-      expect(locationService.appendOrgId({ pathname: '/p' })).toEqual({
+      expect(wrapper.appendOrgId({ pathname: '/p' })).toEqual({
         pathname: '/p',
         search: '?orgId=7',
       });
     });
 
     it('appends orgId to a LocationDescriptor with only a hash', () => {
-      expect(locationService.appendOrgId({ pathname: '/p', hash: '#h' })).toEqual({
+      expect(wrapper.appendOrgId({ pathname: '/p', hash: '#h' })).toEqual({
         pathname: '/p',
         search: '?orgId=7',
         hash: '#h',
@@ -125,14 +130,14 @@ describe('LocationService', () => {
     });
 
     it('appends orgId to a LocationDescriptor with a search', () => {
-      expect(locationService.appendOrgId({ pathname: '/p', search: '?a=1' })).toEqual({
+      expect(wrapper.appendOrgId({ pathname: '/p', search: '?a=1' })).toEqual({
         pathname: '/p',
         search: '?a=1&orgId=7',
       });
     });
 
     it('leaves a LocationDescriptor unchanged when orgId is already present', () => {
-      expect(locationService.appendOrgId({ pathname: '/p', search: '?orgId=3' })).toEqual({
+      expect(wrapper.appendOrgId({ pathname: '/p', search: '?orgId=3' })).toEqual({
         pathname: '/p',
         search: '?orgId=3',
       });
@@ -140,12 +145,14 @@ describe('LocationService', () => {
   });
 
   describe('orgId injection on push/replace', () => {
+    const wrapper = locationService as HistoryWrapper;
+
     beforeEach(() => {
-      locationService.setOrgIdGetter(() => 7);
+      wrapper.setOrgIdGetter(() => 7);
     });
 
     afterAll(() => {
-      locationService.setOrgIdGetter(() => 0);
+      wrapper.setOrgIdGetter(() => 0);
     });
 
     it('push() injects orgId into a string path with fragment', () => {
@@ -164,6 +171,29 @@ describe('LocationService', () => {
       locationService.replace('/test?foo=1#section');
       expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
       expect(locationService.getLocation().hash).toBe('#section');
+    });
+
+    it('detached history.push call (as react-router <Link> does) still injects orgId', () => {
+      const history = wrapper.getHistory();
+      // react-router does: const method = history.push; method(loc)
+      const detachedPush = history.push;
+      detachedPush('/test?foo=1');
+      expect(locationService.getLocation().search).toBe('?foo=1&orgId=7');
+    });
+
+    it('partial() injects orgId when the current url lacks it', () => {
+      // Reset to a path without orgId
+      wrapper.setOrgIdGetter(() => 0);
+      locationService.push('/test?foo=1');
+      wrapper.setOrgIdGetter(() => 7);
+      locationService.partial({ bar: 2 });
+      expect(locationService.getLocation().search).toBe('?foo=1&bar=2&orgId=7');
+    });
+
+    it('createHref injects orgId so rendered <a href> values are shareable', () => {
+      const href = wrapper.createHref({ pathname: '/test', search: '?foo=1' });
+      expect(href).toContain('orgId=7');
+      expect(href).toContain('foo=1');
     });
   });
 
