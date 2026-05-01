@@ -4416,7 +4416,6 @@ __metadata:
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
-    "@types/uuid": "npm:10.0.0"
     "@uiw/codemirror-theme-vscode": "npm:4.25.9"
     "@uiw/react-codemirror": "npm:4.25.9"
     calculate-size: "npm:1.1.1"
@@ -4488,7 +4487,6 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
-    uuid: "npm:11.1.0"
     uwrap: "npm:0.1.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
