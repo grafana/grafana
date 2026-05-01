@@ -171,6 +171,7 @@ func newClient(opts options.StorageOptions,
 		serverOptions := sql.ServerOptions{
 			Backend:        backend,
 			VectorBackend:  vectorBackend,
+			Embedder:       embedderInstance,
 			Cfg:            cfg,
 			Tracer:         tracer,
 			Reg:            reg,
