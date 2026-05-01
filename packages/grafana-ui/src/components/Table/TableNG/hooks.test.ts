@@ -705,7 +705,7 @@ describe('TableNG hooks', () => {
             return rowHeight({ __index: 0, __depth: 1, data: frame });
           }).result.current
           // 3 nested rows + header + footer + padding + scrollbar
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16 + nestedFooterHeight);
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
       });
 
       it('includes nestedFooterHeight in the no-data expanded row height', () => {
@@ -776,7 +776,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -814,7 +814,7 @@ describe('TableNG hooks', () => {
             });
           }).result.current
           // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {

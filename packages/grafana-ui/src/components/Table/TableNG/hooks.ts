@@ -519,7 +519,7 @@ export function useRowHeight({
           (acc, row) => acc + getNestedRowHeightWithCache(row),
           0
         );
-        const scrollbarHeight = nestedHasOverflow ? 16 : 0;
+        const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
         return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
       }
 
