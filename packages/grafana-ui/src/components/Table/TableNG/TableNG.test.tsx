@@ -488,6 +488,67 @@ describe('TableNG', () => {
         expect(expandedRow).toBeInTheDocument();
       }
     });
+
+    it('preserves expanded state by stable key when row order changes on re-render', async () => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { stableRowKey: 'key-A', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { stableRowKey: 'key-B', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { 'key-A': nestedA, 'key-B': nestedB };
+        const labels = { 'key-A': 'Row A', 'key-B': 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'StableTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
+      );
+
+      // Expand the first row (key-A is at index 0)
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Re-render with reversed row order: key-B is now at index 0, key-A at index 1
+      rerender(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />
+      );
+
+      // key-A is now at index 1 but should still be expanded via its stable key
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      // key-B moved to index 0 but was never expanded, so its content should not appear
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+    });
   });
 
   describe('Header options', () => {

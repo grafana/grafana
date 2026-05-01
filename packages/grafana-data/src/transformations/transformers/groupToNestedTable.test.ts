@@ -59,7 +59,7 @@ describe('GroupToSubframe transformer', () => {
           values: [
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'one' } },
                 length: 1,
                 fields: [
                   {
@@ -91,7 +91,7 @@ describe('GroupToSubframe transformer', () => {
             ],
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'two' } },
                 length: 2,
                 fields: [
                   {
@@ -123,7 +123,7 @@ describe('GroupToSubframe transformer', () => {
             ],
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'three' } },
                 length: 3,
                 fields: [
                   {
@@ -211,7 +211,7 @@ describe('GroupToSubframe transformer', () => {
           values: [
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'one' } },
                 length: 1,
                 fields: [
                   {
@@ -255,7 +255,7 @@ describe('GroupToSubframe transformer', () => {
             ],
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'two' } },
                 length: 2,
                 fields: [
                   {
@@ -299,7 +299,7 @@ describe('GroupToSubframe transformer', () => {
             ],
             [
               {
-                meta: { custom: { noHeader: false } },
+                meta: { custom: { noHeader: false, stableRowKey: 'three' } },
                 length: 3,
                 fields: [
                   {
@@ -851,5 +851,44 @@ describe('GroupToSubframe transformer - V2 native config', () => {
 
     const v2 = migrateGroupToNestedTableOptions(v1Options);
     expect(v2.expandAllRows).toBe(true);
+  });
+
+  it('should embed a stableRowKey in each subframe meta based on the composite groupBy key', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'host', type: FieldType.string, values: ['web', 'db', 'web'] },
+        { name: 'region', type: FieldType.string, values: ['us', 'eu', 'eu'] },
+        { name: 'latency', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'host' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'region' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const nestedFramesField = result[0].fields.find((f) => f.name === '__nestedFrames');
+      expect(nestedFramesField).toBeDefined();
+
+      // Three distinct (host, region) groups: (web,us), (db,eu), (web,eu)
+      const subframeKeys = nestedFramesField!.values.map((v: unknown[]) => (v[0] as { meta: { custom: { stableRowKey: string } } }).meta.custom.stableRowKey);
+      expect(subframeKeys).toEqual(['web,us', 'db,eu', 'web,eu']);
+    });
   });
 });
