@@ -38,6 +38,11 @@ import (
 
 const maxBatchSize = 1000
 
+const (
+	defaultVectorSearchLimit = 50
+	maxVectorSearchLimit     = 200
+)
+
 type NamespacedResource struct {
 	Namespace string
 	Group     string
@@ -497,14 +502,6 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	return idx.Search(ctx, s.access, req, federate, stats)
 }
-
-// Default and ceiling for VectorSearch.Limit. Zero on the request becomes
-// the default; anything above the ceiling is clamped down so a misconfigured
-// caller can't run away with the embedding API.
-const (
-	defaultVectorSearchLimit = 50
-	maxVectorSearchLimit     = 200
-)
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
 // the configured embedding model, runs a nearest-neighbor search against
