@@ -6,7 +6,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Box } from '../Layout/Box/Box';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { MenuDivider } from './MenuDivider';
 import { MenuGroup } from './MenuGroup';
@@ -45,25 +44,22 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
         boxShadow="z3"
         display="inline-block"
         onKeyDown={handleKeys}
+        padding={componentTokens.padding}
         ref={localRef}
         role="menu"
         tabIndex={-1}
       >
-        <ScrollContainer maxHeight="100vh">
-          <Box padding={componentTokens.padding}>
-            {header && (
-              <div
-                className={cx(
-                  styles.header,
-                  Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
-                )}
-              >
-                {header}
-              </div>
+        {header && (
+          <div
+            className={cx(
+              styles.header,
+              Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
             )}
-            {children}
-          </Box>
-        </ScrollContainer>
+          >
+            {header}
+          </div>
+        )}
+        {children}
       </Box>
     );
   }

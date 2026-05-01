@@ -4,6 +4,7 @@ import { type SelectableValue } from '@grafana/data';
 
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 import { type PopoverContent } from '../Tooltip/types';
 
@@ -33,19 +34,21 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
 
   const renderMenu = () => (
     <Menu tabIndex={-1} onClose={() => setIsOpen(false)}>
-      {options.map((item) => (
-        <MenuItem
-          key={`${item.value}`}
-          label={item.label ?? String(item.value)}
-          onClick={() => onChange(item)}
-          active={item.value === value?.value}
-          ariaChecked={item.value === value?.value}
-          ariaLabel={item.ariaLabel || item.label}
-          disabled={item.isDisabled}
-          component={item.component}
-          role="menuitemradio"
-        />
-      ))}
+      <ScrollContainer maxHeight="100vh">
+        {options.map((item) => (
+          <MenuItem
+            key={`${item.value}`}
+            label={item.label ?? String(item.value)}
+            onClick={() => onChange(item)}
+            active={item.value === value?.value}
+            ariaChecked={item.value === value?.value}
+            ariaLabel={item.ariaLabel || item.label}
+            disabled={item.isDisabled}
+            component={item.component}
+            role="menuitemradio"
+          />
+        ))}
+      </ScrollContainer>
     </Menu>
   );
 
