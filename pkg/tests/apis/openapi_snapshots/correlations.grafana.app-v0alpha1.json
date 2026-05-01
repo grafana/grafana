@@ -956,7 +956,13 @@
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationDataSourceRef"
           },
           "target": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationDataSourceRef"
+            "description": "null is for PATCH/edit when we want to clear the value",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationDataSourceRef"
+              }
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationCorrelationType"
