@@ -2288,11 +2288,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/LogMessageAnsi.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

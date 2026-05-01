@@ -1,16 +1,16 @@
 import ansicolor from 'ansicolor';
-import { PureComponent } from 'react';
+import { memo, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { findHighlightChunksInText, type GrafanaTheme2 } from '@grafana/data';
-import { withTheme2, type Themeable2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 interface Style {
   [key: string]: string;
 }
 
 interface ParsedChunk {
-  style: Style;
+  style?: Style;
   text: string;
 }
 
@@ -34,7 +34,7 @@ function convertCSSToStyle(theme: GrafanaTheme2, css: string): Style {
   }, {});
 }
 
-interface Props extends Themeable2 {
+interface Props {
   value: string;
   highlight?: {
     searchWords: string[];
@@ -42,62 +42,36 @@ interface Props extends Themeable2 {
   };
 }
 
-interface State {
-  chunks: ParsedChunk[];
-  prevValue: string;
-}
+export const LogMessageAnsi = memo(function UnThemedLogMessageAnsi({ value, highlight }: Props) {
+  const theme = useTheme2();
 
-export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
-  state: State = {
-    chunks: [],
-    prevValue: '',
-  };
+  const chunks = useMemo<ParsedChunk[]>(() => {
+    const parsed = ansicolor.parse(value);
+    return parsed.spans.map((span) =>
+      span.css ? { style: convertCSSToStyle(theme, span.css), text: span.text } : { text: span.text }
+    );
+  }, [value, theme]);
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    if (props.value === state.prevValue) {
-      return null;
-    }
+  return chunks.map((chunk, index) => {
+    const chunkText = highlight?.searchWords ? (
+      <Highlighter
+        key={index}
+        textToHighlight={chunk.text}
+        searchWords={highlight.searchWords}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={highlight.highlightClassName}
+      />
+    ) : (
+      chunk.text
+    );
+    return chunk.style ? (
+      <span key={index} style={chunk.style} data-testid="ansiLogLine">
+        {chunkText}
+      </span>
+    ) : (
+      chunkText
+    );
+  });
+});
 
-    const parsed = ansicolor.parse(props.value);
-
-    return {
-      chunks: parsed.spans.map((span) => {
-        return span.css
-          ? {
-              style: convertCSSToStyle(props.theme, span.css),
-              text: span.text,
-            }
-          : { text: span.text };
-      }),
-      prevValue: props.value,
-    };
-  }
-
-  render() {
-    const { chunks } = this.state;
-
-    return chunks.map((chunk, index) => {
-      const chunkText = this.props.highlight?.searchWords ? (
-        <Highlighter
-          key={index}
-          textToHighlight={chunk.text}
-          searchWords={this.props.highlight.searchWords}
-          findChunks={findHighlightChunksInText}
-          highlightClassName={this.props.highlight.highlightClassName}
-        />
-      ) : (
-        chunk.text
-      );
-      return chunk.style ? (
-        <span key={index} style={chunk.style} data-testid="ansiLogLine">
-          {chunkText}
-        </span>
-      ) : (
-        chunkText
-      );
-    });
-  }
-}
-
-export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
 LogMessageAnsi.displayName = 'LogMessageAnsi';
