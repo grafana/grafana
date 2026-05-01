@@ -360,6 +360,11 @@
      },
      "type": "array"
     },
+    "policy": {
+     "description": "Name of the notification policy to route alerts through.\nMutually exclusive with all other fields, cannot be used with contact point routing via the \"receiver\" field.\nRequires experimental feature flag: alertingMultiplePolicies",
+     "example": "\"Alerting Team\"",
+     "type": "string"
+    },
     "receiver": {
      "description": "Name of the receiver to send notifications to.",
      "example": "grafana-default-email",
@@ -750,39 +755,59 @@
   },
   "Config": {
    "properties": {
-    "global": {
-     "$ref": "#/definitions/GlobalConfig"
+    "device": {
+     "type": "string"
     },
-    "inhibit_rules": {
-     "items": {
-      "$ref": "#/definitions/InhibitRule"
-     },
-     "type": "array"
+    "expire": {
+     "type": "string"
     },
-    "mute_time_intervals": {
-     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
-     "items": {
-      "$ref": "#/definitions/MuteTimeInterval"
-     },
-     "type": "array"
+    "html": {
+     "type": "boolean"
     },
-    "route": {
-     "$ref": "#/definitions/Route"
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
     },
-    "templates": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
+    "message": {
+     "type": "string"
     },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeInterval"
-     },
-     "type": "array"
+    "priority": {
+     "type": "string"
+    },
+    "retry": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "sound": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "token": {
+     "$ref": "#/definitions/Secret"
+    },
+    "token_file": {
+     "type": "string"
+    },
+    "ttl": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "url_title": {
+     "type": "string"
+    },
+    "user_key": {
+     "$ref": "#/definitions/Secret"
+    },
+    "user_key_file": {
+     "type": "string"
     }
    },
-   "title": "Config is the top-level configuration for Alertmanager's config files.",
+   "title": "Config configures notifications via Pushover.",
    "type": "object"
   },
   "ContactPointExport": {
@@ -1169,7 +1194,6 @@
     },
     "uptime": {
      "description": "uptime",
-     "format": "date-time",
      "type": "string"
     },
     "versionInfo": {
@@ -1720,6 +1744,9 @@
     },
     "uid": {
      "type": "string"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -1828,7 +1855,6 @@
      "type": "integer"
     },
     "last_applied": {
-     "format": "date-time",
      "type": "string"
     },
     "template_file_provenances": {
@@ -1854,6 +1880,10 @@
       "internal",
       "external"
      ],
+     "type": "string"
+    },
+    "external_alertmanager_uid": {
+     "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being\nsynced, or empty if sync is not configured for this org.",
      "type": "string"
     }
    },
@@ -1923,7 +1953,6 @@
     },
     "uptime": {
      "description": "uptime",
-     "format": "date-time",
      "type": "string"
     },
     "versionInfo": {
@@ -2052,7 +2081,7 @@
    "type": "object"
   },
   "Gone": {
-    "type": "object"
+   "type": "object"
   },
   "HTTPClientConfig": {
    "properties": {
@@ -2066,7 +2095,7 @@
      "$ref": "#/definitions/Secret"
     },
     "bearer_token_file": {
-     "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
+     "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.now",
      "type": "string"
     },
     "enable_http2": {
@@ -2129,6 +2158,9 @@
    "type": "object"
   },
   "Headers": {
+   "additionalProperties": {
+    "$ref": "#/definitions/Header"
+   },
    "properties": {
     "Headers": {
      "additionalProperties": {
@@ -2191,6 +2223,52 @@
    },
    "type": "object"
   },
+  "InhibitionRule": {
+   "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+   "properties": {
+    "equal": {
+     "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "source_match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "source_match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "source_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "target_match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "target_match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "target_matchers": {
+     "$ref": "#/definitions/Matchers"
+    }
+   },
+   "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
+   "type": "object"
+  },
   "InspectType": {
    "format": "int64",
    "title": "InspectType is a type for the Inspect property of a Notice.",
@@ -2200,7 +2278,6 @@
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-     "format": "date-time",
      "type": "string"
     },
     "lastNotifyAttemptDuration": {
@@ -2301,21 +2378,10 @@
   "Json": {
    "type": "object"
   },
-  "Label": {
-   "properties": {
-    "Name": {
-     "type": "string"
-    }
-   },
-   "title": "Label is a key/value pair of strings.",
-   "type": "object"
-  },
   "Labels": {
-   "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-   "items": {
-    "$ref": "#/definitions/Label"
-   },
-   "type": "array"
+   "description": "Each name and value is preceded by its length, encoded as a single byte\nfor size 0-254, or the following 3 bytes little-endian, if the first byte is 255.\nMaximum length allowed is 2^24 or 16MB.\nNames are in order.",
+   "title": "Labels is implemented by a single flat string holding name/value pairs.",
+   "type": "object"
   },
   "LinkTransformationConfig": {
    "properties": {
@@ -2381,6 +2447,19 @@
      "type": "string"
     }
    },
+   "type": "object"
+  },
+  "ManagedInhibitionRules": {
+   "additionalProperties": {
+    "$ref": "#/definitions/InhibitionRule"
+   },
+   "type": "object"
+  },
+  "ManagedRoutes": {
+   "additionalProperties": {
+    "$ref": "#/definitions/Route"
+   },
+   "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
    "type": "object"
   },
   "MatchRegexps": {
@@ -2606,31 +2685,6 @@
   },
   "OAuth2": {
    "properties": {
-    "TLSConfig": {
-     "$ref": "#/definitions/TLSConfig"
-    },
-    "audience": {
-     "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "string"
-    },
-    "claims": {
-     "additionalProperties": {},
-     "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "object"
-    },
-    "client_certificate_key": {
-     "$ref": "#/definitions/Secret"
-    },
-    "client_certificate_key_file": {
-     "type": "string"
-    },
-    "client_certificate_key_id": {
-     "type": "string"
-    },
-    "client_certificate_key_ref": {
-     "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
-     "type": "string"
-    },
     "client_id": {
      "type": "string"
     },
@@ -2649,14 +2703,6 @@
       "type": "string"
      },
      "type": "object"
-    },
-    "grant_type": {
-     "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
-     "type": "string"
-    },
-    "iss": {
-     "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "string"
     },
     "no_proxy": {
      "description": "NoProxy contains addresses that should not use a proxy.",
@@ -2678,9 +2724,8 @@
      },
      "type": "array"
     },
-    "signature_algorithm": {
-     "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
-     "type": "string"
+    "tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "token_url": {
      "type": "string"
@@ -2862,7 +2907,7 @@
      "type": "string"
     }
    },
-   "title": "PagerdutyImage is an image.",
+   "title": "PagerdutyImage is an image attached to an incident.",
    "type": "object"
   },
   "PagerdutyLink": {
@@ -2874,10 +2919,20 @@
      "type": "string"
     }
    },
-   "title": "PagerdutyLink is a link.",
+   "title": "PagerdutyLink is used to add link to an incident.",
    "type": "object"
   },
   "PermissionDenied": {
+   "type": "object"
+  },
+  "PostSilencesOKBody": {
+   "description": "PostSilencesOKBody post silences o k body",
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
    "type": "object"
   },
   "PostableApiAlertingConfig": {
@@ -2929,13 +2984,13 @@
    "properties": {
     "discord_configs": {
      "items": {
-      "$ref": "#/definitions/DiscordConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "email_configs": {
      "items": {
-      "$ref": "#/definitions/EmailConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
@@ -2947,19 +3002,19 @@
     },
     "jira_configs": {
      "items": {
-      "$ref": "#/definitions/JiraConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteams_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteamsv2_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsV2Config"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
@@ -2969,61 +3024,61 @@
     },
     "opsgenie_configs": {
      "items": {
-      "$ref": "#/definitions/OpsGenieConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pagerduty_configs": {
      "items": {
-      "$ref": "#/definitions/PagerdutyConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pushover_configs": {
      "items": {
-      "$ref": "#/definitions/PushoverConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "slack_configs": {
      "items": {
-      "$ref": "#/definitions/SlackConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "sns_configs": {
      "items": {
-      "$ref": "#/definitions/SNSConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "telegram_configs": {
      "items": {
-      "$ref": "#/definitions/TelegramConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "victorops_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webex_configs": {
      "items": {
-      "$ref": "#/definitions/WebexConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webhook_configs": {
      "items": {
-      "$ref": "#/definitions/WebhookConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "wechat_configs": {
      "items": {
-      "$ref": "#/definitions/WechatConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     }
@@ -3110,6 +3165,9 @@
     },
     "uid": {
      "type": "string"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -3188,6 +3246,10 @@
       "external"
      ],
      "type": "string"
+    },
+    "external_alertmanager_uid": {
+     "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync\nconfiguration from. Empty string disables sync for this org.",
+     "type": "string"
     }
    },
    "type": "object"
@@ -3250,6 +3312,12 @@
       "$ref": "#/definitions/ExtraConfiguration"
      },
      "type": "array"
+    },
+    "managed_inhibition_rules": {
+     "$ref": "#/definitions/ManagedInhibitionRules"
+    },
+    "managed_routes": {
+     "$ref": "#/definitions/ManagedRoutes"
     },
     "template_files": {
      "additionalProperties": {
@@ -3529,6 +3597,7 @@
      "$ref": "#/definitions/URL"
     }
    },
+   "title": "ProxyConfig configures proxy settings.",
    "type": "object"
   },
   "ProxyHeader": {
@@ -3538,6 +3607,7 @@
     },
     "type": "array"
    },
+   "title": "ProxyHeader represents HTTP headers to send to proxies.",
    "type": "object"
   },
   "PublicError": {
@@ -3707,31 +3777,31 @@
    "properties": {
     "discord_configs": {
      "items": {
-      "$ref": "#/definitions/DiscordConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "email_configs": {
      "items": {
-      "$ref": "#/definitions/EmailConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "jira_configs": {
      "items": {
-      "$ref": "#/definitions/JiraConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteams_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteamsv2_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsV2Config"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
@@ -3741,61 +3811,61 @@
     },
     "opsgenie_configs": {
      "items": {
-      "$ref": "#/definitions/OpsGenieConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pagerduty_configs": {
      "items": {
-      "$ref": "#/definitions/PagerdutyConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pushover_configs": {
      "items": {
-      "$ref": "#/definitions/PushoverConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "slack_configs": {
      "items": {
-      "$ref": "#/definitions/SlackConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "sns_configs": {
      "items": {
-      "$ref": "#/definitions/SNSConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "telegram_configs": {
      "items": {
-      "$ref": "#/definitions/TelegramConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "victorops_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webex_configs": {
      "items": {
-      "$ref": "#/definitions/WebexConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webhook_configs": {
      "items": {
-      "$ref": "#/definitions/WebhookConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "wechat_configs": {
      "items": {
-      "$ref": "#/definitions/WechatConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     }
@@ -3893,6 +3963,25 @@
   "RemoteWriteConfig": {
    "properties": {
     "url": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "Responder": {
+   "properties": {
+    "id": {
+     "description": "One of those 3 should be filled.",
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "type": {
+     "description": "team, user, escalation, schedule etc.",
+     "type": "string"
+    },
+    "username": {
      "type": "string"
     }
    },
@@ -4294,7 +4383,7 @@
    "type": "object"
   },
   "Secret": {
-   "title": "Secret special type for storing secrets.",
+   "title": "Secret is a string that must not be revealed on marshaling.",
    "type": "string"
   },
   "SecretURL": {
@@ -4828,6 +4917,7 @@
   "URL": {
    "properties": {
     "ForceQuery": {
+     "description": "ForceQuery indicates whether the original URL contained a query ('?') character.\nWhen set, the String method will include a trailing '?', even when RawQuery is empty.",
      "type": "boolean"
     },
     "Fragment": {
@@ -4837,6 +4927,7 @@
      "type": "string"
     },
     "OmitHost": {
+     "description": "OmitHost indicates the URL has an empty host (authority).\nWhen set, the String method will not include the host when it is empty.",
      "type": "boolean"
     },
     "Opaque": {
@@ -4846,12 +4937,15 @@
      "type": "string"
     },
     "RawFragment": {
+     "description": "RawFragment is an optional field containing an encoded fragment hint.\nSee the EscapedFragment method for more details.\n\nIn general, code should call EscapedFragment instead of reading RawFragment.",
      "type": "string"
     },
     "RawPath": {
+     "description": "RawPath is an optional field containing an encoded path hint.\nSee the EscapedPath method for more details.\n\nIn general, code should call EscapedPath instead of reading RawPath.",
      "type": "string"
     },
     "RawQuery": {
+     "description": "RawQuery contains the encoded query values, without the initial '?'.\nUse URL.Query to decode the query.",
      "type": "string"
     },
     "Scheme": {
@@ -4861,7 +4955,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "URL is a custom type that represents an HTTP or HTTPS URL and allows validation at configuration load time.",
    "type": "object"
   },
   "UpdateNamespaceRulesRequest": {
@@ -5085,7 +5179,6 @@
    "properties": {
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
-     "format": "uri",
      "type": "string"
     },
     "labels": {
@@ -5185,7 +5278,6 @@
     },
     "uptime": {
      "description": "uptime",
-     "format": "date-time",
      "type": "string"
     },
     "versionInfo": {
@@ -5235,7 +5327,6 @@
     },
     "endsAt": {
      "description": "ends at",
-     "format": "date-time",
      "type": "string"
     },
     "fingerprint": {
@@ -5244,7 +5335,6 @@
     },
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
-     "format": "uri",
      "type": "string"
     },
     "labels": {
@@ -5259,7 +5349,6 @@
     },
     "startsAt": {
      "description": "starts at",
-     "format": "date-time",
      "type": "string"
     },
     "status": {
@@ -5267,7 +5356,6 @@
     },
     "updatedAt": {
      "description": "updated at",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5314,7 +5402,6 @@
     },
     "endsAt": {
      "description": "ends at",
-     "format": "date-time",
      "type": "string"
     },
     "id": {
@@ -5329,7 +5416,6 @@
     },
     "startsAt": {
      "description": "starts at",
-     "format": "date-time",
      "type": "string"
     },
     "status": {
@@ -5337,7 +5423,6 @@
     },
     "updatedAt": {
      "description": "updated at",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5372,7 +5457,6 @@
     },
     "endsAt": {
      "description": "ends at",
-     "format": "date-time",
      "type": "string"
     },
     "id": {
@@ -5384,7 +5468,6 @@
     },
     "startsAt": {
      "description": "starts at",
-     "format": "date-time",
      "type": "string"
     },
     "status": {
@@ -5392,7 +5475,6 @@
     },
     "updatedAt": {
      "description": "updated at",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5492,12 +5574,10 @@
     },
     "endsAt": {
      "description": "ends at\nFormat: date-time",
-     "format": "date-time",
      "type": "string"
     },
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
-     "format": "uri",
      "type": "string"
     },
     "labels": {
@@ -5505,7 +5585,6 @@
     },
     "startsAt": {
      "description": "starts at\nFormat: date-time",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5534,7 +5613,6 @@
     },
     "endsAt": {
      "description": "ends at",
-     "format": "date-time",
      "type": "string"
     },
     "id": {
@@ -5546,7 +5624,6 @@
     },
     "startsAt": {
      "description": "starts at",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5585,7 +5662,6 @@
     },
     "endsAt": {
      "description": "ends at",
-     "format": "date-time",
      "type": "string"
     },
     "matchers": {
@@ -5593,7 +5669,6 @@
     },
     "startsAt": {
      "description": "starts at",
-     "format": "date-time",
      "type": "string"
     }
    },
@@ -5662,9 +5737,9 @@
   }
  },
  "info": {
-  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
-  "title": "Grafana Alerting API.",
-  "version": "1.1.0"
+  "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+  "title": "Alertmanager API",
+  "version": "0.0.1"
  },
  "paths": {
   "/alertmanager/grafana/api/v2/alerts": {
@@ -5720,6 +5795,33 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "create alertmanager alerts",
+    "operationId": "RoutePostGrafanaAMAlerts",
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
       }
      }
     },
@@ -5988,18 +6090,21 @@
   },
   "/alertmanager/grafana/config/api/v1/receivers/test": {
    "post": {
-    "description": "This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.",
-    "tags": [
-     "alertmanager"
-    ],
-    "summary": "Test Grafana managed receivers without saving them.",
-    "operationId": "RoutePostTestGrafanaReceivers",
     "deprecated": true,
+    "description": "This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.",
+    "operationId": "RoutePostTestGrafanaReceivers",
     "responses": {
      "410": {
-      "$ref": "#/definitions/Gone"
+      "description": "Gone",
+      "schema": {
+       "$ref": "#/definitions/Gone"
+      }
      }
-    }
+    },
+    "summary": "Test Grafana managed receivers without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
    }
   },
   "/alertmanager/grafana/config/api/v1/templates/test": {
@@ -6511,9 +6616,9 @@
     ],
     "responses": {
      "200": {
-      "description": "GettableStatus",
+      "description": "ExternalAlertmanagerStatus",
       "schema": {
-       "$ref": "#/definitions/GettableStatus"
+       "$ref": "#/definitions/ExternalAlertmanagerStatus"
       }
      },
      "400": {
@@ -6585,9 +6690,9 @@
     ],
     "responses": {
      "200": {
-      "description": "GettableUserConfig",
+      "description": "ExternalAlertmanagerConfig",
       "schema": {
-       "$ref": "#/definitions/GettableUserConfig"
+       "$ref": "#/definitions/ExternalAlertmanagerConfig"
       }
      },
      "400": {
@@ -6615,7 +6720,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/PostableUserConfig"
+       "$ref": "#/definitions/ExternalAlertmanagerConfig"
       }
      },
      {
@@ -6648,6 +6753,127 @@
     },
     "tags": [
      "alertmanager"
+    ]
+   }
+  },
+  "/alerts": {
+   "get": {
+    "description": "Get a list of alerts",
+    "operationId": "getAlerts",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "Active",
+      "type": "boolean"
+     },
+     {
+      "collectionFormat": "multi",
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "Filter",
+      "type": "array"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "Inhibited",
+      "type": "boolean"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "Receiver",
+      "type": "string"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "Silenced",
+      "type": "boolean"
+     },
+     {
+      "default": true,
+      "description": "Show unprocessed alerts",
+      "in": "query",
+      "name": "Unprocessed",
+      "type": "boolean"
+     }
+    ],
+    "tags": [
+     "alert"
+    ]
+   },
+   "post": {
+    "description": "Create new Alerts",
+    "operationId": "postAlerts",
+    "parameters": [
+     {
+      "description": "The alerts to create",
+      "in": "body",
+      "name": "Alerts",
+      "required": true,
+      "schema": {
+       "$ref": "#/definitions/postableAlerts"
+      }
+     }
+    ],
+    "tags": [
+     "alert"
+    ]
+   }
+  },
+  "/alerts/groups": {
+   "get": {
+    "description": "Get a list of alert groups",
+    "operationId": "getAlertGroups",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "Active",
+      "type": "boolean"
+     },
+     {
+      "collectionFormat": "multi",
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "Filter",
+      "type": "array"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "Inhibited",
+      "type": "boolean"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "Receiver",
+      "type": "string"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "Silenced",
+      "type": "boolean"
+     }
+    ],
+    "tags": [
+     "alertgroup"
     ]
    }
   },
@@ -7024,6 +7250,18 @@
       "in": "header",
       "name": "x-grafana-alerting-merge-matchers",
       "type": "string"
+     },
+     {
+      "description": "If true, the configuration will replace an existing configuration regardless of its identifier",
+      "in": "header",
+      "name": "x-grafana-alerting-config-force-replace",
+      "type": "boolean"
+     },
+     {
+      "description": "If true, validates the configuration without saving it",
+      "in": "header",
+      "name": "x-grafana-alerting-dry-run",
+      "type": "boolean"
      },
      {
       "description": "Alertmanager configuration including routing rules, receivers, and template files",
@@ -7596,6 +7834,15 @@
     },
     "tags": [
      "prometheus"
+    ]
+   }
+  },
+  "/receivers": {
+   "get": {
+    "description": "Get list of all receivers (name of notification integrations)",
+    "operationId": "getReceivers",
+    "tags": [
+     "receiver"
     ]
    }
   },
@@ -8427,6 +8674,90 @@
     ]
    }
   },
+  "/silence/{silenceID}": {
+   "delete": {
+    "description": "Delete a silence by its ID",
+    "operationId": "deleteSilence",
+    "parameters": [
+     {
+      "description": "ID of the silence to get",
+      "format": "uuid",
+      "in": "path",
+      "name": "SilenceID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "tags": [
+     "silence"
+    ]
+   },
+   "get": {
+    "description": "Get a silence by its ID",
+    "operationId": "getSilence",
+    "parameters": [
+     {
+      "description": "ID of the silence to get",
+      "format": "uuid",
+      "in": "path",
+      "name": "SilenceID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "tags": [
+     "silence"
+    ]
+   }
+  },
+  "/silences": {
+   "get": {
+    "description": "Get a list of silences",
+    "operationId": "getSilences",
+    "parameters": [
+     {
+      "collectionFormat": "multi",
+      "description": "A list of matchers to filter silences by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "Filter",
+      "type": "array"
+     }
+    ],
+    "tags": [
+     "silence"
+    ]
+   },
+   "post": {
+    "description": "Post a new silence or update an existing one",
+    "operationId": "postSilences",
+    "parameters": [
+     {
+      "description": "The silence to create",
+      "in": "body",
+      "name": "Silence",
+      "required": true,
+      "schema": {
+       "$ref": "#/definitions/postableSilence"
+      }
+     }
+    ],
+    "tags": [
+     "silence"
+    ]
+   }
+  },
+  "/status": {
+   "get": {
+    "description": "Get current status of an Alertmanager instance and its cluster",
+    "operationId": "getStatus",
+    "tags": [
+     "general"
+    ]
+   }
+  },
   "/v1/eval": {
    "post": {
     "consumes": [
@@ -8590,13 +8921,19 @@
   },
   "/v1/provisioning/alert-rules": {
    "get": {
-    "operationId": "RouteGetAlertRules",
     "deprecated": true,
+    "operationId": "RouteGetAlertRules",
     "responses": {
      "200": {
       "description": "ProvisionedAlertRules",
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRules"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -8609,8 +8946,8 @@
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePostAlertRule",
     "deprecated": true,
+    "operationId": "RoutePostAlertRule",
     "parameters": [
      {
       "in": "body",
@@ -8636,6 +8973,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -8704,6 +9047,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -8716,8 +9065,8 @@
   },
   "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
-    "operationId": "RouteDeleteAlertRule",
     "deprecated": true,
+    "operationId": "RouteDeleteAlertRule",
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8735,6 +9084,12 @@
     "responses": {
      "204": {
       "description": " The alert rule was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Delete a specific alert rule by UID.",
@@ -8743,8 +9098,8 @@
     ]
    },
    "get": {
-    "operationId": "RouteGetAlertRule",
     "deprecated": true,
+    "operationId": "RouteGetAlertRule",
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8761,6 +9116,12 @@
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -8774,8 +9135,8 @@
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePutAlertRule",
     "deprecated": true,
+    "operationId": "RoutePutAlertRule",
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8808,6 +9169,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -8862,6 +9229,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -8874,6 +9247,7 @@
   },
   "/v1/provisioning/contact-points": {
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetContactpoints",
     "parameters": [
      {
@@ -8889,18 +9263,24 @@
       "schema": {
        "$ref": "#/definitions/ContactPoints"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the contact points.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "post": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePostContactpoints",
     "parameters": [
      {
@@ -8928,13 +9308,18 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Create a contact point.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/contact-points/export": {
@@ -9006,6 +9391,7 @@
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RouteDeleteContactpoints",
     "parameters": [
      {
@@ -9019,18 +9405,24 @@
     "responses": {
      "202": {
       "description": " The contact point was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Delete a contact point.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "put": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePutContactpoint",
     "parameters": [
      {
@@ -9065,20 +9457,25 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Update an existing contact point.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "delete": {
+    "deprecated": true,
     "description": "Delete rule group",
     "operationId": "RouteDeleteAlertRuleGroup",
-    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -9115,8 +9512,8 @@
     ]
    },
    "get": {
-    "operationId": "RouteGetAlertRuleGroup",
     "deprecated": true,
+    "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
      {
       "in": "path",
@@ -9138,6 +9535,12 @@
        "$ref": "#/definitions/AlertRuleGroup"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -9151,8 +9554,8 @@
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePutAlertRuleGroup",
     "deprecated": true,
+    "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
      {
       "in": "header",
@@ -9190,6 +9593,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -9249,6 +9658,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -9261,6 +9676,7 @@
   },
   "/v1/provisioning/mute-timings": {
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetMuteTimings",
     "responses": {
      "200": {
@@ -9268,18 +9684,24 @@
       "schema": {
        "$ref": "#/definitions/MuteTimings"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the mute timings.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "post": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePostMuteTiming",
     "parameters": [
      {
@@ -9307,13 +9729,18 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Create a new mute timing.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/mute-timings/export": {
@@ -9369,6 +9796,7 @@
   },
   "/v1/provisioning/mute-timings/{name}": {
    "delete": {
+    "deprecated": true,
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
      {
@@ -9394,6 +9822,12 @@
      "204": {
       "description": " The mute timing was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -9404,10 +9838,10 @@
     "summary": "Delete a mute timing.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetMuteTiming",
     "parameters": [
      {
@@ -9425,6 +9859,12 @@
        "$ref": "#/definitions/MuteTimeInterval"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -9432,13 +9872,13 @@
     "summary": "Get a mute timing.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "put": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePutMuteTiming",
     "parameters": [
      {
@@ -9474,6 +9914,12 @@
        "$ref": "#/definitions/ValidationError"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -9484,8 +9930,7 @@
     "summary": "Replace an existing mute timing.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/mute-timings/{name}/export": {
@@ -9551,6 +9996,7 @@
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RouteResetPolicyTree",
     "responses": {
      "202": {
@@ -9558,15 +10004,21 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Clears the notification policy tree.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetPolicyTree",
     "responses": {
      "200": {
@@ -9574,18 +10026,24 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get the notification policy tree.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "put": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePutPolicyTree",
     "parameters": [
      {
@@ -9614,13 +10072,18 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Sets the notification policy tree.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/policies/export": {
@@ -9640,6 +10103,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "NotFound",
       "schema": {
@@ -9655,6 +10124,7 @@
   },
   "/v1/provisioning/templates": {
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetTemplates",
     "responses": {
      "200": {
@@ -9662,17 +10132,23 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplates"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/provisioning/templates/{name}": {
    "delete": {
+    "deprecated": true,
     "operationId": "RouteDeleteTemplate",
     "parameters": [
      {
@@ -9693,6 +10169,12 @@
      "204": {
       "description": " The template was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -9703,10 +10185,10 @@
     "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "get": {
+    "deprecated": true,
     "operationId": "RouteGetTemplate",
     "parameters": [
      {
@@ -9724,6 +10206,12 @@
        "$ref": "#/definitions/NotificationTemplate"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "PublicError",
       "schema": {
@@ -9734,13 +10222,13 @@
     "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    },
    "put": {
     "consumes": [
      "application/json"
     ],
+    "deprecated": true,
     "operationId": "RoutePutTemplate",
     "parameters": [
      {
@@ -9776,6 +10264,12 @@
        "$ref": "#/definitions/PublicError"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -9786,8 +10280,7 @@
     "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
-    ],
-    "deprecated": true
+    ]
    }
   },
   "/v1/rule/backtest": {
@@ -10013,6 +10506,204 @@
      "$ref": "#/definitions/postableAlert"
     },
     "type": "array"
+   }
+  },
+  "deleteSilenceInternalServerError": {
+   "description": "DeleteSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "deleteSilenceNotFound": {
+   "description": "DeleteSilenceNotFound A silence with the specified ID was not found"
+  },
+  "deleteSilenceOK": {
+   "description": "DeleteSilenceOK Delete silence response"
+  },
+  "getAlertGroupsBadRequest": {
+   "description": "GetAlertGroupsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsInternalServerError": {
+   "description": "GetAlertGroupsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsOK": {
+   "description": "GetAlertGroupsOK Get alert groups response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertGroups"
+   }
+  },
+  "getAlertsBadRequest": {
+   "description": "GetAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsInternalServerError": {
+   "description": "GetAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsOK": {
+   "description": "GetAlertsOK Get alerts response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableAlerts"
+   }
+  },
+  "getReceiversOK": {
+   "description": "GetReceiversOK Get receivers response",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "items": {
+      "$ref": "#/definitions/receiver"
+     },
+     "type": "array"
+    }
+   }
+  },
+  "getSilenceInternalServerError": {
+   "description": "GetSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilenceNotFound": {
+   "description": "GetSilenceNotFound A silence with the specified ID was not found"
+  },
+  "getSilenceOK": {
+   "description": "GetSilenceOK Get silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilence"
+   }
+  },
+  "getSilencesBadRequest": {
+   "description": "GetSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesInternalServerError": {
+   "description": "GetSilencesInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesOK": {
+   "description": "GetSilencesOK Get silences response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilences"
+   }
+  },
+  "getStatusOK": {
+   "description": "GetStatusOK Get status response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertmanagerStatus"
+   }
+  },
+  "postAlertsBadRequest": {
+   "description": "PostAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsInternalServerError": {
+   "description": "PostAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsOK": {
+   "description": "PostAlertsOK Create alerts response"
+  },
+  "postSilencesBadRequest": {
+   "description": "PostSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesNotFound": {
+   "description": "PostSilencesNotFound A silence with the specified ID was not found",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesOK": {
+   "description": "PostSilencesOK Create / update silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/PostSilencesOKBody"
    }
   },
   "receiversResponse": {

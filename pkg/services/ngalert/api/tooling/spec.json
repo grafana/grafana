@@ -11,11 +11,16 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
-    "title": "Grafana Alerting API.",
-    "version": "1.1.0"
+    "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+    "title": "Alertmanager API",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.0.1"
   },
-  "basePath": "/api",
+  "host": "localhost",
+  "basePath": "/api/v2/",
   "paths": {
     "/alertmanager/grafana/api/v2/alerts": {
       "get": {
@@ -73,6 +78,33 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create alertmanager alerts",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RoutePostGrafanaAMAlerts",
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -347,7 +379,10 @@
         "deprecated": true,
         "responses": {
           "410": {
-            "$ref": "#/responses/Gone"
+            "description": "Gone",
+            "schema": {
+              "$ref": "#/definitions/Gone"
+            }
           }
         }
       }
@@ -1001,6 +1036,127 @@
         }
       }
     },
+    "/alerts": {
+      "get": {
+        "description": "Get a list of alerts",
+        "tags": [
+          "alert"
+        ],
+        "operationId": "getAlerts",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show active alerts",
+            "name": "Active",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter alerts by",
+            "name": "Filter",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show inhibited alerts",
+            "name": "Inhibited",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "Receiver",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show silenced alerts",
+            "name": "Silenced",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show unprocessed alerts",
+            "name": "Unprocessed",
+            "in": "query"
+          }
+        ]
+      },
+      "post": {
+        "description": "Create new Alerts",
+        "tags": [
+          "alert"
+        ],
+        "operationId": "postAlerts",
+        "parameters": [
+          {
+            "description": "The alerts to create",
+            "name": "Alerts",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/postableAlerts"
+            }
+          }
+        ]
+      }
+    },
+    "/alerts/groups": {
+      "get": {
+        "description": "Get a list of alert groups",
+        "tags": [
+          "alertgroup"
+        ],
+        "operationId": "getAlertGroups",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show active alerts",
+            "name": "Active",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter alerts by",
+            "name": "Filter",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show inhibited alerts",
+            "name": "Inhibited",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "Receiver",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show silenced alerts",
+            "name": "Silenced",
+            "in": "query"
+          }
+        ]
+      }
+    },
     "/convert/api/prom/rules": {
       "get": {
         "produces": [
@@ -1354,6 +1510,18 @@
             "example": "'environment=production,team=backend' will only apply this",
             "description": "Comma-separated list of label matchers in 'key=value' format.\nThese matchers determine which alerts this configuration should handle.",
             "name": "x-grafana-alerting-merge-matchers",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "description": "If true, the configuration will replace an existing configuration regardless of its identifier",
+            "name": "x-grafana-alerting-config-force-replace",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "description": "If true, validates the configuration without saving it",
+            "name": "x-grafana-alerting-dry-run",
             "in": "header"
           },
           {
@@ -1961,6 +2129,15 @@
             }
           }
         }
+      }
+    },
+    "/receivers": {
+      "get": {
+        "description": "Get list of all receivers (name of notification integrations)",
+        "tags": [
+          "receiver"
+        ],
+        "operationId": "getReceivers"
       }
     },
     "/ruler/grafana/api/v1/export/rules": {
@@ -2789,6 +2966,90 @@
             }
           }
         }
+      }
+    },
+    "/silence/{silenceID}": {
+      "get": {
+        "description": "Get a silence by its ID",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "getSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the silence to get",
+            "name": "SilenceID",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "delete": {
+        "description": "Delete a silence by its ID",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "deleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the silence to get",
+            "name": "SilenceID",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/silences": {
+      "get": {
+        "description": "Get a list of silences",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "getSilences",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter silences by",
+            "name": "Filter",
+            "in": "query"
+          }
+        ]
+      },
+      "post": {
+        "description": "Post a new silence or update an existing one",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "postSilences",
+        "parameters": [
+          {
+            "description": "The silence to create",
+            "name": "Silence",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/postableSilence"
+            }
+          }
+        ]
+      }
+    },
+    "/status": {
+      "get": {
+        "description": "Get current status of an Alertmanager instance and its cluster",
+        "tags": [
+          "general"
+        ],
+        "operationId": "getStatus"
       }
     },
     "/v1/eval": {
@@ -4905,6 +5166,11 @@
             "maintenance"
           ]
         },
+        "policy": {
+          "description": "Name of the notification policy to route alerts through.\nMutually exclusive with all other fields, cannot be used with contact point routing via the \"receiver\" field.\nRequires experimental feature flag: alertingMultiplePolicies",
+          "type": "string",
+          "example": "\"Alerting Team\""
+        },
         "receiver": {
           "description": "Name of the receiver to send notifications to.",
           "type": "string",
@@ -5291,38 +5557,58 @@
     },
     "Config": {
       "type": "object",
-      "title": "Config is the top-level configuration for Alertmanager's config files.",
+      "title": "Config configures notifications via Pushover.",
       "properties": {
-        "global": {
-          "$ref": "#/definitions/GlobalConfig"
+        "device": {
+          "type": "string"
         },
-        "inhibit_rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InhibitRule"
-          }
+        "expire": {
+          "type": "string"
         },
-        "mute_time_intervals": {
-          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MuteTimeInterval"
-          }
+        "html": {
+          "type": "boolean"
         },
-        "route": {
-          "$ref": "#/definitions/Route"
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
         },
-        "templates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "message": {
+          "type": "string"
         },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeInterval"
-          }
+        "priority": {
+          "type": "string"
+        },
+        "retry": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "sound": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "token": {
+          "$ref": "#/definitions/Secret"
+        },
+        "token_file": {
+          "type": "string"
+        },
+        "ttl": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "url_title": {
+          "type": "string"
+        },
+        "user_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "user_key_file": {
+          "type": "string"
         }
       }
     },
@@ -5718,8 +6004,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -6263,6 +6548,9 @@
         },
         "uid": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -6371,8 +6659,7 @@
           "format": "int64"
         },
         "last_applied": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "template_file_provenances": {
           "type": "object",
@@ -6398,6 +6685,10 @@
             "internal",
             "external"
           ]
+        },
+        "external_alertmanager_uid": {
+          "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being\nsynced, or empty if sync is not configured for this org.",
+          "type": "string"
         }
       }
     },
@@ -6472,8 +6763,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -6610,7 +6900,7 @@
           "$ref": "#/definitions/Secret"
         },
         "bearer_token_file": {
-          "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
+          "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.now",
           "type": "string"
         },
         "enable_http2": {
@@ -6680,6 +6970,9 @@
             "$ref": "#/definitions/Header"
           }
         }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/Header"
       }
     },
     "HostPort": {
@@ -6733,6 +7026,52 @@
         }
       }
     },
+    "InhibitionRule": {
+      "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+      "type": "object",
+      "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
+      "properties": {
+        "equal": {
+          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "source_match": {
+          "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "source_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "target_match": {
+          "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "target_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "target_matchers": {
+          "$ref": "#/definitions/Matchers"
+        }
+      }
+    },
     "InspectType": {
       "type": "integer",
       "format": "int64",
@@ -6743,8 +7082,7 @@
       "properties": {
         "lastNotifyAttempt": {
           "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "lastNotifyAttemptDuration": {
           "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
@@ -6843,21 +7181,10 @@
     "Json": {
       "type": "object"
     },
-    "Label": {
-      "type": "object",
-      "title": "Label is a key/value pair of strings.",
-      "properties": {
-        "Name": {
-          "type": "string"
-        }
-      }
-    },
     "Labels": {
-      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Label"
-      }
+      "description": "Each name and value is preceded by its length, encoded as a single byte\nfor size 0-254, or the following 3 bytes little-endian, if the first byte is 255.\nMaximum length allowed is 2^24 or 16MB.\nNames are in order.",
+      "type": "object",
+      "title": "Labels is implemented by a single flat string holding name/value pairs."
     },
     "LinkTransformationConfig": {
       "type": "object",
@@ -6923,6 +7250,19 @@
         "webhook_url_file": {
           "type": "string"
         }
+      }
+    },
+    "ManagedInhibitionRules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/InhibitionRule"
+      }
+    },
+    "ManagedRoutes": {
+      "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Route"
       }
     },
     "MatchRegexps": {
@@ -7151,31 +7491,6 @@
       "type": "object",
       "title": "OAuth2 is the oauth2 client configuration.",
       "properties": {
-        "TLSConfig": {
-          "$ref": "#/definitions/TLSConfig"
-        },
-        "audience": {
-          "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-          "type": "string"
-        },
-        "claims": {
-          "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "client_certificate_key": {
-          "$ref": "#/definitions/Secret"
-        },
-        "client_certificate_key_file": {
-          "type": "string"
-        },
-        "client_certificate_key_id": {
-          "type": "string"
-        },
-        "client_certificate_key_ref": {
-          "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
-          "type": "string"
-        },
         "client_id": {
           "type": "string"
         },
@@ -7194,14 +7509,6 @@
           "additionalProperties": {
             "type": "string"
           }
-        },
-        "grant_type": {
-          "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
-          "type": "string"
-        },
-        "iss": {
-          "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-          "type": "string"
         },
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
@@ -7223,9 +7530,8 @@
             "type": "string"
           }
         },
-        "signature_algorithm": {
-          "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
-          "type": "string"
+        "tls_config": {
+          "$ref": "#/definitions/TLSConfig"
         },
         "token_url": {
           "type": "string"
@@ -7395,7 +7701,7 @@
     },
     "PagerdutyImage": {
       "type": "object",
-      "title": "PagerdutyImage is an image.",
+      "title": "PagerdutyImage is an image attached to an incident.",
       "properties": {
         "alt": {
           "type": "string"
@@ -7410,7 +7716,7 @@
     },
     "PagerdutyLink": {
       "type": "object",
-      "title": "PagerdutyLink is a link.",
+      "title": "PagerdutyLink is used to add link to an incident.",
       "properties": {
         "href": {
           "type": "string"
@@ -7422,6 +7728,16 @@
     },
     "PermissionDenied": {
       "type": "object"
+    },
+    "PostSilencesOKBody": {
+      "description": "PostSilencesOKBody post silences o k body",
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
+          "type": "string"
+        }
+      }
     },
     "PostableApiAlertingConfig": {
       "description": "nolint:revive",
@@ -7474,13 +7790,13 @@
         "discord_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DiscordConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "email_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/EmailConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "grafana_managed_receiver_configs": {
@@ -7492,19 +7808,19 @@
         "jira_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/JiraConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "msteams_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "msteamsv2_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MSTeamsV2Config"
+            "$ref": "#/definitions/Config"
           }
         },
         "name": {
@@ -7514,61 +7830,61 @@
         "opsgenie_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OpsGenieConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "pagerduty_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PagerdutyConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "pushover_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PushoverConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "slack_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SlackConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "sns_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SNSConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "telegram_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TelegramConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "victorops_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "webex_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WebexConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "webhook_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WebhookConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "wechat_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WechatConfig"
+            "$ref": "#/definitions/Config"
           }
         }
       }
@@ -7654,6 +7970,9 @@
         },
         "uid": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -7732,6 +8051,10 @@
             "internal",
             "external"
           ]
+        },
+        "external_alertmanager_uid": {
+          "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync\nconfiguration from. Empty string disables sync for this org.",
+          "type": "string"
         }
       }
     },
@@ -7794,6 +8117,12 @@
           "items": {
             "$ref": "#/definitions/ExtraConfiguration"
           }
+        },
+        "managed_inhibition_rules": {
+          "$ref": "#/definitions/ManagedInhibitionRules"
+        },
+        "managed_routes": {
+          "$ref": "#/definitions/ManagedRoutes"
         },
         "template_files": {
           "type": "object",
@@ -8057,6 +8386,7 @@
     },
     "ProxyConfig": {
       "type": "object",
+      "title": "ProxyConfig configures proxy settings.",
       "properties": {
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
@@ -8076,6 +8406,7 @@
     },
     "ProxyHeader": {
       "type": "object",
+      "title": "ProxyHeader represents HTTP headers to send to proxies.",
       "additionalProperties": {
         "type": "array",
         "items": {
@@ -8253,31 +8584,31 @@
         "discord_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DiscordConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "email_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/EmailConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "jira_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/JiraConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "msteams_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "msteamsv2_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MSTeamsV2Config"
+            "$ref": "#/definitions/Config"
           }
         },
         "name": {
@@ -8287,61 +8618,61 @@
         "opsgenie_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OpsGenieConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "pagerduty_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PagerdutyConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "pushover_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PushoverConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "slack_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SlackConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "sns_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SNSConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "telegram_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/TelegramConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "victorops_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "webex_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WebexConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "webhook_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WebhookConfig"
+            "$ref": "#/definitions/Config"
           }
         },
         "wechat_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WechatConfig"
+            "$ref": "#/definitions/Config"
           }
         }
       }
@@ -8437,6 +8768,25 @@
       "type": "object",
       "properties": {
         "url": {
+          "type": "string"
+        }
+      }
+    },
+    "Responder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "One of those 3 should be filled.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "description": "team, user, escalation, schedule etc.",
+          "type": "string"
+        },
+        "username": {
           "type": "string"
         }
       }
@@ -8838,7 +9188,7 @@
     },
     "Secret": {
       "type": "string",
-      "title": "Secret special type for storing secrets."
+      "title": "Secret is a string that must not be revealed on marshaling."
     },
     "SecretURL": {
       "title": "SecretURL is a URL that must not be revealed on marshaling.",
@@ -9370,9 +9720,10 @@
     },
     "URL": {
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "URL is a custom type that represents an HTTP or HTTPS URL and allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
+          "description": "ForceQuery indicates whether the original URL contained a query ('?') character.\nWhen set, the String method will include a trailing '?', even when RawQuery is empty.",
           "type": "boolean"
         },
         "Fragment": {
@@ -9382,6 +9733,7 @@
           "type": "string"
         },
         "OmitHost": {
+          "description": "OmitHost indicates the URL has an empty host (authority).\nWhen set, the String method will not include the host when it is empty.",
           "type": "boolean"
         },
         "Opaque": {
@@ -9391,12 +9743,15 @@
           "type": "string"
         },
         "RawFragment": {
+          "description": "RawFragment is an optional field containing an encoded fragment hint.\nSee the EscapedFragment method for more details.\n\nIn general, code should call EscapedFragment instead of reading RawFragment.",
           "type": "string"
         },
         "RawPath": {
+          "description": "RawPath is an optional field containing an encoded path hint.\nSee the EscapedPath method for more details.\n\nIn general, code should call EscapedPath instead of reading RawPath.",
           "type": "string"
         },
         "RawQuery": {
+          "description": "RawQuery contains the encoded query values, without the initial '?'.\nUse URL.Query to decode the query.",
           "type": "string"
         },
         "Scheme": {
@@ -9632,8 +9987,7 @@
       "properties": {
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
@@ -9735,8 +10089,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -9789,8 +10142,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "fingerprint": {
           "description": "fingerprint",
@@ -9798,8 +10150,7 @@
         },
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
@@ -9813,16 +10164,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/alertStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -9868,8 +10217,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -9883,16 +10231,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/silenceStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -9926,8 +10272,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -9938,16 +10283,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/silenceStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10039,21 +10382,18 @@
         },
         "endsAt": {
           "description": "ends at\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
         },
         "startsAt": {
           "description": "starts at\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10085,8 +10425,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -10097,8 +10436,7 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10136,16 +10474,14 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "matchers": {
           "$ref": "#/definitions/matchers"
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10226,6 +10562,204 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/postableAlert"
+        }
+      }
+    },
+    "deleteSilenceInternalServerError": {
+      "description": "DeleteSilenceInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "deleteSilenceNotFound": {
+      "description": "DeleteSilenceNotFound A silence with the specified ID was not found"
+    },
+    "deleteSilenceOK": {
+      "description": "DeleteSilenceOK Delete silence response"
+    },
+    "getAlertGroupsBadRequest": {
+      "description": "GetAlertGroupsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertGroupsInternalServerError": {
+      "description": "GetAlertGroupsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertGroupsOK": {
+      "description": "GetAlertGroupsOK Get alert groups response",
+      "schema": {
+        "$ref": "#/definitions/alertGroups"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsBadRequest": {
+      "description": "GetAlertsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsInternalServerError": {
+      "description": "GetAlertsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsOK": {
+      "description": "GetAlertsOK Get alerts response",
+      "schema": {
+        "$ref": "#/definitions/gettableAlerts"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getReceiversOK": {
+      "description": "GetReceiversOK Get receivers response",
+      "headers": {
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/receiver"
+          },
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilenceInternalServerError": {
+      "description": "GetSilenceInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilenceNotFound": {
+      "description": "GetSilenceNotFound A silence with the specified ID was not found"
+    },
+    "getSilenceOK": {
+      "description": "GetSilenceOK Get silence response",
+      "schema": {
+        "$ref": "#/definitions/gettableSilence"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesBadRequest": {
+      "description": "GetSilencesBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesInternalServerError": {
+      "description": "GetSilencesInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesOK": {
+      "description": "GetSilencesOK Get silences response",
+      "schema": {
+        "$ref": "#/definitions/gettableSilences"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getStatusOK": {
+      "description": "GetStatusOK Get status response",
+      "schema": {
+        "$ref": "#/definitions/alertmanagerStatus"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsBadRequest": {
+      "description": "PostAlertsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsInternalServerError": {
+      "description": "PostAlertsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsOK": {
+      "description": "PostAlertsOK Create alerts response"
+    },
+    "postSilencesBadRequest": {
+      "description": "PostSilencesBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postSilencesNotFound": {
+      "description": "PostSilencesNotFound A silence with the specified ID was not found",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postSilencesOK": {
+      "description": "PostSilencesOK Create / update silence response",
+      "schema": {
+        "$ref": "#/definitions/PostSilencesOKBody"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
         }
       }
     },
