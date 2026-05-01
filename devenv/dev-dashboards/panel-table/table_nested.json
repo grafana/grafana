@@ -703,7 +703,7 @@
         {
           "id": "groupToNestedTable",
           "options": {
-            "expandNestedRowsByDefault": true,
+            "expandedOnLoad": true,
             "showSubframeHeaders": true,
             "rules": [
               {

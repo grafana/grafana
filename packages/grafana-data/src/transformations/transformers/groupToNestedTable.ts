@@ -28,7 +28,7 @@ const MINIMUM_FIELDS_REQUIRED = 2;
  */
 export interface GroupToNestedTableTransformerOptions {
   showSubframeHeaders?: boolean;
-  expandNestedRowsByDefault?: boolean;
+  expandedOnLoad?: boolean;
   fields: Record<string, GroupByFieldOptions>;
 }
 
@@ -55,7 +55,7 @@ export interface GroupToNestedTableMatcherConfig {
 export interface GroupToNestedTableTransformerOptionsV2 {
   showSubframeHeaders?: boolean;
   /** When true, all nested rows are expanded by default when the panel loads. */
-  expandNestedRowsByDefault?: boolean;
+  expandedOnLoad?: boolean;
   /** Ordered list of matcher rules. First matching rule for a field wins. */
   rules: GroupToNestedTableMatcherConfig[];
 }
@@ -93,7 +93,7 @@ export function migrateGroupToNestedTableOptions(
 
   return {
     showSubframeHeaders: options.showSubframeHeaders,
-    expandNestedRowsByDefault: options.expandNestedRowsByDefault,
+    expandedOnLoad: options.expandedOnLoad,
     rules,
   };
 }
@@ -257,7 +257,7 @@ export const groupToNestedTable: DataTransformerInfo<
             values: subFrames,
           });
 
-          const expandAllRows = options.expandNestedRowsByDefault ?? EXPAND_NESTED_ROWS_DEFAULT;
+          const expandAllRows = options.expandedOnLoad ?? EXPAND_NESTED_ROWS_DEFAULT;
           processed.push({
             meta: expandAllRows ? { custom: { expandAllRows: true } } : undefined,
             fields,

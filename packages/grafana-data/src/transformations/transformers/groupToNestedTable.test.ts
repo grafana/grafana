@@ -752,7 +752,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
-  it('should set expandAllRows on the outer frame meta when expandNestedRowsByDefault is true', async () => {
+  it('should set expandAllRows on the outer frame meta when expandedOnLoad is true', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -764,7 +764,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
       id: DataTransformerID.groupToNestedTable,
       options: {
-        expandNestedRowsByDefault: true,
+        expandedOnLoad: true,
         rules: [
           {
             matcher: { id: FieldMatcherID.byName, options: 'message' },
@@ -781,7 +781,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
-  it('should not set expandAllRows on the outer frame meta when expandNestedRowsByDefault is false', async () => {
+  it('should not set expandAllRows on the outer frame meta when expandedOnLoad is false', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -793,7 +793,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
       id: DataTransformerID.groupToNestedTable,
       options: {
-        expandNestedRowsByDefault: false,
+        expandedOnLoad: false,
         rules: [
           {
             matcher: { id: FieldMatcherID.byName, options: 'message' },
@@ -810,7 +810,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
-  it('should not set expandAllRows when expandNestedRowsByDefault is omitted (defaults to false)', async () => {
+  it('should not set expandAllRows when expandedOnLoad is omitted (defaults to false)', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -838,9 +838,9 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
-  it('should preserve expandNestedRowsByDefault when migrating from V1 to V2', () => {
+  it('should preserve expandedOnLoad when migrating from V1 to V2', () => {
     const v1Options: GroupToNestedTableTransformerOptions = {
-      expandNestedRowsByDefault: true,
+      expandedOnLoad: true,
       fields: {
         message: {
           operation: GroupByOperationID.groupBy,
@@ -850,6 +850,6 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     };
 
     const v2 = migrateGroupToNestedTableOptions(v1Options);
-    expect(v2.expandNestedRowsByDefault).toBe(true);
+    expect(v2.expandedOnLoad).toBe(true);
   });
 });
