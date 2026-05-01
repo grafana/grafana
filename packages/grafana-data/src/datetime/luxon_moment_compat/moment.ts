@@ -504,45 +504,6 @@ function isMomentLike(value: unknown): value is MomentLike {
   );
 }
 
-function fieldAccessor(
-  dtGetter: () => DateTime,
-  dtSetter: (next: DateTime) => void,
-  api: MomentLike,
-  key: keyof InputObject,
-  incoming?: number
-): number | MomentLike {
-  if (incoming == null) {
-    const dt = dtGetter();
-
-    switch (key) {
-      case 'year':
-        return dt.year;
-      case 'month':
-        return dt.month - 1;
-      case 'day':
-        return dt.day;
-      case 'hour':
-        return dt.hour;
-      case 'minute':
-        return dt.minute;
-      case 'second':
-        return dt.second;
-      case 'millisecond':
-        return dt.millisecond;
-      default:
-        return Number.NaN;
-    }
-  }
-
-  if (key === 'month') {
-    dtSetter(dtGetter().set({ month: incoming + 1 }));
-  } else {
-    dtSetter(dtGetter().set({ [key]: incoming }));
-  }
-
-  return api;
-}
-
 function createNames(kind: 'month' | 'weekday', width: LocaleUnit, locale = DEFAULT_LOCALE): string[] {
   const dateFmt = getCachedDateTimeFormatter(locale, {
     [kind]: width,
@@ -633,33 +594,19 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return makeMoment(dt);
     },
 
-    year(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'year', value);
-    },
+    year: (value?) => (value == null ? dt.year : setDt(dt.set({ year: value }))),
 
-    month(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'month', value);
-    },
+    month: (value?) => (value == null ? dt.month - 1 : setDt(dt.set({ month: value + 1 }))),
 
-    date(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'day', value);
-    },
+    date: (value?) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
 
-    hour(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'hour', value);
-    },
+    hour: (value?) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
 
-    minute(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'minute', value);
-    },
+    minute: (value?) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
 
-    second(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'second', value);
-    },
+    second: (value?) => (value == null ? dt.second : setDt(dt.set({ second: value }))),
 
-    millisecond(value?) {
-      return fieldAccessor(() => dt, setDt, api, 'millisecond', value);
-    },
+    millisecond: (value?) => (value == null ? dt.millisecond : setDt(dt.set({ millisecond: value }))),
 
     day(value?) {
       const current = toMomentDay(dt.weekday);
