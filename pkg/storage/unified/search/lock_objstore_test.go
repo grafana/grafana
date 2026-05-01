@@ -286,6 +286,37 @@ func TestObjectStorageLock_ReleaseWaitsForInFlightUpdate(t *testing.T) {
 	}
 }
 
+// TestObjectStorageLock_HeartbeatLossDetectedBeforeTTL asserts that with all
+// heartbeats failing transiently, lostCh fires before the lease expires
+// server-side. See the maxFailures comment in runHeartbeat for the rationale.
+func TestObjectStorageLock_HeartbeatLossDetectedBeforeTTL(t *testing.T) {
+	backend := &failingUpdateBackend{
+		lockBackend: newFakeBackend(newConditionalBucket()),
+		failAfterN:  0,
+	}
+
+	// 3:1 ratio mirrors the production default (180s/60s). Absolute times are
+	// scaled up so scheduler jitter and GC pauses on slow CI runners don't eat
+	// the safety margin we're trying to assert.
+	ttl := 900 * time.Millisecond
+	hbi := 300 * time.Millisecond
+	lock := newTestLock(t, backend, "test-lock", "instance-1", ttl, hbi)
+
+	ctx := context.Background()
+	require.NoError(t, lock.Acquire(ctx))
+	start := time.Now()
+
+	select {
+	case <-lock.Lost():
+	case <-time.After(ttl + 300*time.Millisecond):
+		t.Fatal("expected lock loss")
+	}
+
+	elapsed := time.Since(start)
+	// Loss should fire ~one heartbeat before TTL (~600ms here, vs the 900ms lease).
+	require.Less(t, elapsed, ttl-hbi/2, "loss should be detected with safety margin before TTL (got %s, ttl=%s)", elapsed, ttl)
+}
+
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	backend := &failingUpdateBackend{
 		lockBackend:   newFakeBackend(newConditionalBucket()),
