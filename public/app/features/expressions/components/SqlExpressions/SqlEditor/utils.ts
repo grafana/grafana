@@ -2,7 +2,19 @@ import { type CodeMirrorCompletionSource } from '@grafana/ui/unstable';
 
 export type SqlCompletionKind = 'clause' | 'column' | 'function' | 'keyword' | 'table';
 
+const SQL_WORD_PATTERN = /[\w$]*/;
+const SQL_COMPLETION_VALID_FOR_PATTERN = /^[\w$]*$/;
+const SQL_CURRENT_WORD_PATTERN = /[A-Za-z_][\w$]*$/;
+const SQL_QUALIFIED_COLUMN_PATTERN = /([A-Za-z_][\w$]*)\.([\w$]*)$/;
+// Stop table parsing at clauses that end the FROM/JOIN section of the query.
 const SQL_CLAUSE_BOUNDARY_PATTERN = /\b(?:where|group\s+by|order\s+by|having|limit|union|except|intersect)\b/i;
+const SQL_FROM_TABLE_LIST_PATTERN = /\bfrom\s+([\s\S]*?)(?=\bjoin\b|$)/gi;
+const SQL_JOIN_TABLE_PATTERN = /\bjoin\s+([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/gi;
+const SQL_TABLE_REF_PATTERN = /^([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/i;
+const SQL_TABLE_COMPLETION_START_PATTERN = /\b(?:from|join)$/i;
+const SQL_COMMA_TABLE_COMPLETION_PATTERN = /\bfrom\s+[\w\s,$]+,$/i;
+const SQL_FROM_TABLE_PATTERN = /\bfrom\s+[A-Za-z_][\w$]*/i;
+// The alias parser is permissive, so these SQL words should not be treated as aliases.
 const SQL_ALIAS_STOP_WORDS = new Set([
   'as',
   'cross',
@@ -69,7 +81,7 @@ interface TableRef {
  */
 export function getSqlCompletionSource(completionProvider: SqlCompletionProvider): CodeMirrorCompletionSource {
   return async (context) => {
-    const word = context.matchBefore(/[\w$]*/);
+    const word = context.matchBefore(SQL_WORD_PATTERN);
     const sqlBeforeCursor = context.state.doc.sliceString(0, context.pos);
     const sql = context.state.doc.toString();
     const qualifiedColumnContext = getQualifiedColumnContext(sqlBeforeCursor);
@@ -90,7 +102,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
         : {
             from: qualifiedColumnContext.from,
             options: columns.map((item) => toCodeMirrorCompletion(item, 'column')),
-            validFor: /^[\w$]*$/,
+            validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
           };
     }
 
@@ -102,7 +114,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
         : {
             from: word?.from ?? context.pos,
             options: tables.map((item) => toCodeMirrorCompletion(item, 'table')),
-            validFor: /^[\w$]*$/,
+            validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
           };
     }
 
@@ -112,7 +124,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
       return {
         from: word?.from ?? context.pos,
         options: clauses.map((item) => toCodeMirrorCompletion(item, 'clause')),
-        validFor: /^[\w$]*$/,
+        validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
       };
     }
 
@@ -133,7 +145,7 @@ export function getSqlCompletionSource(completionProvider: SqlCompletionProvider
             ...keywords.map((item) => toCodeMirrorCompletion(item, 'keyword')),
             ...functions.map((item) => toCodeMirrorCompletion(item, 'function')),
           ],
-          validFor: /^[\w$]*$/,
+          validFor: SQL_COMPLETION_VALID_FOR_PATTERN,
         };
   };
 }
@@ -214,7 +226,7 @@ function getCompletionInsertText(item: SqlCompletionItem): string {
  * Finds completions after a qualified reference like `A.` or `alias.columnPrefix`.
  */
 export function getQualifiedColumnContext(sqlBeforeCursor: string): QualifiedColumnContext | undefined {
-  const match = sqlBeforeCursor.match(/([A-Za-z_][\w$]*)\.([\w$]*)$/);
+  const match = sqlBeforeCursor.match(SQL_QUALIFIED_COLUMN_PATTERN);
 
   if (!match) {
     return undefined;
@@ -240,13 +252,11 @@ function getTableRefs(sql: string): TableRef[] {
   const queryBeforeClause = getQueryBeforeClause(sql);
   const tableRefs: TableRef[] = [];
 
-  for (const fromMatch of queryBeforeClause.matchAll(/\bfrom\s+([\s\S]*?)(?=\bjoin\b|$)/gi)) {
+  for (const fromMatch of queryBeforeClause.matchAll(SQL_FROM_TABLE_LIST_PATTERN)) {
     tableRefs.push(...getTableRefsFromList(fromMatch[1]));
   }
 
-  for (const joinMatch of queryBeforeClause.matchAll(
-    /\bjoin\s+([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/gi
-  )) {
+  for (const joinMatch of queryBeforeClause.matchAll(SQL_JOIN_TABLE_PATTERN)) {
     tableRefs.push(toTableRef(joinMatch[1], joinMatch[2]));
   }
 
@@ -261,14 +271,16 @@ function getTableRefsFromList(tableList: string): TableRef[] {
   return tableList
     .split(',')
     .map((table) => {
-      const match = table.trim().match(/^([A-Za-z_][\w$]*)(?:\s+(?:as\s+)?([A-Za-z_][\w$]*))?/i);
+      const match = table.trim().match(SQL_TABLE_REF_PATTERN);
       return match ? toTableRef(match[1], match[2]) : undefined;
     })
     .filter((tableRef): tableRef is TableRef => Boolean(tableRef));
 }
 
+/**
+ * Normalizes a parsed table/alias pair and drops aliases that are really SQL syntax.
+ */
 function toTableRef(table: string, alias?: string): TableRef {
-  // The alias regex is permissive, so drop SQL keywords that are part of the next clause.
   if (!alias || SQL_ALIAS_STOP_WORDS.has(alias.toLowerCase())) {
     return { table };
   }
@@ -295,7 +307,10 @@ function resolveQualifiedTable(sql: string, tableOrAlias: string): string {
 export function isTableCompletionPosition(sqlBeforeCursor: string): boolean {
   const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 
-  return /\b(?:from|join)$/i.test(textBeforeCurrentWord) || /\bfrom\s+[\w\s,$]+,$/i.test(textBeforeCurrentWord);
+  return (
+    SQL_TABLE_COMPLETION_START_PATTERN.test(textBeforeCurrentWord) ||
+    SQL_COMMA_TABLE_COMPLETION_PATTERN.test(textBeforeCurrentWord)
+  );
 }
 
 /**
@@ -304,11 +319,11 @@ export function isTableCompletionPosition(sqlBeforeCursor: string): boolean {
 export function isClauseCompletionPosition(sqlBeforeCursor: string): boolean {
   const textBeforeCurrentWord = getTextBeforeCurrentWord(sqlBeforeCursor);
 
-  if (!/\bfrom\s+[A-Za-z_][\w$]*/i.test(textBeforeCurrentWord)) {
+  if (!SQL_FROM_TABLE_PATTERN.test(textBeforeCurrentWord)) {
     return false;
   }
 
-  if (/\b(?:from|join)$/i.test(textBeforeCurrentWord) || textBeforeCurrentWord.endsWith(',')) {
+  if (SQL_TABLE_COMPLETION_START_PATTERN.test(textBeforeCurrentWord) || textBeforeCurrentWord.endsWith(',')) {
     return false;
   }
 
@@ -317,5 +332,5 @@ export function isClauseCompletionPosition(sqlBeforeCursor: string): boolean {
 }
 
 function getTextBeforeCurrentWord(sqlBeforeCursor: string): string {
-  return sqlBeforeCursor.replace(/[A-Za-z_][\w$]*$/, '').trimEnd();
+  return sqlBeforeCursor.replace(SQL_CURRENT_WORD_PATTERN, '').trimEnd();
 }
