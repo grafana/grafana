@@ -1,6 +1,7 @@
 package search
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -164,11 +165,13 @@ func TestValidateManifestPaths(t *testing.T) {
 		wantErr string
 	}{
 		{name: "valid paths", files: map[string]int64{"store/root.bolt": 100, "store/00001.zap": 200}},
+		{name: "leading double-dot in filename", files: map[string]int64{"..foo/bar.zap": 100}},
 		{name: "path traversal", files: map[string]int64{"../../../tmp/escape": 100}, wantErr: "invalid path"},
 		{name: "absolute path", files: map[string]int64{"/tmp/escape": 100}, wantErr: "invalid path"},
 		{name: "non-canonical dotslash", files: map[string]int64{"./store/root.bolt": 100}, wantErr: "non-canonical"},
 		{name: "non-canonical double dot", files: map[string]int64{"store/../store/root.bolt": 100}, wantErr: "non-canonical"},
 		{name: "dot entry", files: map[string]int64{".": 100}, wantErr: "invalid path"},
+		{name: "parent dir entry", files: map[string]int64{"..": 100}, wantErr: "invalid path"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -268,6 +271,35 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write limit exceeded")
 	})
+}
+
+func TestRemoteIndexStore_DownloadRejectsOversizedFile(t *testing.T) {
+	// A bucket object that exceeds the size advertised in meta.json must fail
+	// fast — we should not transfer unbounded bytes to disk before noticing.
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+	key := ulid.Make()
+	pfx := indexPrefix(ns, key.String())
+
+	const advertised = 10
+	meta := IndexMeta{
+		GrafanaBuildVersion: "11.0.0",
+		Files:               map[string]int64{"store/root.bolt": advertised},
+	}
+	metaBytes, err := json.Marshal(meta)
+	require.NoError(t, err)
+	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+
+	// Plant a file far larger than what meta.json claims.
+	oversized := bytes.Repeat([]byte("x"), advertised*1000)
+	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", oversized, nil))
+
+	_, err = store.DownloadIndex(ctx, ns, key, filepath.Join(t.TempDir(), "dl"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "exceeds expected size")
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {

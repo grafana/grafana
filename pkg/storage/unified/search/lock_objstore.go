@@ -170,9 +170,12 @@ func (l *objectStorageLock) runHeartbeat(ctx context.Context, done chan struct{}
 	ticker := time.NewTicker(l.heartbeatInterval)
 	defer ticker.Stop()
 
-	// Tolerate transient failures up to the lease boundary.
-	// Floor ensures loss is detected no later than TTL
-	maxFailures := int(l.ttl / l.heartbeatInterval)
+	// Declare loss one heartbeat interval before the lease expires server-side,
+	// so we stop work before another replica can acquire the lock. With TTL=400ms
+	// and HBI=100ms, the lease expires at t=400ms; we close lostCh after 3 failed
+	// ticks at t=300ms, leaving 100ms of margin. The -1 is the margin.
+	// The constructor enforces TTL >= 2*HeartbeatInterval, so maxFailures >= 1.
+	maxFailures := int(l.ttl/l.heartbeatInterval) - 1
 	consecutiveFailures := 0
 
 	for {

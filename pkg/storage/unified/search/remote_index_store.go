@@ -335,7 +335,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 		if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
 			return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
 		}
-		if err := s.downloadFile(ctx, objectKey, localPath); err != nil {
+		if err := s.downloadFile(ctx, objectKey, localPath, expectedSize); err != nil {
 			return nil, fmt.Errorf("downloading %s: %w", relPath, err)
 		}
 
@@ -365,22 +365,29 @@ func validateManifestPaths(files map[string]int64) error {
 		if clean != relPath {
 			return fmt.Errorf("non-canonical path %q (canonical: %q)", relPath, clean)
 		}
-		if clean == "." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "..") {
+		if clean == "." || clean == ".." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "../") {
 			return fmt.Errorf("invalid path %q", relPath)
 		}
 	}
 	return nil
 }
 
-// downloadFile creates localPath and streams the remote object into it.
-func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
+// downloadFile creates localPath and streams the remote object into it,
+// capping the transfer at expectedSize+1 bytes so a misadvertised manifest
+// size or a bucket object that's grown out of band fails fast before we
+// transfer unbounded data. meta.json uses the same pattern.
+func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string, expectedSize int64) error {
 	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
 	if err != nil {
 		return err
 	}
 
-	if err := s.bucket.Download(ctx, objectKey, f, nil); err != nil {
+	lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
+	if err := s.bucket.Download(ctx, objectKey, lw, nil); err != nil {
 		_ = f.Close()
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+		}
 		return err
 	}
 	return f.Close()
