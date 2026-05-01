@@ -378,6 +378,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
           resolve([]);
         }
       } catch (error) {
+        this.detectedLabelValuesPromisesCache.delete(cacheKey);
         if (queryOptions?.throwError) {
           reject(error);
         } else {
