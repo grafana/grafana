@@ -10,7 +10,7 @@ import {
   isV1GroupToNestedTableOptions,
   migrateGroupToNestedTableOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
-  EXPAND_NESTED_ROWS_DEFAULT,
+  EXPAND_ALL_ROWS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
@@ -168,7 +168,7 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   const expandByDefault =
-    options.expandedOnLoad === undefined ? EXPAND_NESTED_ROWS_DEFAULT : options.expandedOnLoad;
+    options.expandAllRows === undefined ? EXPAND_ALL_ROWS_DEFAULT : options.expandAllRows;
 
   const hasGrouping = options.rules.some((r) => r.operation === GroupByOperationID.groupBy);
   const hasAggregation = options.rules.some(
@@ -245,10 +245,10 @@ export const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptio
           onChange={() =>
             onChange({
               ...options,
-              expandedOnLoad:
-                options.expandedOnLoad === undefined
-                  ? !EXPAND_NESTED_ROWS_DEFAULT
-                  : !options.expandedOnLoad,
+              expandAllRows:
+                options.expandAllRows === undefined
+                  ? !EXPAND_ALL_ROWS_DEFAULT
+                  : !options.expandAllRows,
             })
           }
         />
