@@ -815,11 +815,6 @@
       "count": 1
     }
   },
-  "public/app/AppWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/TableModel.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

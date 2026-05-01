@@ -23,7 +23,7 @@ import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
  */
 export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DataSourceRef | string | null; // uid
+  current: DataSourceRef | string | undefined | null; // uid
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
@@ -59,7 +59,7 @@ export interface DataSourcePickerProps {
  */
 export const DataSourcePicker = memo(function DataSourcePicker({
   onChange,
-  current,
+  current = null,
   hideTextValue,
   onBlur,
   autoFocus = false,
