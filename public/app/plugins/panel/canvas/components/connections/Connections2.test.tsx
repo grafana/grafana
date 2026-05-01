@@ -1,6 +1,6 @@
-import { CanvasConnection, ConnectionPath } from 'app/features/canvas/element';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { ConnectionPath, type CanvasConnection } from 'app/features/canvas/element';
+import type { ElementState } from 'app/features/canvas/runtime/element';
+import type { Scene } from 'app/features/canvas/runtime/scene';
 
 import { Connections2 } from './Connections2';
 

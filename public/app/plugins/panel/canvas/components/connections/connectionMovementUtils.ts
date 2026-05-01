@@ -1,6 +1,6 @@
-import { ElementState } from 'app/features/canvas/runtime/element';
+import type { ElementState } from 'app/features/canvas/runtime/element';
 
-import { ConnectionState } from '../../types';
+import type { ConnectionState } from '../../types';
 
 /**
  * Type for coordinate calculation functions used by Connections and Connections2

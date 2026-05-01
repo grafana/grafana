@@ -1,12 +1,12 @@
-import { CanvasConnection, ConnectionPath } from 'app/features/canvas/element';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { ConnectionPath, type CanvasConnection } from 'app/features/canvas/element';
+import type { ElementState } from 'app/features/canvas/runtime/element';
 
-import { ConnectionState } from '../../types';
+import type { ConnectionState } from '../../types';
 
 import {
   updateConnectionsAfterIndividualMove,
   updateConnectionsAfterGroupMove,
-  CoordinateCalculator,
+  type CoordinateCalculator,
 } from './connectionMovementUtils';
 
 // Helper to create a proper CanvasConnection with all required fields
