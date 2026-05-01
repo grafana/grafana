@@ -121,7 +121,7 @@ export interface MomentLike {
   isSame(input: MomentInput, unit?: DateTimeUnit): boolean;
   diff(input: MomentInput, unit?: DiffUnit): number;
   toDate(): Date;
-  toISOString(): string | null;
+  toISOString(keepOffset?: boolean): string | null;
   toJSON(): string | null;
   toString(): string;
   valueOf(): number;
@@ -655,8 +655,6 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return setDt(dt.plus({ weeks: value - dt.weekNumber }));
     },
 
-
-
     isValid() {
       return dt.isValid;
     },
@@ -719,8 +717,8 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return dt.toJSDate();
     },
 
-    toISOString() {
-      return dt.toISO();
+    toISOString(keepOffset = false) {
+      return !keepOffset ? dt.toUTC().toISO() : dt.toISO();
     },
 
     toJSON() {
