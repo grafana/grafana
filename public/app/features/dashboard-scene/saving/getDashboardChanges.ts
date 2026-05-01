@@ -135,23 +135,16 @@ export function getHasTimeChanged(
 }
 
 export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
-  if (filtersA === undefined && filtersB === undefined) {
-    console.warn('Adhoc variable filter property is undefined');
-    return true;
-  }
+  const a = filtersA ?? [];
+  const b = filtersB ?? [];
 
-  if ((filtersA === undefined && filtersB !== undefined) || (filtersB === undefined && filtersA !== undefined)) {
-    console.warn('Adhoc variable filter property is undefined');
+  if (a.length !== b.length) {
     return false;
   }
 
-  if (filtersA?.length !== filtersB?.length) {
-    return false;
-  }
-
-  for (let i = 0; i < (filtersA?.length ?? 0); i++) {
-    const aFilter = filtersA?.[i];
-    const bFilter = filtersB?.[i];
+  for (let i = 0; i < a.length; i++) {
+    const aFilter = a[i];
+    const bFilter = b[i];
     if (aFilter?.key !== bFilter?.key || aFilter?.operator !== bFilter?.operator || aFilter?.value !== bFilter?.value) {
       return false;
     }
