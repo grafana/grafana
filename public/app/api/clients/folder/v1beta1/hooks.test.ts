@@ -1,8 +1,10 @@
+import { http, HttpResponse } from 'msw';
 import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
+import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -22,6 +24,12 @@ import {
 import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
 import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
+
+type FolderIndexModule = {
+  useUpdateFolderMutation: typeof useUpdateFolderMutation;
+};
+
+const actualFolderIndex = jest.requireActual('./index') as FolderIndexModule;
 
 // Mocks for the hooks used inside useGetFolderQueryFacade
 jest.mock('./index', () => ({
@@ -274,12 +282,30 @@ describe.each([
   });
 
   describe('useUpdateFolder', () => {
-    // TODO: Remove manual mocking and move this to MSW handlers instead
-    const mockUpdateFolder = jest.fn(() => ({ error: undefined, result: { isSuccess: true } }));
-
     beforeEach(() => {
       jest.clearAllMocks();
-      (useUpdateFolderMutation as jest.Mock).mockReturnValue([mockUpdateFolder, { isSuccess: true }]);
+      folderAPIVersionResolver.set('v1beta1');
+      (useUpdateFolderMutation as jest.Mock).mockImplementation(actualFolderIndex.useUpdateFolderMutation);
+      server.use(
+        http.patch(
+          '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name',
+          async ({ params, request }) => {
+            const body = await request.json();
+
+            return HttpResponse.json({
+              apiVersion: 'folder.grafana.app/v1beta1',
+              kind: 'Folder',
+              metadata: {
+                name: params.name,
+                generation: 1,
+              },
+              spec: {
+                title: body?.spec?.title ?? 'Updated Folder',
+              },
+            });
+          }
+        )
+      );
     });
 
     it('updates a folder', async () => {
