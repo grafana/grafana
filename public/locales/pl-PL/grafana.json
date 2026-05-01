@@ -14415,6 +14415,8 @@
       "alerts-loading": "Alerty",
       "card-click": "Wybierz kartę {{id}}",
       "data": "Dane",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nowy: {{type}}",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
@@ -15143,10 +15145,13 @@
       "title": "Szybko rozpoczynaj tworzenie pulpitów dzięki sugestiom i szablonom"
     },
     "nav": {
+      "counter": "",
       "go-to": "Przejdź do slajdu {{number}}",
-      "next": "Dalej",
-      "prev": "Wstecz"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Wyjaśnij zapytanie",

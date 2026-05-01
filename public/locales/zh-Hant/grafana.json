@@ -14157,6 +14157,8 @@
       "alerts-loading": "警示",
       "card-click": "選取卡片 {{id}}",
       "data": "資料",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新 {{type}}",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14867,10 +14869,13 @@
       "title": "利用建議和範本快速建立儀表板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往投影片 {{number}}",
-      "next": "下一個",
-      "prev": "上一個"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解釋查詢",

@@ -14243,6 +14243,8 @@
       "alerts-loading": "Alertes",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "Données",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
@@ -14959,10 +14961,13 @@
       "title": "Créez rapidement des tableaux de bord à l’aide de suggestions et de modèles"
     },
     "nav": {
+      "counter": "",
       "go-to": "Accéder à la diapositive {{number}}",
-      "next": "Suivant",
-      "prev": "Précédent"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Expliquer la requête",

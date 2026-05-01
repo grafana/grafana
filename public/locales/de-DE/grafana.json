@@ -14243,6 +14243,8 @@
       "alerts-loading": "Warnungen",
       "card-click": "Karte {{id}} auswählen",
       "data": "Daten",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} neu",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
@@ -14959,10 +14961,13 @@
       "title": "Erstellen Sie mit Vorschlägen und Vorlagen im Handumdrehen Dashboards"
     },
     "nav": {
+      "counter": "",
       "go-to": "Zur Folie {{number}}",
-      "next": "Weiter",
-      "prev": "Zurück"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Abfrage erklären",

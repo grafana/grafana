@@ -90,6 +90,28 @@ type RemoteIndexStore interface {
 	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
+// LockOptions controls the timing and shutdown behaviour of an
+// objectStorageLock created by BucketRemoteIndexStore. Zero values fall back
+// to the defaults documented in objectStorageLockConfig.
+type LockOptions struct {
+	TTL                    time.Duration
+	HeartbeatInterval      time.Duration
+	HeartbeatUpdateTimeout time.Duration
+	ReleaseDeleteTimeout   time.Duration
+}
+
+// BucketRemoteIndexStoreConfig configures NewBucketRemoteIndexStore. Build and
+// cleanup locks have separate option blocks so they can diverge: build locks
+// are per-snapshot and benefit from a tight shutdown budget, while cleanup
+// locks run on a 6h cadence and can tolerate longer waits.
+type BucketRemoteIndexStoreConfig struct {
+	Bucket      resource.CDKBucket
+	LockBackend lockBackend
+	LockOwner   string
+	BuildLock   LockOptions
+	CleanupLock LockOptions
+}
+
 // BucketRemoteIndexStore implements RemoteIndexStore using a CDKBucket.
 //
 // Object storage layout:
@@ -102,23 +124,23 @@ type RemoteIndexStore interface {
 // meta.json is uploaded last during upload and deleted first during delete,
 // serving as the completion signal.
 type BucketRemoteIndexStore struct {
-	bucket                resource.CDKBucket
-	lockBackend           lockBackend
-	lockOwner             string
-	lockTTL               time.Duration
-	lockHeartbeatInterval time.Duration
-	log                   log.Logger
+	bucket          resource.CDKBucket
+	lockBackend     lockBackend
+	lockOwner       string
+	buildLockOpts   LockOptions
+	cleanupLockOpts LockOptions
+	log             log.Logger
 }
 
 // NewBucketRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
-func NewBucketRemoteIndexStore(bucket resource.CDKBucket, lockBackend lockBackend, lockOwner string, lockTTL, lockHeartbeatInterval time.Duration) *BucketRemoteIndexStore {
+func NewBucketRemoteIndexStore(cfg BucketRemoteIndexStoreConfig) *BucketRemoteIndexStore {
 	return &BucketRemoteIndexStore{
-		bucket:                bucket,
-		lockBackend:           lockBackend,
-		lockOwner:             lockOwner,
-		lockTTL:               lockTTL,
-		lockHeartbeatInterval: lockHeartbeatInterval,
-		log:                   log.New("bucket-remote-index-store"),
+		bucket:          cfg.Bucket,
+		lockBackend:     cfg.LockBackend,
+		lockOwner:       cfg.LockOwner,
+		buildLockOpts:   cfg.BuildLock,
+		cleanupLockOpts: cfg.CleanupLock,
+		log:             log.New("bucket-remote-index-store"),
 	}
 }
 
@@ -144,13 +166,7 @@ func cleanupLockKey(namespace string) string {
 }
 
 func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           s.lockBackend,
-		Key:               buildIndexLockKey(nsResource),
-		Owner:             s.lockOwner,
-		TTL:               s.lockTTL,
-		HeartbeatInterval: s.lockHeartbeatInterval,
-	})
+	l, err := newObjectStorageLock(s.lockConfig(buildIndexLockKey(nsResource), s.buildLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating build lock: %w", err)
 	}
@@ -161,13 +177,7 @@ func (s *BucketRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource 
 }
 
 func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
-	l, err := newObjectStorageLock(objectStorageLockConfig{
-		Backend:           s.lockBackend,
-		Key:               cleanupLockKey(namespace),
-		Owner:             s.lockOwner,
-		TTL:               s.lockTTL,
-		HeartbeatInterval: s.lockHeartbeatInterval,
-	})
+	l, err := newObjectStorageLock(s.lockConfig(cleanupLockKey(namespace), s.cleanupLockOpts))
 	if err != nil {
 		return nil, fmt.Errorf("creating cleanup lock: %w", err)
 	}
@@ -175,6 +185,21 @@ func (s *BucketRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, na
 		return nil, err
 	}
 	return l, nil
+}
+
+// lockConfig folds a LockOptions block into the shared per-store backend/owner
+// fields. Zero-valued LockOptions fields are passed through to
+// newObjectStorageLock, which applies its own defaults.
+func (s *BucketRemoteIndexStore) lockConfig(key string, opts LockOptions) objectStorageLockConfig {
+	return objectStorageLockConfig{
+		Backend:                s.lockBackend,
+		Key:                    key,
+		Owner:                  s.lockOwner,
+		TTL:                    opts.TTL,
+		HeartbeatInterval:      opts.HeartbeatInterval,
+		HeartbeatUpdateTimeout: opts.HeartbeatUpdateTimeout,
+		ReleaseDeleteTimeout:   opts.ReleaseDeleteTimeout,
+	}
 }
 
 func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
@@ -335,7 +360,7 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 		if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
 			return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
 		}
-		if err := s.downloadFile(ctx, objectKey, localPath); err != nil {
+		if err := s.downloadFile(ctx, objectKey, localPath, expectedSize); err != nil {
 			return nil, fmt.Errorf("downloading %s: %w", relPath, err)
 		}
 
@@ -365,22 +390,29 @@ func validateManifestPaths(files map[string]int64) error {
 		if clean != relPath {
 			return fmt.Errorf("non-canonical path %q (canonical: %q)", relPath, clean)
 		}
-		if clean == "." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "..") {
+		if clean == "." || clean == ".." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "../") {
 			return fmt.Errorf("invalid path %q", relPath)
 		}
 	}
 	return nil
 }
 
-// downloadFile creates localPath and streams the remote object into it.
-func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
+// downloadFile creates localPath and streams the remote object into it,
+// capping the transfer at expectedSize+1 bytes so a misadvertised manifest
+// size or a bucket object that's grown out of band fails fast before we
+// transfer unbounded data. meta.json uses the same pattern.
+func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string, expectedSize int64) error {
 	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
 	if err != nil {
 		return err
 	}
 
-	if err := s.bucket.Download(ctx, objectKey, f, nil); err != nil {
+	lw := &resource.LimitedWriter{W: f, N: expectedSize + 1}
+	if err := s.bucket.Download(ctx, objectKey, lw, nil); err != nil {
 		_ = f.Close()
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return fmt.Errorf("remote object exceeds expected size %d: %w", expectedSize, err)
+		}
 		return err
 	}
 	return f.Close()
@@ -414,7 +446,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 		}
 		indexKey, err := ulid.Parse(keyStr)
 		if err != nil {
-			s.log.Warn("skipping index with non-ULID key", "key", keyStr, "err", err)
+			s.log.Warn("skipping index snapshot with non-ULID key", "key", keyStr, "err", err)
 			continue
 		}
 
@@ -430,7 +462,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 			continue
 		}
 		if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
-			s.log.Warn("skipping index with invalid manifest", "key", obj.Key)
+			s.log.Warn("skipping index snapshot with invalid manifest", "key", obj.Key)
 			continue
 		}
 		result[indexKey] = &meta
