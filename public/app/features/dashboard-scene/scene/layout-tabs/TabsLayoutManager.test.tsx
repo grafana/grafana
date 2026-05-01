@@ -41,6 +41,62 @@ function buildTabsLayoutManager(tabs: TabItem[] = []) {
 }
 
 describe('TabsLayoutManager', () => {
+  describe('TabItem.getSlug', () => {
+    it('returns a plain slug when there are no collisions', () => {
+      const tab = new TabItem({ title: 'Overview' });
+      buildTabsLayoutManager([tab]);
+      expect(tab.getSlug()).toBe('overview');
+    });
+
+    it('returns baseSlug when called on a detached tab (no parent)', () => {
+      // Tab not yet added to any layout — collision check is skipped.
+      const tab = new TabItem({ title: 'Foo!' });
+      expect(tab.getSlug()).toBe('foo');
+    });
+
+    it('disambiguates tabs whose titles differ only by special characters using uid suffix', () => {
+      const tab1 = new TabItem({ title: 'Foo', uid: 'aaaaaaaa-0000-0000-0000-000000000000' });
+      const tab2 = new TabItem({ title: 'Foo!', uid: 'bbbbbbbb-0000-0000-0000-000000000000' });
+      buildTabsLayoutManager([tab1, tab2]);
+
+      // Every tab in the collision group gets a uid suffix so all slugs are distinct.
+      expect(tab1.getSlug()).toBe('foo-aaaaaaaa');
+      expect(tab2.getSlug()).toBe('foo-bbbbbbbb');
+    });
+
+    it('disambiguates all tabs in a larger collision group', () => {
+      const tab1 = new TabItem({ title: 'Metrics', uid: 'aaa00000-0000-0000-0000-000000000000' });
+      const tab2 = new TabItem({ title: 'Metrics!', uid: 'bbb00000-0000-0000-0000-000000000000' });
+      const tab3 = new TabItem({ title: 'Metrics?', uid: 'ccc00000-0000-0000-0000-000000000000' });
+      buildTabsLayoutManager([tab1, tab2, tab3]);
+
+      expect(tab1.getSlug()).toBe('metrics-aaa00000');
+      expect(tab2.getSlug()).toBe('metrics-bbb00000');
+      expect(tab3.getSlug()).toBe('metrics-ccc00000');
+    });
+
+    it('does not affect tabs with non-colliding titles', () => {
+      const tab1 = new TabItem({ title: 'Alpha' });
+      const tab2 = new TabItem({ title: 'Beta' });
+      buildTabsLayoutManager([tab1, tab2]);
+
+      expect(tab1.getSlug()).toBe('alpha');
+      expect(tab2.getSlug()).toBe('beta');
+    });
+
+    it('accepts an explicit siblings array so callers can compute the slug before attachment', () => {
+      const tab1 = new TabItem({ title: 'Sales', uid: 'aaaaaaaa-0000-0000-0000-000000000000' });
+      const tab2 = new TabItem({ title: 'Sales!', uid: 'bbbbbbbb-0000-0000-0000-000000000000' });
+      // tab2 is not yet attached — pass the target array explicitly to get the correct slug.
+      const futureSiblings = [tab1, tab2];
+      buildTabsLayoutManager([tab1]);
+
+      // Both slugify to "sales", so both get uid suffixes.
+      expect(tab1.getSlug(futureSiblings)).toBe('sales-aaaaaaaa');
+      expect(tab2.getSlug(futureSiblings)).toBe('sales-bbbbbbbb');
+    });
+  });
+
   describe('URL sync', () => {
     it('when on top level', () => {
       const tabsLayoutManager = buildTabsLayoutManager([new TabItem({ title: 'Performance' })]);

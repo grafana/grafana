@@ -24,6 +24,7 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
+      uid: tab.state.uid,
       title: tab.state.title,
       layout: layout,
       ...(tab.state.repeatByVariable && {
@@ -75,6 +76,7 @@ export function deserializeTab(
   const layout = tab.spec.layout;
 
   return new TabItem({
+    uid: tab.spec.uid,
     title: tab.spec.title,
     $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),

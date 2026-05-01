@@ -969,6 +969,7 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 });
 
 export interface TabsLayoutTabSpec {
+	uid?: string;
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;

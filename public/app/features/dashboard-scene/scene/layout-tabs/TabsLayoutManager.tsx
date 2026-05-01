@@ -46,8 +46,7 @@ interface TabsLayoutManagerState extends SceneObjectState {
 
 export class TabsLayoutManager
   extends SceneObjectBase<TabsLayoutManagerState>
-  implements DashboardLayoutGroup, DashboardDropTarget
-{
+  implements DashboardLayoutGroup, DashboardDropTarget {
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
@@ -209,15 +208,22 @@ export class TabsLayoutManager
       newTab.setState({ title: newTitle });
     }
 
+    // Pre-compute the final tabs array and slug so both perform and undo use the
+    // same value. getSlug() does a collision check against siblings, and newTab is
+    // not yet attached when perform/undo callbacks fire, so we must pass the target
+    // tabs array explicitly to get the correct slug.
+    const newTabs = [...this.state.tabs, newTab];
+    const newTabSlug = newTab.getSlug(newTabs);
+
     dashboardEditActions.addElement({
       addedObject: newTab,
       source: this,
-      perform: () => this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() }),
+      perform: () => this.setState({ tabs: newTabs, currentTabSlug: newTabSlug }),
       undo: () => {
         this.setState({
           tabs: this.state.tabs.filter((t) => t !== newTab),
-          // if the new tab was the current tab, set the current tab to the previous tab
-          currentTabSlug: this.state.currentTabSlug === newTab.getSlug() ? undefined : this.state.currentTabSlug,
+          // if the new tab was the current tab, clear the selection
+          currentTabSlug: this.state.currentTabSlug === newTabSlug ? undefined : this.state.currentTabSlug,
         });
       },
     });
@@ -392,9 +398,11 @@ export class TabsLayoutManager
       if (!tabsAfterRemoval.length) {
         parent.switchLayout(thisLayout);
       } else {
+        // Pass tabsBeforeRemoval explicitly: tab is detached when undo fires, so
+        // getSlug() must know the restored sibling set to compute the correct slug.
         this.setState({
           tabs: tabsBeforeRemoval,
-          currentTabSlug: tab.getSlug(),
+          currentTabSlug: tab.getSlug(tabsBeforeRemoval),
         });
       }
     };

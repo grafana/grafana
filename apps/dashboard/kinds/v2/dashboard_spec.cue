@@ -691,6 +691,7 @@ TabsLayoutTabKind: {
 }
 
 TabsLayoutTabSpec: {
+	uid?:                  string
 	title?:                string
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
