@@ -405,3 +405,74 @@ type erroringAccessClient struct {
 func (e *erroringAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return nil, nil, e.err
 }
+
+// countingAccessClient wraps an allow function and counts how many times
+// the checker is invoked. Used to verify the per-UID memoization actually
+// reduces calls for sub-resource workloads (panels of the same dashboard).
+type countingAccessClient struct {
+	calls int
+	allow func(name, folder string) bool
+}
+
+func (c *countingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
+}
+func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(name, folder string) bool {
+		c.calls++
+		if c.allow == nil {
+			return true
+		}
+		return c.allow(name, folder)
+	}, nil, nil
+}
+
+func TestVectorSearch_AuthzMemoizationForSubresources(t *testing.T) {
+	// 5 panels across 2 dashboards. With sub-resource memoization the
+	// checker should be called once per unique (UID, Folder) — i.e. twice,
+	// not five times.
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{
+			{UID: "dash-1", Title: "T1", Subresource: "panel/1", Folder: "f1", Score: 0.05},
+			{UID: "dash-1", Title: "T1", Subresource: "panel/2", Folder: "f1", Score: 0.06},
+			{UID: "dash-1", Title: "T1", Subresource: "panel/3", Folder: "f1", Score: 0.07},
+			{UID: "dash-2", Title: "T2", Subresource: "panel/1", Folder: "f1", Score: 0.10},
+			{UID: "dash-2", Title: "T2", Subresource: "panel/2", Folder: "f1", Score: 0.11},
+		},
+	}
+	access := &countingAccessClient{}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, 5, "all 5 panels should pass authz")
+	assert.Equal(t, 2, access.calls, "checker should be called once per unique (UID, Folder)")
+}
+
+func TestVectorSearch_AuthzWholeResourcesOneCheckerCallEach(t *testing.T) {
+	// Each result is a whole resource with a distinct UID. The cache
+	// degenerates to "one miss per row" — same number of checker calls
+	// as if the cache weren't there at all. The invariant holds:
+	// checker calls = unique (UID, Folder) tuples.
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{
+			{UID: "u1", Title: "T1", Folder: "f1", Score: 0.05},
+			{UID: "u2", Title: "T2", Folder: "f1", Score: 0.10},
+			{UID: "u3", Title: "T3", Folder: "f1", Score: 0.15},
+		},
+	}
+	access := &countingAccessClient{}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key: validKey(), Query: "q", Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Results, 3)
+	assert.Equal(t, 3, access.calls, "checker should be called once per row when no subresource")
+}

@@ -597,11 +597,21 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return &resourcepb.VectorSearchResponse{}, nil
 	}
 
+	// Memoize per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) reuse a single checker call.
+	type checkKey struct{ uid, folder string }
+	checked := make(map[checkKey]bool, len(results))
+
 	resp := &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !checker(r.UID, r.Folder) {
+		key := checkKey{r.UID, r.Folder}
+		allowed, ok := checked[key]
+		if !ok {
+			allowed = checker(r.UID, r.Folder)
+			checked[key] = allowed
+		}
+		if !allowed {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
