@@ -553,9 +553,8 @@ const (
 
 func orgIDFromQuery(req *http.Request) int64 {
 	params := req.URL.Query()
-	// Prefer orgId (sent by the frontend) over the legacy targetOrgId.
-	// On parse failure, fall through to the next key rather than returning
-	// early so a malformed value doesn't mask a valid one.
+	// Prefer orgId (frontend) over targetOrgId (legacy). Fall through on
+	// parse failure so a malformed value doesn't mask a valid one.
 	for _, key := range []string{orgIDQuery, orgIDTargetQuery} {
 		if !params.Has(key) {
 			continue
