@@ -96,7 +96,7 @@ func (f *fakeVectorBackend) Run(context.Context) error                  { return
 // access defaults to FixedAccessClient(true) — pass a custom AccessClient
 // to exercise authz filtering.
 func newTestSearchServer(emb *embedder.Embedder, backend vector.VectorBackend, access ...authlib.AccessClient) *searchServer {
-	var ac authlib.AccessClient = authlib.FixedAccessClient(true)
+	ac := authlib.FixedAccessClient(true)
 	if len(access) > 0 && access[0] != nil {
 		ac = access[0]
 	}
