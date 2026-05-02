@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
 import { useGetAffectedItems, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
@@ -39,7 +39,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         folder: Object.keys(selectedItems.folder).length,
       },
       source: 'browse_dashboards',
-      restore_enabled: Boolean(config.featureToggles.restoreDashboards),
+      restore_enabled: true,
     });
     setIsDeleting(true);
     try {
@@ -55,12 +55,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          {config.featureToggles.restoreDashboards && (
-            <>
-              <DeletedDashboardsInfo target="folder" />
-              <Space v={2} />
-            </>
-          )}
+          <DeletedDashboardsInfo target="folder" />
+          <Space v={2} />
           <Text element="p">
             {onlyOneFolderSelected ? (
               <Trans

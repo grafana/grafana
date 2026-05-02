@@ -3,7 +3,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
@@ -34,7 +34,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
         dashboard: 1,
       },
       source: 'dashboard_settings',
-      restore_enabled: Boolean(config.featureToggles.restoreDashboards),
+      restore_enabled: true,
     });
     await deleteDashboards({ dashboardUIDs: [dashboard.uid] });
     cleanUpDashboardAndVariables();

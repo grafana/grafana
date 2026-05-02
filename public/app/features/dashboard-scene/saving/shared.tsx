@@ -1,11 +1,9 @@
-import * as React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 
 import { type Diffs } from '../settings/version-history/utils';
 
@@ -35,14 +33,10 @@ export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }
 
-export interface NameAlreadyExistsErrorProps {
-  cancelButton: React.ReactNode;
-  saveButton: (overwrite: boolean) => React.ReactNode;
-}
+export interface NameAlreadyExistsErrorProps {}
 
-export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
-  return isRestoreDashboardsEnabled ? (
+export function NameAlreadyExistsError({}: NameAlreadyExistsErrorProps) {
+  return (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
         <Trans i18nKey="save-dashboards.name-exists.message-info">
@@ -54,23 +48,6 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
           Please choose a different name or folder.
         </Trans>
       </p>
-    </Alert>
-  ) : (
-    <Alert
-      title={t('dashboard-scene.name-already-exists-error.title-name-already-exists', 'Name already exists')}
-      severity="error"
-    >
-      <p>
-        <Trans i18nKey="dashboard-scene.name-already-exists-error.body-name-already-exists">
-          A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
-        </Trans>
-      </p>
-      <Box paddingTop={2}>
-        <Stack alignItems="center">
-          {cancelButton}
-          {saveButton(true)}
-        </Stack>
-      </Box>
     </Alert>
   );
 }
