@@ -9,7 +9,7 @@ Make sure you have the following dependencies installed before setting up your d
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
-- [GCC](https://gcc.gnu.org/) (optional, not recommded; enables CGO for smaller, dynamically linked binaries)
+- [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
 
 ### macOS
 
@@ -86,7 +86,7 @@ After the command has finished, you can start building the source code:
 yarn start
 ```
 
-This command generates SASS theme files, builds all external plugins, and then builds the frontend assets.
+This command builds the frontend assets and starts a dev server that watches for changes.
 
 After `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 

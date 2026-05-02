@@ -72,7 +72,7 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 
 ### Plain JS usage
 
-Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
+Sometimes you may need to translate a string that cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
 
 ```jsx
 import { t } from "@grafana/i18n"

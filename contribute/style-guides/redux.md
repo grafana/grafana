@@ -2,8 +2,6 @@
 
 Grafana uses [Redux Toolkit](https://redux-toolkit.js.org/) to handle Redux boilerplate code.
 
-> **Note:** Some of our reducers are used by Angular; therefore, consider state to be mutable for those reducers.
-
 ## Test functionality
 
 Here's how to test the functioning of your Redux reducers.
