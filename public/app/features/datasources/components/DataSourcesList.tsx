@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { DragDropContext, type DropResult, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -17,6 +18,7 @@ import {
   type DatasourceFailureDetails,
   useDatasourceFailureByUID,
 } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { updateDataSource } from '../api';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -39,11 +41,28 @@ export function DataSourcesList() {
     updateQueryParams({ starred: value ? 'true' : undefined });
   };
 
-  const dataSources = useSelector((state) => getDataSources(state.dataSources));
-  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
+  const dataSourcesX = useSelector((state) => getDataSources(state.dataSources));
+  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSourcesX));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+
+  // While support for ordinal is rolled out on the backend, we only enable it if the API returned values with ordinals
+  // TODO... we need an additional default sort state that does not sort
+  const { dataSources, hasOrdinal } = useMemo(() => {
+    for (const ds of dataSourcesX) {
+      if (ds.hasOwnProperty('ordinal')) {
+        const dataSources = dataSourcesX.sort((a, b) => {
+          if (a.ordinal && a.ordinal > b.ordinal) {
+            return 1;
+          }
+          return -1;
+        });
+        return { dataSources, hasOrdinal: true };
+      }
+    }
+    return { dataSources: dataSourcesX, hasOrdinal: false };
+  }, [dataSourcesX]);
 
   return (
     <DataSourcesListView
@@ -56,6 +75,7 @@ export function DataSourcesList() {
       showFavoritesOnly={showFavoritesOnly}
       handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
       favoriteDataSources={favoriteDataSources}
+      sortable={hasOrdinal}
     />
   );
 }
@@ -70,6 +90,7 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
+  sortable: boolean; // show drag handles and reorder
 };
 
 export function DataSourcesListView({
@@ -82,6 +103,7 @@ export function DataSourcesListView({
   showFavoritesOnly,
   handleFavoritesCheckboxChange,
   favoriteDataSources,
+  sortable,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -161,6 +183,7 @@ export function DataSourcesListView({
       {dataSources.length === 0 && !isLoading && (
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
       )}
+
       {isLoading && <DataSourcesListLoading hasExploreRights={hasExploreRights} />}
       {dataSources.length > 0 && !isLoading && (
         <DataSourcesListVirtualized
@@ -168,6 +191,7 @@ export function DataSourcesListView({
           hasWriteRights={hasWriteRights}
           hasExploreRights={hasExploreRights}
           datasourceFailureByUID={datasourceFailureByUID}
+          sortable={sortable && hasWriteRights}
           scrollRef={scrollRef}
           rowVirtualizer={rowVirtualizer}
         />
@@ -194,6 +218,7 @@ interface DataSourcesListVirtualizedProps {
   dataSources: DataSourceSettings[];
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  sortable: boolean;
   datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
   scrollRef: RefObject<HTMLDivElement>;
   rowVirtualizer: ReturnType<typeof useVirtualizer<HTMLDivElement, Element>>;
@@ -203,11 +228,114 @@ function DataSourcesListVirtualized({
   dataSources,
   hasWriteRights,
   hasExploreRights,
+  sortable,
   datasourceFailureByUID,
   scrollRef,
   rowVirtualizer,
 }: DataSourcesListVirtualizedProps) {
   const styles = useStyles2(getStyles);
+
+  if (sortable) {
+    const onDragEnd = (drop: DropResult) => {
+      if (!drop.destination || !drop.source || dataSources.length < 2) {
+        return; // noop
+      }
+      const startIndex = drop.source.index;
+      const endIndex = drop.destination.index;
+
+      const result = dataSources.map((ds, idx) => ({
+        uid: ds.uid,
+        ordinal: ds.ordinal ?? (idx + 1) * 1000,
+        ds,
+      }));
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      result[0].ordinal = 1; // "isDefault" synonym
+
+      let max = 1;
+      for (let v of result) {
+        if (v.ordinal > max) {
+          max = v.ordinal;
+        }
+      }
+
+      // Make the last value bigger if necessary
+      const last = result[result.length - 1];
+      if (last.ordinal < max) {
+        const now = Date.now();
+        result[result.length - 1].ordinal = now;
+        if (max > now) {
+          result[result.length - 1].ordinal = max + 1000;
+        }
+      }
+
+      // Make sure the updated ordinal is in the right value
+      if (result.length > 2) {
+        for (let i = 1; i < result.length - 1; i++) {
+          const prev = result[i - 1];
+          const next = result[i + 1];
+          if (result[i].ordinal <= prev.ordinal) {
+            let delta = Math.trunc((next.ordinal - prev.ordinal) / 2);
+            if (delta < 1) {
+              delta = 100;
+            }
+            result[i].ordinal = prev.ordinal + delta;
+          }
+        }
+      }
+
+      console.log('onDragEnd', drop);
+      const updater = new Promise(() => {
+        console.log('dest', result); // desired order
+
+        // Patch datasources that need a new ordinal
+        for (const v of result) {
+          if (v.ordinal !== v.ds.ordinal) {
+            console.log('update ordinal', v);
+            v.ds.ordinal = v.ordinal;
+            updateDataSource(v.ds).then((x) => {
+              console.log('>>>', x);
+            });
+          }
+        }
+        console.log('reload after updates');
+        window.location.reload();
+      });
+      updater.then(() => console.log('doneX'));
+    };
+
+    // NOT THE BEST... this should use the react-window based approach from:
+    // https://github.com/hello-pangea/dnd/blob/v18.0.1/stories/src/virtual/react-window/list.tsx#L66
+    // but my react foo is not up to the task
+    return (
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="ds-ordinal">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              {dataSources.map((ds, index) => (
+                <Draggable key={ds.uid} draggableId={ds.uid} index={index}>
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps}>
+                      <div style={{ marginBottom: `5px` }}>
+                        <DataSourcesListCard
+                          dataSource={ds}
+                          hasWriteRights={hasWriteRights}
+                          hasExploreRights={hasExploreRights}
+                          failure={datasourceFailureByUID.get(ds.uid)}
+                          dragHandleProps={sortable ? provided.dragHandleProps : undefined}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    );
+  }
 
   return (
     <div ref={scrollRef} className={styles.listContainer}>

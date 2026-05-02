@@ -68,6 +68,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
+			Ordinal:   ds.Ordinal,
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,

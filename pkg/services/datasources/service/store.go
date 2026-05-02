@@ -373,7 +373,9 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if cmd.IsDefault {
+		if cmd.Ordinal == 1 {
+			cmd.IsDefault = true
+		} else if cmd.IsDefault {
 			cmd.Ordinal = 1 // the default value
 		}
 

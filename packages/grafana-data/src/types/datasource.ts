@@ -745,7 +745,8 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   database: string;
   basicAuth: boolean;
   basicAuthUser: string;
-  isDefault: boolean;
+  isDefault: boolean; // will gradually be replaced by ordinal
+  ordinal?: number; // will exist if the backend supports it
   jsonData: T;
   secureJsonData?: S;
   secureJsonFields: KeyValue<boolean>;
