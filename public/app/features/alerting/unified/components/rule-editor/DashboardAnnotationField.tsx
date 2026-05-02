@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 
@@ -69,8 +69,22 @@ const DashboardAnnotationField = ({
 
       {(dashboard || panel) && (
         <>
-          <Icon name={'pen'} onClick={onEditClick} className={styles.icon} />
-          <Icon name={'trash-alt'} onClick={onDeleteClick} className={styles.icon} />
+          <IconButton
+            name="pen"
+            onClick={onEditClick}
+            aria-label={t(
+              'alerting.annotations.dashboard-annotation-field.edit',
+              'Edit annotation'
+            )}
+          />
+          <IconButton
+            name="trash-alt"
+            onClick={onDeleteClick}
+            aria-label={t(
+              'alerting.annotations.dashboard-annotation-field.delete',
+              'Delete annotation'
+            )}
+          />
         </>
       )}
     </div>
@@ -90,10 +104,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(1.5),
   }),
 
-  icon: css({
-    marginRight: theme.spacing(1),
-    cursor: 'pointer',
-  }),
 });
 
 export default DashboardAnnotationField;
