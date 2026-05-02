@@ -4453,6 +4453,10 @@
         "name": {
           "type": "string"
         },
+        "ordinal": {
+          "type": "integer",
+          "format": "int64"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -4520,6 +4524,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "ordinal": {
+          "type": "integer",
+          "format": "int64"
         },
         "orgId": {
           "type": "integer",

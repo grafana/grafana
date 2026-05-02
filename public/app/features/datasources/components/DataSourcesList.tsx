@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
+import { config, useFavoriteDatasources, useLocationService, type FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -42,7 +42,7 @@ export function DataSourcesList() {
   };
 
   const dataSourcesX = useSelector((state) => getDataSources(state.dataSources));
-  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSourcesX));
+  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
@@ -53,10 +53,21 @@ export function DataSourcesList() {
     for (const ds of dataSourcesX) {
       if (ds.hasOwnProperty('ordinal')) {
         const dataSources = dataSourcesX.sort((a, b) => {
-          if (a.ordinal && a.ordinal > b.ordinal) {
+          if (a.ordinal) {
+            if (b.ordinal) {
+              if (a.ordinal > b.ordinal) {
+                return 1;
+              }
+              return -1;
+            }
             return 1;
           }
-          return -1;
+          if (b.ordinal) {
+            return -1;
+          }
+          // when nothing has an ordinal, sort by name
+          // eslint-disable-next-line @grafana/no-locale-compare
+          return a.name.localeCompare(b.name);
         });
         return { dataSources, hasOrdinal: true };
       }
@@ -285,21 +296,24 @@ function DataSourcesListVirtualized({
       }
 
       console.log('onDragEnd', drop);
-      const updater = new Promise(() => {
+      const updater = new Promise(async () => {
         console.log('dest', result); // desired order
-
+        let changed = false;
         // Patch datasources that need a new ordinal
+        // NOTE: this does not have to happen sequentially
         for (const v of result) {
           if (v.ordinal !== v.ds.ordinal) {
             console.log('update ordinal', v);
             v.ds.ordinal = v.ordinal;
-            updateDataSource(v.ds).then((x) => {
-              console.log('>>>', x);
-            });
+            v.ds.isDefault = v.ordinal === 1;
+            await updateDataSource(v.ds);
+            changed = true;
           }
         }
-        console.log('reload after updates');
-        window.location.reload();
+        if (changed) {
+          console.log('reload after updates');
+          window.location.reload();
+        }
       });
       updater.then(() => console.log('doneX'));
     };

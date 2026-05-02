@@ -754,6 +754,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		BasicAuthUser:    ds.BasicAuthUser,
 		WithCredentials:  ds.WithCredentials,
 		IsDefault:        ds.IsDefault,
+		Ordinal:          ds.Ordinal,
 		JsonData:         ds.JsonData,
 		SecureJsonFields: map[string]bool{},
 		Version:          ds.Version,

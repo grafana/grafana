@@ -23,6 +23,7 @@ type DataSource struct {
 	BasicAuthUser    string                 `json:"basicAuthUser"`
 	WithCredentials  bool                   `json:"withCredentials"`
 	IsDefault        bool                   `json:"isDefault"`
+	Ordinal          int64                  `json:"ordinal,omitzero"`
 	JsonData         *simplejson.Json       `json:"jsonData,omitempty"`
 	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
 	Version          int                    `json:"version"`
