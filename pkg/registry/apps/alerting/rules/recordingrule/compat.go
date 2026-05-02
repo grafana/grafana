@@ -2,6 +2,7 @@ package recordingrule
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -145,6 +146,81 @@ func convertToK8sResources(
 		k8sRules.Items = append(k8sRules.Items, *k8sRule)
 	}
 	return k8sRules, nil
+}
+
+// convertVersionToK8sResource converts an AlertRuleVersion into a k8s RecordingRule resource.
+// The version's revision message is preserved on the message annotation so callers iterating
+// history can display per-revision context the same way the unified storage history list does.
+func convertVersionToK8sResource(
+	orgID int64,
+	version *ngmodels.AlertRuleVersion,
+	namespaceMapper request.NamespaceMapper,
+) (*model.RecordingRule, error) {
+	if version == nil {
+		return nil, fmt.Errorf("nil version")
+	}
+	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, ngmodels.ProvenanceNone, namespaceMapper)
+	if err != nil {
+		return nil, err
+	}
+	if version.Message != "" {
+		meta, err := utils.MetaAccessor(k8sRule)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get metadata: %w", err)
+		}
+		meta.SetMessage(version.Message)
+	}
+	return k8sRule, nil
+}
+
+// convertVersionsToK8sResources converts a list of AlertRuleVersion into a k8s RecordingRuleList.
+// The Version on each rule is reflected via ResourceVersion so paginating clients can identify revisions.
+func convertVersionsToK8sResources(
+	orgID int64,
+	versions []*ngmodels.AlertRuleVersion,
+	namespaceMapper request.NamespaceMapper,
+) (*model.RecordingRuleList, error) {
+	out := &model.RecordingRuleList{Items: make([]model.RecordingRule, 0, len(versions))}
+	for _, v := range versions {
+		k8sRule, err := convertVersionToK8sResource(orgID, v, namespaceMapper)
+		if err != nil {
+			if errors.Is(err, errInvalidRule) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to convert version to k8s resource: %w", err)
+		}
+		out.Items = append(out.Items, *k8sRule)
+	}
+	return out, nil
+}
+
+// convertDeletedToK8sResources converts soft-deleted recording rules into a k8s RecordingRuleList.
+// Deleted rules have their original UID cleared in storage, so the rule GUID is used as the resource
+// name (the only stable identifier left) and the deletion timestamp is set so consumers can recognize
+// the entry as a tombstone, matching the behavior of unified storage trash listings.
+func convertDeletedToK8sResources(
+	orgID int64,
+	rules []*ngmodels.AlertRule,
+	namespaceMapper request.NamespaceMapper,
+) (*model.RecordingRuleList, error) {
+	out := &model.RecordingRuleList{Items: make([]model.RecordingRule, 0, len(rules))}
+	for _, rule := range rules {
+		copy := *rule
+		if copy.UID == "" {
+			copy.UID = copy.GUID
+		}
+		k8sRule, err := convertToK8sResource(orgID, &copy, ngmodels.ProvenanceNone, namespaceMapper)
+		if err != nil {
+			if errors.Is(err, errInvalidRule) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to convert deleted rule to k8s resource: %w", err)
+		}
+		deleted := metav1.NewTime(rule.Updated)
+		k8sRule.SetDeletionTimestamp(&deleted)
+		out.Items = append(out.Items, *k8sRule)
+	}
+	return out, nil
 }
 
 func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, ngmodels.Provenance, error) {

@@ -5,7 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestParseLabelSelectorFilter(t *testing.T) {
@@ -107,5 +110,73 @@ func TestParseLabelSelectorFilter(t *testing.T) {
 		assert.Nil(t, filter.Exists)
 		assert.Empty(t, filter.Include)
 		assert.Empty(t, filter.Exclude)
+	})
+}
+
+func TestParseListMode(t *testing.T) {
+	t.Run("nil selector returns normal mode", func(t *testing.T) {
+		mode, name, err := ParseListMode(nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, ListModeNormal, mode)
+		assert.Empty(t, name)
+	})
+
+	t.Run("non-reserved label returns normal mode", func(t *testing.T) {
+		sel, err := labels.Parse("foo=bar")
+		require.NoError(t, err)
+		mode, name, err := ParseListMode(sel, nil)
+		require.NoError(t, err)
+		assert.Equal(t, ListModeNormal, mode)
+		assert.Empty(t, name)
+	})
+
+	t.Run("trash label returns trash mode", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyGetTrash + "=true")
+		require.NoError(t, err)
+		mode, name, err := ParseListMode(sel, nil)
+		require.NoError(t, err)
+		assert.Equal(t, ListModeTrash, mode)
+		assert.Empty(t, name)
+	})
+
+	t.Run("trash label rejects values other than true", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyGetTrash + "=false")
+		require.NoError(t, err)
+		_, _, err = ParseListMode(sel, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("history label requires metadata.name field selector", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyGetHistory + "=true")
+		require.NoError(t, err)
+
+		_, _, err = ParseListMode(sel, nil)
+		require.Error(t, err)
+
+		fs, err := fields.ParseSelector("spec.title=foo")
+		require.NoError(t, err)
+		_, _, err = ParseListMode(sel, fs)
+		require.Error(t, err)
+
+		fs, err = fields.ParseSelector("metadata.name=rule-uid")
+		require.NoError(t, err)
+		mode, name, err := ParseListMode(sel, fs)
+		require.NoError(t, err)
+		assert.Equal(t, ListModeHistory, mode)
+		assert.Equal(t, "rule-uid", name)
+	})
+
+	t.Run("reserved label combined with another label is rejected", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyGetTrash + "=true,foo=bar")
+		require.NoError(t, err)
+		_, _, err = ParseListMode(sel, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("non-equality operator on reserved label is rejected", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyGetTrash + " in (true)")
+		require.NoError(t, err)
+		_, _, err = ParseListMode(sel, nil)
+		require.Error(t, err)
 	})
 }

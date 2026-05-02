@@ -3110,3 +3110,78 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 // 		})
 // 	})
 // }
+
+func TestGetAlertRuleVersions(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	gen := models.RuleGen
+	rule := gen.With(gen.WithGroupKey(groupKey)).GenerateRef()
+
+	t.Run("returns versions for an authorized rule", func(t *testing.T) {
+		service, ruleStore, _, _ := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: {rule}}
+		ruleStore.AppendHistory(rule.GUID, []*models.AlertRule{rule}, "first")
+		ruleStore.AppendHistory(rule.GUID, []*models.AlertRule{rule}, "second")
+
+		versions, err := service.GetAlertRuleVersions(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Len(t, versions, 2)
+		assert.Equal(t, "first", versions[0].Message)
+		assert.Equal(t, "second", versions[1].Message)
+	})
+
+	t.Run("propagates authorization failure", func(t *testing.T) {
+		service, ruleStore, _, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: {rule}}
+		expected := errors.New("denied")
+		ac.AuthorizeAccessInFolderFunc = func(_ context.Context, _ identity.Requester, _ models.Namespaced) error {
+			return expected
+		}
+
+		_, err := service.GetAlertRuleVersions(context.Background(), u, rule.UID)
+		require.ErrorIs(t, err, expected)
+	})
+
+	t.Run("returns ErrAlertRuleNotFound for unknown rule", func(t *testing.T) {
+		service, _, _, _ := initService(t)
+		_, err := service.GetAlertRuleVersions(context.Background(), u, "missing")
+		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+	})
+}
+
+func TestGetDeletedAlertRules(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	gen := models.RuleGen
+	r1 := gen.With(gen.WithNamespaceUID("folder-a")).GenerateRef()
+	r2 := gen.With(gen.WithNamespaceUID("folder-b")).GenerateRef()
+
+	t.Run("returns all deleted rules when user can read all", func(t *testing.T) {
+		service, ruleStore, _, ac := initService(t)
+		ruleStore.Deleted = map[int64][]*models.AlertRule{orgID: {r1, r2}}
+		ac.CanReadAllRulesFunc = func(_ context.Context, _ identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		got, err := service.GetDeletedAlertRules(context.Background(), u)
+		require.NoError(t, err)
+		assert.Len(t, got, 2)
+	})
+
+	t.Run("filters to namespaces the user can access", func(t *testing.T) {
+		service, ruleStore, _, ac := initService(t)
+		ruleStore.Deleted = map[int64][]*models.AlertRule{orgID: {r1, r2}}
+		ac.CanReadAllRulesFunc = func(_ context.Context, _ identity.Requester) (bool, error) {
+			return false, nil
+		}
+		ac.HasAccessInFolderFunc = func(_ context.Context, _ identity.Requester, ns models.Namespaced) (bool, error) {
+			return ns.GetNamespaceUID() == "folder-a", nil
+		}
+
+		got, err := service.GetDeletedAlertRules(context.Background(), u)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, "folder-a", got[0].NamespaceUID)
+	})
+}

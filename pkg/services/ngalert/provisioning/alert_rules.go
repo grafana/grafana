@@ -301,6 +301,54 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 	}, nil
 }
 
+// GetAlertRuleVersions returns the version history of a single alert rule identified by UID.
+// The caller must already have read access to the rule; this is verified via getAlertRuleAuthorized.
+// Versions are returned in the order provided by the underlying store (newest first).
+func (service *AlertRuleService) GetAlertRuleVersions(ctx context.Context, user identity.Requester, ruleUID string) ([]*models.AlertRuleVersion, error) {
+	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
+	if err != nil {
+		return nil, err
+	}
+	return service.ruleStore.GetAlertRuleVersions(ctx, user.GetOrgID(), rule.GUID)
+}
+
+// GetDeletedAlertRules returns rules that have been soft-deleted in the user's organization.
+// The result is filtered to namespaces the user can access when they don't have blanket read access.
+func (service *AlertRuleService) GetDeletedAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, error) {
+	rules, err := service.ruleStore.ListDeletedRules(ctx, user.GetOrgID())
+	if err != nil {
+		return nil, err
+	}
+
+	canReadAll, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	if canReadAll {
+		return rules, nil
+	}
+
+	// Filter to namespaces the user can read rules in. Deleted rules retain their last known
+	// namespace UID, so we use the same folder-access check used by ListAlertRules.
+	allowed := make(map[string]bool)
+	filtered := rules[:0]
+	for _, r := range rules {
+		ns := r.NamespaceUID
+		access, ok := allowed[ns]
+		if !ok {
+			access, err = service.authz.HasAccessInFolder(ctx, user, models.NewNamespaceUID(ns))
+			if err != nil {
+				return nil, err
+			}
+			allowed[ns] = access
+		}
+		if access {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered, nil
+}
+
 // CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
 // interval that is set in the rule struct and use the already existing group interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {

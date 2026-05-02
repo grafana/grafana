@@ -24,6 +24,37 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
+// onlyRecordingVersions filters versions to those representing recording rules. Versions of
+// alerting rules share storage but should not surface through the RecordingRule resource.
+func onlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
+	out := versions[:0]
+	for _, v := range versions {
+		if v == nil {
+			continue
+		}
+		if v.AlertRule.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// onlyRecordingRules filters deleted rules to those representing recording rules.
+func onlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
+	out := rules[:0]
+	for _, r := range rules {
+		if r == nil {
+			continue
+		}
+		if r.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
@@ -65,6 +96,28 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
+	if err != nil {
+		return nil, k8serrors.NewBadRequest(err.Error())
+	}
+	switch mode {
+	case common.ListModeHistory:
+		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		if err != nil {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
+			}
+			return nil, err
+		}
+		return convertVersionsToK8sResources(info.OrgID, onlyRecordingVersions(versions), s.namespacer)
+	case common.ListModeTrash:
+		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+		return convertDeletedToK8sResources(info.OrgID, onlyRecordingRules(deleted), s.namespacer)
 	}
 
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
