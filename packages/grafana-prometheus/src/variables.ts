@@ -51,15 +51,7 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
     };
 
     const interpolated = this.templateSrv.replace(query, scopedVars, this.datasource.interpolateQueryExpr);
-
-    const requestHeaders: Record<string, string> = {
-      'X-Datasource-Uid': this.datasource.uid,
-    };
-    if (request.dashboardUID) {
-      requestHeaders['X-Dashboard-Uid'] = request.dashboardUID;
-    }
-
-    const metricFindQuery = new PrometheusMetricFindQuery(this.datasource, interpolated, requestHeaders);
+    const metricFindQuery = new PrometheusMetricFindQuery(this.datasource, interpolated);
     const metricFindStream = from(metricFindQuery.process(request.range));
 
     return metricFindStream.pipe(map((results) => ({ data: results })));

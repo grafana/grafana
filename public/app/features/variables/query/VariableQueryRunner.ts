@@ -193,10 +193,7 @@ export class VariableQueryRunner {
       targets: [target],
       scopedVars,
       startTime: Date.now(),
-      dashboardUID:
-        identifier.rootStateKey && identifier.rootStateKey !== 'null' && identifier.rootStateKey !== 'undefined'
-          ? identifier.rootStateKey
-          : undefined,
+      dashboardUID: identifier.rootStateKey || undefined,
     };
 
     return request;
