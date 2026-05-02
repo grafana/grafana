@@ -111,7 +111,7 @@ func ProvideRegistration(
 
 	if cfg.JWTAuth.Enabled {
 		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
+		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, tracer))
 	}
 
 	if cfg.ExtJWTAuth.Enabled {

@@ -258,12 +258,13 @@ func TestAuthenticateJWT(t *testing.T) {
 			t.Parallel()
 			jwtService := &jwt.FakeJWTService{
 				VerifyProvider: tc.verifyProvider,
+				SettingsValue:  tc.cfg.JWTAuth,
 			}
 
 			jwtClient := ProvideJWT(jwtService,
 				connectors.ProvideOrgRoleMapper(tc.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				tc.cfg, tracing.InitializeTracerForTest())
+				tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
 					jwtHeaderName: {"sample-token"}},
@@ -282,16 +283,14 @@ func TestAuthenticateJWT(t *testing.T) {
 
 func TestJWTClaimConfig(t *testing.T) {
 	t.Parallel()
-	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (map[string]any, error) {
-			return map[string]any{
-				"sub":                "1234567890",
-				"email":              "eai.doe@cor.po",
-				"preferred_username": "eai-doe",
-				"name":               "Eai Doe",
-				"roles":              "Admin",
-			}, nil
-		},
+	verifyClaims := func(context.Context, string) (map[string]any, error) {
+		return map[string]any{
+			"sub":                "1234567890",
+			"email":              "eai.doe@cor.po",
+			"preferred_username": "eai-doe",
+			"name":               "Eai Doe",
+			"roles":              "Admin",
+		}, nil
 	}
 
 	jwtHeaderName := "X-Forwarded-User"
@@ -379,9 +378,13 @@ func TestJWTClaimConfig(t *testing.T) {
 				Header: map[string][]string{
 					jwtHeaderName: {token}},
 			}
+			jwtService := &jwt.FakeJWTService{
+				VerifyProvider: verifyClaims,
+				SettingsValue:  cfg.JWTAuth,
+			}
 			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
 				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				cfg, tracing.InitializeTracerForTest())
+				tracing.InitializeTracerForTest())
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: httpReq,
@@ -397,7 +400,6 @@ func TestJWTClaimConfig(t *testing.T) {
 
 func TestJWTTest(t *testing.T) {
 	t.Parallel()
-	jwtService := &jwt.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
 	// #nosec G101 -- This is dummy/test token
 	validFormatToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
@@ -491,10 +493,11 @@ func TestJWTTest(t *testing.T) {
 					RoleAttributeStrict:     true,
 				},
 			}
+			jwtService := &jwt.FakeJWTService{SettingsValue: cfg.JWTAuth}
 			jwtClient := ProvideJWT(jwtService,
 				connectors.ProvideOrgRoleMapper(cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				cfg, tracing.InitializeTracerForTest())
+				tracing.InitializeTracerForTest())
 			httpReq := &http.Request{
 				URL: &url.URL{RawQuery: "auth_token=" + tc.token},
 				Header: map[string][]string{
@@ -513,18 +516,6 @@ func TestJWTTest(t *testing.T) {
 
 func TestJWTStripParam(t *testing.T) {
 	t.Parallel()
-	jwtService := &jwt.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (map[string]any, error) {
-			return map[string]any{
-				"sub":                "1234567890",
-				"email":              "eai.doe@cor.po",
-				"preferred_username": "eai-doe",
-				"name":               "Eai Doe",
-				"roles":              "Admin",
-			}, nil
-		},
-	}
-
 	jwtHeaderName := "X-Forwarded-User"
 
 	cfg := &setting.Cfg{
@@ -541,6 +532,19 @@ func TestJWTStripParam(t *testing.T) {
 		},
 	}
 
+	jwtService := &jwt.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (map[string]any, error) {
+			return map[string]any{
+				"sub":                "1234567890",
+				"email":              "eai.doe@cor.po",
+				"preferred_username": "eai-doe",
+				"name":               "Eai Doe",
+				"roles":              "Admin",
+			}, nil
+		},
+		SettingsValue: cfg.JWTAuth,
+	}
+
 	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 
@@ -550,7 +554,7 @@ func TestJWTStripParam(t *testing.T) {
 	jwtClient := ProvideJWT(jwtService,
 		connectors.ProvideOrgRoleMapper(cfg,
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-		cfg, tracing.InitializeTracerForTest())
+		tracing.InitializeTracerForTest())
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
@@ -604,12 +608,13 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 		VerifyProvider: func(context.Context, string) (map[string]any, error) {
 			return response, nil
 		},
+		SettingsValue: cfg.JWTAuth,
 	}
 
 	jwtClient := ProvideJWT(jwtService,
 		connectors.ProvideOrgRoleMapper(cfg,
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-		cfg, tracing.InitializeTracerForTest())
+		tracing.InitializeTracerForTest())
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
