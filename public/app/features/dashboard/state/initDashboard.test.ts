@@ -267,11 +267,6 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
   });
 
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
-  });
-
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
     expect(ctx.actions[7].payload.title).toBe('New dashboard');
@@ -421,11 +416,6 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should send action dashboardInitServices ', () => {
     expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
-
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
   });
 
   it('Should send action dashboardInitCompleted', () => {

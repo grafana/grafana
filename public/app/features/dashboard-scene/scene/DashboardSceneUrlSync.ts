@@ -1,5 +1,4 @@
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
@@ -27,7 +26,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
       shareView: state.shareView,
-      orgId: contextSrv.user.orgId.toString(),
     };
   }
 

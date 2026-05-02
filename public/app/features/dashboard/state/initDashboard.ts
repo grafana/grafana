@@ -210,14 +210,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       return;
     }
 
-    // add missing orgId query param
     const storeState = getState();
     const queryParams = locationService.getSearchObject();
-
-    if (!queryParams.orgId) {
-      // TODO this is currently not possible with the LocationService API
-      locationService.partial({ orgId: storeState.user.orgId }, true);
-    }
 
     // init services
     const timeSrv: TimeSrv = getTimeSrv();
