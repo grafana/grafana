@@ -295,27 +295,30 @@ function DataSourcesListVirtualized({
         }
       }
 
-      console.log('onDragEnd', drop);
-      const updater = new Promise(async () => {
-        console.log('dest', result); // desired order
-        let changed = false;
-        // Patch datasources that need a new ordinal
-        // NOTE: this does not have to happen sequentially
-        for (const v of result) {
-          if (v.ordinal !== v.ds.ordinal) {
-            console.log('update ordinal', v);
-            v.ds.ordinal = v.ordinal;
-            v.ds.isDefault = v.ordinal === 1;
-            await updateDataSource(v.ds);
-            changed = true;
-          }
+      let changes: DataSourceSettings[] = [];
+      for (const v of result) {
+        if (v.ordinal !== v.ds.ordinal) {
+          changes.push({
+            ...v.ds,
+            ordinal: v.ordinal,
+            isDefault: v.ordinal === 1,
+          });
         }
-        if (changed) {
+      }
+
+      if (changes.length) {
+        const updater = new Promise(async () => {
+          console.log('drop', drop);
+          // Patch datasources that need a new ordinal
+          // NOTE: this does not have to happen sequentially
+          for (const v of changes) {
+            await updateDataSource(v);
+          }
           console.log('reload after updates');
           window.location.reload();
-        }
-      });
-      updater.then(() => console.log('doneX'));
+        });
+        updater.then(() => console.log('done'));
+      }
     };
 
     // NOT THE BEST... this should use the react-window based approach from:
