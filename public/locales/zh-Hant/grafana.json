@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "新增至收藏夾",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "探索資料",
       "open-in-explore": "在「探索」檢視畫面中開啟",
       "remove-favorite": "從收藏夾中移除"

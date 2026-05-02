@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"

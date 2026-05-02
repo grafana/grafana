@@ -8236,6 +8236,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odebrat z oblíbených"

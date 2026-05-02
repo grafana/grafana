@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
