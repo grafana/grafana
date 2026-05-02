@@ -266,12 +266,34 @@ function PieSlice({
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
 
+  // Shared helper: show tooltip at given SVG coordinates
+  const showTooltipAt = useCallback(
+    (coords: { x: number; y: number } | null) => {
+      if (!coords || tooltipOptions.mode === 'none') {
+        return;
+      }
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          x: coords.x,
+          y: coords.y,
+          dataId: arc.data.display.title,
+        },
+      });
+      tooltip.showTooltip({
+        tooltipLeft: coords.x,
+        tooltipTop: coords.y,
+        tooltipData: getTooltipData(pie, arc, tooltipOptions, gradientFills),
+      });
+    },
+    [eventBus, arc, tooltip, pie, tooltipOptions, gradientFills]
+  );
+
   const onMouseOut = useCallback(
-    (event: React.MouseEvent<SVGGElement>) => {
+    () => {
       eventBus?.publish({
         type: DataHoverClearEvent.type,
         payload: {
-          raw: event,
           x: 0,
           y: 0,
           dataId: arc.data.display.title,
@@ -284,29 +306,41 @@ function PieSlice({
 
   const onMouseMoveOverArc = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
-      eventBus?.publish({
-        type: DataHoverEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: arc.data.display.title,
-        },
-      });
-
       const owner = event.currentTarget.ownerSVGElement;
-
       if (owner) {
         const coords = localPoint(owner, event);
-        tooltip.showTooltip({
-          tooltipLeft: coords!.x,
-          tooltipTop: coords!.y,
-          tooltipData: getTooltipData(pie, arc, tooltipOptions, gradientFills),
-        });
+        showTooltipAt(coords);
       }
     },
-    [eventBus, arc, tooltip, pie, tooltipOptions, gradientFills]
+    [showTooltipAt]
   );
+
+  // Keyboard focus shows tooltip at slice center
+  const onFocus = useCallback(
+    (event: React.FocusEvent<SVGGElement>) => {
+      const owner = event.currentTarget.ownerSVGElement;
+      if (owner) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const ownerRect = owner.getBoundingClientRect();
+        const x = rect.left + rect.width / 2 - ownerRect.left;
+        const y = rect.top + rect.height / 2 - ownerRect.top;
+        showTooltipAt({ x, y });
+      }
+    },
+    [showTooltipAt]
+  );
+
+  const onBlur = useCallback(() => {
+    eventBus?.publish({
+      type: DataHoverClearEvent.type,
+      payload: {
+        x: 0,
+        y: 0,
+        dataId: arc.data.display.title,
+      },
+    });
+    tooltip.hideTooltip();
+  }, [eventBus, arc, tooltip]);
 
   const pieStyle = getSvgStyle(highlightState, styles);
 
@@ -316,10 +350,9 @@ function PieSlice({
       className={cx(pieStyle, triggerClassName)}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
+      onFocus={onFocus}
+      onBlur={onBlur}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
-      // `triggerProps` (when present) supplies role="button", tabIndex=0,
-      // onClick (open menu), onKeyDown (Enter/Space → open menu), and
-      // aria-haspopup. Spread last so consumers can override defaults.
       aria-label={ariaLabel}
       {...triggerProps}
     >
