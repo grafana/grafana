@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, useFavoriteDatasources, useLocationService, type FavoriteDatasources } from '@grafana/runtime';
+import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';

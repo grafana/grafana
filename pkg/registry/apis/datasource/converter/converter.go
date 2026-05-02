@@ -68,14 +68,16 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetBasicAuth(ds.BasicAuth).
 		SetBasicAuthUser(ds.BasicAuthUser).
 		SetWithCredentials(ds.WithCredentials).
-		SetIsDefault(ds.IsDefault).
 		SetReadOnly(ds.ReadOnly)
 
 	if ds.IsDefault {
-		ds.Ordinal = 1
+		obj.Spec.SetIsDefault(true)
 		obj.Spec.Set("ordinal", int64(1))
 	} else if ds.Ordinal > 0 {
+		obj.Spec.SetIsDefault(ds.Ordinal == 1)
 		obj.Spec.Set("ordinal", ds.Ordinal)
+	} else {
+		obj.Spec.SetIsDefault(false)
 	}
 
 	if ds.JsonData != nil && !ds.JsonData.IsEmpty() {
