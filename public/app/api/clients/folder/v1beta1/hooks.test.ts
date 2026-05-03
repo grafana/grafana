@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
+import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
@@ -23,19 +23,12 @@ import {
 } from './hooks';
 import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
-import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
-
-type FolderIndexModule = {
-  useUpdateFolderMutation: typeof useUpdateFolderMutation;
-};
-
-const actualFolderIndex = jest.requireActual('./index') as FolderIndexModule;
+import { useDeleteFolderMutation } from './index';
 
 // Mocks for the hooks used inside useGetFolderQueryFacade
 jest.mock('./index', () => ({
   ...jest.requireActual('./index'),
   useDeleteFolderMutation: jest.fn(),
-  useUpdateFolderMutation: jest.fn(),
 }));
 
 const publishMockFn = jest.fn();
@@ -82,6 +75,31 @@ const renderFolderHook = async () => {
     expect(result.current.data).toBeDefined();
   });
   return result;
+};
+
+const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
+  folderAPIVersionResolver.set('v1beta1');
+  server.use(
+    http.patch('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name', async ({ params, request }) => {
+      const body = await request.json();
+      onPatch?.({ name: params.name, body });
+
+      return HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: {
+          name: params.name,
+          generation: 1,
+        },
+        spec: {
+          title:
+            body && typeof body === 'object' && 'spec' in body
+              ? (body.spec?.title ?? 'Updated Folder')
+              : 'Updated Folder',
+        },
+      });
+    })
+  );
 };
 
 const originalToggles = { ...config.featureToggles };
@@ -200,30 +218,37 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
 });
 
 describe('useMoveMultipleFoldersMutationFacade', () => {
-  const mockUpdateFolder = jest.fn(() => ({ error: undefined }));
   const mockMoveFolders = jest.fn(() => ({ error: undefined }));
+  const patchSpy = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useUpdateFolderMutation as jest.Mock).mockReturnValue([mockUpdateFolder]);
     (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
+    patchSpy.mockReset();
+  });
+  afterEach(() => {
+    folderAPIVersionResolver.reset();
   });
 
   it('moves multiple folders and publishes success alert', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
+    setupUpdateFolderHandler(patchSpy);
     const folderUIDs = ['uid1', 'uid2'];
-    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
-    await moveFolders({ folderUIDs, destinationUID: 'uid3' });
-
-    // Should call deleteFolder for each UID
-    expect(mockUpdateFolder).toHaveBeenCalledTimes(folderUIDs.length);
-    expect(mockUpdateFolder).toHaveBeenCalledWith({
-      name: 'uid1',
-      patch: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+    const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
     });
-    expect(mockUpdateFolder).toHaveBeenCalledWith({
+    await act(async () => {
+      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+    });
+
+    expect(patchSpy).toHaveBeenCalledTimes(folderUIDs.length);
+    expect(patchSpy).toHaveBeenCalledWith({
+      name: 'uid1',
+      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+    });
+    expect(patchSpy).toHaveBeenCalledWith({
       name: 'uid2',
-      patch: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
     });
 
     // Should publish a success alert
@@ -239,8 +264,12 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('uses legacy call when flag is false', async () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const folderUIDs = ['uid1', 'uid2'];
-    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
-    await moveFolders({ folderUIDs, destinationUID: 'uid3' });
+    const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+    });
 
     // Should call deleteFolder for each UID
     expect(mockMoveFolders).toHaveBeenCalledTimes(1);
@@ -256,9 +285,13 @@ describe.each([
 ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
   beforeEach(() => {
     config.featureToggles.foldersAppPlatformAPI = toggle;
+    if (toggle) {
+      folderAPIVersionResolver.set('v1beta1');
+    }
   });
   afterEach(() => {
     config.featureToggles = originalToggles;
+    folderAPIVersionResolver.reset();
   });
 
   describe('useCreateFolder', () => {
@@ -284,28 +317,7 @@ describe.each([
   describe('useUpdateFolder', () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      folderAPIVersionResolver.set('v1beta1');
-      (useUpdateFolderMutation as jest.Mock).mockImplementation(actualFolderIndex.useUpdateFolderMutation);
-      server.use(
-        http.patch(
-          '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name',
-          async ({ params, request }) => {
-            const body = await request.json();
-
-            return HttpResponse.json({
-              apiVersion: 'folder.grafana.app/v1beta1',
-              kind: 'Folder',
-              metadata: {
-                name: params.name,
-                generation: 1,
-              },
-              spec: {
-                title: body?.spec?.title ?? 'Updated Folder',
-              },
-            });
-          }
-        )
-      );
+      setupUpdateFolderHandler();
     });
 
     it('updates a folder', async () => {
