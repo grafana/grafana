@@ -20,7 +20,7 @@ const TOKEN_MAP: Record<string, string> = {
   ss: 'ss',
   s: 's',
   A: 'a',
-  a: 'a',
+  a: "'__mls__'a'__mle__'",
 
   ZZ: 'Z',
   Z: 'ZZ',
@@ -33,6 +33,7 @@ const TOKEN_MAP: Record<string, string> = {
 const TOKEN_PATTERN = new RegExp(`\\[([^\\]]+)\\]|Do|${Object.keys(TOKEN_MAP).join('|')}`, 'g');
 const ORDINAL_MARKER = '__ord__';
 const ORDINAL_MARKER_PATTERN = new RegExp(`(\\d+)${ORDINAL_MARKER}`, 'g');
+const LOWER_MERIDIEM_MARKER_PATTERN = /__mls__(.*?)__mle__/g;
 const ORDINAL_SUFFIXES = ['th', 'st', 'nd', 'rd'] as const;
 
 function replaceMomentToken(match: string, escapedText?: string): string {
@@ -68,8 +69,11 @@ export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string)
   // Global regexes carry `lastIndex`; reset so repeated calls are deterministic.
   ORDINAL_MARKER_PATTERN.lastIndex = 0;
 
-  return formatted.replace(ORDINAL_MARKER_PATTERN, (_, rawDay: string) => {
+  const withOrdinals = formatted.replace(ORDINAL_MARKER_PATTERN, (_: string, rawDay: string) => {
     const day = parseInt(rawDay, 10);
     return `${rawDay}${getOrdinal(day)}`;
   });
+
+  // Moment's `a` is lowercase meridiem while Luxon's `a` is uppercase.
+  return withOrdinals.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) => meridiem.toLowerCase());
 }
