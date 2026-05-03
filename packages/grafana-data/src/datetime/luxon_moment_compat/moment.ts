@@ -476,7 +476,9 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
 
 function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
   if (input == null) {
-    return DateTime.now().reconfigure({ locale: options?.locale }).setZone(options?.zone ?? 'local');
+    return DateTime.now()
+      .reconfigure({ locale: options?.locale })
+      .setZone(options?.zone ?? 'local');
   }
 
   if (Array.isArray(input)) {
