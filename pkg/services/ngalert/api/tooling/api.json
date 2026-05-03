@@ -755,23 +755,26 @@
   },
   "Config": {
    "properties": {
-    "api_url": {
-     "$ref": "#/definitions/URL"
-    },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
-    "message": {
-     "type": "string"
-    },
-    "room_id": {
-     "type": "string"
-    },
     "send_resolved": {
      "type": "boolean"
+    },
+    "text": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
-   "title": "Config configures notifications via Webex.",
+   "title": "Config configures notifications via MS Teams V2.",
    "type": "object"
   },
   "ContactPointExport": {
@@ -3968,7 +3971,6 @@
    "type": "object"
   },
   "Route": {
-   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -4010,12 +4012,6 @@
      },
      "type": "array"
     },
-    "object_matchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
     "receiver": {
      "type": "string"
     },
@@ -4029,6 +4025,7 @@
      "type": "array"
     }
    },
+   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {

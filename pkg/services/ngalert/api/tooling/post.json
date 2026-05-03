@@ -755,87 +755,29 @@
   },
   "Config": {
    "properties": {
-    "actions": {
-     "items": {
-      "$ref": "#/definitions/SlackAction"
-     },
-     "type": "array"
-    },
-    "api_url": {
-     "$ref": "#/definitions/SecretURL"
-    },
-    "api_url_file": {
-     "type": "string"
-    },
-    "callback_id": {
-     "type": "string"
-    },
-    "channel": {
-     "description": "Slack channel override, (like #other-channel or @username).",
-     "type": "string"
-    },
-    "color": {
-     "type": "string"
-    },
-    "fallback": {
-     "type": "string"
-    },
-    "fields": {
-     "items": {
-      "$ref": "#/definitions/SlackField"
-     },
-     "type": "array"
-    },
-    "footer": {
-     "type": "string"
-    },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
-    },
-    "icon_emoji": {
-     "type": "string"
-    },
-    "icon_url": {
-     "type": "string"
-    },
-    "image_url": {
-     "type": "string"
-    },
-    "link_names": {
-     "type": "boolean"
-    },
-    "mrkdwn_in": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "pretext": {
-     "type": "string"
     },
     "send_resolved": {
      "type": "boolean"
     },
-    "short_fields": {
-     "type": "boolean"
-    },
-    "text": {
+    "summary": {
      "type": "string"
     },
-    "thumb_url": {
+    "text": {
      "type": "string"
     },
     "title": {
      "type": "string"
     },
-    "title_link": {
-     "type": "string"
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
     },
-    "username": {
+    "webhook_url_file": {
      "type": "string"
     }
    },
-   "title": "Config configures notifications via Slack.",
+   "title": "Config configures notifications via MS Teams.",
    "type": "object"
   },
   "ContactPointExport": {
@@ -4032,6 +3974,7 @@
    "type": "object"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -4073,6 +4016,12 @@
      },
      "type": "array"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "receiver": {
      "type": "string"
     },
@@ -4086,7 +4035,6 @@
      "type": "array"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
@@ -4415,19 +4363,19 @@
   "SigV4Config": {
    "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
    "properties": {
-    "access_key": {
+    "AccessKey": {
      "type": "string"
     },
-    "profile": {
+    "Profile": {
      "type": "string"
     },
-    "region": {
+    "Region": {
      "type": "string"
     },
-    "role_arn": {
+    "RoleARN": {
      "type": "string"
     },
-    "secret_key": {
+    "SecretKey": {
      "$ref": "#/definitions/Secret"
     }
    },
@@ -5841,10 +5789,7 @@
     ],
     "responses": {
      "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+      "description": " The alert was created successfully."
      },
      "400": {
       "description": "ValidationError",
