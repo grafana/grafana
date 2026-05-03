@@ -535,10 +535,8 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
   }
 
   if (input instanceof Date) {
-    return DateTime.fromJSDate(input, {
-      ...options,
-      locale,
-    });
+    const dateTime = DateTime.fromJSDate(input, { zone: options?.zone });
+    return locale ? dateTime.setLocale(locale) : dateTime;
   }
 
   if (typeof input === 'number') {
