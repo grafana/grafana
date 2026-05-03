@@ -32,7 +32,25 @@ type MomentUnit =
   | 'millisecond'
   | 'ms';
 
-type StartEndUnit = 'year' | 'month' | 'week' | 'isoWeek' | 'day' | 'date' | 'hour' | 'minute' | 'second' | 'quarter';
+type StartEndUnit =
+  | 'year'
+  | 'month'
+  | 'week'
+  | 'isoWeek'
+  | 'day'
+  | 'date'
+  | 'hour'
+  | 'minute'
+  | 'second'
+  | 'quarter'
+  | 'y'
+  | 'M'
+  | 'w'
+  | 'd'
+  | 'h'
+  | 'm'
+  | 's'
+  | 'Q';
 
 type InputObject = Partial<{
   year: number;
@@ -188,15 +206,23 @@ const UNIT_MAP: Record<MomentUnit, DurationUnit> = {
 
 const START_END_UNIT_MAP: Record<StartEndUnit, DateTimeUnit> = {
   year: 'year',
+  y: 'year',
   month: 'month',
+  M: 'month',
   week: 'week',
   isoWeek: 'week',
+  w: 'week',
   day: 'day',
   date: 'day',
+  d: 'day',
   hour: 'hour',
+  h: 'hour',
   minute: 'minute',
+  m: 'minute',
   second: 'second',
+  s: 'second',
   quarter: 'quarter',
+  Q: 'quarter',
 };
 
 const DEFAULT_LOCALE = 'en';
@@ -450,7 +476,7 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
 
 function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
   if (input == null) {
-    return DateTime.now();
+    return DateTime.now().reconfigure({ locale: options?.locale }).setZone(options?.zone ?? 'local');
   }
 
   if (Array.isArray(input)) {
@@ -458,8 +484,9 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
   }
 
   if (isMomentLike(input)) {
+    const sourceZone = input.tz();
     return DateTime.fromMillis(input.valueOf(), {
-      zone: options?.zone,
+      zone: options?.zone ?? sourceZone,
       locale: options?.locale,
     });
   }
@@ -537,6 +564,17 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     return setDt(dt.setZone(zone, { keepLocalTime }));
   }) as MomentLike['tz'];
 
+  const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
+
+  const startOfLocaleWeek = () => {
+    const weekStart = getLocaleWeekStart();
+    const currentDay = toMomentDay(dt.weekday);
+    const daysSinceWeekStart = (currentDay - weekStart + 7) % 7;
+    return dt.startOf('day').minus({ days: daysSinceWeekStart });
+  };
+
+  const endOfLocaleWeek = () => startOfLocaleWeek().plus({ days: 6 }).endOf('day');
+
   const api: MomentLike = {
     add(value, unit) {
       const duration = normalizeDurationInput(value, unit);
@@ -549,10 +587,18 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     startOf(unit) {
+      if (unit === 'week' || unit === 'w') {
+        return setDt(startOfLocaleWeek());
+      }
+
       return setDt(dt.startOf(normalizeStartEndUnit(unit)));
     },
 
     endOf(unit) {
+      if (unit === 'week' || unit === 'w') {
+        return setDt(endOfLocaleWeek());
+      }
+
       return setDt(dt.endOf(normalizeStartEndUnit(unit)));
     },
 
