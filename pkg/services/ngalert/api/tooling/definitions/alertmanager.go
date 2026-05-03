@@ -120,7 +120,7 @@ import (
 // create alertmanager alerts
 //
 //     Responses:
-//       200: Ack
+//       200: description: The alert was created successfully.
 //       400: ValidationError
 //       404: NotFound
 
