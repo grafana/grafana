@@ -278,6 +278,32 @@ func TestSmtpSend(t *testing.T) {
 		require.True(t, found)
 	})
 
+	t.Run("does not panic when AttachedFiles contains a nil entry", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		message := &Message{
+			From:    "from@example.com",
+			To:      []string{"rcpt@example.com"},
+			Subject: "subject",
+			Body:    map[string]string{"text/plain": "hello world"},
+			AttachedFiles: []*AttachedFile{
+				nil,
+				{Name: "ok.txt", Content: []byte("payload")},
+			},
+		}
+
+		require.NotPanics(t, func() {
+			count, sendErr := client.Send(ctx, message)
+			require.NoError(t, sendErr)
+			require.Equal(t, 1, count)
+		})
+
+		_, err := srv.WaitForMessagesAndPurge(1, 5*time.Second)
+		require.NoError(t, err)
+	})
+
 	t.Run("multiple recipients, multiple messages", func(t *testing.T) {
 		tracer := tracing.InitializeTracerForTest()
 		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
