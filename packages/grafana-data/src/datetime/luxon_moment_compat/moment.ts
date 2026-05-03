@@ -234,6 +234,40 @@ const intlFormatterCache = new Map<string, Intl.DateTimeFormat>();
 let cachedGuessedZone: string | null = null;
 let cachedTimeZones: string[] | null = null;
 
+function normalizeLocale(locale?: string): string | undefined {
+  if (locale == null) {
+    return undefined;
+  }
+
+  const trimmed = locale.trim();
+  if (trimmed === '') {
+    return undefined;
+  }
+
+  // Common runtime locale formats (e.g. en_US.UTF-8, en_US@posix) are not always
+  // valid BCP-47 tags and can throw in Intl.DateTimeFormat.
+  const cleaned = trimmed.split('.')[0].split('@')[0].replace(/_/g, '-');
+  const fallback = cleaned.split('-')[0];
+  const candidates = [cleaned, fallback];
+
+  for (const candidate of candidates) {
+    if (candidate === '') {
+      continue;
+    }
+
+    try {
+      const [canonical] = Intl.getCanonicalLocales(candidate);
+      if (canonical) {
+        return canonical;
+      }
+    } catch {
+      // Keep trying candidates.
+    }
+  }
+
+  return DEFAULT_LOCALE;
+}
+
 function isInputObject(value: unknown): value is InputObject {
   if (value == null || typeof value !== 'object') {
     return false;
@@ -289,13 +323,14 @@ function normalizeArrayInput(input: InputArray, options?: MomentOptions): DateTi
 }
 
 function getCachedDateTimeFormatter(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
-  const key = `${locale}|${JSON.stringify(options)}`;
+  const normalizedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE;
+  const key = `${normalizedLocale}|${JSON.stringify(options)}`;
   const cached = intlFormatterCache.get(key);
   if (cached) {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat(locale, options);
+  const formatter = new Intl.DateTimeFormat(normalizedLocale, options);
   intlFormatterCache.set(key, formatter);
   return formatter;
 }
@@ -475,9 +510,11 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
 }
 
 function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
+  const locale = normalizeLocale(options?.locale);
+
   if (input == null) {
     return DateTime.now()
-      .reconfigure({ locale: options?.locale })
+      .reconfigure({ locale })
       .setZone(options?.zone ?? 'local');
   }
 
@@ -489,7 +526,7 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
     const sourceZone = input.tz();
     return DateTime.fromMillis(input.valueOf(), {
       zone: options?.zone ?? sourceZone,
-      locale: options?.locale,
+      locale,
     });
   }
 
@@ -498,23 +535,35 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
   }
 
   if (input instanceof Date) {
-    return DateTime.fromJSDate(input, options);
+    return DateTime.fromJSDate(input, {
+      ...options,
+      locale,
+    });
   }
 
   if (typeof input === 'number') {
-    return DateTime.fromMillis(input, options);
+    return DateTime.fromMillis(input, {
+      ...options,
+      locale,
+    });
   }
 
   if (typeof input === 'string') {
     if (parseOptions?.format) {
-      const formatted = parseWithFormats(input, parseOptions.format, options);
+      const formatted = parseWithFormats(input, parseOptions.format, {
+        ...options,
+        locale,
+      });
 
       if (formatted.isValid || parseOptions.strict) {
         return formatted;
       }
     }
 
-    return parseWithFallbacks(input, options);
+    return parseWithFallbacks(input, {
+      ...options,
+      locale,
+    });
   }
 
   if (isInputObject(input)) {
@@ -522,7 +571,10 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
     if (normalized.month != null) {
       normalized.month += 1;
     }
-    return DateTime.fromObject(normalized, options);
+    return DateTime.fromObject(normalized, {
+      ...options,
+      locale,
+    });
   }
 
   return DateTime.invalid('unsupported moment input');
@@ -635,7 +687,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     locale(value) {
-      return setDt(dt.setLocale(value));
+      return setDt(dt.setLocale(normalizeLocale(value) ?? DEFAULT_LOCALE));
     },
 
     utc(keepLocalTime = false) {
@@ -1001,8 +1053,9 @@ const moment: MomentFactory = ((
 moment.ISO_8601 = ISO_8601;
 
 moment.locale = (locale?: string): string => {
-  if (locale != null && locale !== '') {
-    currentLocale = locale;
+  const normalizedLocale = normalizeLocale(locale);
+  if (normalizedLocale != null) {
+    currentLocale = normalizedLocale;
   }
   return currentLocale;
 };
