@@ -108,6 +108,8 @@ interface MomentTzFactory {
 }
 
 export interface MomentLike {
+  _isAMomentObject?: boolean;
+
   add(value: number | MomentDurationLike | string, unit?: MomentUnit | string): MomentLike;
   subtract(value: number | MomentDurationLike | string, unit?: MomentUnit | string): MomentLike;
   startOf(unit: StartEndUnit): MomentLike;
@@ -582,8 +584,8 @@ function isMomentLike(value: unknown): value is MomentLike {
   return (
     typeof value === 'object' &&
     value != null &&
-    typeof (value as MomentLike).add === 'function' &&
-    typeof (value as MomentLike).valueOf === 'function'
+    // @ts-ignore
+    value._isAMomentObject
   );
 }
 
@@ -628,6 +630,8 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
   const endOfLocaleWeek = () => startOfLocaleWeek().plus({ days: 6 }).endOf('day');
 
   const api: MomentLike = {
+    _isAMomentObject: true,
+
     add(value, unit) {
       const duration = normalizeDurationInput(value, unit);
       return setDt(dt.plus(duration));
