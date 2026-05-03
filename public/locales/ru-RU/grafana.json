@@ -8236,6 +8236,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"

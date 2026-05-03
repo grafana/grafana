@@ -8144,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
