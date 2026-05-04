@@ -487,3 +487,33 @@ export function trackViewExperienceToggleConfirmed(
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }
+
+// ============================================================================
+// Triage workbench (empty state & predefined time ranges)
+// ============================================================================
+
+export type TriageWorkbenchPredefinedTimeRangeApplyPayload = {
+  /** Predefined time range key, e.g. 4h, 12h, 24h, 48h */
+  time_window_duration: string;
+  time_range_from: string;
+  has_activity_in_window: boolean;
+  has_active_filters: boolean;
+};
+
+/**
+ * User applied a predefined time range from the empty-state grid.
+ */
+export function trackTriageWorkbenchPredefinedTimeRangeApply(payload: TriageWorkbenchPredefinedTimeRangeApplyPayload) {
+  reportInteraction('grafana_alerting_triage_workbench_predefined_time_range_apply', payload);
+}
+
+/**
+ * Emitted once per workbench mount when the first data load settles (empty state vs result rows).
+ * Subsequent loads (refresh, filter changes) are not reported by the workbench caller.
+ */
+export function trackTriageWorkbenchOutcome(payload: {
+  outcome: 'empty' | 'results';
+  has_active_filters: boolean;
+}) {
+  reportInteraction('grafana_alerting_triage_workbench_outcome', payload);
+}

@@ -37,13 +37,15 @@ function serializeMatchers(matchers: MatcherExpr[]): string {
 }
 
 /**
+ * Exported for use in direct Prometheus queries (e.g. predefined time range stats hook).
+ *
  * Builds one or more metric selectors from the current ad-hoc filter string.
  *
  * Combined filters use a single user-facing key (for example `service`) while
  * alert series may have one of several backing label keys (`service`, `service_name`).
  * We expand those matchers into OR selectors so filtering is consistent.
  */
-function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
+export function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
   const combinedMatchers = Object.entries(COMBINED_FILTER_LABEL_KEYS)
     .map(([canonicalKey, labelKeys]) => ({
@@ -72,7 +74,7 @@ function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = [])
   return branches.map((branchMatchers) => `${METRIC_NAME}{${serializeMatchers(branchMatchers)}}`);
 }
 
-function orSelectors(selectors: string[]): string {
+export function orSelectors(selectors: string[]): string {
   if (selectors.length === 1) {
     return selectors[0];
   }
@@ -140,18 +142,21 @@ export function alertRuleInstancesQuery(
 
 /**
  * Returns a PromQL expression that produces one entry per unique alert instance,
- * deduplicated over the selected time range (`$__range`).
+ * deduplicated over the given range.
  *
  * Uses `last_over_time` to capture all instances active during the range, then
  * `unless` to remove pending instances that also had a corresponding firing series.
  * Firing takes priority over pending — instances that transitioned between states are
  * counted only once in their firing state.
+ *
+ * @param range - The PromQL range duration string, e.g. `$__range` (scene variable) or a
+ *                literal like `4h` for direct Prometheus queries outside the scene runner.
  */
-function uniqueAlertInstancesExpr(filter: string): string {
+export function uniqueAlertInstancesExpr(filter: string, range = '$__range'): string {
   const firingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'firing' }]);
   const pendingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'pending' }]);
-  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
-  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[${range}])`));
+  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[${range}])`));
 
   return (
     `${firingExpr} or ` + `(${pendingExpr} ` + `unless ignoring(alertstate, grafana_alertstate) ` + `${firingExpr})`
