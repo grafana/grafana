@@ -14,6 +14,12 @@ import { type MapLayerState } from '../types';
 
 import { getMapLayerState } from './layers';
 
+// Number of pixels of tolerance when matching co-located features.
+// This accounts for floating-point imprecision in projected coordinates
+// from geocoding or lookup-mode location resolution. A small value (2px)
+// catches float drift without merging visually distinct points.
+const HIT_TOLERANCE_PX = 2;
+
 export const setTooltipListeners = (panel: GeomapPanel) => {
   panel.tooltipPointerMoveDebounced?.cancel();
 
@@ -72,6 +78,15 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
   const layers: GeomapLayerHover[] = [];
   const layerLookup = new Map<MapLayerState, GeomapLayerHover>();
 
+  // Compute the coordinate-space tolerance from the current map resolution.
+  // Resolution is map units (meters in EPSG:3857) per pixel. Multiplying by
+  // the pixel tolerance gives the distance threshold below which two features
+  // are considered co-located. When resolution is unavailable (0), tolerance
+  // falls back to 0 which preserves the legacy exact-match behavior.
+  const resolution = panel.map.getView().getResolution() ?? 0;
+  const tolerance = resolution * HIT_TOLERANCE_PX;
+  const toleranceSq = tolerance * tolerance;
+
   let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
   panel.map.forEachFeatureAtPixel(
     pixel,
@@ -107,7 +122,12 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
           h.features.push(feature);
         }
 
-        // For WebGLPointsLayer, check for additional features at the same coordinates
+        // For WebGLPointsLayer, check for additional features at the same coordinates.
+        // WebGL hit detection only returns the topmost feature at a pixel, so we
+        // search the source for other features whose coordinates are within the
+        // pixel tolerance of the hit feature. This catches both exactly co-located
+        // features (identical coordinates) and nearly co-located features that
+        // differ due to floating-point imprecision from geocoding or lookup mode.
         if (layer instanceof WebGLPointsLayer) {
           const featureGeom = feature.getGeometry();
           if (featureGeom instanceof Point) {
@@ -120,8 +140,11 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
                 const otherGeom = otherFeature.getGeometry();
                 if (otherGeom instanceof Point) {
                   const otherCoords = otherGeom.getCoordinates();
-                  // Check for matching coordinates
-                  if (otherCoords[0] === featureCoords[0] && otherCoords[1] === featureCoords[1]) {
+                  // Check for co-located coordinates within pixel tolerance
+                  // using Euclidean distance for circular proximity
+                  const dx = otherCoords[0] - featureCoords[0];
+                  const dy = otherCoords[1] - featureCoords[1];
+                  if (dx * dx + dy * dy <= toleranceSq) {
                     h.features.push(otherFeature);
                     addedFeatures = true;
                   }
