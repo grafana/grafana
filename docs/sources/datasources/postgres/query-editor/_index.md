@@ -314,7 +314,24 @@ WHERE $__unixEpochFilter(epoch_seconds_column)
 ORDER BY time
 ```
 
-For grouped time series with epoch columns, use `$__unixEpochGroupAlias` and `$__unixEpochFilter`. See the [Macros](#macros) table for details.
+For grouped time series with epoch columns, use `$__unixEpochGroupAlias` and `$__unixEpochFilter`. Refer to the [Macros](#macros) table for details.
+
+## EXPLAIN queries
+
+You can run `EXPLAIN` and `EXPLAIN ANALYZE` queries in Code mode to inspect query execution plans. The results are returned as a table, which is useful for diagnosing slow queries directly within Grafana.
+
+```sql
+EXPLAIN ANALYZE
+SELECT
+  $__timeGroupAlias("time_date_time", '5m'),
+  avg("value_double") AS value
+FROM test_data
+WHERE $__timeFilter("time_date_time")
+GROUP BY time
+ORDER BY time
+```
+
+Grafana macros are expanded before the query runs, so you can use `$__timeFilter` and other macros in your `EXPLAIN` queries to see the actual execution plan for the dashboard's time range. Set the **Format** to **Table** to display the plan output.
 
 ## Next steps
 
