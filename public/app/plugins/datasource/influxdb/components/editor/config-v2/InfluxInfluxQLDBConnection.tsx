@@ -26,27 +26,15 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
       return;
     }
     if (options.jsonData.dbName) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.dbName;
-        return next;
-      });
+      setFieldErrors(({ dbName: _, ...rest }) => rest);
       validation.clearError('dbName');
     }
     if (options.user) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.user;
-        return next;
-      });
+      setFieldErrors(({ user: _, ...rest }) => rest);
       validation.clearError('user');
     }
     if (passwordConfigured || passwordEntered) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.password;
-        return next;
-      });
+      setFieldErrors(({ password: _, ...rest }) => rest);
       validation.clearError('password');
     }
     return validation.registerValidation(() => {

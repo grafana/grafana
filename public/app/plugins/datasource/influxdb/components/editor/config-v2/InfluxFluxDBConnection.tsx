@@ -29,27 +29,15 @@ export const InfluxFluxDBConnection = (props: Props) => {
       return;
     }
     if (jsonData.organization) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.organization;
-        return next;
-      });
+      setFieldErrors(({ organization: _, ...rest }) => rest);
       validation.clearError('organization');
     }
     if (jsonData.defaultBucket) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.defaultBucket;
-        return next;
-      });
+      setFieldErrors(({ defaultBucket: _, ...rest }) => rest);
       validation.clearError('defaultBucket');
     }
     if (tokenConfigured || tokenEntered) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.token;
-        return next;
-      });
+      setFieldErrors(({ token: _, ...rest }) => rest);
       validation.clearError('token');
     }
     return validation.registerValidation(() => {

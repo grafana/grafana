@@ -48,27 +48,15 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       return;
     }
     if (options.url) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.url;
-        return next;
-      });
+      setFieldErrors(({ url: _, ...rest }) => rest);
       validation.clearError('url');
     }
     if (options.jsonData.product) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.product;
-        return next;
-      });
+      setFieldErrors(({ product: _, ...rest }) => rest);
       validation.clearError('product');
     }
     if (options.jsonData.version) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.version;
-        return next;
-      });
+      setFieldErrors(({ version: _, ...rest }) => rest);
       validation.clearError('version');
     }
     return validation.registerValidation(() => {

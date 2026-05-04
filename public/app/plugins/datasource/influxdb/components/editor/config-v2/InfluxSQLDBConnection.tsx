@@ -25,19 +25,11 @@ export const InfluxSQLDBConnection = (props: Props) => {
       return;
     }
     if (options.jsonData.dbName) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.dbName;
-        return next;
-      });
+      setFieldErrors(({ dbName: _, ...rest }) => rest);
       validation.clearError('dbName');
     }
     if (tokenConfigured || tokenEntered) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next.token;
-        return next;
-      });
+      setFieldErrors(({ token: _, ...rest }) => rest);
       validation.clearError('token');
     }
     return validation.registerValidation(() => {
