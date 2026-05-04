@@ -59,16 +59,12 @@ type FolderAPIBuilder struct {
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
-	acService              accesscontrol.Service
-	ac                     accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
-	accessControl accesscontrol.AccessControl,
-	acService accesscontrol.Service,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -78,8 +74,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		features:             features,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		folderPermissionsSvc: folderPermissionsSvc,
-		acService:            acService,
-		ac:                   accessControl,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		searcher:             unified,
@@ -187,7 +181,6 @@ func (b *FolderAPIBuilder) storageForVersion(
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
 			features:             b.features,
-			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}
