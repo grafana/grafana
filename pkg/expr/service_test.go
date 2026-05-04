@@ -235,6 +235,126 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 	}
 }
 
+// nonExecutableNode implements Node but not ExecutableNode, to test that
+// the pipeline handles non-executable nodes gracefully per-node instead of
+// returning a global error.
+type nonExecutableNode struct {
+	id        int64
+	refID     string
+	ntype     NodeType
+	inputTo   map[string]struct{}
+	needsVars []string
+}
+
+func (n *nonExecutableNode) ID() int64           { return n.id }
+func (n *nonExecutableNode) NodeType() NodeType  { return n.ntype }
+func (n *nonExecutableNode) RefID() string       { return n.refID }
+func (n *nonExecutableNode) String() string      { return n.refID }
+func (n *nonExecutableNode) NeedsVars() []string { return n.needsVars }
+func (n *nonExecutableNode) SetInputTo(refID string) {
+	if n.inputTo == nil {
+		n.inputTo = make(map[string]struct{})
+	}
+	n.inputTo[refID] = struct{}{}
+}
+func (n *nonExecutableNode) IsInputTo() map[string]struct{} { return n.inputTo }
+
+func TestUnexpectedNodeTypeIsPerNodeError(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+
+	queries := []Query{
+		{
+			RefID:      "C",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "42" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	// Inject a non-executable node into the pipeline before the math node.
+	badNode := &nonExecutableNode{id: 99, refID: "X", ntype: TypeCMDNode}
+	pl = append(DataPipeline{badNode}, pl...)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	// Should not return a global error — per-node errors only
+	require.NoError(t, err)
+
+	// X should have a per-node error
+	require.Error(t, res.Responses["X"].Error)
+	require.ErrorContains(t, res.Responses["X"].Error, "expected executable node type")
+
+	// C should still succeed independently
+	require.NoError(t, res.Responses["C"].Error)
+	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
+func TestMultipleIndependentNodesWithMixedErrors(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "1" }`),
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "2" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	badX := &nonExecutableNode{id: 98, refID: "X", ntype: TypeCMDNode}
+	badY := &nonExecutableNode{id: 99, refID: "Y", ntype: TypeCMDNode}
+	pl = append(DataPipeline{badX, badY}, pl...)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.Error(t, res.Responses["X"].Error)
+	require.Error(t, res.Responses["Y"].Error)
+	require.NoError(t, res.Responses["A"].Error)
+	require.NoError(t, res.Responses["B"].Error)
+	require.Equal(t, fp(1), res.Responses["A"].Frames[0].Fields[0].At(0))
+	require.Equal(t, fp(2), res.Responses["B"].Frames[0].Fields[0].At(0))
+}
+
+func TestDependencyChainPartialFailure(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+	queries := []Query{
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "42" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	// A is a bad node; C is a bad node that depends on A.
+	// C should get a dependency error because A failed; B is independent and succeeds.
+	badA := &nonExecutableNode{id: 97, refID: "A", ntype: TypeCMDNode}
+	nodeC := &nonExecutableNode{id: 98, refID: "C", ntype: TypeCMDNode, needsVars: []string{"A"}}
+	pl = append(DataPipeline{badA, nodeC}, pl...)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.Error(t, res.Responses["A"].Error)
+	require.Error(t, res.Responses["C"].Error)
+	require.NoError(t, res.Responses["B"].Error)
+	require.Equal(t, fp(42), res.Responses["B"].Frames[0].Fields[0].At(0))
+}
+
 func fp(f float64) *float64 {
 	return &f
 }

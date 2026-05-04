@@ -112,7 +112,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 				if res.Error != nil {
 					var depErr error
 					// IF SQL expression dependency error
-					if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
+					if cmdNode, ok := node.(*CMDNode); ok && cmdNode.CMDType == TypeSQL {
 						e := sql.MakeSQLDependencyError(node.RefID(), neededVar)
 
 						// although the SQL expression won't be executed,
@@ -151,7 +151,10 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 		execNode, ok := node.(ExecutableNode)
 		if !ok {
-			return vars, makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String())
+			vars[node.RefID()] = mathexp.Results{
+				Error: makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String()),
+			}
+			continue
 		}
 
 		res, err := execNode.Execute(c, now, vars, s)
