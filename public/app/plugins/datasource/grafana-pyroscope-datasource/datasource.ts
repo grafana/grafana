@@ -105,7 +105,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): Query {
-    let labelSelector = this.templateSrv.replace(query.labelSelector ?? '', scopedVars);
+    let labelSelector = this.templateSrv.replace(query.labelSelector ?? '', scopedVars, 'regex');
     if (filters && labelSelector) {
       for (const filter of filters) {
         labelSelector = addLabelToQuery(labelSelector, filter.key, filter.value, filter.operator);
