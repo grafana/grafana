@@ -231,10 +231,13 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onLayoutChange = (layout: SearchLayout) => {
     store.set(this.layoutStorageKey, layout);
 
-    if (this.state.sort && layout === SearchLayout.Folders) {
+    if (layout === SearchLayout.Folders) {
+      // Folders never has sort. Stash whatever the current sort is (including undefined
+      // when the user has just cleared it) so List can restore it if needed.
       this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
     } else {
-      this.setStateAndDoSearch({ layout, sort: this.state.prevSort });
+      // List: keep the current sort if set, otherwise restore the previously stashed sort.
+      this.setStateAndDoSearch({ layout, sort: this.state.sort ?? this.state.prevSort });
     }
   };
 

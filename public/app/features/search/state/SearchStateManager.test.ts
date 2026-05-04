@@ -173,6 +173,50 @@ describe('SearchStateManager', () => {
       });
     });
 
+    describe('onLayoutChange', () => {
+      beforeEach(() => {
+        localStorage.clear();
+        locationService.push('/');
+      });
+
+      it('does not resurrect a cleared sort when switching to Folders (regression)', () => {
+        store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+        store.set(SEARCH_SELECTED_SORT, 'name_sort');
+        const stm = createSearchStateManager();
+        stm.initStateFromUrl(undefined, false);
+        expect(stm.state.sort).toBe('name_sort');
+        expect(stm.state.prevSort).toBe('name_sort');
+
+        stm.onSortChange(undefined);
+        expect(stm.state.sort).toBeUndefined();
+
+        stm.onLayoutChange(SearchLayout.Folders);
+        expect(stm.state.layout).toBe(SearchLayout.Folders);
+        expect(stm.state.sort).toBeUndefined();
+        expect(stm.state.prevSort).toBeUndefined();
+      });
+
+      it('round-trips sort through prevSort when switching List → Folders → List', () => {
+        const stm = createSearchStateManager();
+        stm.setState({ layout: SearchLayout.List, sort: 'name_sort' });
+
+        stm.onLayoutChange(SearchLayout.Folders);
+        expect(stm.state.sort).toBeUndefined();
+        expect(stm.state.prevSort).toBe('name_sort');
+
+        stm.onLayoutChange(SearchLayout.List);
+        expect(stm.state.sort).toBe('name_sort');
+      });
+
+      it('restores prevSort when switching to List with no current sort set', () => {
+        const stm = createSearchStateManager();
+        stm.setState({ layout: SearchLayout.Folders, sort: undefined, prevSort: 'name_sort' });
+
+        stm.onLayoutChange(SearchLayout.List);
+        expect(stm.state.sort).toBe('name_sort');
+      });
+    });
+
     it('updates search results in order', async () => {
       jest.useRealTimers();
       const stm = createSearchStateManager();
