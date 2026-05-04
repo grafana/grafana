@@ -68,6 +68,18 @@ it('renders an empty panel with padding', () => {
   expect(screen.getByText("Panel's Content").parentElement).not.toHaveStyle({ padding: '0px' });
 });
 
+it('does not render header when title is empty and no other header content', () => {
+  setup({ title: '' });
+
+  expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
+});
+
+it('renders header when title is empty but description exists', () => {
+  setup({ title: '', description: 'Some description' });
+
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
+});
+
 // Check for backwards compatibility
 it('renders panel header if prop title', () => {
   setup({ title: 'Test Panel Header' });
