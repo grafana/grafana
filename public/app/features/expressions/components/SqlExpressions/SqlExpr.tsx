@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -16,16 +15,10 @@ import { type SqlExpressionQuery } from '../../types';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
-import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
+import { SQLEditor } from './SQLEditor';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
-
-const SQLEditor = lazy(() =>
-  import('@grafana/plugin-ui').then((module) => ({
-    default: module.SQLEditor,
-  }))
-);
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -44,21 +37,6 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
-  const completionProvider = useMemo(
-    () =>
-      getSqlCompletionProvider({
-        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
-        refIds,
-      }),
-    [queries, refIds]
-  );
-
-  // Define the language definition for MySQL syntax highlighting and autocomplete
-  const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
-    id: 'mysql',
-    completionProvider,
-    formatter: formatSQL,
-  };
 
   const initialQuery = `SELECT
   *
@@ -203,6 +181,22 @@ LIMIT
     >
       <div className={styles.editorContainer}>
         <AutoSizer>
+          {({ width, height }) => (
+            <SQLEditor
+              query={query.expression || initialQuery}
+              onChange={onEditorChange}
+              formatter={formatSQL}
+              refIds={refIds}
+              getFields={(identifier) => fetchFields(identifier, queries || [])}
+              width={width}
+              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+            >
+              {({ formatQuery }) => (
+                <div ref={toolboxRef}>
+                  <QueryToolbox query={query} onFormatCode={formatQuery} />
+                </div>
+              )}
+            </SQLEditor>
           {({ width, height }: Size) => (
             <Suspense fallback={null}>
               <SQLEditor
@@ -279,7 +273,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
+async function fetchFields(identifier: { table?: string }, queries: DataQuery[]) {
   const fields = await fetchSQLFields({ table: identifier.table }, queries);
-  return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
+  return fields.map((t) => ({ name: t.name, completion: t.value }));
 }
