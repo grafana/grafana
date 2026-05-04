@@ -60,7 +60,10 @@ function replaceMomentToken(match: string, escapedText?: string): string {
 }
 
 export function convertMomentToLuxonWithOrdinal(format: string): string {
-  return format.replace(TOKEN_PATTERN, replaceMomentToken);
+  // Moment escapes literals using backslashes while Luxon expects quoted literals.
+  // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
+  const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
+  return withEscapedLiterals.replace(TOKEN_PATTERN, replaceMomentToken);
 }
 
 export function getOrdinal(day: number): string {
