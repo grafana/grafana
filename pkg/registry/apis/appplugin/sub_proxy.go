@@ -19,6 +19,12 @@ type subProxyREST struct {
 	pluginJSON plugins.JSONData
 }
 
+func newProxy(b *AppPluginAPIBuilder) *subProxyREST {
+	return &subProxyREST{
+		pluginJSON: b.pluginJSON,
+	}
+}
+
 var _ = rest.Connecter(&subProxyREST{})
 
 func (r *subProxyREST) New() runtime.Object {
@@ -70,11 +76,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 func proxyRequest(req *http.Request) (*http.Request, error) {
 	idx := strings.LastIndex(req.URL.Path, "/proxy")
 	if idx < 0 {
-		return nil, fmt.Errorf("expected resource path") // 400?
+		return nil, fmt.Errorf("expected proxy path") // 400?
 	}
 
 	clonedReq := req.Clone(req.Context())
-	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resources"):], "/")
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/proxy"):], "/")
 
 	clonedReq.URL = &url.URL{
 		Path:     rawURL,

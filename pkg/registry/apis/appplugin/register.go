@@ -185,7 +185,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		return err
 	}
 	storage[settingsRI.StoragePath()] = unified
-	if b.opts.LegacyStore != nil {
+	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
 		store, err := opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
@@ -203,9 +203,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		contextProvider: b.getPluginContext,
 	}
 	if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
-		storage[settingsRI.StoragePath("routes")] = &subProxyREST{
-			pluginJSON: b.pluginJSON,
-		}
+		storage[settingsRI.StoragePath("proxy")] = newProxy(b)
 	}
 
 	b.getter = storage[settingsRI.StoragePath()].(rest.Getter)
