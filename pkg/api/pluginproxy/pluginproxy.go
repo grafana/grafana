@@ -10,10 +10,10 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -28,7 +28,9 @@ type PluginProxy struct {
 	accessControl  ac.AccessControl
 	ps             *pluginsettings.DTO
 	pluginRoutes   []*plugins.Route
-	ctx            *contextmodel.ReqContext
+	req            *http.Request
+	resp           http.ResponseWriter
+	signedInUser   identity.Requester
 	proxyPath      string
 	matchedRoute   *plugins.Route
 	cfg            *setting.Cfg
@@ -39,14 +41,17 @@ type PluginProxy struct {
 }
 
 // NewPluginProxy creates a plugin proxy.
-func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contextmodel.ReqContext,
-	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
+func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, r *http.Request, w http.ResponseWriter,
+	signedInUser identity.Requester, proxyPath string,
+	cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:  accessControl,
 		ps:             ps,
 		pluginRoutes:   routes,
-		ctx:            ctx,
+		req:            r,
+		resp:           w,
+		signedInUser:   signedInUser,
 		proxyPath:      proxyPath,
 		cfg:            cfg,
 		secretsService: secretsService,
@@ -60,7 +65,7 @@ func (proxy *PluginProxy) HandleRequest() {
 	// found route if there are any
 	for _, route := range proxy.pluginRoutes {
 		// method match
-		if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
+		if route.Method != "" && route.Method != "*" && route.Method != proxy.req.Method {
 			continue
 		}
 
@@ -73,7 +78,7 @@ func (proxy *PluginProxy) HandleRequest() {
 		}
 
 		if !proxy.hasAccessToRoute(route) {
-			proxy.ctx.JsonApiErr(http.StatusForbidden, "plugin proxy route access denied", nil)
+			writeJSONErr(proxy.resp, proxy.req, http.StatusForbidden, "plugin proxy route access denied", nil)
 			return
 		}
 
@@ -82,7 +87,7 @@ func (proxy *PluginProxy) HandleRequest() {
 			proxy.proxyPath = path
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
-			if hasSlash && !strings.HasSuffix(path, "/") && proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagPluginProxyPreserveTrailingSlash) {
+			if hasSlash && !strings.HasSuffix(path, "/") && proxy.features.IsEnabled(proxy.req.Context(), featuremgmt.FlagPluginProxyPreserveTrailingSlash) {
 				proxy.proxyPath += "/"
 			}
 		} else {
@@ -94,17 +99,17 @@ func (proxy *PluginProxy) HandleRequest() {
 	}
 
 	if proxy.matchedRoute == nil {
-		proxy.ctx.JsonApiErr(http.StatusNotFound, "plugin route match not found", nil)
+		writeJSONErr(proxy.resp, proxy.req, http.StatusNotFound, "plugin route match not found", nil)
 		return
 	}
 
 	proxyErrorLogger := logger.New(
-		"userId", proxy.ctx.UserID,
-		"orgId", proxy.ctx.OrgID,
-		"uname", proxy.ctx.Login,
-		"path", proxy.ctx.Req.URL.Path,
-		"remote_addr", proxy.ctx.RemoteAddr(),
-		"referer", proxy.ctx.Req.Referer(),
+		"userId", proxy.signedInUser.GetID(),
+		"orgId", proxy.signedInUser.GetOrgID(),
+		"uname", proxy.signedInUser.GetLogin(),
+		"path", proxy.req.URL.Path,
+		"remote_addr", web.RemoteAddr(proxy.req),
+		"referer", proxy.req.Referer(),
 	)
 
 	reverseProxy := proxyutil.NewReverseProxy(
@@ -114,40 +119,44 @@ func (proxy *PluginProxy) HandleRequest() {
 	)
 
 	proxy.logRequest()
-	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "plugin reverse proxy")
+	ctx, span := proxy.tracer.Start(proxy.req.Context(), "plugin reverse proxy")
 	defer span.End()
 
-	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
+	proxy.req = proxy.req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.String("user", proxy.ctx.Login),
-		attribute.Int64("org_id", proxy.ctx.OrgID),
+		attribute.String("user", proxy.signedInUser.GetLogin()),
+		attribute.Int64("org_id", proxy.signedInUser.GetOrgID()),
 	)
 
-	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
+	proxy.tracer.Inject(ctx, proxy.req.Header, span)
 
-	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
+	reverseProxy.ServeHTTP(proxy.resp, proxy.req)
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	if route.ReqAction != "" {
 		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
-		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
+		hasAccess, err := proxy.accessControl.Evaluate(proxy.req.Context(), proxy.signedInUser, routeEval)
+		if err != nil {
+			logger.FromContext(proxy.req.Context()).Error("Error from access control system", "error", err)
+			return false
+		}
 		if !hasAccess {
-			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)
+			logger.FromContext(proxy.req.Context()).Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.req.URL.Path)
 		}
 		return hasAccess
 	}
 	if route.ReqRole.IsValid() {
-		return proxy.ctx.HasUserRole(route.ReqRole)
+		return proxy.signedInUser.GetOrgRole().Includes(route.ReqRole)
 	}
 	return true
 }
 
 func (proxy PluginProxy) director(req *http.Request) {
-	secureJsonData, err := proxy.secretsService.DecryptJsonData(proxy.ctx.Req.Context(), proxy.ps.SecureJSONData)
+	secureJsonData, err := proxy.secretsService.DecryptJsonData(proxy.req.Context(), proxy.ps.SecureJSONData)
 	if err != nil {
-		proxy.ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
+		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to decrypt plugin settings", err)
 		return
 	}
 
@@ -158,12 +167,12 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	interpolatedURL, err := interpolateString(proxy.matchedRoute.URL, data)
 	if err != nil {
-		proxy.ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
+		writeJSONErr(proxy.resp, proxy.req, 500, "Could not interpolate plugin route url", err)
 		return
 	}
 	targetURL, err := url.Parse(interpolatedURL)
 	if err != nil {
-		proxy.ctx.JsonApiErr(500, "Could not parse url", err)
+		writeJSONErr(proxy.resp, proxy.req, 500, "Could not parse url", err)
 		return
 	}
 	req.URL.Scheme = targetURL.Scheme
@@ -176,19 +185,19 @@ func (proxy PluginProxy) director(req *http.Request) {
 	req.Header.Del("Set-Cookie")
 
 	// Create a HTTP header with the context in it.
-	ctxJSON, err := json.Marshal(proxy.ctx.SignedInUser)
+	ctxJSON, err := json.Marshal(proxy.signedInUser)
 	if err != nil {
-		proxy.ctx.JsonApiErr(500, "failed to marshal context to json.", err)
+		writeJSONErr(proxy.resp, proxy.req, 500, "failed to marshal context to json.", err)
 		return
 	}
 
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
-	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
+	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.signedInUser)
+	proxyutil.ApplyForwardIDHeader(req, proxy.signedInUser)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
-		proxy.ctx.JsonApiErr(500, "Failed to render plugin headers", err)
+		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to render plugin headers", err)
 		return
 	}
 
@@ -203,23 +212,49 @@ func (proxy PluginProxy) logRequest() {
 	}
 
 	var body string
-	if proxy.ctx.Req.Body != nil {
-		buffer, err := io.ReadAll(proxy.ctx.Req.Body)
+	if proxy.req.Body != nil {
+		buffer, err := io.ReadAll(proxy.req.Body)
 		if err == nil {
-			proxy.ctx.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
+			proxy.req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
 
-	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	ctxLogger := logger.FromContext(proxy.req.Context())
 	ctxLogger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserID,
-		"orgid", proxy.ctx.OrgID,
-		"username", proxy.ctx.Login,
+		"userid", proxy.signedInUser.GetID(),
+		"orgid", proxy.signedInUser.GetOrgID(),
+		"username", proxy.signedInUser.GetLogin(),
 		"app", proxy.ps.PluginID,
-		"uri", proxy.ctx.Req.RequestURI,
-		"method", proxy.ctx.Req.Method,
+		"uri", proxy.req.RequestURI,
+		"method", proxy.req.Method,
 		"body", body)
+}
+
+func writeJSONErr(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
+	resp := make(map[string]any)
+	if err != nil {
+		traceID := tracing.TraceIDFromContext(r.Context(), false)
+		resp["traceID"] = traceID
+		ctxLogger := logger.FromContext(r.Context())
+		if status == http.StatusInternalServerError {
+			ctxLogger.Error(message, "error", err, "traceID", traceID)
+		} else {
+			ctxLogger.Warn(message, "error", err, "traceID", traceID)
+		}
+	}
+	switch status {
+	case http.StatusNotFound:
+		resp["message"] = "Not Found"
+	case http.StatusInternalServerError:
+		resp["message"] = "Internal Server Error"
+	}
+	if message != "" {
+		resp["message"] = message
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 type templateData struct {
