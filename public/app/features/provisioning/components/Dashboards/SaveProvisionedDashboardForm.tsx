@@ -24,6 +24,7 @@ import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { renderCommitMessage } from '../../utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -233,7 +234,14 @@ export function SaveProvisionedDashboardForm({
     //   ref = loadedFromRef;
     // }
 
-    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+    const message =
+      comment ||
+      renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, {
+        action: isNew ? 'create' : 'update',
+        resourceKind: 'dashboard',
+        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+        title: dashboard.state.title ?? '',
+      });
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)

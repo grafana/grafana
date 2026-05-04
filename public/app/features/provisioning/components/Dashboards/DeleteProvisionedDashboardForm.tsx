@@ -18,6 +18,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { renderCommitMessage } from '../../utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -96,7 +97,14 @@ export function DeleteProvisionedDashboardForm({
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = comment || `Delete dashboard: ${dashboard.state.title}`;
+      const commitMessage =
+        comment ||
+        renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, {
+          action: 'delete',
+          resourceKind: 'dashboard',
+          resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+          title: dashboard.state.title ?? '',
+        });
 
       try {
         await deleteRepoFile({

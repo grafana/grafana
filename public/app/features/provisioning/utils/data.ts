@@ -23,6 +23,11 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
+  const singleResourceMessageTemplate = data.commit?.singleResourceMessageTemplate?.trim();
+  if (singleResourceMessageTemplate) {
+    spec.commit = { singleResourceMessageTemplate };
+  }
+
   if (data.webhook?.baseUrl) {
     spec.webhook = { baseUrl: data.webhook.baseUrl };
   }

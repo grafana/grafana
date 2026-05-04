@@ -19,6 +19,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { renderCommitMessage } from '../../utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -78,7 +79,14 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = comment || t('browse-dashboards.delete-provisioned-folder-form.commit', 'Delete folder');
+      const commitMessage =
+        comment ||
+        renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, {
+          action: 'delete',
+          resourceKind: 'folder',
+          resourceID: parentFolder?.uid ?? '',
+          title: parentFolder?.title ?? '',
+        });
 
       try {
         await deleteRepoFile({
