@@ -31,7 +31,7 @@ export class AddNewEditPane extends SceneObjectBase {
 
 export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
-  const { hasCopiedPanel } = useClipboardState();
+  const { hasCopiedPanel, hasCopiedRow, hasCopiedTab } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(model);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
@@ -127,6 +127,38 @@ export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEdit
         <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
           <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
+          {hasCopiedRow && (
+            <AddButton
+              icon="clipboard-alt"
+              tabIndex={0}
+              onClick={() => editPane.pasteRow(selectedObj)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  editPane.pasteRow(selectedObj);
+                }
+              }}
+              aria-label={t('dashboard.canvas-actions.add.paste-row.title', 'Paste row')}
+              label={t('dashboard.canvas-actions.add.paste-row.title', 'Paste row')}
+              tooltip={t('dashboard.canvas-actions.add.paste-row.description', 'Click to paste row from clipboard')}
+            />
+          )}
+          {hasCopiedTab && (
+            <AddButton
+              icon="clipboard-alt"
+              tabIndex={0}
+              onClick={() => editPane.pasteTab(selectedObj)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  editPane.pasteTab(selectedObj);
+                }
+              }}
+              aria-label={t('dashboard.canvas-actions.add.paste-tab.title', 'Paste tab')}
+              label={t('dashboard.canvas-actions.add.paste-tab.title', 'Paste tab')}
+              tooltip={t('dashboard.canvas-actions.add.paste-tab.description', 'Click to paste tab from clipboard')}
+            />
+          )}
         </AddNewSection>
         <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
           {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
