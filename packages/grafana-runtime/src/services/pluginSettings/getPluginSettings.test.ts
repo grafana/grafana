@@ -1,3 +1,4 @@
+import { useFlagUseMTPlugins } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
@@ -153,13 +154,17 @@ describe('settings', () => {
         });
       });
 
-      it('should throw when meta is null', async () => {
+      it('should fallback to legacy api when meta is null', async () => {
         getPluginMetaFromCacheMock.mockResolvedValue(null);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        await expect(() => getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toThrow(
-          'Plugin not found, no installed plugin with id myorg-test-app'
-        );
+        const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+        expect(response).toMatchObject(legacyMyOrgTestAppSettings);
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          validatePath: true,
+        });
       });
     });
   });
@@ -167,6 +172,66 @@ describe('settings', () => {
   describe('when useMTPluginSettings flag is disabled', () => {
     beforeAll(() => {
       setTestFlags({ useMTPluginSettings: false });
+    });
+
+    afterAll(() => {
+      setTestFlags({});
+    });
+
+    beforeEach(() => {
+      backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+    });
+
+    describe('getPluginSettings', () => {
+      it('should fetch settings when cache is empty', async () => {
+        const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+        expect(response).toEqual(legacyMyOrgTestAppSettings);
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          validatePath: true,
+        });
+      });
+
+      it('should not fetch settings from new apis when cache exists', async () => {
+        const resp1 = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+        const resp2 = await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+        expect(resp1).toMatchObject(legacyMyOrgTestAppSettings);
+        expect(resp1).toStrictEqual(resp2);
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          validatePath: true,
+        });
+      });
+
+      it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
+        const error = { status: 404, message: 'Not found' };
+        backendSrv.get = jest.fn().mockRejectedValue(error);
+
+        await expect(getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toEqual(new Error('Unknown Plugin'));
+      });
+
+      it('should reject thrown error if error status is 403', async () => {
+        const error = { status: 403, message: 'Forbidden' };
+        backendSrv.get = jest.fn().mockRejectedValue(error);
+
+        await expect(getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toEqual({ ...error, isHandled: true });
+      });
+
+      it('should reject thrown error if error status is 401', async () => {
+        const error = { status: 401, message: 'Unauthorized' };
+        backendSrv.get = jest.fn().mockRejectedValue(error);
+
+        await expect(getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toEqual({ ...error, isHandled: true });
+      });
+    });
+  });
+
+  describe('when useMTPluginSettings flag is enabled but useMTPlugins is disabled', () => {
+    beforeAll(() => {
+      setTestFlags({ useMTPlugins: false });
+      setTestFlags({ useMTPluginSettings: true });
     });
 
     afterAll(() => {

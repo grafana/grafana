@@ -82,7 +82,7 @@ export function refetchPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | null> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     return null;
   }
 
@@ -92,7 +92,7 @@ export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | n
 }
 
 export async function refetchPluginMeta(pluginId: string): Promise<Meta | null> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
     return null;
   }
 

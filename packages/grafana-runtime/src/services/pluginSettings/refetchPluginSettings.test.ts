@@ -141,13 +141,17 @@ describe('settings', () => {
         });
       });
 
-      it('should throw when meta is null', async () => {
+      it('should fallback to legacy api when meta is null', async () => {
         refetchPluginMetaMock.mockResolvedValue(null);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        await expect(() => refetchPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toThrow(
-          'Plugin not found, no installed plugin with id myorg-test-app'
-        );
+        const response = await refetchPluginSettings(legacyMyOrgTestAppSettings.id);
+
+        expect(response).toMatchObject(legacyMyOrgTestAppSettings);
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          validatePath: true,
+        });
       });
     });
   });

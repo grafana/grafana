@@ -61,7 +61,8 @@ export async function updateAppPluginSettings(pluginId: string, data: Partial<Pl
 
   const meta = await refetchPluginMeta(pluginId);
   if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
+    await updateLegacySettings(pluginId, data);
+    return refetchCachedLegacySettings(pluginId, false);
   }
 
   if (meta.spec.pluginJson.type !== 'app') {

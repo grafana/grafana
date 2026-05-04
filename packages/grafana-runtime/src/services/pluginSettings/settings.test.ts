@@ -110,7 +110,13 @@ describe('settings', () => {
         const enabled = await isAppPluginEnabled('myorg-someplugin-app');
 
         expect(enabled).toEqual(false);
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/api/plugins/myorg-someplugin-app/settings',
+          undefined,
+          undefined,
+          { validatePath: true }
+        );
       });
 
       it('should return false if plugin id is not for an app', async () => {

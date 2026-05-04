@@ -231,8 +231,18 @@ describe('settings', () => {
         backendSrv.post = jest.fn().mockResolvedValue(undefined);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        await expect(() => updateAppPluginSettings(legacyMyOrgTestAppSettings.id, { enabled: true })).rejects.toThrow(
-          'Plugin not found, no installed plugin with id myorg-test-app'
+        const response = await updateAppPluginSettings(legacyMyOrgTestAppSettings.id, { enabled: true });
+
+        expect(response).toEqual(legacyMyOrgTestAppSettings);
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+          validatePath: true,
+        });
+        expect(backendSrv.post).toHaveBeenCalledTimes(1);
+        expect(backendSrv.post).toHaveBeenCalledWith(
+          '/api/plugins/myorg-test-app/settings',
+          { enabled: true },
+          { validatePath: true }
         );
       });
     });

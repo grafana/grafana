@@ -16,7 +16,7 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
 
   const meta = await refetchPluginMeta(pluginId);
   if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
+    return refetchCachedLegacySettings(pluginId, false);
   }
 
   if (meta.spec.pluginJson.type !== 'app') {

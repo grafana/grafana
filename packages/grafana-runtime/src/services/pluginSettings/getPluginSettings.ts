@@ -61,7 +61,7 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
 
   const meta = await getPluginMetaFromCache(pluginId);
   if (!meta) {
-    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
+    return getCachedLegacySettings(pluginId, showErrorAlert);
   }
 
   if (meta.spec.pluginJson.type !== 'app') {
