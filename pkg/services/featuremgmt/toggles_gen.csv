@@ -361,3 +361,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-27,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-04-28,grafana.meticulousAIRecorder,experimental,@grafana/dataviz-squad,false,false,false
 2026-04-30,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
+2026-05-04,alerting.disableV0ReceiverConversion,experimental,@grafana/alerting-squad,false,false,false

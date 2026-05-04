@@ -76,8 +76,6 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 			assert.Equal(t, models.ProvenanceConvertedPrometheus, recv.Provenance)
 
 			require.Len(t, recv.Integrations, 2)
-			integration := recv.Integrations[0]
-			assert.Equal(t, "", integration.UID)
 		})
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
@@ -548,6 +546,7 @@ func TestReceiverService_Create(t *testing.T) {
 							UID:                   lineIntegration.UID,
 							Name:                  lineIntegration.Name,
 							Type:                  string(lineIntegration.Config.Type()),
+							Version:               string(lineIntegration.Config.Version),
 							DisableResolveMessage: lineIntegration.DisableResolveMessage,
 							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
 							SecureSettings: map[string]string{

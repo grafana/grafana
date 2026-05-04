@@ -57,7 +57,7 @@
         "name": "ZGlzY29yZA",
         "namespace": "default",
         "uid": "qZZWlsquf3y9Jq7t4DPEHSRuBoeHemHgnoHgUVV43OYX",
-        "resourceVersion": "06e437697f62ac59",
+        "resourceVersion": "faa7705455991f0a",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -71,7 +71,7 @@
         "title": "discord",
         "integrations": [
           {
-            "uid": "",
+            "uid": "c1c176c3df57651f",
             "type": "discord",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -102,7 +102,7 @@
         "name": "ZW1haWw",
         "namespace": "default",
         "uid": "HqiXTxM48q3i9R6eNxGMsqRwFotgKfd2Y3Sgrg0QQagX",
-        "resourceVersion": "9b3ffed277cee189",
+        "resourceVersion": "4d17750eb3c688f1",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -116,7 +116,7 @@
         "title": "email",
         "integrations": [
           {
-            "uid": "",
+            "uid": "4a969f287a552a6f",
             "type": "email",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -151,7 +151,7 @@
         "name": "amlyYQ",
         "namespace": "default",
         "uid": "lvjnZkpXPRYUr8kb6E5H009rCuobN8lPszXoThLzrxwX",
-        "resourceVersion": "deae9d34f8554205",
+        "resourceVersion": "20686dc4795761dc",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -165,7 +165,7 @@
         "title": "jira",
         "integrations": [
           {
-            "uid": "",
+            "uid": "1f256059131a67c5",
             "type": "jira",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -210,7 +210,7 @@
         "name": "bXN0ZWFtcw",
         "namespace": "default",
         "uid": "k7o0Hz5XWPoVRtr7MrhMlPY1E6Ap1XXda4da4wEKgBYX",
-        "resourceVersion": "95c8d082d65466a3",
+        "resourceVersion": "c327781b22fb2375",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -224,7 +224,7 @@
         "title": "msteams",
         "integrations": [
           {
-            "uid": "",
+            "uid": "520485d002f9ae1f",
             "type": "teams",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -256,7 +256,7 @@
         "name": "b3BzZ2VuaWU",
         "namespace": "default",
         "uid": "14bze1pZagWIKYELPXs1Mcy8cL1DAlqpzJ4JkoLDfvYX",
-        "resourceVersion": "8ee2957ba150ba16",
+        "resourceVersion": "c70e8e240efa3837",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -270,7 +270,7 @@
         "title": "opsgenie",
         "integrations": [
           {
-            "uid": "",
+            "uid": "041a1d3ac026892d",
             "type": "opsgenie",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -318,7 +318,7 @@
         "name": "cGFnZXJkdXR5",
         "namespace": "default",
         "uid": "JV4UiQeX9R6UmwVHL7GXBskXRqvaunmRBIIaS7YMnl8X",
-        "resourceVersion": "fe673d5dcd67ccf0",
+        "resourceVersion": "f325da7f87ea80d2",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -332,7 +332,7 @@
         "title": "pagerduty",
         "integrations": [
           {
-            "uid": "",
+            "uid": "629b8e0bb4372373",
             "type": "pagerduty",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -390,7 +390,7 @@
         "name": "cHVzaG92ZXI",
         "namespace": "default",
         "uid": "KmdEYNvIFqIhZXDgo72RJqKNeg8dBQDKam9ROun2tZAX",
-        "resourceVersion": "6ae076725ab463e0",
+        "resourceVersion": "8a8a575957af1a21",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -404,7 +404,7 @@
         "title": "pushover",
         "integrations": [
           {
-            "uid": "",
+            "uid": "af53622258943669",
             "type": "pushover",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -444,7 +444,7 @@
         "name": "c2xhY2s",
         "namespace": "default",
         "uid": "MHKEKXAOzOMISzPH7eCi0c2CvT0wODhSfSk1TiuNnKgX",
-        "resourceVersion": "ec0e343029ff5d8b",
+        "resourceVersion": "b21cb4295ac326aa",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -458,7 +458,7 @@
         "title": "slack",
         "integrations": [
           {
-            "uid": "",
+            "uid": "7fa35ded43c67d03",
             "type": "slack",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -529,7 +529,7 @@
         "name": "c25z",
         "namespace": "default",
         "uid": "0hEMltsOTiMXbcfNFtajn9V7A5Dc9PuJo91i3jT0UIYX",
-        "resourceVersion": "d45308fd19fecf7d",
+        "resourceVersion": "ba1eccdb05772026",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -543,7 +543,7 @@
         "title": "sns",
         "integrations": [
           {
-            "uid": "",
+            "uid": "da82caaec85fc30f",
             "type": "sns",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -584,7 +584,7 @@
         "name": "dGVsZWdyYW0",
         "namespace": "default",
         "uid": "o6LIJM0yt1aXox7EVBiZmDVXGSfShDYsk1gVEENSSGcX",
-        "resourceVersion": "d9850878a33e302e",
+        "resourceVersion": "cd6f78ff21dc390c",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -598,7 +598,7 @@
         "title": "telegram",
         "integrations": [
           {
-            "uid": "",
+            "uid": "54a04ffdd3bb93c7",
             "type": "telegram",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -631,7 +631,7 @@
         "name": "dmljdG9yb3Bz",
         "namespace": "default",
         "uid": "aiBEoHeP0XnxaWsteUm7JXYlOUMgcXoX03DuzxiZteMX",
-        "resourceVersion": "1e6886531440afc2",
+        "resourceVersion": "ccbc6a7976745166",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -645,7 +645,7 @@
         "title": "victorops",
         "integrations": [
           {
-            "uid": "",
+            "uid": "9593a5745d6e721f",
             "type": "victorops",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -681,7 +681,7 @@
         "name": "d2ViZXg",
         "namespace": "default",
         "uid": "UWNKI0plkKlibdMG2E31fXv7rSp1bj5En5Ly8y7PXuIX",
-        "resourceVersion": "08fc955a08dfe9c0",
+        "resourceVersion": "174f0aa8a946eca8",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -695,7 +695,7 @@
         "title": "webex",
         "integrations": [
           {
-            "uid": "",
+            "uid": "b3f090b281ed7963",
             "type": "webex",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -730,7 +730,7 @@
         "name": "d2ViaG9vaw",
         "namespace": "default",
         "uid": "Tb4lHkct27YZEAVtmU6UtYo31OKxl3aSZhvHUteYgQkX",
-        "resourceVersion": "494392f899a7b410",
+        "resourceVersion": "45c922bee67f8fe5",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -744,7 +744,7 @@
         "title": "webhook",
         "integrations": [
           {
-            "uid": "",
+            "uid": "0d6fcc706b339a1f",
             "type": "webhook",
             "version": "v0mimir1",
             "disableResolveMessage": false,
@@ -776,7 +776,7 @@
         "name": "d2VjaGF0",
         "namespace": "default",
         "uid": "OjepUCGQaz7BU7QeECzRfv3L2jDQB4wnfCUQYGN5YBMX",
-        "resourceVersion": "135913515cbc156b",
+        "resourceVersion": "6bf294b80b035167",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -790,7 +790,7 @@
         "title": "wechat",
         "integrations": [
           {
-            "uid": "",
+            "uid": "daf1a91b2842ea41",
             "type": "wechat",
             "version": "v0mimir1",
             "disableResolveMessage": false,
