@@ -1,7 +1,6 @@
 package pluginproxy
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,30 +16,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestPluginProxy(t *testing.T) {
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.Route{
 			Headers: []plugins.Header{
 				{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 			},
 		}
-
-		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
-		require.NoError(t, err)
 
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
@@ -49,17 +39,15 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			&pluginsettings.DTO{
 				SecureJSONData: map[string][]byte{
-					"key": key,
+					"key": []byte("xxxxxx"),
 				},
 			},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			map[string]string{
+				"key": "123",
+			},
+			httpReq,
+			&user.SignedInUser{
+				Login: "test_user",
 			},
 			&setting.Cfg{SendUserHeader: true},
 			route,
@@ -75,16 +63,12 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login:        "test_user",
-					FallbackType: claims.TypeUser,
-					UserID:       1,
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			nil,
+			httpReq,
+			&user.SignedInUser{
+				Login:        "test_user",
+				FallbackType: claims.TypeUser,
+				UserID:       1,
 			},
 			&setting.Cfg{SendUserHeader: true},
 			nil,
@@ -101,14 +85,10 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			nil,
+			httpReq,
+			&user.SignedInUser{
+				Login: "test_user",
 			},
 			&setting.Cfg{SendUserHeader: false},
 			nil,
@@ -124,13 +104,9 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{IsAnonymous: true},
-				Context: &web.Context{
-					Req: httpReq,
-				},
-			},
+			nil,
+			httpReq,
+			&user.SignedInUser{IsAnonymous: true},
 			&setting.Cfg{SendUserHeader: true},
 			nil,
 		)
@@ -155,14 +131,10 @@ func TestPluginProxy(t *testing.T) {
 					"dynamicUrl": "https://dynamic.grafana.com",
 				},
 			},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			nil,
+			httpReq,
+			&user.SignedInUser{
+				Login: "test_user",
 			},
 			&setting.Cfg{SendUserHeader: true},
 			route,
@@ -183,14 +155,10 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			nil,
+			httpReq,
+			&user.SignedInUser{
+				Login: "test_user",
 			},
 			&setting.Cfg{SendUserHeader: true},
 			route,
@@ -205,30 +173,20 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		encryptedJsonData, err := secretsService.EncryptJsonData(
-			context.Background(),
-			map[string]string{"key": "123"},
-			secrets.WithoutScope(),
-		)
-		require.NoError(t, err)
-
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
 
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{
-				JSONData:       map[string]any{"dynamicUrl": "https://dynamic.grafana.com"},
-				SecureJSONData: encryptedJsonData,
+				JSONData: map[string]any{"dynamicUrl": "https://dynamic.grafana.com"},
 			},
-			secretsService,
-			&contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
-				},
-				Context: &web.Context{
-					Req: httpReq,
-				},
+			map[string]string{
+				"key": "123",
+			},
+			httpReq,
+			&user.SignedInUser{
+				Login: "test_user",
 			},
 			&setting.Cfg{SendUserHeader: true},
 			route,
@@ -256,18 +214,11 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		ctx := &contextmodel.ReqContext{
-			SignedInUser: &user.SignedInUser{},
-			Context: &web.Context{
-				Req:  httptest.NewRequest("GET", "/", nil),
-				Resp: responseWriter,
-			},
-		}
+		req := httptest.NewRequest("GET", "/", nil)
 		ps := &pluginsettings.DTO{
 			SecureJSONData: map[string][]byte{},
 		}
-		cfg := &setting.Cfg{}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+		proxy, err := NewPluginProxy(ps, routes, req, responseWriter, &user.SignedInUser{}, "", false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -277,7 +228,7 @@ func TestPluginProxy(t *testing.T) {
 			t.Fatal("timeout waiting for request to be handled")
 		}
 
-		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
+		require.Equal(t, "sandbox", responseWriter.Header().Get("Content-Security-Policy"))
 	})
 }
 
@@ -385,7 +336,6 @@ func TestPluginProxyRoutes(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("When proxying path %q should call expected URL", tc.proxyPath), func(t *testing.T) {
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			requestHandled := false
 			requestURL := ""
 			backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -411,27 +361,19 @@ func TestPluginProxyRoutes(t *testing.T) {
 			}
 
 			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
-
-			ctx := &contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{},
-				Context: &web.Context{
-					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
-					Resp: responseWriter,
-				},
-			}
+			req := httptest.NewRequest("GET", tc.proxyPath, nil)
 			ps := &pluginsettings.DTO{
 				SecureJSONData: map[string][]byte{},
 			}
-			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
+			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, &user.SignedInUser{}, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for !requestHandled && !ctx.Resp.Written() {
+			for !requestHandled && !responseWriter.Written() {
 
 			}
 
-			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
+			require.Equal(t, tc.expectedStatus, responseWriter.Status())
 
 			if tc.expectedStatus == http.StatusNotFound {
 				return
@@ -511,7 +453,6 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Should enforce RBAC when proxying path %s %s", tc.proxyPath, http.StatusText(tc.expectedStatus)), func(t *testing.T) {
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			requestHandled := false
 			requestURL := ""
 			backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -537,33 +478,25 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			}
 
 			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
-
-			ctx := &contextmodel.ReqContext{
-				Logger: logger.New("pluginproxy-test"),
-				SignedInUser: &user.SignedInUser{
-					OrgID:       1,
-					OrgRole:     tc.usrRole,
-					Permissions: map[int64]map[string][]string{1: tc.usrPerms},
-				},
-				Context: &web.Context{
-					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
-					Resp: responseWriter,
-				},
+			req := httptest.NewRequest("GET", tc.proxyPath, nil)
+			signedInUser := &user.SignedInUser{
+				OrgID:       1,
+				OrgRole:     tc.usrRole,
+				Permissions: map[int64]map[string][]string{1: tc.usrPerms},
 			}
 			ps := &pluginsettings.DTO{
 				PluginID:       "test-app",
 				SecureJSONData: map[string][]byte{},
 			}
-			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, signedInUser, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for !requestHandled && !ctx.Resp.Written() {
+			for !requestHandled && !responseWriter.Written() {
 
 			}
 
-			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
+			require.Equal(t, tc.expectedStatus, responseWriter.Status())
 
 			if tc.expectedStatus == http.StatusForbidden {
 				return
@@ -574,8 +507,8 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 	}
 }
 
-// getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsService secrets.Service, ctx *contextmodel.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
+// getPluginProxiedRequest is a helper for easier setup of tests based on global config and SignedInUser.
+func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secureJsonData map[string]string, r *http.Request, signedInUser *user.SignedInUser, cfg *setting.Cfg, route *plugins.Route) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{
@@ -584,7 +517,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, r, httptest.NewRecorder(), signedInUser, "", cfg.DataProxyLogging, cfg.SendUserHeader, secureJsonData, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
