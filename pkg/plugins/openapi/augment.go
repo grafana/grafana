@@ -9,7 +9,6 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -68,16 +67,14 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 				},
 			}
 
-			example := unstructured.Unstructured{
-				Object: map[string]any{
-					"meta": map[string]any{
-						"name": app_INSTANCE_NAME,
-					},
-					"spec": map[string]any{
-						"enabled": true,
-						"pinned":  true,
-						// JSONData (from examples)
-					},
+			example := map[string]any{
+				"meta": map[string]any{
+					"name": app_INSTANCE_NAME,
+				},
+				"spec": map[string]any{
+					"enabled": true,
+					"pinned":  true,
+					// JSONData (from examples)
 				},
 			}
 			opts.Resource.Example = example
