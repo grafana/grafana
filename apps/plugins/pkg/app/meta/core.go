@@ -154,18 +154,13 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 // createLoader creates a loader service configured for core plugins.
 func createLoader(cdnAssets bool, staticRootPath string) pluginsLoader.Service {
 	cfg := &config.PluginManagementCfg{}
-	constructFunc := bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider())
-	if cdnAssets {
-		constructFunc = bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), newAssetProvider(staticRootPath))
-	}
-
 	d := discovery.New(cfg, discovery.Opts{
 		FilterFuncs: []discovery.FilterFunc{
 			// Allow all plugin types for core plugins
 		},
 	})
 	b := bootstrap.New(cfg, bootstrap.Opts{
-		ConstructFunc: constructFunc,
+		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), newAssetProvider(cdnAssets, staticRootPath)),
 		DecorateFuncs: []bootstrap.DecorateFunc{
 			bootstrap.LoadingStrategyDecorateFunc(cfg, pluginscdn.ProvideService(cfg)),
 		}, // no decoration required for metadata
@@ -192,12 +187,15 @@ func createLoader(cdnAssets bool, staticRootPath string) pluginsLoader.Service {
 }
 
 type assetProvider struct {
+	// cdnAssets controls whether to return paths relative to staticRootPath (CDN)
+	// or in "plugins/<id>/..." format (on-prem, frontend prepends "public/").
+	cdnAssets bool
 	// staticRootPath is the absolute path to the static root ("public/" directory).
 	staticRootPath string
 }
 
-func newAssetProvider(staticRootPath string) *assetProvider {
-	return &assetProvider{staticRootPath: staticRootPath}
+func newAssetProvider(cdnAssets bool, staticRootPath string) *assetProvider {
+	return &assetProvider{cdnAssets: cdnAssets, staticRootPath: staticRootPath}
 }
 
 func (p *assetProvider) Module(pi pluginassets.PluginInfo) (string, error) {
@@ -209,6 +207,10 @@ func (p *assetProvider) Module(pi pluginassets.PluginInfo) (string, error) {
 }
 
 func (p *assetProvider) AssetPath(pi pluginassets.PluginInfo, assetPath ...string) (string, error) {
+	if !p.cdnAssets {
+		// frontend will prepend `public/` instead
+		return path.Join("plugins", pi.JsonData.ID, path.Join(assetPath...)), nil
+	}
 	absPath := filepath.Join(pi.FS.Base(), filepath.Join(assetPath...))
 	rel, err := filepath.Rel(p.staticRootPath, absPath)
 	if err != nil {

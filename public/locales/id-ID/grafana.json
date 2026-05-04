@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "Edit YAML",
         "save": "Simpan"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "nama",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "Hapus semua aturan"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Hapus",
       "delete-modal-delete-button": "Hapus",
@@ -1568,8 +1570,14 @@
         "update-error": "Gagal memperbarui grup aturan",
         "update-success": "Berhasil memperbarui grup aturan"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Grup yang dipilih tidak dapat diedit",
       "group-not-editable-description": "Grup ini termasuk dalam sumber data yang tidak mendukung pengeditan.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Edit grup aturan",
       "rule-group-error": "Kesalahan saat memuat grup aturan"
     },
@@ -3570,9 +3578,9 @@
         "declare-incident": "Nyatakan insiden",
         "declare-incident-no-permission": "Anda tidak memiliki izin untuk mengakses Insiden",
         "instance-details": "Detail instance",
+        "section-silence": "",
         "silence-button": "Mode Senyap",
-        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Anda tidak memiliki izin untuk membuat mode senyap"
       },
       "labels-column-title": "Label",
       "no-firing-or-pending-instances": "Anda tidak memiliki instance peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "Sesuai abjad (A-Z)",
         "alphabetically-za": "Sesuai abjad (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Dihapus (terbaru lebih dulu)",
         "deleted-oldest": "Dihapus (terlama lebih dulu)"
       }
@@ -5606,6 +5616,7 @@
         "panels": "Panel",
         "row": "Baris",
         "rows": "Baris",
+        "section-filters-set": "",
         "tab": "Tab",
         "tabs": "Tab",
         "variable": "variabel {{type}}",
@@ -6456,6 +6467,7 @@
     },
     "transformation-editor": {
       "input-data": "Data input",
+      "loading": "",
       "output-data": "Data output",
       "title-debug-transformation": "Debug transformasi"
     },
@@ -8086,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"
@@ -8222,6 +8240,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Cari"
     },
     "resource-dimension-editor": {
@@ -10061,6 +10080,12 @@
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "Nilai RGBA"
     },
@@ -10406,6 +10431,7 @@
     "sidebar": {
       "close": "Tutup",
       "dock": "Gandeng",
+      "go-back": "",
       "hide": "Sembunyikan",
       "show": "Tampilkan",
       "undock": "Lepas gandengan"
@@ -11157,6 +11183,7 @@
       "label-numbers": "Angka",
       "label-signature": "Tanda Tangan"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
@@ -11451,6 +11478,7 @@
         "common-labels": "Label umum:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Label umum",
     "name-deduplication": "Deduplikasi",
     "name-details-mode": "Mode panel detail log",
@@ -11839,8 +11867,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Semua",
-      "title-filtered": "Semua (difilter)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Hapus semua"
@@ -13080,6 +13110,7 @@
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token API",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
+      "url-pattern": "",
       "url-required": "URL repositori wajib diisi"
     },
     "bootstrap-step": {
@@ -13487,6 +13518,7 @@
       "contact-admin": "Hubungi administrator Grafana Anda untuk mengonversi sumber daya ini menjadi lokal atau menghapus semua sumber daya dari repositori yang tidak ditemukan.",
       "convert-to-local-button": "Konversi ke lokal",
       "delete-button": "Hapus",
+      "go-to-dashboards": "",
       "job-error": "Terjadi kesalahan saat memproses sumber daya yang terabaikan",
       "job-success": "Sumber daya terabaikan berhasil diproses",
       "job-warning": "Beberapa sumber daya diproses dengan peringatan. Silakan tinjau hasilnya.",
@@ -13725,7 +13757,8 @@
       "make-sure": "Buat token dengan izin ini"
     },
     "validation": {
-      "hidden-characters": "Bidang ini berisi karakter tersembunyi yang mungkin timbul akibat menyalin dan menempelkan. Harap ketik ulang atau hapus nilainya, lalu coba lagi."
+      "hidden-characters": "Bidang ini berisi karakter tersembunyi yang mungkin timbul akibat menyalin dan menempelkan. Harap ketik ulang atau hapus nilainya, lalu coba lagi.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Peringatan Awal",
     "watch-stream": {
@@ -14018,7 +14051,6 @@
       "hide": "Sembunyikan {{type}}",
       "hide-help": "Sembunyikan bantuan sumber data",
       "hide-transformation-help": "Sembunyikan bantuan transformasi",
-      "inspector": "Pemeriksa kueri",
       "more-actions": "Tindakan {{type}} lainnya",
       "remove": "Hapus {{type}}",
       "remove-transformation-filter": "Hapus filter",
@@ -14030,6 +14062,25 @@
     "alerts": {
       "no-alerts": "Tidak ada aturan peringatan untuk panel ini",
       "no-alerts-description": "Buat aturan peringatan untuk mendapatkan notifikasi saat data Anda memenuhi kondisi tertentu."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Yakin ingin menghapus kueri ini?",
@@ -14067,6 +14118,7 @@
     },
     "footer": {
       "edit-option": "Edit {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Titik data maksimum",
@@ -14077,6 +14129,7 @@
       "placeholder": {
         "no-limit": "Tanpa batas"
       },
+      "query-inspector": "",
       "query-options": "Opsi Kueri"
     },
     "header": {
@@ -14110,6 +14163,8 @@
       "alerts-loading": "Peringatan",
       "card-click": "Pilih kartu {{id}}",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "{{type}} baru",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
@@ -14160,6 +14215,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Pulihkan"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Anda belum menghapus dasbor baru-baru ini.",
@@ -14320,6 +14379,10 @@
     },
     "results-table": {
       "datasource-header": "Sumber data",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 menit",
       "deleted-remaining-header": "Waktu yang tersisa",
       "location-header": "Lokasi",
@@ -14673,6 +14736,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",
@@ -14808,10 +14875,13 @@
       "title": "Mulai membuat dasbor dengan saran dan templat"
     },
     "nav": {
+      "counter": "",
       "go-to": "Buka slide {{number}}",
-      "next": "Berikutnya",
-      "prev": "Sebelumnya"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Jelaskan kueri",
@@ -15887,6 +15957,9 @@
         "grouping-to-matrix": "Pengelompokan ke matriks"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "Hitung histogram dari data input."
@@ -16221,6 +16294,9 @@
       "label-time-field": "Bidang waktu",
       "tooltip-statistic-should-calculated-series": "Statistik yang harus dihitung untuk deret waktu ini.",
       "tooltip-time-field": "Bidang waktu yang akan digunakan untuk deret waktu. Jika tidak dipilih, yang pertama ditemukan akan digunakan."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Nama bidang pertama",

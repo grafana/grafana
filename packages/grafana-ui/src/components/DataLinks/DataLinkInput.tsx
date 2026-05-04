@@ -29,6 +29,9 @@ interface DataLinkInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  // For accessibility, this should be the id of the label that describes this input.
+  // This is needed because the input is rendered as a contenteditable div and can't use the normal label/htmlFor logic.
+  ['aria-labelledby']?: string;
 }
 
 const datalinksSyntax: Grammar = {
@@ -81,6 +84,7 @@ export const DataLinkInput = memo(
     onChange,
     suggestions,
     placeholder = 'http://your-grafana.com/d/000000010/annotations',
+    ['aria-labelledby']: ariaLabelledby,
   }: DataLinkInputProps) => {
     const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
@@ -242,6 +246,7 @@ export const DataLinkInput = memo(
                   padding: '3px 8px',
                 })
               )}
+              aria-labelledby={ariaLabelledby}
             />
           </div>
         </div>

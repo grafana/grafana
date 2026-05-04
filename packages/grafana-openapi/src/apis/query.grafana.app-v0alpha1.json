@@ -91,6 +91,7 @@
         "tags": ["Query"],
         "description": "Query any datasources (with expressions)",
         "operationId": "queryDatasources",
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -114,24 +115,16 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueryDataResponse"
                 }
               }
             }
           }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
         }
-      },
-      "parameters": []
+      }
     },
     "/query/sqlschemas": {
       "post": {
@@ -203,11 +196,6 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse": {
-        "description": "todo... improve schema",
-        "type": "object",
-        "additionalProperties": true
-      },
       "QueryDataResponse": {
         "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
         "type": "object",
@@ -225,22 +213,10 @@
             "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
-              ]
+              "default": {}
             }
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "query.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

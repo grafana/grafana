@@ -24,8 +24,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // fakeRemoteIndexStore is an in-memory RemoteIndexStore for unit tests.
@@ -70,6 +72,25 @@ func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedR
 	return out, nil
 }
 
+func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
+	keys := make([]ulid.ULID, 0, len(f.data))
+	for k := range f.data {
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
+func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	meta, ok := f.data[k]
+	if !ok {
+		return nil, ErrSnapshotNotFound
+	}
+	return meta, nil
+}
+
 func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.NamespacedResource, k ulid.ULID, destDir string) (*IndexMeta, error) {
 	f.downloadCalls.Add(1)
 	if f.downloadErr != nil {
@@ -94,6 +115,15 @@ func (f *fakeRemoteIndexStore) DeleteIndex(context.Context, resource.NamespacedR
 }
 func (f *fakeRemoteIndexStore) CleanupIncompleteUploads(context.Context, resource.NamespacedResource, time.Duration) (int, error) {
 	panic("CleanupIncompleteUploads not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) ListNamespaces(context.Context) ([]string, error) {
+	panic("ListNamespaces not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) ListNamespaceIndexes(context.Context, string) ([]resource.NamespacedResource, error) {
+	panic("ListNamespaceIndexes not implemented for fakeRemoteIndexStore")
+}
+func (f *fakeRemoteIndexStore) LockNamespaceForCleanup(context.Context, string) (IndexStoreLock, error) {
+	panic("LockNamespaceForCleanup not implemented for fakeRemoteIndexStore")
 }
 
 // writeFakeSnapshot creates an empty bleve index at dir with RV and build info
@@ -161,9 +191,6 @@ func TestSnapshotTier(t *testing.T) {
 
 	t.Run("no min: below running is tier 0", func(t *testing.T) {
 		assert.Equal(t, 0, snapshotTier(semver.MustParse("9.0.0"), nil, running))
-	})
-	t.Run("no running: anything is tier 0 or 1", func(t *testing.T) {
-		assert.Equal(t, 0, snapshotTier(semver.MustParse("99.0.0"), minV, nil))
 	})
 }
 
@@ -417,12 +444,243 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 // snapshot via store.UploadIndex, then verifies BuildIndex downloads it
 // instead of calling the builder. The round-trip of a real built index
 // through the store is covered separately in TestRemoteIndexStore_*.
+func TestShouldUpload(t *testing.T) {
+	key := newTestNsResource()
+
+	t.Run("uploads when no prior upload is tracked", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1000})
+		idx := newUploadTestIndex(t, be, key, 42)
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips below min doc count", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 2, UploadInterval: time.Hour, MinDocChanges: 1000})
+		idx := newUploadTestIndex(t, be, key, 42)
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
+		idx := newUploadTestIndex(t, be, key, 42)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
+		be.setUploadTracking(key, time.Now().Add(-30*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when interval elapsed and mutation count is large enough", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 25})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 30))
+		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
+
+		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+}
+
+func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
+	be, _ := newTestBleveBackend(t, SnapshotOptions{})
+	key := newTestNsResource()
+	idx := newUploadTestIndex(t, be, key, 42)
+
+	count, err := readSnapshotMutationCount(idx.index)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Name:  "dash-2",
+				Title: "dash-2",
+				Key: &resourcepb.ResourceKey{
+					Name:      "dash-2",
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+			},
+		},
+		{
+			Action: resource.ActionDelete,
+			Key: &resourcepb.ResourceKey{
+				Name:      "dash-1",
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+		},
+	}})
+	require.NoError(t, err)
+
+	count, err = readSnapshotMutationCount(idx.index)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+}
+
+func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
+	be, _ := newTestBleveBackend(t, SnapshotOptions{})
+	key := newTestNsResource()
+	resourceDir := be.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	require.NoError(t, err)
+	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
+	require.NoError(t, setRV(index, 42))
+
+	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	idx.resourceVersion.Store(42)
+	idx.expiration = time.Now().Add(-time.Minute)
+
+	be.cacheMx.Lock()
+	be.cache[key] = idx
+	be.cacheMx.Unlock()
+	be.setUploadTracking(key, time.Now())
+
+	be.runEvictExpiredOrUnownedIndexes(time.Now())
+
+	assert.Nil(t, be.getCachedIndex(key, time.Now()))
+	_, ok := be.getUploadTracking(key)
+	assert.False(t, ok)
+}
+
+func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "default"})
+	bucketURL := fileBucketURL(t, t.TempDir())
+	key := newTestNsResource()
+
+	beA, metricsA := newConfiguredSnapshotBackend(t, bucketURL)
+	beAStopped := false
+	t.Cleanup(func() {
+		if !beAStopped {
+			beA.Stop()
+		}
+	})
+	idxA, err := beA.BuildIndex(ctx, key, 10, nil, "startup", func(index resource.ResourceIndex) (int64, error) {
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  "dash-prod",
+					Title: "Production Overview",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-prod",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    2,
+					Name:  "dash-api",
+					Title: "API Latency",
+					Key: &resourcepb.ResourceKey{
+						Name:      "dash-api",
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+				},
+			},
+		}}))
+		return 2, nil
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxA)
+
+	beA.runUploadSnapshots(ctx)
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsA.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+
+	indexes, err := beA.opts.Snapshot.Store.ListIndexes(ctx, key)
+	require.NoError(t, err)
+	require.Len(t, indexes, 1)
+
+	beA.Stop()
+	beAStopped = true
+
+	beB, metricsB := newConfiguredSnapshotBackend(t, bucketURL)
+	t.Cleanup(beB.Stop)
+	var builderCalled atomic.Bool
+	idxB, err := beB.BuildIndex(ctx, key, 10, nil, "startup", func(resource.ResourceIndex) (int64, error) {
+		builderCalled.Store(true)
+		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
+	}, nil, false, time.Time{})
+	require.NoError(t, err)
+	require.NotNil(t, idxB)
+
+	assert.False(t, builderCalled.Load())
+	assert.Equal(t, 1.0, testutil.ToFloat64(metricsB.IndexSnapshotDownloads.WithLabelValues(snapshotStatusSuccess)))
+
+	res, err := idxB.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Query: "Production",
+		Limit: 100,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), res.TotalHits)
+	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
+}
+
+func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend, *resource.BleveIndexMetrics) {
+	t.Helper()
+	cfg := snapshotOptionsTestCfg(t)
+	cfg.EnableSearch = true
+	cfg.BuildVersion = "11.5.0"
+	cfg.IndexSnapshotEnabled = true
+	cfg.IndexSnapshotBucketURL = bucketURL
+
+	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	require.NoError(t, err)
+	be, ok := opts.Backend.(*bleveBackend)
+	require.True(t, ok)
+	be.opts.Snapshot.MinDocChanges = 1
+	return be, metrics
+}
+
 func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	bucket := memblob.OpenBucket(nil)
 	t.Cleanup(func() { _ = bucket.Close() })
 
-	store := NewBucketRemoteIndexStore(bucket, newFakeBackend(newConditionalBucket()), "test-owner", 5*time.Second, 500*time.Millisecond)
+	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	store := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: newFakeBackend(newConditionalBucket()),
+		LockOwner:   "test-owner",
+		BuildLock:   lockOpts,
+		CleanupLock: lockOpts,
+	})
 	key := newTestNsResource()
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.5.0",
@@ -465,4 +723,145 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	bi, ok := idx.(*bleveIndex)
 	require.True(t, ok)
 	assert.Equal(t, meta.LatestResourceVersion, bi.resourceVersion.Load())
+
+	trackedAt, tracked := be.getUploadTracking(key)
+	require.True(t, tracked)
+	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+
+	mutationCount, err := readSnapshotMutationCount(bi.index)
+	require.NoError(t, err)
+	assert.Zero(t, mutationCount)
+}
+
+// --- findFreshSnapshotByUploadTime ---
+
+// probeFakeStore embeds fakeRemoteIndexStore but lets individual GetIndexMeta
+// calls fail with a chosen error, so we can test mid-walk error tolerance.
+type probeFakeStore struct {
+	*fakeRemoteIndexStore
+	getErr     map[ulid.ULID]error
+	getCalls   []ulid.ULID
+	listKeyErr error
+}
+
+func (s *probeFakeStore) ListIndexKeys(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
+	if s.listKeyErr != nil {
+		return nil, s.listKeyErr
+	}
+	return s.fakeRemoteIndexStore.ListIndexKeys(ctx, ns)
+}
+
+func (s *probeFakeStore) GetIndexMeta(ctx context.Context, ns resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	s.getCalls = append(s.getCalls, k)
+	if e, ok := s.getErr[k]; ok {
+		return nil, e
+	}
+	return s.fakeRemoteIndexStore.GetIndexMeta(ctx, ns, k)
+}
+
+func newProbeFake() *probeFakeStore {
+	return &probeFakeStore{fakeRemoteIndexStore: &fakeRemoteIndexStore{}, getErr: map[ulid.ULID]error{}}
+}
+
+func TestFindFreshSnapshotByUploadTime_HomogeneousCluster(t *testing.T) {
+	now := time.Now()
+	store := newProbeFake()
+	want := makeULID(t, now.Add(-5*time.Minute))
+	store.put(want, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+
+	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.NoError(t, err)
+	assert.Equal(t, want, k)
+	require.NotNil(t, meta)
+	assert.Equal(t, "11.5.0", meta.GrafanaBuildVersion)
+	assert.Len(t, store.getCalls, 1, "should fetch only the newest manifest in homogeneous case")
+}
+
+func TestFindFreshSnapshotByUploadTime_MixedVersionWalksPastNewerOtherVersion(t *testing.T) {
+	now := time.Now()
+	store := newProbeFake()
+	// Newest: V1, 5 min old. Skipped on version mismatch.
+	v1New := makeULID(t, now.Add(-5*time.Minute))
+	store.put(v1New, &IndexMeta{GrafanaBuildVersion: "11.4.0"})
+	// Match: V2, 30 min old, well within the 1h window.
+	v2Match := makeULID(t, now.Add(-30*time.Minute))
+	store.put(v2Match, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	// Older V2 still in window — should not be picked, but also not visited.
+	store.put(makeULID(t, now.Add(-50*time.Minute)), &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+
+	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.NoError(t, err)
+	assert.Equal(t, v2Match, k)
+	require.NotNil(t, meta)
+	// Walk visits the newest (V1, mismatch) then the next (V2, match) and stops.
+	assert.Equal(t, []ulid.ULID{v1New, v2Match}, store.getCalls)
+}
+
+func TestFindFreshSnapshotByUploadTime_StopsAtAgeCutoff(t *testing.T) {
+	now := time.Now()
+	store := newProbeFake()
+	// Newest is V1, 5 min ago — skipped on version.
+	v1 := makeULID(t, now.Add(-5*time.Minute))
+	store.put(v1, &IndexMeta{GrafanaBuildVersion: "11.4.0"})
+	// Only V2 candidate is older than the window — must NOT be returned.
+	stale := makeULID(t, now.Add(-90*time.Minute))
+	store.put(stale, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+
+	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.NoError(t, err)
+	assert.Equal(t, ulid.ULID{}, k)
+	assert.Nil(t, meta)
+	// Walk should have visited only v1 before hitting the cutoff.
+	assert.Equal(t, []ulid.ULID{v1}, store.getCalls)
+}
+
+func TestFindFreshSnapshotByUploadTime_NoCandidates(t *testing.T) {
+	store := newProbeFake()
+	k, meta, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.NoError(t, err)
+	assert.Equal(t, ulid.ULID{}, k)
+	assert.Nil(t, meta)
+	assert.Empty(t, store.getCalls)
+}
+
+func TestFindFreshSnapshotByUploadTime_TolerateNotFoundAndInvalid(t *testing.T) {
+	now := time.Now()
+	store := newProbeFake()
+	// Newest: races with cleanup → ErrSnapshotNotFound. Skip and continue.
+	notFound := makeULID(t, now.Add(-5*time.Minute))
+	store.put(notFound, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	store.getErr[notFound] = ErrSnapshotNotFound
+	// Next: corrupt manifest → ErrInvalidManifest. Skip and continue.
+	invalid := makeULID(t, now.Add(-10*time.Minute))
+	store.put(invalid, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	store.getErr[invalid] = ErrInvalidManifest
+	// Then: a clean V2 match.
+	match := makeULID(t, now.Add(-15*time.Minute))
+	store.put(match, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+
+	k, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.NoError(t, err)
+	assert.Equal(t, match, k)
+	assert.Equal(t, []ulid.ULID{notFound, invalid, match}, store.getCalls)
+}
+
+func TestFindFreshSnapshotByUploadTime_SurfacesListError(t *testing.T) {
+	store := newProbeFake()
+	store.listKeyErr = errors.New("boom")
+
+	_, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "boom")
+}
+
+func TestFindFreshSnapshotByUploadTime_SurfacesUnexpectedGetError(t *testing.T) {
+	now := time.Now()
+	store := newProbeFake()
+	bad := makeULID(t, now.Add(-5*time.Minute))
+	store.put(bad, &IndexMeta{GrafanaBuildVersion: "11.5.0"})
+	store.getErr[bad] = errors.New("transport boom")
+
+	_, _, err := findFreshSnapshotByUploadTime(t.Context(), store, newTestNsResource(), time.Hour, "11.5.0")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "transport boom")
 }

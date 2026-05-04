@@ -76,6 +76,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		TeamLBACRuleSpec{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
 		TeamList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamList(ref),
 		TeamSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
+		TeamTeamMember{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_TeamTeamMember(ref),
 		User{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_User(ref),
 		UserList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		UserSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
@@ -1068,6 +1069,12 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -1082,11 +1089,11 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetUserTeamsUserTeam{}.OpenAPIModelName()},
+			GetUserTeamsUserTeam{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -2879,8 +2886,68 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
+					"members": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(TeamTeamMember{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"title", "email", "provisioned", "externalUID"},
+				Required: []string{"title", "email", "provisioned", "externalUID", "members"},
+			},
+		},
+		Dependencies: []string{
+			TeamTeamMember{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamTeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "kind of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "permission of the identity in the team",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "whether the member was added externally (e.g. team sync)",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name", "permission", "external"},
 			},
 		},
 	}

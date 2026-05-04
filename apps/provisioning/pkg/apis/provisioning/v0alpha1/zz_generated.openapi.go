@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Author{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		BitbucketConnectionConfig{}.OpenAPIModelName():   schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		BitbucketRepositoryConfig{}.OpenAPIModelName():   schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
+		CommitOptions{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
 		Connection{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
 		ConnectionInfo{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		ConnectionList{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
@@ -174,6 +175,25 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 					},
 				},
 				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"singleResourceMessageTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -610,9 +630,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			ResourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -1691,9 +1727,25 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			ResourceRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -2043,6 +2095,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"commit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Commit message options. Currently only contains the template used by single-resource UI operations; future siblings (bulk, sync) can live here.",
+							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
+						},
+					},
 					"workflows": {
 						SchemaProps: spec.SchemaProps{
 							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
@@ -2122,7 +2180,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2370,10 +2428,18 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							},
 						},
 					},
+					"commit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Commit message options. Mirrors the same-named field on the repository spec.",
+							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"name", "title", "type", "target", "workflows"},
 			},
 		},
+		Dependencies: []string{
+			CommitOptions{}.OpenAPIModelName()},
 	}
 }
 

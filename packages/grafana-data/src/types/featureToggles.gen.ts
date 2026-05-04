@@ -39,11 +39,6 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
-  * Configurable storage for dashboards, datasources, and resources
-  * @default false
-  */
-  storage?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -313,11 +308,6 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
-  /**
-  * use raw output mode for the data source querier
-  * @default false
-  */
-  datasourcesQuerierRawOutput?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -1000,11 +990,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Enables SRI checks for Grafana JavaScript assets
-  * @default false
-  */
-  assetSriChecks?: boolean;
-  /**
   * Enables the alert rule restore feature
   * @default true
   */
@@ -1492,6 +1477,11 @@ export interface FeatureToggles {
   */
   queryEditorNext?: boolean;
   /**
+  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+  * @default false
+  */
+  queryEditorNextMultiSelect?: boolean;
+  /**
   * Enables search for team bindings in the app platform API
   * @default false
   */
@@ -1706,11 +1696,6 @@ export interface FeatureToggles {
   * @default false
   */
   clearPreviousFieldValues?: boolean;
-  /**
-  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
-  * @default false
-  */
-  enableDatasourceMetaApiPluginLoading?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false

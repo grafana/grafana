@@ -135,6 +135,12 @@ export function trackQueryOptionsToggle(open: boolean) {
   });
 }
 
+export function trackSelectButtonClick() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'click_multi_select',
+  });
+}
+
 export function trackRenameInitiated() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'rename_initiated',

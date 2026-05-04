@@ -511,7 +511,8 @@
       "action-buttons": {
         "edit-yaml": "编辑 YAML",
         "save": "保存"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "姓名",
@@ -1285,7 +1286,8 @@
       "delete": {
         "button": {
           "label": "删除所有规则"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "删除",
       "delete-modal-delete-button": "删除",
@@ -1568,8 +1570,14 @@
         "update-error": "更新规则组失败",
         "update-success": "已成功更新规则组"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "无法编辑所选组",
       "group-not-editable-description": "此组所属的数据源不支持编辑。",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "编辑规则组",
       "rule-group-error": "加载规则组时出错"
     },
@@ -3570,9 +3578,9 @@
         "declare-incident": "声明事件",
         "declare-incident-no-permission": "您没有访问事件的权限",
         "instance-details": "实例详情",
+        "section-silence": "",
         "silence-button": "静默",
-        "silence-no-permission": "您没有创建静默的权限",
-        "silence-title-with-name": ""
+        "silence-no-permission": "您没有创建静默的权限"
       },
       "labels-column-title": "标签",
       "no-firing-or-pending-instances": "在所选时间范围内，您没有处于触发或待处理状态的警报实例。",
@@ -4461,6 +4469,8 @@
       "label": {
         "alphabetically-az": "按字母顺序 (A-Z)",
         "alphabetically-za": "按字母顺序 (Z-A)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "已删除（最新靠前）",
         "deleted-oldest": "已删除（最旧靠前）"
       }
@@ -5606,6 +5616,7 @@
         "panels": "面板",
         "row": "行",
         "rows": "行",
+        "section-filters-set": "",
         "tab": "标签页",
         "tabs": "标签页",
         "variable": "{{type}} 变量",
@@ -6456,6 +6467,7 @@
     },
     "transformation-editor": {
       "input-data": "输入数据",
+      "loading": "",
       "output-data": "输出数据",
       "title-debug-transformation": "调试转换"
     },
@@ -8086,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -8222,6 +8240,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "搜索"
     },
     "resource-dimension-editor": {
@@ -10061,6 +10080,12 @@
     "cascader": {
       "clear-button": "清除选择"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA 值"
     },
@@ -10406,6 +10431,7 @@
     "sidebar": {
       "close": "关闭",
       "dock": "停靠",
+      "go-back": "",
       "hide": "隐藏",
       "show": "显示",
       "undock": "取消停靠"
@@ -11157,6 +11183,7 @@
       "label-numbers": "数字",
       "label-signature": "签名"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "实验性。显示一个组件用于管理日志中显示的字段。",
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
     "description-enable-logs-highlighting": "使用预定义的着色方案来突出显示日志行的相关部分。",
@@ -11451,6 +11478,7 @@
         "common-labels": "常用标签："
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "常用标签",
     "name-deduplication": "去重",
     "name-details-mode": "日志详情面板模式",
@@ -11839,8 +11867,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "全部",
-      "title-filtered": "全部（已筛选）"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "全部清除"
@@ -13080,6 +13110,7 @@
       "token-user-description": "将用于通过 API 令牌访问存储库的用户名",
       "token-user-required": "用户名为必填项",
       "url-description": "Bitbucket 存储库 URL",
+      "url-pattern": "",
       "url-required": "存储库 URL 为必填项"
     },
     "bootstrap-step": {
@@ -13487,6 +13518,7 @@
       "contact-admin": "请与您的 Grafana 管理员联系，以便将此资源转换为本地资源，或删除该缺失存储库中的所有资源。",
       "convert-to-local-button": "转换为本地资源",
       "delete-button": "删除",
+      "go-to-dashboards": "",
       "job-error": "处理孤立资源时发生错误",
       "job-success": "孤立资源已成功处理",
       "job-warning": "某些资源已处理完毕，但有警告。请查看结果。",
@@ -13725,7 +13757,8 @@
       "make-sure": "创建具有以下权限的令牌"
     },
     "validation": {
-      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。"
+      "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。",
+      "url-with-credentials": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14018,7 +14051,6 @@
       "hide": "隐藏{{type}}",
       "hide-help": "隐藏数据源帮助",
       "hide-transformation-help": "隐藏转换帮助",
-      "inspector": "查询检查器",
       "more-actions": "更多{{type}}操作",
       "remove": "移除{{type}}",
       "remove-transformation-filter": "移除筛选条件",
@@ -14030,6 +14062,25 @@
     "alerts": {
       "no-alerts": "此面板没有警报规则",
       "no-alerts-description": "创建警报规则，以便在您的数据满足特定条件时收到通知。"
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "您确定要删除此查询吗？",
@@ -14067,6 +14118,7 @@
     },
     "footer": {
       "edit-option": "编辑 {{label}}",
+      "inspect-queries": "",
       "label": {
         "interval": "间隔",
         "max-data-points": "最大数据点",
@@ -14077,6 +14129,7 @@
       "placeholder": {
         "no-limit": "无限制"
       },
+      "query-inspector": "",
       "query-options": "查询选项"
     },
     "header": {
@@ -14110,6 +14163,8 @@
       "alerts-loading": "警报",
       "card-click": "选择卡片 {{id}}",
       "data": "数据",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新{{type}}",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
@@ -14160,6 +14215,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "还原"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
@@ -14320,6 +14379,10 @@
     },
     "results-table": {
       "datasource-header": "数据源",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 分钟",
       "deleted-remaining-header": "剩余时间",
       "location-header": "位置",
@@ -14673,6 +14736,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "主页仪表板",
       "home-dashboard-placeholder": "默认仪表板",
@@ -14808,10 +14875,13 @@
       "title": "借助建议和模板快速创建数据面板"
     },
     "nav": {
+      "counter": "",
       "go-to": "前往幻灯片 {{number}}",
-      "next": "下一个",
-      "prev": "上一个"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "解释查询",
@@ -15887,6 +15957,9 @@
         "grouping-to-matrix": "分组到矩阵"
       }
     },
+    "heatmap": {
+      "is-applicable-description": ""
+    },
     "histogram-transformer-editor": {
       "description": {
         "calculate-histogram-from-input-data": "从输入数据计算直方图。"
@@ -16221,6 +16294,9 @@
       "label-time-field": "时间字段",
       "tooltip-statistic-should-calculated-series": "应该为此时间序列计算的统计信息。",
       "tooltip-time-field": "将用于时间序列的时间字段。如果未选择，将使用第一个找到的字段。"
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "第一个字段名称",

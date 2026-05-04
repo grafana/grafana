@@ -44,7 +44,7 @@ export function TransformationHelpDisplay() {
 
   return (
     <Drawer
-      title={selectedTransformation.registryItem.transformation.name}
+      title={selectedTransformation.registryItem.name}
       subtitle="Transformation help"
       onClose={transformToggles.toggleHelp}
     >

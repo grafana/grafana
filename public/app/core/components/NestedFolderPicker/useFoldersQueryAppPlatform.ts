@@ -9,7 +9,7 @@ import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { type ManagerKind } from '../../../features/apiserver/types';
-import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
+import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
 import { type UseFoldersQueryProps } from './useFoldersQuery';

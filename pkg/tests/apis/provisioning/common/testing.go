@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,11 +31,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardsV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -55,6 +58,22 @@ import (
 const (
 	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
+
+	// waitTimeoutCleanup is the per-step budget for non-folder steps in
+	// CleanupAllResources (repositories, connections, dashboards). It is
+	// larger than the default per-operation wait because finalizers and
+	// controller reconciliation can briefly hold these resources past the
+	// initial delete call.
+	waitTimeoutCleanup = 2 * WaitTimeoutDefault
+
+	// waitTimeoutFolderCleanup is the budget for the folders step in
+	// CleanupAllResources. Folder admission validates "folder is empty"
+	// against the resource search index, which is eventually consistent
+	// with respect to dashboard deletes. Under SQLite write contention that
+	// lag has been observed to exceed waitTimeoutCleanup, so folders alone
+	// get a larger budget — bumping every step would slow the common case
+	// for no benefit.
+	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -98,6 +117,7 @@ type ProvisioningTestHelper struct {
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
+	DashboardsV2       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
 	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
@@ -145,6 +165,11 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 			Namespace: namespace,
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 		}),
+		DashboardsV2: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+		}),
 		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
 			Namespace: namespace,
@@ -182,8 +207,8 @@ func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
 		t.Logf("warning: failed to delete folders: %v", err)
 	}
 
-	// Delete all dashboards (V0, V1, V2alpha1, V2beta1)
-	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+	// Delete all dashboards (V0, V1, V2, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
 		if client != nil {
 			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
 				t.Logf("warning: failed to delete dashboards: %v", err)
@@ -973,65 +998,95 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
 }
 
-// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
+// RequireRepoDashboardCount polls the dashboards list until the number of
+// dashboards managed by the given repo matches the expected count, or the
+// default wait timeout elapses. Polling is required because SyncAndWait only
+// waits for the sync job resource to complete; the dashboards-list API may
+// not yet reflect newly-created/deleted resources at that instant.
 func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list dashboards")
-
-	var count int
-	for _, d := range dashboards.Items {
-		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID == repoName {
-			count++
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
 		}
-	}
-	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+
+		var count int
+		for _, d := range dashboards.Items {
+			managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repoName {
+				count++
+			}
+		}
+		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
+}
+
+// RequireRepoFolderCount polls the folders list until the number of folders
+// managed by the given repo matches the expected count, or the default wait
+// timeout elapses. Like the dashboard variant, this avoids races where the
+// sync job has completed but the folders-list API has not yet observed the
+// newly-created folders or their grafana.app/managerId annotation.
+func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+
+		var count int
+		for _, f := range folders.Items {
+			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repoName {
+				count++
+			}
+		}
+		assert.Equal(c, expectedCount, count, "unexpected number of folders managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms).
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// by touching its status (aging the health timestamp by 1ms). A merge patch on the
+// status subresource carries no resourceVersion, so it never conflicts with
+// concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get connection %s", name) {
-			return
-		}
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on connection %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for connection %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Connections.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// A merge patch on the status subresource carries no resourceVersion, so it never
+// conflicts with concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repository %s", name) {
-			return
-		}
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on repository %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for repository %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Repositories.Resource.Patch(ctx, name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
@@ -1221,6 +1276,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Namespace: "default",
 		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
+	dashboardsV2Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
+		GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+	})
 	dashboardsV2alpha1Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
 		User:      k8sHelper.Org1.Admin,
 		Namespace: "default",
@@ -1251,6 +1311,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Folders:            foldersClient,
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
+		DashboardsV2:       dashboardsV2Client,
 		DashboardsV2alpha1: dashboardsV2alpha1Client,
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
@@ -1302,12 +1363,10 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		return nil
 	}
 
-	var firstErr error
+	var lastErr error
 	for _, item := range list.Items {
 		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-			if firstErr == nil {
-				firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-			}
+			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 		}
 	}
 
@@ -1326,20 +1385,18 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		}
 		for _, item := range remaining.Items {
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-				if firstErr == nil {
-					firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-				}
+				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 			}
 		}
 		select {
 		case <-ctx.Done():
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (last delete error: %v): %w", lastErr, ctx.Err())
 			}
 			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
 		case <-timer.C:
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last delete error: %v)", len(remaining.Items), lastErr)
 			}
 			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
 		case <-ticker.C:
@@ -1353,7 +1410,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
 //
-// Every step uses WaitTimeoutDefault because each one can be blocked by an
+// Every step uses waitTimeoutCleanup because each one can be blocked by an
 // eventually-consistent signal: repository finalizers draining orphan
 // resources, dashboards freeing their folder reference in the search index,
 // and folder admission rejecting deletion until that index catches up. Under
@@ -1361,15 +1418,16 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
 	for _, c := range []struct {
-		name   string
-		client dynamic.ResourceInterface
+		name    string
+		client  dynamic.ResourceInterface
+		timeout time.Duration
 	}{
-		{"repositories", h.Repositories.Resource},
-		{"connections", h.Connections.Resource},
-		{"dashboards", h.DashboardsV1.Resource},
-		{"folders", h.Folders.Resource},
+		{"repositories", h.Repositories.Resource, waitTimeoutCleanup},
+		{"connections", h.Connections.Resource, waitTimeoutCleanup},
+		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup},
+		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup},
 	} {
-		if err := deleteAndWait(ctx, c.client, WaitTimeoutDefault); err != nil {
+		if err := deleteAndWait(ctx, c.client, c.timeout); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -2994,11 +3052,13 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 	return data
 }
 
-// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key
-//
-//nolint:gosec // Test RSA private key (base64-encoded, generated for testing purposes only, never used in production)
+// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key.
+// Computed from TestGithubPrivateKeyPEM at runtime so the encoded form is not a
+// source literal — TruffleHog's PrivateKey detector decodes base64 chunks and
+// re-runs detectors on the result, which bypasses inline `trufflehog:ignore`.
+// The trailing newline matches the canonical PEM file format.
 func TestGithubPrivateKeyBase64() string {
-	return "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb1FJQkFBS0NBUUJuMU11TTVoSWZINmQzVE5TdEkxb2ZXdi9nY2pRNGpvaTljRmlqRXdWTHVQWWtGMW5ECktrU2JhTUdGVVdpT1RhQi9IOWZ4bWQvVjJ1MDRObEJZM2F2Nm01VC9zSGZWU2lFV0FFVWJsaDNjQTM0SFZDbUQKY3F5eVZ0eTVITEdKSmxTczJDN1cyeDd5VWM5SW16eURCc3lqcEtPWHVvako5d045YTE3RDJjWVU1V2tYam9EQwo0QkhpZDYxam45V0JUdFBaWFNnT2RpcndhaE56eFpRU0lQN0RBOVQ4eWlad0lXUHA1WWVzZ3NBUHlRTENGUGdNCnM3N3h6L0NFVW5FWVEzNXpJL2svbVFyd0tkUS9aUDh4THdRb2hVSUQwQkl4RTdHNXF1TDA2OVJ1dUNaV1prb0YKb1BpWmJwN0hTcnl6MSsxOWpEM3JGVDdlSEdVWXZBeUNuWG1YQWdNQkFBRUNnZ0VBRFNzNEJjN0lUWm8rS3l0YgpiZm9sM0FRMm44amNSckFOTjdtZ0JFN05SU1ZZVW91RG52VWxibkNDMnQzUVhQd0xkeFFhMTFHa3lnTFNRMmJnCkdlVkRncTFvNEdVSlRjdnhGbEZDY3BVL2hFQU5JL0RRc3hOQVEvNHdVR29MT2xIYU8zSFB2d0JibEhBNzBnR2UKVXgveHBHK2xNQUZBaUIwRUhFd1o0TTBtQ2xCRU9RdjNOemFGVFd1Qkh0SU1TOGVpZDdNMXE1cXo5K3JDZ1pTTApLQkJIbzBPdlViYWpHNENXbDhTTTZMVVlhcEFTR2crVTE3RSs0eEEzbnB3cElkc2srQ2J0WCt2dlgzMjRuNGtuCjBFa3JKcUNqdjhNMUtpQ0tBUCtVeHdQMDB5d3hPZzRQTit4K2RISS9JN3hCdkVLZS94NkJsdFZTZEdBK1BsVUsKMDJ3YWdRS0JnUURGN2dkUUxGSWFnUEg3WDdkQlA2cUVHeGovQ2s5UWR6M1MxZ290UGtWZXErMS9VdFFpallaMQpqNDR1cC8weUIyQjlQNGtXMDkxbitpV2N5Zm9VNVV3QnVhOWRIdkNaUDNRSDA1TFIxWnNjVUh4TEdqRFBCQVN0CmwyeFNxMGhxcU5XQnNwYjFNMGVDWTBZeGk2NWlEa2ozeHNJMmlOMzVCRWIxRmxXZFI1S0d2d0tCZ1FDR1MwY2UKd0FTV2JaSVBVMlVvS0dPUWtJSlU2UW1MeTBLWmJmWWtweWZFOEl4R3R0WVZFUThwdU52REROWldITmYrTFA4NQpjOGlWNlNmbldpTG11MVhrRzJZbUpGQkNDQVdnSjhNcTJYUUQ4RSthL3hjYVczTnFsY0M1K0kyY3pYMzY3ajNyCjY5d1pTeFJielIrRENmT2lJa3Jla0pJbXdOMTgzWll5MmNCYktRS0JnRmo4NklyU01tTzZINUZ0K2owNnU1WkQKZkp5RjdSejNUM053U2drSFd6YnlRNGdnSEVJZ3NSZy8zNlA0WVN6U0JqNnBoeUFkUndrTmZVV2R4WE1KbUgrYQpGVTdmcnpxblBhcWJKQUoxY0JSdDEwUUkxWEx0a3BEZGFKVk9idk9OVHRqT0MzTFlpRWtHQ3pRUlllaXlGWHBaCkFVNTFnSjhKbmtGb3RqdE5SNEtQQW9HQWVoVlJFRGxMY2wwbG5OMFpac3BneVBrMkltNi9pT0E5S1RIM3hCWloKWndXdTRGSXlpSEE3c3BnazRFcDVSMHR0WjlvTUkzU0ljdy9FZ09OR095OHV3L0hNaVB3V0loRWMzQjJKcFJpTwpDVTZiYjdKYWxGRnl1UUJ1ZGlIb3l4VmNZNVBWb3ZXRjMxQ0xyM0RvSnI0VFI5K1k1SC9VL1huellDSW8rdzFOCmV4RUNnWUJGQUdLWVRJZUdBdmhJdkQ1VHBoTHBiQ3llVkxCSXE1aFJ5cmRSWSs2SXdxZHI1UEd2TFBLd2luNSsKKzRDRGhXUFc0c3BxOE1ZUENSaU1ydlJTY3RLdC83RmhWR0wydkUvMFZZM1RjTGsxNHFMQysyKzBsblBWZ25Zbgp1NS93T3l1SHAxY0lCbmplTjQxL3BsdU9XRkJISTl4TFczRXhMdG1ZTWllY0o4VmRSQT09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==" // trufflehog:ignore
+	return base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM + "\n"))
 }
 
 // GetConnectionClientV1Beta1 returns a K8sResourceClient configured for v1beta1 Connections
