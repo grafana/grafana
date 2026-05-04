@@ -190,6 +190,19 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			model.Services[routeName] = service
 		}
 
+		// Create a dedicated HTTP client for the Metrics Batch data-plane endpoint.
+		// It uses the metrics.monitor.azure.com audience, which is distinct from the
+		// ARM audience used by the "Azure Monitor" service above.
+		// Only created when the route is present (standard clouds); customized cloud
+		// users must supply the metricsDataPlane route themselves.
+		if _, ok := routesForModel[azureMonitorBatchMetrics]; ok {
+			batchService, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, azureMonitorBatchMetrics, logger)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[azureMonitorBatchMetrics] = batchService
+		}
+
 		return model, nil
 	}
 }
