@@ -188,7 +188,7 @@ function grafanaChannelConfigToFormChannelValues(
     type: channel.type as NotifierType,
     version: channel.version,
     provenance: channel.provenance,
-    settings: { ...channel.settings },
+    settings: structuredClone(channel.settings ?? {}),
     secureFields: { ...channel.secureFields },
     disableResolveMessage: channel.disableResolveMessage,
   };
