@@ -336,7 +336,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 // Snapshots with an unparseable GrafanaBuildVersion are excluded from any
 // version group; rule A still applies, but otherwise they are left untouched.
 // CleanupIncompleteUploads does NOT pick them up — it only targets prefixes
-// with missing or syntactically invalid meta.json, and an unparseable version
+// with missing or syntactically invalid snapshot manifest, and an unparseable version
 // string lives inside a structurally valid manifest. Rule A's age cutoff is
 // therefore the only mechanism that bounds their lifetime.
 //

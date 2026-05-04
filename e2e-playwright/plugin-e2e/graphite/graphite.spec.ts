@@ -8,7 +8,7 @@ test(
   async ({ createDataSourceConfigPage, page }) => {
     await createDataSourceConfigPage({ type: 'graphite' });
 
-    await expect(await page.getByText('Type: Graphite', { exact: true })).toBeVisible();
+    await expect(await page.getByText(/^Type\s*Graphite$/, { exact: true })).toBeVisible();
     await expect(await page.getByRole('heading', { name: 'HTTP', exact: true })).toBeVisible();
   }
 );

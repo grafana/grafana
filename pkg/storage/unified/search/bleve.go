@@ -407,11 +407,12 @@ func (b *bleveBackend) clearUploadTracking(key resource.NamespacedResource) {
 }
 
 const (
-	snapshotUploadCheckInterval       = 5 * time.Minute
-	snapshotUploadStatusSuccess       = "success"
-	snapshotUploadStatusSkipNoChanges = "skip_no_changes"
-	snapshotUploadStatusSkipLockHeld  = "skip_lock_contention"
-	snapshotUploadStatusError         = "error"
+	snapshotUploadCheckInterval          = 5 * time.Minute
+	snapshotUploadStatusSuccess          = "success"
+	snapshotUploadStatusSkipNoChanges    = "skip_no_changes"
+	snapshotUploadStatusSkipLockHeld     = "skip_lock_contention"
+	snapshotUploadStatusSkipRecentRemote = "skip_recent_remote"
+	snapshotUploadStatusError            = "error"
 )
 
 func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
@@ -457,9 +458,17 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 
 		start := time.Now()
 		if err := b.uploadSnapshot(ctx, key, idx); err != nil {
-			if errors.Is(err, errLockHeld) {
+			switch {
+			case errors.Is(err, errLockHeld):
 				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockHeld)
-			} else {
+			case errors.Is(err, errSkipRecentRemote):
+				// A recent remote upload covers this resource for the cross-instance
+				// dedup window. Update lastUploadTime so this replica's local probe
+				// also rate-limits to once per UploadInterval, and don't reset the
+				// mutation baseline — we didn't actually take a snapshot.
+				b.setUploadTracking(key, time.Now())
+				b.recordSnapshotUploadStatus(snapshotUploadStatusSkipRecentRemote)
+			default:
 				b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 				b.log.Warn("snapshot upload failed", "key", key, "err", err)
 			}

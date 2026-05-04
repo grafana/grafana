@@ -282,6 +282,210 @@ func TestCrud(t *testing.T) {
 	})
 }
 
+func TestUpdateOwnerReferences(t *testing.T) {
+	t.Parallel()
+
+	namespace := "ns1"
+	owner := common.ObjectReference{
+		APIGroup:   "prometheus.datasource.grafana.app",
+		APIVersion: "v0alpha1",
+		Kind:       "DataSource",
+		Name:       "test-ds",
+		Namespace:  namespace,
+	}
+
+	t.Run("update without owner references on either side does not require AccessPolicy identity", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+		require.Empty(t, sv1.OwnerReferences)
+
+		input := sv1.DeepCopy()
+		input.Spec.Description = "updated"
+
+		sv2, err := sut.UpdateSv(t.Context(), input)
+		require.NoError(t, err)
+		require.Equal(t, "updated", sv2.Spec.Description)
+	})
+
+	t.Run("update keeping the same owner reference does not require AccessPolicy identity", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.Len(t, sv1.OwnerReferences, 1)
+
+		input := sv1.DeepCopy()
+		input.Spec.Description = "updated"
+
+		sv2, err := sut.UpdateSv(t.Context(), input)
+		require.NoError(t, err)
+		require.Equal(t, "updated", sv2.Spec.Description)
+		require.Len(t, sv2.OwnerReferences, 1)
+	})
+
+	t.Run("adding an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context())
+			require.NoError(t, err)
+			require.Empty(t, sv1.OwnerReferences)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored for any other identity, owner references stay empty", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context())
+			require.NoError(t, err)
+			require.Empty(t, sv1.OwnerReferences)
+
+			input := sv1.DeepCopy()
+			input.Spec.Description = "updated"
+			input.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Empty(t, sv2.OwnerReferences)
+			// Other fields are still updated.
+			require.Equal(t, "updated", sv2.Spec.Description)
+		})
+	})
+
+	t.Run("removing an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = nil
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Empty(t, sv2.OwnerReferences)
+		})
+
+		t.Run("ignored for any other identity, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.Spec.Description = "updated"
+			input.OwnerReferences = nil
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+			require.Equal(t, "updated", sv2.Spec.Description)
+		})
+	})
+
+	t.Run("changing an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		differentOwner := common.ObjectReference{
+			APIGroup:   "prometheus.datasource.grafana.app",
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "other-ds",
+			Namespace:  namespace,
+		}
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, differentOwner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored for any other identity, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored when auth info is missing, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			sv2, err := sut.UpdateSv(t.Context(), input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
+	})
+}
+
 func Test_SetAsActive(t *testing.T) {
 	t.Parallel()
 
