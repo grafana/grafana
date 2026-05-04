@@ -189,6 +189,20 @@ func (s *Service) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return nil
 }
 
+func (s *Service) DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error {
+	err := s.authInfoStore.DeleteUserAuthInfoByModule(ctx, userID, authModule)
+	if err != nil {
+		return err
+	}
+
+	s.deleteUserAuthInfoInCache(ctx, &login.GetAuthInfoQuery{
+		UserId:     userID,
+		AuthModule: authModule,
+	})
+
+	return nil
+}
+
 func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery) {
 	if query.AuthId != "" {
 		err := s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{

@@ -15,9 +15,10 @@ type FakeService struct {
 	ExpectedRecentlyUsedLabel map[int64]string
 	ExpectedAuthModuleLabels  []string
 
-	SetAuthInfoFn        func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
-	UpdateAuthInfoFn     func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
-	DeleteUserAuthInfoFn func(ctx context.Context, userID int64) error
+	SetAuthInfoFn              func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
+	UpdateAuthInfoFn           func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
+	DeleteUserAuthInfoFn       func(ctx context.Context, userID int64) error
+	DeleteUserAuthInfoByModuleFn func(ctx context.Context, userID int64, authModule string) error
 }
 
 func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -52,6 +53,14 @@ func (a *FakeService) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthI
 func (a *FakeService) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	if a.DeleteUserAuthInfoFn != nil {
 		return a.DeleteUserAuthInfoFn(ctx, userID)
+	}
+
+	return a.ExpectedError
+}
+
+func (a *FakeService) DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error {
+	if a.DeleteUserAuthInfoByModuleFn != nil {
+		return a.DeleteUserAuthInfoByModuleFn(ctx, userID, authModule)
 	}
 
 	return a.ExpectedError

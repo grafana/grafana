@@ -41,6 +41,11 @@ type ResetUserPasswordForm struct {
 	ConfirmPassword user.Password `json:"confirmPassword"`
 }
 
+type AdminSetUserAuthInfoForm struct {
+	AuthModule string `json:"auth_module" binding:"Required"`
+	AuthId     string `json:"auth_id" binding:"Required"`
+}
+
 type UserLookupDTO struct {
 	UserID    int64  `json:"userId"`
 	UID       string `json:"uid"`

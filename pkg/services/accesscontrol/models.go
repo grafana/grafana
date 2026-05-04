@@ -367,6 +367,9 @@ const (
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
 	ActionUsersPermissionsRead   = "users.permissions:read"
+	// We can ignore gosec G101 since this does not contain any credentials.
+	// nolint:gosec
+	ActionUsersAuthInfoWrite = "users.authinfo:write"
 
 	// Org actions
 	ActionOrgsRead             = "orgs:read"
