@@ -418,7 +418,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -444,7 +446,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1', parentNodeId: 'parent1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -468,7 +472,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node2' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
@@ -494,7 +500,9 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1' }],
-          scopes: {},
+          scopes: {
+            scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+          },
         },
         {
           appliedScopes: [],
@@ -534,7 +542,7 @@ describe('ScopesService', () => {
     });
 
     describe('defaultPath support', () => {
-      it('should extract scope_node from defaultPath when available', () => {
+      it('should not write scope_node to URL when defaultPath is available', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
@@ -559,11 +567,12 @@ describe('ScopesService', () => {
           }
         );
 
-        // Should use 'correct-node' from defaultPath, not 'old-node' from appliedScopes
+        // When defaultPath is available, scope_node is redundant (it is re-derived
+        // from defaultPath on load), so the URL param is cleared.
         expect(locationService.partial).toHaveBeenCalledWith(
           {
             scopes: ['scope1'],
-            scope_node: 'correct-node',
+            scope_node: null,
             scope_parent: null,
           },
           true
@@ -641,10 +650,54 @@ describe('ScopesService', () => {
         );
       });
 
-      it('should detect changes in defaultPath-derived scopeNodeId', () => {
+      it('should clear stale scope_node when scope metadata loads with defaultPath', () => {
         if (!selectorStateSubscription) {
           throw new Error('selectorStateSubscription not set');
         }
+
+        jest.clearAllMocks();
+
+        // Simulates the second emit in applyScopes: the first emit ran while
+        // scope metadata was still loading (so the subscription fell through
+        // to firstScope.scopeNodeId and a stale value may have been written
+        // to the URL). Once metadata loads and defaultPath becomes visible,
+        // the subscription must fire with scope_node: null to clear it.
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'stale-node' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: ['', 'parent', 'derived-node'],
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'stale-node' }],
+            scopes: {},
+          }
+        );
+
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: null,
+            scope_parent: null,
+          },
+          true
+        );
+      });
+
+      it('should not update URL when only defaultPath changes and scopes are unchanged', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        jest.clearAllMocks();
 
         selectorStateSubscription(
           {
@@ -675,15 +728,9 @@ describe('ScopesService', () => {
           }
         );
 
-        // Should detect the change in defaultPath-derived scopeNodeId
-        expect(locationService.partial).toHaveBeenCalledWith(
-          {
-            scopes: ['scope1'],
-            scope_node: 'new-node',
-            scope_parent: null,
-          },
-          true
-        );
+        // scope_node is no longer synced when defaultPath is present, so a
+        // defaultPath-only change does not trigger a URL update.
+        expect(locationService.partial).not.toHaveBeenCalled();
       });
     });
 
@@ -907,6 +954,9 @@ describe('ScopesService', () => {
 
     it('should sync scopeNodeId when enabling scopes', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
 
       service.setEnabled(true);
 
@@ -920,6 +970,9 @@ describe('ScopesService', () => {
 
     it('should reset scope_parent when enabling scopes', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {
+        scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+      };
 
       service.setEnabled(true);
 
@@ -931,7 +984,21 @@ describe('ScopesService', () => {
       );
     });
 
-    it('should use defaultPath for scope_node when enabling scopes', () => {
+    it('should defer URL write when scope metadata has not loaded', () => {
+      // setEnabled is called from `@grafana/scenes` during dashboard mount,
+      // which can race with applyScopes. If metadata is not loaded yet, the
+      // helper would fall through to firstScope.scopeNodeId — a value that
+      // the URL-sync subscription is about to settle to a different state.
+      // Defer to avoid the race-write.
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'node1' }];
+      selectorService.state.scopes = {};
+
+      service.setEnabled(true);
+
+      expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    it('should clear scope_node when enabling scopes for a scope with defaultPath', () => {
       selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'old-node' }];
       selectorService.state.scopes = {
         scope1: {
@@ -946,10 +1013,11 @@ describe('ScopesService', () => {
 
       service.setEnabled(true);
 
-      // Should use defaultPath instead of scopeNodeId from appliedScopes
+      // When defaultPath is available, scope_node is redundant and should be
+      // cleared from the URL (passing null removes any stale value).
       expect(locationService.partial).toHaveBeenCalledWith(
         expect.objectContaining({
-          scope_node: 'correct-node-from-defaultPath',
+          scope_node: null,
         }),
         true
       );
