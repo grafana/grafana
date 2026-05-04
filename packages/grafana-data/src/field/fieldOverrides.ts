@@ -241,56 +241,19 @@ export function applyFieldOverrides(
       );
 
       if (field.type === FieldType.nestedFrames) {
-        const newValues: DataFrame[][] = Array(field.values.length);
-        for (let idx = 0; idx < field.values.length; idx++) {
-          const nestedFrames: DataFrame[] = field.values[idx];
-          for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
-            const nestedFrame = nestedFrames[nfIndex];
-            for (const valueField of nestedFrame.fields) {
-              // Get display processor for nested fields
-              valueField.display = getDisplayProcessor({
-                field: valueField,
-                theme: options.theme,
-                timeZone: options.timeZone,
-              });
-
-              valueField.state = {
-                scopedVars: {
-                  __dataContext: {
-                    value: {
-                      data: nestedFrames,
-                      frame: nestedFrame,
-                      frameIndex: nfIndex,
-                      field: valueField,
-                    },
-                  },
-                },
-              };
-
-              valueField.getLinks = getLinksSupplier(
-                nestedFrame,
-                valueField,
-                valueField.state?.scopedVars ?? {},
-                context.replaceVariables,
-                options.timeZone,
-                options.dataLinkPostProcessor
-              );
-            }
-          }
-          newValues[idx] = applyFieldOverrides(options, nestedFrames, 'nested');
-        }
-        field.values = newValues;
+        field.values = field.values.map((v) => applyFieldOverrides(options, v, 'nested'));
       } else if (field.type === FieldType.frame) {
         const newValues: DataFrame[] = Array(field.values.length);
         for (let idx = 0; idx < field.values.length; idx++) {
+          // ensure no null frames lead to thrown errors
           const nestedFrame: DataFrame = field.values[idx] ?? createDataFrame({ fields: [] });
-          for (let fieldIndex = 0; fieldIndex < nestedFrame.fields.length; fieldIndex++) {
-            const valueField = nestedFrame.fields[fieldIndex];
-            valueField.config = defaultsDeep(valueField.config || {}, config);
+          // merge default config into the frame field config before applying overrides
+          for (const valueField of nestedFrame.fields) {
+            valueField.config ??= {};
+            valueField.config = defaultsDeep(valueField.config, config);
           }
           newValues[idx] = nestedFrame;
         }
-        // @todo should this be scoped?
         field.values = applyFieldOverrides(options, newValues);
       }
     }
