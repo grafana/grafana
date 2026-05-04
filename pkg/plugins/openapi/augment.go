@@ -9,14 +9,15 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
+
+const app_INSTANCE_NAME = "instance"
 
 type PluginOptions struct {
 	Schema *pluginschema.PluginSchema
@@ -67,16 +68,15 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 				},
 			}
 
-			// The example needs an instance name configured
-			example := apppluginV0.Settings{
-				ObjectMeta: v1.ObjectMeta{
-					Name: apppluginV0.INSTANCE_NAME,
-				},
-				Spec: apppluginV0.SettingsSpec{
-					Enabled:  true,
-					Pinned:   true,
-					JsonData: common.Unstructured{
-						// from examples....
+			example := unstructured.Unstructured{
+				Object: map[string]any{
+					"meta": map[string]any{
+						"name": app_INSTANCE_NAME,
+					},
+					"spec": map[string]any{
+						"enabled": true,
+						"pinned":  true,
+						// JSONData (from examples)
 					},
 				},
 			}
@@ -180,7 +180,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 		}
 
 		// Replace the {name} property with /instance path
-		appRoutePrefix := opts.Path + "/" + apppluginV0.INSTANCE_NAME
+		appRoutePrefix := opts.Path + "/" + app_INSTANCE_NAME
 		for k, v := range oas.Paths.Paths {
 			if strings.HasPrefix(k, routePrefix) {
 				delete(oas.Paths.Paths, k)
