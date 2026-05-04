@@ -7,8 +7,8 @@ import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 
 import { getSettingsMapper } from './mappers/mappers';
-import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './settings';
 import { type Settings as v0alpha1Settings } from './types';
+import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
   const options = showErrorAlert ? { showErrorAlert, validatePath: true } : { validatePath: true };

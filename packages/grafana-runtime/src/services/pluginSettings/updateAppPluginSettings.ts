@@ -11,8 +11,8 @@ import { refetchPluginMeta } from '../pluginMeta/plugins';
 import { getSettingsMapper } from './mappers/mappers';
 import { inlineSecureValuesMapper, settingsSpecMapper } from './mappers/v0alpha1SettingsMapper';
 import { refetchCachedAppSettings, refetchCachedLegacySettings } from './refetchPluginSettings';
-import { getApiVersion, getCacheKey, getNamespace } from './settings';
 import { type Settings as v0alpha1Settings } from './types';
+import { getApiVersion, getCacheKey, getNamespace } from './utils';
 
 function updateLegacySettings(id: string, data: Partial<PluginMeta>): Promise<void> {
   return getBackendSrv().post<void>(`/api/plugins/${id}/settings`, data, { validatePath: true });

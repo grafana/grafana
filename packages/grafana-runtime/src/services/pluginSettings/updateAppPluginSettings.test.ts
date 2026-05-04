@@ -15,6 +15,7 @@ import {
 } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
+import { getCacheKey } from './utils';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -192,7 +193,7 @@ describe('settings', () => {
           secureJsonFields: { apiKey: true, password: false },
         });
         const cached = await getCachedPromise(async () => ({}) as v0alpha1Settings, {
-          cacheKey: 'getAppPluginSettings-myorg-test-app',
+          cacheKey: getCacheKey('myorg-test-app'),
         });
 
         expect(before).not.toBe(cached);
