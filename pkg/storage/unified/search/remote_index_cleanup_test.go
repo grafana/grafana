@@ -501,6 +501,12 @@ func (s *recordingStore) ListIndexes(ctx context.Context, r resource.NamespacedR
 	s.mu.Unlock()
 	return s.inner.ListIndexes(ctx, r)
 }
+func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *recordingStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
+}
 func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
 	s.deleteIndex[r.Namespace]++
@@ -621,6 +627,12 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 }
 func (s *controllableLockStore) ListIndexes(ctx context.Context, r resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	return s.inner.ListIndexes(ctx, r)
+}
+func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeys(ctx, r)
+}
+func (s *controllableLockStore) GetIndexMeta(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	return s.inner.GetIndexMeta(ctx, r, k)
 }
 func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, r, k)
