@@ -169,7 +169,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Metrics:               alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
 		NotificationHistorian: notificationHistorian,
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		BuildWithManifestBuilder: !featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingV0ReceiversAsLegacy),
+		BuildWithManifestBuilder: !featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion),
 	}
 
 	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)

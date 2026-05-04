@@ -89,7 +89,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	}
 	preparedConfig := mergeResult.Config
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingV0ReceiversAsLegacy) {
+	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDisableV0ReceiverConversion) {
 		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
 	} else {
 		converted, failed := 0, 0

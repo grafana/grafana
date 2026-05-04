@@ -727,7 +727,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				flags = append(flags, featuremgmt.FlagAlertingMultiplePolicies)
 			}
 			if test.legacyMimirReceivers {
-				flags = append(flags, featuremgmt.FlagAlertingV0ReceiversAsLegacy)
+				flags = append(flags, featuremgmt.FlagAlertingDisableV0ReceiverConversion)
 			}
 			features := featuremgmt.WithFeatures(flags...)
 			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
@@ -787,7 +787,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 // TestCompareAndSendConfigurationConvertsMimirReceivers exercises the same
 // extra-configurations cases as TestCompareAndSendConfiguration but with the
-// FlagAlertingV0ReceiversAsLegacy disabled, so that PrepareConfig converts
+// FlagAlertingDisableV0ReceiverConversion disabled, so that PrepareConfig converts
 // V0/Mimir receivers to Grafana managed receivers. Asserts on the converted
 // receiver structure rather than the full byte-level config diff (which is
 // affected by the encryption pass re-marshaling settings).
@@ -1167,7 +1167,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingV0ReceiversAsLegacy), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableV0ReceiverConversion), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := json.Marshal(cfg)

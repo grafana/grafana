@@ -40,7 +40,7 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
 			"alertingImportAlertmanagerAPI",
-			"alerting.v0ReceiversAsLegacy",
+			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})
@@ -156,7 +156,7 @@ func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
 			"alertingImportAlertmanagerAPI",
-			"alerting.v0ReceiversAsLegacy",
+			"alerting.disableV0ReceiverConversion",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
 	})
