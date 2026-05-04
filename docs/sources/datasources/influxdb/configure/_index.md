@@ -50,7 +50,7 @@ To configure the InfluxDB data source, you must have the `Administrator` role.
 InfluxData provides three query languages:
 
 - **SQL** - Standard SQL query language for InfluxDB 3.x and newer cloud products (Cloud Serverless, Cloud Dedicated, Clustered). InfluxData recommends SQL for new deployments. It supports JOINs, subqueries, and standard SQL functions. Refer to [InfluxDB SQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for the full list of supported statements, operators, and functions.
-- **InfluxQL** - A SQL-like query language developed by InfluxData, available across all InfluxDB versions. InfluxQL doesn't support advanced functions such as JOINs. Refer to the [InfluxQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/influxql/) for details.
+- **InfluxQL** - An SQL-like query language developed by InfluxData, available across all InfluxDB versions. InfluxQL doesn't support advanced functions such as JOINs. Refer to the [InfluxQL reference](https://docs.influxdata.com/influxdb/cloud-serverless/reference/influxql/) for details.
 - **Flux** - A functional data scripting language for InfluxDB 2.x. Flux is not supported on InfluxDB 3.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide.
 
 {{< admonition type="note" >}}

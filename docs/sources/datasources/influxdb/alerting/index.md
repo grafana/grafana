@@ -96,7 +96,7 @@ Set the condition to alert when the mean value exceeds 85.
 
 ### SQL: Alert on disk usage
 
-Monitor disk usage with a SQL query:
+Monitor disk usage with an SQL query:
 
 ```sql
 SELECT $__dateBin(time), mean(used_percent)

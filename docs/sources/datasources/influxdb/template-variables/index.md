@@ -79,7 +79,7 @@ schema.tagValues(bucket: v.defaultBucket, tag: "hostname")
 
 ### SQL query variable examples
 
-For SQL-configured data sources (InfluxDB 3.x), write a SQL query that returns a single column of values:
+For SQL-configured data sources (InfluxDB 3.x), write an SQL query that returns a single column of values:
 
 ```sql
 SELECT DISTINCT hostname FROM cpu
