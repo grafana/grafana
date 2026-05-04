@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,21 +45,20 @@ var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features             featuremgmt.FeatureToggles
-	namespacer           request.NamespaceMapper
 	storage              grafanarest.Storage
 	permissionStore      PermissionStore
 	accessClient         authlib.AccessClient
 	parents              parentsGetter
 	searcher             resourcepb.ResourceIndexClient
-	permissionsOnCreate  bool
 	maxNestedFolderDepth int
+
+	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
 
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
 	acService              accesscontrol.Service
-	ac                     accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -75,13 +73,11 @@ func RegisterAPIService(cfg *setting.Cfg,
 	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		features:             features,
-		namespacer:           request.GetNamespaceMapper(cfg),
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
-		ac:                   accessControl,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
+		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
@@ -92,7 +88,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		features:               features,
+		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
@@ -186,7 +182,6 @@ func (b *FolderAPIBuilder) storageForVersion(
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
-			features:             b.features,
 			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
@@ -334,8 +329,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+	if b.useZanzana {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate
 		store.BeginUpdate = b.beginUpdate

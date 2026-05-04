@@ -67,7 +67,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return nil, err
 	}
 
-	// Can view is managed here (and in the Authorizer)
+	// Can view is managed by both the authorizer and the storage layer
 	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -76,37 +76,56 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	if err != nil {
 		return nil, err
 	}
-	var tmp authlib.CheckResponse
-	check := func(verb string) bool {
-		if err != nil {
-			return false
-		}
-		tmp, err = r.accessClient.Check(ctx, user, authlib.CheckRequest{
-			Verb:      verb,
-			Group:     foldersV1.GROUP,
-			Resource:  foldersV1.RESOURCE,
-			Namespace: ns.Value,
-			Name:      name,
-		}, obj.GetFolder())
-		return tmp.Allowed
+
+	folder := obj.GetFolder()
+	results, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: ns.Value,
+		Checks: []authlib.BatchCheckItem{{
+			CorrelationID: "canAdmin",
+			Verb:          utils.VerbSetPermissions,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canDelete",
+			Verb:          utils.VerbDelete,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canEdit",
+			Verb:          utils.VerbUpdate,
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,
+			Folder:        folder,
+		}, {
+			CorrelationID: "canSave",
+			Verb:          utils.VerbCreate, // new folder in the parent one
+			Group:         foldersV1.GROUP,
+			Resource:      foldersV1.RESOURCE,
+			Name:          name,   // ?? seems weird, but removing it breaks a test
+			Folder:        folder, // Create a new folder in the parent folder
+		}},
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	rsp := &foldersV1.FolderAccessInfo{}
-	rsp.CanAdmin = check(utils.VerbSetPermissions)
-	if err != nil {
-		return nil, err
+	check := func(key string) bool {
+		v, ok := results.Results[key]
+		if ok {
+			return v.Allowed
+		}
+		return false
 	}
-	rsp.CanDelete = rsp.CanAdmin || check(utils.VerbDelete)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanEdit = rsp.CanAdmin || check(utils.VerbUpdate)
-	if err != nil {
-		return nil, err
-	}
-	rsp.CanSave = rsp.CanAdmin || check(utils.VerbCreate) // or the same as update?
-	if err != nil {
-		return nil, err
-	}
-	return rsp, nil
+	isAdmin := check("canAdmin")
+	return &foldersV1.FolderAccessInfo{
+		CanAdmin:  isAdmin,
+		CanDelete: isAdmin || check("canDelete"),
+		CanEdit:   isAdmin || check("canEdit"),
+		CanSave:   isAdmin || check("canSave"),
+	}, nil
 }

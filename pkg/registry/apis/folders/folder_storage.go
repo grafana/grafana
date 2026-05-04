@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -43,7 +42,6 @@ type folderStorage struct {
 	tableConverter rest.TableConvertor
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
-	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
 }
