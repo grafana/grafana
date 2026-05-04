@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type EmbeddedDashboardProps } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
+import { SceneObjectStateChangedEvent, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -42,7 +42,7 @@ interface RendererProps extends EmbeddedDashboardProps {
   model: DashboardScene;
 }
 
-function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
+function EmbeddedDashboardRenderer({ model, initialState, onStateChange, hideControls, timeRange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
@@ -59,15 +59,18 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
 
+  useSyncExternalTimeRange(model, timeRange);
   useSubscribeToEmbeddedUrlState(onStateChange, model);
 
   if (!isActive) {
     return null;
   }
 
+  const showControls = !hideControls && controls;
+
   return (
-    <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
-      {controls && (
+    <div className={cx(styles.canvas, showControls && styles.canvasWithControls)}>
+      {showControls && (
         <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
@@ -77,6 +80,24 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
       </div>
     </div>
   );
+}
+
+function useSyncExternalTimeRange(
+  model: DashboardScene,
+  timeRange: EmbeddedDashboardProps['timeRange']
+) {
+  useEffect(() => {
+    if (!timeRange) {
+      return;
+    }
+
+    const sceneTimeRange = sceneGraph.getTimeRange(model);
+    const { from: currentFrom, to: currentTo } = sceneTimeRange.state;
+
+    if (currentFrom !== timeRange.from || currentTo !== timeRange.to) {
+      sceneTimeRange.setState({ from: timeRange.from, to: timeRange.to });
+    }
+  }, [model, timeRange?.from, timeRange?.to]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void) | undefined, model: DashboardScene) {
