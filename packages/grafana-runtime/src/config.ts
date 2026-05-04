@@ -232,6 +232,8 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  postHogToken?: string;
+  postHogHost?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
