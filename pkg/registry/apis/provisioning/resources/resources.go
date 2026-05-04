@@ -415,6 +415,11 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if err := oldParsed.DryRun(ctx); err != nil {
 			return "", "", schema.GroupVersionKind{}, err
 		}
+		// In-place rename: the resource already exists in the cluster, so a
+		// path/folder change must not be blocked by strict schema validation
+		// of an unchanged spec (e.g. a legacy dashboard saved before stricter
+		// CUE schemas were enforced).
+		newParsed.SkipStrictValidation = true
 	}
 
 	oldFolderName := oldParsed.ExistingFolder()
