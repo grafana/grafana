@@ -319,71 +319,97 @@ Grafana sets defaults that are shown in dark gray text.
 Changes are displayed in white text.
 To return a field to the default setting, delete the white text from the field.
 
-Panel data source query options include:
+The following sections describe the panel data source query options.
 
-- **Max data points** - If the data source supports it, this sets the maximum number of data points for each series returned.
-  If the query returns more data points than the max data points setting, then the data source reduces the number of points returned by aggregating them together by average, max, or another function.
+### Max data points
 
-  You can limit the number of points to improve query performance or smooth the visualized line.
-  The default value is the width (or number of pixels) of the graph, because you can only visualize as many data points as the graph panel has room to display.
+If the data source supports it, this sets the maximum number of data points for each series returned.
 
-  With streaming data, Grafana uses the max data points value for the rolling buffer.
-  Streaming is a continuous flow of data, and buffering divides the stream into chunks.
-  For example, Loki streams data in its live tailing mode.
+If the query returns more data points than the max data points setting, then the data source reduces the number of points returned by aggregating them together by average, max, or another function.
 
-- **Min interval** - Sets a minimum limit for the automatically calculated interval, which is typically the minimum scrape interval.
-  If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
-  You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
+You can limit the number of points to improve query performance or smooth the visualized line.
+The default value is the width (or number of pixels) of the graph, because you can only visualize as many data points as the graph panel has room to display.
 
-  {{< admonition type="note" >}}
-  The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
-  {{< /admonition >}}
+Because the default depends on the panel's pixel width, the same dashboard can show different query results depending on the panel's size on screen.
+When you click **View** in the panel menu, the panel expands to fill the window.
+This doesn't change the dashboard's grid layout, but it gives the panel more pixels with which to render.
+With more pixels, Grafana can request more data points, which increases the resolution and reduces the step size between points.
+As a result, the same query can return a more detailed series in view mode than inline in the dashboard.
 
-- **Interval** - Sets a time span that you can use when aggregating or grouping data points by time.
+To get a consistent query result in both views, set **Max data points** to a fixed value.
+For example, if you set **Max data points** to `100`, Grafana requests at most 100 points regardless of the panel's pixel width, so the query resolution stays the same whether the panel is in the dashboard or in view mode.
 
-  Grafana automatically calculates an appropriate interval that you can use as a variable in templated queries.
-  The variable is measured in either seconds (`$__interval`) or milliseconds (`$__interval_ms`).
+With streaming data, Grafana uses the max data points value for the rolling buffer.
+Streaming is a continuous flow of data, and buffering divides the stream into chunks.
+For example, Loki streams data in its live tailing mode.
 
-  Intervals are typically used in aggregation functions like sum or average.
-  For example, this is a Prometheus query that uses the interval variable: `rate(http_requests_total[$__interval])`.
+### Min interval
 
-  This automatic interval is calculated based on the width of the graph.
-  As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
-  Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
+Sets a minimum limit for the automatically calculated interval, which is typically the minimum scrape interval.
 
-  For more information, refer to [Global variables](ref:global-variables).
+If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
+You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
 
-- **Relative time** - Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
-  You can use this to show metrics from different time periods or days on the same dashboard.
+{{< admonition type="note" >}}
+The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
+{{< /admonition >}}
 
-  {{< admonition type="note">}}
-  Panel time overrides have no effect when the dashboard's time range is absolute.
-  {{< /admonition >}}
+### Interval
 
-  | Example          | Relative time field |
-  | ---------------- | ------------------- |
-  | Last 5 minutes   | `now-5m`            |
-  | The day so far   | `now/d`             |
-  | Last 5 days      | `now-5d/d`          |
-  | This week so far | `now/w`             |
-  | Last 2 years     | `now-2y/y`          |
+Sets a time span that you can use when aggregating or grouping data points by time.
+
+Grafana automatically calculates an appropriate interval that you can use as a variable in templated queries.
+The variable is measured in either seconds (`$__interval`) or milliseconds (`$__interval_ms`).
+
+Intervals are typically used in aggregation functions like sum or average.
+For example, this is a Prometheus query that uses the interval variable: `rate(http_requests_total[$__interval])`.
+
+This automatic interval is calculated based on the width of the graph.
+As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
+Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
+
+For more information, refer to [Global variables](ref:global-variables).
+
+### Relative time
+
+Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
+
+You can use this to show metrics from different time periods or days on the same dashboard.
+
+{{< admonition type="note">}}
+Panel time overrides have no effect when the dashboard's time range is absolute.
+{{< /admonition >}}
+
+| Example          | Relative time field |
+| ---------------- | ------------------- |
+| Last 5 minutes   | `now-5m`            |
+| The day so far   | `now/d`             |
+| Last 5 days      | `now-5d/d`          |
+| This week so far | `now/w`             |
+| Last 2 years     | `now-2y/y`          |
 
 {{< docs/play title="Time range override" url="https://play.grafana.org/d/000000041/" >}}
 
-- **Time shift** - Overrides the time range for individual panels by shifting its start and end relative to the time picker.
-  For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
+### Time shift
 
-  {{< admonition type="note">}}
-  Panel time overrides have no effect when the dashboard's time range is absolute.
-  {{< /admonition >}}
+Overrides the time range for individual panels by shifting its start and end relative to the time picker.
 
-  | Example              | Time shift field |
-  | -------------------- | ---------------- |
-  | Last entire week     | `1w/w`           |
-  | Two entire weeks ago | `2w/w`           |
-  | Last entire month    | `1M/M`           |
-  | This entire year     | `1d/y`           |
-  | Last entire year     | `1y/y`           |
+For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
 
-- **Cache timeout** - _(Visible only if available in the data source)_ Overrides the default cache timeout if your time series store has a query cache.
-  Specify this value as a numeric value in seconds.
+{{< admonition type="note">}}
+Panel time overrides have no effect when the dashboard's time range is absolute.
+{{< /admonition >}}
+
+| Example              | Time shift field |
+| -------------------- | ---------------- |
+| Last entire week     | `1w/w`           |
+| Two entire weeks ago | `2w/w`           |
+| Last entire month    | `1M/M`           |
+| This entire year     | `1d/y`           |
+| Last entire year     | `1y/y`           |
+
+### Cache timeout
+
+_(Visible only if available in the data source)_ Overrides the default cache timeout if your time series store has a query cache.
+
+Specify this value as a numeric value in seconds.
