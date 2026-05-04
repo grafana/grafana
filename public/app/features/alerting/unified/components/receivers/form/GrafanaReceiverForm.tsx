@@ -43,13 +43,13 @@ const baseDefaultChannelValues = {
   // when the integration is created/type is changed. The backend will use its default if not provided.
 };
 
-interface Props {
+export interface GrafanaReceiverFormProps {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
 }
 
-export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
+export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: GrafanaReceiverFormProps) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
@@ -100,23 +100,28 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
 
-    if (editMode) {
-      if (contactPoint && contactPoint.id) {
-        await updateContactPoint.execute({
-          contactPoint: newReceiver,
-          id: contactPoint.id,
-          resourceVersion: contactPoint?.metadata?.resourceVersion,
-        });
-      } else if (contactPoint) {
-        await updateContactPoint.execute({
-          contactPoint: newReceiver,
-          originalName: contactPoint.name,
-        });
+    try {
+      if (editMode) {
+        if (contactPoint && contactPoint.id) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            id: contactPoint.id,
+            resourceVersion: contactPoint?.metadata?.resourceVersion,
+          });
+        } else if (contactPoint) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            originalName: contactPoint.name,
+          });
+        }
+      } else {
+        await createContactPoint.execute({ contactPoint: newReceiver });
       }
-    } else {
-      await createContactPoint.execute({ contactPoint: newReceiver });
+      locationService.push('/alerting/notifications');
+    } catch (error) {
+      // Propagate so ReceiverForm can show notifyApp.error with the backend message
+      throw error;
     }
-    locationService.push('/alerting/notifications');
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {

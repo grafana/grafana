@@ -16,6 +16,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ContactPointInstanceDrawerDetails } from 'app/features/alerting/unified/triage/instance-details/ContactPointInstanceDrawerDetails';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -272,9 +273,16 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   pageSize?: number;
+  /** True when this list is rendered inside the alert instance contact-point drawer: single-row compact layout + headers use new-tab full edit; multi-row passes the flag through to each `ContactPoint`. */
+  contactPointFromInstanceDrawer?: boolean;
 }
 
-const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
+export const ContactPointsList = ({
+  contactPoints,
+  search,
+  pageSize = DEFAULT_PAGE_SIZE,
+  contactPointFromInstanceDrawer,
+}: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
@@ -287,7 +295,17 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} />;
+        const singleInstanceDrawer = Boolean(contactPointFromInstanceDrawer && pageItems.length === 1);
+        if (singleInstanceDrawer) {
+          return <ContactPointInstanceDrawerDetails key={key} contactPoint={contactPoint} />;
+        }
+        return (
+          <ContactPoint
+            key={key}
+            contactPoint={contactPoint}
+            contactPointFromInstanceDrawer={contactPointFromInstanceDrawer}
+          />
+        );
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>

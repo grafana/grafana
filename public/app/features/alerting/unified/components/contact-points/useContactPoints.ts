@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -15,7 +16,11 @@ import { useOnCallIntegration } from 'app/features/alerting/unified/components/r
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { receiverConfigToK8sIntegration, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  receiverConfigToK8sIntegration,
+  shouldUseK8sApi,
+  stringifyFieldSelector,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -80,7 +85,8 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   }, [installed, loading, oncallIntegrationsResponse]);
 };
 
-const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
+/** Maps a notifications API `Receiver` to the unified contact point shape (also used after save mutations). */
+export function parseK8sReceiver(item: K8sReceiver): GrafanaManagedContactPoint {
   const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
   const provenance = metadataProvenance === KnownProvenance.None ? undefined : metadataProvenance;
 
@@ -91,7 +97,7 @@ const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
     grafana_managed_receiver_configs: item.spec.integrations,
     metadata: item.metadata,
   };
-};
+}
 
 const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListReceiverQuery>) => {
   return useListReceiverQuery(hookParams, {
@@ -209,37 +215,132 @@ const useGetAlertmanagerContactPoint = (
 };
 
 /**
- * Fetch single contact point via the k8s API, or the alertmanager config
+ * Load one Grafana-managed receiver via `GET .../receivers/{name}`.
+ * If `name` is a display title and the live resource id is `base64UrlEncode(title)`, the GET may 404; we then
+ * list with `metadata.name = base64UrlEncode(name)` (same resolution as the notifications UI).
  */
 const useGetGrafanaContactPoint = (
   { name }: { name: string },
   queryOptions?: Parameters<typeof useGetReceiverQuery>[1]
 ) => {
-  return useGetReceiverQuery(
-    { name },
+  const skipBase = Boolean(queryOptions?.skip || !name);
+
+  const primary = useGetReceiverQuery({ name }, { ...queryOptions, skip: skipBase });
+
+  const parsedFromPrimary = primary.isSuccess && primary.data ? parseK8sReceiver(primary.data) : undefined;
+
+  // Do not require `primary.isFetched`: for this endpoint, RTK Query can report `isFetched: false` on a failed GET
+  // while `isError` is true, which would block the list fallback and leave the 404 visible to consumers.
+  const needsEncodedNameLookup = !skipBase && !parsedFromPrimary && primary.isError;
+
+  const listQuery = useListReceiverQuery(
     {
-      ...queryOptions,
-      selectFromResult: (result) => {
-        const data = result.data ? parseK8sReceiver(result.data) : undefined;
-        return {
-          ...result,
-          data,
-          currentData: data,
-        };
-      },
-      skip: queryOptions?.skip,
+      fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(name)]]),
+    },
+    {
+      skip: skipBase || !needsEncodedNameLookup,
     }
   );
+
+  const parsedFromList = listQuery.data?.items?.[0] ? parseK8sReceiver(listQuery.data.items[0]) : undefined;
+
+  return useMemo(() => {
+    if (skipBase) {
+      return primary;
+    }
+
+    if (parsedFromPrimary) {
+      return {
+        ...primary,
+        data: parsedFromPrimary,
+        currentData: parsedFromPrimary,
+        isLoading: primary.isLoading || primary.isFetching,
+        isSuccess: true,
+        isError: false,
+        error: undefined,
+      };
+    }
+
+    if (needsEncodedNameLookup) {
+      if (parsedFromList) {
+        return {
+          ...listQuery,
+          data: parsedFromList,
+          currentData: parsedFromList,
+          isLoading: listQuery.isLoading || listQuery.isFetching,
+          isSuccess: true,
+          isError: false,
+          error: undefined,
+        };
+      }
+      // Until the list request settles, avoid surfacing the primary GET error (e.g. 404 when `name` is a title).
+      // Use `status` — `isFetched` is absent on some RTK Query union members (e.g. uninitialized).
+      const listRequestCompleted = listQuery.status === 'fulfilled' || listQuery.status === 'rejected';
+      if (!listRequestCompleted) {
+        return {
+          ...listQuery,
+          data: undefined,
+          currentData: undefined,
+          isLoading: true,
+          isSuccess: false,
+          isError: false,
+          error: undefined,
+        };
+      }
+      return {
+        ...listQuery,
+        data: undefined,
+        currentData: undefined,
+        isLoading: false,
+        isSuccess: false,
+        isError: Boolean(listQuery.isError || primary.isError),
+        error: listQuery.error ?? primary.error,
+      };
+    }
+
+    if (primary.isLoading || primary.isFetching) {
+      return {
+        ...primary,
+        data: undefined,
+        currentData: undefined,
+        isLoading: true,
+        isSuccess: false,
+        isError: false,
+        error: undefined,
+      };
+    }
+
+    return {
+      ...primary,
+      data: undefined,
+      currentData: undefined,
+      isLoading: false,
+      isSuccess: false,
+      isError: primary.isError,
+      error: primary.error,
+    };
+  }, [skipBase, primary, parsedFromPrimary, needsEncodedNameLookup, listQuery, parsedFromList]);
 };
 
-export const useGetContactPoint = ({ alertmanager, name }: { alertmanager: string; name: string }) => {
+export interface UseGetContactPointArgs {
+  alertmanager: string;
+  /**
+   * For Grafana-managed (K8s) contact points, the path segment is the live `metadata.name` for that object
+   * (see `parseK8sReceiver` / list `id`); it is not the same as the display `spec.title` when the name was
+   * generated for the store.
+   */
+  name: string;
+  skip?: boolean;
+}
+
+export function useGetContactPoint({ alertmanager, name, skip: skipQuery }: UseGetContactPointArgs) {
   const isGrafana = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const grafanaResponse = useGetGrafanaContactPoint({ name }, { skip: !isGrafana });
-  const alertmanagerResponse = useGetAlertmanagerContactPoint({ alertmanager, name }, { skip: isGrafana });
+  const grafanaResponse = useGetGrafanaContactPoint({ name }, { skip: skipQuery || !isGrafana });
+  const alertmanagerResponse = useGetAlertmanagerContactPoint({ alertmanager, name }, { skip: skipQuery || isGrafana });
 
   return isGrafana ? grafanaResponse : alertmanagerResponse;
-};
+}
 
 export function useContactPointsWithStatus({
   alertmanager,

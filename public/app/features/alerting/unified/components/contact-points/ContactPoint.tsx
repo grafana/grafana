@@ -19,13 +19,20 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { type ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
+import {
+  type ContactPointWithMetadata,
+  type ReceiverConfigWithMetadata,
+  getReceiverDescription,
+  getReceiverResourceId,
+} from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
+  /** When true, this card is shown from the alert instance contact-point drawer: header opens full edit in a new tab (“Open configuration” / “View details”) instead of same-tab Edit/View. */
+  contactPointFromInstanceDrawer?: boolean;
 }
 
-export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint, contactPointFromInstanceDrawer }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
@@ -42,33 +49,16 @@ export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
           contactPoint={contactPoint}
           onDelete={(contactPointToDelete) =>
             showDeleteModal({
-              name: contactPointToDelete.id || contactPointToDelete.name,
+              name: getReceiverResourceId(contactPointToDelete),
               resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
           }
+          contactPointFromInstanceDrawer={contactPointFromInstanceDrawer}
         />
 
         {showFullMetadata ? (
           <div>
-            {receivers.map((receiver, index) => {
-              const diagnostics = receiver[RECEIVER_STATUS_KEY];
-              const metadata = receiver[RECEIVER_META_KEY];
-              const sendingResolved = !Boolean(receiver.disableResolveMessage);
-              const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
-              const key = metadata.name + index;
-
-              return (
-                <ContactPointReceiver
-                  key={key}
-                  name={metadata.name}
-                  type={receiver.type}
-                  description={getReceiverDescription(receiver)}
-                  diagnostics={diagnostics}
-                  pluginMetadata={pluginMetadata}
-                  sendingResolved={sendingResolved}
-                />
-              );
-            })}
+            <ContactPointIntegrationRows contactPoint={contactPoint} />
           </div>
         ) : (
           <div className={styles.integrationWrapper}>
@@ -110,6 +100,38 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
     </div>
   );
 };
+
+/**
+ * Renders each integration for the notifications list card; shares {@link ContactPointReceiverMetadataRow}
+ * with the instance drawer integration section (different layout component).
+ */
+export function ContactPointIntegrationRows({ contactPoint }: { contactPoint: ContactPointWithMetadata }) {
+  const { grafana_managed_receiver_configs: receivers } = contactPoint;
+
+  return (
+    <>
+      {receivers.map((receiver, index) => {
+        const diagnostics = receiver[RECEIVER_STATUS_KEY];
+        const metadata = receiver[RECEIVER_META_KEY];
+        const sendingResolved = !Boolean(receiver.disableResolveMessage);
+        const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
+        const key = metadata.name + index;
+
+        return (
+          <ContactPointReceiver
+            key={key}
+            name={metadata.name}
+            type={receiver.type}
+            description={getReceiverDescription(receiver)}
+            diagnostics={diagnostics}
+            pluginMetadata={pluginMetadata}
+            sendingResolved={sendingResolved}
+          />
+        );
+      })}
+    </>
+  );
+}
 
 export interface ContactPointReceiverTitleRowProps {
   name: string;
@@ -210,7 +232,7 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
   );
 };
 
-const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
+export const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
   const styles = useStyles2(getStyles);
 
   const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
