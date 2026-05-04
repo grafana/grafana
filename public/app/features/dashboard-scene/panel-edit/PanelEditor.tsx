@@ -48,6 +48,7 @@ import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
+import { SqlEditorModeShell } from './SqlEditorModeShell';
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -67,11 +68,16 @@ export interface PanelEditorState extends SceneObjectState {
    * Enable the v2 query editor experience
    */
   useQueryExperienceNext?: boolean;
+  /** SQL abstraction prototype: 'sql' switches to SQL mode layout */
+  sqlPrototypeMode?: 'classic' | 'sql';
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = ({ model }: SceneComponentProps<PanelEditor>) => {
-    const { useQueryExperienceNext } = model.useState();
+    const { useQueryExperienceNext, sqlPrototypeMode } = model.useState();
+    if (sqlPrototypeMode === 'sql') {
+      return <SqlEditorModeShell model={model} />;
+    }
     return useQueryExperienceNext ? <PanelEditorRendererNext model={model} /> : <PanelEditorRenderer model={model} />;
   };
 
@@ -403,6 +409,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   /**
    * Toggle between v1 and v2 query editor.
    */
+  public onToggleSqlPrototypeMode = () => {
+    const next = this.state.sqlPrototypeMode === 'sql' ? 'classic' : 'sql';
+    this.setState({ sqlPrototypeMode: next });
+  };
+
   public onToggleQueryEditorVersion = () => {
     const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');

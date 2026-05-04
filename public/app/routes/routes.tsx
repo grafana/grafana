@@ -50,6 +50,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/sql-prototype',
+      pageClass: 'page-dashboard',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "SqlPrototypeDashboard" */ '../features/sql-prototype/dashboard/DashboardPrototypePage'
+          ).then((m) => ({ default: m.DashboardPrototypePage }))
+      ),
+    },
+    {
       path: '/dashboard/new',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',

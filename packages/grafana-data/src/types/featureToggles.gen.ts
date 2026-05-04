@@ -1741,4 +1741,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enables the SQL abstraction prototype (mid-fidelity simulation)
+  * @default false
+  */
+  sqlAbstractionPrototype?: boolean;
 }

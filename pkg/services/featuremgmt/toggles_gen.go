@@ -953,4 +953,8 @@ const (
 	// FlagReportingAnyPageReporting
 	// Enables reporting for any page in Grafana
 	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagSqlAbstractionPrototype
+	// Enables the SQL abstraction prototype (mid-fidelity simulation)
+	FlagSqlAbstractionPrototype = "sqlAbstractionPrototype"
 )

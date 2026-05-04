@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { InlineSwitch, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { InlineSwitch, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { type PanelEditor } from './PanelEditor';
 
@@ -12,24 +13,42 @@ export interface Props {
 }
 
 export function PanelEditControls({ panelEditor }: Props) {
-  const { tableView, dataPane } = panelEditor.useState();
+  const { tableView, dataPane, sqlPrototypeMode } = panelEditor.useState();
   const styles = useStyles2(getStyles);
 
-  if (!dataPane) {
+  if (!dataPane && !config.featureToggles.sqlAbstractionPrototype) {
     return null;
   }
 
+  const sqlModeOptions = [
+    { label: 'Classic', value: 'classic' as const },
+    { label: '{ } SQL', value: 'sql' as const },
+  ];
+
   return (
     <div className={styles.container}>
-      <InlineSwitch
-        label={t('dashboard-scene.panel-edit-controls.table-view-label-table-view', 'Table view')}
-        showLabel={true}
-        id="table-view"
-        value={tableView ? true : false}
-        onClick={panelEditor.onToggleTableView}
-        aria-label={t('dashboard-scene.panel-edit-controls.table-view-aria-label-toggletableview', 'Toggle table view')}
-        data-testid={selectors.components.PanelEditor.toggleTableView}
-      />
+      {config.featureToggles.sqlAbstractionPrototype && (
+        <RadioButtonGroup
+          options={sqlModeOptions}
+          value={sqlPrototypeMode ?? 'classic'}
+          onChange={panelEditor.onToggleSqlPrototypeMode}
+          size="sm"
+        />
+      )}
+      {dataPane && sqlPrototypeMode !== 'sql' && (
+        <InlineSwitch
+          label={t('dashboard-scene.panel-edit-controls.table-view-label-table-view', 'Table view')}
+          showLabel={true}
+          id="table-view"
+          value={tableView ? true : false}
+          onClick={panelEditor.onToggleTableView}
+          aria-label={t(
+            'dashboard-scene.panel-edit-controls.table-view-aria-label-toggletableview',
+            'Toggle table view'
+          )}
+          data-testid={selectors.components.PanelEditor.toggleTableView}
+        />
+      )}
     </div>
   );
 }
