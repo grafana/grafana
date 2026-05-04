@@ -399,6 +399,17 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) && (c.HasRole(org.RoleEditor) || c.HasRole(org.RoleAdmin)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Variables",
+				SubTitle: "Organization and folder-scoped variables for dashboards",
+				Id:       "dashboards/variables",
+				Url:      s.cfg.AppSubURL + "/dashboard/variables",
+				Icon:     "brackets",
+			})
+		}
+
 		if s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",

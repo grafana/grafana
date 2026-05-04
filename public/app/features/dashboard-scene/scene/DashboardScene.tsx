@@ -88,6 +88,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { isGlobalSceneVariable } from '../utils/globalDashboardVariables';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
@@ -216,6 +217,15 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultLinksLoading?: boolean;
 }
 
+/**
+ * Returns true for variables that should be preserved when datasource-default variables
+ * are reloaded: persisted dashboard variables (no origin) and runtime-only globals
+ * (marked via {@link markAsGlobalSceneVariable}).
+ */
+function isPersistedOrGlobalDashboardVariable(v: SceneVariable): boolean {
+  return v.state.origin === undefined || isGlobalSceneVariable(v);
+}
+
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
@@ -337,7 +347,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
-    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    // Keep persisted variables (no origin) and org/folder globals (not replaced by datasource defaults).
+    const userVars = variableSet.state.variables.filter(isPersistedOrGlobalDashboardVariable);
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -359,7 +370,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    const nonDefaultVars = variableSet.state.variables.filter(isPersistedOrGlobalDashboardVariable);
     variableSet.setState({ variables: nonDefaultVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);

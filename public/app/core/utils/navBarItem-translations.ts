@@ -41,6 +41,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/variables':
+      return t('nav.dashboard-variables.title', 'Variables');
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
@@ -221,6 +223,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards");
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
+    case 'dashboards/variables':
+      return t(
+        'nav.dashboard-variables.subtitle',
+        'Organization and folder-scoped variables for dashboards'
+      );
     case 'dashboards/recently-deleted':
       return t(
         'nav.recently-deleted.subtitle',

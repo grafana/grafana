@@ -63,6 +63,10 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import {
+  fetchGlobalDashboardVariablesForLoad,
+  type GlobalVariableDefault,
+} from '../utils/globalDashboardVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -106,7 +110,15 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  /** Folder UID for the loaded dashboard (e.g. on reload when annotations are not re-fetched). */
+  folderUid?: string;
   defaultVariables?: VariableKind[];
+  /**
+   * Default variables sourced from the global dashboard variables service (org- and
+   * folder-scoped). Kept separate from {@link defaultVariables} so the scene construction
+   * step can mark them via {@link markAsGlobalSceneVariable} without widening any schema.
+   */
+  globalDefaultVariables?: GlobalVariableDefault[];
   defaultLinks?: DashboardLink[];
 }
 
@@ -176,6 +188,14 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
+
+  /**
+   * Hook for subclasses to merge async data (e.g. global dashboard variables) into load options before scene creation.
+   * Public so the unified manager can delegate to the active version-specific manager.
+   */
+  public async prepareLoadOptions(options: LoadDashboardOptions, _rsp: T | null): Promise<LoadDashboardOptions> {
+    return options;
+  }
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -517,7 +537,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const scene = this.transformResponseToScene(rsp, options);
+    const effectiveOptions = await this.prepareLoadOptions(options, rsp);
+    const scene = this.transformResponseToScene(rsp, effectiveOptions);
 
     return scene;
   }
@@ -975,6 +996,30 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 > {
   private dashboardLoader = new DashboardLoaderSrvV2();
 
+  public async prepareLoadOptions(
+    options: LoadDashboardOptions,
+    rsp: DashboardWithAccessInfo<DashboardV2Spec> | null
+  ): Promise<LoadDashboardOptions> {
+    if (!rsp || !config.featureToggles.globalDashboardVariables) {
+      return options;
+    }
+    if (options.route === DashboardRoutes.Public) {
+      return options;
+    }
+
+    try {
+      const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] ?? options.folderUid ?? options.urlFolderUid;
+      const globals = await fetchGlobalDashboardVariablesForLoad(rsp, folderUid);
+      return {
+        ...options,
+        globalDefaultVariables: globals,
+      };
+    } catch (e) {
+      console.warn('Failed to load global dashboard variables', e);
+      return options;
+    }
+  }
+
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await this.dashboardLoader.loadSnapshot(slug);
     const v2Response = ensureV2Response(rsp);
@@ -1153,7 +1198,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         return;
       }
 
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const baseLoadOptions: LoadDashboardOptions = {
+        uid,
+        route: DashboardRoutes.Normal,
+        slug: dashboard.state.meta.slug,
+        type: 'db',
+        folderUid: dashboard.state.meta.folderUid,
+      };
+      const loadOptions = await this.prepareLoadOptions(baseLoadOptions, rsp);
+      const scene = transformSaveModelSchemaV2ToScene(rsp, loadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -1264,6 +1317,28 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
 
     return this.v1Manager.transformResponseToScene(rsp, options);
+  }
+
+  /**
+   * Dispatch prepareLoadOptions to the appropriate version-specific manager.
+   *
+   * This is needed because the unified manager invokes the base `loadDashboard` via
+   * `.call(this, options)` which rebinds `this` to the unified instance. Without this
+   * override, `this.prepareLoadOptions(...)` inside `loadScene` resolves to the base
+   * no-op and version-specific hooks (e.g. merging global dashboard variables on V2)
+   * are skipped on initial dashboard load.
+   */
+  public async prepareLoadOptions(
+    options: LoadDashboardOptions,
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null
+  ): Promise<LoadDashboardOptions> {
+    if (!rsp) {
+      return options;
+    }
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.prepareLoadOptions(options, rsp);
+    }
+    return this.v1Manager.prepareLoadOptions(options, rsp);
   }
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {

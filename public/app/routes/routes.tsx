@@ -518,6 +518,22 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboard/variables/:variableName',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "GlobalDashboardVariablesPage"*/ 'app/features/dashboard-variables/GlobalDashboardVariablesPage')
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboard/variables',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "GlobalDashboardVariablesPage"*/ 'app/features/dashboard-variables/GlobalDashboardVariablesPage')
+      ),
+    },
     {
       path: '/notifications',
       component: SafeDynamicImport(
