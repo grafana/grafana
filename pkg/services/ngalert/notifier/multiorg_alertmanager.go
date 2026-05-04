@@ -149,6 +149,7 @@ func NewMultiOrgAlertmanager(
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
+	skipClustering bool,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -170,8 +171,12 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 	}
 
-	if err := moa.setupClustering(cfg); err != nil {
-		return nil, err
+	if skipClustering {
+		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
+	} else {
+		if err := moa.setupClustering(cfg); err != nil {
+			return nil, err
+		}
 	}
 
 	moa.initAlertBroadcast()
@@ -649,10 +654,9 @@ func (moa *MultiOrgAlertmanager) DeleteSilence(ctx context.Context, orgID int64,
 // the state has persisted. This can happen, for example, in a rolling deployment scenario.
 func (moa *MultiOrgAlertmanager) updateSilenceState(ctx context.Context, orgAM Alertmanager, orgID int64) error {
 	// Collect the internal silence state from the AM.
-	// TODO: Currently, we rely on the AM itself for the persisted silence state representation. Preferably, we would
-	//  define the state ourselves and persist it in a format that is easy to guarantee consistency for writes to
-	//  individual silences. In addition to the consistency benefits, this would also allow us to avoid the need for
-	//  a network request to the AM to get the state in the case of remote alertmanagers.
+	// TODO: Currently, we rely on the AM itself for the persisted silence state representation.
+	// Preferably, we would define the state ourselves and persist it in a format that is easy to
+	// guarantee consistency for writes to individual silences.
 	silences, err := orgAM.SilenceState(ctx)
 	if err != nil {
 		return err

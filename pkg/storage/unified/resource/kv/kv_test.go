@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -499,6 +500,224 @@ func TestBadgerKV_Batch(t *testing.T) {
 				}
 			}
 			require.Equal(t, 1, successes, "only one writer should succeed")
+		}
+	})
+}
+
+func TestBadgerKV_ContextCancellation(t *testing.T) {
+	const section = "test-section"
+
+	seed := func(t *testing.T, kv KV, n int) []string {
+		t.Helper()
+		keys := make([]string, n)
+		for i := range n {
+			k := fmt.Sprintf("key-%03d", i)
+			keys[i] = k
+			saveKVHelper(t, kv, context.Background(), section, k, strings.NewReader("value"))
+		}
+		return keys
+	}
+
+	t.Run("Keys: pre-cancelled ctx yields error before any keys", func(t *testing.T) {
+		kv := setupTestKV(t)
+		seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		var got []string
+		var gotErr error
+		for k, err := range kv.Keys(ctx, section, ListOptions{}) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got = append(got, k)
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.Empty(t, got)
+	})
+
+	t.Run("Keys: cancellation mid-iteration stops scan", func(t *testing.T) {
+		kv := setupTestKV(t)
+		seed(t, kv, 100)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var got []string
+		var gotErr error
+		for k, err := range kv.Keys(ctx, section, ListOptions{}) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got = append(got, k)
+			if len(got) == 3 {
+				cancel()
+			}
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.GreaterOrEqual(t, len(got), 3)
+		require.Less(t, len(got), 100, "iteration should have stopped before draining all keys")
+	})
+
+	t.Run("BatchGet: pre-cancelled ctx yields error before any keys", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		var got int
+		var gotErr error
+		for _, err := range kv.BatchGet(ctx, section, keys) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			got++
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.Equal(t, 0, got)
+	})
+
+	t.Run("BatchGet: cancellation mid-iteration stops scan", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 50)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var got int
+		var gotErr error
+		for entry, err := range kv.BatchGet(ctx, section, keys) {
+			if err != nil {
+				gotErr = err
+				break
+			}
+			require.NoError(t, entry.Value.Close())
+			got++
+			if got == 3 {
+				cancel()
+			}
+		}
+		require.ErrorIs(t, gotErr, context.Canceled)
+		require.GreaterOrEqual(t, got, 3)
+		require.Less(t, got, 50, "iteration should have stopped before draining all keys")
+	})
+
+	t.Run("BatchDelete: pre-cancelled ctx returns error and deletes nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 5)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.BatchDelete(ctx, section, keys)
+		require.ErrorIs(t, err, context.Canceled)
+
+		// Transaction should have been discarded; all keys still present.
+		for _, k := range keys {
+			_, err := kv.Get(context.Background(), section, k)
+			require.NoError(t, err, "key %q should still exist", k)
+		}
+	})
+
+	t.Run("BatchDelete: empty keys with cancelled ctx is a no-op", func(t *testing.T) {
+		// BatchDelete is eager and only checks ctx per-iteration, so an empty
+		// keys slice short-circuits to a successful empty Commit even when
+		// ctx is already cancelled. Documenting that behavior here.
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.BatchDelete(ctx, section, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("Get: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := kv.Get(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("Save: pre-cancelled ctx returns error", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		writer, err := kv.Save(ctx, section, "save-cancelled")
+		require.ErrorIs(t, err, context.Canceled)
+		require.Nil(t, writer)
+	})
+
+	t.Run("Save writer: cancellation before close returns error and saves nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		writer, err := kv.Save(ctx, section, "save-writer-cancelled")
+		require.NoError(t, err)
+		_, err = writer.Write([]byte("value"))
+		require.NoError(t, err)
+
+		cancel()
+
+		err = writer.Close()
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "save-writer-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("Delete: pre-cancelled ctx returns error and deletes nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+		keys := seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Delete(ctx, section, keys[0])
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, keys[0])
+		require.NoError(t, err)
+	})
+
+	t.Run("Batch: pre-cancelled ctx returns error and applies nothing", func(t *testing.T) {
+		kv := setupTestKV(t)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := kv.Batch(ctx, section, []BatchOp{
+			{Mode: BatchOpPut, Key: "batch-cancelled", Value: []byte("value")},
+		})
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = kv.Get(context.Background(), section, "batch-cancelled")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("sanity: errors.Is matches context.Canceled", func(t *testing.T) {
+		// Guards against a future change wrapping ctx.Err() into an opaque
+		// error type that breaks errors.Is for callers (e.g. retry logic).
+		kv := setupTestKV(t)
+		seed(t, kv, 1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		for _, err := range kv.Keys(ctx, section, ListOptions{}) {
+			require.True(t, errors.Is(err, context.Canceled))
+			break
 		}
 	})
 }

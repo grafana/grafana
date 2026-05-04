@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML düzenle",
         "save": "Kaydet"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "ad",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Tüm kuralları sil"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Sil",
       "delete-modal-delete-button": "Sil",
@@ -1573,8 +1575,14 @@
         "update-error": "Kural grubu güncellenemedi ",
         "update-success": "Kural grubu başarıyla güncellendi"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Seçilen grup düzenlenemez",
       "group-not-editable-description": "Bu grup, düzenlemeyi desteklemeyen bir veri kaynağına aittir.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Kural grubunu düzenle",
       "rule-group-error": "Kural grubu yüklenirken hata oluştu"
     },
@@ -8136,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -13826,7 +13840,8 @@
       "make-sure": "Bu izinlere sahip bir belirteç oluşturun"
     },
     "validation": {
-      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin."
+      "hidden-characters": "Bu alan, kopyalama ve yapıştırma işlemiyle eklenmiş olabilecek gizli karakterler içeriyor. Lütfen değeri yeniden yazın veya temizleyip tekrar deneyin.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Uyarı",
     "watch-stream": {
@@ -14234,6 +14249,8 @@
       "alerts-loading": "Uyarılar",
       "card-click": "{{id}} kartını seçin",
       "data": "Veri",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Yeni {{type}}",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
@@ -14950,10 +14967,13 @@
       "title": "Öneriler ve şablonlarla pano kullanımına kolay bir başlangıç yapın"
     },
     "nav": {
+      "counter": "",
       "go-to": "{{number}}. slayda git",
-      "next": "İleri",
-      "prev": "Önceki"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Sorguyu açıkla",
