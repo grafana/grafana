@@ -609,7 +609,6 @@
           },
           "spec": {
             "enabled": true,
-            "jsonData": null,
             "pinned": true
           }
         },
