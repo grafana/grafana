@@ -1,6 +1,17 @@
 import type { DateTime } from 'luxon';
 
 const TOKEN_MAP: Record<string, string> = {
+  LLLL: 'cccc, LLLL d, yyyy h:mm a',
+  LLL: 'LLLL d, yyyy h:mm a',
+  LL: 'LLLL d, yyyy',
+  LTS: 'h:mm:ss a',
+  LT: 'h:mm a',
+  L: 'MM/dd/yyyy',
+  llll: 'ccc, LLL d, yyyy h:mm a',
+  lll: 'LLL d, yyyy h:mm a',
+  ll: 'LLL d, yyyy',
+  l: 'M/d/yyyy',
+
   YYYY: 'yyyy',
   YY: 'yy',
   MMMM: 'LLLL',
