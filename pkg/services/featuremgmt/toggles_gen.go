@@ -770,6 +770,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagGlobalDashboardVariables
+	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+	FlagGlobalDashboardVariables = "globalDashboardVariables"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"

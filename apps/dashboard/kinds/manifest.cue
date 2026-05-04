@@ -124,6 +124,7 @@ manifest: {
 						status: DashboardStatus
 					}
 				},
+				globalVariableV2,
 			]
 		}
 	}

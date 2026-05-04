@@ -22,6 +22,10 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
 	@cp ./tshack/v1alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
 
+	# Variable spec currently requires a TS shim to expose Spec/defaultSpec.
+	@rm ../../packages/grafana-schema/src/schema/variable/v2/types.spec.gen.ts
+	@cp ./tshack/variable_v2_spec_gen.ts ../../packages/grafana-schema/src/schema/variable/v2/types.spec.gen.ts
+
 	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v0alpha1.
 	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp
 	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp2

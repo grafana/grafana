@@ -86,15 +86,19 @@ const (
 	dashboardSpecRefreshInterval = "refresh"
 )
 
-type simpleFolderClientProvider struct {
+// simpleClientProvider is a K8sHandlerProvider that always returns the same
+// pre-built handler regardless of namespace. It is used when a caller has
+// already obtained a handler (e.g. folder or variable client) and just needs
+// to satisfy the provider interface.
+type simpleClientProvider struct {
 	handler client.K8sHandler
 }
 
-func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleFolderClientProvider{handler: handler}
+func newSimpleClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleClientProvider{handler: handler}
 }
 
-func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
@@ -117,6 +121,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval       string
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
+	variableClientProvider   client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
@@ -161,6 +166,7 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
+	variableClient := client.NewK8sHandler(namespacer, dashv2.VariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
@@ -186,7 +192,8 @@ func RegisterAPIService(
 		minRefreshInterval:       cfg.MinRefreshInterval,
 		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
-		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
+		folderClientProvider:     newSimpleClientProvider(folderClient),
+		variableClientProvider:   newSimpleClientProvider(variableClient),
 		libraryPanels:            libraryPanels,
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
@@ -278,6 +285,20 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	if err := scheme.AddFieldLabelConversionFunc(
+		dashv2.VariableResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.spec.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Variable: %s", label)
+			}
+		},
+	); err != nil {
+		return err
+	}
+
 	if err := dashv2.AddToScheme(scheme); err != nil {
 		return err
 	}
@@ -335,6 +356,25 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2 Variable storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
+	// dashboard.grafana.app version registers a standalone Variable resource,
+	// so without the flag the apiserver has no route and admission never
+	// dispatches here. If Variable is ever added to another version or moved
+	// to a subresource, update both the storage registration and this switch
+	// in lockstep.
+	case dashv2.VariableResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create:
+			return b.validateVariableCreate(ctx, a)
+		case admission.Update:
+			return b.validateVariableUpdate(ctx, a)
+		case admission.Delete:
+			return b.validateVariableDelete(ctx)
+		case admission.Connect:
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
@@ -524,6 +564,135 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
+	if err := b.validateVariableMutationPermissions(ctx); err != nil {
+		return err
+	}
+
+	variable, ok := a.GetObject().(*dashv2.Variable)
+	if !ok {
+		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
+	}
+
+	if err := validateVariable(variable); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	accessor, err := utils.MetaAccessor(variable)
+	if err != nil {
+		return fmt.Errorf("error getting variable meta accessor: %w", err)
+	}
+
+	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting requester: %w", err)
+		}
+
+		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+			return err
+		}
+
+		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+			return err
+		}
+	}
+
+	if !a.IsDryRun() {
+		namespace := accessor.GetNamespace()
+		if namespace == "" {
+			namespace = a.GetNamespace()
+		}
+
+		if err := b.validateVariableNameUniqueness(ctx, namespace, variable, variable.GetName()); err != nil {
+			return apierrors.NewBadRequest(err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
+	if err := b.validateVariableMutationPermissions(ctx); err != nil {
+		return err
+	}
+
+	newVariable, ok := a.GetObject().(*dashv2.Variable)
+	if !ok {
+		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
+	}
+
+	oldVariable, ok := a.GetOldObject().(*dashv2.Variable)
+	if !ok {
+		return fmt.Errorf("unsupported old variable version: %T", a.GetOldObject())
+	}
+
+	if err := validateVariable(newVariable); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	oldAccessor, err := utils.MetaAccessor(oldVariable)
+	if err != nil {
+		return fmt.Errorf("error getting old variable meta accessor: %w", err)
+	}
+
+	newAccessor, err := utils.MetaAccessor(newVariable)
+	if err != nil {
+		return fmt.Errorf("error getting new variable meta accessor: %w", err)
+	}
+
+	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting requester: %w", err)
+		}
+
+		if err := b.verifyFolderAccessPermissions(ctx, id, newAccessor.GetFolder()); err != nil {
+			return err
+		}
+
+		nsInfo, err := authlib.ParseNamespace(newAccessor.GetNamespace())
+		if err != nil {
+			return fmt.Errorf("failed to parse namespace: %w", err)
+		}
+
+		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
+		}
+	}
+
+	if !a.IsDryRun() {
+		namespace := newAccessor.GetNamespace()
+		if namespace == "" {
+			namespace = a.GetNamespace()
+		}
+
+		if err := b.validateVariableNameUniqueness(ctx, namespace, newVariable, newVariable.GetName()); err != nil {
+			return apierrors.NewBadRequest(err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context) error {
+	return b.validateVariableMutationPermissions(ctx)
+}
+
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewForbidden(dashv2.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+	}
+
+	role := requester.GetOrgRole()
+	if role != identity.RoleEditor && role != identity.RoleAdmin {
+		return apierrors.NewForbidden(dashv2.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
 	return nil
@@ -759,6 +928,28 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return dto, err
 		}); err != nil {
 		return err
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
+		opts.StorageOptsRegister(dashv2.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
+
+		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme,
+			dashv2.VariableResourceInfo,
+			opts.OptsGetter,
+			grafanaregistry.SelectableFieldsOptions{
+				GetAttrs: VariableGetAttrs,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2.VERSION]
+		storage[dashv2.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
 	}
 
 	return nil

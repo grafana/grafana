@@ -2500,6 +2500,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:            "globalDashboardVariables",
+			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,

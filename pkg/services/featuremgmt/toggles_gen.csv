@@ -292,6 +292,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-05,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-12-09,multiPropsVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-03-02,dashboardSectionVariables,experimental,@grafana/dashboards-squad,false,false,true
+2026-03-24,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,preview,@grafana/observability-traces-and-profiling,false,false,false
