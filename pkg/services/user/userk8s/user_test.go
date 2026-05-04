@@ -1647,6 +1647,198 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_Search(t *testing.T) {
+	searchResponse := func(hits ...v0alpha1.GetSearchUsersUserHit) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{
+				TotalHits: int64(len(hits)),
+				Hits:      hits,
+			})
+		}
+	}
+
+	tests := []struct {
+		name           string
+		cmd            *user.SearchUsersQuery
+		requesterOrgID int64
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		expectErr      bool
+		expectResult   *user.SearchUserQueryResult
+	}{
+		{
+			name:           "returns hits with all fields mapped correctly",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{},
+			serverResponse: searchResponse(v0alpha1.GetSearchUsersUserHit{
+				Id:            42,
+				Name:          "uid-one",
+				Title:         "John Doe",
+				Login:         "jdoe",
+				Email:         "jdoe@example.com",
+				LastSeenAt:    time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix(),
+				LastSeenAtAge: "5 days",
+				Provisioned:   true,
+			}),
+			expectResult: &user.SearchUserQueryResult{
+				TotalCount: 1,
+				Page:       1,
+				PerPage:    100,
+				Users: []*user.UserSearchHitDTO{
+					{
+						ID:            42,
+						UID:           "uid-one",
+						Name:          "John Doe",
+						Login:         "jdoe",
+						Email:         "jdoe@example.com",
+						LastSeenAt:    time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+						LastSeenAtAge: "5 days",
+						IsProvisioned: true,
+					},
+				},
+			},
+		},
+		{
+			name: "uses orgID from cmd when set",
+			cmd:  &user.SearchUsersQuery{OrgID: 2},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "org-2")
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
+			},
+		},
+		{
+			name:           "falls back to orgID from context when cmd.OrgID is zero",
+			requesterOrgID: 3,
+			cmd:            &user.SearchUsersQuery{},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "org-3")
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
+			},
+		},
+		{
+			name:           "passes query parameter to the search endpoint",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{Query: "doe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "doe", r.URL.Query().Get("query"))
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
+			},
+		},
+		{
+			name:           "uses default limit 100 and page 1 when cmd values are zero",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "100", r.URL.Query().Get("limit"))
+				assert.Equal(t, "1", r.URL.Query().Get("page"))
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
+			},
+			expectResult: &user.SearchUserQueryResult{Page: 1, PerPage: 100},
+		},
+		{
+			name:           "passes limit and page from cmd to the search endpoint",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{Limit: 25, Page: 3},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "25", r.URL.Query().Get("limit"))
+				assert.Equal(t, "3", r.URL.Query().Get("page"))
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{})
+			},
+			expectResult: &user.SearchUserQueryResult{Page: 3, PerPage: 25},
+		},
+		{
+			name:           "returns empty users slice when there are no hits",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{},
+			serverResponse: searchResponse(),
+			expectResult: &user.SearchUserQueryResult{
+				TotalCount: 0,
+				Page:       1,
+				PerPage:    100,
+			},
+		},
+		{
+			name:           "propagates error from the search request",
+			requesterOrgID: 1,
+			cmd:            &user.SearchUsersQuery{},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Code:     http.StatusInternalServerError,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:        "returns error when client generator not initialized",
+			cmd:         &user.SearchUsersQuery{OrgID: 1},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
+			name:      "returns error when no orgID in context and cmd.OrgID is zero",
+			cmd:       &user.SearchUsersQuery{},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
+
+			result, err := svc.Search(ctx, tt.cmd)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			if tt.expectResult == nil {
+				return
+			}
+
+			assert.Equal(t, tt.expectResult.TotalCount, result.TotalCount)
+			assert.Equal(t, tt.expectResult.Page, result.Page)
+			assert.Equal(t, tt.expectResult.PerPage, result.PerPage)
+
+			if tt.expectResult.Users != nil {
+				require.Len(t, result.Users, len(tt.expectResult.Users))
+				for i, expected := range tt.expectResult.Users {
+					got := result.Users[i]
+					assert.Equal(t, expected.ID, got.ID, "ID")
+					assert.Equal(t, expected.UID, got.UID, "UID")
+					assert.Equal(t, expected.Name, got.Name, "Name")
+					assert.Equal(t, expected.Login, got.Login, "Login")
+					assert.Equal(t, expected.Email, got.Email, "Email")
+					assert.Equal(t, expected.IsProvisioned, got.IsProvisioned, "IsProvisioned")
+					assert.Equal(t, expected.LastSeenAtAge, got.LastSeenAtAge, "LastSeenAtAge")
+					if !expected.LastSeenAt.IsZero() {
+						assert.Equal(t, expected.LastSeenAt.UTC(), got.LastSeenAt.UTC(), "LastSeenAt")
+					}
+				}
+			} else {
+				assert.Empty(t, result.Users)
+			}
+		})
+	}
+}
+
 func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 	return v0alpha1.User{
 		TypeMeta: metav1.TypeMeta{

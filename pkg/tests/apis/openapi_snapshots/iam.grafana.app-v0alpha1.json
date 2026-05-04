@@ -5400,6 +5400,7 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit": {
         "type": "object",
         "required": [
+          "id",
           "name",
           "title",
           "login",
@@ -5421,6 +5422,11 @@
           "email": {
             "type": "string",
             "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",

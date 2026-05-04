@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -64,6 +65,7 @@ func TestSearchFallback(t *testing.T) {
 				if mockClient.LastSearchRequest == nil {
 					t.Fatalf("expected Unified Search to be called, but it was not")
 				}
+				assert.Contains(t, mockClient.LastSearchRequest.Fields, resource.SEARCH_FIELD_LEGACY_ID, "SEARCH_FIELD_LEGACY_ID should be requested")
 			} else {
 				if mockLegacyClient.LastSearchRequest == nil {
 					t.Fatalf("expected Legacy Search to be called, but it was not")
@@ -365,6 +367,81 @@ func (m *mockAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo
 		return m.batchCheckFunc(ctx, info, req)
 	}
 	return authlib.BatchCheckResponse{}, nil
+}
+
+func int64ToBytes(v int64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
+
+func TestParseResults(t *testing.T) {
+	t.Run("returns empty response for nil input", func(t *testing.T) {
+		resp, err := ParseResults(nil)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Empty(t, resp.Hits)
+	})
+
+	t.Run("populates Id from SEARCH_FIELD_LEGACY_ID column", func(t *testing.T) {
+		result := &resourcepb.ResourceSearchResponse{
+			TotalHits: 2,
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_LEGACY_ID},
+					{Name: "title"},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-one"}, Cells: [][]byte{int64ToBytes(101), []byte("User One")}},
+					{Key: &resourcepb.ResourceKey{Name: "uid-two"}, Cells: [][]byte{int64ToBytes(202), []byte("User Two")}},
+				},
+			},
+		}
+
+		resp, err := ParseResults(result)
+		require.NoError(t, err)
+		require.Len(t, resp.Hits, 2)
+		assert.Equal(t, int64(101), resp.Hits[0].Id)
+		assert.Equal(t, "uid-one", resp.Hits[0].Name)
+		assert.Equal(t, int64(202), resp.Hits[1].Id)
+		assert.Equal(t, "uid-two", resp.Hits[1].Name)
+	})
+
+	t.Run("Id is zero when SEARCH_FIELD_LEGACY_ID column is absent", func(t *testing.T) {
+		result := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "title"},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-one"}, Cells: [][]byte{[]byte("User One")}},
+				},
+			},
+		}
+
+		resp, err := ParseResults(result)
+		require.NoError(t, err)
+		require.Len(t, resp.Hits, 1)
+		assert.Equal(t, int64(0), resp.Hits[0].Id)
+	})
+
+	t.Run("Id is zero when SEARCH_FIELD_LEGACY_ID cell is nil", func(t *testing.T) {
+		result := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_LEGACY_ID},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid-one"}, Cells: [][]byte{nil}},
+				},
+			},
+		}
+
+		resp, err := ParseResults(result)
+		require.NoError(t, err)
+		require.Len(t, resp.Hits, 1)
+		assert.Equal(t, int64(0), resp.Hits[0].Id)
+	})
 }
 
 func TestEscapeBleveQuery(t *testing.T) {
