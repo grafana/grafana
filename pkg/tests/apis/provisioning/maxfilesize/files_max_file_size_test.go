@@ -111,37 +111,10 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		"error should advertise the size cap; got %v", result.Error())
 }
 
-// TestIntegrationProvisioning_MaxFileSize_Disabled covers the
-// "0 = unlimited" semantics by spinning up a second server with the cap off
-// and confirming that a payload that would have been blocked by the shared
-// 4 KB cap is accepted.
-func TestIntegrationProvisioning_MaxFileSize_Disabled(t *testing.T) {
-	helper := common.RunGrafana(t,
-		common.WithoutProvisioningFolderMetadata,
-		common.WithProvisioningMaxFileSize(0),
-	)
-
-	const repo = "max-file-size-disabled"
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
-	})
-
-	// Write a README larger than the shared cap and confirm it round-trips.
-	bigReadme := bytes.Repeat([]byte("Y"), 8*1024)
-	helper.WriteToProvisioningPath(t, "README.md", bigReadme)
-
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	// nolint:errcheck
-	defer resp.Body.Close()
-
-	require.Equal(t, http.StatusOK, resp.StatusCode, "with cap disabled, large README should be served")
-}
+// The "0 = unlimited" semantics are covered by the unit test
+// TestHandleGetRawFile_MaxFileSize/zero_disables_limit. We deliberately do
+// not exercise it as a separate integration test here: spinning up a second
+// Grafana inside this package would share the package-wide test database
+// with the shared env, and the shared env's controllers would then attempt
+// to validate the second server's repos against their own (different)
+// permitted_provisioning_paths and fail the sync.
