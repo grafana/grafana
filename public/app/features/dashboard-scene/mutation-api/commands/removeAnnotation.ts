@@ -16,9 +16,7 @@ import {
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const removeAnnotationPayloadSchema = payloads.removeAnnotation;
-
-export type RemoveAnnotationPayload = z.infer<typeof removeAnnotationPayloadSchema>;
+type RemoveAnnotationPayload = z.infer<typeof payloads.removeAnnotation>;
 
 export const removeAnnotationCommand: MutationCommand<RemoveAnnotationPayload> = {
   name: 'REMOVE_ANNOTATION',

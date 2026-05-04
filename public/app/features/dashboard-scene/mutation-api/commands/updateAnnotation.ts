@@ -18,9 +18,7 @@ import {
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const updateAnnotationPayloadSchema = payloads.updateAnnotation;
-
-export type UpdateAnnotationPayload = z.infer<typeof updateAnnotationPayloadSchema>;
+type UpdateAnnotationPayload = z.infer<typeof payloads.updateAnnotation>;
 
 export const updateAnnotationCommand: MutationCommand<UpdateAnnotationPayload> = {
   name: 'UPDATE_ANNOTATION',
