@@ -1311,6 +1311,13 @@ func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 
 var skipStaticRootValidation = false
 
+// SetSkipStaticRootValidation prevents the "Failed to detect generated javascript
+// files in public/build" log from being emitted during config loading. Useful for
+// API server deployments that do not serve a frontend.
+func SetSkipStaticRootValidation() {
+	skipStaticRootValidation = true
+}
+
 func NewCfg() *Cfg {
 	return &Cfg{
 		Env:    Dev,
