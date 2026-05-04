@@ -214,6 +214,11 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	}
 
 	// Default token exchange
+	if s.info.TokenExchangeTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.info.TokenExchangeTimeout)
+		defer cancel()
+	}
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
