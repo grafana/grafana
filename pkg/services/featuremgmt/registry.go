@@ -2191,6 +2191,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "enableDeclareIncidentDrilldown",
+			Description:  "Enables declare incident drilldown",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingAlertsActivityBanner",
 			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
 			Stage:        FeatureStageExperimental,

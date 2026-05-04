@@ -2211,6 +2211,20 @@
     },
     {
       "metadata": {
+        "name": "enableDeclareIncidentDrilldown",
+        "resourceVersion": "1776415632633",
+        "creationTimestamp": "2026-04-17T08:47:12Z"
+      },
+      "spec": {
+        "description": "Enables declare incident drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableExtensionsAdminPage",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-05T15:55:10Z"

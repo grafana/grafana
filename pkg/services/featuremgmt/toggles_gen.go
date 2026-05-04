@@ -702,6 +702,10 @@ const (
 	// Enables the alerting triage feature
 	FlagAlertingTriage = "alertingTriage"
 
+	// FlagEnableDeclareIncidentDrilldown
+	// Enables declare incident drilldown
+	FlagEnableDeclareIncidentDrilldown = "enableDeclareIncidentDrilldown"
+
 	// FlagGraphiteBackendMode
 	// Enables the Graphite data source full backend mode
 	FlagGraphiteBackendMode = "graphiteBackendMode"
