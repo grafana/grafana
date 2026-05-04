@@ -67,7 +67,7 @@ function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promi
     });
 }
 
-async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
+async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
   const spec = settingsSpecMapper(data);
   const secure = inlineSecureValuesMapper(data);
   const update = {
@@ -101,8 +101,13 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
   }
 
   const meta = await getPluginMetaFromCache(pluginId);
-  if (!meta || meta.spec.pluginJson.type !== 'app') {
-    return getCachedLegacySettings(pluginId, showErrorAlert);
+  if (!meta) {
+    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
+  }
+
+  if (meta.spec.pluginJson.type !== 'app') {
+    const mapper = getSettingsMapper();
+    return mapper(meta.spec);
   }
 
   const settings = await getCachedAppSettings(pluginId, showErrorAlert);
@@ -116,8 +121,13 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
   }
 
   const meta = await refetchPluginMeta(pluginId);
-  if (!meta || meta.spec.pluginJson.type !== 'app') {
-    return refetchCachedLegacySettings(pluginId, false);
+  if (!meta) {
+    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
+  }
+
+  if (meta.spec.pluginJson.type !== 'app') {
+    const mapper = getSettingsMapper();
+    return mapper(meta.spec);
   }
 
   const settings = await refetchCachedAppSettings(pluginId, false);
@@ -125,21 +135,25 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
   return mapper(meta.spec, settings);
 }
 
-export async function updatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta | null> {
+export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta | null> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
   }
 
   const meta = await refetchPluginMeta(pluginId);
-  if (!meta || meta.spec.pluginJson.type !== 'app') {
-    await updateLegacySettings(pluginId, data);
-    return refetchCachedLegacySettings(pluginId, false);
+  if (!meta) {
+    throw new Error(`Plugin not found, no installed plugin with id ${pluginId}`);
   }
 
-  const updated = await updateAppPluginSettings(pluginId, data);
+  if (meta.spec.pluginJson.type !== 'app') {
+    const mapper = getSettingsMapper();
+    return mapper(meta.spec);
+  }
+
+  const updatedSettings = await internalUpdateAppPluginSettings(pluginId, data);
   const mapper = getSettingsMapper();
-  return mapper(meta.spec, updated);
+  return mapper(meta.spec, updatedSettings);
 }
 
 export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
@@ -170,26 +184,20 @@ export async function isAppPluginEnabled(pluginId: string): Promise<boolean> {
   return false;
 }
 
-const getCachedLegacySettings = getCachedPromiseWithArgs(
-  getLegacySettings,
-  {},
-  (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`
-);
+const getCachedLegacySettings = getCachedPromiseWithArgs(getLegacySettings, {
+  cacheKeyFn: (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`,
+});
 
-const refetchCachedLegacySettings = getCachedPromiseWithArgs(
-  getLegacySettings,
-  { invalidate: true },
-  (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`
-);
+const refetchCachedLegacySettings = getCachedPromiseWithArgs(getLegacySettings, {
+  invalidate: true,
+  cacheKeyFn: (pluginId, _showErrorAlert) => `getLegacySettings-${pluginId}`,
+});
 
-const getCachedAppSettings = getCachedPromiseWithArgs(
-  getAppPluginSettings,
-  {},
-  (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`
-);
+const getCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
+  cacheKeyFn: (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`,
+});
 
-const refetchCachedAppSettings = getCachedPromiseWithArgs(
-  getAppPluginSettings,
-  { invalidate: true },
-  (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`
-);
+const refetchCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
+  invalidate: true,
+  cacheKeyFn: (pluginId, _showErrorAlert) => `getAppPluginSettings-${pluginId}`,
+});

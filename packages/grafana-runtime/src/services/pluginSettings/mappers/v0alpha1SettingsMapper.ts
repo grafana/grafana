@@ -208,16 +208,14 @@ export function defaultNavUrlMapper(spec: v0alpha1Spec): string | undefined {
   return getDefaultNavUrlForDashboard(defaultInclude);
 }
 
-export const v0alpha1SettingsMapper: SettingsMapper = (spec, settings) => {
+function v0alpha1SpecMapper(spec: v0alpha1Spec) {
   const { aliasIds: aliasIDs, baseURL: baseUrl } = spec;
   const { id, name } = spec.pluginJson;
   const { org: signatureOrg = '' } = spec.signature;
   const { path: module, hash: moduleHash } = spec.module;
-  const { enabled, jsonData, pinned } = settings.spec;
   const autoEnabled = false;
   const hasUpdate = false;
   const latestVersion = '';
-  const secureJsonFields = secureJsonFieldsMapper(settings);
   const type = typeMapper(spec);
   const info = infoMapper(spec);
   const angular = angularMapper(spec);
@@ -246,17 +244,38 @@ export const v0alpha1SettingsMapper: SettingsMapper = (spec, settings) => {
     angular,
     angularDetected,
     dependencies,
-    enabled,
     extensions,
     includes,
-    jsonData,
     loadingStrategy,
     moduleHash,
-    pinned,
-    secureJsonFields,
     signature,
     signatureOrg,
     signatureType,
     state,
+  };
+}
+
+export const v0alpha1SettingsMapper: SettingsMapper = (spec, settings) => {
+  const specMappings = v0alpha1SpecMapper(spec);
+
+  if (spec.pluginJson.type === 'app' && settings) {
+    const { enabled, jsonData, pinned } = settings.spec;
+    const secureJsonFields = secureJsonFieldsMapper(settings);
+
+    return {
+      ...specMappings,
+      enabled,
+      jsonData,
+      pinned,
+      secureJsonFields,
+    };
+  }
+
+  return {
+    ...specMappings,
+    enabled: false,
+    pinned: false,
+    jsonData: {},
+    secureJsonFields: {},
   };
 };

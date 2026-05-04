@@ -58,4 +58,4 @@ export interface Settings {
   secure?: InlineSecureValues;
 }
 
-export type SettingsMapper = (spec: v0alpha1Spec, settings: Settings) => PluginMeta;
+export type SettingsMapper = (spec: v0alpha1Spec, settings?: Settings) => PluginMeta;

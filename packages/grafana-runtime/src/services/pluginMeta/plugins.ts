@@ -71,12 +71,11 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
 }
 
 export function initPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { cacheKey: 'loadPluginMetas', defaultValue: { items: [] } });
+  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
 }
 
 export function refetchPluginMetas(): Promise<PluginMetasResponse> {
   return getCachedPromise(loadPluginMetas, {
-    cacheKey: 'loadPluginMetas',
     defaultValue: { items: [] },
     invalidate: true,
   });

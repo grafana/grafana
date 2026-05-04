@@ -1,7 +1,6 @@
 import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
-import { updatePluginSettings as runtimeUpdatePluginSettings } from '@grafana/runtime/unstable';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
@@ -259,14 +258,13 @@ export async function uninstallPlugin(id: string) {
 }
 
 export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  return await runtimeUpdatePluginSettings(id, data);
-  // const response = await getBackendSrv().datasourceRequest({
-  //   url: `/api/plugins/${id}/settings`,
-  //   method: 'POST',
-  //   data,
-  // });
+  const response = await getBackendSrv().datasourceRequest({
+    url: `/api/plugins/${id}/settings`,
+    method: 'POST',
+    data,
+  });
 
-  // return response?.data;
+  return response?.data;
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {

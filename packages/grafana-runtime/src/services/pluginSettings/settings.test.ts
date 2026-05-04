@@ -1,15 +1,19 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache } from '../../utils/getCachedPromise';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
-import { getPluginSettings, isAppPluginEnabled, refetchPluginSettings, updatePluginSettings } from './settings';
+import { getPluginSettings, isAppPluginEnabled, refetchPluginSettings, updateAppPluginSettings } from './settings';
 import { legacyClockPanelOnPrem, legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
+import {
+  clockPanelOnPremPluginMeta,
+  cloudwatchPluginMeta,
+  myOrgTestAppSettings,
+} from './test-fixtures/v0alpha1Response';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -31,7 +35,7 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    invalidateCache();
+    invalidateCachedPromisesCache();
     backendSrv = {
       chunked: jest.fn(),
       delete: jest.fn(),
@@ -102,26 +106,22 @@ describe('settings', () => {
         );
       });
 
-      it('should use legacy apis for panel plugins', async () => {
+      it('should just map panel plugins', async () => {
         getPluginMetaFromCacheMock.mockResolvedValue(clockPanelMetaOnPrem);
 
-        await getPluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id);
+        const result = await getPluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id);
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/grafana-clock-panel/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(clockPanelOnPremPluginMeta);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
-      it('should use legacy apis for data source plugins', async () => {
+      it('should just map data source plugins', async () => {
         getPluginMetaFromCacheMock.mockResolvedValue(cloudwatch);
 
-        await getPluginSettings(cloudwatch.spec.pluginJson.id);
+        const result = await getPluginSettings(cloudwatch.spec.pluginJson.id);
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/cloudwatch/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
@@ -153,17 +153,13 @@ describe('settings', () => {
         });
       });
 
-      it('should fall back to legacy apis when meta is null', async () => {
+      it('should throw when meta is null', async () => {
         getPluginMetaFromCacheMock.mockResolvedValue(null);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        const response = await getPluginSettings(legacyMyOrgTestAppSettings.id);
-
-        expect(response).toEqual(legacyMyOrgTestAppSettings);
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(`/api/plugins/myorg-test-app/settings`, undefined, undefined, {
-          validatePath: true,
-        });
+        await expect(() => getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toThrow(
+          'Plugin not found, no installed plugin with id myorg-test-app'
+        );
       });
     });
 
@@ -187,26 +183,22 @@ describe('settings', () => {
         );
       });
 
-      it('should use legacy apis for panel plugins', async () => {
+      it('should just map panel plugins', async () => {
         refetchPluginMetaMock.mockResolvedValue(clockPanelMetaOnPrem);
 
-        await refetchPluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id);
+        const result = await refetchPluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id);
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/grafana-clock-panel/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(clockPanelOnPremPluginMeta);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should use legacy apis for data source plugins', async () => {
         refetchPluginMetaMock.mockResolvedValue(cloudwatch);
 
-        await refetchPluginSettings(cloudwatch.spec.pluginJson.id);
+        const result = await refetchPluginSettings(cloudwatch.spec.pluginJson.id);
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/cloudwatch/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should reject with Unknown Plugin message if error status is not 403 or 401', async () => {
@@ -238,21 +230,17 @@ describe('settings', () => {
         });
       });
 
-      it('should fall back to legacy apis when meta is null', async () => {
+      it('should throw when meta is null', async () => {
         refetchPluginMetaMock.mockResolvedValue(null);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        const response = await refetchPluginSettings(legacyMyOrgTestAppSettings.id);
-
-        expect(response).toEqual(legacyMyOrgTestAppSettings);
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(`/api/plugins/myorg-test-app/settings`, undefined, undefined, {
-          validatePath: true,
-        });
+        await expect(() => refetchPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toThrow(
+          'Plugin not found, no installed plugin with id myorg-test-app'
+        );
       });
     });
 
-    describe('updatePluginSettings', () => {
+    describe('updateAppPluginSettings', () => {
       it('should update settings from new apis', async () => {
         // stored value
         backendSrv.get = jest.fn().mockResolvedValue({
@@ -274,7 +262,7 @@ describe('settings', () => {
           },
         });
 
-        const response = await updatePluginSettings(myOrgTestAppSettings.metadata.name, {
+        const response = await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
           enabled: false,
           pinned: false,
           jsonData: { apiUrl: 'https://grafana.com/' },
@@ -294,6 +282,7 @@ describe('settings', () => {
         expect(backendSrv.patch).toHaveBeenCalledWith(
           '/apis/myorg-test-app.grafana.app/v0alpha1/namespaces/default/settings/myorg-test-app',
           [
+            { op: 'test', path: '/metadata/resourceVersion', value: '' },
             { op: 'remove', path: '/secure/password/name' },
             {
               op: 'add',
@@ -328,7 +317,7 @@ describe('settings', () => {
               value: false,
             },
           ],
-          { validatePath: true }
+          { validatePath: true, headers: { 'Content-Type': 'application/json-patch+json' } }
         );
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith(
@@ -339,54 +328,34 @@ describe('settings', () => {
         );
       });
 
-      it('should use legacy apis for panel plugins', async () => {
+      it('should just map panel plugins', async () => {
         refetchPluginMetaMock.mockResolvedValue(clockPanelMetaOnPrem);
 
-        await updatePluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id, {});
+        const result = await updateAppPluginSettings(clockPanelMetaOnPrem.spec.pluginJson.id, {});
 
-        expect(backendSrv.post).toHaveBeenCalledTimes(1);
-        expect(backendSrv.post).toHaveBeenCalledWith(
-          '/api/plugins/grafana-clock-panel/settings',
-          {},
-          { validatePath: true }
-        );
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/grafana-clock-panel/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(clockPanelOnPremPluginMeta);
+        expect(backendSrv.post).not.toHaveBeenCalled();
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
-      it('should use legacy apis for data source plugins', async () => {
+      it('should just map data source plugins', async () => {
         refetchPluginMetaMock.mockResolvedValue(cloudwatch);
 
-        await updatePluginSettings(cloudwatch.spec.pluginJson.id, {});
+        const result = await updateAppPluginSettings(cloudwatch.spec.pluginJson.id, {});
 
-        expect(backendSrv.post).toHaveBeenCalledTimes(1);
-        expect(backendSrv.post).toHaveBeenCalledWith('/api/plugins/cloudwatch/settings', {}, { validatePath: true });
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/cloudwatch/settings', undefined, undefined, {
-          validatePath: true,
-        });
+        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(backendSrv.post).not.toHaveBeenCalled();
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
-      it('should fall back to legacy apis when meta is null', async () => {
+      it('should throw when meta is null', async () => {
         refetchPluginMetaMock.mockResolvedValue(null);
         backendSrv.post = jest.fn().mockResolvedValue(undefined);
         backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
 
-        const response = await updatePluginSettings(legacyMyOrgTestAppSettings.id, { enabled: true });
-
-        expect(response).toEqual(legacyMyOrgTestAppSettings);
-        expect(backendSrv.post).toHaveBeenCalledTimes(1);
-        expect(backendSrv.post).toHaveBeenCalledWith(
-          `/api/plugins/myorg-test-app/settings`,
-          { enabled: true },
-          { validatePath: true }
+        await expect(() => updateAppPluginSettings(legacyMyOrgTestAppSettings.id, { enabled: true })).rejects.toThrow(
+          'Plugin not found, no installed plugin with id myorg-test-app'
         );
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(`/api/plugins/myorg-test-app/settings`, undefined, undefined, {
-          validatePath: true,
-        });
       });
     });
 
@@ -432,7 +401,7 @@ describe('settings', () => {
         const enabled = await isAppPluginEnabled('myorg-someplugin-app');
 
         expect(enabled).toEqual(false);
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should return false if plugin id is not for an app', async () => {
@@ -442,7 +411,7 @@ describe('settings', () => {
         const enabled = await isAppPluginEnabled(clockPanelMetaOnPrem.spec.pluginJson.id);
 
         expect(enabled).toEqual(false);
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should return false and log a warning if the backend rejects with auth error', async () => {
@@ -572,11 +541,11 @@ describe('settings', () => {
       });
     });
 
-    describe('updatePluginSettings', () => {
+    describe('updateAppPluginSettings', () => {
       it('should update settings from new apis', async () => {
         backendSrv.post = jest.fn().mockResolvedValue(undefined);
 
-        const response = await updatePluginSettings(myOrgTestAppSettings.metadata.name, {
+        const response = await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
           enabled: false,
           pinned: false,
           jsonData: { apiUrl: 'https://grafana.com/' },
