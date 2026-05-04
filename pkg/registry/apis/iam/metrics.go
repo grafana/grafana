@@ -57,6 +57,17 @@ var (
 		Name:      "hooks_tuples_total",
 		Help:      "Total number of tuples written or deleted by resource type and operation type",
 	}, []string{"resource_type", "operation", "action"})
+
+	// ResourceHandlerDurationHistogram tracks time spent in each layer of the
+	// IAM apiserver resource handler (api_authz, store_wrapper_inner,
+	// store_wrapper_authz, store_backend, legacy).
+	ResourceHandlerDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: metricsNamespace,
+		Subsystem: metricsSubSystem,
+		Name:      "resource_handler_duration_seconds",
+		Help:      "Latency of resource operations broken down by layer, operation, resource and status.",
+		Buckets:   prometheus.ExponentialBuckets(0.001, 2, 12), // 1ms to ~4s
+	}, []string{"layer", "operation", "resource", "status"})
 )
 
 func registerMetrics(reg prometheus.Registerer) {
@@ -66,6 +77,7 @@ func registerMetrics(reg prometheus.Registerer) {
 			HooksDurationHistogram,
 			HooksOperationCounter,
 			HooksTuplesCounter,
+			ResourceHandlerDurationHistogram,
 		}
 
 		for _, metric := range metrics {
