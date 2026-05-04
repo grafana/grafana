@@ -77,8 +77,7 @@ type RepositoryController struct {
 	tracer                        tracing.Tracer
 	quotaGetter                   quotas.QuotaGetter
 	tokenMetrics                  *repositoryTokenMetrics
-	folderMetadataEnabled         bool
-	maxIncrementalChanges         int
+	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 }
 
@@ -103,9 +102,8 @@ func NewRepositoryController(
 	minSyncInterval time.Duration,
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
-	folderMetadataEnabled bool,
+	incrementalPolicy repository.IncrementalSyncPolicy,
 	folderAPIVersion string,
-	maxIncrementalChanges int,
 	webhookSecretRotationInterval time.Duration,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -142,8 +140,7 @@ func NewRepositoryController(
 		drainTimeout:                  drainTimeout,
 		quotaGetter:                   quotaGetter,
 		tokenMetrics:                  repoTokenMetrics,
-		folderMetadataEnabled:         folderMetadataEnabled,
-		maxIncrementalChanges:         maxIncrementalChanges,
+		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
@@ -468,7 +465,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// However, we fall back to a full sync when incremental diffing cannot safely represent the change,
 		// such as .keep file deletions inside a folder with no other deletions (to detect whether the folder
 		// was deleted in git) or when the diff size reaches/exceeds max_incremental_changes.
-		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled, rc.maxIncrementalChanges)
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.incrementalPolicy)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
 			return &provisioning.SyncJobOptions{}
@@ -486,15 +483,21 @@ func shouldUseIncrementalSync(
 	versioned repository.Versioned,
 	obj *provisioning.Repository,
 	latestRef string,
-	folderMetadataEnabled bool,
-	maxIncrementalChanges int,
+	policy repository.IncrementalSyncPolicy,
 ) (bool, error) {
 	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
 	if err != nil {
 		return false, err
 	}
 
-	return repository.CanUseIncrementalSyncInController(changes, folderMetadataEnabled, maxIncrementalChanges), nil
+	var deletedPaths []string
+	for _, change := range changes {
+		if change.Action == repository.FileActionDeleted {
+			deletedPaths = append(deletedPaths, change.Path)
+		}
+	}
+
+	return policy.CanUseIncrementalSync(deletedPaths, len(changes)), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {

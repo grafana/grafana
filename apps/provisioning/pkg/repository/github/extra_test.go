@@ -32,7 +32,7 @@ func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureVal
 }
 
 func TestExtra_Type(t *testing.T) {
-	e := github.Extra(nil, nil, nil, false)
+	e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{})
 	assert.Equal(t, provisioning.GitHubRepositoryType, e.Type())
 }
 
@@ -263,7 +263,7 @@ func TestExtra_Build(t *testing.T) {
 			webhookBuilder := tt.setupWebhook(t, tt.repo)
 			factory := github.ProvideFactory()
 
-			e := github.Extra(decrypter, factory, webhookBuilder, false)
+			e := github.Extra(decrypter, factory, webhookBuilder, repository.IncrementalSyncPolicy{})
 
 			result, err := e.Build(ctx, tt.repo)
 
@@ -393,7 +393,7 @@ func TestExtra_Mutate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			e := github.Extra(nil, nil, nil, false)
+			e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{})
 
 			err := e.Mutate(ctx, tt.obj)
 
