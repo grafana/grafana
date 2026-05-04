@@ -12,6 +12,7 @@ import (
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
 type ctxOrgIDKey struct{}
+type innermostServiceIdentityKey struct{}
 
 // WithOrgID stores the org ID in context as a fallback when no requester is available.
 func WithOrgID(ctx context.Context, orgID int64) context.Context {
@@ -54,6 +55,19 @@ func GetRequester(ctx context.Context) (Requester, error) {
 		return u, nil
 	}
 	return nil, fmt.Errorf("a Requester was not found in the context")
+}
+
+// WithInnermostServiceIdentity sets the innermost service identity in the context.
+// This is useful for gRPC services to propagate and recover the caller service identity, in the context of audit logging.
+func WithInnermostServiceIdentity(ctx context.Context, svcIdentity string) context.Context {
+	return context.WithValue(ctx, innermostServiceIdentityKey{}, svcIdentity)
+}
+
+// InnermostServiceIdentityFrom returns the innermost service identity stored in the context, and whether it was present.
+// This is useful for gRPC services to propagate and recover the caller service identity, in the context of audit logging.
+func InnermostServiceIdentityFrom(ctx context.Context) (string, bool) {
+	svcIdentity, ok := ctx.Value(innermostServiceIdentityKey{}).(string)
+	return svcIdentity, ok && svcIdentity != ""
 }
 
 func checkNilRequester(r Requester) bool {

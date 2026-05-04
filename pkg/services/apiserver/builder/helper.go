@@ -95,6 +95,11 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
+		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
+		// and injects it into the k8s audit event context (used for audit log suppression).
+		// Runs after WithRequester so auth info is available for the first-hop fallback.
+		handler = auditing.HTTPInjectAuditAnnotationMiddleware(handler)
+
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 
