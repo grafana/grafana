@@ -17,7 +17,7 @@ import (
 func TestSubscribeStream(t *testing.T) {
 	// Create a service instance with required dependencies
 	service := &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpclient.NewProvider())),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpclient.NewProvider(), backend.NewLoggerWith("logger", "loki test"), tracing.DefaultTracer())),
 		tracer: tracing.DefaultTracer(),
 		logger: backend.NewLoggerWith("logger", "loki test"),
 	}

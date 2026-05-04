@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	schemas "github.com/grafana/schemads"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
@@ -47,10 +48,11 @@ var (
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+	logger := backend.NewLoggerWith("logger", "tsdb.loki")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger, tracer)),
 		tracer: tracer,
-		logger: backend.NewLoggerWith("logger", "tsdb.loki"),
+		logger: logger,
 	}
 }
 
@@ -69,6 +71,8 @@ type datasourceInfo struct {
 	// open streams
 	streams   map[string]data.FrameJSONCache
 	streamsMu sync.RWMutex
+
+	schemaDatasource *schemas.SchemaDatasource
 }
 
 type QueryJSONModel struct {
@@ -91,7 +95,7 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	return model, nil
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger, tracer trace.Tracer) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -104,10 +108,21 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
 		}
 
+		schemaProvider := NewSchemaProvider(client, settings.URL, logger, tracer)
+		schemaDs := schemas.NewSchemaDatasource(
+			schemaProvider,
+			schemaProvider,
+			schemaProvider,
+			nil,
+			schemaProvider,
+			nil,
+		)
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
-			streams:    make(map[string]data.FrameJSONCache),
+			HTTPClient:       client,
+			URL:              settings.URL,
+			streams:          make(map[string]data.FrameJSONCache),
+			schemaDatasource: schemaDs,
 		}
 		return model, nil
 	}
@@ -124,6 +139,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
+	if strings.HasPrefix(req.Path, schemas.BaseResourcePath) && dsInfo.schemaDatasource != nil {
+		return dsInfo.schemaDatasource.CallResource(ctx, req, sender)
+	}
+
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
