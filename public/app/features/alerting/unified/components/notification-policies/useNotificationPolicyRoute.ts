@@ -56,6 +56,7 @@ const {
 } = routingTreeApi;
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+const EMPTY_AM_CONFIG_ROUTE: Route = {};
 
 // WeakMap-based caches for stable Route object references. Using WeakMap rather than a
 // fixed-size LRU (micro-memoize's default) avoids cache eviction when multiple external
@@ -101,11 +102,11 @@ export const useNotificationPolicyRoute = (
     selectFromResult: (result) => {
       return {
         ...result,
-        currentData: result.currentData?.alertmanager_config?.route
-          ? parseAmConfigRoute(result.currentData.alertmanager_config.route)
+        currentData: result.currentData?.alertmanager_config
+          ? parseAmConfigRoute(result.currentData.alertmanager_config.route ?? EMPTY_AM_CONFIG_ROUTE)
           : undefined,
-        data: result.data?.alertmanager_config?.route
-          ? parseAmConfigRoute(result.data.alertmanager_config.route)
+        data: result.data?.alertmanager_config
+          ? parseAmConfigRoute(result.data.alertmanager_config.route ?? EMPTY_AM_CONFIG_ROUTE)
           : undefined,
       };
     },
