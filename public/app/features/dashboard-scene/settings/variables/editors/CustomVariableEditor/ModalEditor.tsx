@@ -28,6 +28,7 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
+    draftVariable,
     previewOptions,
     valuesFormat,
     query,
@@ -40,7 +41,9 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable: {{name}}', {
+        name: draftVariable.state.name,
+      })}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -73,14 +76,6 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
       </Stack>
       <Modal.ButtonRow>
         <Button
-          variant="secondary"
-          fill="outline"
-          onClick={onCloseModal}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
-        </Button>
-        <Button
           variant="primary"
           onClick={onSaveOptions}
           disabled={Boolean(queryValidationError)}
@@ -88,13 +83,21 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
         >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
         </Button>
+        <Button
+          variant="secondary"
+          fill="outline"
+          onClick={onCloseModal}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
+        >
+          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 }
 
-export function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>(undefined);
+function useDraftVariable(variable: CustomVariable) {
+  const draftVariableRef = useRef<CustomVariable>();
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }
@@ -119,6 +122,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   };
 
   return {
+    draftVariable,
     previewOptions: options,
     valuesFormat,
     query,
