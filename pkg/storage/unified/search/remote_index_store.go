@@ -467,9 +467,6 @@ func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource r
 	return keys, nil
 }
 
-// GetIndexMeta fetches and validates the manifest for a single snapshot.
-// Returns ErrSnapshotNotFound if the manifest is missing (incomplete upload
-// or already deleted).
 func (s *BucketRemoteIndexStore) GetIndexMeta(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
 	manifestKey := indexPrefix(nsResource, indexKey.String()) + snapshotManifestFile
 	var buf bytes.Buffer
