@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -154,6 +156,16 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
+
+	// Reject resource paths that escape the /loki/api/v1/ prefix. neturl.Parse
+	// decodes percent-encoded segments so this catches both raw and encoded "../".
+	parsed, perr := neturl.Parse(lokiURL)
+	if perr != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
+	if cleaned := path.Clean(parsed.Path); cleaned != "/loki/api/v1" && !strings.HasPrefix(cleaned, "/loki/api/v1/") {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
 		attribute.String("url", lokiURL),
