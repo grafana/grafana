@@ -18,46 +18,49 @@ import (
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type PluginProxy struct {
-	accessControl  ac.AccessControl
-	ps             *pluginsettings.DTO
-	pluginRoutes   []*plugins.Route
-	req            *http.Request
-	resp           http.ResponseWriter
-	signedInUser   identity.Requester
-	proxyPath      string
-	matchedRoute   *plugins.Route
-	cfg            *setting.Cfg
-	secretsService secrets.Service
-	tracer         tracing.Tracer
-	transport      *http.Transport
-	features       featuremgmt.FeatureToggles
+	accessControl    ac.AccessControl
+	ps               *pluginsettings.DTO
+	pluginRoutes     []*plugins.Route
+	req              *http.Request
+	resp             http.ResponseWriter
+	signedInUser     identity.Requester
+	proxyPath        string
+	matchedRoute     *plugins.Route
+	dataProxyLogging bool // from cfg
+	sendUserHeader   bool // from cfg
+	secretsService   secrets.Service
+	tracer           tracing.Tracer
+	transport        *http.Transport
+	features         featuremgmt.FeatureToggles
 }
 
 // NewPluginProxy creates a plugin proxy.
-func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, r *http.Request, w http.ResponseWriter,
-	signedInUser identity.Requester, proxyPath string,
-	cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
+func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
+	r *http.Request, w http.ResponseWriter, signedInUser identity.Requester,
+	proxyPath string,
+	dataProxyLogging bool, sendUserHeader bool,
+	secretsService secrets.Service, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
-		accessControl:  accessControl,
-		ps:             ps,
-		pluginRoutes:   routes,
-		req:            r,
-		resp:           w,
-		signedInUser:   signedInUser,
-		proxyPath:      proxyPath,
-		cfg:            cfg,
-		secretsService: secretsService,
-		tracer:         tracer,
-		transport:      transport,
-		features:       features,
+		accessControl:    accessControl,
+		ps:               ps,
+		pluginRoutes:     routes,
+		req:              r,
+		resp:             w,
+		signedInUser:     signedInUser,
+		proxyPath:        proxyPath,
+		sendUserHeader:   dataProxyLogging,
+		dataProxyLogging: sendUserHeader,
+		secretsService:   secretsService,
+		tracer:           tracer,
+		transport:        transport,
+		features:         features,
 	}, nil
 }
 
@@ -193,7 +196,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.signedInUser)
+	proxyutil.ApplyUserHeader(proxy.sendUserHeader, req, proxy.signedInUser)
 	proxyutil.ApplyForwardIDHeader(req, proxy.signedInUser)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
@@ -207,7 +210,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 }
 
 func (proxy PluginProxy) logRequest() {
-	if !proxy.cfg.DataProxyLogging {
+	if !proxy.dataProxyLogging {
 		return
 	}
 
@@ -231,6 +234,7 @@ func (proxy PluginProxy) logRequest() {
 		"body", body)
 }
 
+// Equivalent to
 func writeJSONErr(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
 	resp := make(map[string]any)
 	if err != nil {
