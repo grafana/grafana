@@ -17,13 +17,41 @@ export default function useExtensionActions(): CommandPaletteAction[] {
   });
 
   return useMemo(() => {
-    return links.map((link) => ({
-      section: link.category ?? 'Extensions',
-      priority: EXTENSIONS_PRIORITY,
-      id: link.id,
-      name: link.title,
-      perform: () => link.onClick && link.onClick(),
-      url: link.path,
-    }));
+    const actions: CommandPaletteAction[] = [];
+    const groupParents = new Map<string, string>();
+
+    for (const link of links) {
+      const section = link.group?.name?.trim() || link.category || 'Extensions';
+      const base = {
+        id: link.id,
+        name: link.title,
+        section,
+        priority: EXTENSIONS_PRIORITY,
+        perform: () => link.onClick?.(),
+        url: link.path,
+      };
+
+      const groupName = link.group?.name?.trim();
+      if (groupName) {
+        const groupKey = `${link.pluginId}/${groupName}`;
+
+        if (!groupParents.has(groupKey)) {
+          const parentId = `ext-group/${groupKey}`;
+          groupParents.set(groupKey, parentId);
+          actions.push({
+            id: parentId,
+            name: groupName,
+            section,
+            priority: EXTENSIONS_PRIORITY,
+          });
+        }
+
+        actions.push({ ...base, parent: groupParents.get(groupKey)! });
+      } else {
+        actions.push(base);
+      }
+    }
+
+    return actions;
   }, [links]);
 }
