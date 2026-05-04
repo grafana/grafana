@@ -330,20 +330,39 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
-		if q.DashboardUID != "" {
-			if r.DashboardUID == nil || *r.DashboardUID != q.DashboardUID {
-				continue
-			}
+		ruleDashUID := ""
+		if r.DashboardUID != nil {
+			ruleDashUID = *r.DashboardUID
 		}
-		if q.PanelID != 0 {
-			if r.PanelID == nil || *r.PanelID != q.PanelID {
-				continue
-			}
+		if q.DashboardUID != "" && ruleDashUID != q.DashboardUID {
+			continue
+		}
+		if len(q.DashboardUIDIn) > 0 && !slices.Contains(q.DashboardUIDIn, ruleDashUID) {
+			continue
+		}
+		if len(q.DashboardUIDNotIn) > 0 && slices.Contains(q.DashboardUIDNotIn, ruleDashUID) {
+			continue
+		}
+		var rulePanelID int64
+		if r.PanelID != nil {
+			rulePanelID = *r.PanelID
+		}
+		if q.PanelID != 0 && rulePanelID != q.PanelID {
+			continue
+		}
+		if len(q.PanelIDIn) > 0 && !slices.Contains(q.PanelIDIn, rulePanelID) {
+			continue
+		}
+		if len(q.PanelIDNotIn) > 0 && slices.Contains(q.PanelIDNotIn, rulePanelID) {
+			continue
 		}
 		if q.IsPaused != nil && r.IsPaused != *q.IsPaused {
 			continue
 		}
-		if q.TitleExact != "" && r.Title != q.TitleExact {
+		if len(q.Titles) > 0 && !slices.Contains(q.Titles, r.Title) {
+			continue
+		}
+		if len(q.ExcludeTitles) > 0 && slices.Contains(q.ExcludeTitles, r.Title) {
 			continue
 		}
 		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
@@ -361,7 +380,60 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		if cpr := r.ContactPointRouting(); q.ReceiverName != "" && (cpr == nil || cpr.Receiver != q.ReceiverName) {
+		ruleReceiver := ""
+		if cpr := r.ContactPointRouting(); cpr != nil {
+			ruleReceiver = cpr.Receiver
+		}
+		if q.ReceiverName != "" && ruleReceiver != q.ReceiverName {
+			continue
+		}
+		if len(q.ReceiverNameIn) > 0 && !slices.Contains(q.ReceiverNameIn, ruleReceiver) {
+			continue
+		}
+		if len(q.ReceiverNameNotIn) > 0 && slices.Contains(q.ReceiverNameNotIn, ruleReceiver) {
+			continue
+		}
+
+		var ruleNotifType models.NotificationSettingsType
+		switch {
+		case r.ContactPointRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeSimplifiedRouting
+		case r.PolicyRouting() != nil:
+			ruleNotifType = models.NotificationSettingsTypeNamedRoutingTree
+		}
+		if len(q.NotificationSettingsTypes) > 0 && !slices.Contains(q.NotificationSettingsTypes, ruleNotifType) {
+			continue
+		}
+		if len(q.ExcludeNotificationSettingsTypes) > 0 && slices.Contains(q.ExcludeNotificationSettingsTypes, ruleNotifType) {
+			continue
+		}
+
+		rulePolicy := ""
+		if pr := r.PolicyRouting(); pr != nil {
+			rulePolicy = pr.Policy
+		}
+		if len(q.RoutingPolicies) > 0 && !slices.Contains(q.RoutingPolicies, rulePolicy) {
+			continue
+		}
+		if len(q.ExcludeRoutingPolicies) > 0 && slices.Contains(q.ExcludeRoutingPolicies, rulePolicy) {
+			continue
+		}
+
+		ruleMetric, ruleTargetUID := "", ""
+		if r.Record != nil {
+			ruleMetric = r.Record.Metric
+			ruleTargetUID = r.Record.TargetDatasourceUID
+		}
+		if len(q.RecordMetrics) > 0 && !slices.Contains(q.RecordMetrics, ruleMetric) {
+			continue
+		}
+		if len(q.ExcludeRecordMetrics) > 0 && slices.Contains(q.ExcludeRecordMetrics, ruleMetric) {
+			continue
+		}
+		if len(q.RecordTargetDatasourceUIDs) > 0 && !slices.Contains(q.RecordTargetDatasourceUIDs, ruleTargetUID) {
+			continue
+		}
+		if len(q.ExcludeRecordTargetDatasourceUIDs) > 0 && slices.Contains(q.ExcludeRecordTargetDatasourceUIDs, ruleTargetUID) {
 			continue
 		}
 

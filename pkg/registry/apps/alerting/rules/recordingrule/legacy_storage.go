@@ -77,27 +77,40 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter  provisioning.ListRuleStringFilter
-		pausedFilter provisioning.ListRuleBoolFilter
+		titleFilter               provisioning.ListRuleStringFilter
+		pausedFilter              provisioning.ListRuleBoolFilter
+		metricFilter              provisioning.ListRuleStringFilter
+		targetDatasourceUIDFilter provisioning.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
-			isEq := r.Operator == selection.Equals || r.Operator == selection.DoubleEquals
 			switch r.Field {
 			case "spec.title":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.title (only = supported)")
+				if err := common.AccumulateFieldSelectorFilter(&titleFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				titleFilter.Include = []string{r.Value}
 			case "spec.paused":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.paused (only = supported)")
-				}
 				v, err := strconv.ParseBool(r.Value)
 				if err != nil {
 					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.paused: %s", r.Value))
 				}
-				pausedFilter.Value = &v
+				switch r.Operator {
+				case selection.Equals, selection.DoubleEquals:
+					pausedFilter.Value = &v
+				case selection.NotEquals:
+					negated := !v
+					pausedFilter.Value = &negated
+				default:
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("unsupported operator %q for spec.paused (only =, ==, != are supported)", r.Operator))
+				}
+			case "spec.metric":
+				if err := common.AccumulateFieldSelectorFilter(&metricFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			case "spec.targetDatasourceUID":
+				if err := common.AccumulateFieldSelectorFilter(&targetDatasourceUIDFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
 			default:
 				return nil, k8serrors.NewBadRequest(fmt.Sprintf("unknown field selector: %s", r.Field))
 			}
@@ -105,13 +118,15 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
-		RuleType:      ngmodels.RuleTypeFilterRecording,
-		Limit:         opts.Limit,
-		ContinueToken: opts.Continue,
-		GroupFilter:   groupFilter,
-		FolderFilter:  folderFilter,
-		TitleFilter:   titleFilter,
-		PausedFilter:  pausedFilter,
+		RuleType:                  ngmodels.RuleTypeFilterRecording,
+		Limit:                     opts.Limit,
+		ContinueToken:             opts.Continue,
+		GroupFilter:               groupFilter,
+		FolderFilter:              folderFilter,
+		TitleFilter:               titleFilter,
+		PausedFilter:              pausedFilter,
+		MetricFilter:              metricFilter,
+		TargetDatasourceUIDFilter: targetDatasourceUIDFilter,
 	})
 	if err != nil {
 		return nil, err

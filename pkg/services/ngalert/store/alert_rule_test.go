@@ -3283,8 +3283,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		query := &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:      orgID,
-				TitleExact: matchTitle,
+				OrgID:  orgID,
+				Titles: []string{matchTitle},
 			},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3418,6 +3418,161 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 			gotUIDs = append(gotUIDs, r.UID)
 		}
 		require.ElementsMatch(t, []string{panel1.UID, panel2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=SimplifiedRouting", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-x")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-x"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		s1 := createRule(t, store, simplifiedGen)
+		s2 := createRule(t, store, simplifiedGen)
+		createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                     orgID,
+				NotificationSettingsTypes: []models.NotificationSettingsType{models.NotificationSettingsTypeSimplifiedRouting},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{s1.UID, s2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=NamedRoutingTree", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-y")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-y"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, simplifiedGen)
+		p1 := createRule(t, store, policyGen)
+		p2 := createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                     orgID,
+				NotificationSettingsTypes: []models.NotificationSettingsType{models.NotificationSettingsTypeNamedRoutingTree},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchPolicy := "match-policy"
+		matchGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: matchPolicy}))
+		otherGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}))
+
+		p1 := createRule(t, store, matchGen)
+		p2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:           orgID,
+				RoutingPolicies: []string{matchPolicy},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("RecordMetricExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchMetric := "match_metric"
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric(matchMetric))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric("other_metric"))
+
+		m1 := createRule(t, store, matchGen)
+		m2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:         orgID,
+				RecordMetrics: []string{matchMetric},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{m1.UID, m2.UID}, gotUIDs)
+	})
+
+	t.Run("RecordTargetDatasourceUIDExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchUID := "match-target-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID(matchUID))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID("other-target-ds-uid"))
+
+		t1 := createRule(t, store, matchGen)
+		t2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                      orgID,
+				RecordTargetDatasourceUIDs: []string{matchUID},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{t1.UID, t2.UID}, gotUIDs)
 	})
 }
 

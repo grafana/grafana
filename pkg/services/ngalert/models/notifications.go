@@ -20,6 +20,15 @@ const GroupByAll = "..."
 const DefaultRoutingTreeName = "user-defined"
 const NamedRouteLabel = "__grafana_managed_route__"
 
+// NotificationSettingsType is an enum of the notification settings configurations a rule may have.
+// It is used by ListAlertRulesQuery to filter by the type of notification settings configured.
+type NotificationSettingsType string
+
+const (
+	NotificationSettingsTypeSimplifiedRouting NotificationSettingsType = "SimplifiedRouting"
+	NotificationSettingsTypeNamedRoutingTree  NotificationSettingsType = "NamedRoutingTree"
+)
+
 // DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 

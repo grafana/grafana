@@ -1059,16 +1059,48 @@ type ListAlertRulesQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
+	// DashboardUIDIn / DashboardUIDNotIn filter rules whose dashboard UID is (or is not)
+	// in the given set. Used by callers that need multi-value field-selector semantics.
+	// When empty, no filter from these is applied. Combined with DashboardUID via AND.
+	DashboardUIDIn    []string
+	DashboardUIDNotIn []string
+	// PanelIDIn / PanelIDNotIn filter rules whose panel ID is (or is not) in the given set.
+	// Combined with PanelID via AND.
+	PanelIDIn    []int64
+	PanelIDNotIn []int64
 
 	// IsPaused filters rules by their paused state.
 	// nil means no filter; true means only paused rules; false means only non-paused rules.
 	IsPaused *bool
-	// TitleExact filters rules to those with an exact title match (case-sensitive).
-	// Empty string means no filter.
-	TitleExact string
 
-	ReceiverName     string
-	TimeIntervalName string
+	// Titles / ExcludeTitles filter rules whose title is (or is not) in the given set.
+	// Empty slice means no filter.
+	Titles        []string
+	ExcludeTitles []string
+
+	// NotificationSettingsTypes / ExcludeNotificationSettingsTypes filter rules whose notification
+	// settings type is (or is not) in the given set. Empty slice means no filter.
+	NotificationSettingsTypes        []NotificationSettingsType
+	ExcludeNotificationSettingsTypes []NotificationSettingsType
+	// RoutingPolicies / ExcludeRoutingPolicies filter rules whose named routing policy is (or is
+	// not) in the given set. Empty slice means no filter.
+	RoutingPolicies        []string
+	ExcludeRoutingPolicies []string
+	// RecordMetrics / ExcludeRecordMetrics filter recording rules whose target metric name is
+	// (or is not) in the given set. Empty slice means no filter.
+	RecordMetrics        []string
+	ExcludeRecordMetrics []string
+	// RecordTargetDatasourceUIDs / ExcludeRecordTargetDatasourceUIDs filter recording rules
+	// whose target data source UID is (or is not) in the given set. Empty slice means no filter.
+	RecordTargetDatasourceUIDs        []string
+	ExcludeRecordTargetDatasourceUIDs []string
+
+	ReceiverName string
+	// ReceiverNameIn / ReceiverNameNotIn filter rules whose contact-point receiver name is
+	// (or is not) in the given set. Combined with ReceiverName via AND.
+	ReceiverNameIn    []string
+	ReceiverNameNotIn []string
+	TimeIntervalName  string
 
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).
