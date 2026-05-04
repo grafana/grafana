@@ -252,3 +252,62 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 		})
 	})
 }
+
+func TestPropertyDelete(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes only specified secure values", func(t *testing.T) {
+		t.Parallel()
+
+		tt := t
+
+		rapid.Check(t, func(t *rapid.T) {
+			sut := testutils.Setup(tt)
+
+			// The list of secure values created during the test
+			secureValues := make([]*secretv1beta1.SecureValue, 0)
+
+			t.Repeat(map[string]func(*rapid.T){
+				// Create a random secure value
+				"create": func(t *rapid.T) {
+					sv := testutils.AnySecureValueGen.Draw(t, "sv")
+					createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+					require.NoError(t, err)
+					secureValues = append(secureValues, createdSv)
+				},
+
+				// Bulk delete a subset of the created secure values
+				"delete": func(t *rapid.T) {
+					if len(secureValues) == 0 {
+						return
+					}
+					i := rapid.IntRange(0, len(secureValues)).Draw(t, "i")
+					keep := secureValues[:i]
+					delete := secureValues[i:]
+
+					// Delete some of the secure values
+					deleteInput := make([]contracts.DeleteInput, 0, len(delete))
+					for _, sv := range delete {
+						deleteInput = append(deleteInput, contracts.DeleteInput{
+							Namespace: xkube.Namespace(sv.Namespace),
+							Name:      sv.Name,
+							Version:   sv.Status.Version,
+						})
+					}
+					require.NoError(t, sut.SecureValueMetadataStorage.Delete(t.Context(), deleteInput))
+
+					// Ensure the non-deleted ones are still reachable.
+					for _, sv := range keep {
+						read, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+						require.NoError(t, err)
+						require.Equal(t, sv.Namespace, read.Namespace)
+						require.Equal(t, sv.Name, read.Name)
+						require.Equal(t, sv.Status.Version, read.Status.Version)
+					}
+
+					secureValues = keep
+				},
+			})
+		})
+	})
+}
