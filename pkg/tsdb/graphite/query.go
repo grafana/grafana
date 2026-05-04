@@ -28,6 +28,17 @@ type queryModel struct {
 	rawTarget string
 }
 
+// maxRenderBodyBytes caps the /render response body we read into memory.
+// Inuse profiling on prod pods under a 20 GiB GOMEMLIMIT showed individual
+// in-flight /render responses retaining 10+ GB of live heap (the io.ReadAll
+// buffer plus the json.Unmarshal slice growth that follows). 200 MiB aligns
+// with the plugin gRPC receive ceiling: anything larger can't traverse the
+// plugin boundary anyway, so the cap only rejects payloads Grafana could
+// not have delivered. Legitimate Graphite responses sit orders of magnitude
+// below this; the cap exists so oversized responses fail the one request
+// rather than the whole pod.
+const maxRenderBodyBytes = 200 << 20
+
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
 	graphiteQueries := map[string]queryModel{}
@@ -248,19 +259,24 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 }
 
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
-	body, err := io.ReadAll(res.Body)
+	// Closing res.Body is the caller's responsibility: RunQuery already
+	// defers res.Body.Close() on the same response before calling
+	// toDataFrames -> parseResponse.
+	//
+	// Read at most maxRenderBodyBytes+1 so we can distinguish "exactly at
+	// the cap" from "over the cap".
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxRenderBodyBytes+1))
 	if err != nil {
 		return nil, backend.DownstreamError(err)
 	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			s.logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
+	if int64(len(body)) > maxRenderBodyBytes {
+		s.logger.Error("Graphite /render response exceeded maximum allowed size", "status", res.Status, "limit", maxRenderBodyBytes)
+		return nil, backend.DownstreamError(fmt.Errorf("graphite response exceeded maximum allowed size of %d bytes", maxRenderBodyBytes))
+	}
 
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
-		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
+		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", truncateForLog(body))
 		err := fmt.Errorf("request failed with error: %s", graphiteError)
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
@@ -275,7 +291,7 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 		var legacyData LegacyTargetResponseDTO
 		err = json.Unmarshal(body, &legacyData)
 		if err != nil {
-			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", string(body))
+			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", truncateForLog(body))
 			return nil, backend.PluginError(err)
 		}
 		return legacyData.Series, nil

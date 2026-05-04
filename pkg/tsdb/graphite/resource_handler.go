@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,17 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
+
+// maxInboundResourceBodyBytes caps the size of inbound resource-handler
+// POST bodies. The resource handler only accepts small JSON control
+// payloads (filter query, from/until, tag prefixes); 1 MiB is generous.
+const maxInboundResourceBodyBytes = 1 << 20
+
+// maxResourceBodyBytes caps upstream Graphite response bodies read during
+// resource calls (metrics/find, metrics/expand, tags/*, events/*, functions,
+// version). These are config/metadata endpoints -- render data is handled
+// separately in query.go with its own larger cap.
+const maxResourceBodyBytes = 32 << 20
 
 type resourceHandler[T any] func(context.Context, *datasourceInfo, *T) ([]byte, int, error)
 
@@ -43,6 +55,13 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 			return
 		}
 
+		if req.Body != nil {
+			// MaxBytesReader returns an error on the Read that crosses the
+			// cap, which io.ReadAll propagates. Bounds per-request allocation
+			// regardless of Content-Length.
+			req.Body = http.MaxBytesReader(rw, req.Body, maxInboundResourceBodyBytes)
+		}
+
 		defer func() {
 			if req.Body != nil {
 				if err := req.Body.Close(); err != nil {
@@ -58,6 +77,13 @@ func handleResourceReq[T any](handlerFn resourceHandler[T], s *Service) func(rw 
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				s.logger.Error("Failed to read request body", "error", err)
+				// Surface MaxBytesReader overflow as a specific 413 rather
+				// than a generic 500.
+				var maxBytesErr *http.MaxBytesError
+				if errors.As(err, &maxBytesErr) {
+					writeErrorResponse(rw, http.StatusRequestEntityTooLarge, fmt.Sprintf("request body exceeds %d bytes", maxInboundResourceBodyBytes))
+					return
+				}
 				writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 				return
 			}
@@ -353,13 +379,16 @@ func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) 
 
 func parseResponse[V any](res *http.Response, isRaw bool, logger log.Logger) (*V, *[]byte, error) {
 	encoding := res.Header.Get("Content-Encoding")
-	body, err := decode(encoding, res.Body)
+	body, err := decode(encoding, res.Body, maxResourceBodyBytes)
 	if err != nil {
+		if errors.Is(err, errResponseBodyTooLarge) {
+			logger.Error("Graphite resource response exceeded maximum allowed size", "status", res.Status, "limit", maxResourceBodyBytes)
+		}
 		return nil, nil, fmt.Errorf("failed to read response: %v", err)
 	}
 
 	if res.StatusCode/100 != 2 {
-		logger.Warn("Request failed", "status", res.Status, "body", string(body))
+		logger.Warn("Request failed", "status", res.Status, "body", truncateForLog(body))
 		return nil, nil, fmt.Errorf("request failed, status: %d", res.StatusCode)
 	}
 

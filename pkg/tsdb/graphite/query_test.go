@@ -867,6 +867,38 @@ func TestAliasMatching(t *testing.T) {
 	}
 }
 
+func TestParseResponseBodyCap(t *testing.T) {
+	service := &Service{logger: backend.Logger}
+
+	t.Run("response exactly at the cap parses successfully", func(t *testing.T) {
+		// Wrap a minimal valid JSON payload in padding to reach the cap.
+		pad := maxRenderBodyBytes - len(`[{"target":"","datapoints":[]}]`)
+		require.Greater(t, pad, 0)
+		body := `[{"target":"` + strings.Repeat("t", pad) + `","datapoints":[]}]`
+		require.Equal(t, maxRenderBodyBytes, len(body))
+
+		resp := &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader(body)),
+		}
+		_, err := service.parseResponse(resp)
+		require.NoError(t, err)
+	})
+
+	t.Run("response over the cap is rejected", func(t *testing.T) {
+		// One byte past the cap -- io.LimitReader reads cap+1 and the
+		// overflow check fires.
+		oversized := strings.Repeat("x", maxRenderBodyBytes+1)
+		resp := &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader(oversized)),
+		}
+		_, err := service.parseResponse(resp)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "exceeded maximum allowed size")
+	})
+}
+
 func TestParseGraphiteError(t *testing.T) {
 	tests := []struct {
 		name     string
