@@ -748,6 +748,30 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(1);
       expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
     });
+
+    it('fetches resource groups for distinct subscriptions in parallel', async () => {
+      const { resourcePickerData } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+      resourcePickerData.getResourceGroupsBySubscriptionId = jest.fn().mockImplementation(async (subId: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight--;
+        return [{ id: `rg-${subId}`, uri: `/subscriptions/${subId}/resourceGroups/rg-${subId}` }];
+      });
+      resourcePickerData.getResourcesForResourceGroup = jest.fn().mockResolvedValue([]);
+
+      await resourcePickerData.fetchInitialRows('logs', [
+        { subscription: '1', resourceGroup: 'rg-1', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+        { subscription: '2', resourceGroup: 'rg-2', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+        { subscription: '3', resourceGroup: 'rg-3', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+      ]);
+
+      expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(3);
+      expect(maxInFlight).toBeGreaterThan(1);
+    });
   });
 
   describe('parseRows', () => {

@@ -8098,6 +8098,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -14157,6 +14163,8 @@
       "alerts-loading": "アラート",
       "card-click": "カード{{id}}を選択",
       "data": "データ",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "新規{{type}} ",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
@@ -14867,10 +14875,13 @@
       "title": "おすすめやテンプレートを活用して、ダッシュボードの作成をスムーズに開始できます"
     },
     "nav": {
+      "counter": "",
       "go-to": "スライド{{number}}へ移動",
-      "next": "次へ",
-      "prev": "前へ"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "クエリを説明",

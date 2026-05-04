@@ -8236,6 +8236,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -14415,6 +14421,8 @@
       "alerts-loading": "Оповещения",
       "card-click": "Выбрать карту {{id}}",
       "data": "Данные",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Новый {{type}}",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
@@ -15143,10 +15151,13 @@
       "title": "Оперативно создавайте дашборды с помощью рекомендаций и шаблонов"
     },
     "nav": {
+      "counter": "",
       "go-to": "Перейти к слайду {{number}}",
-      "next": "Далее",
-      "prev": "Назад"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Объяснить запрос",
