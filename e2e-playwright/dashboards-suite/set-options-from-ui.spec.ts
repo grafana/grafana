@@ -235,7 +235,7 @@ test.describe(
           selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
         )
       ).toBeVisible();
-
+      // remove AAA
       // Click on server variable dropdown
       const serverVariable = dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB'))
