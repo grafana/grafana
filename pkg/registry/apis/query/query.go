@@ -133,7 +133,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	raw := &query.QueryDataRequest{}
 	err := web.Bind(httpreq, raw)
 	if err != nil {
-		connectLogger.Error("Hit unexpected error when reading query", "err", err)
+		connectLogger.Error("Hit unexpected error when reading query", "err", err, "err_type", fmt.Sprintf("%T", err))
 		err = errorsK8s.NewBadRequest("error reading query")
 		// TODO: can we wrap the error so details are not lost?!
 		// errutil.BadRequest(
@@ -160,7 +160,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 				"cause", context.Cause(ctx),
 			)
 		}
-		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err, "err_type", fmt.Sprintf("%T", err))
 		logEmptyRefids(raw.Queries, connectLogger)
 		if qdr != nil { // if we have a response, we assume the err is set in the response
 			responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{

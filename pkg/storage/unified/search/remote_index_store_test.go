@@ -96,9 +96,11 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
+	buildStart := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
 	meta := IndexMeta{
 		GrafanaBuildVersion:   "11.0.0",
 		LatestResourceVersion: 99,
+		BuildStartTimestamp:   buildStart,
 	}
 
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
@@ -110,6 +112,16 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, meta.GrafanaBuildVersion, gotMeta.GrafanaBuildVersion)
 	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
+	assert.True(t, gotMeta.BuildStartTimestamp.Equal(buildStart),
+		"BuildStartTimestamp should round-trip: got %s, want %s", gotMeta.BuildStartTimestamp, buildStart)
+
+	// ListIndexes must surface the same value.
+	listed, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Contains(t, listed, indexKey)
+	assert.True(t, listed[indexKey].BuildStartTimestamp.Equal(buildStart),
+		"BuildStartTimestamp should round-trip via ListIndexes: got %s, want %s",
+		listed[indexKey].BuildStartTimestamp, buildStart)
 
 	// Open and query the downloaded index
 	idx, err := bleve.Open(destDir)
@@ -129,6 +141,39 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	assert.Equal(t, uint64(2), result2.Total)
 
 	require.NoError(t, idx.Close())
+}
+
+// TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime verifies
+// that a snapshot manifest produced before the BuildStartTimestamp field was
+// introduced is still accepted by ListIndexes and surfaces a zero-value
+// BuildStartTimestamp. Readers must treat zero as "unknown".
+func TestRemoteIndexStore_ListIndexes_LegacyMetaWithoutBuildStartTime(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	t.Cleanup(func() { _ = bucket.Close() })
+	store := newTestRemoteIndexStore(t, bucket)
+	ns := newTestNsResource()
+	indexKey := ulid.Make()
+
+	// Hand-crafted manifest with no build_start_timestamp field at all,
+	// mirroring the on-disk shape of legacy snapshots.
+	legacyManifest := []byte(`{
+		"grafana_build_version": "11.0.0",
+		"upload_timestamp": "2024-01-01T00:00:00Z",
+		"latest_resource_version": 42,
+		"files": {"store/root.bolt": 1}
+	}`)
+	pfx := indexPrefix(ns, indexKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, pfx+snapshotManifestFile, legacyManifest, nil))
+
+	listed, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	require.Contains(t, listed, indexKey)
+	assert.True(t, listed[indexKey].BuildStartTimestamp.IsZero(),
+		"legacy manifest should decode to zero-valued BuildStartTimestamp, got %s",
+		listed[indexKey].BuildStartTimestamp)
+	assert.Equal(t, "11.0.0", listed[indexKey].GrafanaBuildVersion)
+	assert.Equal(t, int64(42), listed[indexKey].LatestResourceVersion)
 }
 
 func TestRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
@@ -226,8 +271,7 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 
 	t.Run("missing snapshot manifest", func(t *testing.T) {
 		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "reading snapshot manifest")
+		require.ErrorIs(t, err, ErrSnapshotNotFound)
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
