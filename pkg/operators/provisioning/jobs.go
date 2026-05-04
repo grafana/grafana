@@ -178,10 +178,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
-	// Operator uses a NoOp renderer, so screenshotBaseURL is plumbed for
-	// signature parity but never used at runtime. The on-prem-only
-	// [provisioning] public_root_url setting is intentionally not consulted
-	// here.
 	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, cfg.AppURL, registry)
 	commenter := pullrequest.NewCommenter(false)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
