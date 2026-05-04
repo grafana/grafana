@@ -2,25 +2,22 @@ name: PR Checks
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-
 concurrency:
   group: pr-checks-${{ github.event.number }}-new
   cancel-in-progress: true
-
 permissions:
   statuses: write
   checks: write
   actions: write
   contents: read
   pull-requests: read
-
 jobs:
   main:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
       - name: Run PR Checks
-        uses: grafana/grafana-github-actions/pr-checks@main
+        uses: grafana/grafana-github-actions/pr-checks@6606a86307be7d0f4249bc38a19a5f5818d2cd55 # main
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-checks
