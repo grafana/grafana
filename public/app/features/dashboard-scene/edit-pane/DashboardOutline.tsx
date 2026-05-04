@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
-import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
@@ -149,7 +149,15 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
           ) : (
             <>
               <div className={styles.nodeName}>
-                <Text truncate>{instanceName}</Text>
+                {elementInfo.tooltip ? (
+                  <Tooltip content={elementInfo.tooltip} placement="left">
+                    <span className={styles.nodeNameText}>
+                      <Text truncate>{instanceName}</Text>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Text truncate>{instanceName}</Text>
+                )}
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
               </div>
               {isCloned && (
@@ -270,6 +278,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       alignItems: 'center',
       overflow: 'hidden',
+    }),
+    nodeNameText: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     hiddenIcon: css({
       color: theme.colors.text.secondary,
