@@ -1466,6 +1466,71 @@ func TestSetTeamMember(t *testing.T) {
 			},
 		},
 		{
+			name:       "does not update external members",
+			permission: "Admin",
+			userID:     1,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "should not Update when target member is External")
+			},
+		},
+		{
+			name:       "does not delete external members",
+			permission: "",
+			userID:     1,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+				}
+			},
+			validateCalls: func(t *testing.T, _, updateCalls int) {
+				assert.Equal(t, 0, updateCalls, "should not Update when deleting an External member")
+			},
+		},
+		{
+			name:       "accepts lowercase permission",
+			permission: "admin",
+			userID:     1,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[0].Permission)
+			},
+		},
+		{
 			name:       "returns error for unsupported permission",
 			permission: "Bogus",
 			userID:     1,

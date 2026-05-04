@@ -658,14 +658,17 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 			a.logger.Warn("Skipping team member with unknown permission", "error", err, "resource", a.service.options.Resource)
 			continue
 		}
-		actions, exists := a.service.options.PermissionsToActions[permission]
+		// Capitalize for legacy clients and PermissionsToActions, which still
+		// key on "Admin"/"Member" rather than the lowercase schema form.
+		legacyLabel := cases.Title(language.Und).String(permission)
+		actions, exists := a.service.options.PermissionsToActions[legacyLabel]
 		if !exists {
-			a.logger.Warn("Permission not found in PermissionsToActions map", "permission", permission, "resource", a.service.options.Resource)
+			a.logger.Warn("Permission not found in PermissionsToActions map", "permission", legacyLabel, "resource", a.service.options.Resource)
 			actions = []string{}
 		}
 
 		permDTO := resourcePermissionDTO{
-			Permission: permission,
+			Permission: legacyLabel,
 			Actions:    actions,
 			IsManaged:  true,
 		}
@@ -750,6 +753,10 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 			return m.Kind == subjectKindUser && m.Name == userDetails.UID
 		})
 
+		if idx >= 0 && t.Spec.Members[idx].External {
+			return nil
+		}
+
 		switch {
 		case permission == "" && idx < 0:
 			return nil
@@ -781,26 +788,24 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 	})
 }
 
-// teamMemberPermissionToString maps the K8s enum to the title-cased string used
-// by Options.PermissionsToActions ("Admin", "Member"). An unknown variant
-// returns an error instead of silently collapsing so a new upstream value is
-// visible rather than silently corrupt.
+// teamMemberPermissionToString returns the lowercase schema value ("admin",
+// "member") that matches teammember.cue.
 func teamMemberPermissionToString(p iamv0.TeamTeamPermission) (string, error) {
 	switch p {
 	case iamv0.TeamTeamPermissionAdmin:
-		return "Admin", nil
+		return "admin", nil
 	case iamv0.TeamTeamPermissionMember:
-		return "Member", nil
+		return "member", nil
 	default:
 		return "", fmt.Errorf("unhandled TeamTeamPermission %q", p)
 	}
 }
 
 func stringToTeamMemberPermission(s string) (iamv0.TeamTeamPermission, error) {
-	switch s {
-	case "Admin":
+	switch strings.ToLower(s) {
+	case "admin":
 		return iamv0.TeamTeamPermissionAdmin, nil
-	case "Member":
+	case "member":
 		return iamv0.TeamTeamPermissionMember, nil
 	default:
 		return "", fmt.Errorf("unsupported team permission %q", s)
