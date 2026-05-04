@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -11,6 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -70,35 +70,28 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
-	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
-	// in multiple steps (first with empty path, then configure path, then enable sync).
-	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
+	// Duplicate repository locations are rejected once branch is configured.
+	// Parent folder conflict checks stay gated by sync.Enabled to support multi-step onboarding.
+	if cfg.Spec.Type.IsGit() && cfg.URL() != "" && (cfg.Spec.Sync.Enabled || cfg.Branch() != "") {
 		for _, v := range all {
 			// skip itself
 			if cfg.Name == v.Name {
 				continue
 			}
-			if v.URL() == cfg.URL() {
-				// Allow duplicate paths only when both paths are empty (repository root)
-				if v.Path() == cfg.Path() && cfg.Path() != "" {
+			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
+				if normalizeRepositoryPath(v.Path()) == normalizeRepositoryPath(cfg.Path()) {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
 				}
 
-				// Skip parent/child conflict check when both paths are empty (both at repository root)
-				if v.Path() != "" || cfg.Path() != "" {
-					relPath, err := filepath.Rel(v.Path(), cfg.Path())
-					if err != nil {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-					}
-					// https://pkg.go.dev/path/filepath#Rel
-					// Rel will return "../" if the relative paths are not related
-					if !strings.HasPrefix(relPath, "../") {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
-					}
+				if !cfg.Spec.Sync.Enabled {
+					continue
+				}
+
+				if repositoryPathsOverlap(v.Path(), cfg.Path()) {
+					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
+						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
 				}
 			}
 		}
@@ -134,4 +127,23 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	}
 
 	return nil
+}
+
+// repositoryPathsOverlap reports whether two repository-relative paths target the
+// same tree or one tree contains the other. An empty path represents the repository root.
+func repositoryPathsOverlap(existingPath, newPath string) bool {
+	existingPath = normalizeRepositoryPath(existingPath)
+	newPath = normalizeRepositoryPath(newPath)
+
+	if existingPath == "" || newPath == "" {
+		return true
+	}
+
+	return strings.HasPrefix(newPath, existingPath+"/") || strings.HasPrefix(existingPath, newPath+"/")
+}
+
+// normalizeRepositoryPath canonicalizes configured repository paths before comparing them.
+// Repository paths are relative, so leading and trailing slashes are ignored.
+func normalizeRepositoryPath(p string) string {
+	return strings.Trim(safepath.Clean(strings.TrimSpace(p)), "/")
 }
