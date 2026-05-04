@@ -437,6 +437,7 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 		for i := range frames {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
+				frames[i].Meta.Custom = nil
 			}
 		}
 	}
@@ -459,6 +460,7 @@ func sanitizeData(data *simplejson.Json) {
 			target.Del("expr")
 			target.Del("query")
 			target.Del("rawSql")
+			target.Del("rawQuery")
 		}
 	}
 }
@@ -475,6 +477,7 @@ func sanitizeDataV2(data *simplejson.Json) {
 			dataQuerySpec.Del("expr")
 			dataQuerySpec.Del("query")
 			dataQuerySpec.Del("rawSql")
+			dataQuerySpec.Del("rawQuery")
 		}
 	}
 }

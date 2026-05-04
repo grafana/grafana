@@ -1153,9 +1153,9 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 		}
 		sanitizeMetadataFromQueryData(fakeResponse)
 		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.ExecutedQueryString, "")
-		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom, map[string]string{"test1": "test1"})
+		assert.Nil(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom)
 		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.ExecutedQueryString, "")
-		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom, map[string]string{"test2": "test2"})
+		assert.Nil(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom)
 		assert.Equal(t, fakeResponse.Responses["B"].Frames[0].Meta.ExecutedQueryString, "")
 		assert.Nil(t, fakeResponse.Responses["B"].Frames[0].Meta.Custom)
 	})
@@ -1392,7 +1392,7 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 }
 
 func TestSanitizeDataV2(t *testing.T) {
-	t.Run("removes expr, query, rawSql from query specs", func(t *testing.T) {
+	t.Run("removes expr, query, rawSql, rawQuery from query specs", func(t *testing.T) {
 		data := simplejson.NewFromAny(map[string]interface{}{
 			"elements": map[string]interface{}{
 				"panel-1": map[string]interface{}{
@@ -1418,6 +1418,17 @@ func TestSanitizeDataV2(t *testing.T) {
 													"rawSql": "SELECT * FROM metrics",
 													"refId":  "B",
 													"format": "time_series",
+												},
+											},
+										},
+									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawQuery": true,
+													"query":    "SELECT * FROM cpu",
+													"refId":    "C",
 												},
 											},
 										},
@@ -1456,7 +1467,7 @@ func TestSanitizeDataV2(t *testing.T) {
 
 		panel1Queries := simplejson.NewFromAny(elements["panel-1"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
-		require.Len(t, panel1Queries, 2)
+		require.Len(t, panel1Queries, 3)
 
 		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
 		assert.Empty(t, q1spec.Get("expr").MustString())
@@ -1468,12 +1479,17 @@ func TestSanitizeDataV2(t *testing.T) {
 		assert.Equal(t, "B", q2spec.Get("refId").MustString())
 		assert.Equal(t, "time_series", q2spec.Get("format").MustString())
 
+		q3spec := simplejson.NewFromAny(panel1Queries[2]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q3spec.Get("rawQuery").MustString())
+		assert.Empty(t, q3spec.Get("query").MustString())
+		assert.Equal(t, "C", q3spec.Get("refId").MustString())
+
 		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
 		require.Len(t, panel2Queries, 1)
-		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
-		assert.Empty(t, q3spec.Get("query").MustString())
-		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+		q4spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q4spec.Get("query").MustString())
+		assert.Equal(t, "A", q4spec.Get("refId").MustString())
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
