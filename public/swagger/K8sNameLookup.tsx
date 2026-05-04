@@ -34,7 +34,8 @@ export function K8sNameLookup(props: Props) {
           ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
           : `apis/${group}/${version}/${resource}`;
 
-        const response = await fetch(url + '?limit=100', {
+        const params = new URLSearchParams({ limit: '100' });
+        const response = await fetch(`${url}?${params}`, {
           headers: {
             Accept:
               'application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/jso',
