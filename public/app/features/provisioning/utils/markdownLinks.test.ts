@@ -118,6 +118,38 @@ describe('rewriteRelativeMarkdownLinks', () => {
     expect(out).toContain('href="https://bitbucket.org/workspace/repo/src/main/docs/README.md"');
   });
 
+  it('preserves a fragment in the rewritten URL', () => {
+    const html = `<p><a href="./setup.md#install">Install</a></p>`;
+    const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+    expect(out).toContain(
+      'href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/setup.md#install"'
+    );
+  });
+
+  it('preserves a query string in the rewritten URL', () => {
+    const html = `<p><a href="./setup.md?ref=main">Setup</a></p>`;
+    const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+    expect(out).toContain(
+      'href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/setup.md?ref=main"'
+    );
+  });
+
+  it('preserves both query and fragment when present', () => {
+    const html = `<p><a href="./setup.md?ref=main#install">x</a></p>`;
+    const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+    expect(out).toContain(
+      'href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/setup.md?ref=main#install"'
+    );
+  });
+
+  it('decodes percent-escapes so they are not double-encoded', () => {
+    const html = `<p><a href="./my%20file.md">file</a></p>`;
+    const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+    expect(out).toContain(
+      'href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/my%20file.md"'
+    );
+  });
+
   describe('images', () => {
     it('rewrites a relative image src to the host raw URL', () => {
       const html = `<p><img src="./diagram.png" alt="diagram"></p>`;
@@ -174,6 +206,22 @@ describe('rewriteRelativeMarkdownLinks', () => {
 
       expect(out).not.toMatch(/src="\.\/img\.png"/);
       expect(out).toContain('alt="fallback"');
+    });
+
+    it('preserves a fragment on an image src', () => {
+      const html = `<p><img src="./icons.svg#logo"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+      expect(out).toContain(
+        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/RnD/icons.svg#logo"'
+      );
+    });
+
+    it('preserves a cache-busting query on an image src', () => {
+      const html = `<p><img src="./diagram.png?v=2"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+      expect(out).toContain(
+        'src="https://github.com/grafana/grafana-manifests/raw/main/ops/resources/RnD/diagram.png?v=2"'
+      );
     });
   });
 });

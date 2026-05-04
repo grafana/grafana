@@ -15,7 +15,8 @@ export interface UseFolderReadmeResult {
   /** Path of the README relative to the repository's configured root. */
   readmePath: string;
   status: FolderReadmeStatus;
-  fileData: ReturnType<typeof useGetRepositoryFilesWithPathQuery>['data'];
+  /** Markdown body of the README, or undefined when not loaded successfully. */
+  markdownContent: string | undefined;
   refetch: () => void;
 }
 
@@ -64,12 +65,25 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
     status = 'loading';
   }
 
+  let markdownContent: string | undefined;
+  if (status === 'ok') {
+    const rawFile = fileData?.resource?.file;
+    if (typeof rawFile === 'string') {
+      markdownContent = rawFile;
+    } else if (rawFile && typeof rawFile === 'object' && 'content' in rawFile) {
+      const { content } = rawFile;
+      if (typeof content === 'string') {
+        markdownContent = content;
+      }
+    }
+  }
+
   return {
     repository,
     folder,
     readmePath,
     status,
-    fileData,
+    markdownContent,
     refetch,
   };
 }

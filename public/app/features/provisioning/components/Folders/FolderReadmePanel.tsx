@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, Box, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -25,7 +25,7 @@ interface Props {
  */
 export function FolderReadmePanel({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, status, fileData, refetch } = useFolderReadme(folderUID);
+  const { repository, folder, readmePath, status, markdownContent, refetch } = useFolderReadme(folderUID);
 
   if (!config.featureToggles.provisioningReadmes) {
     return null;
@@ -52,8 +52,6 @@ export function FolderReadmePanel({ folderUID }: Props) {
     pathPrefix: repository.path,
     template: buildReadmeTemplate(folderTitle),
   });
-
-  const markdownContent = status === 'ok' ? extractMarkdownContent(fileData?.resource?.file) : undefined;
 
   return (
     <section id={FOLDER_README_ANCHOR_ID} className={styles.panel} aria-labelledby={`${FOLDER_README_ANCHOR_ID}-title`}>
@@ -101,7 +99,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
 }
 
 interface ReadmeBodyProps {
-  status: FolderReadmeStatus;
+  status: Exclude<FolderReadmeStatus, 'loading'>;
   markdownContent: string | undefined;
   repository: RepositoryView;
   readmePath: string;
@@ -111,14 +109,8 @@ interface ReadmeBodyProps {
 
 function ReadmeBody({ status, markdownContent, repository, readmePath, newFileUrl, refetch }: ReadmeBodyProps) {
   switch (status) {
-    case 'loading':
-      return (
-        <Box display="flex" justifyContent="center" alignItems="center" paddingY={4}>
-          <Spinner size="lg" />
-        </Box>
-      );
     case 'ok':
-      return markdownContent ? (
+      return markdownContent !== undefined ? (
         <RenderedMarkdown
           markdown={markdownContent}
           repository={repository}
@@ -214,29 +206,6 @@ function buildReadmeTemplate(folderTitle: string): string {
   ].join('\n');
 }
 
-function extractMarkdownContent(file: unknown): string | undefined {
-  if (!file) {
-    return undefined;
-  }
-  if (typeof file === 'string') {
-    return file;
-  }
-  if (!isStringRecord(file)) {
-    return undefined;
-  }
-  for (const key of ['content', 'data', 'spec', 'raw']) {
-    const value = file[key];
-    if (typeof value === 'string') {
-      return value;
-    }
-  }
-  return undefined;
-}
-
-function isStringRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     border: `1px solid ${theme.colors.border.weak}`,
@@ -258,5 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
+    maxHeight: '60vh',
+    overflowY: 'auto',
   }),
 });

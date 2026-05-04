@@ -36,8 +36,8 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       return;
     }
 
-    const targetPath = resolveRepoRelativePath(options.baseDirInRepo, href);
-    if (!targetPath) {
+    const result = resolveRepoRelativePath(options.baseDirInRepo, href);
+    if (!result) {
       return;
     }
 
@@ -45,11 +45,11 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       repoType: options.repository.type,
       url: options.repository.url,
       branch: options.repository.branch,
-      filePath: targetPath,
+      filePath: result.path,
     });
 
     if (absolute) {
-      anchor.setAttribute('href', absolute);
+      anchor.setAttribute('href', absolute + result.suffix);
       anchor.setAttribute('target', '_blank');
       anchor.setAttribute('rel', 'noopener noreferrer');
     } else {
@@ -65,8 +65,8 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       return;
     }
 
-    const targetPath = resolveRepoRelativePath(options.baseDirInRepo, src);
-    if (!targetPath) {
+    const result = resolveRepoRelativePath(options.baseDirInRepo, src);
+    if (!result) {
       return;
     }
 
@@ -74,11 +74,11 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       repoType: options.repository.type,
       url: options.repository.url,
       branch: options.repository.branch,
-      filePath: targetPath,
+      filePath: result.path,
     });
 
     if (absolute) {
-      img.setAttribute('src', absolute);
+      img.setAttribute('src', absolute + result.suffix);
     } else {
       // Strip a broken relative src so the alt text takes over instead of a
       // broken-image icon pointing at the Grafana app's own URL space.
@@ -98,20 +98,32 @@ function isAbsoluteUrl(url: string): boolean {
  * `/foo` is treated as repo-root-relative. Trailing slashes are preserved so
  * directories produce a tree URL upstream.
  */
-function resolveRepoRelativePath(baseDir: string, relPath: string): string | undefined {
-  const trimmedRel = relPath.split('?')[0].split('#')[0];
-  if (!trimmedRel) {
+function resolveRepoRelativePath(baseDir: string, relPath: string): { path: string; suffix: string } | undefined {
+  // Split off query/fragment suffix while preserving it for later reattachment.
+  const suffixIdx = relPath.search(/[?#]/);
+  const pathPart = suffixIdx === -1 ? relPath : relPath.slice(0, suffixIdx);
+  const suffix = suffixIdx === -1 ? '' : relPath.slice(suffixIdx);
+
+  if (!pathPart) {
     return undefined;
   }
 
-  const trailingSlash = trimmedRel.endsWith('/') ? '/' : '';
+  // Decode percent-escapes so downstream encodeURIComponent doesn't double-encode.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathPart);
+  } catch {
+    decoded = pathPart;
+  }
 
-  if (trimmedRel.startsWith('/')) {
-    return stripLeadingSlashes(trimmedRel);
+  const trailingSlash = decoded.endsWith('/') ? '/' : '';
+
+  if (decoded.startsWith('/')) {
+    return { path: stripLeadingSlashes(decoded), suffix };
   }
 
   const baseParts = baseDir.split('/').filter(Boolean);
-  const relParts = trimmedRel.split('/');
+  const relParts = decoded.split('/');
   const stack = [...baseParts];
 
   for (const part of relParts) {
@@ -123,11 +135,10 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): string | und
   }
 
   if (stack.length === 0) {
-    return trailingSlash || undefined;
+    return trailingSlash ? { path: trailingSlash, suffix } : undefined;
   }
-  return stack.join('/') + trailingSlash;
+  return { path: stack.join('/') + trailingSlash, suffix };
 }
-
 function stripLeadingSlashes(s: string): string {
   return s.replace(/^\/+/, '');
 }

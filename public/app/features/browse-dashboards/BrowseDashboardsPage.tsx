@@ -16,8 +16,6 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
-import { FolderReadmeHint } from '../provisioning/components/Folders/FolderReadmeHint';
-import { InlineFolderReadmeLayout } from '../provisioning/components/Folders/InlineFolderReadmeLayout';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
@@ -188,7 +186,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        <FolderReadmeHint folderUID={folderUID} isProvisionedFolder={isProvisionedFolder} />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
@@ -202,11 +199,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
-        <InlineFolderReadmeLayout
-          folderUID={folderUID}
-          isProvisionedFolder={isProvisionedFolder}
-          className={styles.subView}
-        >
+        <div className={styles.subView}>
           <AutoSizer>
             {({ width, height }: Size) =>
               isSearching ? (
@@ -224,11 +217,12 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
                   height={height}
                   folderUID={folderUID}
                   isReadOnlyRepo={isReadOnlyRepo}
+                  isProvisionedFolder={isProvisionedFolder}
                 />
               )
             }
           </AutoSizer>
-        </InlineFolderReadmeLayout>
+        </div>
         {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
       {showRenameDrawer && folderDTO && (

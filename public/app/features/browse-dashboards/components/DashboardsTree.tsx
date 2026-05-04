@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -9,6 +9,7 @@ import { type GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { canSelectItems } from '../permissions';
@@ -32,6 +33,7 @@ interface DashboardsTreeProps {
   width: number;
   height: number;
   permissions: BrowseDashboardsPermissions;
+  folderUID?: string;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
@@ -45,6 +47,7 @@ interface DashboardsTreeProps {
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
 const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
+const README_ROW_INITIAL_HEIGHT = 320;
 
 export function DashboardsTree({
   items,
@@ -58,12 +61,15 @@ export function DashboardsTree({
   isItemLoaded,
   requestLoadMore,
   permissions,
+  folderUID,
 }: DashboardsTreeProps) {
   const treeID = useId();
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
+  const [readmeHeight, setReadmeHeight] = useState(README_ROW_INITIAL_HEIGHT);
+  const handleReadmeMeasured = useCallback((h: number) => setReadmeHeight(h), []);
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
@@ -77,6 +83,12 @@ export function DashboardsTree({
       listRef.current.resetAfterIndex(0);
     }
   }, [items]);
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  }, [readmeHeight]);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
@@ -120,10 +132,22 @@ export function DashboardsTree({
       onItemSelectionChange,
       treeID,
       permissions,
+      folderUID,
+      onReadmeMeasured: handleReadmeMeasured,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions]
+    [
+      table,
+      isSelected,
+      onAllSelectionChange,
+      onItemSelectionChange,
+      items,
+      treeID,
+      permissions,
+      folderUID,
+      handleReadmeMeasured,
+    ]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -147,10 +171,13 @@ export function DashboardsTree({
       if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
         return DIVIDER_HEIGHT;
       }
+      if (row.item.kind === 'ui' && row.item.uiKind === 'readme') {
+        return readmeHeight;
+      }
 
       return ROW_HEIGHT;
     },
-    [items]
+    [items, readmeHeight]
   );
 
   return (
@@ -215,6 +242,8 @@ interface VirtualListRowProps {
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
     permissions: BrowseDashboardsPermissions;
+    folderUID?: string;
+    onReadmeMeasured: (height: number) => void;
   };
 }
 
@@ -233,6 +262,14 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     return (
       <div key={key} {...rowProps}>
         <hr className={styles.divider} />
+      </div>
+    );
+  }
+
+  if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'readme' && data.folderUID) {
+    return (
+      <div key={key} {...rowProps}>
+        <ReadmeRowContent folderUID={data.folderUID} onMeasured={data.onReadmeMeasured} />
       </div>
     );
   }
@@ -256,6 +293,30 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function ReadmeRowContent({ folderUID, onMeasured }: { folderUID: string; onMeasured: (h: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (typeof height === 'number') {
+        onMeasured(height);
+      }
+    });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [onMeasured]);
+
+  return (
+    <div ref={ref}>
+      <FolderReadmePanel folderUID={folderUID} />
     </div>
   );
 }

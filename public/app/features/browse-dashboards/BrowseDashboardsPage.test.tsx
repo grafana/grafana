@@ -120,29 +120,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
-
-    // Regression: when provisioningReadmes is off, the subView wrapper must not have
-    // an inline style (e.g. height cap) applied unconditionally.
-    it('does not apply inline styles to the subView wrapper when provisioningReadmes is off', async () => {
-      config.featureToggles.provisioningReadmes = false;
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
-
-      const subViewEl = document.querySelector('[class*="subView"]');
-      expect(subViewEl).not.toBeNull();
-      expect(subViewEl!.getAttribute('style')).toBeNull();
-    });
-
-    it('does not apply inline styles to the subView wrapper when provisioningReadmes is ON either', async () => {
-      config.featureToggles.provisioningReadmes = true;
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
-
-      const subViewEl = document.querySelector('[class*="subView"]');
-      expect(subViewEl).not.toBeNull();
-      expect(subViewEl!.getAttribute('style')).toBeNull();
-    });
-
     it('shows the "New" button', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
