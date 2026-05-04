@@ -83,6 +83,11 @@ export function infoMapper(spec: v0alpha1Spec): PluginMetaInfo {
 }
 
 export function stateMapper(spec: v0alpha1Spec): PluginState {
+  if (!spec.pluginJson.state) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return (spec.pluginJson.state ?? '') as PluginState;
+  }
+
   switch (spec.pluginJson.state) {
     case 'alpha':
       return PluginState.alpha;
@@ -95,11 +100,16 @@ export function stateMapper(spec: v0alpha1Spec): PluginState {
     default:
       logPluginSettingsWarning(`stateMapper: unknown PluginState ${spec.pluginJson.state}`, spec.pluginJson.id);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return (spec.pluginJson.state ?? '') as PluginState;
+      return '' as PluginState;
   }
 }
 
 export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus {
+  if (!spec.signature.status) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return 'unsigned' as PluginSignatureStatus;
+  }
+
   switch (spec.signature.status) {
     case 'internal':
       return PluginSignatureStatus.internal;
@@ -115,7 +125,7 @@ export function signatureStatusMapper(spec: v0alpha1Spec): PluginSignatureStatus
         spec.pluginJson.id
       );
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return (spec.signature.status ?? '') as PluginSignatureStatus;
+      return 'unsigned' as PluginSignatureStatus;
   }
 }
 

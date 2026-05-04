@@ -369,9 +369,9 @@ describe('signatureStatusMapper', () => {
     { status: 'modified', expected: PluginSignatureStatus.modified },
     { status: 'valid', expected: PluginSignatureStatus.valid },
     { status: 'unsigned', expected: 'unsigned' },
-    { status: '', expected: '' },
-    { status: null, expected: '' },
-    { status: undefined, expected: '' },
+    { status: '', expected: 'unsigned' },
+    { status: null, expected: 'unsigned' },
+    { status: undefined, expected: 'unsigned' },
   ])(`when called with $status then it should map to $expected`, ({ expected, status }) => {
     myOrgTestAppMeta.spec.signature.status = status as v0alpha1Spec['signature']['status'];
     expect(signatureStatusMapper(myOrgTestAppMeta.spec)).toStrictEqual(expected);
