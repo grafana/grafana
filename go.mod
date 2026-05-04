@@ -59,7 +59,7 @@ require (
 	github.com/crewjam/saml v0.4.14 // @grafana/identity-access-team
 	github.com/dgraph-io/badger/v4 v4.9.1 // @grafana/grafana-search-and-storage
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
-	github.com/docker/go-connections v0.6.0 // @grafana/grafana-app-platform-squad
+	github.com/docker/go-connections v0.6.0 // indirect; @grafana/grafana-app-platform-squad
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // @grafana/grafana-datasources-core-services
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
@@ -236,7 +236,7 @@ require (
 	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // @grafana/grafana-app-platform-squad
-	sigs.k8s.io/yaml v1.6.0 // @grafana/grafana-app-platform-squad
+	sigs.k8s.io/yaml v1.6.0 // indirect; @grafana/grafana-app-platform-squad
 	xorm.io/builder v0.3.13 // @grafana/grafana-backend-group
 )
 
