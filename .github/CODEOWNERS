@@ -794,6 +794,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
+/mise.toml @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
