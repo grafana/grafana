@@ -768,4 +768,25 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
   });
+
+  it('commits typed path text without Enter when user clicks Choose what to synchronize', async () => {
+    const mockSubmitData = setupMockSubmitData();
+    const { user } = setup(<ProvisioningWizard type="github" />);
+
+    await navigateToConnectionStep(user, 'github', {
+      token: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      url: 'https://github.com/test/repo',
+    });
+
+    const pathCombobox = screen.getAllByRole('combobox')[1];
+    await user.click(pathCombobox);
+    await user.type(pathCombobox, 'docs/dashboards');
+    // No Enter — this is the bug scenario: typed text should survive the blur.
+
+    await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+    await waitFor(() => expect(mockSubmitData).toHaveBeenCalledTimes(2));
+    const connectionSubmitSpec = mockSubmitData.mock.calls[1][0];
+    expect(connectionSubmitSpec.github).toMatchObject({ path: 'docs/dashboards' });
+  });
 });

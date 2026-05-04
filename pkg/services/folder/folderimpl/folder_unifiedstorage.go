@@ -30,6 +30,18 @@ import (
 const folderSearchLimit = 100000
 const folderListLimit = 100000
 
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// multi-value `In` Search when walking a subtree in GetDescendants. K=100
+// keeps per-call latency on the same order as a single-parent Search while
+// reducing the call count for non-trivial subtrees by ~100x.
+const descendantsBatchSize = 100
+
+// searchPageSize bounds the per-page hit count when searchChildren paginates
+// internally. At ~100 bytes per hit this keeps each response well under the
+// default 4 MiB gRPC max receive size, so a high-fanout search is split into
+// multiple round-trips instead of failing with ResourceExhausted.
+const searchPageSize = 10000
+
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
 	defer span.End()
@@ -116,15 +128,6 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return dashFolder, nil
 	}
 
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
-	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, folder.ErrAccessDenied
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
 		q.ID = nil
@@ -516,14 +519,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return toFolderError(err)
-		}
-		return folder.ErrAccessDenied
 	}
 
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)

@@ -514,7 +514,8 @@
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
         "save": "Opslaan"
-      }
+      },
+      "error-title": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "naam",
@@ -1290,7 +1291,8 @@
       "delete": {
         "button": {
           "label": "Alle regels verwijderen"
-        }
+        },
+        "error": ""
       },
       "delete-modal-confirmation-text": "Verwijderen",
       "delete-modal-delete-button": "Verwijderen",
@@ -1573,8 +1575,14 @@
         "update-error": "Kan regelgroep niet bijwerken",
         "update-success": "Regelgroep is bijgewerkt"
       },
+      "group-federated": "",
+      "group-federated-description": "",
       "group-not-editable": "Geselecteerde groep kan niet worden bewerkt",
       "group-not-editable-description": "Deze groep behoort tot een gegevensbron die geen bewerking ondersteunt.",
+      "group-plugin-provided": "",
+      "group-plugin-provided-description": "",
+      "group-provisioned": "",
+      "group-provisioned-description": "",
       "page-title": "Regelgroep bewerken",
       "rule-group-error": "Er is een fout opgetreden bij het laden van de regelgroep"
     },
@@ -3589,9 +3597,9 @@
         "declare-incident": "Incident melden",
         "declare-incident-no-permission": "Je hebt geen toestemming om het incident te openen",
         "instance-details": "Instantiedetails",
+        "section-silence": "",
         "silence-button": "Stilte",
-        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken",
-        "silence-title-with-name": ""
+        "silence-no-permission": "Je hebt geen toestemming om stiltes aan te maken"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "Je hebt geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
@@ -4491,6 +4499,8 @@
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
         "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-by-az": "",
+        "deleted-by-za": "",
         "deleted-newest": "Verwijderd (nieuwste eerst)",
         "deleted-oldest": "Verwijderd (oudste eerst)"
       }
@@ -5636,6 +5646,7 @@
         "panels": "Panelen",
         "row": "Rij",
         "rows": "Rijen",
+        "section-filters-set": "",
         "tab": "Tabblad",
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
@@ -6453,7 +6464,6 @@
         "save-library-panel": "Bibliotheekpaneel",
         "share": {
           "arrow": "Delen",
-          "title": "Delen",
           "tooltip": "Link kopiëren"
         },
         "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
@@ -6488,6 +6498,7 @@
     },
     "transformation-editor": {
       "input-data": "Data invoer",
+      "loading": "",
       "output-data": "Uitvoergegevens",
       "title-debug-transformation": "Debugtransformatie"
     },
@@ -8133,6 +8144,12 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "default-active": "",
+      "default-error": "",
+      "default-label": "",
+      "default-make-button": "",
+      "default-remove-button": "",
+      "default-tooltip": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -8269,6 +8286,7 @@
       }
     },
     "folder-picker-tab": {
+      "label-folder": "",
       "placeholder-search": "Zoeken"
     },
     "resource-dimension-editor": {
@@ -8655,6 +8673,7 @@
         "copy-link": "Link naar logboekregel kopiëren",
         "copy-to-clipboard": "Naar klembord kopiëren",
         "inspect-value": "Waarde inspecteren",
+        "show-details": "",
         "view-log-line": "Logregel bekijken"
       }
     },
@@ -10119,6 +10138,12 @@
     "cascader": {
       "clear-button": "Selectie wissen"
     },
+    "code-mirror": {
+      "error-label": "",
+      "language-load-failed": "",
+      "language-load-failed-description": "",
+      "loading-placeholder": ""
+    },
     "color-picker": {
       "input-label": "RGBA-waarde"
     },
@@ -10464,6 +10489,7 @@
     "sidebar": {
       "close": "Sluiten",
       "dock": "Vastzetten",
+      "go-back": "",
       "hide": "Verbergen",
       "show": "Tonen",
       "undock": "Losmaken"
@@ -11220,6 +11246,7 @@
       "label-numbers": "Nummers",
       "label-signature": "Handtekening"
     },
+    "description-allow-download": "",
     "description-enable-field-selector": "Experimenteel. Toon een onderdeel om de weergegeven velden uit de logs te beheren.",
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren.",
@@ -11329,6 +11356,8 @@
       "fields-section": "Velden",
       "hide-log-line": "Logregel verbergen",
       "inline-mode": "Inline weergave",
+      "inline-no-scrolls": "",
+      "inline-with-scrolls": "",
       "link-value-tooltip": "Linkwaarde",
       "links-section": "Links",
       "log-attributes-field": "Logattributen",
@@ -11515,6 +11544,7 @@
         "common-labels": "Gemeenschappelijke labels:"
       }
     },
+    "name-allow-download": "",
     "name-common-labels": "Gemeenschappelijke labels",
     "name-deduplication": "Dedupliceren",
     "name-details-mode": "Paneelmodus logdetails",
@@ -11577,13 +11607,13 @@
   "logstable": {
     "category-table": "Logtabel",
     "description-show-controls": "Besturingselementen van tabel weergeven",
+    "enable-log-details": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Schakelt de knop voor de logregellink in de eerste kolom van elke rij in/uit",
       "name": "Knop voor kopiëren van loglink weergeven"
-    },
-    "show-inspect-button": {
-      "description": "Schakelt de knop 'Logregel inspecteren' in de eerste kolom van elke rij in/uit",
-      "name": "Knop Inspecteren weergeven"
     }
   },
   "manage-dashbaords": {
@@ -11903,8 +11933,10 @@
   },
   "multicombobox": {
     "all": {
-      "title": "Alle",
-      "title-filtered": "Alle (gefilterd)"
+      "title-deselect": "",
+      "title-deselect-filtered": "",
+      "title-select": "",
+      "title-select-filtered": ""
     },
     "clear": {
       "title": "Alles wissen"
@@ -13147,6 +13179,7 @@
       "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het API-token",
       "token-user-required": "Gebruikersnaam is vereist",
       "url-description": "De Bitbucket-repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL is vereist"
     },
     "bootstrap-step": {
@@ -13560,6 +13593,7 @@
       "contact-admin": "Neem contact op met je Grafana-beheerder om deze bron naar lokaal om te zetten of om alle bronnen uit de ontbrekende repository te verwijderen.",
       "convert-to-local-button": "Converteren naar lokaal",
       "delete-button": "Verwijderen",
+      "go-to-dashboards": "",
       "job-error": "Er is een fout opgetreden bij het verwerken van verweesde bronnen",
       "job-success": "Verweesde bronnen zijn succesvol verwerkt",
       "job-warning": "Sommige bronnen zijn verwerkt met waarschuwingen. Controleer de resultaten.",
@@ -13806,7 +13840,8 @@
       "make-sure": "Een token aanmaken met deze toestemmingen"
     },
     "validation": {
-      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw."
+      "hidden-characters": "Dit veld bevat verborgen tekens die mogelijk zijn ingevoerd door kopiëren en plakken. Typ de waarde opnieuw of verwijder de verborgen tekens en probeer het opnieuw.",
+      "url-with-credentials": ""
     },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
@@ -14100,7 +14135,6 @@
       "hide": "{{type}} verbergen",
       "hide-help": "Hulp bij gegevensbron verbergen",
       "hide-transformation-help": "Help bij transformatie verbergen",
-      "inspector": "Querycontrole",
       "more-actions": "Meer acties voor {{type}}",
       "remove": "{{type}} verwijderen",
       "remove-transformation-filter": "Filter verwijderen",
@@ -14112,6 +14146,27 @@
     "alerts": {
       "no-alerts": "Geen waarschuwingsregels voor dit paneel",
       "no-alerts-description": "Maak een waarschuwingsregel om een melding te krijgen wanneer je gegevens aan bepaalde voorwaarden voldoen."
+    },
+    "bulk-actions": {
+      "change-datasource": "",
+      "clear-selection": "",
+      "datasource": "",
+      "delete": "",
+      "delete-confirm-body": "",
+      "delete-tooltip": "",
+      "disable-all": "",
+      "disable-all-tooltip": "",
+      "enable-all": "",
+      "enable-all-tooltip": "",
+      "hide": "",
+      "hide-all-tooltip": "",
+      "show": "",
+      "show-all-tooltip": "",
+      "toolbar-label": "",
+      "delete-confirm-title_one": "",
+      "delete-confirm-title_other": "",
+      "delete-transformations-confirm-title_one": "",
+      "delete-transformations-confirm-title_other": ""
     },
     "delete-modal": {
       "body-query": "Weet je zeker dat je deze query wilt verwijderen?",
@@ -14149,6 +14204,7 @@
     },
     "footer": {
       "edit-option": "{{label}} bewerken",
+      "inspect-queries": "",
       "label": {
         "interval": "Interval",
         "max-data-points": "Maximale datapunten",
@@ -14159,6 +14215,7 @@
       "placeholder": {
         "no-limit": "Geen limiet"
       },
+      "query-inspector": "",
       "query-options": "Query-opties"
     },
     "header": {
@@ -14192,6 +14249,8 @@
       "alerts-loading": "Waarschuwingen",
       "card-click": "Kaart {{id}} selecteren",
       "data": "Data",
+      "footer-select": "",
+      "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
@@ -14245,6 +14304,10 @@
   "recently-deleted": {
     "buttons": {
       "restore": "Herstellen"
+    },
+    "limit-banner": {
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Je hebt onlangs geen dashboards verwijderd.",
@@ -14407,6 +14470,10 @@
     },
     "results-table": {
       "datasource-header": "Gegevensbron",
+      "deleted-by-header": "",
+      "deleted-by-removed": "",
+      "deleted-by-unknown-short": "",
+      "deleted-by-unknown-tooltip": "",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Resterende tijd",
       "location-header": "Locatie",
@@ -14761,6 +14828,10 @@
     }
   },
   "shared-preferences": {
+    "error": {
+      "get-preferences": "",
+      "update-preferences": ""
+    },
     "fields": {
       "home-dashboard-label": "Startpagina dashboard",
       "home-dashboard-placeholder": "Standaard dashboard",
@@ -14896,10 +14967,13 @@
       "title": "Maak snel dashboards aan met suggesties en sjablonen"
     },
     "nav": {
+      "counter": "",
       "go-to": "Naar slide {{number}}",
-      "next": "Volgende",
-      "prev": "Vorige"
-    }
+      "label": "",
+      "next": "",
+      "prev": ""
+    },
+    "slide-announcement": ""
   },
   "sql-expressions": {
     "explain-query": "Query uitleggen",
@@ -15930,6 +16004,7 @@
           "group-by": "Groeperen op"
         }
       },
+      "placeholder-calculations": "",
       "placeholder-ignored": "Genegeerd",
       "placeholder-select-stats": "Selecteer statistieken"
     },
@@ -15941,6 +16016,16 @@
         "group-by": "Groeperen op"
       },
       "title-calc-alert": "Berekeningen hebben geen effect als er geen velden worden gegroepeerd"
+    },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "",
+      "aria-label-operation": "",
+      "aria-label-remove-rule": "",
+      "button-add-rule": "",
+      "label-calculations": "",
+      "label-keep-nested-field": "",
+      "placeholder": "",
+      "tooltip-keep-nested-field": ""
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
@@ -15964,6 +16049,9 @@
       "name": {
         "grouping-to-matrix": "Groeperen naar matrix"
       }
+    },
+    "heatmap": {
+      "is-applicable-description": ""
     },
     "histogram-transformer-editor": {
       "description": {
@@ -16299,6 +16387,9 @@
       "label-time-field": "Tijdveld",
       "tooltip-statistic-should-calculated-series": "De statistiek die voor deze tijdreeks moet worden berekend.",
       "tooltip-time-field": "Het tijdveld dat zal worden gebruikt voor de tijdreeks. Indien niet geselecteerd, zal de eerst gevonden worden gebruikt."
+    },
+    "transformation-editor": {
+      "loading": ""
     },
     "transpose-transfomer-editor": {
       "label-first-field-name": "Naam eerste veld",

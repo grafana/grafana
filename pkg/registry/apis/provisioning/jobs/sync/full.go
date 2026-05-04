@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -55,7 +56,25 @@ func FullSync(
 			Title: cfg.Spec.Title,
 			Path:  "", // at the root of the repository
 		}, ""); err != nil {
+			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
+
+			// An unmanaged collision on the root folder is the user-facing
+			// outcome of "Delete and keep resources" + reconnect with the
+			// same name. Surface it as a per-resource validation warning in
+			// the pull job output and stop cleanly: no children can be
+			// placed under an unclaimed root, but failing the whole job
+			// hides the actual cause.
+			var unmanagedErr *resources.ResourceUnmanagedConflictError
+			if errors.As(err, &unmanagedErr) {
+				progress.Record(ctx, jobs.NewFolderResult("").
+					WithName(rootFolder).
+					WithAction(repository.FileActionCreated).
+					WithError(err).
+					Build())
+				progress.SetFinalMessage(ctx, "root folder cannot be claimed by this repository")
+				return nil
+			}
 			return tracing.Error(span, fmt.Errorf("create root folder: %w", err))
 		}
 	}

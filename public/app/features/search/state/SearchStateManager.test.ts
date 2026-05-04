@@ -1,11 +1,19 @@
 import { waitFor } from '@testing-library/react';
 import { delay, http, HttpResponse } from 'msw';
 
+import { store } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { TrashStateManager } from 'app/features/browse-dashboards/api/useRecentlyDeletedStateManager';
 
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_LAYOUT_DELETED,
+  SEARCH_SELECTED_SORT,
+} from '../constants';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
@@ -91,6 +99,78 @@ describe('SearchStateManager', () => {
       expect(stm.state.query).toBe('');
       expect(stm.state.sort).toBe(undefined);
       expect(stm.state.folderUid).toBe('abc');
+    });
+
+    it('reads persisted layout from the main SEARCH_SELECTED_LAYOUT key', () => {
+      store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+      store.set(SEARCH_SELECTED_SORT, 'name_sort');
+      const stm = createSearchStateManager();
+      stm.initStateFromUrl(undefined, false);
+      expect(stm.state.layout).toBe(SearchLayout.List);
+      expect(stm.state.sort).toBe('name_sort');
+      expect(stm.state.prevSort).toBe('name_sort');
+    });
+
+    describe('stale recently-deleted sort guard', () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it('clears a recently-deleted sort value from the main key and ignores it', () => {
+        store.set(SEARCH_SELECTED_SORT, 'deleted-desc');
+        const stm = createSearchStateManager();
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBeUndefined();
+        expect(store.get(SEARCH_SELECTED_SORT)).toBeUndefined();
+      });
+
+      it('clears all recently-deleted vocabulary values from the main key', () => {
+        for (const value of RECENTLY_DELETED_SORT_VALUES) {
+          store.set(SEARCH_SELECTED_SORT, value);
+          const stm = createSearchStateManager();
+          stm.initStateFromUrl(undefined, false);
+
+          expect(stm.state.prevSort).toBeUndefined();
+          expect(store.get(SEARCH_SELECTED_SORT)).toBeUndefined();
+        }
+      });
+
+      it('preserves valid main-page sort values', () => {
+        store.set(SEARCH_SELECTED_SORT, 'name_sort');
+        const stm = createSearchStateManager();
+        store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBe('name_sort');
+        expect(store.get(SEARCH_SELECTED_SORT)).toBe('name_sort');
+      });
+
+      it('preserves -name_sort as a valid main-page value', () => {
+        store.set(SEARCH_SELECTED_SORT, '-name_sort');
+        const stm = createSearchStateManager();
+        store.set(SEARCH_SELECTED_LAYOUT, SearchLayout.List);
+        stm.initStateFromUrl(undefined, false);
+
+        expect(stm.state.prevSort).toBe('-name_sort');
+        expect(store.get(SEARCH_SELECTED_SORT)).toBe('-name_sort');
+      });
+    });
+
+    describe('main layout not affected by TrashStateManager sort', () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it('leaves main layout key unchanged when trash page picks a sort', () => {
+        localStorage.setItem(SEARCH_SELECTED_LAYOUT, SearchLayout.Folders);
+        const stm = new TrashStateManager({ ...initialState, includePanels: false, deleted: true });
+        jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+        stm.onSortChange('deleted-desc');
+
+        expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT)).toBe(SearchLayout.Folders);
+        expect(localStorage.getItem(SEARCH_SELECTED_LAYOUT_DELETED)).toBe(SearchLayout.List);
+      });
     });
 
     it('updates search results in order', async () => {

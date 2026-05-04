@@ -148,7 +148,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
           ]);
         }
       },
-      options: { context: 'dashboard' },
+      options: { context: 'unconfigured-panel' },
     });
   };
 
@@ -411,10 +411,11 @@ function getStyles(theme: GrafanaTheme2) {
         content: '""',
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${emptyPanelSvg})`,
-        backgroundSize: '100% auto',
-        backgroundPosition: 'bottom',
-        backgroundRepeat: 'no-repeat',
+        maskImage: `url(${emptyPanelSvg})`,
+        maskSize: '100% auto',
+        maskPosition: 'bottom',
+        maskRepeat: 'no-repeat',
+        backgroundColor: theme.colors.text.primary,
         opacity: 0.08,
         pointerEvents: 'none',
       },

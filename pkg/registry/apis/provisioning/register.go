@@ -135,12 +135,13 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter      func(context.Context) (*clientrest.Config, error)
-	registry              prometheus.Registerer
-	quotaGetter           quotas.QuotaGetter
-	folderMetadataEnabled bool
-	maxIncrementalChanges int
-	folderAPIVersion      string
+	restConfigGetter              func(context.Context) (*clientrest.Config, error)
+	registry                      prometheus.Registerer
+	quotaGetter                   quotas.QuotaGetter
+	folderMetadataEnabled         bool
+	maxIncrementalChanges         int
+	folderAPIVersion              string
+	webhookSecretRotationInterval time.Duration
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -351,6 +352,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -388,8 +390,9 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-
+	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(v1beta1Builder)
+
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
@@ -790,7 +793,16 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled, b.folderAPIVersion)
+	// The files subresource handles GET/POST/PUT/DELETE in a single connector
+	// and the appropriate role fallback differs per verb: reads should fall
+	// back to Viewer, writes to Editor. A static accessWithEditor would over-
+	// restrict reads when the inner authz denies; a static accessWithViewer
+	// would over-permit writes. Compose a verb-aware checker so each operation
+	// gets the right fallback. Per-resource authz still happens inside the
+	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
+	// level operations remain Admin-gated by authorizeRepositorySubresource.
+	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -1007,6 +1019,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			webhookSecretRotationInterval := b.webhookSecretRotationInterval
+			if webhookSecretRotationInterval <= 0 {
+				// If webhookSecretRotationInterval is not set, use the default value
+				webhookSecretRotationInterval = 30 * 24 * time.Hour
+			}
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -1027,6 +1045,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.folderMetadataEnabled,
 				b.folderAPIVersion,
 				b.maxIncrementalChanges,
+				webhookSecretRotationInterval,
 			)
 			if err != nil {
 				return err
@@ -1435,6 +1454,19 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
+
+	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
+	// use an empty ReferenceCallback, so non-primitive fields like commit lose
+	// their $ref and have to be re-attached here (same pattern as RepositoryViewList.items).
+	commitSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"]
+	commitSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
 
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{

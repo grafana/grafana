@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
+import { forwardRef, type HTMLProps } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type StringSelector, selectors } from '@grafana/e2e-selectors';
@@ -12,7 +12,7 @@ import { getPropertiesForButtonSize } from '../commonStyles';
 export const RADIO_GROUP_PADDING = 2;
 export type RadioButtonSize = 'sm' | 'md';
 
-export interface RadioButtonProps {
+export interface RadioButtonProps extends Omit<HTMLProps<HTMLInputElement>, 'size'> {
   size?: RadioButtonSize;
   disabled?: boolean;
   name?: string;
@@ -27,7 +27,7 @@ export interface RadioButtonProps {
   children?: React.ReactNode;
 }
 
-export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
+export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
   (
     {
       children,
@@ -42,6 +42,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       fullWidth,
       title,
       'aria-label': ariaLabel,
+      ...rest
     },
     ref
   ) => {
@@ -50,6 +51,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
     const inputRadioButton = (
       <input
+        {...rest}
         type="radio"
         className={styles.radio}
         onChange={onChange}
@@ -115,6 +117,10 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
         zIndex: 1,
+        // this ensures the selected radio button is shown when forced colors are active
+        '@media (forced-colors: active)': {
+          outline: '1px solid transparent',
+        },
       },
 
       '&:focus + label, &:focus-visible + label': getFocusStyles(theme),

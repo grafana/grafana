@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { validateNoUserInfoInUrl } from '../utils/validators';
+
 import { type RepoType } from './types';
 
 export interface FieldConfig {
@@ -13,6 +15,7 @@ export interface FieldConfig {
       value: RegExp;
       message: string;
     };
+    validate?: (value: string | undefined) => string | true;
   };
 }
 
@@ -42,6 +45,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           value: /^https:\/\/[^\/]+\/[^\/]+\/[^\/]+\/?$/,
           message: t('provisioning.shared.url-pattern', 'Must be a valid repository URL (https://hostname/owner/repo)'),
         },
+        validate: validateNoUserInfoInUrl,
       },
     },
     tokenUser: {
@@ -125,6 +129,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
               'Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)'
             ),
           },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
@@ -175,8 +180,15 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.bitbucket.url-pattern',
+              'Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)'
+            ),
+          },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
@@ -232,6 +244,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
             value: /^https?:\/\/.+/,
             message: t('provisioning.git.url-pattern', 'Must be a valid Git repository URL'),
           },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
