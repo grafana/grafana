@@ -91,6 +91,7 @@ export function TraceView(props: Props) {
     detailLogItemToggle,
     detailLogsToggle,
     detailProcessToggle,
+    detailInstrumentationScopeToggle,
     detailReferencesToggle,
     detailReferenceItemToggle,
     detailTagsToggle,
@@ -232,6 +233,7 @@ export function TraceView(props: Props) {
             detailReferencesToggle={detailReferencesToggle}
             detailReferenceItemToggle={detailReferenceItemToggle}
             detailProcessToggle={detailProcessToggle}
+            detailInstrumentationScopeToggle={detailInstrumentationScopeToggle}
             detailTagsToggle={detailTagsToggle}
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}

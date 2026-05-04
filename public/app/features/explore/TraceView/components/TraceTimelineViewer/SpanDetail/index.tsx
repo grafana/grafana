@@ -243,6 +243,7 @@ export type SpanDetailProps = {
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
+  instrumentationScopeToggle: (spanID: string) => void;
   span: TraceSpan;
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
@@ -273,6 +274,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     logItemToggle,
     logsToggle,
     processToggle,
+    instrumentationScopeToggle,
     span,
     tagsToggle,
     traceStartTime,
@@ -296,6 +298,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const {
     isTagsOpen,
     isProcessOpen,
+    isInstrumentationScopeOpen,
     logs: logsState,
     isWarningsOpen,
     references: referencesState,
@@ -437,6 +440,20 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
+      />
+    );
+  }
+
+  if (span.instrumentationLibraryTags && span.instrumentationLibraryTags.length > 0) {
+    listOfContentCards.push(
+      <AccordianKeyValues
+        data={span.instrumentationLibraryTags}
+        label={t(
+          'explore.span-detail.label-instrumentation-scope-attributes',
+          'Instrumentation scope attributes'
+        )}
+        isOpen={isInstrumentationScopeOpen}
+        onToggle={() => instrumentationScopeToggle(spanID)}
       />
     );
   }

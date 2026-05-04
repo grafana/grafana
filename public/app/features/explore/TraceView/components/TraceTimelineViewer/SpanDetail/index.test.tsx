@@ -64,6 +64,7 @@ describe('<SpanDetail>', () => {
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
+    instrumentationScopeToggle: jest.fn(),
     tagsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
@@ -228,6 +229,29 @@ describe('<SpanDetail>', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+  });
+
+  it('renders the instrumentation scope attributes section when present', async () => {
+    const spanWithScopeAttrs = {
+      ...span,
+      instrumentationLibraryTags: [
+        { key: 'tailsampling.policy', value: 'test-policy' },
+        { key: 'scope.attr', value: 'scope-value' },
+      ],
+    };
+    const propsWithScopeAttrs = {
+      ...props,
+      span: spanWithScopeAttrs,
+      detailState: new DetailState()
+        .toggleLogs()
+        .toggleProcess()
+        .toggleReferences()
+        .toggleTags()
+        .toggleInstrumentationScope(),
+    };
+    render(<SpanDetail {...(propsWithScopeAttrs as unknown as SpanDetailProps)} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Instrumentation scope attributes/ }));
+    expect(props.instrumentationScopeToggle).toHaveBeenLastCalledWith(spanWithScopeAttrs.spanID);
   });
 
   it('renders the logs', async () => {

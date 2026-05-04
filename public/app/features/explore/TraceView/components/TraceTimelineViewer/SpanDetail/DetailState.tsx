@@ -22,6 +22,7 @@ import { type TraceSpanReference } from '../../types/trace';
 export default class DetailState {
   isTagsOpen: boolean;
   isProcessOpen: boolean;
+  isInstrumentationScopeOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   references: { isOpen: boolean; openedItems: Set<TraceSpanReference> };
   isWarningsOpen: boolean;
@@ -32,6 +33,7 @@ export default class DetailState {
     const {
       isTagsOpen,
       isProcessOpen,
+      isInstrumentationScopeOpen,
       isReferencesOpen,
       isWarningsOpen,
       isStackTracesOpen,
@@ -40,6 +42,7 @@ export default class DetailState {
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
     this.isProcessOpen = Boolean(isProcessOpen);
+    this.isInstrumentationScopeOpen = Boolean(isInstrumentationScopeOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
     this.isStackTracesOpen = Boolean(isStackTracesOpen);
@@ -62,6 +65,12 @@ export default class DetailState {
   toggleProcess() {
     const next = new DetailState(this);
     next.isProcessOpen = !this.isProcessOpen;
+    return next;
+  }
+
+  toggleInstrumentationScope() {
+    const next = new DetailState(this);
+    next.isInstrumentationScopeOpen = !this.isInstrumentationScopeOpen;
     return next;
   }
 

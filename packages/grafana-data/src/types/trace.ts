@@ -48,6 +48,7 @@ export interface TraceSpanRow {
   statusMessage?: string;
   instrumentationLibraryName?: string;
   instrumentationLibraryVersion?: string;
+  instrumentationLibraryTags?: TraceKeyValuePair[];
   traceState?: string;
   warnings?: string[];
   stackTraces?: string[];

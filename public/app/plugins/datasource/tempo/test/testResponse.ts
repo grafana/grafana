@@ -178,6 +178,12 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
         ],
       ],
     },
+    {
+      name: 'instrumentationLibraryTags',
+      type: FieldType.other,
+      config: {},
+      values: [[]],
+    },
   ],
   length: 1,
 });
