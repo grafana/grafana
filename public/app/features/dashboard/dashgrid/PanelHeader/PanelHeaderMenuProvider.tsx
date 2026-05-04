@@ -57,5 +57,6 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     targets: panel.targets,
     scopedVars: panel.scopedVars,
     data: panel.getQueryRunner().getLastResult(),
+    panelKey: panel.key,
   };
 }

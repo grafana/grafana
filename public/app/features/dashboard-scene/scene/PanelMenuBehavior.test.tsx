@@ -333,6 +333,7 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
+        panelKey: expect.any(String) as unknown as string,
       };
 
       expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
@@ -390,6 +391,7 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
+        panelKey: expect.any(String) as unknown as string,
       };
 
       expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));

@@ -39,6 +39,7 @@ import {
   setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
+  setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
@@ -92,6 +93,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
@@ -189,6 +191,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
       initGrafanaLive();

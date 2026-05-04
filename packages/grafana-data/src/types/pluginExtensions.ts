@@ -271,6 +271,12 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+  /**
+   * Opaque, stable identifier for the panel. Pass to
+   * `getPanelScreenshotService().capture(panelKey)` from `@grafana/runtime`
+   * to capture an image of the panel as the user currently sees it.
+   */
+  panelKey: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {

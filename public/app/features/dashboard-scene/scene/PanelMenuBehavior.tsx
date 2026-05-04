@@ -527,6 +527,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     targets,
     scopedVars,
     data: queryRunner?.state.data,
+    panelKey: panel.state.key ?? '',
   };
 }
 
