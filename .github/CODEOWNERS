@@ -71,6 +71,7 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
+/scripts/ci/generate-enterprise-imports @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
 /hack/ @grafana/grafana-app-platform-squad
