@@ -52,6 +52,9 @@ type AppPluginRunnerOptions struct {
 
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
+
+	// Direct access to legacy access control (required for proxy)
+	AccessControl ac.AccessControl
 }
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
@@ -62,7 +65,7 @@ type AppPluginAPIBuilder struct {
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
-	accessControl   PluginAccessChecker
+	accessChecker   PluginAccessChecker
 
 	// optional configuration
 	opts AppPluginRunnerOptions
@@ -77,7 +80,7 @@ func NewAppPluginAPIBuilder(
 	client PluginClient, // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
-	accessControl PluginAccessChecker,
+	accessChecker PluginAccessChecker,
 	opts AppPluginRunnerOptions, // can change without updating wire :)
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
@@ -90,7 +93,7 @@ func NewAppPluginAPIBuilder(
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
-		accessControl:   accessControl,
+		accessChecker:   accessChecker,
 		opts:            opts,
 	}, nil
 }
@@ -140,6 +143,7 @@ func RegisterAPIService(
 			AppPluginRunnerOptions{
 				RegisterProxy: registerProxy, // FROM feature toggles
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
+				AccessControl: accessControl,
 			},
 		)
 		if err != nil {

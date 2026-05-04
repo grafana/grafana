@@ -36,7 +36,7 @@ func (b *AppPluginAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
-			return b.accessControl(ctx, user, b.pluginJSON.ID)
+			return b.accessChecker(ctx, user, b.pluginJSON.ID)
 		},
 	)
 }

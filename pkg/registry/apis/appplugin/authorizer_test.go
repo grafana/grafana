@@ -55,7 +55,7 @@ func TestGetAuthorizer(t *testing.T) {
 				pluginJSON: plugins.JSONData{
 					ID: "test-app",
 				},
-				accessControl: NewPluginAccessChecker(&tt.fakeAC),
+				accessChecker: NewPluginAccessChecker(&tt.fakeAC),
 			}
 
 			auth := builder.GetAuthorizer()
