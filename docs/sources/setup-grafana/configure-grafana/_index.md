@@ -2521,6 +2521,18 @@ Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:
 
 Secret key, for example, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
+#### `enable_presigned_urls`
+
+Generate presigned URLs for uploaded images instead of requiring publicly readable objects. When enabled, objects are uploaded without an ACL header, making this compatible with S3 buckets that have `ObjectOwnership` set to `BucketOwnerEnforced` (ACLs disabled). Default is `false`.
+
+#### `presigned_url_expiration`
+
+Duration for which presigned URLs remain valid. Uses Go duration format (e.g., `168h` for 7 days, `6h` for 6 hours). Default is `168h` (7 days).
+
+{{< admonition type="note" >}}
+The maximum expiration depends on your AWS credential type: IAM user credentials support up to 7 days, IAM role or STS credentials are limited to the session duration (typically 1–12 hours), and instance profile credentials are limited to 6 hours.
+{{< /admonition >}}
+
 <hr>
 
 ### `[external_image_storage.webdav]`
