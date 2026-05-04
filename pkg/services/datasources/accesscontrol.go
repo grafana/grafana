@@ -14,6 +14,11 @@ const (
 	ActionIDRead           = "datasources.id:read"
 	ActionPermissionsRead  = "datasources.permissions:read"
 	ActionPermissionsWrite = "datasources.permissions:write"
+
+	// ActionAssistantDeny blocks Assistant from querying the datasource.
+	// When a user/team/role has this permission for a datasource, requests
+	// from Grafana Assistant will be denied even if the user has ActionQuery.
+	ActionAssistantDeny = "datasources.assistant:deny"
 )
 
 var (

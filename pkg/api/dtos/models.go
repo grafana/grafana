@@ -99,6 +99,25 @@ func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 	return res
 }
 
+func (mr *MetricRequest) GetUniqueDatasourceUIDs() []string {
+	dsUIDs := make(map[string]bool)
+	for _, query := range mr.Queries {
+		if uid, ok := query.Get("datasource").CheckGet("uid"); ok {
+			uidStr := uid.MustString()
+			if uidStr != "" && !dsUIDs[uidStr] {
+				dsUIDs[uidStr] = true
+			}
+		}
+	}
+
+	res := make([]string, 0, len(dsUIDs))
+	for uid := range dsUIDs {
+		res = append(res, uid)
+	}
+
+	return res
+}
+
 func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
 	return MetricRequest{
 		From:    mr.From,

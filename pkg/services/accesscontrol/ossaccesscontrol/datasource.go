@@ -94,3 +94,8 @@ func (e DatasourcePermissionsService) DeleteResourcePermissions(ctx context.Cont
 func (e DatasourcePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return ""
 }
+
+func (e DatasourcePermissionsService) HasAssistantDeny(ctx context.Context, user identity.Requester, datasourceUID string) (bool, error) {
+	// OSS doesn't have enterprise permissions, so assistant deny is never set
+	return false, nil
+}
