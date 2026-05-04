@@ -197,7 +197,7 @@
     "rollup-plugin-node-externals": "^8.0.0",
     "rollup-plugin-svg-import": "3.0.0",
     "sass-loader": "16.0.5",
-    "storybook": "patch:storybook@npm%3A9.1.20#~/.yarn/patches/storybook-npm-9.1.20-8675de1863.patch",
+    "storybook": "9.1.20",
     "style-loader": "4.0.0",
     "typescript": "6.0.2",
     "webpack": "^5.105.0"

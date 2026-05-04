@@ -468,7 +468,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "8.0.4",
-    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch",
+    "storybook@npm:9.1.20": "patch:storybook@npm%3A9.1.20#~/.yarn/patches/storybook-npm-9.1.20-8675de1863.patch",
     "protobufjs@npm:8.0.0": "8.0.1",
     "@types/slate/immutable": "^4.0.0",
     "@types/slate-react/immutable": "^4.0.0"
