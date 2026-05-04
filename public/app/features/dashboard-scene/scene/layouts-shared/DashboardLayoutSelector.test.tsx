@@ -59,6 +59,7 @@ describe('DashboardLayoutSelector', () => {
   });
 
   it('should disable tabs option when a row contains tabs layout and show correct message', async () => {
+    const user = userEvent.setup();
     const scene = buildTestSceneWithNestedTabs();
     const layoutManager = scene.state.body;
 
@@ -66,7 +67,9 @@ describe('DashboardLayoutSelector', () => {
 
     const tabsOption = screen.getByLabelText('layout-selection-option-Tabs');
     expect(tabsOption).toBeDisabled();
-    expect(screen.getByTitle('Cannot change to tabs because a row already contains tabs')).toBeInTheDocument();
+
+    await user.hover(tabsOption);
+    expect(await screen.findByText('Cannot change to tabs because a row already contains tabs')).toBeInTheDocument();
   });
 
   it('should not disable tabs option when rows do not contain tabs', async () => {
