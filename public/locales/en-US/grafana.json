@@ -6366,6 +6366,8 @@
         "ungroup-tabs": "Ungroup tabs"
       },
       "name": "Tabs",
+      "scroll-tabs-left": "Scroll tabs left",
+      "scroll-tabs-right": "Scroll tabs right",
       "tab": {
         "new": "New tab",
         "repeat": {

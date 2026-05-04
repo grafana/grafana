@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -74,7 +74,7 @@ export class TabItem
   public readonly isDashboardDropTarget = true;
   private _filtersSet?: SectionFiltersSet;
 
-  public containerRef = React.createRef<HTMLDivElement>();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
 
   constructor(state?: Partial<TabItemState>) {
     super({
