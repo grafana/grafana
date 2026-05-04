@@ -76,13 +76,17 @@ func (du *DashboardUpdater) updateAppDashboards(ctx context.Context) {
 		serviceCtx, _ := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
 		if pluginDef, exists := du.pluginStore.Plugin(serviceCtx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(serviceCtx, pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboardsWithOptions(serviceCtx, pluginDef, pluginSetting.OrgID, false)
 			}
 		}
 	}
 }
 
 func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin pluginstore.Plugin, orgID int64) {
+	du.syncPluginDashboardsWithOptions(ctx, plugin, orgID, true)
+}
+
+func (du *DashboardUpdater) syncPluginDashboardsWithOptions(ctx context.Context, plugin pluginstore.Plugin, orgID int64, importNew bool) {
 	du.logger.Info("Syncing plugin dashboards to DB", "pluginId", plugin.ID)
 
 	// Get plugin dashboards
@@ -107,6 +111,10 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 				return
 			}
 
+			continue
+		}
+
+		if !importNew && !dash.Imported {
 			continue
 		}
 

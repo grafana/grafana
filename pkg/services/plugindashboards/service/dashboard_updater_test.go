@@ -178,6 +178,7 @@ func TestDashboardUpdater(t *testing.T) {
 						DashboardId:      5,
 						PluginId:         "test",
 						Reference:        "updated.json",
+						Imported:         true,
 						Revision:         1,
 						ImportedRevision: 2,
 					},
@@ -197,6 +198,54 @@ func TestDashboardUpdater(t *testing.T) {
 				require.Equal(t, org.RoleAdmin, ctx.importDashboardArgs[0].User.GetOrgRole())
 				require.Equal(t, string(""), ctx.importDashboardArgs[0].FolderUid)
 				require.True(t, ctx.importDashboardArgs[0].Overwrite)
+			})
+
+		scenario(t, "With stored enabled plugin and installed with different versions should not auto-import dashboards that were never imported",
+			scenarioInput{
+				storedPluginSettings: []*pluginsettings.DTO{
+					{
+						PluginID:      "test",
+						Enabled:       true,
+						PluginVersion: "1.0.0",
+						OrgID:         2,
+					},
+				},
+				installedPlugins: []pluginstore.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID: "test",
+							Info: plugins.Info{
+								Version: "1.0.1",
+							},
+						},
+					},
+				},
+				pluginDashboards: []*plugindashboards.PluginDashboard{
+					{
+						PluginId:         "test",
+						Reference:        "never-imported.json",
+						Imported:         false,
+						Revision:         1,
+						ImportedRevision: 0,
+					},
+					{
+						DashboardId:      5,
+						PluginId:         "test",
+						Reference:        "previously-imported.json",
+						Imported:         true,
+						Revision:         2,
+						ImportedRevision: 1,
+					},
+				},
+			}, func(ctx *scenarioContext) {
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
+
+				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
+				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
+
+				require.Len(t, ctx.importDashboardArgs, 1)
+				require.Equal(t, "test", ctx.importDashboardArgs[0].PluginId)
+				require.Equal(t, "previously-imported.json", ctx.importDashboardArgs[0].Path)
 			})
 	})
 
