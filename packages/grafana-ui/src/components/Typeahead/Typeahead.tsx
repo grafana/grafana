@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
+import deepEqual from 'fast-deep-equal';
 import { createRef, PureComponent } from 'react';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
@@ -87,7 +87,7 @@ export class Typeahead extends PureComponent<Props, State> {
       this.listRef.current.scrollToItem(this.state.typeaheadIndex);
     }
 
-    if (isEqual(prevProps.groupedItems, this.props.groupedItems) === false) {
+    if (!deepEqual(prevProps.groupedItems, this.props.groupedItems)) {
       const allItems = flattenGroupItems(this.props.groupedItems);
       const longestLabel = calculateLongestLabel(allItems);
       const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
