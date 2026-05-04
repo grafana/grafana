@@ -52,7 +52,6 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
 type EvaluationMode = 'new' | 'legacy';
 
@@ -152,13 +151,13 @@ export function GrafanaEvaluationBehaviorStep({
     register,
   } = useFormContext<RuleFormValues>();
 
-  const [group, type, isPaused, folder, evaluateEvery] = watch([
+  const [group, type, isPaused, folder, evaluateEvery, isUngrouped] = watch([
     'group',
     'type',
     'isPaused',
     'folder',
     'evaluateEvery',
-    'keepFiringFor',
+    'isUngroupedRuleGroup',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
@@ -199,9 +198,7 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
-  // When the v2 flag is off the radio is hidden; force 'legacy' so only the group selector renders.
-  const startInLegacyMode = !v2Enabled || (Boolean(group) && !isEditingUngroupedRule);
-  const [evaluationMode, setEvaluationMode] = useState<EvaluationMode>(startInLegacyMode ? 'legacy' : 'new');
+  const evaluationMode: EvaluationMode = isUngrouped ? 'new' : 'legacy';
   const showGroupSelection = evaluationMode === 'legacy';
 
   const evaluationModeOptions: Array<SelectableValue<EvaluationMode>> = [
@@ -216,11 +213,13 @@ export function GrafanaEvaluationBehaviorStep({
   ];
 
   useEffect(() => {
+    // When a real group lands on the form (user picked one or the form mounted with one),
+    // remember it for round-trips and snap the form into legacy mode.
     if (group && !isUngroupedRuleGroup(group)) {
       setLastSelectedGroup(group);
-      setEvaluationMode('legacy');
+      setValue('isUngroupedRuleGroup', false);
     }
-  }, [group]);
+  }, [group, setValue]);
 
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
     setValue('group', groupName);
@@ -245,7 +244,7 @@ export function GrafanaEvaluationBehaviorStep({
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
   const onEvaluationModeChange = (value: EvaluationMode) => {
-    setEvaluationMode(value);
+    setValue('isUngroupedRuleGroup', value === 'new');
 
     if (value === 'new') {
       if (group && !isUngroupedRuleGroup(group)) {
