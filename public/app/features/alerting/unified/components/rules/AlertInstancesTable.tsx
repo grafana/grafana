@@ -2,15 +2,15 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { PluginExtensionPoints, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
-import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
+import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   instances: Alert[];
   pagination?: PaginationProps;
   footerRow?: React.ReactNode;
+  showNotificationColumn?: boolean;
 }
 
 interface RuleAndAlert {
@@ -28,7 +29,7 @@ interface RuleAndAlert {
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: Props) => {
+export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -71,19 +72,18 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: 
       }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
       size: '150px',
     },
-    {
-      id: 'actions',
-      label: '',
-      renderCell: ({ data: { alert, rule } }) => (
-        <AlertInstanceExtensionPoint
-          rule={rule}
-          instance={alert}
-          extensionPointId={PluginExtensionPoints.AlertInstanceAction}
-          key="alert-instance-extension-point"
-        />
-      ),
-      size: '40px',
-    },
+    ...(showNotificationColumn
+      ? [
+          {
+            id: 'actions',
+            label: t('alerting.alert-instances-table.notification', 'Notification'),
+            renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
+              <AlertInstanceNotificationAction rule={rule} instance={alert} />
+            ),
+            size: '120px',
+          } satisfies AlertTableColumnProps,
+        ]
+      : []),
   ];
 
   return (
