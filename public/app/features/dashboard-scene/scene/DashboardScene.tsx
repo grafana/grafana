@@ -354,18 +354,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public addVariable(variable: VariableKind, position?: number): void {
     const name = variable.spec.name;
-    const existingVariables = this.state.$variables;
-    if (existingVariables) {
-      const existing = existingVariables.state.variables.find((v) => v.state.name === name);
-      if (existing) {
-        throw new Error(`Variable '${name}' already exists`);
-      }
-    }
-
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
     const sceneVariable = createSceneVariableFromVariableModelV2(variable);
     const varSet = sceneGraph.getVariables(this);
     const currentVariables = [...varSet.state.variables];
+
+    const existing = currentVariables.find((v) => v.state.name === name);
+    if (existing) {
+      throw new Error(`Variable '${name}' already exists`);
+    }
 
     if (position !== undefined && position >= 0 && position < currentVariables.length) {
       currentVariables.splice(position, 0, sceneVariable);
