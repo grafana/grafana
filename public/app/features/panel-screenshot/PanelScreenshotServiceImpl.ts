@@ -1,9 +1,5 @@
 import { type PanelPlugin, type PanelScreenshotContext } from '@grafana/data';
-import {
-  type PanelScreenshotOptions,
-  type PanelScreenshotService,
-  reportInteraction,
-} from '@grafana/runtime';
+import { type PanelScreenshotOptions, type PanelScreenshotService, reportInteraction } from '@grafana/runtime';
 
 import { syncGetPanelPlugin } from '../plugins/importPanelPlugin';
 
@@ -133,13 +129,7 @@ function requireBlob(blob: Blob | null): Blob {
   return blob;
 }
 
-function report(
-  panelType: string,
-  start: number,
-  ok: boolean,
-  errorKind: string | undefined,
-  plugin: PluginSource
-) {
+function report(panelType: string, start: number, ok: boolean, errorKind: string | undefined, plugin: PluginSource) {
   reportInteraction('grafana_panel_screenshot_captured', {
     panelType,
     durationMs: Math.round(performance.now() - start),
