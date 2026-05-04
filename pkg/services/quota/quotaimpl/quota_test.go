@@ -495,10 +495,12 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 }
 
 func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
-	tracer := tracing.InitializeTracerForTest()
-	_, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
+	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
+	tracer := tracing.InitializeTracerForTest()
+	_, err = apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
+	_, err = authimpl.ProvideUserAuthTokenService(t.Context(), sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfgProvider, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
