@@ -1226,9 +1226,9 @@ describe('TableNG hooks', () => {
     it('resets to schema widths when field schema changes', () => {
       const fields = makeFields(['a', 'b']);
       const { result, rerender } = renderHook(
-        ({ nestedVisibleFields }: { nestedVisibleFields: Field[] }) =>
-          useNestedColWidths({ nestedVisibleFields, availableWidth: 300 }),
-        { initialProps: { nestedVisibleFields: fields } }
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
       );
 
       // simulate a user drag
@@ -1242,9 +1242,9 @@ describe('TableNG hooks', () => {
       });
       expect(result.current.nestedFieldWidths).toEqual([200, 200]);
 
-      // now the field schema changes (different configured width)
+      // now the field schema changes (different configured width) — structureRev bumped to signal the change
       const newFields = makeFields(['a', 'b'], 120);
-      rerender({ nestedVisibleFields: newFields });
+      rerender({ nestedVisibleFields: newFields, structureRev: 2 });
 
       expect(result.current.nestedFieldWidths).toEqual([120, 120]);
     });
@@ -1252,9 +1252,9 @@ describe('TableNG hooks', () => {
     it('resets when a new field is added', () => {
       const fields = makeFields(['a', 'b']);
       const { result, rerender } = renderHook(
-        ({ nestedVisibleFields }: { nestedVisibleFields: Field[] }) =>
-          useNestedColWidths({ nestedVisibleFields, availableWidth: 300 }),
-        { initialProps: { nestedVisibleFields: fields } }
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
       );
 
       // simulate a user drag on the original columns
@@ -1268,7 +1268,7 @@ describe('TableNG hooks', () => {
       });
 
       const fieldsWithExtra = makeFields(['a', 'b', 'c']);
-      rerender({ nestedVisibleFields: fieldsWithExtra });
+      rerender({ nestedVisibleFields: fieldsWithExtra, structureRev: 2 });
 
       expect(result.current.nestedFieldWidths).toHaveLength(3);
       expect(result.current.nestedFieldWidths).toEqual([100, 100, 100]);
