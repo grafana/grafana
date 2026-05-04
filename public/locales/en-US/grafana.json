@@ -515,7 +515,8 @@
         "edit-yaml": "Edit YAML",
         "save": "Save"
       },
-      "error-title": "Failed to save alert rule"
+      "error-title": "Failed to save alert rule",
+      "no-group-success": "Rule added successfully"
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -1165,6 +1166,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
+        "none-not-allowed": "Evaluation interval cannot be None and must be a valid duration.",
         "required": "Required."
       }
     },
@@ -1566,6 +1568,7 @@
         "group-name-label": "Evaluation group name",
         "group-name-required": "Group name is required",
         "interval-description": "How often is the group evaluated",
+        "interval-invalid-none": "Evaluation interval cannot be None and must be a valid duration.",
         "interval-label": "Evaluation interval",
         "namespace-label": "Namespace",
         "namespace-required": "Namespace is required",
@@ -2869,6 +2872,11 @@
         },
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "interval-label": "Evaluation interval",
+        "mode": {
+          "legacy": "Use groups (Legacy)",
+          "new": "Set interval"
+        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",

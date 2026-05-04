@@ -350,7 +350,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
           <>
             <Input
               id="interval"
-              {...register('interval', evaluateEveryValidationOptions(rulerGroup.rules))}
+              {...register('interval', evaluateEveryValidationOptions<GroupEditFormData, 'interval'>(rulerGroup.rules))}
               className={styles.intervalInput}
             />
             <EvaluationGroupQuickPick

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, type RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 import { useFirstMountState } from 'react-use';
@@ -16,6 +15,7 @@ import {
   Input,
   Label,
   Modal,
+  RadioButtonGroup,
   Select,
   Stack,
   Switch,
@@ -25,6 +25,7 @@ import {
 } from '@grafana/ui';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { shouldUseRulesAPIV2 } from '../../featureToggles';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
@@ -39,6 +40,7 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
   isProvisionedRuleGroup,
+  isUngroupedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -50,10 +52,31 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
-  const folderGroups = Object.values(rulerNamespace).flat();
+export const MAX_GROUP_RESULTS = 1000;
+type EvaluationMode = 'new' | 'legacy';
 
-  return folderGroups
+const collator = new Intl.Collator();
+const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
+  return collator.compare(a.label ?? '', b.label ?? '');
+};
+
+export const namespaceToGroupOptions = (
+  rulerNamespace: RulerRulesConfigDTO,
+  enableProvisionedGroups: boolean,
+  // Optional in-flight group. Including it here lets the Select display
+  // the new group as the selected option immediately.
+  pendingGroup?: { name: string; interval?: string }
+) => {
+  const folderGroups = Object.values(rulerNamespace)
+    .flat()
+    .filter((group) => !isUngroupedRuleGroup(group.name));
+
+  const groups =
+    pendingGroup && !isUngroupedRuleGroup(pendingGroup.name) && !folderGroups.some((g) => g.name === pendingGroup.name)
+      ? [...folderGroups, { name: pendingGroup.name, interval: pendingGroup.interval, rules: [] }]
+      : folderGroups;
+
+  return groups
     .map<SelectableValue<string>>((group) => {
       const isProvisioned = isProvisionedRuleGroup(group);
       return {
@@ -65,13 +88,7 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
         isProvisioned: isProvisioned,
       };
     })
-
     .sort(sortByLabel);
-};
-
-const collator = new Intl.Collator();
-const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
-  return collator.compare(a.label ?? '', b.label ?? '');
 };
 
 const forValidationOptions = (getEvaluateEvery: () => string): RegisterOptions<{ evaluateFor: string }> => ({
@@ -128,27 +145,43 @@ export function GrafanaEvaluationBehaviorStep({
     watch,
     setValue,
     getValues,
+    clearErrors,
     formState: { errors },
     control,
     register,
   } = useFormContext<RuleFormValues>();
 
-  const [group, type, isPaused, folder, evaluateEvery] = watch([
+  const [group, type, isPaused, folder, evaluateEvery, isUngrouped] = watch([
     'group',
     'type',
     'isPaused',
     'folder',
     'evaluateEvery',
-    'keepFiringFor',
+    'isUngroupedRuleGroup',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
-  const groupOptions = useMemo(() => {
+  // Stable across `group`/`evaluateEvery` changes — only rebuilt when the ruler API
+  // response or the provisioning gate changes.
+  const baseGroupOptions = useMemo(() => {
     return rulerNamespace ? namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups) : [];
   }, [enableProvisionedGroups, rulerNamespace]);
+
+  // Only rebuilds when we actually need to inject a pending group (selected group not yet
+  // returned by the ruler API). Keystrokes in `evaluateEvery` while a known group is selected
+  // short-circuit to the cached `baseGroupOptions`.
+  const groupOptions = useMemo(() => {
+    if (!group || baseGroupOptions.some((option) => option.value === group)) {
+      return baseGroupOptions;
+    }
+    return namespaceToGroupOptions(rulerNamespace ?? {}, enableProvisionedGroups, {
+      name: group,
+      interval: evaluateEvery,
+    });
+  }, [baseGroupOptions, group, evaluateEvery, enableProvisionedGroups, rulerNamespace]);
 
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
@@ -162,6 +195,31 @@ export function GrafanaEvaluationBehaviorStep({
   }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
+  const v2Enabled = shouldUseRulesAPIV2();
+  const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
+  const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const evaluationMode: EvaluationMode = isUngrouped ? 'new' : 'legacy';
+  const showGroupSelection = evaluationMode === 'legacy';
+
+  const evaluationModeOptions: Array<SelectableValue<EvaluationMode>> = [
+    {
+      label: t('alerting.rule-form.evaluation.mode.new', 'Set interval'),
+      value: 'new',
+    },
+    {
+      label: t('alerting.rule-form.evaluation.mode.legacy', 'Use groups (Legacy)'),
+      value: 'legacy',
+    },
+  ];
+
+  useEffect(() => {
+    // When a real group lands on the form (user picked one or the form mounted with one),
+    // remember it for round-trips and snap the form into legacy mode.
+    if (group && !isUngroupedRuleGroup(group)) {
+      setLastSelectedGroup(group);
+      setValue('isUngroupedRuleGroup', false);
+    }
+  }, [group, setValue]);
 
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
     setValue('group', groupName);
@@ -185,6 +243,22 @@ export function GrafanaEvaluationBehaviorStep({
     : t('alerting.rule-form.evaluation.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
+  const onEvaluationModeChange = (value: EvaluationMode) => {
+    setValue('isUngroupedRuleGroup', value === 'new');
+
+    if (value === 'new') {
+      if (group && !isUngroupedRuleGroup(group)) {
+        setLastSelectedGroup(group);
+      }
+      setValue('group', '');
+      clearErrors('group');
+      return;
+    }
+
+    if (!getValues('group') && lastSelectedGroup) {
+      setValue('group', lastSelectedGroup);
+    }
+  };
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const label =
@@ -203,92 +277,126 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <Stack alignItems="center">
-          <div style={{ width: 420 }}>
+        {v2Enabled && !isEditingUngroupedRule && (
+          <Field noMargin>
+            <RadioButtonGroup
+              value={evaluationMode}
+              options={evaluationModeOptions}
+              onChange={onEvaluationModeChange}
+              className={styles.modeField}
+            />
+          </Field>
+        )}
+        {!showGroupSelection && (
+          <Stack direction="column" gap={1.5}>
             <Field
               noMargin
-              label={label}
-              data-testid="group-picker"
-              className={styles.formInput}
-              error={errors.group?.message}
-              invalid={!!errors.group?.message}
-              htmlFor="group"
+              label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
+              className={styles.inlineField}
+              error={errors.evaluateEvery?.message}
+              invalid={Boolean(errors.evaluateEvery?.message)}
+              htmlFor="evaluate-every-no-group"
             >
-              <Controller
-                render={({ field: { ref, ...field }, fieldState }) => (
-                  <Select
-                    disabled={!folder?.uid || loadingGroups}
-                    inputId="group"
-                    key={uniqueId()}
-                    {...field}
-                    onChange={(group) => {
-                      field.onChange(group.label ?? '');
-                    }}
-                    isLoading={loadingGroups}
-                    invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
-                    cacheOptions
-                    loadingMessage={t(
-                      'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
-                      'Loading groups...'
-                    )}
-                    defaultValue={defaultGroupValue}
-                    options={groupOptions}
-                    getOptionLabel={(option: SelectableValue<string>) => (
-                      <div>
-                        <span>{option.label}</span>
-                        {option.isProvisioned && (
-                          <>
-                            {' '}
-                            <ProvisioningBadge />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    placeholder={t(
-                      'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
-                      'Select an evaluation group...'
-                    )}
-                  />
-                )}
-                name="group"
-                control={control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: t(
-                      'alerting.grafana-evaluation-behavior-step.message.must-enter-a-group-name',
-                      'Must enter a group name'
-                    ),
-                  },
-                }}
+              <Input
+                id="evaluate-every-no-group"
+                width={8}
+                {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
               />
             </Field>
-          </div>
-          <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">
-              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-            </Text>
-            <Button
-              onClick={onOpenEvaluationGroupCreationModal}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!folder?.uid}
-              data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
-            >
-              <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-            </Button>
-          </Box>
-          {isCreatingEvaluationGroup && (
-            <EvaluationGroupCreationModal
-              onCreate={handleEvalGroupCreation}
-              onClose={() => setIsCreatingEvaluationGroup(false)}
+            <EvaluationGroupQuickPick
+              currentInterval={evaluateEvery}
+              onSelect={(interval) => setValue('evaluateEvery', interval)}
             />
-          )}
-        </Stack>
+          </Stack>
+        )}
 
-        {folder?.title && group && (
+        {showGroupSelection && (
+          <Stack alignItems="end" gap={1}>
+            <div style={{ width: 420 }}>
+              <Field
+                noMargin
+                label={label}
+                data-testid="group-picker"
+                className={styles.formInput}
+                error={errors.group?.message}
+                invalid={!!errors.group?.message}
+                htmlFor="group"
+              >
+                <Controller
+                  render={({ field: { ref, ...field }, fieldState }) => (
+                    <Select
+                      disabled={!folder?.uid || loadingGroups}
+                      inputId="group"
+                      {...field}
+                      onChange={(group) => {
+                        field.onChange(group.label ?? '');
+                      }}
+                      isLoading={loadingGroups}
+                      invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
+                      cacheOptions
+                      loadingMessage={t(
+                        'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
+                        'Loading groups...'
+                      )}
+                      defaultValue={defaultGroupValue}
+                      options={groupOptions}
+                      getOptionLabel={(option: SelectableValue<string>) => (
+                        <div>
+                          <span>{option.label}</span>
+                          {option.isProvisioned && (
+                            <>
+                              {' '}
+                              <ProvisioningBadge />
+                            </>
+                          )}
+                        </div>
+                      )}
+                      placeholder={t(
+                        'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
+                        'Select an evaluation group...'
+                      )}
+                    />
+                  )}
+                  name="group"
+                  control={control}
+                  rules={{
+                    required: {
+                      value: showGroupSelection,
+                      message: t(
+                        'alerting.grafana-evaluation-behavior-step.message.must-enter-a-group-name',
+                        'Must enter a group name'
+                      ),
+                    },
+                  }}
+                />
+              </Field>
+            </div>
+            <Box gap={1} display={'flex'} alignItems={'center'}>
+              <Text color="secondary">
+                <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+              </Text>
+              <Button
+                onClick={onOpenEvaluationGroupCreationModal}
+                type="button"
+                icon="plus"
+                fill="outline"
+                variant="secondary"
+                disabled={!folder?.uid}
+                data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
+              >
+                <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
+              </Button>
+            </Box>
+            {isCreatingEvaluationGroup && (
+              <EvaluationGroupCreationModal
+                onCreate={handleEvalGroupCreation}
+                onClose={() => setIsCreatingEvaluationGroup(false)}
+              />
+            )}
+          </Stack>
+        )}
+
+        {folder?.title && group && !isUngroupedRuleGroup(group) && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
@@ -303,11 +411,14 @@ export function GrafanaEvaluationBehaviorStep({
             </Stack>
           </div>
         )}
-        {/* Show the pending period input only for Grafana alerting rules */}
-        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
-        <Divider />
-        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
-        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
+        {isGrafanaAlertingRule && (
+          <>
+            <Divider />
+            <ForInput evaluateEvery={evaluateEvery} />
+            <Divider />
+            <KeepFiringFor evaluateEvery={evaluateEvery} />
+          </>
+        )}
 
         {existing && (
           <Field noMargin htmlFor="pause-alert-switch">
@@ -775,6 +886,9 @@ function getDescription(isGrafanaRecordingRule: boolean) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  modeField: css({
+    marginBottom: theme.spacing(1.5),
+  }),
   inlineField: css({
     marginBottom: 0,
   }),

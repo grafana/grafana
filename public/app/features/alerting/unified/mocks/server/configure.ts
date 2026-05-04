@@ -80,6 +80,30 @@ export const setUpdateGrafanaRulerRuleNamespaceResolver = (
   );
 };
 
+export const setCreateGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.post<{ namespace: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      resolver
+    )
+  );
+};
+
+export const setReplaceGrafanaRuleResolver = (
+  resolver: HttpResponseResolver<{ namespace: string; name: string }, DefaultBodyType, undefined>,
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+) => {
+  server.use(
+    http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      resolver
+    )
+  );
+};
+
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {
@@ -121,6 +145,37 @@ export const setGrafanaRulerRuleGroupResolver = (
       resolver
     )
   );
+};
+
+/**
+ * Override the GET /rule/:uid endpoint with a custom resolver. Useful when a test
+ * needs to surface a specific rule shape that's not in the default ruler test DB
+ * (e.g. an ungrouped rule, a recording rule).
+ */
+export const setGrafanaRulerRuleResolver = (
+  resolver: HttpResponseResolver<{ uid: string }, DefaultBodyType, undefined>
+) => {
+  server.use(http.get<{ uid: string }, DefaultBodyType, undefined>(`/api/ruler/grafana/api/v1/rule/:uid`, resolver));
+};
+
+/**
+ * Resolver that echoes the request body back to the caller, fabricating a `metadata.name`
+ * for create requests where the server would normally generate one. Common shape for
+ * app-platform create/replace responses in unit tests. Reads `params.name` when present
+ * (replace path), falls back to a sentinel for create.
+ */
+export const echoBodyResolver = async ({
+  request,
+  params,
+}: {
+  request: Request;
+  params: Record<string, string | readonly string[]>;
+}) => {
+  // Clone before reading: captureRequests reads the body too, and a Request body can only be consumed once.
+  const body = (await request.clone().json()) as Record<string, unknown>;
+  const rawName = params.name;
+  const name = typeof rawName === 'string' ? rawName : 'new-uid';
+  return HttpResponse.json({ ...body, metadata: { name } });
 };
 
 export const setRulerRuleGroupResolver = (

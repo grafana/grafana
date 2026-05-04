@@ -22,7 +22,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
-import { getRulerGroupReadOnlyStatus } from '../utils/rules';
+import { getRuleName, getRulerGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 import { formatPrometheusDuration } from '../utils/time';
 
 import { Title } from './Title';
@@ -82,6 +82,14 @@ function GroupDetailsPage() {
 
   const namespaceName = folder?.title ?? namespaceId;
   const namespaceUrl = createListFilterLink([['namespace', namespaceName]]);
+  const firstPromRule = promGroup?.rules?.[0];
+  const firstPromRuleName = firstPromRule?.name;
+  const firstRulerRuleName = rulerGroup?.rules?.[0] ? getRuleName(rulerGroup.rules[0]) : undefined;
+  const ungroupedRuleName =
+    firstPromRuleName || firstRulerRuleName || t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+  const groupDisplayName = isUngroupedRuleGroup(groupName)
+    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: ungroupedRuleName })
+    : groupName;
 
   const namespaceLabel = isGrafanaRuleGroup
     ? t('alerting.group-details.folder', 'Folder')
@@ -97,8 +105,9 @@ function GroupDetailsPage() {
 
   return (
     <AlertingPageWrapper
+      key={groupDisplayName}
       pageNav={{
-        text: groupName,
+        text: groupDisplayName,
         parentItem: {
           text: namespaceName,
           url: namespaceUrl,

@@ -71,6 +71,8 @@ const selectFolderAndGroup = async (user: UserEvent) => {
   const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
   await user.click(folderOption);
 
+  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
+
   const groupInput = await ui.inputs.group.find();
   const groupCombobox = await byRole('combobox').find(groupInput);
   await user.click(groupCombobox);
@@ -122,6 +124,8 @@ const grantAllPermissions = () => {
 };
 
 describe('PolicyTreeSelector - feature toggle OFF', () => {
+  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     contextSrv.isEditor = true;
@@ -149,7 +153,7 @@ describe('PolicyTreeSelector - feature toggle OFF', () => {
 });
 
 describe('PolicyTreeSelector - feature toggle ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alerting.rulesAPIV2'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -465,7 +469,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 });
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings'] });
+  testWithFeatureToggles({
+    enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
+  });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
