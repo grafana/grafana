@@ -252,6 +252,12 @@ func Error(status int, message string, err error) *NormalResponse {
 		data["message"] = message
 	}
 
+	// Include actual error details for 4xx client/validation errors so users can debug issues.
+	// Do not expose error details for 5xx to avoid leaking internal information.
+	if err != nil && status >= 400 && status < 500 {
+		data["error"] = err.Error()
+	}
+
 	resp := JSON(status, data)
 
 	if err != nil {
