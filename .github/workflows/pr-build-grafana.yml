@@ -135,6 +135,7 @@ jobs:
            -f "output[text]=${IMAGE}"
 
   run-meticulous-tests:
+    if: github.repository == 'grafana/grafana'
     needs: push-docker-image
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
@@ -148,7 +149,7 @@ jobs:
       statuses: read
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
