@@ -423,6 +423,10 @@ const (
 	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
+	// FlagGroupToNestedTableV2
+	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
+
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
