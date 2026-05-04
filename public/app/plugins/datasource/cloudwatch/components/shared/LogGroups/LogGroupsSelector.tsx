@@ -15,6 +15,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { useAppNotification } from 'app/core/copy/appNotification';
+
 import { type LogGroup } from '../../../dataquery.gen';
 import { type DescribeLogGroupsRequest, type LogGroupsResponse } from '../../../resources/types';
 import getStyles from '../../styles';
@@ -48,6 +50,7 @@ export const LogGroupsSelector = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextToken, setNextToken] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
+  const notifyApp = useAppNotification();
   const selectedLogGroupsCounter = useMemo(
     () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
     [selectedLogGroups]
@@ -130,7 +133,7 @@ export const LogGroupsSelector = ({
       ]);
       setNextToken(response.nextToken);
     } catch (err) {
-      // keep existing results on error
+      notifyApp.error('Failed to load more log groups. Please try again.');
     }
     setIsLoadingMore(false);
   };

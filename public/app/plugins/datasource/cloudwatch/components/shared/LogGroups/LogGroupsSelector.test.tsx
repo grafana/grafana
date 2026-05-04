@@ -8,6 +8,16 @@ import { type LogGroupsResponse } from '../../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 
+const mockNotifyError = jest.fn();
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    error: mockNotifyError,
+    warning: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  }),
+}));
+
 const defaultLogGroupsResponse: LogGroupsResponse = {
   results: [
     {
@@ -190,8 +200,7 @@ describe('LogGroupsSelector', () => {
     ]);
   });
 
-  const labelText =
-    'If you do not see an expected log group, try narrowing down your search.';
+  const labelText = 'If you do not see an expected log group, try narrowing down your search.';
   it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
@@ -210,12 +219,14 @@ describe('LogGroupsSelector', () => {
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
       return {
-        results: Array(50).fill(null).map((_, i) => ({
-          value: {
-            arn: `logGroup${i}`,
-            name: `logGroup${i}`,
-          },
-        })),
+        results: Array(50)
+          .fill(null)
+          .map((_, i) => ({
+            value: {
+              arn: `logGroup${i}`,
+              name: `logGroup${i}`,
+            },
+          })),
       } as LogGroupsResponse;
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
@@ -370,5 +381,37 @@ describe('LogGroupsSelector', () => {
     await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
     expect(screen.queryByText('Load more')).not.toBeInTheDocument();
+  });
+
+  it('should show a toast error when load more fails', async () => {
+    let callCount = 0;
+    const fetchLogGroups = jest.fn(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          results: [
+            {
+              accountId: '123',
+              value: {
+                name: 'logGroup1',
+                arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+              },
+            },
+          ],
+          nextToken: 'page2_token',
+        } as LogGroupsResponse;
+      }
+      throw new Error('network error');
+    });
+
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Select log groups' }));
+    await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+
+    await waitFor(() =>
+      expect(mockNotifyError).toHaveBeenCalledWith('Failed to load more log groups. Please try again.')
+    );
   });
 });
