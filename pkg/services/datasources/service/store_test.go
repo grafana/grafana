@@ -294,6 +294,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.Equal(t, ds.OrgID, deleted.OrgID)
 		require.Equal(t, ds.Name, deleted.Name)
 		require.Equal(t, ds.UID, deleted.UID)
+		require.Equal(t, ds.Type, deleted.Type)
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {

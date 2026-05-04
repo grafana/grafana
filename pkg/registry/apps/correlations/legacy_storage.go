@@ -61,21 +61,26 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
-	uids := []string{}
-	if options.FieldSelector != nil {
-		for _, r := range options.FieldSelector.Requirements() {
-			switch r.Field {
-			case "spec.datasource.name":
-				switch r.Operator {
-				case selection.Equals, selection.DoubleEquals:
-					uids = []string{r.Value}
-				case selection.In:
-					uids = strings.Split(r.Value, ";") // ??? not sure how/if this supports multiple values
-				default:
+	// only allow selecting up to 100 datasources
+	uids := make([]string, 0, 100)
+	if options.LabelSelector != nil {
+		reqs, selectable := options.LabelSelector.Requirements()
+
+		if !selectable {
+			return nil, fmt.Errorf("label not selectable")
+		}
+
+		for _, r := range reqs {
+			if r.Key() == "correlations.grafana.app/sourceDS-ref" {
+				if r.Operator() == selection.Equals || r.Operator() == selection.In {
+					for _, item := range r.Values().List() {
+						uids = append(uids, strings.Split(item, ".")[1])
+					}
+				} else {
 					return nil, fmt.Errorf("unsupported operation")
 				}
-			default:
-				return nil, fmt.Errorf("unsupported field")
+			} else {
+				return nil, fmt.Errorf("unsupported label")
 			}
 		}
 	}
@@ -219,7 +224,21 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for correlation not implemented")
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	labelSelectors, _ := listOptions.LabelSelector.Requirements()
+	datasourceRef := labelSelectors[0].Values().List()[0]
+	datasourceData := strings.Split(datasourceRef, ".") // the selector is type.uid
+	if labelSelectors[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceData[1], SourceType: datasourceData[0], OrgId: orgID, OnlyProvisioned: true})
+	}
+	if labelSelectors[0].Key() == "correlations.grafana.app/targetDS-ref" {
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceData[1], TargetType: datasourceData[0], OrgId: orgID})
+	}
+	return nil, fmt.Errorf("deleteCollection key not implemented for passthrough to legacy")
 }
 
 type continueToken struct {

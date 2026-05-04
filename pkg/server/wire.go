@@ -279,7 +279,7 @@ var wireBasicSet = wire.NewSet(
 	queryhistory.ProvideService,
 	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	correlations.ProvideService,
-	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
+	correlations.ProvideLegacyService,
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),

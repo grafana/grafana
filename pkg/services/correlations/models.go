@@ -152,11 +152,13 @@ type CreateCorrelationResponseBody struct {
 // swagger:model
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
-	SourceUID string `json:"-"`
-	OrgId     int64  `json:"-"`
+	SourceUID  string `json:"-"`
+	SourceType string `json:"-"`
+	OrgId      int64  `json:"-"`
 	// Target data source UID to which the correlation is created. required if type = query
 	// example: PE1C5CBDA0504A6A3
-	TargetUID *string `json:"targetUID"`
+	TargetUID  *string `json:"targetUID"`
+	TargetType *string `json:"-"`
 	// Optional label identifying the correlation
 	// example: My label
 	Label string `json:"label"`
@@ -284,11 +286,13 @@ type GetCorrelationsQuery struct {
 
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID       string
+	SourceType      string
 	OrgId           int64
 	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
-	TargetUID string
-	OrgId     int64
+	TargetUID  string
+	TargetType string
+	OrgId      int64
 }

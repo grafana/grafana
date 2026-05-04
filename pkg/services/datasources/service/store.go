@@ -222,6 +222,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 				ID:        ds.ID,
 				UID:       ds.UID,
 				OrgID:     ds.OrgID,
+				Type:      ds.Type,
 			})
 		}
 

@@ -94,7 +94,7 @@ export const useCorrelations = () => {
       return lastValueFrom(
         backend.fetch<CorrelationsResponse>({
           url: '/api/datasources/correlations',
-          params: { page: params.page },
+          params: { page: params.page, limit: 10 },
           method: 'GET',
           showErrorAlert: false,
         })

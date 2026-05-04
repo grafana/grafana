@@ -24,7 +24,7 @@ export function CorrelationsPageLegacy() {
 
 export function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
-  const limit = 100;
+  const limit = 10;
   const { currentData, isLoading, error, doesContinue } = useCorrelationsK8s(limit, page);
   const [deleteCorrelation] = useDeleteCorrelationMutation();
 

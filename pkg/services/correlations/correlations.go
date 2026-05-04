@@ -2,52 +2,26 @@ package correlations
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
 	logger = log.New("correlations")
 )
-
-func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg,
-) (*CorrelationsService, error) {
-	s := &CorrelationsService{
-		SQLStore:          sqlStore,
-		RouteRegister:     routeRegister,
-		log:               logger,
-		DataSourceService: ds,
-		AccessControl:     ac,
-		QuotaService:      qs,
-	}
-
-	s.registerAPIEndpoints()
-
-	bus.AddEventListener(s.handleDatasourceDeletion)
-
-	defaultLimits, err := readQuotaConfig(cfg)
-	if err != nil {
-		return s, err
-	}
-
-	if err := qs.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      s.Usage,
-	}); err != nil {
-		return s, err
-	}
-
-	return s, nil
-}
 
 type Service interface {
 	GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error)
@@ -112,15 +86,17 @@ func (s CorrelationsService) DeleteCorrelationsByTargetUID(ctx context.Context, 
 func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
-			SourceUID: event.UID,
-			OrgId:     event.OrgID,
+			SourceUID:  event.UID,
+			OrgId:      event.OrgID,
+			SourceType: event.Type,
 		}); err != nil {
 			return err
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
-			TargetUID: event.UID,
-			OrgId:     event.OrgID,
+			TargetUID:  event.UID,
+			OrgId:      event.OrgID,
+			TargetType: event.Type,
 		}); err != nil {
 			return err
 		}
@@ -147,4 +123,177 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 
 	limits.Set(globalQuotaTag, cfg.Quota.Global.Correlations)
 	return limits, nil
+}
+
+// app platform service functions
+
+type CorrelationsK8sService struct {
+	RouteRegister routing.RouteRegister
+	log           log.Logger
+	AccessControl accesscontrol.AccessControl
+	QuotaService  quota.Service
+	clientGen     resource.ClientGenerator
+	k8sClient     client.K8sHandler
+}
+
+func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
+	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
+	if err != nil {
+		logger.Warn("Error getting correlation quota.", "error", err)
+		return Correlation{}, ErrCorrelationsQuotaFailed
+	}
+	if quotaReached {
+		return Correlation{}, ErrCorrelationsQuotaReached
+	}
+
+	correlation := Correlation{
+		UID:         util.GenerateShortUID(),
+		OrgID:       cmd.OrgId,
+		SourceUID:   cmd.SourceUID,
+		SourceType:  &cmd.SourceType,
+		TargetUID:   cmd.TargetUID,
+		TargetType:  cmd.TargetType,
+		Label:       cmd.Label,
+		Description: cmd.Description,
+		Config:      cmd.Config,
+		Provisioned: cmd.Provisioned,
+		Type:        cmd.Type,
+	}
+
+	corrSpec, err := convertCorrelationToUnstructured(correlation)
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	appPlatformCorr, err := s.k8sClient.Create(ctx, corrSpec, cmd.OrgId, v1.CreateOptions{})
+	if err != nil {
+		return Correlation{}, err
+	}
+	legacyCorr, err := convertUnstructuredToCorrelation(*appPlatformCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
+	return *legacyCorr, nil
+}
+
+func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
+	return s.k8sClient.Delete(ctx, cmd.UID, cmd.OrgId, v1.DeleteOptions{})
+}
+
+func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+	correlation := Correlation{
+		UID:         cmd.UID,
+		OrgID:       cmd.OrgId,
+		SourceUID:   cmd.SourceUID,
+		Label:       *cmd.Label,
+		Description: *cmd.Description,
+		Config: CorrelationConfig{
+			Field:           *cmd.Config.Field,
+			Target:          *cmd.Config.Target,
+			Transformations: cmd.Config.Transformations,
+		},
+		Type: *cmd.Type,
+	}
+
+	unstructCorr, err := convertCorrelationToUnstructured(correlation)
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	returnedUnstructCorr, err := s.k8sClient.Update(ctx, unstructCorr, cmd.OrgId, v1.UpdateOptions{})
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	legacyCorr, err := convertUnstructuredToCorrelation(*returnedUnstructCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	return *legacyCorr, nil
+}
+
+func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
+	unstructCorr, err := s.k8sClient.Get(ctx, cmd.UID, cmd.OrgId, v1.GetOptions{}, "")
+	if err != nil {
+		return Correlation{}, err
+	}
+	legacyCorr, err := convertUnstructuredToCorrelation(*unstructCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
+	return *legacyCorr, nil
+}
+
+func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
+	// todo: datasource type was needed a a label selector for actually using app platform - test with write mode 5
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: "correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID})
+	if err != nil {
+		return []Correlation{}, err
+	}
+
+	correlations := make([]Correlation, len(appPlatformCorrs.Items))
+
+	for i, val := range appPlatformCorrs.Items {
+		legacyCorr, err := convertUnstructuredToCorrelation(val)
+		if err != nil {
+			return []Correlation{}, err
+		}
+		correlations[i] = *legacyCorr
+	}
+	return correlations, nil
+}
+
+func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
+	appPlatformCorrs, err := s.k8sClient.List(ctx, cmd.OrgId, v1.ListOptions{Limit: cmd.Limit})
+	if err != nil {
+		return GetCorrelationsResponseBody{
+			Correlations: []Correlation{},
+		}, err
+	}
+
+	correlations := make([]Correlation, len(appPlatformCorrs.Items))
+
+	for i, val := range appPlatformCorrs.Items {
+		legacyCorr, _ := convertUnstructuredToCorrelation(val)
+		if err != nil {
+			return GetCorrelationsResponseBody{
+				Correlations: []Correlation{},
+			}, err
+		}
+		correlations[i] = *legacyCorr
+	}
+
+	// TODO pagination
+	return GetCorrelationsResponseBody{
+		Correlations: correlations,
+		TotalCount:   int64(len(correlations)),
+		Page:         0,
+		Limit:        100000,
+	}, nil
+}
+
+func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
+	dsLabel := fmt.Sprintf("correlations.grafana.app/sourceDSProv-ref in (%s.%s.%s)", cmd.SourceType, cmd.SourceUID, strconv.FormatBool(cmd.OnlyProvisioned))
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
+}
+
+func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
+	dsLabel := fmt.Sprintf("correlations.grafana.app/targetDS-ref in (%s.%s)", cmd.TargetType, cmd.TargetUID)
+	return s.k8sClient.DeleteCollection(ctx, cmd.OrgId, v1.ListOptions{LabelSelector: dsLabel})
+}
+
+// this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
+func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
+	err := s.DeleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{OrgId: event.OrgID, SourceUID: event.UID, SourceType: event.Type})
+	if err != nil {
+		return err
+	}
+	return s.DeleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{OrgId: event.OrgID, TargetUID: event.UID, TargetType: event.Type})
+}
+
+// what's the best way to return just a count of records
+func (s *CorrelationsK8sService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	// TODO
+	return &quota.Map{}, nil
 }
