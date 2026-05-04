@@ -378,4 +378,43 @@ describe('shouldAlignTimeCompare', () => {
     const allFrames = [originalFrame, compareFrame];
     expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
+
+  it('should return false after alignment is applied (prevents double-alignment on live refresh)', () => {
+    // liveTimer advances timeRange.from every ~100ms without re-running queries.
+    // alignTimeRangeCompareData mutates field.values in-place, so the same frame object
+    // is re-evaluated on each re-render. After the first alignment, isTimeShiftQuery is set
+    // on field.config — subsequent calls must short-circuit to prevent accumulating drift.
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_B },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+      meta: { timeCompare: { isTimeShiftQuery: true, diffMs: 4000 } },
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+
+    // First render: alignment is needed and applied (mutates field.values in-place)
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
+    alignTimeRangeCompareData(compareFrame, 4000, createTheme());
+
+    // Simulate liveTimer advancing timeRange.from by 100ms
+    const advancedTimeRange: TimeRange = {
+      from: { valueOf: () => 4100 },
+      to: { valueOf: () => 8100 },
+      raw: { from: 'now-1h', to: 'now' },
+    } as TimeRange;
+
+    // Second render: must not re-align the already-mutated frame
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, advancedTimeRange)).toBe(false);
+  });
 });

@@ -174,6 +174,14 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
  * @returns true if alignment is needed
  */
 export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[], timeRange: TimeRange): boolean {
+  // liveTimer advances timeRange every ~100ms without issuing new queries, so the same mutated
+  // frame objects are re-evaluated on each re-render. If the time field already carries
+  // isTimeShiftQuery the alignment was already applied — skip to prevent accumulating drift.
+  const compareTimeField = compareFrame.fields.find((f) => f.type === FieldType.time);
+  if (compareTimeField?.config?.custom?.timeCompare?.isTimeShiftQuery) {
+    return false;
+  }
+
   // Find the matching original frame by removing '-compare' from refId
   const compareRefId = compareFrame.refId;
   if (!compareRefId || !compareRefId.endsWith('-compare')) {
@@ -190,7 +198,6 @@ export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataF
   }
 
   // Find time fields
-  const compareTimeField = compareFrame.fields.find((field) => field.type === FieldType.time);
   const originalTimeField = originalFrame.fields.find((field) => field.type === FieldType.time);
 
   if (!compareTimeField?.values.length || !originalTimeField?.values.length) {
