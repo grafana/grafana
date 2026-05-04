@@ -6,6 +6,8 @@
 
 import { type z } from 'zod';
 
+import { sceneGraph } from '@grafana/scenes';
+
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
@@ -28,25 +30,24 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
     enterEditModeIfNeeded(scene);
 
     try {
-      const variables = scene.state.$variables;
-      if (!variables) {
-        throw new Error('Dashboard has no variable set');
-      }
-
-      const variable = variables.getByName(name);
-      if (!variable) {
+      const varSet = sceneGraph.getVariables(scene);
+      const existingVar = varSet.state.variables.find((v) => v.state.name === name);
+      if (!existingVar) {
         throw new Error(`Variable '${name}' not found`);
       }
+      const previousState = existingVar.state;
+      const variablesBeforeRemove = varSet.state.variables.slice();
 
-      const previousState = variable.state;
-
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
+      scene.removeVariable(name);
 
       return {
         success: true,
         data: { name },
         changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
+        _description: `Remove variable '${name}'`,
+        _undo: () => {
+          replaceVariableSet(scene, variablesBeforeRemove);
+        },
       };
     } catch (error) {
       return {

@@ -1,8 +1,12 @@
-import { SceneVariableSet } from '@grafana/scenes';
+import { sceneGraph, SceneVariableSet } from '@grafana/scenes';
+import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
+
+import { replaceVariableSet } from './variableUtils';
 
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
   const { editable = true, isEditing = false } = options;
@@ -11,7 +15,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
     isEditing,
     $variables: new SceneVariableSet({ variables: [] }),
   };
-  const scene = {
+  const scene: Record<string, unknown> = {
     state,
     canEditDashboard: jest.fn(() => editable),
     onEnterEditMode: jest.fn(() => {
@@ -27,6 +31,49 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
       }
     }),
   };
+
+  scene.addVariable = (variable: VariableKind, position?: number) => {
+    const name = variable.spec.name;
+    const varSet = sceneGraph.getVariables(scene as unknown as DashboardScene);
+    const existing = varSet.state.variables.find((v) => v.state.name === name);
+    if (existing) {
+      throw new Error(`Variable '${name}' already exists`);
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
+    const sceneVar = createSceneVariableFromVariableModel(variable as VariableKind);
+    const current = [...varSet.state.variables];
+    if (position !== undefined && position >= 0 && position < current.length) {
+      current.splice(position, 0, sceneVar);
+    } else {
+      current.push(sceneVar);
+    }
+    replaceVariableSet(scene as unknown as DashboardScene, current);
+  };
+
+  scene.updateVariable = (name: string, variable: VariableKind) => {
+    const varSet = sceneGraph.getVariables(scene as unknown as DashboardScene);
+    const current = [...varSet.state.variables];
+    const idx = current.findIndex((v) => v.state.name === name);
+    if (idx === -1) {
+      throw new Error(`Variable '${name}' not found`);
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structurally compatible
+    current[idx] = createSceneVariableFromVariableModel(variable as VariableKind);
+    replaceVariableSet(scene as unknown as DashboardScene, current);
+  };
+
+  scene.removeVariable = (name: string) => {
+    const varSet = sceneGraph.getVariables(scene as unknown as DashboardScene);
+    const existing = varSet.state.variables.find((v) => v.state.name === name);
+    if (!existing) {
+      throw new Error(`Variable '${name}' not found`);
+    }
+    replaceVariableSet(
+      scene as unknown as DashboardScene,
+      varSet.state.variables.filter((v) => v.state.name !== name)
+    );
+  };
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock scene satisfies DashboardScene at runtime
   return scene as unknown as DashboardScene;
 }
