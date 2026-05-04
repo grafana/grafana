@@ -271,7 +271,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	defer span.End()
 
 	assemble := func() ([]accesscontrol.Permission, error) {
-		permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+		basicPermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 		if err != nil {
 			return nil, err
 		}
@@ -280,12 +280,17 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 		if err != nil {
 			return nil, err
 		}
-		permissions = append(permissions, teamsPermissions...)
 
 		userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
 		if err != nil {
 			return nil, err
 		}
+
+		// Single allocation and copy to avoid repeated realloc when appending large slices
+		n := len(basicPermissions) + len(teamsPermissions) + len(userManagedPermissions)
+		permissions := make([]accesscontrol.Permission, 0, n)
+		permissions = append(permissions, basicPermissions...)
+		permissions = append(permissions, teamsPermissions...)
 		permissions = append(permissions, userManagedPermissions...)
 		span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
