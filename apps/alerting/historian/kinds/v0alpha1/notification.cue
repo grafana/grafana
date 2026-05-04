@@ -94,6 +94,9 @@ import (
 	error?:            string
 	ruleUID?:          string
 
+	// RuleTitle is returned if grouping by ruleUID.
+	ruleTitle?: string
+
 	// Count is the number of notification attempts in the time period. Set for counts queries.
 	count: int
 

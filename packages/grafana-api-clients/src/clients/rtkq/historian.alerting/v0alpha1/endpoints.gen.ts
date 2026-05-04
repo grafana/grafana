@@ -677,6 +677,8 @@ export type CreateNotificationqueryNotificationCount = {
   integrationIndex?: number;
   outcome?: CreateNotificationqueryNotificationOutcome;
   receiver?: string;
+  /** RuleTitle is returned if grouping by ruleUID. */
+  ruleTitle?: string;
   ruleUID?: string;
   status?: CreateNotificationqueryNotificationStatus;
   /** Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries. */

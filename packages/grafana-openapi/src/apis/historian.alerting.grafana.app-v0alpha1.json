@@ -1173,6 +1173,10 @@
           "receiver": {
             "type": "string"
           },
+          "ruleTitle": {
+            "description": "RuleTitle is returned if grouping by ruleUID.",
+            "type": "string"
+          },
           "ruleUID": {
             "type": "string"
           },
