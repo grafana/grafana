@@ -8039,19 +8039,6 @@
       "aria-label-explore-data": "Explore data",
       "aria-label-suggested-dashboards": "Suggested dashboards"
     },
-    "alerting-enabled": {
-      "text-alerting-not-supported": "Alerting not supported",
-      "text-alerting-supported": "Alerting supported"
-    },
-    "basic-serttings": {
-      "tooltip-name": "The name is used when you select the data source in panels. The default data source is preselected in new panels."
-    },
-    "basic-settings": {
-      "aria-label-datasource-settings-page-basic": "Datasource settings page basic settings",
-      "basic-settings-name-placeholder-name": "Name",
-      "label-default": "Default",
-      "label-name": "Name"
-    },
     "build-a-dashboard-button": {
       "blank": "Blank",
       "build-a-dashboard": "Build a dashboard",
