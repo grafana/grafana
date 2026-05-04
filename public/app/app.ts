@@ -21,6 +21,7 @@ import {
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
+  HistoryWrapper,
   locationService,
   setBackendSrv,
   setDataSourceSrv,
@@ -250,6 +251,13 @@ export class GrafanaApp {
 
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
+
+      // For multi-org users, ensure every SPA navigation carries ?orgId so
+      // dashboard / alert URLs are shareable across orgs. Single-org users
+      // (the OSS / Cloud majority) skip this — no URL pollution.
+      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
+        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
+      }
 
       // Init DataSourceSrv
       const dataSourceSrv = new DatasourceSrv();
