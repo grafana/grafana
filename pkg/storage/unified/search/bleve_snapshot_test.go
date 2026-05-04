@@ -72,6 +72,25 @@ func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedR
 	return out, nil
 }
 
+func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
+	keys := make([]ulid.ULID, 0, len(f.data))
+	for k := range f.data {
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
+func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
+	meta, ok := f.data[k]
+	if !ok {
+		return nil, ErrSnapshotNotFound
+	}
+	return meta, nil
+}
+
 func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.NamespacedResource, k ulid.ULID, destDir string) (*IndexMeta, error) {
 	f.downloadCalls.Add(1)
 	if f.downloadErr != nil {
