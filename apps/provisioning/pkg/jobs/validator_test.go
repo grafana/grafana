@@ -447,21 +447,36 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
-			name: "migrate action with non-Dashboard kind",
+			name: "migrate action with Folder kind is allowed",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
 					Action:     provisioning.JobActionMigrate,
 					Repository: "test-repo",
 					Migrate: &provisioning.MigrateJobOptions{
-						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder"}},
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder", Group: "folder.grafana.app"}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate action with unsupported kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "panel-1", Kind: "LibraryPanel"}},
 					},
 				},
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.migrate.resources[0].kind")
-				require.Contains(t, err.Error(), "only Dashboard is supported")
+				require.Contains(t, err.Error(), "Dashboard")
+				require.Contains(t, err.Error(), "Folder")
 			},
 		},
 		{
@@ -700,7 +715,21 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
-			name: "push action with non-Dashboard kind",
+			name: "push action with Folder kind is allowed",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder", Group: "folder.grafana.app"}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with Folder kind without explicit group",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
@@ -711,14 +740,64 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
+			wantErr: false,
+		},
+		{
+			name: "push action with mixed Dashboard and Folder refs",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "folder-1", Kind: "Folder", Group: "folder.grafana.app"},
+							{Name: "dash-1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with Folder kind and dashboard group is rejected",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder", Group: "dashboard.grafana.app"}},
+					},
+				},
+			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
-				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
-				require.Contains(t, err.Error(), "only Dashboard is supported")
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "folder.grafana.app")
 			},
 		},
 		{
-			name: "push action with non-dashboard group",
+			name: "push action with unsupported kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "panel-1", Kind: "LibraryPanel"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "Dashboard")
+				require.Contains(t, err.Error(), "Folder")
+			},
+		},
+		{
+			name: "push action with Dashboard kind and folder group",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
 				Spec: provisioning.JobSpec{
