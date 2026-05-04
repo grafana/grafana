@@ -93,3 +93,4 @@ export {
   usePanelPluginVersion,
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
+export { createGrafanaOFREPProvider } from './utils/openfeature';
