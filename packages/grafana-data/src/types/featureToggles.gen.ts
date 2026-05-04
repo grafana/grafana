@@ -124,6 +124,11 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
+  * Store query history in browser IndexedDB instead of server-side
+  * @default false
+  */
+  queryHistoryLocalOnly?: boolean;
+  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */
