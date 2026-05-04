@@ -29,6 +29,7 @@ declare module "@openfeature/core" {
     | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
+    | "grafana.scenesFlickeringFix"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"

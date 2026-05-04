@@ -37,6 +37,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Prevents flickering in dashboards */
+  GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -203,6 +205,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Prevents flickering in dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.scenesFlickeringFix`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scenesFlickeringFix", false, options).value;
 };
 
 /**

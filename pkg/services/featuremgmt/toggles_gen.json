@@ -2614,6 +2614,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.scenesFlickeringFix",
+        "resourceVersion": "1777349561512",
+        "creationTimestamp": "2026-04-28T04:12:41Z"
+      },
+      "spec": {
+        "description": "Prevents flickering in dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"
@@ -5291,6 +5306,41 @@
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "scenesFlickeringFix",
+        "resourceVersion": "1777349289155",
+        "creationTimestamp": "2026-04-28T04:08:09Z",
+        "deletionTimestamp": "2026-04-28T04:12:41Z"
+      },
+      "spec": {
+        "description": "Prevents flickering in scenes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "scenesNoFlickering",
+        "resourceVersion": "1777348999596",
+        "creationTimestamp": "2026-03-03T15:07:32Z",
+        "deletionTimestamp": "2026-04-28T04:08:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-28 04:03:19.596606 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Prevents flickering in scenes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

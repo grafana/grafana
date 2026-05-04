@@ -2801,6 +2801,15 @@ var (
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
+			Name:         "grafana.scenesFlickeringFix",
+			Description:  "Prevents flickering in dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
 			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
 			Stage:           FeatureStageExperimental,
