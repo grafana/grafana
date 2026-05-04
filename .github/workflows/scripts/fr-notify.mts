@@ -13,14 +13,32 @@ import {
 function getIssueMetadata(): void {
   const issueNumber = requireEnv('ISSUE_NUMBER');
   const repo = requireEnv('REPO');
+  const eventAction = process.env.EVENT_ACTION ?? '';
 
-  const issueData = JSON.parse(
-    execFileSync('gh', ['issue', 'view', issueNumber, '--repo', repo, '--json', 'title,author,labels,createdAt'], {
-      encoding: 'utf-8', timeout: 30_000,
-    }),
+  const issueJson = execFileSync(
+    'gh', ['api', `repos/${repo}/issues/${issueNumber}`, '--jq',
+      '{title: .title, author: .user.login, labels: [.labels[].name], createdAt: .created_at, type: (.type.name // "")}'],
+    { encoding: 'utf-8', timeout: 30_000 },
   );
+  const issueData = JSON.parse(issueJson);
 
-  const labels: string[] = (issueData.labels ?? []).map((l: { name: string }) => l.name);
+  const labels: string[] = issueData.labels ?? [];
+  const issueType: string = issueData.type ?? '';
+
+  if (eventAction === 'typed' && issueType !== 'Enhancement') {
+    log.notice(`Issue #${issueNumber} type is "${issueType || 'none'}", not Enhancement — skipping`);
+    setOutput('skip_processing', 'true');
+    process.exit(0);
+  }
+
+  if (eventAction === 'typed' && !labels.includes('type/feature-request')) {
+    log.notice(`Adding type/feature-request label to Enhancement issue #${issueNumber}`);
+    execFileSync('gh', ['issue', 'edit', issueNumber, '--repo', repo, '--add-label', 'type/feature-request'], {
+      encoding: 'utf-8', timeout: 30_000,
+    });
+    labels.push('type/feature-request');
+  }
+
   if (labels.includes('fr/auto-triaged')) {
     log.notice(`Issue #${issueNumber} already has fr/auto-triaged label - skipping to prevent duplicate processing`);
     setOutput('skip_processing', 'true');
@@ -31,7 +49,7 @@ function getIssueMetadata(): void {
   setOutput('created_date', (issueData.createdAt as string).split('T')[0]);
 
   const title = (issueData.title as string ?? 'No title').replace(/[\x00-\x1F]/g, '').slice(0, 150);
-  let author = issueData.author?.login ?? 'unknown';
+  let author = (issueData.author as string) ?? 'unknown';
   if (!isValidGitHubUsername(author)) {
     log.warning('Invalid author format detected, using "unknown"');
     author = 'unknown';
