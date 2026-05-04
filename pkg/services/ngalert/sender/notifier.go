@@ -20,7 +20,7 @@ package sender
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"log/slog"
@@ -346,7 +346,28 @@ func (n *Manager) Send(alerts ...*Alert) {
 	n.setMore()
 }
 
+// validateRelabelConfigs checks that all relabel configurations are non-nil
+// and contain only known, allowlisted actions before processing.
+func validateRelabelConfigs(cfgs []*relabel.Config) bool {
+	for _, cfg := range cfgs {
+		if cfg == nil {
+			return false
+		}
+		switch cfg.Action {
+		case relabel.Replace, relabel.Keep, relabel.Drop, relabel.HashMod,
+			relabel.LabelMap, relabel.LabelDrop, relabel.LabelKeep,
+			relabel.Lowercase, relabel.Uppercase, relabel.KeepEqual, relabel.DropEqual:
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 func relabelAlerts(relabelConfigs []*relabel.Config, externalLabels labels.Labels, alerts []*Alert) []*Alert {
+	if !validateRelabelConfigs(relabelConfigs) {
+		return alerts
+	}
 	lb := labels.NewBuilder(labels.EmptyLabels())
 	var relabeledAlerts []*Alert
 
@@ -506,7 +527,7 @@ func (s *alertmanagerSet) configHash() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hash := md5.Sum(b)
+	hash := sha256.Sum256(b)
 	return hex.EncodeToString(hash[:]), nil
 }
 
@@ -521,6 +542,10 @@ func AlertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig
 	var res []alertmanager
 	var droppedAlertManagers []alertmanager
 	lb := labels.NewBuilder(labels.EmptyLabels())
+
+	if !validateRelabelConfigs(cfg.RelabelConfigs) {
+		return nil, nil, fmt.Errorf("invalid relabel configuration")
+	}
 
 	for _, tlset := range tg.Targets {
 		lb.Reset(labels.EmptyLabels())
