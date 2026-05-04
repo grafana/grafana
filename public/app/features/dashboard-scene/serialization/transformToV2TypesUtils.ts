@@ -73,6 +73,14 @@ export function transformSortVariableToEnum(sort?: VariableSortV1): VariableSort
       return 'numericalAsc';
     case 4:
       return 'numericalDesc';
+    case 5:
+      return 'alphabeticalCaseInsensitiveAsc';
+    case 6:
+      return 'alphabeticalCaseInsensitiveDesc';
+    case 7:
+      return 'naturalAsc';
+    case 8:
+      return 'naturalDesc';
     default:
       return defaultVariableSort();
   }
