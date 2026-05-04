@@ -38,6 +38,10 @@ type LogGroupsProvider interface {
 	GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error)
 }
 
+type DataSourcesProvider interface {
+	GetDataSources(ctx context.Context, request resources.DataSourcesRequest) ([]resources.ResourceResponse[resources.LogDataSource], error)
+}
+
 type AccountsProvider interface {
 	GetAccountsForCurrentUserOrRole(ctx context.Context) ([]resources.ResourceResponse[resources.Account], error)
 }
@@ -57,6 +61,7 @@ type CloudWatchMetricsAPIProvider interface {
 type CloudWatchLogsAPIProvider interface {
 	cloudwatchlogs.DescribeLogGroupsAPIClient
 	GetLogGroupFields(ctx context.Context, in *cloudwatchlogs.GetLogGroupFieldsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogGroupFieldsOutput, error)
+	ListAggregateLogGroupSummaries(ctx context.Context, in *cloudwatchlogs.ListAggregateLogGroupSummariesInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.ListAggregateLogGroupSummariesOutput, error)
 }
 
 type OAMAPIProvider interface {
