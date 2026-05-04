@@ -2,12 +2,6 @@ module github.com/grafana/grafana/pkg/build
 
 go 1.26.2
 
-// Override docker/docker to avoid:
-// go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
-// github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-// Updated to v28.5.2 to fix compatibility with testcontainers-go v0.40.0
-replace github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
-
 replace (
 	// TODO: remove these - the build system should not depend on Grafana code.
 	github.com/grafana/grafana/pkg/apimachinery => ../apimachinery
