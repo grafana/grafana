@@ -30,18 +30,17 @@ func ProvidePullRequestWorker(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
-	// Clickable links in PR comments resolve against AppURL so internal
-	// reviewers reach Grafana via the canonical (corp-network-friendly) URL.
-	internalURLProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
-	}
-
 	// Screenshot images are fetched server-side by the Git provider's image
 	// proxy and must be reachable from the public internet — prefer
-	// public_root_url when set.
-	screenshotBaseURL := cfg.AppURL
+	// public_root_url when set. Clickable links stay on AppURL so internal
+	// reviewers reach Grafana via the canonical URL.
+	publicURL := cfg.AppURL
 	if cfg.ProvisioningPublicRootURL != "" {
-		screenshotBaseURL = cfg.ProvisioningPublicRootURL
+		publicURL = cfg.ProvisioningPublicRootURL
+	}
+	urls := URLProvider{
+		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
+		Public:   func(_ context.Context, _ string) string { return publicURL },
 	}
 
 	// FIXME: we should create providers for client and parsers, so that we don't have
@@ -49,7 +48,7 @@ func ProvidePullRequestWorker(
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
-	evaluator := NewEvaluator(screenshotRenderer, parsers, internalURLProvider, screenshotBaseURL, registry)
+	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)

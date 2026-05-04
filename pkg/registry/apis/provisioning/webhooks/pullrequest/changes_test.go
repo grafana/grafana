@@ -1168,13 +1168,14 @@ func TestCalculateChanges(t *testing.T) {
 			if screenshotBaseURL == "" {
 				screenshotBaseURL = "http://host/"
 			}
-			evaluator := NewEvaluator(renderer, parserFactory, func(_ context.Context, _ string) string {
-				if tt.grafanaBaseURL != "" {
-					return tt.grafanaBaseURL
-				}
-
-				return "http://host/"
-			}, screenshotBaseURL, prometheus.NewPedanticRegistry())
+			internalURL := "http://host/"
+			if tt.grafanaBaseURL != "" {
+				internalURL = tt.grafanaBaseURL
+			}
+			evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+				Internal: func(_ context.Context, _ string) string { return internalURL },
+				Public:   func(_ context.Context, _ string) string { return screenshotBaseURL },
+			}, prometheus.NewPedanticRegistry())
 
 			pullRequest := provisioning.PullRequestJobOptions{
 				Ref: "ref",

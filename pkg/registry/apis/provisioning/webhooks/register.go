@@ -72,31 +72,24 @@ func ProvideWebhooksWithImages(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	// Clickable links embedded in PR comments (GrafanaURL, PreviewURL) point
-	// human reviewers back at Grafana for inspection. Reviewers typically click
-	// from inside the corp network, so these resolve against the canonical
-	// AppURL — flipping them to a firewalled public URL would 403 the very
-	// users who need them.
-	internalURLProvider := func(_ context.Context, _ string) string {
-		return cfg.AppURL
-	}
-
-	// Webhook callbacks (registered with the Git provider) and screenshot
-	// images (fetched server-side by the Git provider's image proxy) must both
-	// be reachable from the public internet. Prefer [provisioning]
-	// public_root_url when set, otherwise fall back to AppURL.
+	// Webhook callbacks and screenshot images embedded in PR comments must be
+	// reachable from the public internet (the Git provider fetches them
+	// server-side). Prefer [provisioning] public_root_url when set; fall back
+	// to AppURL. Clickable links stay on AppURL so internal reviewers reach
+	// Grafana via the canonical, corp-network-friendly URL.
 	publicURL := cfg.AppURL
 	if cfg.ProvisioningPublicRootURL != "" {
 		publicURL = cfg.ProvisioningPublicRootURL
 	}
-	publicURLProvider := func(_ context.Context, _ string) string {
-		return publicURL
+	urls := pullrequest.URLProvider{
+		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
+		Public:   func(_ context.Context, _ string) string { return publicURL },
 	}
 	isPublic := isPublicURL(publicURL)
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
-		urlProvider: publicURLProvider,
+		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
@@ -110,14 +103,14 @@ func ProvideWebhooksWithImages(
 				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, internalURLProvider, publicURL, registry)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(
 				render,
 				webhook,
-				publicURLProvider,
+				urls.Public,
 				[]jobs.Worker{pullRequestWorker},
 			)
 		},

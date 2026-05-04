@@ -69,28 +69,37 @@ type fileChangeInfo struct {
 	HasRemovedMetadata bool
 }
 
-type evaluator struct {
-	render            ScreenshotRenderer
-	parsers           resources.ParserFactory
-	urlProvider       func(ctx context.Context, namespace string) string
-	screenshotBaseURL string
-	metrics           screenshotMetrics
+// URLProvider yields the two base URLs Grafana uses when referring to itself
+// from a PR comment. They split because consumers differ:
+//
+//   - Internal builds the dashboard view and preview URLs surfaced as
+//     clickable links. Reviewers click these from their own browsers — usually
+//     from inside the corp network — so the canonical AppURL works.
+//   - Public prefixes screenshot images embedded in the same comment. These
+//     images are fetched server-side by the Git provider's image proxy, so
+//     the URL must be reachable from the public internet.
+//
+// Operator deployments that don't need the split can set both fields to the
+// same closure.
+type URLProvider struct {
+	Internal func(ctx context.Context, namespace string) string
+	Public   func(ctx context.Context, namespace string) string
 }
 
-// NewEvaluator constructs an Evaluator. screenshotBaseURL is the base URL
-// used to prefix relative blob paths returned by the screenshot renderer when
-// embedding images in PR comments — these images are fetched by external
-// systems (e.g. GitHub) so the URL must be publicly reachable. It is
-// independent from urlProvider, which builds the dashboard view and preview
-// URLs surfaced as clickable links in the same comment.
-func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, screenshotBaseURL string, registry prometheus.Registerer) Evaluator {
+type evaluator struct {
+	render  ScreenshotRenderer
+	parsers resources.ParserFactory
+	urls    URLProvider
+	metrics screenshotMetrics
+}
+
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urls URLProvider, registry prometheus.Registerer) Evaluator {
 	metrics := registerScreenshotMetrics(registry)
 	return &evaluator{
-		render:            render,
-		parsers:           parsers,
-		urlProvider:       urlProvider,
-		screenshotBaseURL: screenshotBaseURL,
-		metrics:           metrics,
+		render:  render,
+		parsers: parsers,
+		urls:    urls,
+		metrics: metrics,
 	}
 }
 
@@ -105,11 +114,12 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	rendererAvailable := e.render.IsAvailable(ctx)
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
-		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
+	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -123,7 +133,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, e.screenshotBaseURL, change, opts, parser, shouldRender))
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
