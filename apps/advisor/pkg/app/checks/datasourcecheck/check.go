@@ -95,7 +95,7 @@ func (c *check) Name() string {
 
 func (c *check) Init(ctx context.Context) error {
 	c.pluginCanBeInstalledCache = make(map[string]bool)
-	return nil
+	return c.healthChecker.Init(ctx)
 }
 
 func (c *check) Steps() []checks.Step {
