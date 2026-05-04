@@ -130,6 +130,22 @@ describe('v0alpha1SettingsMapper', () => {
     expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).enabled).toBe(true);
   });
 
+  it('should map enabled to true when autoEnabled is set to true', () => {
+    const updatedSpec = {
+      ...myOrgTestAppMeta.spec,
+      pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, autoEnabled: true },
+    };
+    const updatedSettings = {
+      ...myOrgTestAppSettings,
+      spec: {
+        ...myOrgTestAppSettings.spec,
+        enabled: false,
+      },
+    };
+
+    expect(v0alpha1SettingsMapper(updatedSpec, updatedSettings).enabled).toBe(true);
+  });
+
   it('should map extensions correctly', () => {
     expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).extensions).toStrictEqual({
       addedComponents: [],
@@ -227,6 +243,22 @@ describe('v0alpha1SettingsMapper', () => {
 
   it('should map pinned correctly', () => {
     expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).pinned).toBe(false);
+  });
+
+  it('should map pinned to true when autoEnabled is set to true', () => {
+    const updatedSpec = {
+      ...myOrgTestAppMeta.spec,
+      pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, autoEnabled: true },
+    };
+    const updatedSettings = {
+      ...myOrgTestAppSettings,
+      spec: {
+        ...myOrgTestAppSettings.spec,
+        pinned: false,
+      },
+    };
+
+    expect(v0alpha1SettingsMapper(updatedSpec, updatedSettings).enabled).toBe(true);
   });
 
   it('should map secureJsonFields correctly', () => {

@@ -213,7 +213,7 @@ function v0alpha1SpecMapper(spec: v0alpha1Spec) {
   const { id, name } = spec.pluginJson;
   const { org: signatureOrg = '' } = spec.signature;
   const { path: module, hash: moduleHash } = spec.module;
-  const autoEnabled = false;
+  const autoEnabled = spec.pluginJson.autoEnabled ?? false;
   const hasUpdate = false;
   const latestVersion = '';
   const type = typeMapper(spec);
@@ -264,9 +264,9 @@ export const v0alpha1SettingsMapper: SettingsMapper = (spec, settings) => {
 
     return {
       ...specMappings,
-      enabled,
+      enabled: specMappings.autoEnabled ? true : enabled,
       jsonData,
-      pinned,
+      pinned: specMappings.autoEnabled ? true : pinned,
       secureJsonFields,
     };
   }
