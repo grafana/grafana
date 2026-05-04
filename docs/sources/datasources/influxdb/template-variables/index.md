@@ -18,7 +18,7 @@ labels:
     - oss
 menuTitle: Template variables
 title: InfluxDB template variables
-weight: 600
+weight: 450
 review_date: 2026-05-01
 ---
 
