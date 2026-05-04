@@ -124,9 +124,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.2)`,
-    strong: `rgba(${this.whiteBase}, 0.30)`,
+    weak: palette.gray20,
+    medium: palette.gray25,
+    strong: palette.gray35,
   };
 
   text = {
@@ -224,9 +224,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.3)`,
-    strong: `rgba(${this.blackBase}, 0.4)`,
+    weak: palette.gray85,
+    medium: palette.gray70,
+    strong: palette.gray65,
   };
 
   secondary = {
