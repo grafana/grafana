@@ -756,8 +756,7 @@ const injectedRtkApi = api
           url: `/users/${queryArg.name}/teams`,
           params: {
             limit: queryArg.limit,
-            page: queryArg.page,
-            offset: queryArg.offset,
+            continue: queryArg['continue'],
           },
         }),
         providesTags: ['User'],
@@ -1976,16 +1975,14 @@ export type UpdateUserStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetUserTeamsApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList;
+export type GetUserTeamsApiResponse = /** status 200 OK */ GetUserTeamsResponse;
 export type GetUserTeamsApiArg = {
   /** name of the UserTeamList */
   name: string;
-  /** number of results to return */
+  /** maximum number of results to return per page */
   limit?: number;
-  /** page number (starting from 1) */
-  page?: number;
-  /** number of results to skip */
-  offset?: number;
+  /** Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail. */
+  continue?: string;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -2397,25 +2394,13 @@ export type UserList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef = {
-  /** Name is the unique identifier for a team. */
-  name?: string;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam = {
-  /** Possible enum values:
-     - `"admin"`
-     - `"member"` */
-  permission?: 'admin' | 'member';
-  teamRef?: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef;
-  title?: string;
-};
-export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList = {
+export type GetUserTeamsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam[];
+  items: any[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  metadata?: ListMeta;
+  metadata: any;
 };
 export const {
   useGetApiResourcesQuery,
