@@ -604,7 +604,6 @@
         },
         "example": {
           "metadata": {
-            "generation": 0,
             "name": "instance"
           },
           "spec": {
