@@ -11,7 +11,7 @@ import {
   type Account,
   type ResourceResponse,
   type DescribeLogGroupsRequest,
-  type LogGroupResponse,
+  type LogGroupsResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
   type GetDimensionValuesRequest,
@@ -69,13 +69,19 @@ export class ResourcesAPI extends CloudWatchRequest {
     );
   }
 
-  getLogGroups(params: DescribeLogGroupsRequest): Promise<Array<ResourceResponse<LogGroupResponse>>> {
-    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', {
+  getLogGroups(params: DescribeLogGroupsRequest): Promise<LogGroupsResponse> {
+    const requestParams: Record<string, string | string[] | number> = {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
-    });
+    };
+    // When nextToken is present, bypass memoized cache to avoid stale results
+    if (params.nextToken) {
+      requestParams.nextToken = params.nextToken;
+      return this.getRequest<LogGroupsResponse>('log-groups', requestParams);
+    }
+    return this.memoizedGetRequest<LogGroupsResponse>('log-groups', requestParams);
   }
 
   getLogGroupFields(region: string, logGroupName: string): Promise<Array<ResourceResponse<LogGroupField>>> {

@@ -46,7 +46,7 @@ func TestGetLogGroups(t *testing.T) {
 				AccountId: utils.Pointer("333"),
 				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:333:log-group:group_c", Name: "group_c"},
 			},
-		}, resp)
+		}, resp.Results)
 	})
 
 	t.Run("Should return an empty error if api doesn't return any data", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestGetLogGroups(t *testing.T) {
 		resp, err := service.GetLogGroups(context.Background(), resources.LogGroupsRequest{})
 
 		assert.NoError(t, err)
-		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{}, resp)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{}, resp.Results)
 	})
 
 	t.Run("Should only use LogGroupNamePrefix even if LogGroupNamePattern passed in resource call", func(t *testing.T) {
@@ -131,7 +131,41 @@ func TestGetLogGroups(t *testing.T) {
 				AccountId: utils.Pointer("111"),
 				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
 			},
-		}, resp)
+		}, resp.Results)
+		assert.Equal(t, aws.String("next_token"), resp.NextToken)
+	})
+
+	t.Run("Should pass NextToken to the API when provided in the request", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			Limit:              2,
+			LogGroupNamePrefix: utils.Pointer("test"),
+			NextToken:          utils.Pointer("some_token"),
+		}
+
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:              aws.Int32(req.Limit),
+			LogGroupNamePrefix: req.LogGroupNamePrefix,
+			NextToken:          utils.Pointer("some_token"),
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+			},
+			NextToken: aws.String("another_token"),
+		}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(context.Background(), req)
+
+		assert.NoError(t, err)
+		mockLogsAPI.AssertNumberOfCalls(t, "DescribeLogGroups", 1)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
+			{
+				AccountId: utils.Pointer("111"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
+			},
+		}, resp.Results)
+		assert.Equal(t, aws.String("another_token"), resp.NextToken)
 	})
 
 	t.Run("Should keep on calling the api until NextToken is empty in case ListAllLogGroups is set to true", func(t *testing.T) {
@@ -176,7 +210,8 @@ func TestGetLogGroups(t *testing.T) {
 				AccountId: utils.Pointer("222"),
 				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:222:log-group:group_b", Name: "group_b"},
 			},
-		}, resp)
+		}, resp.Results)
+		assert.Nil(t, resp.NextToken)
 	})
 }
 

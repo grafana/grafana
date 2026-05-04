@@ -266,15 +266,17 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		err := ds.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
 		assert.NoError(t, err)
 
-		assert.JSONEq(t, `[
-		   {
-			  "accountId":"111",
-			  "value":{
-				 "arn":"arn:aws:logs:us-east-1:111:log-group:group_a",
-				 "name":"group_a"
+		assert.JSONEq(t, `{
+		   "results":[
+			  {
+				 "accountId":"111",
+				 "value":{
+					"arn":"arn:aws:logs:us-east-1:111:log-group:group_a",
+					"name":"group_a"
+				 }
 			  }
-		   }
-		]`, string(sender.Response.Body))
+		   ]
+		}`, string(sender.Response.Body))
 
 		logsApi.AssertCalled(t, "DescribeLogGroups",
 			&cloudwatchlogs.DescribeLogGroupsInput{
