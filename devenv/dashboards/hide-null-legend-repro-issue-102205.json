@@ -1,0 +1,97 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "PD8C576611E62080A" },
+      "description": "Issue #102205 repro: legend Total (sum) on all-null series shows 0. Uses calcs sum + legend limit 2. No allIsNull override. Requires grafana-testdata-datasource uid PD8C576611E62080A (or change datasource).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "annotations": { "clustering": -1, "multiLane": false },
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "limit": 2
+        },
+        "tooltip": { "hideZeros": false, "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "13.0.0-local",
+      "targets": [
+        {
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "PD8C576611E62080A" },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        { \"name\": \"time\", \"type\": \"time\", \"typeInfo\": { \"frame\": \"time.Time\" }, \"config\": {} },\n        { \"name\": \"A-series\", \"type\": \"number\", \"typeInfo\": { \"frame\": \"int64\", \"nullable\": true }, \"config\": {} }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [1773823294836,1773827614836,1773831934836,1773836254836,1773840574836,1773844894836],\n        [1,20,90,30,5,0]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A2\",\n      \"fields\": [\n        { \"name\": \"time\", \"type\": \"time\", \"typeInfo\": { \"frame\": \"time.Time\" }, \"config\": {} },\n        { \"name\": \"A2-series\", \"type\": \"number\", \"typeInfo\": { \"frame\": \"int64\", \"nullable\": true }, \"config\": {} }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [1773823294836,1773827614836,1773831934836,1773836254836,1773840574836,1773844894836],\n        [100,0,100,0,100,0]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"B\",\n      \"fields\": [\n        { \"name\": \"time\", \"type\": \"time\", \"typeInfo\": { \"frame\": \"time.Time\" }, \"config\": {} },\n        { \"name\": \"B-series\", \"type\": \"number\", \"typeInfo\": { \"frame\": \"int64\", \"nullable\": true }, \"config\": {} }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [1773823294836,1773827614836,1773831934836,1773836254836,1773840574836,1773844894836],\n        [null,null,null,null,null,null]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"C\",\n      \"fields\": [\n        { \"name\": \"time\", \"type\": \"time\", \"typeInfo\": { \"frame\": \"time.Time\" }, \"config\": {} },\n        { \"name\": \"C-series\", \"type\": \"number\", \"typeInfo\": { \"frame\": \"int64\", \"nullable\": true }, \"config\": {} }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [1773823294836,1773827614836,1773831934836,1773836254836,1773840574836,1773844894836],\n        [2,2,2,2,2,2]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "102205: Total + all-null + legend limit (scroll)",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": ["repro", "102205"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "hide-null-legend-repro-issue-102205",
+  "uid": "gfvgrm102205",
+  "version": 1,
+  "weekStart": ""
+}

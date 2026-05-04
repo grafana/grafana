@@ -7,6 +7,8 @@ import {
   extractFacetedLabels,
   getFieldDisplayName,
   getFieldSeriesColor,
+  reduceField,
+  ReducerID,
   resolveFacetedFilterNames,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -48,6 +50,10 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
     const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
     if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
+
+    if (reduceField({ field, reducers: [ReducerID.allIsNull] })[ReducerID.allIsNull]) {
       return false;
     }
 
@@ -93,6 +99,11 @@ export const PlotLegend = memo(function PlotLegend({
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
       if (!field || field.config.custom?.hideFrom?.legend) {
+        return undefined;
+      }
+
+      const allIsNull = reduceField({ field, reducers: [ReducerID.allIsNull] })[ReducerID.allIsNull];
+      if (allIsNull) {
         return undefined;
       }
 
