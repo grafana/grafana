@@ -3032,6 +3032,26 @@
       "import-to-gma": "Import alert rules",
       "import-to-gma-tool": "Import to Grafana Alerting"
     },
+    "rule-list-v3": {
+      "chain-link-label": "Open evaluation chain (position {{position}} of {{total}})",
+      "chain-link-text": "Evaluation chain",
+      "drawer": {
+        "alert-rule": "Alert rule",
+        "error": "Failed to load chain",
+        "evaluation-order": "Evaluation order",
+        "interval": "Interval",
+        "loading": "Loading chain details...",
+        "mode": "Mode",
+        "recording-rule": "Recording rule",
+        "rules-count": "Rules",
+        "title": "Evaluation chain",
+        "you-are-here": "You are here"
+      },
+      "filter": {
+        "all-chains": "All chains",
+        "chain-label": "Evaluation chain"
+      }
+    },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
       "title-cannot-exist": "Cannot load the rule. The rule does not exist",

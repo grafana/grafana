@@ -60,6 +60,9 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
+  // V3 evaluation chain link; when present, the per-rule evaluation interval chip is omitted
+  // because chained rules share a chain-level interval surfaced in the drawer.
+  chainLink?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -87,6 +90,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
+    chainLink,
   } = props;
 
   const listItemAriaId = useId();
@@ -111,7 +115,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   }
 
   if (!isPaused) {
-    if (lastEvaluation && evaluationInterval) {
+    if (lastEvaluation && evaluationInterval && !chainLink) {
       metadata.push(
         <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
       );
@@ -150,6 +154,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </TextLink>
       </MetaText>
     );
+  }
+
+  if (chainLink) {
+    metadata.push(chainLink);
   }
 
   const ruleHealth = normalizeHealth(health);
@@ -201,6 +209,7 @@ export function RecordingRuleListItem({
   actions,
   showLocation = true,
   querySourceUIDs = [],
+  chainLink,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -219,6 +228,10 @@ export function RecordingRuleListItem({
 
   if (querySourceUIDs.length > 0) {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
+  }
+
+  if (chainLink) {
+    metadata.push(chainLink);
   }
 
   const ruleHealth = normalizeHealth(health);

@@ -16,6 +16,8 @@ export const shouldUseAlertingListViewV2 = () => {
   return config.featureToggles.alertingListViewV2 ?? false;
 };
 
+export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
+
 export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
 
