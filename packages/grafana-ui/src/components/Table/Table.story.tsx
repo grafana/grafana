@@ -1,5 +1,4 @@
 import { type Meta, type StoryFn } from '@storybook/react';
-import { merge } from 'lodash';
 
 import {
   type DataFrame,
@@ -14,6 +13,7 @@ import {
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { deepMerge } from '../../utils/deepMerge';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { Button } from '../Button/Button';
@@ -110,7 +110,7 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, ro
   });
 
   for (const field of data.fields) {
-    field.config = merge(field.config, config[field.name]);
+    field.config = deepMerge(field.config, config[field.name]);
   }
 
   for (let i = 0; i < rows; i++) {
@@ -163,7 +163,7 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
       });
 
       for (const field of nestedData.fields) {
-        field.config = merge(field.config, config[field.name]);
+        field.config = deepMerge(field.config, config[field.name]);
       }
 
       for (let i = 0; i < Math.random() * 4; i++) {
