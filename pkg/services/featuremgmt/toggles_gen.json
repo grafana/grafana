@@ -2721,7 +2721,8 @@
       "metadata": {
         "name": "groupAttributeSync",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-09-09T15:29:43Z"
+        "creationTimestamp": "2024-09-09T15:29:43Z",
+        "deletionTimestamp": "2026-03-11T10:24:46Z"
       },
       "spec": {
         "description": "Enable the groupsync extension for managing Group Attribute Sync feature",

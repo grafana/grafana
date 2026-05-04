@@ -1028,188 +1028,6 @@
         }
       }
     },
-    "/groupsync/groups": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getMappedGroups",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/groups/{group_id}": {
-      "put": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "updateGroupMappings",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupAttributes"
-            }
-          },
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "createGroupMappings",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupAttributes"
-            }
-          },
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "deleteGroupMappings",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/groups/{group_id}/roles": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupRoles",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupRolesResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/licensing/check": {
       "get": {
         "tags": [
@@ -5195,26 +5013,6 @@
         }
       }
     },
-    "Group": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "mappings": {}
-      }
-    },
-    "GroupAttributes": {
-      "type": "object",
-      "properties": {
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "Hit": {
       "type": "object",
       "properties": {
@@ -9001,21 +8799,6 @@
         }
       }
     },
-    "getGroupsResponse": {
-      "type": "object",
-      "properties": {
-        "groups": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Group"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "healthResponse": {
       "type": "object",
       "properties": {
@@ -9032,14 +8815,6 @@
           "type": "string"
         },
         "version": {
-          "type": "string"
-        }
-      }
-    },
-    "messageResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
           "type": "string"
         }
       }
@@ -9186,12 +8961,6 @@
         "items": {
           "$ref": "#/definitions/UserToken"
         }
-      }
-    },
-    "apiResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/messageResponse"
       }
     },
     "badRequestError": {
@@ -9710,21 +9479,6 @@
         "items": {
           "$ref": "#/definitions/FolderSearchHit"
         }
-      }
-    },
-    "getGroupRolesResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/RoleDTO"
-        }
-      }
-    },
-    "getGroupsResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/getGroupsResponse"
       }
     },
     "getHomeDashboardResponse": {

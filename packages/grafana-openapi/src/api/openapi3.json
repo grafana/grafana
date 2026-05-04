@@ -93,16 +93,6 @@
         },
         "description": "(empty)"
       },
-      "apiResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/messageResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "badRequestError": {
         "content": {
           "application/json": {
@@ -807,29 +797,6 @@
                 "$ref": "#/components/schemas/FolderSearchHit"
               },
               "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getGroupRolesResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/RoleDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getGroupsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/getGroupsResponse"
             }
           }
         },
@@ -6409,26 +6376,6 @@
           },
           "wechat_api_url": {
             "$ref": "#/components/schemas/URL"
-          }
-        },
-        "type": "object"
-      },
-      "Group": {
-        "properties": {
-          "groupID": {
-            "type": "string"
-          },
-          "mappings": {}
-        },
-        "type": "object"
-      },
-      "GroupAttributes": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -12952,21 +12899,6 @@
         },
         "type": "object"
       },
-      "getGroupsResponse": {
-        "properties": {
-          "groups": {
-            "items": {
-              "$ref": "#/components/schemas/Group"
-            },
-            "type": "array"
-          },
-          "total": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "gettableAlert": {
         "description": "GettableAlert gettable alert",
         "properties": {
@@ -13183,14 +13115,6 @@
           "$ref": "#/components/schemas/matcher"
         },
         "type": "array"
-      },
-      "messageResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "type": "object"
       },
       "peerStatus": {
         "description": "PeerStatus peer status",
@@ -19130,187 +19054,6 @@
         },
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": ["folders", "permissions"]
-      }
-    },
-    "/groupsync/groups": {
-      "get": {
-        "operationId": "getMappedGroups",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupsResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      }
-    },
-    "/groupsync/groups/{group_id}": {
-      "delete": {
-        "operationId": "deleteGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      },
-      "post": {
-        "operationId": "createGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupAttributes"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      },
-      "put": {
-        "operationId": "updateGroupMappings",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupAttributes"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
-      }
-    },
-    "/groupsync/groups/{group_id}/roles": {
-      "get": {
-        "operationId": "getGroupRoles",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "group_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getGroupRolesResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "tags": ["group_attribute_sync", "enterprise"]
       }
     },
     "/health": {

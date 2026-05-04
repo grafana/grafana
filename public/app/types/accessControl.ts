@@ -179,10 +179,6 @@ export enum AccessControlAction {
   SettingsRead = 'settings:read',
   SettingsWrite = 'settings:write',
 
-  // GroupSync
-  GroupSyncMappingsRead = 'groupsync.mappings:read',
-  GroupSyncMappingsWrite = 'groupsync.mappings:write',
-
   // Migration Assistant
   MigrationAssistantMigrate = 'migrationassistant:migrate',
 
