@@ -33,9 +33,7 @@ export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }
 
-export interface NameAlreadyExistsErrorProps {}
-
-export function NameAlreadyExistsError({}: NameAlreadyExistsErrorProps) {
+export function NameAlreadyExistsError() {
   return (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>

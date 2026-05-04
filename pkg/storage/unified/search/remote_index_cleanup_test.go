@@ -364,8 +364,15 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	// directly rather than via newCleanupTestBucket because we need distinct
 	// lock owners.
 	backend := newFakeBackend(newConditionalBucket())
-	storeA := NewBucketRemoteIndexStore(bucket, backend, "instance-A", 5*time.Second, 500*time.Millisecond)
-	storeB := NewBucketRemoteIndexStore(bucket, backend, "instance-B", 5*time.Second, 500*time.Millisecond)
+	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
+	storeA := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket: bucket, LockBackend: backend, LockOwner: "instance-A",
+		BuildLock: lockOpts, CleanupLock: lockOpts,
+	})
+	storeB := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket: bucket, LockBackend: backend, LockOwner: "instance-B",
+		BuildLock: lockOpts, CleanupLock: lockOpts,
+	})
 
 	nsA := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	nsB := resource.NamespacedResource{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"}

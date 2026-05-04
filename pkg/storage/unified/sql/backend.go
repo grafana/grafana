@@ -953,30 +953,38 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 	// TODO: validate key ?
 
-	if req.ResourceVersion > 0 {
-		return b.readHistory(ctx, req.Key, req.ResourceVersion)
-	}
-
-	readReq := &sqlResourceReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request:     req,
-		Response:    NewReadResponse(),
-	}
 	var res *resource.BackendReadResponse
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		var err error
-		res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
-		return err
-	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
-			Error: resource.NewNotFoundError(req.Key),
+	if req.ResourceVersion > 0 {
+		res = b.readHistory(ctx, req.Key, req.ResourceVersion)
+	} else {
+		readReq := &sqlResourceReadRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Request:     req,
+			Response:    NewReadResponse(),
 		}
-	} else if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			var err error
+			res, err = dbutil.QueryRow(ctx, tx, sqlResourceRead, readReq)
+			return err
+		})
+
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			res = &resource.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
+		case err != nil:
+			res = &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		}
 	}
 
+	if resource.IsResourceNameMixedCase(req, res) {
+		b.log.Warn("resource name case mismatch in ReadResource",
+			"namespace", req.Key.Namespace,
+			"group", req.Key.Group,
+			"resource", req.Key.Resource,
+			"requested_name", req.Key.Name,
+			"stored_name", res.Key.Name,
+		)
+	}
 	return res
 }
 

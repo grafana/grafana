@@ -35,7 +35,6 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
         dashboard: 1,
       },
       source: 'dashboard_scene_settings',
-      restore_enabled: true,
     });
     toggleModal();
     if (dashboard.state.uid) {
