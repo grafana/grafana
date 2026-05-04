@@ -145,6 +145,23 @@ describe('VariableQueryRunner', () => {
 
       runner.queueRequest({ identifier, datasource });
     });
+
+    it('then the DataQueryRequest should include dashboardUID for context header propagation', (done) => {
+      const { key, identifier, runner, datasource, queryRunner } = getTestContext();
+
+      expectOnResults({
+        identifier,
+        runner,
+        expect: () => {
+          expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
+          const [, request] = queryRunner.runRequest.mock.calls[0];
+          expect(request.dashboardUID).toBe(key);
+        },
+        done,
+      });
+
+      runner.queueRequest({ identifier, datasource });
+    });
   });
 
   describe('error cases', () => {

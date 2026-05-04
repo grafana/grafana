@@ -176,7 +176,7 @@ export class VariableQueryRunner {
   }
 
   private getRequest(variable: QueryVariableModel, args: UpdateOptionsArgs, target: DataQuery) {
-    const { searchFilter } = args;
+    const { searchFilter, identifier } = args;
     const variableAsVars = { variable: { text: variable.current.text, value: variable.current.value } };
     const searchFilterScope = { searchFilter: { text: searchFilter, value: searchFilter } };
     const searchFilterAsVars = searchFilter ? searchFilterScope : {};
@@ -193,6 +193,7 @@ export class VariableQueryRunner {
       targets: [target],
       scopedVars,
       startTime: Date.now(),
+      dashboardUID: identifier.rootStateKey || undefined,
     };
 
     return request;
