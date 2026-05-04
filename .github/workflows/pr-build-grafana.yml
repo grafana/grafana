@@ -115,7 +115,7 @@ jobs:
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
-          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
       - name: Add PR status check
         env:
           GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
