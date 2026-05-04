@@ -75,14 +75,20 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUser identity.Requester, session *db.Session, uid string) (model.LibraryElementWithMeta, error) {
+// getLibraryElementRow fetches a single library element row from the database using the
+// provided transaction session. It intentionally does NOT call folderService.Get — callers
+// that need folder metadata (e.g. for display) should use GetLibraryElement instead.
+//
+// This separation exists because folderService.Get opens its own database connection. Calling
+// it inside a WithTransactionalDbSession callback can cause SQLite "database is locked" errors
+// (or deadlocks on small connection pools) because the outer transaction already holds the
+// write lock. DeleteLibraryElement uses this helper so the transaction stays clean.
+func (l *LibraryElementService) getLibraryElementRow(session *db.Session, signedInUser identity.Requester, uid string) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
 		getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
 		" WHERE le.uid=? AND le.org_id=?"
-	sess := session.SQL(sql, uid, signedInUser.GetOrgID())
-	err := sess.Find(&elements)
-	if err != nil {
+	if err := session.SQL(sql, uid, signedInUser.GetOrgID()).Find(&elements); err != nil {
 		return model.LibraryElementWithMeta{}, err
 	}
 	if len(elements) == 0 {
@@ -91,21 +97,34 @@ func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUse
 	if len(elements) > 1 {
 		return model.LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
 	}
+	return elements[0], nil
+}
 
-	// get the folder title
+// GetLibraryElement fetches a library element by UID and enriches it with the folder title.
+// Do NOT call this from inside a WithTransactionalDbSession callback — the folderService.Get
+// call it makes opens a new database connection, which can deadlock against the open
+// transaction (especially on SQLite). Use getLibraryElementRow instead for transactional paths.
+func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUser identity.Requester, session *db.Session, uid string) (model.LibraryElementWithMeta, error) {
+	element, err := l.getLibraryElementRow(session, signedInUser, uid)
+	if err != nil {
+		return model.LibraryElementWithMeta{}, err
+	}
+
+	// Enrich with the folder title. folderService.Get opens its own DB connection so this
+	// must not be called inside an active transaction (see getLibraryElementRow above).
 	f, err := l.folderService.Get(c, &folder.GetFolderQuery{
-		OrgID:        elements[0].OrgID,
-		UID:          &elements[0].FolderUID,
+		OrgID:        element.OrgID,
+		UID:          &element.FolderUID,
 		SignedInUser: signedInUser,
 	})
 	if err == nil {
-		elements[0].FolderName = f.Title
+		element.FolderName = f.Title
 	} else {
 		// default to General if we cannot find the folder
-		elements[0].FolderName = "General"
+		element.FolderName = "General"
 	}
 
-	return elements[0], nil
+	return element, nil
 }
 
 // createLibraryElement adds a library element.
@@ -232,7 +251,11 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
+		// Use getLibraryElementRow (not GetLibraryElement) to avoid calling folderService.Get
+		// inside the transaction. folderService.Get opens its own DB connection; doing so
+		// while holding a write lock causes "database is locked" errors on SQLite and can
+		// deadlock on small connection pools. Folder metadata is not needed for deletion.
+		element, err := l.getLibraryElementRow(session, signedInUser, uid)
 		if err != nil {
 			return err
 		}

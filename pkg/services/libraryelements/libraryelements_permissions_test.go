@@ -125,6 +125,11 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	})
 
 	t.Run("delete", func(t *testing.T) {
+		// Guard: if earlier subtests failed to create or correctly move the panel, uid will
+		// be empty or the element will be in an unexpected state. Catching that here prevents
+		// the delete from getting a 404/500 that looks like a delete-specific bug.
+		require.NotEmpty(t, uid, "uid must be set by the 'create' subtest before delete can run")
+
 		t.Run("When viewer tries to delete library panel, it should fail", func(t *testing.T) {
 			deleteLibraryElement(t, grafanaListedAddr, "viewer", "viewer", uid, http.StatusForbidden)
 		})
@@ -329,6 +334,8 @@ func revokeFolderPermissions(t *testing.T, grafanaListedAddr, folderUID string, 
 }
 
 func makeHTTPRequest(t *testing.T, method, url string, body interface{}, expectedStatus int) []byte {
+	t.Helper()
+
 	var req *http.Request
 	var err error
 
@@ -347,12 +354,17 @@ func makeHTTPRequest(t *testing.T, method, url string, body interface{}, expecte
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
-	// nolint:errcheck
-	defer resp.Body.Close()
-	require.Equal(t, expectedStatus, resp.StatusCode)
+	defer resp.Body.Close() // nolint:errcheck
 
+	// Read the body before asserting the status code so the response text is
+	// visible in the failure message. Previously the body was read after the
+	// require.Equal, which meant a status mismatch always showed an empty body.
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
+
+	require.Equal(t, expectedStatus, resp.StatusCode,
+		"%s %s: unexpected status code; response body: %s", method, url, string(respBody))
+
 	return respBody
 }
 
