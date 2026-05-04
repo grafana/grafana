@@ -5,6 +5,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"k8s.io/utils/ptr"
 )
@@ -262,9 +263,7 @@ func TestSecureValueQueries(t *testing.T) {
 					Name: "deleteSecureValue",
 					Data: &deleteSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "ns",
-						Name:        "name",
-						Version:     1,
+						ToDelete:    []contracts.DeleteInput{{Namespace: "a", Name: "b", Version: 1}, {Namespace: "d", Name: "e", Version: 2}},
 					},
 				},
 			},

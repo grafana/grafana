@@ -31,6 +31,12 @@ type ReadOpts struct {
 	ForUpdate bool
 }
 
+type DeleteInput struct {
+	Namespace xkube.Namespace
+	Name      string
+	Version   int64
+}
+
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
 	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
@@ -39,11 +45,10 @@ type SecureValueMetadataStorage interface {
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
-	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	Delete(ctx context.Context, input []DeleteInput) error
 	SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error
 	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
 	AddGCAttemptCount(ctx context.Context, secureValueIDs []string) (map[string]int, error)
-	DeleteByIds(ctx context.Context, secureValueIDs []string) (err error)
 }
 
 type SecureValueService interface {

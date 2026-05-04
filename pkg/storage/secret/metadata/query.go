@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -253,9 +254,7 @@ func (r updateExternalIdSecureValue) Validate() error {
 
 type deleteSecureValue struct {
 	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-	Version   int64
+	ToDelete []contracts.DeleteInput
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`

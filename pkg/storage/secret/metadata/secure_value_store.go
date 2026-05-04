@@ -529,12 +529,11 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) (err error) {
+func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contracts.DeleteInput) (err error) {
 	start := s.clock.Now()
+	inputStr := fmt.Sprintf("%+v", input)
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Delete", trace.WithAttributes(
-		attribute.String("name", name),
-		attribute.String("namespace", namespace.String()),
-		attribute.Int64("version", version),
+		attribute.String("input", inputStr),
 	))
 
 	defer span.End()
@@ -542,9 +541,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	defer func() {
 		success := err == nil
 		args := []any{
-			"namespace", namespace.String(),
-			"name", name,
-			"version", strconv.FormatInt(version, 10),
+			"input", inputStr,
 			"success", success,
 		}
 
@@ -560,9 +557,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-		Version:     version,
+		ToDelete:    input,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueDelete, req)
@@ -572,7 +567,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 
 	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("deleting secure value: namespace=%+v name=%+v version=%+v %w", namespace, name, version, err)
+		return fmt.Errorf("deleting secure values: %s %w", inputStr, err)
 	}
 
 	modifiedCount, err := res.RowsAffected()
