@@ -54,6 +54,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
   private dashboardUID = '';
   private dashboardTitle = '';
+  private currentOperationId = '';
 
   public initialize(uid: string, title: string) {
     // Clear previous dashboard data and set new context
@@ -85,8 +86,8 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
 
   // Dashboard-level events (we don't need to track these for panel analytics)
   onDashboardInteractionStart = (data: performanceUtils.DashboardInteractionStartData): void => {
-    // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
+    this.currentOperationId = data.operationId;
   };
 
   onDashboardInteractionMilestone = (_data: performanceUtils.DashboardInteractionMilestoneData): void => {
@@ -105,7 +106,6 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   };
 
   onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
-    // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
       console.warn('Panel not found for operation completion:', data.panelKey);
@@ -153,6 +153,26 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
       case 'plugin-load':
         panel.pluginLoadTime += duration;
         break;
+    }
+
+    // Send individual panel_operation measurement immediately for correct Faro timestamps
+    if (this.currentOperationId) {
+      const context: Record<string, string> = {
+        panelKey: data.panelKey,
+        pluginId: data.pluginId,
+        panelId: data.panelId,
+        operationId: this.currentOperationId,
+        operationType: data.operation,
+      };
+
+      if (data.operation === 'query' && data.metadata.queryType) {
+        context.queryType = data.metadata.queryType;
+      }
+      if (data.operation === 'transform' && data.metadata.transformationId) {
+        context.transformationId = data.metadata.transformationId;
+      }
+
+      logMeasurement('panel_operation', { duration }, context);
     }
   };
 
@@ -212,12 +232,17 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
 
       // logMeasurement requires numeric values in second parameter, metadata in third
       const measurementValues = {
-        totalTime: Math.round(totalPanelTime * 10) / 10,
+        totalTime: totalPanelTime,
         queryCount: panel.queryOperations.length,
         transformCount: panel.transformationOperations.length,
         renderCount: panel.renderOperations.length,
         fieldConfigCount: panel.fieldConfigOperations.length,
         pluginLoadCount: panel.pluginLoadTime > 0 ? 1 : 0,
+        queryTime: panel.totalQueryTime,
+        transformTime: panel.totalTransformationTime,
+        renderTime: panel.totalRenderTime,
+        fieldConfigTime: panel.totalFieldConfigTime,
+        pluginLoadTime: panel.pluginLoadTime,
       };
 
       logMeasurement('panel_render', measurementValues, {

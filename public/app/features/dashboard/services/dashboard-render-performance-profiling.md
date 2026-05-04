@@ -308,6 +308,7 @@ Aggregates panel-level performance metrics for analytics reporting:
 - Sends comprehensive analytics reports via `reportInteraction` and `logMeasurement`
 - Provides detailed panel breakdowns including slow panel detection
 - Sends individual `panel_render` measurements for each panel with aggregated metrics via `logMeasurement`
+- Sends individual `panel_operation` measurements for each operation within a panel via `logMeasurement`
 
 #### ScenePerformanceLogger
 
@@ -433,7 +434,12 @@ For each dashboard interaction, individual `panel_render` measurements are sent 
   transformCount: number,       // Number of transformation operations
   renderCount: number,         // Number of render operations
   fieldConfigCount: number,     // Number of field config operations
-  pluginLoadCount: number       // Number of plugin load operations (0 or 1)
+  pluginLoadCount: number,      // Number of plugin load operations (0 or 1)
+  queryTime: number,            // Total time spent in queries (ms)
+  transformTime: number,        // Total time spent in transformations (ms)
+  renderTime: number,           // Total time spent in renders (ms)
+  fieldConfigTime: number,      // Total time spent in field config (ms)
+  pluginLoadTime: number        // Time spent loading the plugin (ms)
 }
 ```
 
@@ -453,6 +459,47 @@ For each dashboard interaction, individual `panel_render` measurements are sent 
 **Correlating panel_render with dashboard_render**:
 
 All `panel_render` measurements share the same `operationId` as their parent `dashboard_render` interaction.
+
+#### Panel Operation Measurements
+
+Individual `panel_operation` measurements are sent in real-time as each operation completes during the panel's render lifecycle. This provides per-query, per-transform, and per-render timing data for fine-grained performance analysis with accurate Faro ingestion timestamps.
+
+**When sent**: Immediately when each panel operation completes (not batched at interaction end)
+
+**Correlation**: All `panel_operation` measurements share the same `operationId` as their parent `dashboard_render` and sibling `panel_render` measurements, enabling full correlation across dashboard, panel, and operation levels.
+
+**Measurement values** (via `logMeasurement`):
+
+```typescript
+{
+  duration: number; // Duration of the individual operation (ms)
+}
+```
+
+**Measurement metadata** (via `logMeasurement` context):
+
+```typescript
+{
+  panelKey: string,            // Panel key identifier
+  pluginId: string,            // Panel plugin identifier
+  panelId: string,             // Panel identifier
+  operationId: string,         // Shared operationId for correlating with dashboard_render
+  operationType: string,       // One of: 'query', 'transform', 'render', 'fieldConfig', 'plugin-load'
+  // Operation-specific metadata (included when available):
+  queryType?: string,          // Query type (only for operationType: 'query')
+  transformationId?: string    // Transformation ID (only for operationType: 'transform')
+}
+```
+
+**Operation types**:
+
+| operationType | When sent                               |
+| ------------- | --------------------------------------- |
+| `query`       | One per query executed by the panel     |
+| `transform`   | One per transformation applied          |
+| `render`      | One per render cycle                    |
+| `fieldConfig` | One per field config application        |
+| `plugin-load` | One measurement if plugin load time > 0 |
 
 ## Debugging and Development
 
