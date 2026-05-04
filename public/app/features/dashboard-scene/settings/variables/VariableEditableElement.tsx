@@ -34,6 +34,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
+import { getVariableSectionType } from './variableSectionType';
 
 // TODO fix conditional hook usage here...
 function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
@@ -382,6 +383,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
     <VariableDisplaySelect
       display={display}
       type={variable.state.type}
+      sectionType={getVariableSectionType(variable)}
       hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
       onChange={onChange}
     />

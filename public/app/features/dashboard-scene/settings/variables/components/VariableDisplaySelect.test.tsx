@@ -57,6 +57,50 @@ describe('VariableDisplaySelect', () => {
     expect(screen.getByText('Hidden')).toBeInTheDocument();
   });
 
+  it('should render row display labels for row variables', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        sectionType="row"
+        hideControlsMenuOption={true}
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Top of row')).toBeInTheDocument();
+    expect(screen.getByText('Top of row, label hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Above dashboard')).not.toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('should render tab display labels for tab variables', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        sectionType="tab"
+        hideControlsMenuOption={true}
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Top of tab')).toBeInTheDocument();
+    expect(screen.getByText('Top of tab, label hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Above dashboard')).not.toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
   it('should call onChange() with the selected value', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();

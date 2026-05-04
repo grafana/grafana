@@ -73,6 +73,7 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  public readonly sectionType = 'row' as const;
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
   private _filtersSet?: SectionFiltersSet;
 

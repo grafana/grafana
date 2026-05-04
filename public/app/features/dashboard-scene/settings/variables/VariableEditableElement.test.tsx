@@ -11,11 +11,13 @@ import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRend
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';
 import { VariableTypeChangePane } from './VariableTypeSelectionPane';
+import { getVariableSectionType } from './variableSectionType';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
@@ -133,6 +135,46 @@ describe('VariableEditableElement', () => {
       const variable = new CustomVariable({ name: 'env', query: 'prod,dev', value: 'prod', text: 'prod' });
 
       expect(shouldHideControlsMenuOption(variable)).toBe(true);
+    });
+  });
+
+  describe('getVariableSectionType', () => {
+    it('returns dashboard for dashboard-level variables', () => {
+      const variable = new CustomVariable({ name: 'env', query: 'prod,dev', value: 'prod', text: 'prod' });
+      const variableSet = new SceneVariableSet({ variables: [variable] });
+
+      new DashboardScene({
+        $variables: variableSet,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: AutoGridLayoutManager.createEmpty(),
+        isEditing: true,
+      });
+
+      expect(getVariableSectionType(variable)).toBe('dashboard');
+    });
+
+    it('returns row for row-level variables', () => {
+      const variable = new CustomVariable({ name: 'env', query: 'prod,dev', value: 'prod', text: 'prod' });
+      const variableSet = new SceneVariableSet({ variables: [variable] });
+
+      new RowItem({ $variables: variableSet });
+
+      expect(getVariableSectionType(variable)).toBe('row');
+    });
+
+    it('returns tab for tab-level variables', () => {
+      const variable = new CustomVariable({ name: 'env', query: 'prod,dev', value: 'prod', text: 'prod' });
+      const variableSet = new SceneVariableSet({ variables: [variable] });
+
+      new TabItem({ $variables: variableSet });
+
+      expect(getVariableSectionType(variable)).toBe('tab');
+    });
+
+    it('returns dashboard when variable parent is not a SceneVariableSet', () => {
+      const variable = new CustomVariable({ name: 'env', query: 'prod,dev', value: 'prod', text: 'prod' });
+
+      expect(getVariableSectionType(variable)).toBe('dashboard');
     });
   });
 });
