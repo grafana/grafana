@@ -661,6 +661,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboardMutationApiVariablePilot",
+			Description: "Routes variable editor add/update/delete through the Dashboard Mutation API instead of direct Scenes mutations",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "unlimitedLayoutsNesting",
 			Description: "Enables unlimited dashboard panel grouping",
 			Stage:       FeatureStageExperimental,

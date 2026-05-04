@@ -6,6 +6,7 @@
  * and inferred from Zod schemas.
  */
 
+import type { SceneObject } from '@grafana/scenes';
 import type {
   AutoGridLayoutItemKind,
   Element,
@@ -13,10 +14,9 @@ import type {
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-export interface MutationRequest {
-  type: string;
-  payload: unknown;
-}
+// The __scenesPayload variant signals the execute() path to skip Zod
+// validation and pass the SceneObject directly to the handler.
+export type MutationRequest = { type: string; payload: unknown } | { type: string; __scenesPayload: SceneObject };
 
 export interface MutationResult {
   success: boolean;
