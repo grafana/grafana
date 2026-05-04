@@ -16,6 +16,7 @@ labels:
 menuTitle: Template variables
 title: PostgreSQL template variables
 weight: 300
+review_date: 2026-05-04
 ---
 
 # PostgreSQL template variables
@@ -72,15 +73,35 @@ SELECT hostname FROM host WHERE region IN($region)
 
 ### Filter results with `__searchFilter`
 
-Using `__searchFilter` in the query field allows the query results to be filtered based on the user's input in the drop-down selection box. If you don't enter anything, the default value for `__searchFilter` is `%`.
+Using `__searchFilter` in the query field filters the query results based on user input in the drop-down selection box. If nothing is entered, the default value for `__searchFilter` is `%`.
 
-Note that you must enclose the `__searchFilter` expression in quotes as Grafana doesn't add them automatically.
+You must enclose the `__searchFilter` expression in quotes because Grafana doesn't add them automatically.
 
-The following example demonstrates how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user types in the drop-down selection box.
+The following example enables real-time searching for `hostname` as the user types in the drop-down selection box:
 
 ```sql
 SELECT hostname FROM host WHERE hostname LIKE '$__searchFilter'
 ```
+
+For tables with a large number of rows, combine `__searchFilter` with `LIMIT` to keep the drop-down responsive:
+
+```sql
+SELECT DISTINCT hostname
+FROM host
+WHERE hostname LIKE '$__searchFilter'
+ORDER BY hostname
+LIMIT 100
+```
+
+### Regex variable
+
+You can use a **Regex** type variable to filter or transform values from another variable. For example, if you have a variable named `server` that returns values like `web-prod-01`, `web-staging-01`, and `db-prod-01`, you can create a regex variable to extract only the environment:
+
+1. Create a new variable with **Type: Query**.
+1. Set the query to return the raw values.
+1. In the **Regex** field, enter a pattern to extract or filter. For example, `/^web-(.+)-\d+$/` extracts `prod` and `staging` from web server names.
+
+You can also use regex to filter a variable's options. For example, setting the **Regex** field to `/prod/` on a variable that returns all server names limits the drop-down to only production servers.
 
 ## Multi-property variables
 
@@ -109,7 +130,7 @@ In a panel query you might use `$env.env_aws` for an AWS-related query and `$env
 
 ## Use variables in queries
 
-Grafana automatically quotes template variable values only when the template variable is a **multi-value**.
+Grafana automatically quotes template variable values only when the template variable is a **multi-value** variable.
 
 When using a multi-value variable, use the `IN` comparison operator instead of `=` to match against multiple values.
 
@@ -141,9 +162,36 @@ WHERE $__timeFilter(atimestamp) AND hostname IN([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
+### Multi-value variable with IN clause
+
+When a variable has **Multi-value** enabled, Grafana automatically adds quotes around each selected value. For example, if the user selects `web01` and `web02`, `$hostname` expands to `'web01','web02'`. Use the `IN` operator to match:
+
+```sql
+SELECT
+  $__timeGroupAlias("created_at", '5m'),
+  count(*) AS requests
+FROM access_log
+WHERE $__timeFilter("created_at")
+  AND hostname IN($hostname)
+GROUP BY time
+ORDER BY time
+```
+
+If only a single value is selected, the `IN` clause still works correctly — `IN('web01')` is equivalent to `= 'web01'`.
+
+### Multi-value variable with numeric columns
+
+For numeric columns (such as IDs), disable quoting with the `csv` format option so values aren't wrapped in quotes:
+
+```sql
+SELECT name FROM host WHERE id IN(${host_id:csv})
+```
+
+If `host_id` has values `1`, `2`, and `3` selected, this expands to `IN(1,2,3)` instead of `IN('1','2','3')`.
+
 ### Disable quoting for multi-value variables
 
-By default, Grafana formats multi-value variables as a quoted, comma-separated string. For example, if `server01` and `server02` are selected, the result will be `'server01'`, `'server02'`. To disable quoting, use the `csv` formatting option for variables:
+By default, Grafana formats multi-value variables as a quoted, comma-separated string. For example, if `server01` and `server02` are selected, the result is `'server01','server02'`. To disable quoting, use the `csv` formatting option:
 
 ```text
 ${servers:csv}
