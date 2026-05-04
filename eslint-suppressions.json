@@ -2011,11 +2011,6 @@
       "count": 2
     }
   },
-  "public/app/features/datasources/components/ButtonRow.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
   "public/app/features/datasources/components/DataSourcePluginState.tsx": {
     "@grafana/no-gf-form": {
       "count": 3
