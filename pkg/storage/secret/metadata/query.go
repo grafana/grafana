@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -28,12 +29,14 @@ var (
 
 	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList                    = mustTemplate("secure_value_list.sql")
+	sqlSecureValueListByIDs               = mustTemplate("secure_value_list_by_ids.sql")
 	sqlSecureValueCreate                  = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId        = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueDelete                  = mustTemplate("secure_value_delete.sql")
 	sqlSecureValueSetInactiveAllFromGroup = mustTemplate("secure_value_set_inactive_all_from_group.sql")
 	sqlSecureValueLeaseInactive           = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken        = mustTemplate("secure_value_list_by_lease_token.sql")
+	sqlSecureValueAddGCRetryCount         = mustTemplate("secure_value_add_gc_retry_count.sql")
 
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
@@ -214,6 +217,16 @@ func (r listSecureValue) Validate() error {
 	return nil // TODO
 }
 
+type listSecureValuesByIDs struct {
+	sqltemplate.SQLTemplate
+	SecureValueIDs []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listSecureValuesByIDs) Validate() error {
+	return nil // TODO
+}
+
 type createSecureValue struct {
 	sqltemplate.SQLTemplate
 	Row *secureValueDB
@@ -240,9 +253,7 @@ func (r updateExternalIdSecureValue) Validate() error {
 
 type deleteSecureValue struct {
 	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-	Version   int64
+	ToDelete []contracts.DeleteInput
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -282,5 +293,15 @@ type listSecureValuesByLeaseToken struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listSecureValuesByLeaseToken) Validate() error {
+	return nil // TODO
+}
+
+type addGCAttemptCountSecureValues struct {
+	sqltemplate.SQLTemplate
+	SecureValueIDs []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r addGCAttemptCountSecureValues) Validate() error {
 	return nil // TODO
 }

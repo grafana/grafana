@@ -35,6 +35,8 @@ type StorageMetrics struct {
 	SecureValueSetStatusDuration               *prometheus.HistogramVec
 	SecureValueDeleteDuration                  *prometheus.HistogramVec
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	SecureValueAddGCAttemptCount               *prometheus.HistogramVec
+	SecureValueDeleteByIds                     *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -174,6 +176,20 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
+		SecureValueAddGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_add_to_gc_attempt_count_duration_seconds",
+			Help:      "Duration of secure value gc attempt count modification operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
+		SecureValueDeleteByIds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_delete_by_ids_duration_seconds",
+			Help:      "Duration of operations to delete a list of secure values by ids",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -215,6 +231,8 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.DecryptDuration,
+				m.SecureValueAddGCAttemptCount,
+				m.SecureValueDeleteByIds,
 			)
 		}
 

@@ -41,20 +41,14 @@ import (
 )
 
 type SetupConfig struct {
-	KeeperService            contracts.KeeperService
 	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
 	RunSecretsDBMigrations   bool
 	RunDataKeyMigration      bool
+	SystemKeeperWrapperFunc  func(contracts.Keeper) contracts.Keeper
 }
 
 func defaultSetupCfg() SetupConfig {
 	return SetupConfig{}
-}
-
-func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
-	return func(setupCfg *SetupConfig) {
-		setupCfg.KeeperService = keeperService
-	}
 }
 
 func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
@@ -93,13 +87,14 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		CurrentEncryptionProvider:     "secret_key.v1",
-		ConfiguredKMSProviders:        map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
-		GCWorkerEnabled:               false,
-		RunSecretsDBMigrations:        setupCfg.RunSecretsDBMigrations,
-		RunDataKeyMigration:           setupCfg.RunDataKeyMigration,
-		GCWorkerMaxBatchSize:          2,
-		GCWorkerMaxConcurrentCleanups: 2,
+		CurrentEncryptionProvider:         "secret_key.v1",
+		ConfiguredKMSProviders:            map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		GCWorkerEnabled:                   false,
+		RunSecretsDBMigrations:            setupCfg.RunSecretsDBMigrations,
+		RunDataKeyMigration:               setupCfg.RunDataKeyMigration,
+		GCWorkerMaxBatchSize:              2,
+		GCWorkerMaxConcurrentCleanups:     2,
+		GCWorkerMaxAttemptsPerSecureValue: 2,
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
@@ -139,19 +134,22 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	if fakeMigrationExecutor == nil {
 		fakeMigrationExecutor = &NoopMigrationExecutor{}
 	}
+
 	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, fakeMigrationExecutor, nil, cfg)
 	require.NoError(t, err)
+
+	var systemKeeper contracts.Keeper = sqlKeeper
+
+	if setupCfg.SystemKeeperWrapperFunc != nil {
+		systemKeeper = setupCfg.SystemKeeperWrapperFunc(systemKeeper)
+	}
 
 	// Initialize a real migration executor for test
 	realMigrationExecutor, err := encryptionstorage.ProvideEncryptedValueMigrationExecutor(database, tracer, encryptedValueStorage, globalEncryptedValueStorage)
 	require.NoError(t, err)
 
 	mockAwsKeeper := NewModelSecretsManager()
-	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper, mockAwsKeeper)
-
-	if setupCfg.KeeperService != nil {
-		keeperService = setupCfg.KeeperService
-	}
+	var keeperService contracts.KeeperService = newKeeperServiceWrapper(systemKeeper, mockAwsKeeper)
 
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
@@ -184,7 +182,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		EncryptedValueStorage:           encryptedValueStorage,
 		GlobalEncryptedValueStorage:     globalEncryptedValueStorage,
 		EncryptedValueMigrationExecutor: realMigrationExecutor,
-		SQLKeeper:                       sqlKeeper,
+		SystemKeeper:                    systemKeeper,
 		Database:                        database,
 		AccessClient:                    accessClient,
 		ConsolidationService:            consolidationService,
@@ -206,7 +204,7 @@ type Sut struct {
 	EncryptedValueStorage           contracts.EncryptedValueStorage
 	GlobalEncryptedValueStorage     contracts.GlobalEncryptedValueStorage
 	EncryptedValueMigrationExecutor contracts.EncryptedValueMigrationExecutor
-	SQLKeeper                       *sqlkeeper.SQLKeeper
+	SystemKeeper                    contracts.Keeper
 	Database                        *database.Database
 	AccessClient                    types.AccessClient
 	ConsolidationService            contracts.ConsolidationService
@@ -316,12 +314,12 @@ func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig
 }
 
 type keeperServiceWrapper struct {
-	sqlKeeper *sqlkeeper.SQLKeeper
-	awsKeeper *ModelAWSSecretsManager
+	systemKeeper contracts.Keeper
+	awsKeeper    *ModelAWSSecretsManager
 }
 
-func newKeeperServiceWrapper(sqlKeeper *sqlkeeper.SQLKeeper, awsKeeper *ModelAWSSecretsManager) *keeperServiceWrapper {
-	return &keeperServiceWrapper{sqlKeeper: sqlKeeper, awsKeeper: awsKeeper}
+func newKeeperServiceWrapper(systemKeeper contracts.Keeper, awsKeeper *ModelAWSSecretsManager) *keeperServiceWrapper {
+	return &keeperServiceWrapper{systemKeeper: systemKeeper, awsKeeper: awsKeeper}
 }
 
 func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
@@ -329,7 +327,7 @@ func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperCon
 	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperAWSConfig]:
 		return wrapper.awsKeeper, nil
 	default:
-		return wrapper.sqlKeeper, nil
+		return wrapper.systemKeeper, nil
 	}
 }
 

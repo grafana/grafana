@@ -12,8 +12,8 @@ WHERE "guid" IN (
     WHERE
       "active" = FALSE AND
       10 - "updated" > 300 AND
-      10 - "lease_created" > 30
-  ) AS sub
+      10 - "lease_created" > POWER(30, "gc_attempts")
+  ) AS sub 
   WHERE rn <= 10
 )
 ;

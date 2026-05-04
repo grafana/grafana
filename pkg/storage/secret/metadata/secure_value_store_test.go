@@ -2,6 +2,7 @@ package metadata_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -238,7 +239,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 			"lease": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
 				minAge := 300 * time.Second
-				leaseTTL := 30 * time.Second
+				leaseTTL := 300 * time.Second
 				maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
 				modelSvs, modelErr := model.LeaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				svs, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
@@ -249,6 +250,80 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				duration := time.Duration(rapid.IntRange(1, 10).Draw(t, "minutes")) * time.Minute
 				sut.Clock.AdvanceBy(duration)
 			},
+		})
+	})
+}
+
+func TestPropertyDelete(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes only specified secure values", func(t *testing.T) {
+		t.Parallel()
+
+		tt := t
+
+		rapid.Check(t, func(t *rapid.T) {
+			sut := testutils.Setup(tt)
+
+			// The latest version of secure values created during the test
+			secureValues := make([]*secretv1beta1.SecureValue, 0)
+
+			t.Repeat(map[string]func(*rapid.T){
+				// Create a random secure value
+				"create": func(t *rapid.T) {
+					sv := testutils.AnySecureValueGen.Draw(t, "sv")
+					createdSv, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv.DeepCopy(), "actor-uid")
+					require.NoError(t, err)
+					i := slices.IndexFunc(secureValues, func(v *secretv1beta1.SecureValue) bool {
+						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
+					})
+
+					// Set new version to active since it'll be read later on
+					require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version))
+
+					// Secure value is not in the slice
+					if i == -1 {
+						secureValues = append(secureValues, createdSv)
+					} else {
+						// Replace old version (now inactive) with new version
+						secureValues[i] = createdSv
+					}
+				},
+
+				// Bulk delete a subset of the created secure values
+				"delete": func(t *rapid.T) {
+					if len(secureValues) == 0 {
+						return
+					}
+
+					i := rapid.IntRange(0, len(secureValues)).Draw(t, "i")
+					keep := secureValues[:i]
+					delete := secureValues[i:]
+
+					// Delete some of the secure values
+					deleteInput := make([]contracts.DeleteInput, 0, len(delete))
+					for _, sv := range delete {
+						deleteInput = append(deleteInput, contracts.DeleteInput{
+							Namespace: xkube.Namespace(sv.Namespace),
+							Name:      sv.Name,
+							Version:   sv.Status.Version,
+						})
+					}
+
+					require.NoError(t, sut.SecureValueMetadataStorage.Delete(t.Context(), deleteInput))
+
+					// Ensure the non-deleted ones are still reachable.
+					for _, sv := range keep {
+						read, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+						require.NoError(t, err)
+						require.Equal(t, sv.Namespace, read.Namespace)
+						require.Equal(t, sv.Name, read.Name)
+						require.Equal(t, sv.Status.Version, read.Status.Version)
+					}
+
+					secureValues = keep
+				},
+			})
 		})
 	})
 }

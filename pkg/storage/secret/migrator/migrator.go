@@ -243,4 +243,10 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
+
+	mg.AddMigration("add gc_attempts to secret_secure_value table", migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:    "gc_attempts",
+		Type:    migrator.DB_Int,
+		Default: "0",
+	}))
 }

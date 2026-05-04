@@ -51,6 +51,8 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
+	// Max number of times the worker tries to clean up a secure value before giving up on it.
+	GCWorkerMaxAttemptsPerSecureValue int
 
 	// Whether to register the MT CRUD API
 	RegisterAPIServer bool
@@ -81,6 +83,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups = uint16(secretsMgmt.Key("gc_worker_max_concurrency").MustUint(16))
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
+	cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue = int(secretsMgmt.Key("gc_worker_max_attempts_per_secure_value").MustUint(5))
 
 	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)

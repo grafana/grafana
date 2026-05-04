@@ -66,6 +66,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	if err != nil {
 		return nil, fmt.Errorf("fetching inactive secure values that need to be cleaned up: %w", err)
 	}
+
 	if len(secureValues) == 0 {
 		return nil, nil
 	}
@@ -88,6 +89,45 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	}
 
 	wg.Wait()
+
+	secureValuesWithError := make([]secretv1beta1.SecureValue, 0)
+	for i, sv := range secureValues {
+		if errs[i] == nil {
+			continue
+		}
+		secureValuesWithError = append(secureValuesWithError, sv)
+	}
+
+	if len(secureValuesWithError) > 0 {
+		ids := make([]string, 0, len(secureValuesWithError))
+		for _, sv := range secureValuesWithError {
+			ids = append(ids, string(sv.UID))
+		}
+
+		counts, err := w.secureValueMetadataStorage.AddGCAttemptCount(ctx, ids)
+		if err != nil {
+			return secureValues, errors.Join(append(errs, fmt.Errorf("incrementing gc retry count for secure values: %w", err))...)
+		}
+
+		if len(counts) > 0 {
+			// Delete secure values that exceeed max retries
+			deleteInput := make([]contracts.DeleteInput, 0, len(secureValuesWithError))
+			for _, sv := range secureValuesWithError {
+				if counts[string(sv.UID)] > w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
+					deleteInput = append(deleteInput, contracts.DeleteInput{
+						Namespace: xkube.Namespace(sv.Namespace),
+						Name:      sv.Name,
+						Version:   sv.Status.Version,
+					})
+				}
+			}
+
+			logging.FromContext(ctx).Error("deleting secure values that gc worker is unable to clean up after retrying", "deleteInput", deleteInput)
+			if err := w.secureValueMetadataStorage.Delete(ctx, deleteInput); err != nil {
+				return secureValues, errors.Join(append(errs, fmt.Errorf("deleting secure values: %w", err))...)
+			}
+		}
+	}
 
 	return secureValues, errors.Join(errs...)
 }
@@ -112,7 +152,9 @@ func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) err
 	}
 
 	// Metadata deletion is not idempotent but not found errors are ignored
-	if err := w.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
+	if err := w.secureValueMetadataStorage.Delete(ctx, []contracts.DeleteInput{{
+		Namespace: xkube.Namespace(sv.Namespace), Name: sv.Name, Version: sv.Status.Version,
+	}}); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return fmt.Errorf("deleting secure value from metadata storage: %w", err)
 	}
 

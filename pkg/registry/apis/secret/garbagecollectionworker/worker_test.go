@@ -1,6 +1,8 @@
 package garbagecollectionworker_test
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -122,6 +124,59 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 	})
+
+	t.Run("worker deletes secure value after N attempts to delete it fail", func(t *testing.T) {
+		sut := testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
+			cfg.SystemKeeperWrapperFunc = func(k contracts.Keeper) contracts.Keeper {
+				return &fakeKeeper{inner: k}
+			}
+		}))
+
+		sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv1"
+		})
+		require.NoError(t, err)
+		sv2, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv2"
+		})
+		require.NoError(t, err)
+
+		_, err = sut.DeleteSv(t.Context(), sv1.Namespace, sv1.Name)
+		require.NoError(t, err)
+
+		for range sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
+			// Advance time to wait for grace period
+			sut.Clock.AdvanceBy(10 * time.Minute)
+
+			_, _ = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		}
+
+		// No more secure values to clean up
+		svs, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		require.NoError(t, err)
+		require.Empty(t, svs)
+
+		// Ensure unrelated secure values have not been deleted
+		sv2Read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
+		require.NoError(t, err)
+		require.Equal(t, sv2.Namespace, sv2Read.Namespace)
+		require.Equal(t, sv2.Name, sv2Read.Name)
+	})
+}
+
+type fakeKeeper struct{ inner contracts.Keeper }
+
+func (k *fakeKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
+	return k.inner.Store(ctx, cfg, namespace, name, version, exposedValueOrRef)
+}
+func (k *fakeKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
+	return k.inner.Expose(ctx, cfg, namespace, name, version)
+}
+func (k *fakeKeeper) RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+	return k.inner.RetrieveReference(ctx, cfg, ref)
+}
+func (k *fakeKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
+	return fmt.Errorf("Delete: fake error")
 }
 
 func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
@@ -236,8 +291,8 @@ func TestProperty(t *testing.T) {
 			},
 			"cleanup": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
-				minAge := 300 * time.Second
-				leaseTTL := 30 * time.Second
+				minAge := 10 * time.Minute
+				leaseTTL := 5 * time.Minute
 				maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
 				modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
@@ -254,7 +309,7 @@ func TestProperty(t *testing.T) {
 				}
 			},
 			"advanceTime": func(t *rapid.T) {
-				duration := time.Duration(rapid.IntRange(1, 10).Draw(t, "minutes")) * time.Minute
+				duration := time.Duration(rapid.IntRange(1, 60).Draw(t, "minutes")) * time.Minute
 				sut.Clock.AdvanceBy(duration)
 			},
 		})
