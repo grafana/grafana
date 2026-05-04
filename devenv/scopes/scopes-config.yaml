@@ -48,6 +48,22 @@ scopes:
         operator: equals
         value: kids
 
+  # A scope with a 4-level defaultPath for testing deep path resolution.
+  # Tests that resolvePathToRoot uses the live state tree (not a stale snapshot)
+  # when merging path nodes after async API calls.
+  deep-service:
+    title: Deep Service
+    # Path: gdev-scopes > production > eu-west > deep-service-prod  (4 levels)
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-eu-west
+      - gdev-scopes-production-eu-west-deep-service-prod
+    filters:
+      - key: service
+        operator: equals
+        value: deep
+
   # This scope appears in multiple places in the tree.
   # The defaultPath determines which path is shown when this scope is selected
   # (e.g., from a URL or programmatically), even if another path also links to it.
@@ -85,6 +101,16 @@ tree:
             nodeType: leaf
             linkId: app2
             linkType: scope
+          eu-west:
+            title: EU West
+            nodeType: container
+            disableMultiSelect: true
+            children:
+              deep-service-prod:
+                title: Deep Service
+                nodeType: leaf
+                linkId: deep-service
+                linkType: scope
           # This node links to 'shared-service' scope.
           # The scope's defaultPath points here (production > gdev-scopes).
           shared-service-prod:

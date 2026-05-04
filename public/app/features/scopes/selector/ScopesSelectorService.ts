@@ -184,7 +184,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       nodePath = await this.getNodePath(scopeNodeId);
     }
 
-    const newTree = insertPathNodesIntoTree(tree, nodePath);
+    // Use this.state.tree instead of the tree parameter: after the awaits above,
+    // concurrent calls (e.g. open() → filterNode) may have modified state. Reading
+    // this.state.tree here ensures we merge into the latest version rather than
+    // overwriting it with a stale snapshot captured at call time.
+    const newTree = insertPathNodesIntoTree(this.state.tree, nodePath);
 
     this.updateState({ tree: newTree });
 

@@ -1581,6 +1581,39 @@ describe('ScopesSelectorService', () => {
         result.tree.children?.['region-us-west']?.children?.['country-usa']?.children?.['city-seattle']
       ).toBeDefined();
     });
+
+    it('should not overwrite concurrent tree updates made while awaiting the API', async () => {
+      (service as any).updateState({
+        scopes: { 'scope-sea-1': scopeWithDefaultPath },
+      });
+
+      // Hold the API response so we can inject a concurrent tree update in the gap
+      let resolveApiCall!: (nodes: ScopeNode[]) => void;
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockImplementation(() => new Promise<ScopeNode[]>((resolve) => (resolveApiCall = resolve)));
+
+      // The tree snapshot passed to resolvePathToRoot (stale by the time await resumes)
+      const staleSnapshot = { expanded: false, scopeNodeId: '', query: '', children: {} };
+      const resultPromise = service.resolvePathToRoot('datacenter-sea-1', staleSnapshot, 'scope-sea-1');
+
+      // Simulate a concurrent caller (e.g. open() → filterNode) writing a sibling node
+      // into this.state.tree while resolvePathToRoot is suspended at its internal await.
+      const concurrentNode = { expanded: false, scopeNodeId: 'region-eu-west', query: '', children: {} };
+      (service as any).updateState({
+        tree: { ...service.state.tree, children: { 'region-eu-west': concurrentNode } },
+      });
+
+      // Unblock the API — resolvePathToRoot resumes and must merge into this.state.tree,
+      // not the stale staleSnapshot which predates the concurrent update above.
+      resolveApiCall([regionNode, countryNode, cityNode, datacenterNode]);
+      const result = await resultPromise;
+
+      // The concurrent sibling must survive the merge
+      expect(result.tree.children?.['region-eu-west']).toBeDefined();
+      // The resolved path nodes must also be present
+      expect(result.tree.children?.['region-us-west']).toBeDefined();
+    });
   });
 
   describe('applyScopes with defaultPath pre-fetching', () => {

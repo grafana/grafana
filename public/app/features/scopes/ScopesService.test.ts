@@ -283,6 +283,47 @@ describe('ScopesService', () => {
       );
     });
 
+    it('should correctly call resolvePathToRoot for a deeply nested defaultPath without scope_node', async () => {
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'deep-scope' }];
+        selectorService.state.scopes = {
+          'deep-scope': {
+            metadata: { name: 'deep-scope' },
+            spec: {
+              title: 'Deep Scope',
+              defaultPath: ['', 'l1', 'l1-l2', 'l1-l2-l3', 'l1-l2-l3-leaf'],
+              filters: [],
+            },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=deep-scope',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      await changeScopesPromise;
+
+      // Should use last element of the 4-level defaultPath
+      expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('l1-l2-l3-leaf', expect.anything(), 'deep-scope');
+
+      // scope_node should NOT be written to URL — it is re-derived from defaultPath on load
+      expect(locationService.partial).not.toHaveBeenCalledWith(
+        expect.objectContaining({ scope_node: expect.any(String) }),
+        expect.anything()
+      );
+    });
+
     it('should not call resolvePathToRoot when scope_node is absent and no defaultPath exists', async () => {
       let changeScopesResolve: () => void;
       const changeScopesPromise = new Promise<void>((resolve) => {
