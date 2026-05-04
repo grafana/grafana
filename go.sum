@@ -1937,8 +1937,8 @@ github.com/lyft/protoc-gen-star v0.6.1/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuz
 github.com/lyft/protoc-gen-star/v2 v2.0.1/go.mod h1:RcCdONR2ScXaYnQC5tUzxzlpA3WVYF7/opLeUgcQs/o=
 github.com/m3db/prometheus_remote_client_golang v0.4.4 h1:DsAIjVKoCp7Ym35tAOFL1OuMLIdIikAEHeNPHY+yyM8=
 github.com/m3db/prometheus_remote_client_golang v0.4.4/go.mod h1:wHfVbA3eAK6dQvKjCkHhusWYegCk3bDGkA15zymSHdc=
-github.com/madflojo/testcerts v1.4.0 h1:I09gN0C1ly9IgeVNcAqKk8RAKIJTe3QnFrrPBDyvzN4=
-github.com/madflojo/testcerts v1.4.0/go.mod h1:MW8sh39gLnkKh4K0Nc55AyHEDl9l/FBLDUsQhpmkuo0=
+github.com/madflojo/testcerts v1.5.0 h1:GhQllyAiGzXVZU+i8O/cQkPTHzN59RxMGtm3uETgXnU=
+github.com/madflojo/testcerts v1.5.0/go.mod h1:MW8sh39gLnkKh4K0Nc55AyHEDl9l/FBLDUsQhpmkuo0=
 github.com/magefile/mage v1.17.1 h1:F1d2lnLSlbQDM0Plq6Ac4NtaHxkxTK8t5nrMY9SkoNA=
 github.com/magefile/mage v1.17.1/go.mod h1:Yj51kqllmsgFpvvSzgrZPK9WtluG3kUhFaBUVLo4feA=
 github.com/magiconair/properties v1.8.6/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
