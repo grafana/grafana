@@ -14,6 +14,7 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
+import { type MatcherScope } from '@grafana/schema';
 import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
@@ -93,7 +94,7 @@ export function TablePanel(props: Props) {
       sortByBehavior={sortByBehavior}
       sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
+      onColumnResize={(displayName, resizedWidth, fieldScope) => onColumnResize(displayName, resizedWidth, fieldScope, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
@@ -135,7 +136,7 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
+function onColumnResize(fieldDisplayName: string, width: number, fieldScope: MatcherScope = 'series', props: Props) {
   const { fieldConfig } = props;
   const { overrides } = fieldConfig;
 
@@ -143,7 +144,7 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
   const propId = 'custom.width';
 
   // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName && o.matcher.scope === fieldScope);
 
   if (override) {
     // look for existing property
@@ -155,7 +156,7 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
     }
   } else {
     overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
+      matcher: { id: matcherId, options: fieldDisplayName, scope: fieldScope },
       properties: [{ id: propId, value: width }],
     });
   }
