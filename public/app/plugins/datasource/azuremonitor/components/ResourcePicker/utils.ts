@@ -189,7 +189,12 @@ export function setResources(
     azureMonitor: {
       ...query.azureMonitor,
       metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
-      region: parsedResource.region,
+      region: (() => {
+        const regions = [...new Set(resources.map((r) => parseResourceDetails(r).region).filter(Boolean))];
+        // Store the shared region when all resources agree, or clear it when they span
+        // multiple regions so that cross-region batch queries don't carry a misleading value.
+        return regions.length === 1 ? regions[0] : '';
+      })(),
       resources: parseMultipleResourceDetails(resources).filter(
         (resource) =>
           resource.resourceName !== '' &&
