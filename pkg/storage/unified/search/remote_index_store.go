@@ -43,6 +43,14 @@ type IndexMeta struct {
 	GrafanaBuildVersion string `json:"grafana_build_version"`
 	// UploadTimestamp is when the snapshot was uploaded.
 	UploadTimestamp time.Time `json:"upload_timestamp"`
+	// BuildStartTimestamp is when the bleve index was originally created
+	// (start of the from-scratch build that produced it). Persisted across
+	// periodic re-uploads of the same index, so it always describes the
+	// underlying data, not the most recent upload.
+	//
+	// Zero-value means "unknown" — snapshots produced before this field was
+	// introduced. Readers fall back to other criteria in that case.
+	BuildStartTimestamp time.Time `json:"build_start_timestamp,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// Files maps relative file paths to their sizes in bytes.
