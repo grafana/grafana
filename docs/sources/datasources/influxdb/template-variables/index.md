@@ -129,7 +129,7 @@ To add **Ad hoc filters**:
 1. Select your InfluxDB data source.
 
 <!-- vale Grafana.Spelling = NO -->
-For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to [Add free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 <!-- vale Grafana.Spelling = YES -->
 
 ## Choose a variable syntax
