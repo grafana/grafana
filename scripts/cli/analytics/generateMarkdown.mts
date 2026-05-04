@@ -47,9 +47,14 @@ export const formatEventAsMarkdown = (event: EventData): string => {
 };
 
 export async function formatEventsAsMarkdown(events: EventData[]): Promise<string> {
+  // Silent events are subscriber-only and never forwarded to analytics backends,
+  // so they don't belong in a Rudderstack-facing registry. The silent flag is
+  // still preserved on EventData for non-markdown consumers (e.g. JSON output).
+  const reportableEvents = events.filter((event) => !event.silent);
+
   const byFeature: Record<string, EventData[]> = {};
 
-  for (const event of events) {
+  for (const event of reportableEvents) {
     const feature = event.feature;
     byFeature[feature] = byFeature[feature] ?? [];
     byFeature[feature].push(event);
