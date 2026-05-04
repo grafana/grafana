@@ -58,6 +58,8 @@ replace (
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 )
@@ -173,7 +175,6 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20260302011040-a15ffb7f9dcc // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260424175959-abd9b421dc12 // indirect
@@ -186,6 +187,8 @@ require (
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect

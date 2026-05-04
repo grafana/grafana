@@ -39,6 +39,8 @@ replace (
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 )

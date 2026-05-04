@@ -228,7 +228,7 @@ require (
 	k8s.io/kube-aggregator v0.36.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // @grafana/data-sources-plugins
-	modernc.org/sqlite v1.48.2 // @grafana/grafana-backend-group
+	modernc.org/sqlite v1.48.2 // indirect; @grafana/grafana-backend-group
 	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // @grafana/grafana-app-platform-squad
@@ -273,6 +273,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // @grafana/grafana-backend-group
 )
 
 // Replace references to internal workspaces
@@ -310,6 +311,7 @@ replace (
 	github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ./pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
 )
 
 // Indirect references
