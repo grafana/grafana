@@ -47,7 +47,7 @@ replace (
 
 require (
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.54.0
+	github.com/grafana/grafana-app-sdk v0.54.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	k8s.io/apimachinery v0.36.0
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a

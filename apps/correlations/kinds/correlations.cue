@@ -20,7 +20,7 @@ correlationsv0alpha1: {
 		}
 	}
 	selectableFields: [
-		"spec.datasource.name",
+		"spec.source.name",
 	]
 }
 
