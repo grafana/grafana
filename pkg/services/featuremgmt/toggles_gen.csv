@@ -313,6 +313,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
 2026-03-16,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
 2026-04-27,appplugins.registerAPIServer,experimental,@grafana/plugins-platform-backend,false,true,false
+2026-05-04,appplugins.handleProxyRequests,experimental,@grafana/plugins-platform-backend,false,true,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false

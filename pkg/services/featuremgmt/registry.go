@@ -2685,6 +2685,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "appplugins.handleProxyRequests",
+			Description:     "Register the proxy endpoints",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:         "alertingIgnorePendingForNoDataAndError",
 			Description:  "Makes NoData and Error alerts fire immediately, without 'pending' stage",
 			Stage:        FeatureStageExperimental,

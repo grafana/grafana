@@ -1033,6 +1033,20 @@
     },
     {
       "metadata": {
+        "name": "appplugins.handleProxyRequests",
+        "resourceVersion": "1777879188163",
+        "creationTimestamp": "2026-05-04T07:19:48Z"
+      },
+      "spec": {
+        "description": "Register the proxy endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1777319865396",
         "creationTimestamp": "2026-04-27T19:57:45Z"

@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/openapi"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -38,13 +40,19 @@ var (
 type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.ConversionHandler
 }
 
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
 type PluginContextWrapper interface {
 	// Get the plugin context for an app plugin request
 	PluginContextForApp(ctx context.Context, pluginID string, appSettings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error)
+}
+
+type AppPluginRunnerOptions struct {
+	RegisterProxy bool
+
+	// When this exists, dual write settings will be used
+	LegacyStore grafanarest.Storage
 }
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
@@ -54,12 +62,38 @@ type AppPluginAPIBuilder struct {
 	client          PluginClient // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
-	getter          rest.Getter            // gets the settings from the storage layer
 	decrypter       decrypt.DecryptService // Used with unified storage
+	accessControl   PluginAccessChecker
 
-	// Depends on legacy services
-	pluginSettings pluginsettings.Service
-	accessControl  ac.AccessControl
+	// optional configuration
+	opts AppPluginRunnerOptions
+
+	// Populated in UpdateAPIGroupInfo
+	getter rest.Getter
+}
+
+func NewAppPluginAPIBuilder(
+	plugin openapi.PluginInfo,
+	apiVersion string,
+	client PluginClient, // will only ever be called with the same plugin id!
+	contextProvider PluginContextWrapper,
+	decrypter decrypt.DecryptService, // when not reading legacy
+	accessControl PluginAccessChecker,
+	opts AppPluginRunnerOptions, // can change without updating wire :)
+) (*AppPluginAPIBuilder, error) {
+	return &AppPluginAPIBuilder{
+		pluginJSON: plugin.JSONData,
+		groupVersion: schema.GroupVersion{
+			Group:   plugin.JSONData.ID,
+			Version: apiVersion,
+		},
+		client:          client,
+		contextProvider: contextProvider,
+		schemas:         plugin.Schemas,
+		decrypter:       decrypter,
+		accessControl:   accessControl,
+		opts:            opts,
+	}, nil
 }
 
 // Called in ST Grafana to register
@@ -68,7 +102,7 @@ func RegisterAPIService(
 	pluginClient plugins.Client, // access to everything
 	contextProvider PluginContextWrapper,
 	pluginSources sources.Registry,
-	pluginSettings pluginsettings.Service, // Do we need an explicitly caching version?
+	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
 	decrypter decrypt.DecryptService,
 ) (*AppPluginAPIBuilder, error) {
@@ -76,11 +110,14 @@ func RegisterAPIService(
 	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
 		return nil, nil
 	}
+	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
 
-	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
+	// Find all local plugins
+	pluginInfos, err := pluginspec.LoadPlugins(ctx, pluginSources,
 		func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// Enforce that the plugin ID ends with -app so it is OK to live as a root api group
+				// Alternatively, we could fail or append -app to the name
 				if strings.HasSuffix(jsonData.ID, "-app") {
 					backend.Logger.Warn("app plugin with invalid suffix: %s", jsonData.ID)
 				}
@@ -95,18 +132,19 @@ func RegisterAPIService(
 
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginInfos {
-		b := &AppPluginAPIBuilder{
-			pluginJSON: plugin.JSONData,
-			schemas:    plugin.Schemas,
-			groupVersion: schema.GroupVersion{
-				Group:   plugin.JSONData.ID,
-				Version: apppluginV0.VERSION,
+		b, err := NewAppPluginAPIBuilder(plugin,
+			apppluginV0.VERSION, // v0alpha1
+			pluginClient,        // scoped to a single plugin!
+			contextProvider,
+			decrypter,
+			NewPluginAccessChecker(accessControl),
+			AppPluginRunnerOptions{
+				RegisterProxy: registerProxy, // FROM feature toggles
+				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 			},
-			pluginSettings:  pluginSettings,
-			accessControl:   accessControl,
-			contextProvider: contextProvider,
-			client:          pluginClient, // scoped to a single plugin!
-			decrypter:       decrypter,
+		)
+		if err != nil {
+			return nil, err
 		}
 		apiRegistrar.RegisterAPI(b)
 		last = b
@@ -142,23 +180,18 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
 	storage := map[string]rest.Storage{}
-	legacyStore := &settingsStorage{
-		pluginID:       b.pluginJSON.ID,
-		pluginSettings: b.pluginSettings,
-		resourceInfo:   &settingsRI,
-	}
 
-	if opts.DualWriteBuilder != nil {
-		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[settingsRI.StoragePath()] = unified
+	if b.opts.LegacyStore != nil {
+		store, err := opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
 		}
-		storage[settingsRI.StoragePath()], err = opts.DualWriteBuilder(settingsRI.GroupResource(), legacyStore, unified)
-		if err != nil {
-			return err
-		}
-	} else {
-		storage[settingsRI.StoragePath()] = legacyStore
+		storage[settingsRI.StoragePath()] = store
 	}
 
 	storage[settingsRI.StoragePath("health")] = &subHealthREST{
@@ -170,7 +203,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		client:          b.client,
 		contextProvider: b.getPluginContext,
 	}
-	if len(b.pluginJSON.Routes) > 0 {
+	if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
 		storage[settingsRI.StoragePath("routes")] = &subProxyREST{
 			pluginJSON: b.pluginJSON,
 		}

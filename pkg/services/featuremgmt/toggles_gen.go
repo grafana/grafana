@@ -834,6 +834,10 @@ const (
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
 
+	// FlagApppluginsHandleProxyRequests
+	// Register the proxy endpoints
+	FlagApppluginsHandleProxyRequests = "appplugins.handleProxyRequests"
+
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"

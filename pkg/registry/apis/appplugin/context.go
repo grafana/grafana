@@ -10,13 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 type ctxAppDTO struct{}
 
 type shimDTO struct {
-	dto *pluginsettings.DTO
+	getDecryptedSecureJSONData func(context.Context) (map[string]string, error)
 }
 
 // This can be removed when we no longer support loading directly from the legacy SQL store
@@ -57,9 +56,12 @@ func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Con
 
 	if len(settings.Secure) > 0 {
 		shim := shimFromContext(ctx)
-		if shim != nil && shim.dto != nil && b.pluginSettings != nil {
+		if shim != nil && shim.getDecryptedSecureJSONData != nil {
 			// Odd this does not have an error???!!
-			instance.DecryptedSecureJSONData = b.pluginSettings.DecryptedValues(shim.dto)
+			instance.DecryptedSecureJSONData, err = shim.getDecryptedSecureJSONData(ctx)
+			if err != nil {
+				return ctx, backend.PluginContext{}, k8serrors.NewBadRequest("error getting decrypted secure values")
+			}
 		} else {
 			names := make([]string, 0, len(settings.Secure))
 			for k, v := range settings.Secure {

@@ -72,8 +72,19 @@ func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
 
 type settingsStorage struct {
 	pluginID       string
-	pluginSettings pluginsettings.Service
+	pluginSettings pluginsettings.Service // Do we need an explicitly caching version?
 	resourceInfo   *utils.ResourceInfo
+}
+
+func NewLegacySettingsStore(pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
+	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
+		pluginID, pluginID,
+	)
+	return &settingsStorage{
+		pluginID:       pluginID,
+		pluginSettings: pluginSettings,
+		resourceInfo:   &settingsRI,
+	}
 }
 
 var _ grafanarest.Storage = (*settingsStorage)(nil)
@@ -142,7 +153,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 	if ps != nil {
 		shim := shimFromContext(ctx)
 		if shim != nil {
-			shim.dto = ps // passes the raw values back for decryption
+			shim.getDecryptedSecureJSONData = func(ctx context.Context) (map[string]string, error) {
+				v := s.pluginSettings.DecryptedValues(ps)
+				return v, nil // odd this does not have an error
+			}
 		}
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
