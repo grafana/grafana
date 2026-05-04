@@ -345,7 +345,7 @@ build-go: pkg/services/preference/themes_generated.go
 	$(GO) build $(GO_BUILD_ARGS)
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
 
-bin/$(OS)/$(ARCH)/grafana:
+bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe):
 	$(MAKE) build-go
 
 .PHONY: build-backend
@@ -416,7 +416,7 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build
+$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) public/build
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
