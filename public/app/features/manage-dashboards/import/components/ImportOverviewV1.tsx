@@ -5,6 +5,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
+import { AnnoKeyGrantPermissions } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -70,6 +71,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         k8s: {
           annotations: {
             'grafana.app/folder': form.folder.uid,
+            [AnnoKeyGrantPermissions]: 'default',
           },
         },
       };
