@@ -44,6 +44,29 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 
 const labelQueryPrefix = "labels_"
 
+// labelQueryParamToMatcher parses a labels_* query value into a Prometheus-style label matcher.
+// If rawValue starts with =, !=, =~, or !~, it is appended to labelName (Prometheus matcher syntax).
+// Otherwise rawValue is treated as an equality operand (backward compatible with labels_key=value).
+func labelQueryParamToMatcher(labelName, rawValue string) (*labels.Matcher, error) {
+	if labelName == "" {
+		return nil, fmt.Errorf("empty label name")
+	}
+	var matcherStr string
+	switch {
+	case strings.HasPrefix(rawValue, "!="):
+		matcherStr = labelName + rawValue
+	case strings.HasPrefix(rawValue, "!~"):
+		matcherStr = labelName + rawValue
+	case strings.HasPrefix(rawValue, "=~"):
+		matcherStr = labelName + rawValue
+	case strings.HasPrefix(rawValue, "="):
+		matcherStr = labelName + rawValue
+	default:
+		matcherStr = labelName + "=" + rawValue
+	}
+	return labels.ParseMatcher(matcherStr)
+}
+
 // ParseHistoryQuery parses a HistoryQuery from request parameters.
 func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (models.HistoryQuery, error) {
 	from, _ := strconv.ParseInt(query.Get("from"), 10, 64)
@@ -72,7 +95,11 @@ func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (
 	var matchers labels.Matchers
 	for k, v := range query {
 		if strings.HasPrefix(k, labelQueryPrefix) {
-			m, err := labels.ParseMatcher(k[len(labelQueryPrefix):] + "=" + v[0])
+			if len(v) == 0 {
+				return models.HistoryQuery{}, fmt.Errorf("missing value for label filter %q", k)
+			}
+			labelName := k[len(labelQueryPrefix):]
+			m, err := labelQueryParamToMatcher(labelName, v[0])
 			if err != nil {
 				return models.HistoryQuery{}, fmt.Errorf("invalid label filter %q: %w", k, err)
 			}

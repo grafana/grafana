@@ -61,6 +61,50 @@ func TestRouteQueryStateHistory(t *testing.T) {
 			assert.Equal(t, tt.expectedCode, resp.Status())
 		})
 	}
+
+	labelParamCases := []struct {
+		name         string
+		values       url.Values
+		expectedCode int
+	}{
+		{
+			name:         "valid labels_ not-equal",
+			values:       url.Values{"labels_severity": {`!="critical"`}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "valid labels_ regex",
+			values:       url.Values{"labels_severity": {`=~"crit.*"`}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "valid labels_ not-regex",
+			values:       url.Values{"labels_env": {`!~"prod.*"`}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "valid labels_ explicit equal",
+			values:       url.Values{"labels_env": {`="prod"`}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "invalid labels_ regex",
+			values:       url.Values{"labels_severity": {`=~"[invalid"`}},
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range labelParamCases {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/?"+tt.values.Encode(), nil)
+			c := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{OrgID: 1},
+			}
+			resp := srv.RouteQueryStateHistory(c)
+			assert.Equal(t, tt.expectedCode, resp.Status())
+		})
+	}
 }
 
 func TestParseHistoryQuery(t *testing.T) {
@@ -78,6 +122,49 @@ func TestParseHistoryQuery(t *testing.T) {
 		require.Equal(t, "critical", byName["severity"].Value)
 		require.Equal(t, labels.MatchEqual, byName["env"].Type)
 		require.Equal(t, "prod", byName["env"].Value)
+	})
+
+	t.Run("labels_ prefix supports comparison operators", func(t *testing.T) {
+		q := url.Values{
+			"labels_severity": {`!="critical"`},
+			"labels_region":   {`=~"us-.*"`},
+			"labels_zone":     {`!~"eu-.*"`},
+			"labels_team":     {`="alerting"`},
+		}
+		result, err := ParseHistoryQuery(1, &user.SignedInUser{}, q)
+		require.NoError(t, err)
+		require.Len(t, result.Labels, 4)
+
+		byName := matchersByName(result.Labels)
+		assert.Equal(t, labels.MatchNotEqual, byName["severity"].Type)
+		assert.Equal(t, "critical", byName["severity"].Value)
+		assert.Equal(t, labels.MatchRegexp, byName["region"].Type)
+		assert.Equal(t, "us-.*", byName["region"].Value)
+		assert.Equal(t, labels.MatchNotRegexp, byName["zone"].Type)
+		assert.Equal(t, "eu-.*", byName["zone"].Value)
+		assert.Equal(t, labels.MatchEqual, byName["team"].Type)
+		assert.Equal(t, "alerting", byName["team"].Value)
+	})
+
+	t.Run("invalid regex in labels_ returns error", func(t *testing.T) {
+		q := url.Values{"labels_severity": {`=~"[invalid"`}}
+		_, err := ParseHistoryQuery(1, &user.SignedInUser{}, q)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid label filter")
+	})
+
+	t.Run("labels_ without name returns error", func(t *testing.T) {
+		q := url.Values{"labels_": {"foo"}}
+		_, err := ParseHistoryQuery(1, &user.SignedInUser{}, q)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid label filter")
+	})
+
+	t.Run("labels_ without value returns error", func(t *testing.T) {
+		q := url.Values{"labels_severity": {}}
+		_, err := ParseHistoryQuery(1, &user.SignedInUser{}, q)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "missing value for label filter")
 	})
 
 	t.Run("matchers param supports all operators", func(t *testing.T) {

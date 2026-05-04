@@ -4467,7 +4467,7 @@
     },
     "/v1/rules/history": {
       "get": {
-        "description": "Allows to query alerting state history.\nIn addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'\nExample: /v1/rules/history?labels_myKey1=myValue1\u0026labels_myKey2=myValue2",
+        "description": "Allows to query alerting state history.\nIn addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'.\nEquality (default): pass the label value only, e.g. labels_severity=critical maps to severity=\"critical\".\nOther operators: the query value must start with the operator and Prometheus matcher operand, e.g.\nlabels_severity!=\"critical\", labels_severity=~\"crit.*\", labels_env!~\"prod.*\", labels_team=\"alerting\".\nMultiple label filters and the 'matchers' parameter can be combined.",
         "produces": [
           "application/json"
         ],
