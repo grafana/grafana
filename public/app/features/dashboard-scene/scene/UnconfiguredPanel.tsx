@@ -165,9 +165,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
 
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
+  if (panelContext.app === CoreApp.PanelEditor) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
@@ -205,7 +203,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     },
   ];
 
-  if (queryLibraryEnabled && config.featureToggles.newVizSuggestions && hasSavedQueryReadPermissions()) {
+  if (queryLibraryEnabled && hasSavedQueryReadPermissions()) {
     buttons.splice(1, 0, {
       key: 'saved-query',
       icon: 'book-open',
@@ -347,20 +345,14 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
     </Menu>
   );
 
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
-    const defaultContent = (
-      <Trans i18nKey="dashboard.new-panel.empty-state-message">
-        Run a query to visualize it here or go to all visualizations to add other panel types
-      </Trans>
-    );
-
+  if (panelContext.app === CoreApp.PanelEditor) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
         <Text element="p" textAlignment="center" color="secondary">
-          {defaultContent}
+          <Trans i18nKey="dashboard.new-panel.empty-state-message">
+            Run a query to visualize it here or go to all visualizations to add other panel types
+          </Trans>
         </Text>
       </div>
     );

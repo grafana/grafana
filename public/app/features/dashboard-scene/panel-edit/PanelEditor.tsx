@@ -104,9 +104,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      // default to timeseries if newVizSuggestions is off or the options pane is collapsed
       const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
-      if (!config.featureToggles.newVizSuggestions || isPaneCollapsed) {
+      if (isPaneCollapsed) {
         panel.changePluginType('timeseries');
       }
     }
