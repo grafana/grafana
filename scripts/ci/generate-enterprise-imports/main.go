@@ -85,9 +85,9 @@ func run() error {
 				continue
 			}
 
-			// Skip grafana internal packages
-			if strings.HasPrefix(importPath, "github.com/grafana/grafana/") ||
-				strings.HasPrefix(importPath, "github.com/grafana/grafana-enterprise/") {
+			// Skip grafana-enterprise internal packages
+			if strings.HasPrefix(importPath, "github.com/grafana/grafana-enterprise/") ||
+				strings.HasPrefix(importPath, "github.com/grafana/grafana/pkg/extensions/") {
 				continue
 			}
 
